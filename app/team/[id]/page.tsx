@@ -1,6 +1,7 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import WorkspaceList from '@/app/components/WorskpaceList';
 
 interface Workspace {
@@ -9,18 +10,23 @@ interface Workspace {
   teamId: number;
 }
 
-function HomePage() {
+function TeamPage() {
+  const pathname = usePathname();
+  const id = pathname.split('/').pop();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
-  const [newWorkspaceTeamId, setNewWorkspaceTeamId] = useState<string>('');
 
   useEffect(() => {
-    fetch('/api/workspaces')
-      .then((res) => res.json())
-      .then((data) => setWorkspaces(data));
-  }, []);
+    if (id) {
+      fetch(`/api/team/${id}/workspaces`)
+        .then((res) => res.json())
+        .then((data) => setWorkspaces(data));
+    }
+  }, [id]);
 
   const addWorkspace = async () => {
+    if (!id) return;
+
     const response = await fetch('/api/workspaces', {
       method: 'POST',
       headers: {
@@ -28,14 +34,13 @@ function HomePage() {
       },
       body: JSON.stringify({
         name: newWorkspaceName,
-        teamId: parseInt(newWorkspaceTeamId),
+        teamId: parseInt(id as string),
       }),
     });
 
     const newWorkspace: Workspace = await response.json();
     setWorkspaces([...workspaces, newWorkspace]);
     setNewWorkspaceName('');
-    setNewWorkspaceTeamId('');
   };
 
   return (
@@ -49,16 +54,10 @@ function HomePage() {
           value={newWorkspaceName}
           onChange={(e) => setNewWorkspaceName(e.target.value)}
         />
-        <input
-          type="number"
-          placeholder="Team ID"
-          value={newWorkspaceTeamId}
-          onChange={(e) => setNewWorkspaceTeamId(e.target.value)}
-        />
         <button onClick={addWorkspace}>Add Workspace</button>
       </div>
     </div>
   );
 }
 
-export default HomePage;
+export default TeamPage;

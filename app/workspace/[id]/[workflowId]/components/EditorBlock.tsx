@@ -21,7 +21,7 @@ export default function EditorBlock({ block, onClick }: EditorBlockProps) {
         </div>
         {/* Ensure the vertical rectangle is centered and spaced properly */}
       </div>
-      <div className="w-2 h-12 bg-gray-600 mt-2 mx-auto" />
+      {/* <div className="w-2 h-12 bg-gray-600 mt-2 mx-auto" /> */}
     </div>
   );
 }

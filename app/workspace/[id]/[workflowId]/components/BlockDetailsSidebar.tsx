@@ -1,4 +1,3 @@
-// components/BlockDetailsSidebar.tsx
 import React, { useState, useEffect } from 'react';
 import { Block } from '@/types/block';
 
@@ -34,14 +33,13 @@ export default function BlockDetailsSidebar({
         type: newType,
         description: newDescription,
       };
-      onUpdate(updatedBlock);
+      onUpdate(updatedBlock); // Call the onUpdate function from Canvas
     }
   };
 
   const handleDelete = () => {
     if (block) {
-      onDelete(block.id);
-      onClose(); // Close sidebar after deletion
+      onDelete(block.id); // Call the onDelete function from Canvas
     }
   };
 

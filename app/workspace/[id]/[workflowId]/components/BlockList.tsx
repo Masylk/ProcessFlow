@@ -7,7 +7,7 @@ import AddBlock from './AddBlock';
 interface BlockListProps {
   blocks: Block[];
   onBlockClick: (block: Block) => void;
-  onAddBlock: () => void;
+  onAddBlock: (position: number) => void;
 }
 
 export default function BlockList({
@@ -17,12 +17,13 @@ export default function BlockList({
 }: BlockListProps) {
   return (
     <div className="space-y-4">
+      <AddBlock id={0} onAdd={onAddBlock} />
       {blocks.map((block) => (
-        <EditorBlock key={block.id} block={block} onClick={onBlockClick} />
+        <React.Fragment key={block.id}>
+          <EditorBlock block={block} onClick={onBlockClick} />
+          <AddBlock id={block.position + 1} onAdd={onAddBlock} />
+        </React.Fragment>
       ))}
-      <div className="flex justify-center mt-4">
-        <AddBlock onAdd={onAddBlock} />
-      </div>
     </div>
   );
 }

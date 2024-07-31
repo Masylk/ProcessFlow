@@ -6,9 +6,7 @@ export interface Block {
   id: number;
   type: string;
   position: number;
-  icon?: string;
-  description?: string;
-  // workflowId: number;
-  // workflow: Workflow;
-  // actions: Action[];
+  icon: string;
+  description: string;
+  workflowId: number;
 }
