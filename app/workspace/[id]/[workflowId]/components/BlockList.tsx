@@ -7,23 +7,23 @@ import AddBlock from './AddBlock';
 interface BlockListProps {
   blocks: Block[];
   onBlockClick: (block: Block) => void;
-  onAddBlock: (position: number) => void;
+  onAddBlockClick: (position: number) => void;
 }
 
 export default function BlockList({
   blocks,
   onBlockClick,
-  onAddBlock,
+  onAddBlockClick,
 }: BlockListProps) {
   return (
     <div className="space-y-4">
-      <AddBlock id={0} onAdd={onAddBlock} />
-      {blocks.map((block) => (
+      {blocks.map((block, index) => (
         <React.Fragment key={block.id}>
           <EditorBlock block={block} onClick={onBlockClick} />
-          <AddBlock id={block.position + 1} onAdd={onAddBlock} />
+          <AddBlock id={index + 1} onAdd={onAddBlockClick} />
         </React.Fragment>
       ))}
+      {blocks.length === 0 && <AddBlock id={0} onAdd={onAddBlockClick} />}
     </div>
   );
 }

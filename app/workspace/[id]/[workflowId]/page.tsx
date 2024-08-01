@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
 import Canvas from './components/Canvas';
 import StatusIndicator from './components/StatusIndicator';
+import AddBlockForm from './components/AddBlockForm';
 import { Block } from '@/types/block';
 
 export default function WorkflowPage() {
@@ -18,6 +19,8 @@ export default function WorkflowPage() {
   const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
     null
   );
+  const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
+  const [insertPosition, setInsertPosition] = useState<number | null>(null);
 
   useEffect(() => {
     if (id && workflowId) {
@@ -48,6 +51,42 @@ export default function WorkflowPage() {
 
   const goBack = () => {
     router.back();
+  };
+
+  const handleAddBlockClick = (position: number) => {
+    setInsertPosition(position);
+    setIsAddBlockFormOpen(true);
+  };
+
+  const handleAddBlock = async (blockData: Pick<Block, 'description' | 'type'>) => {
+    setIsAddBlockFormOpen(false);
+    if (insertPosition === null) return;
+
+    try {
+      const response = await fetch('/api/blocks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...blockData,
+          position: insertPosition,
+          icon: 'default-icon',
+          workflowId: parseInt(workflowId),
+        }),
+      });
+
+      if (response.ok) {
+        // Refetch the blocks to update the list
+        fetchBlocks(id, workflowId);
+      } else {
+        console.error('Failed to create new block');
+      }
+    } catch (error) {
+      console.error('Error creating new block:', error);
+    }
+
+    setInsertPosition(null);
   };
 
   return (
@@ -81,8 +120,14 @@ export default function WorkflowPage() {
           initialBlocks={blocks}
           workspaceId={id}
           workflowId={workflowId}
-          onAddBlock={() => fetchBlocks(id, workflowId)}
+          onAddBlockClick={handleAddBlockClick}
         />
+        {isAddBlockFormOpen && (
+          <AddBlockForm
+            onSubmit={handleAddBlock}
+            onCancel={() => setIsAddBlockFormOpen(false)}
+          />
+        )}
       </main>
     </div>
   );

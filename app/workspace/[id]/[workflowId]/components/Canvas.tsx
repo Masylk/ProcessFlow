@@ -9,14 +9,14 @@ interface CanvasProps {
   initialBlocks: Block[];
   workspaceId: string;
   workflowId: string;
-  onAddBlock: () => void;
+  onAddBlockClick: (position: number) => void;
 }
 
 export default function Canvas({
   initialBlocks,
   workspaceId,
   workflowId,
-  onAddBlock,
+  onAddBlockClick,
 }: CanvasProps) {
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
@@ -24,42 +24,6 @@ export default function Canvas({
   useEffect(() => {
     setBlocks(initialBlocks);
   }, [initialBlocks]);
-
-  const addBlock = async (position: number) => {
-    const newBlockData = {
-      type: 'New Block Type',
-      position: position,
-      icon: '',
-      description: 'New block description',
-      workflowId: parseInt(workflowId),
-    };
-
-    const response = await fetch('/api/blocks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newBlockData),
-    });
-
-    if (response.ok) {
-      const newBlock: Block = await response.json();
-      setBlocks((prevBlocks) => {
-        const updatedBlocks = [
-          ...prevBlocks.slice(0, position),
-          newBlock,
-          ...prevBlocks.slice(position).map((block) => ({
-            ...block,
-            position: block.position + 1,
-          })),
-        ];
-        return updatedBlocks;
-      });
-      onAddBlock(); // Fetch the blocks again to ensure they are updated from the database
-    } else {
-      console.error('Failed to add block');
-    }
-  };
 
   const handleBlockClick = (block: Block) => {
     setSelectedBlock(block);
@@ -116,7 +80,7 @@ export default function Canvas({
         <BlockList
           blocks={blocks}
           onBlockClick={handleBlockClick}
-          onAddBlock={addBlock}
+          onAddBlockClick={onAddBlockClick}
         />
       </div>
       {selectedBlock && (
