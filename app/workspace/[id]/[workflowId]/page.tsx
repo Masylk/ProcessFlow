@@ -43,7 +43,7 @@ export default function WorkflowPage() {
       console.error('Error fetching blocks:', error);
       setLastRequestStatus(false);
     }
-  };
+  };  
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -58,7 +58,9 @@ export default function WorkflowPage() {
     setIsAddBlockFormOpen(true);
   };
 
-  const handleAddBlock = async (blockData: Pick<Block, 'description' | 'type'>) => {
+  const handleAddBlock = async (
+    blockData: Pick<Block, 'description' | 'type'>
+  ) => {
     setIsAddBlockFormOpen(false);
     if (insertPosition === null) return;
 

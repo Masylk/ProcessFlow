@@ -40,9 +40,13 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    await prisma.block.delete({
-      where: { id: Number(id) },
-    });
+    // Delete related records in a transaction
+    await prisma.$transaction([
+      prisma.pathBlock.deleteMany({ where: { blockId: Number(id) } }),
+      prisma.stepBlock.deleteMany({ where: { blockId: Number(id) } }),
+      prisma.delayBlock.deleteMany({ where: { blockId: Number(id) } }),
+      prisma.block.delete({ where: { id: Number(id) } }),
+    ]);
 
     // Return a response with no content
     return new NextResponse(null, { status: 204 });

@@ -14,7 +14,7 @@ export default function BlockDetailsSidebar({
   onUpdate,
   onDelete,
 }: BlockDetailsSidebarProps) {
-  const [newType, setNewType] = useState(block?.type || '');
+  const [newType, setNewType] = useState<Block['type']>(block?.type || 'STEP');
   const [newDescription, setNewDescription] = useState(
     block?.description || ''
   );
@@ -28,18 +28,20 @@ export default function BlockDetailsSidebar({
 
   const handleUpdate = () => {
     if (block) {
-      const updatedBlock = {
+      const updatedBlock: Block = {
         ...block,
-        type: newType,
+        type: newType as Block['type'],
         description: newDescription,
       };
-      onUpdate(updatedBlock); // Call the onUpdate function from Canvas
+      onUpdate(updatedBlock);
+      onClose(); // Close the component after updating
     }
   };
 
   const handleDelete = () => {
     if (block) {
-      onDelete(block.id); // Call the onDelete function from Canvas
+      onDelete(block.id);
+      onClose(); // Close the component after deleting
     }
   };
 
@@ -54,12 +56,15 @@ export default function BlockDetailsSidebar({
             <label className="block text-sm font-medium text-gray-700">
               Type
             </label>
-            <input
-              type="text"
+            <select
               value={newType}
-              onChange={(e) => setNewType(e.target.value)}
+              onChange={(e) => setNewType(e.target.value as Block['type'])}
               className="border rounded p-1 w-full"
-            />
+            >
+              <option value="DELAY">DELAY</option>
+              <option value="STEP">STEP</option>
+              <option value="PATH">PATH</option>
+            </select>
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">

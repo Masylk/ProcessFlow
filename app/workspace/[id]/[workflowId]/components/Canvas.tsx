@@ -18,7 +18,7 @@ export default function Canvas({
   workflowId,
   onAddBlockClick,
 }: CanvasProps) {
-  const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
+  const [blocks, setBlocks] = useState<Block[]>(initialBlocks || []);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
 
   useEffect(() => {
@@ -74,6 +74,31 @@ export default function Canvas({
     }
   };
 
+  const handleBlocksReorder = async (reorderedBlocks: Block[]) => {
+    // Update the local state
+    setBlocks(reorderedBlocks);
+
+    // Prepare the updated positions
+    const updatedPositions = reorderedBlocks.map((block, index) => ({
+      id: block.id,
+      position: index,
+    }));
+
+    // Send the updated positions to the server
+    const response = await fetch(`/api/workflows/${workflowId}/reorder-blocks`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedPositions),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to update block positions');
+      // Optionally, you could revert the local state here if the server update fails
+    }
+  };
+
   return (
     <div className="flex">
       <div className="flex-1 p-6">
@@ -81,6 +106,7 @@ export default function Canvas({
           blocks={blocks}
           onBlockClick={handleBlockClick}
           onAddBlockClick={onAddBlockClick}
+          onBlocksReorder={handleBlocksReorder}
         />
       </div>
       {selectedBlock && (

@@ -8,12 +8,27 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { name, teamId } = await req.json();
-  const newWorkspace = await prisma.workspace.create({
-    data: {
-      name,
-      teamId: Number(teamId),
-    },
-  });
-  return NextResponse.json(newWorkspace, { status: 201 });
+  try {
+    const { name, teamId } = await req.json();
+    
+    // Check if the team exists
+    const team = await prisma.team.findUnique({
+      where: { id: Number(teamId) },
+    });
+
+    if (!team) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
+
+    const newWorkspace = await prisma.workspace.create({
+      data: {
+        name,
+        teamId: Number(teamId),
+      },
+    });
+    return NextResponse.json(newWorkspace, { status: 201 });
+  } catch (error) {
+    console.error('Error creating workspace:', error);
+    return NextResponse.json({ error: 'Failed to create workspace' }, { status: 500 });
+  }
 }

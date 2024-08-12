@@ -14,6 +14,12 @@ enum Role {
   READER
 }
 
+enum BlockType {
+  DELAY
+  STEP
+  PATH
+}
+
 model User {
   id            Int         @id @default(autoincrement())
   name          String
@@ -55,13 +61,37 @@ model Workflow {
 
 model Block {
   id          Int        @id @default(autoincrement())
-  type        String
+  type        BlockType
   position    Int
   icon        String?    // Optional field
   description String?    // Optional field
   workflowId  Int
   workflow    Workflow   @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions     Action[]
+  delayBlock  DelayBlock?
+  stepBlock   StepBlock?
+  pathBlock   PathBlock?
+}
+
+model DelayBlock {
+  id          Int   @id @default(autoincrement())
+  blockId     Int   @unique
+  delay       Int   // Specific field for Delay block
+  block       Block @relation(fields: [blockId], references: [id])
+}
+
+model StepBlock {
+  id          Int   @id @default(autoincrement())
+  blockId     Int   @unique
+  stepDetails String // Specific field for Step block
+  block       Block @relation(fields: [blockId], references: [id])
+}
+
+model PathBlock {
+  id          Int   @id @default(autoincrement())
+  blockId     Int   @unique
+  pathOptions String[] // Specific field for Path block
+  block       Block @relation(fields: [blockId], references: [id])
 }
 
 model Action {
