@@ -51,9 +51,9 @@ const PathForm: React.FC<PathFormProps> = ({
     onSubmit({
       ...formData,
       pathBlock: {
-        pathOptions: formData.pathOptions.filter(
-          (option) => option.trim() !== ''
-        ),
+        pathOptions: formData.pathOptions
+          .filter((option) => option.trim() !== '')
+          .map((option) => ({ pathOption: option })),  // Adjusted to correct format
       },
     });
   };

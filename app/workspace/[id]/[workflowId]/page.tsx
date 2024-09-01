@@ -94,9 +94,7 @@ export default function WorkflowPage() {
     setIsAddBlockFormOpen(true);
   };
 
-  const handleAddBlock = async (
-    blockData: Pick<Block, 'description' | 'type'>
-  ) => {
+  const handleAddBlock = async (blockData: any) => {
     setIsAddBlockFormOpen(false);
     if (insertPosition === null) return;
 
@@ -111,6 +109,10 @@ export default function WorkflowPage() {
           position: insertPosition,
           icon: 'default-icon',
           workflowId: parseInt(workflowId),
+          pathBlock:
+            blockData.type === 'PATH'
+              ? { pathOptions: blockData.pathOptions }
+              : undefined,
         }),
       });
 
@@ -162,10 +164,12 @@ export default function WorkflowPage() {
             workflowId={workflowId}
             onAddBlockClick={handleAddBlockClick}
           />
-          {isAddBlockFormOpen && (
+          {isAddBlockFormOpen && insertPosition !== null && (
             <AddBlockForm
               onSubmit={handleAddBlock}
               onCancel={() => setIsAddBlockFormOpen(false)}
+              initialPosition={insertPosition}
+              workflowId={parseInt(workflowId)} // Pass the workflowId as an integer
             />
           )}
         </main>

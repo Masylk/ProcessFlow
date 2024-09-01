@@ -85,17 +85,41 @@ export default function Canvas({
     }));
 
     // Send the updated positions to the server
-    const response = await fetch(`/api/workflows/${workflowId}/reorder-blocks`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedPositions),
-    });
+    const response = await fetch(
+      `/api/workflows/${workflowId}/reorder-blocks`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedPositions),
+      }
+    );
 
     if (!response.ok) {
       console.error('Failed to update block positions');
       // Optionally, you could revert the local state here if the server update fails
+    }
+  };
+
+  const handleUpdatePathOption = async (
+    pathOptionId: number,
+    relatedBlockId: number
+  ) => {
+    const response = await fetch(
+      `/api/path-options/${pathOptionId}/related-blocks`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ blockId: relatedBlockId }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Failed to update PathOption with related block');
+      // Handle failure scenario here
     }
   };
 
@@ -107,6 +131,7 @@ export default function Canvas({
           onBlockClick={handleBlockClick}
           onAddBlockClick={onAddBlockClick}
           onBlocksReorder={handleBlocksReorder}
+          onUpdatePathOption={handleUpdatePathOption}
         />
       </div>
       {selectedBlock && (

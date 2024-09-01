@@ -55,7 +55,13 @@ export async function POST(req: NextRequest) {
         };
       } else if (type === 'PATH') {
         blockData.pathBlock = {
-          create: { pathOptions: pathBlock.pathOptions },
+          create: {
+            pathOptions: {
+              create: pathBlock.pathOptions.map((option: string) => ({
+                pathOption: option,
+              })),
+            },
+          },
         };
       }
 
@@ -65,7 +71,11 @@ export async function POST(req: NextRequest) {
         include: {
           delayBlock: type === 'DELAY',
           stepBlock: type === 'STEP',
-          pathBlock: type === 'PATH',
+          pathBlock: {
+            include: {
+              pathOptions: true,
+            },
+          },
         },
       });
 

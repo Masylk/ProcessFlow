@@ -6,9 +6,16 @@ import StepForm from '@/app/workspace/[id]/[workflowId]/components/StepForm';
 interface AddBlockFormProps {
   onSubmit: (blockData: any) => void;
   onCancel: () => void;
+  initialPosition: number;
+  workflowId: number;
 }
 
-const AddBlockForm: React.FC<AddBlockFormProps> = ({ onSubmit, onCancel }) => {
+const AddBlockForm: React.FC<AddBlockFormProps> = ({
+  onSubmit,
+  onCancel,
+  initialPosition,
+  workflowId,
+}) => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
   const renderForm = () => {
@@ -18,6 +25,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({ onSubmit, onCancel }) => {
           <DelayForm
             onSubmit={onSubmit}
             onCancel={() => setSelectedForm(null)}
+            initialPosition={initialPosition}
+            workflowId={workflowId}
           />
         );
       case 'Path':
@@ -25,6 +34,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({ onSubmit, onCancel }) => {
           <PathForm
             onSubmit={onSubmit}
             onCancel={() => setSelectedForm(null)}
+            initialPosition={initialPosition}
+            workflowId={workflowId}
           />
         );
       case 'Step':
@@ -32,6 +43,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({ onSubmit, onCancel }) => {
           <StepForm
             onSubmit={onSubmit}
             onCancel={() => setSelectedForm(null)}
+            initialPosition={initialPosition}
+            workflowId={workflowId}
           />
         );
       default:
