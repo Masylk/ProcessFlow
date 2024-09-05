@@ -53,7 +53,7 @@ const PathForm: React.FC<PathFormProps> = ({
       pathBlock: {
         pathOptions: formData.pathOptions
           .filter((option) => option.trim() !== '')
-          .map((option) => ({ pathOption: option })),  // Adjusted to correct format
+          .map((option) => ({ pathOption: option })), // Adjusted to correct format
       },
     });
   };

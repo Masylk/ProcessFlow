@@ -1,4 +1,4 @@
-// app/api/workspace/[id]/blocks/route.ts
+// app/api/workspace/[id]/paths/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -10,30 +10,18 @@ export async function GET(
   const workflowId = url.searchParams.get('workflowId');
   const workspaceId = parseInt(params.id);
 
-  // Validate workflowId and workspaceId
-  if (!workflowId || isNaN(workspaceId)) {
+  if (!workflowId) {
     return NextResponse.json(
-      { error: 'workflowId and valid workspaceId are required' },
+      { error: 'workflowId is required' },
       { status: 400 }
     );
   }
 
   try {
-    // Convert workflowId to a number for further processing
-    const parsedWorkflowId = parseInt(workflowId);
-
-    if (isNaN(parsedWorkflowId)) {
-      return NextResponse.json(
-        { error: 'Invalid workflowId' },
-        { status: 400 }
-      );
-    }
-
-    // Log the request data
-    console.log('Fetching paths for:', { workspaceId, parsedWorkflowId });
-
-    // Fetch or create paths with blocks for the given workflowId
+    // Use a transaction to safely check and create if necessary
     const result = await prisma.$transaction(async (prisma) => {
+      const parsedWorkflowId = parseInt(workflowId);
+
       // Fetch paths for the given workflowId
       const existingPaths = await prisma.path.findMany({
         where: {
@@ -42,7 +30,7 @@ export async function GET(
         include: {
           blocks: {
             orderBy: {
-              position: 'asc',
+              position: 'asc', // Order blocks within each path if necessary
             },
             include: {
               pathBlock: {
@@ -51,9 +39,9 @@ export async function GET(
                     include: {
                       blocks: {
                         include: {
-                          pathBlock: true,
-                          stepBlock: true,
-                          delayBlock: true,
+                          pathBlock: true, // Include nested pathBlock relations
+                          stepBlock: true, // Include step block relations
+                          delayBlock: true, // Include delay block relations
                         },
                       },
                     },
@@ -67,13 +55,13 @@ export async function GET(
         },
       });
 
-      // If no paths are found, create a new Path without linking to a PathBlock
+      // If no paths are found, create a new Path (without linking to a PathBlock since it's optional)
       if (existingPaths.length === 0) {
         const newPath = await prisma.path.create({
           data: {
-            name: 'First Path',
+            name: 'First Path', // Set a default or customizable name
             workflowId: parsedWorkflowId,
-            pathBlockId: null,
+            pathBlockId: null, // Optional relationship with PathBlock
           },
           include: {
             blocks: {
@@ -99,19 +87,19 @@ export async function GET(
             },
           },
         });
-
+        console.log(newPath);
         return { paths: [newPath] };
       }
-
-      // Return existing paths
+      console.log(existingPaths);
+      // Return existing paths with their associated blocks if they exist
       return { paths: existingPaths };
     });
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching or creating paths and blocks:', error);
+    console.error('Error fetching or creating paths:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch or create paths and blocks' },
+      { error: 'Failed to fetch or create paths' },
       { status: 500 }
     );
   }

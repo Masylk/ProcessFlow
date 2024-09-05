@@ -1,3 +1,4 @@
+// WorkflowPage.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -5,9 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
 import Canvas from './components/Canvas';
 import StatusIndicator from './components/StatusIndicator';
-import AddBlockForm from './components/AddBlockForm';
 import TitleBar from './components/TitleBar';
-import { Block } from '@/types/block';
+import { Path } from '@/types/path';
 
 export default function WorkflowPage() {
   const pathname = usePathname();
@@ -15,35 +15,33 @@ export default function WorkflowPage() {
   const pathSegments = pathname.split('/');
   const workflowId = pathSegments[pathSegments.length - 1];
   const id = pathSegments[pathSegments.length - 2]; // This is your workspaceId
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const [workflowTitle, setWorkflowTitle] = useState<string>(''); // State to hold the workflow title
+  const [path, setPath] = useState<Path | null>(null);
+  const [workflowTitle, setWorkflowTitle] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
     null
   );
-  const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
-  const [insertPosition, setInsertPosition] = useState<number | null>(null);
 
   useEffect(() => {
     if (id && workflowId) {
-      fetchBlocks(id, workflowId);
-      fetchWorkflowTitle(workflowId); // Fetch the title of the workflow
+      fetchPaths(id, workflowId);
+      fetchWorkflowTitle(workflowId);
     }
   }, [id, workflowId]);
 
-  const fetchBlocks = async (id: string, workflowId: string) => {
+  const fetchPaths = async (id: string, workflowId: string) => {
     try {
       const response = await fetch(
-        `/api/workspace/${id}/blocks?workflowId=${workflowId}`
+        `/api/workspace/${id}/paths?workflowId=${workflowId}`
       );
       if (!response.ok) {
-        throw new Error('Failed to fetch blocks');
+        throw new Error('Failed to fetch paths');
       }
       const data = await response.json();
-      setBlocks(data);
+      setPath(data.paths && data.paths[0] ? data.paths[0] : null);
       setLastRequestStatus(true);
     } catch (error) {
-      console.error('Error fetching blocks:', error);
+      console.error('Error fetching paths:', error);
       setLastRequestStatus(false);
     }
   };
@@ -75,7 +73,7 @@ export default function WorkflowPage() {
         throw new Error('Failed to update workflow title');
       }
 
-      setWorkflowTitle(newTitle); // Update the title in the state
+      setWorkflowTitle(newTitle);
     } catch (error) {
       console.error('Error updating workflow title:', error);
     }
@@ -87,46 +85,6 @@ export default function WorkflowPage() {
 
   const goBack = () => {
     router.back();
-  };
-
-  const handleAddBlockClick = (position: number) => {
-    setInsertPosition(position);
-    setIsAddBlockFormOpen(true);
-  };
-
-  const handleAddBlock = async (blockData: any) => {
-    setIsAddBlockFormOpen(false);
-    if (insertPosition === null) return;
-
-    try {
-      const response = await fetch('/api/blocks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...blockData,
-          position: insertPosition,
-          icon: 'default-icon',
-          workflowId: parseInt(workflowId),
-          pathBlock:
-            blockData.type === 'PATH'
-              ? { pathOptions: blockData.pathOptions }
-              : undefined,
-        }),
-      });
-
-      if (response.ok) {
-        // Refetch the blocks to update the list
-        fetchBlocks(id, workflowId);
-      } else {
-        console.error('Failed to create new block');
-      }
-    } catch (error) {
-      console.error('Error creating new block:', error);
-    }
-
-    setInsertPosition(null);
   };
 
   return (
@@ -158,19 +116,14 @@ export default function WorkflowPage() {
             </div>
             <StatusIndicator isSuccess={lastRequestStatus} />
           </div>
-          <Canvas
-            initialBlocks={blocks}
-            workspaceId={id}
-            workflowId={workflowId}
-            onAddBlockClick={handleAddBlockClick}
-          />
-          {isAddBlockFormOpen && insertPosition !== null && (
-            <AddBlockForm
-              onSubmit={handleAddBlock}
-              onCancel={() => setIsAddBlockFormOpen(false)}
-              initialPosition={insertPosition}
-              workflowId={parseInt(workflowId)} // Pass the workflowId as an integer
+          {path ? (
+            <Canvas
+              initialPath={path}
+              workspaceId={id}
+              workflowId={workflowId}
             />
+          ) : (
+            <p>Loading path...</p>
           )}
         </main>
       </div>

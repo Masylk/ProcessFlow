@@ -47,7 +47,6 @@ model UserTeam {
 
   @@unique([userId, teamId])
 }
-
 model Workflow {
   id           Int        @id @default(autoincrement())
   name         String
@@ -55,6 +54,7 @@ model Workflow {
   workspace    Workspace  @relation(fields: [workspaceId], references: [id])
   blocks       Block[]    @relation("WorkflowBlocks")
   history      Action[]   @relation("WorkflowActions")
+  paths        Path[]     @relation("WorkflowPaths") // One-to-many relation with Path
 
   @@unique([name, workspaceId])
 }
@@ -63,9 +63,12 @@ model Path {
   id          Int          @id @default(autoincrement())
   name        String       // Optional name for easier management of paths
   blocks      Block[]      @relation("PathBlocks") // One-to-many relation with Block
-  pathBlockId Int          // Foreign key to PathBlock
-  pathBlock   PathBlock    @relation("PathBlockPath", fields: [pathBlockId], references: [id])
+  pathBlockId Int?         // Make this field optional by adding "?"
+  pathBlock   PathBlock?   @relation("PathBlockPath", fields: [pathBlockId], references: [id]) // Mark the relation as optional
+  workflowId  Int          // Foreign key to Workflow
+  workflow    Workflow     @relation("WorkflowPaths", fields: [workflowId], references: [id])
 }
+
 
 model Block {
   id                Int          @id @default(autoincrement())
@@ -89,7 +92,6 @@ model PathBlock {
   block        Block       @relation(fields: [blockId], references: [id])
   paths        Path[]      @relation("PathBlockPath")
 }
-
 
 model DelayBlock {
   id          Int   @id @default(autoincrement())

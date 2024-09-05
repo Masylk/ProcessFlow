@@ -1,6 +1,7 @@
 // types/block.ts
 import { Workflow } from './workflow'; // Import Workflow type if needed
 import { Action } from './action'; // Import Action type if needed
+import { Path } from './path';
 
 // Represents a Block, which might include different types of blocks
 export interface Block {
@@ -40,14 +41,6 @@ export interface DelayBlock {
   blockId: number;
   delay: number; // Duration of the delay
   block?: Block; // Optional reference back to the block
-}
-
-// Represents a Path, which is associated with a single PathBlock
-export interface Path {
-  id: number;
-  name: string; // Optional name for easier management of paths
-  pathBlockId: number;
-  pathBlock: PathBlock; // Reference to the PathBlock this Path belongs to
 }
 
 // Represents a PathBlock, which can contain multiple Paths
