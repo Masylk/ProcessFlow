@@ -8,6 +8,7 @@ import Canvas from './components/Canvas';
 import StatusIndicator from './components/StatusIndicator';
 import TitleBar from './components/TitleBar';
 import { Path } from '@/types/path';
+import { BlockProvider } from './components/BlockContext'; // Adjust path as needed
 
 export default function WorkflowPage() {
   const pathname = usePathname();
@@ -117,11 +118,13 @@ export default function WorkflowPage() {
             <StatusIndicator isSuccess={lastRequestStatus} />
           </div>
           {path ? (
-            <Canvas
-              initialPath={path}
-              workspaceId={id}
-              workflowId={workflowId}
-            />
+            <BlockProvider>
+              <Canvas
+                initialPath={path}
+                workspaceId={id}
+                workflowId={workflowId}
+              />
+            </BlockProvider>
           ) : (
             <p>Loading path...</p>
           )}

@@ -11,9 +11,15 @@ interface BlockListProps {
   blocks: Block[];
   workspaceId: number;
   pathId: number;
-  onBlockClick: (block: Block) => void;
+  onBlockClick: (
+    block: Block,
+    updateBlockFn: (updatedBlock: Block) => Promise<void>,
+    deleteBlockFn: (blockId: number) => Promise<void>
+  ) => void;
   onAddBlockClick: (position: number) => void;
   onBlocksReorder: (reorderedBlocks: Block[]) => void;
+  handleBlockClick: (block: Block) => void;
+  closeDetailSidebar: () => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -23,6 +29,8 @@ const BlockList: React.FC<BlockListProps> = ({
   onBlockClick,
   onAddBlockClick,
   onBlocksReorder,
+  handleBlockClick,
+  closeDetailSidebar,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -79,7 +87,6 @@ const BlockList: React.FC<BlockListProps> = ({
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
       const paths = block.pathBlock ? pathsByBlockId[block.pathBlock?.id] : [];
-      console.log(paths, block.type, block.description);
       return (
         <Draggable
           key={block.id}
@@ -93,7 +100,7 @@ const BlockList: React.FC<BlockListProps> = ({
               {...provided.dragHandleProps}
               className="flex flex-col w-full"
             >
-              <EditorBlock block={block} onClick={onBlockClick} />
+              <EditorBlock block={block} onClick={handleClick} />
               {paths && (
                 <div className="flex flex-wrap items-center gap-2 mt-2 w-full">
                   {paths.map((path, key) => (
@@ -102,27 +109,27 @@ const BlockList: React.FC<BlockListProps> = ({
                       pathId={path.id}
                       workspaceId={workspaceId}
                       workflowId={block.workflowId}
+                      onBlockClick={onBlockClick}
+                      closeDetailSidebar={closeDetailSidebar}
                     />
                   ))}
-                  <AddBlock
-                    id={index + 1}
-                    onAdd={() => onAddBlockClick(index + 1)}
-                    label="Add Block"
-                  />
                 </div>
               )}
-              {block.type !== 'PATH' && (
-                <AddBlock
-                  id={index + 1}
-                  onAdd={() => onAddBlockClick(index + 1)}
-                  label="Add Block"
-                />
-              )}
+              <AddBlock
+                id={index + 1}
+                onAdd={() => onAddBlockClick(index + 1)}
+                label="Add Block"
+              />
             </div>
           )}
         </Draggable>
       );
     });
+  };
+
+  const handleClick = (block: Block, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevents the click from bubbling up
+    handleBlockClick(block)
   };
 
   return (

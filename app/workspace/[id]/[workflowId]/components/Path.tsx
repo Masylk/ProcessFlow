@@ -3,6 +3,7 @@ import BlockList from './BlockList';
 import { Block } from '@/types/block';
 import AddBlockForm from './AddBlockForm';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
+import { useBlockContext } from './BlockContext';
 
 interface PathData {
   id: number;
@@ -16,14 +17,25 @@ interface PathProps {
   pathId: number;
   workspaceId: number;
   workflowId: number;
+  onBlockClick: (
+    block: Block,
+    updateBlockFn: (updatedBlock: Block) => Promise<void>,
+    deleteBlockFn: (blockId: number) => Promise<void>
+  ) => void;
+  closeDetailSidebar: () => void;
 }
 
-const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
+const Path: React.FC<PathProps> = ({
+  pathId,
+  workspaceId,
+  workflowId,
+  onBlockClick,
+  closeDetailSidebar,
+}) => {
   const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
   const [insertPosition, setInsertPosition] = useState<number | null>(null);
   const [blockList, setBlockList] = useState<Block[]>([]); // State to hold blocks
   const [pathData, setPathData] = useState<PathData | null>(null);
-  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch path data including blocks when the component is mounted
@@ -37,17 +49,13 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
 
         if (response.ok) {
           const fetchedPathData: PathData = await response.json();
-          console.log('Fetched Path Data:', fetchedPathData); // Check fetched data
 
           // Verify blocks data before setting state
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
-            console.log('Blocks Data:', fetchedPathData.blocks);
             setBlockList(fetchedPathData.blocks);
           } else {
-            console.warn('Fetched path has no blocks:', fetchedPathData.blocks);
             setBlockList([]); // Set empty if no blocks exist
           }
-
           setPathData(fetchedPathData);
         } else {
           console.error('Failed to fetch path data:', response.statusText);
@@ -62,8 +70,10 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
 
+  // Function to handle block click and set handlers
   const handleBlockClick = (block: Block) => {
-    setSelectedBlock(block);
+    console.log(pathId);
+    onBlockClick(block, handleUpdateBlock, handleDeleteBlock); // Use the passed callback
   };
 
   const handleAddBlockClick = (position: number) => {
@@ -160,11 +170,38 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
       });
 
       if (response.ok) {
+        console.log(pathId);
         const updatedBlockData: Block = await response.json();
         setBlockList((prevBlocks) =>
-          prevBlocks.map((block) =>
-            block.id === updatedBlockData.id ? updatedBlockData : block
-          )
+          prevBlocks.map((block) => {
+            if (block.id !== updatedBlockData.id) {
+              return block; // Return unchanged blocks
+            }
+
+            // Merge the updated fields with the existing block, keeping relations intact
+            return {
+              ...block,
+              // Only update fields that are present in the updatedBlockData
+              ...(updatedBlockData.type !== undefined && {
+                type: updatedBlockData.type,
+              }),
+              ...(updatedBlockData.position !== undefined && {
+                position: updatedBlockData.position,
+              }),
+              ...(updatedBlockData.icon !== undefined && {
+                icon: updatedBlockData.icon,
+              }),
+              ...(updatedBlockData.description !== undefined && {
+                description: updatedBlockData.description,
+              }),
+              ...(updatedBlockData.pathId !== undefined && {
+                pathId: updatedBlockData.pathId,
+              }),
+              ...(updatedBlockData.workflowId !== undefined && {
+                workflowId: updatedBlockData.workflowId,
+              }),
+            };
+          })
         );
       } else {
         console.error('Failed to update block');
@@ -184,9 +221,7 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
         setBlockList((prevBlocks) =>
           prevBlocks.filter((block) => block.id !== blockId)
         );
-        if (selectedBlock?.id === blockId) {
-          setSelectedBlock(null);
-        }
+        closeDetailSidebar();
       } else {
         console.error('Failed to delete block');
       }
@@ -208,6 +243,8 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
           onBlockClick={handleBlockClick}
           onAddBlockClick={handleAddBlockClick}
           onBlocksReorder={handleBlocksReorder}
+          handleBlockClick={handleBlockClick}
+          closeDetailSidebar={closeDetailSidebar}
         />
       ) : (
         <p>Loading blocks...</p>
@@ -220,14 +257,14 @@ const Path: React.FC<PathProps> = ({ pathId, workspaceId, workflowId }) => {
           workflowId={workflowId}
         />
       )}
-      {selectedBlock && (
+      {/* {selectedBlock && (
         <BlockDetailsSidebar
           block={selectedBlock}
           onClose={() => setSelectedBlock(null)}
           onUpdate={handleUpdateBlock}
           onDelete={handleDeleteBlock}
         />
-      )}
+      )} */}
     </div>
   );
 };

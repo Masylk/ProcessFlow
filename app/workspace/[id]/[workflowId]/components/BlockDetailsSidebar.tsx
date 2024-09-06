@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
@@ -14,7 +14,9 @@ export default function BlockDetailsSidebar({
   onUpdate,
   onDelete,
 }: BlockDetailsSidebarProps) {
-  const [newType, setNewType] = useState<Block['type']>(block?.type || 'STEP');
+  const [newType, setNewType] = useState<Block['type']>(
+    block?.type || BlockType.STEP
+  );
   const [newDescription, setNewDescription] = useState(
     block?.description || ''
   );
