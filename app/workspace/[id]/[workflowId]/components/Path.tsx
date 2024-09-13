@@ -52,6 +52,7 @@ const Path: React.FC<PathProps> = ({
 
           // Verify blocks data before setting state
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
+            console.log(fetchedPathData.blocks);
             setBlockList(fetchedPathData.blocks);
           } else {
             setBlockList([]); // Set empty if no blocks exist
@@ -74,6 +75,7 @@ const Path: React.FC<PathProps> = ({
   const handleBlockClick = (block: Block) => {
     console.log(pathId);
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock); // Use the passed callback
+    console.log('hello: ' + pathId);
   };
 
   const handleAddBlockClick = (position: number) => {
@@ -169,8 +171,9 @@ const Path: React.FC<PathProps> = ({
         }),
       });
 
-      if (response.ok) {
+      if (response?.ok) {
         console.log(pathId);
+        console.log(updatedBlock.pathId);
         const updatedBlockData: Block = await response.json();
         setBlockList((prevBlocks) =>
           prevBlocks.map((block) => {
@@ -240,7 +243,7 @@ const Path: React.FC<PathProps> = ({
           blocks={blockList}
           workspaceId={workspaceId}
           pathId={pathId}
-          onBlockClick={handleBlockClick}
+          onBlockClick={onBlockClick}
           onAddBlockClick={handleAddBlockClick}
           onBlocksReorder={handleBlocksReorder}
           handleBlockClick={handleBlockClick}

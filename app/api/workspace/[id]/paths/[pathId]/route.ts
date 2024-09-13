@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import path according to your setup
+import { describe } from 'node:test';
 
 export async function GET(
   req: NextRequest,
@@ -38,6 +39,9 @@ export async function GET(
             pathBlock: true, // Include related pathBlock information
             delayBlock: true, // Include related delayBlock information
             stepBlock: true, // Include related stepBlock information
+          },
+          orderBy: {
+            position: 'asc',
           },
         },
       },
