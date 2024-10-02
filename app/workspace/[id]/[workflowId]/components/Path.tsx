@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { Block } from '@/types/block';
-import AddBlockForm from './AddBlockForm';
-import BlockDetailsSidebar from './BlockDetailsSidebar';
-import { useBlockContext } from './BlockContext';
 
 interface PathData {
   id: number;
@@ -23,6 +20,16 @@ interface PathProps {
     deleteBlockFn: (blockId: number) => Promise<void>
   ) => void;
   closeDetailSidebar: () => void;
+  handleAddBlock: (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => void;
+  disableZoom: (isDisabled: boolean) => void; // New prop for controlling zoom/pan
 }
 
 const Path: React.FC<PathProps> = ({
@@ -31,14 +38,13 @@ const Path: React.FC<PathProps> = ({
   workflowId,
   onBlockClick,
   closeDetailSidebar,
+  handleAddBlock,
+  disableZoom, // Pass down the prop
 }) => {
-  const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
-  const [insertPosition, setInsertPosition] = useState<number | null>(null);
-  const [blockList, setBlockList] = useState<Block[]>([]); // State to hold blocks
+  const [blockList, setBlockList] = useState<Block[]>([]);
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch path data including blocks when the component is mounted
   useEffect(() => {
     const fetchPathData = async () => {
       setLoading(true);
@@ -50,12 +56,10 @@ const Path: React.FC<PathProps> = ({
         if (response.ok) {
           const fetchedPathData: PathData = await response.json();
 
-          // Verify blocks data before setting state
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
-            console.log(fetchedPathData.blocks);
             setBlockList(fetchedPathData.blocks);
           } else {
-            setBlockList([]); // Set empty if no blocks exist
+            setBlockList([]);
           }
           setPathData(fetchedPathData);
         } else {
@@ -71,16 +75,12 @@ const Path: React.FC<PathProps> = ({
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
 
-  // Function to handle block click and set handlers
   const handleBlockClick = (block: Block) => {
-    console.log(pathId);
-    onBlockClick(block, handleUpdateBlock, handleDeleteBlock); // Use the passed callback
-    console.log('hello: ' + pathId);
+    onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
   };
 
   const handleAddBlockClick = (position: number) => {
-    setInsertPosition(position);
-    setIsAddBlockFormOpen(true);
+    handleAddBlock(pathId, position, handleAddBlockFn);
   };
 
   const handleBlocksReorder = async (reorderedBlocks: Block[]) => {
@@ -111,17 +111,20 @@ const Path: React.FC<PathProps> = ({
     }
   };
 
-  const handleAddBlock = async (blockData: any) => {
-    setIsAddBlockFormOpen(false);
-    if (insertPosition === null) return;
+  const handleAddBlockFn = async (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => {
+    if (position === null) return;
 
     try {
       const requestBody = {
         ...blockData,
-        position: insertPosition,
+        position: position,
         icon: 'default-icon',
         pathId,
-        workflowId,
+        workflowId: workflowId,
         pathBlock:
           blockData.type === 'PATH'
             ? { pathOptions: blockData.pathOptions }
@@ -138,10 +141,12 @@ const Path: React.FC<PathProps> = ({
 
       if (response.ok) {
         const newBlock = await response.json();
-        setBlockList((prevBlocks) => {
-          const updatedBlocks = [...prevBlocks];
-          updatedBlocks.splice(insertPosition, 0, newBlock);
-          return updatedBlocks;
+
+        // Update blockList with the newly created block
+        setBlockList((prevBlockList) => {
+          const updatedBlockList = [...prevBlockList];
+          updatedBlockList.splice(position, 0, newBlock); // Add the new block at the correct position
+          return updatedBlockList;
         });
       } else {
         const errorData = await response.json();
@@ -150,8 +155,6 @@ const Path: React.FC<PathProps> = ({
     } catch (error) {
       console.error('Error creating new block:', error);
     }
-
-    setInsertPosition(null);
   };
 
   const handleUpdateBlock = async (updatedBlock: Block) => {
@@ -172,19 +175,15 @@ const Path: React.FC<PathProps> = ({
       });
 
       if (response?.ok) {
-        console.log(pathId);
-        console.log(updatedBlock.pathId);
         const updatedBlockData: Block = await response.json();
         setBlockList((prevBlocks) =>
           prevBlocks.map((block) => {
             if (block.id !== updatedBlockData.id) {
-              return block; // Return unchanged blocks
+              return block;
             }
 
-            // Merge the updated fields with the existing block, keeping relations intact
             return {
               ...block,
-              // Only update fields that are present in the updatedBlockData
               ...(updatedBlockData.type !== undefined && {
                 type: updatedBlockData.type,
               }),
@@ -234,10 +233,8 @@ const Path: React.FC<PathProps> = ({
   };
 
   return (
-    <div className="path-container">
-      <div className="path-title text-center">
-        {pathData?.name || 'Loading...'}
-      </div>
+    <div className="w-full">
+      <div className="text-center">{pathData?.name || 'Loading...'}</div>
       {!loading ? (
         <BlockList
           blocks={blockList}
@@ -248,26 +245,12 @@ const Path: React.FC<PathProps> = ({
           onBlocksReorder={handleBlocksReorder}
           handleBlockClick={handleBlockClick}
           closeDetailSidebar={closeDetailSidebar}
+          handleAddBlock={handleAddBlock}
+          disableZoom={disableZoom} // Pass down to BlockList
         />
       ) : (
         <p>Loading blocks...</p>
       )}
-      {isAddBlockFormOpen && insertPosition !== null && (
-        <AddBlockForm
-          onSubmit={handleAddBlock}
-          onCancel={() => setIsAddBlockFormOpen(false)}
-          initialPosition={insertPosition}
-          workflowId={workflowId}
-        />
-      )}
-      {/* {selectedBlock && (
-        <BlockDetailsSidebar
-          block={selectedBlock}
-          onClose={() => setSelectedBlock(null)}
-          onUpdate={handleUpdateBlock}
-          onDelete={handleDeleteBlock}
-        />
-      )} */}
     </div>
   );
 };

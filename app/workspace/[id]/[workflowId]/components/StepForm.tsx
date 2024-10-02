@@ -1,10 +1,12 @@
 import React, { useState, ChangeEvent } from 'react';
 
 interface StepFormProps {
-  onSubmit: (blockData: any) => void;
+  onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
   initialPosition: number;
   workflowId: number;
+  pathId: number;
+  position: number;
 }
 
 const StepForm: React.FC<StepFormProps> = ({
@@ -12,6 +14,8 @@ const StepForm: React.FC<StepFormProps> = ({
   onCancel,
   initialPosition,
   workflowId,
+  pathId,
+  position,
 }) => {
   const [formData, setFormData] = useState({
     type: 'STEP',
@@ -35,7 +39,7 @@ const StepForm: React.FC<StepFormProps> = ({
       stepBlock: {
         stepDetails: formData.stepDetails,
       },
-    });
+    }, pathId, position);
   };
 
   return (

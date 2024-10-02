@@ -1,10 +1,12 @@
 import React, { useState, ChangeEvent } from 'react';
 
 interface PathFormProps {
-  onSubmit: (blockData: any) => void;
+  onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
   initialPosition: number;
   workflowId: number;
+  pathId: number;
+  position: number;
 }
 
 const PathForm: React.FC<PathFormProps> = ({
@@ -12,6 +14,8 @@ const PathForm: React.FC<PathFormProps> = ({
   onCancel,
   initialPosition,
   workflowId,
+  pathId,
+  position,
 }) => {
   const [formData, setFormData] = useState({
     type: 'PATH',
@@ -48,14 +52,18 @@ const PathForm: React.FC<PathFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      pathBlock: {
-        pathOptions: formData.pathOptions
-          .filter((option) => option.trim() !== '')
-          .map((option) => ({ pathOption: option })), // Adjusted to correct format
+    onSubmit(
+      {
+        ...formData,
+        pathBlock: {
+          pathOptions: formData.pathOptions
+            .filter((option) => option.trim() !== '')
+            .map((option) => ({ pathOption: option })), // Adjusted to correct format
+        },
       },
-    });
+      pathId,
+      position
+    );
   };
 
   return (

@@ -1,10 +1,26 @@
+// Sidebar.tsx
 import React from 'react';
 
-export default function Sidebar() {
-  return (
-    <aside className="w-64 bg-gray-800 text-white min-h-screen p-4">
-      <h2 className="text-xl font-bold">Sidebar</h2>
-      {/* Add your sidebar content here */}
-    </aside>
-  );
+interface SidebarProps {
+  onHideSidebar: () => void;
 }
+
+const Sidebar: React.FC<SidebarProps> = ({ onHideSidebar }) => {
+  return (
+    <div className="flex flex-col h-full p-4 bg-gray-200">
+      {/* Add your sidebar content here */}
+      <button
+        onClick={onHideSidebar}
+        className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors mb-4 self-end"
+      >
+        Hide Sidebar
+      </button>
+      <div className="flex-1">
+        {/* Sidebar content */}
+        <p>Sidebar Content Here</p>
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;

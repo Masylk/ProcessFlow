@@ -1,4 +1,3 @@
-// WorkflowPage.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -89,17 +88,24 @@ export default function WorkflowPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen">
       <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
+
       <div className="flex flex-1">
+        {/* Sidebar with absolute positioning to avoid affecting the canvas size */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden ${
-            isSidebarOpen ? 'w-64' : 'w-0'
+          className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
+            isSidebarOpen
+              ? 'translate-x-0 w-64'
+              : '-translate-x-full w-0 hidden'
           }`}
         >
-          <Sidebar />
+          <Sidebar onHideSidebar={toggleSidebar} />{' '}
+          {/* Pass the toggleSidebar function */}
         </div>
-        <main className="flex-1 bg-gray-100 p-6">
+
+        {/* Main content area remains full width and unaffected by the sidebar */}
+        <main className="flex-1 bg-gray-100 p-6 ml-0">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-4">
               <button

@@ -48,7 +48,7 @@ export default function BlockDetailsSidebar({
   };
 
   return (
-    <div className="bg-gray-100 p-4 w-64 border-l">
+    <div className="fixed top-0 right-0 bottom-0 bg-gray-100 p-4 w-64 border-l">
       {block ? (
         <>
           <button onClick={onClose} className="text-red-500 mb-4">

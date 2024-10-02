@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
 interface DelayFormProps {
-  onSubmit: (blockData: any) => void;
+  onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
   initialPosition: number;
   workflowId: number;
+  pathId: number;
+  position: number;
 }
 
 export default function DelayForm({
@@ -12,22 +14,28 @@ export default function DelayForm({
   onCancel,
   initialPosition,
   workflowId,
+  pathId,
+  position,
 }: DelayFormProps) {
   const [description, setDescription] = useState('');
   const [delay, setDelay] = useState(0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      type: 'DELAY',
-      position: initialPosition,
-      icon: 'clock-icon',
-      description,
-      workflowId,
-      delayBlock: {
-        delay: delay,
+    onSubmit(
+      {
+        type: 'DELAY',
+        position: initialPosition,
+        icon: 'clock-icon',
+        description,
+        workflowId,
+        delayBlock: {
+          delay: delay,
+        },
       },
-    });
+      pathId,
+      position
+    );
   };
 
   return (

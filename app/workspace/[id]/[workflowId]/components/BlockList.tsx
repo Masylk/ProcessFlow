@@ -2,10 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Block } from '@/types/block';
 import EditorBlock from './EditorBlock';
 import AddBlock from './AddBlock';
-import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
+import {
+  DragDropContext,
+  Draggable,
+  DropResult,
+  DragStart,
+} from 'react-beautiful-dnd';
 import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 import { Path as PathType } from '@/types/path';
-import Path from './Path';
+import Path from './Path'; // Ensure Path is imported
 
 interface BlockListProps {
   blocks: Block[];
@@ -20,6 +25,16 @@ interface BlockListProps {
   onBlocksReorder: (reorderedBlocks: Block[]) => void;
   handleBlockClick: (block: Block) => void;
   closeDetailSidebar: () => void;
+  handleAddBlock: (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => void;
+  disableZoom: (isDisabled: boolean) => void; // New prop to control zoom/pan
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -31,6 +46,8 @@ const BlockList: React.FC<BlockListProps> = ({
   onBlocksReorder,
   handleBlockClick,
   closeDetailSidebar,
+  handleAddBlock,
+  disableZoom, // Added here
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -66,7 +83,15 @@ const BlockList: React.FC<BlockListProps> = ({
     });
   }, [blockList]);
 
+  const handleDragStart = (start: DragStart) => {
+    // Disable zoom when drag starts
+    disableZoom(true);
+  };
+
   const handleDragEnd = async (result: DropResult) => {
+    // Enable zoom when drag ends
+    disableZoom(false);
+
     if (!result.destination) return;
 
     const reorderedBlocks = Array.from(blockList);
@@ -93,35 +118,39 @@ const BlockList: React.FC<BlockListProps> = ({
           draggableId={block.id.toString()}
           index={index}
         >
-          {(provided) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              className="flex flex-col w-full"
-            >
-              <EditorBlock block={block} onClick={handleClick} />
-              {paths && (
-                <div className="flex flex-wrap items-center gap-2 mt-2 w-full">
-                  {paths.map((path, key) => (
-                    <Path
-                      key={`${block.id}-path-${key}`}
-                      pathId={path.id}
-                      workspaceId={workspaceId}
-                      workflowId={block.workflowId}
-                      onBlockClick={onBlockClick}
-                      closeDetailSidebar={closeDetailSidebar}
-                    />
-                  ))}
-                </div>
-              )}
-              <AddBlock
-                id={index + 1}
-                onAdd={() => onAddBlockClick(index + 1)}
-                label="Add Block"
-              />
-            </div>
-          )}
+          {(provided) => {
+            return (
+              <div
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+                className="flex flex-col w-full"
+              >
+                <EditorBlock block={block} onClick={handleClick} />
+                {paths && (
+                  <div className="flex flex-row items-center gap-2 mt-2 w-full">
+                    {paths.map((path, key) => (
+                      <Path
+                        key={`${block.id}-path-${key}`}
+                        pathId={path.id}
+                        workspaceId={workspaceId}
+                        workflowId={block.workflowId}
+                        onBlockClick={onBlockClick}
+                        closeDetailSidebar={closeDetailSidebar}
+                        handleAddBlock={handleAddBlock}
+                        disableZoom={disableZoom} // Pass disableZoom here
+                      />
+                    ))}
+                  </div>
+                )}
+                <AddBlock
+                  id={index + 1}
+                  onAdd={() => onAddBlockClick(index + 1)}
+                  label="Add Block"
+                />
+              </div>
+            );
+          }}
         </Draggable>
       );
     });
@@ -129,25 +158,31 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const handleClick = (block: Block, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevents the click from bubbling up
-    handleBlockClick(block)
+    handleBlockClick(block);
   };
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <StrictModeDroppable droppableId="blocks">
         {(provided) => (
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="space-y-4 w-full"
+            className="flex justify-center h-full w-full"
           >
-            {renderBlocksWithOptions(blockList)}
-            {provided.placeholder}
-            {blockList.length === 0 && (
-              <div>
-                <AddBlock id={0} onAdd={onAddBlockClick} label="Add Block" />
-              </div>
-            )}
+            <div className="w-full max-w-md">
+              {renderBlocksWithOptions(blockList)}
+              <div>{provided.placeholder}</div>
+              {blockList.length === 0 && (
+                <div>
+                  <AddBlock
+                    id={0}
+                    onAdd={() => onAddBlockClick(0)}
+                    label="Add Block"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </StrictModeDroppable>

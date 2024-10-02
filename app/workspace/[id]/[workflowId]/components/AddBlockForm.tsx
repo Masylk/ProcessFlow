@@ -4,10 +4,12 @@ import PathForm from '@/app/workspace/[id]/[workflowId]/components/PathForm';
 import StepForm from '@/app/workspace/[id]/[workflowId]/components/StepForm';
 
 interface AddBlockFormProps {
-  onSubmit: (blockData: any) => void;
+  onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
   initialPosition: number;
   workflowId: number;
+  pathId: number;
+  position: number;
 }
 
 const AddBlockForm: React.FC<AddBlockFormProps> = ({
@@ -15,6 +17,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
   onCancel,
   initialPosition,
   workflowId,
+  pathId,
+  position,
 }) => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
@@ -27,6 +31,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onCancel={() => setSelectedForm(null)}
             initialPosition={initialPosition}
             workflowId={workflowId}
+            pathId={pathId}
+            position={position}
           />
         );
       case 'Path':
@@ -36,6 +42,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onCancel={() => setSelectedForm(null)}
             initialPosition={initialPosition}
             workflowId={workflowId}
+            pathId={pathId}
+            position={position}
           />
         );
       case 'Step':
@@ -45,6 +53,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onCancel={() => setSelectedForm(null)}
             initialPosition={initialPosition}
             workflowId={workflowId}
+            pathId={pathId}
+            position={position}
           />
         );
       default:
