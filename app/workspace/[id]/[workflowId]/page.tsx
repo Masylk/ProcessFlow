@@ -88,54 +88,56 @@ export default function WorkflowPage() {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen">
-      <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
+    <body className=" overflow-hidden h-full">
+      <div className="relative flex flex-col overflow-hidden">
+        <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
 
-      <div className="flex flex-1">
-        {/* Sidebar with absolute positioning to avoid affecting the canvas size */}
-        <div
-          className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
-            isSidebarOpen
-              ? 'translate-x-0 w-64'
-              : '-translate-x-full w-0 hidden'
-          }`}
-        >
-          <Sidebar onHideSidebar={toggleSidebar} />{' '}
-          {/* Pass the toggleSidebar function */}
-        </div>
-
-        {/* Main content area remains full width and unaffected by the sidebar */}
-        <main className="flex-1 bg-gray-100 p-6 ml-0">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleSidebar}
-                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-              >
-                {isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
-              </button>
-              <button
-                onClick={goBack}
-                className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
-              >
-                Back
-              </button>
-            </div>
-            <StatusIndicator isSuccess={lastRequestStatus} />
+        <div className="flex flex-1">
+          {/* Sidebar with absolute positioning to avoid affecting the canvas size */}
+          <div
+            className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
+              isSidebarOpen
+                ? 'translate-x-0 w-64'
+                : '-translate-x-full w-0 hidden'
+            }`}
+          >
+            <Sidebar onHideSidebar={toggleSidebar} />{' '}
+            {/* Pass the toggleSidebar function */}
           </div>
-          {path ? (
-            <BlockProvider>
-              <Canvas
-                initialPath={path}
-                workspaceId={id}
-                workflowId={workflowId}
-              />
-            </BlockProvider>
-          ) : (
-            <p>Loading path...</p>
-          )}
-        </main>
+
+          {/* Main content area remains full width and unaffected by the sidebar */}
+          <main className="flex-1 bg-gray-100 p-6 ml-0 overflow-hidden">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={toggleSidebar}
+                  className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                >
+                  {isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
+                </button>
+                <button
+                  onClick={goBack}
+                  className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
+                >
+                  Back
+                </button>
+              </div>
+              <StatusIndicator isSuccess={lastRequestStatus} />
+            </div>
+            {path ? (
+              <BlockProvider>
+                <Canvas
+                  initialPath={path}
+                  workspaceId={id}
+                  workflowId={workflowId}
+                />
+              </BlockProvider>
+            ) : (
+              <p>Loading path...</p>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </body>
   );
 }

@@ -10,7 +10,8 @@ import {
 } from 'react-beautiful-dnd';
 import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 import { Path as PathType } from '@/types/path';
-import Path from './Path'; // Ensure Path is imported
+import Path from './Path';
+import { useTransformContext } from 'react-zoom-pan-pinch';
 
 interface BlockListProps {
   blocks: Block[];
@@ -34,7 +35,7 @@ interface BlockListProps {
       position: number
     ) => Promise<void>
   ) => void;
-  disableZoom: (isDisabled: boolean) => void; // New prop to control zoom/pan
+  disableZoom: (isDisabled: boolean) => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -47,15 +48,20 @@ const BlockList: React.FC<BlockListProps> = ({
   handleBlockClick,
   closeDetailSidebar,
   handleAddBlock,
-  disableZoom, // Added here
+  disableZoom,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
     Record<number, PathType[]>
   >({});
+  const [draggingBlockId, setDraggingBlockId] = useState<number | null>(null);
+  const { transformState } = useTransformContext();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    setBlockList(blocks); // Sync local state with props when blocks change
+    setBlockList(blocks);
   }, [blocks]);
 
   useEffect(() => {
@@ -84,80 +90,115 @@ const BlockList: React.FC<BlockListProps> = ({
   }, [blockList]);
 
   const handleDragStart = (start: DragStart) => {
-    // Disable zoom when drag starts
+    setDraggingBlockId(Number(start.draggableId));
+    setIsDragging(true);
     disableZoom(true);
   };
 
   const handleDragEnd = async (result: DropResult) => {
-    // Enable zoom when drag ends
     disableZoom(false);
+    setDraggingBlockId(null);
+    setIsDragging(false);
+    setMousePosition({ x: 0, y: 0 });
 
     if (!result.destination) return;
 
     const reorderedBlocks = Array.from(blockList);
     const [reorderedItem] = reorderedBlocks.splice(result.source.index, 1);
     reorderedBlocks.splice(result.destination.index, 0, reorderedItem);
-
-    // Update local state with the new order
     setBlockList(reorderedBlocks);
 
     try {
-      // Send the reordered list to the parent component to update the database
       onBlocksReorder(reorderedBlocks);
     } catch (error) {
       console.error('Failed to update block order:', error);
     }
   };
 
+  const handleMouseMove = (event: MouseEvent) => {
+    // Include scroll position offsets
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
+    if (isDragging) {
+      // Adjust the offsets according to zoom level
+      let baseOffsetX = 70;
+      let baseOffsetY = 180;
+
+      // Apply zoom scaling to the offsets
+      const offsetX = baseOffsetX;
+      const offsetY = baseOffsetY;
+
+      const adjustedX =
+        (event.clientX + scrollX - transformState.positionX - offsetX) /
+        transformState.scale;
+      const adjustedY =
+        (event.clientY + scrollY - transformState.positionY - offsetY) /
+        transformState.scale;
+
+      setMousePosition({ x: adjustedX, y: adjustedY });
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isDragging]);
+
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
       const paths = block.pathBlock ? pathsByBlockId[block.pathBlock?.id] : [];
+      const draggingClass =
+        draggingBlockId === block.id ? 'invisible' : 'visible';
+
       return (
         <Draggable
           key={block.id}
           draggableId={block.id.toString()}
           index={index}
         >
-          {(provided) => {
-            return (
-              <div
-                ref={provided.innerRef}
-                {...provided.draggableProps}
-                {...provided.dragHandleProps}
-                className="flex flex-col w-full"
-              >
-                <EditorBlock block={block} onClick={handleClick} />
-                {paths && (
-                  <div className="flex flex-row items-center gap-2 mt-2 w-full">
-                    {paths.map((path, key) => (
-                      <Path
-                        key={`${block.id}-path-${key}`}
-                        pathId={path.id}
-                        workspaceId={workspaceId}
-                        workflowId={block.workflowId}
-                        onBlockClick={onBlockClick}
-                        closeDetailSidebar={closeDetailSidebar}
-                        handleAddBlock={handleAddBlock}
-                        disableZoom={disableZoom} // Pass disableZoom here
-                      />
-                    ))}
-                  </div>
-                )}
-                <AddBlock
-                  id={index + 1}
-                  onAdd={() => onAddBlockClick(index + 1)}
-                  label="Add Block"
-                />
-              </div>
-            );
-          }}
+          {(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              className={`flex flex-col w-full ${
+                draggingBlockId === block.id ? draggingClass : ''
+              }`}
+            >
+              <EditorBlock block={block} onClick={handleClick} />
+              {paths && (
+                <div className="flex flex-row items-center gap-2 mt-2 w-full">
+                  {paths.map((path, key) => (
+                    <Path
+                      key={`${block.id}-path-${key}`}
+                      pathId={path.id}
+                      workspaceId={workspaceId}
+                      workflowId={block.workflowId}
+                      onBlockClick={onBlockClick}
+                      closeDetailSidebar={closeDetailSidebar}
+                      handleAddBlock={handleAddBlock}
+                      disableZoom={disableZoom}
+                    />
+                  ))}
+                </div>
+              )}
+              <AddBlock
+                id={index + 1}
+                onAdd={() => onAddBlockClick(index + 1)}
+                label="Add Block"
+              />
+            </div>
+          )}
         </Draggable>
       );
     });
   };
 
   const handleClick = (block: Block, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevents the click from bubbling up
+    event.stopPropagation();
     handleBlockClick(block);
   };
 
@@ -168,9 +209,9 @@ const BlockList: React.FC<BlockListProps> = ({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex justify-center h-full w-full"
+            className="flex justify-center overflow-hidden"
           >
-            <div className="w-full max-w-md">
+            <div>
               {renderBlocksWithOptions(blockList)}
               <div>{provided.placeholder}</div>
               {blockList.length === 0 && (
@@ -182,6 +223,23 @@ const BlockList: React.FC<BlockListProps> = ({
                   />
                 </div>
               )}
+            </div>
+            {/* Div that follows the mouse */}
+            <div
+              style={{
+                position: 'absolute',
+                left: mousePosition.x + 10,
+                top: mousePosition.y + 10,
+                backgroundColor: 'rgba(200, 200, 200, 0.8)',
+                padding: '8px',
+                borderRadius: '4px',
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+                pointerEvents: 'none', // Prevent blocking mouse events
+                opacity: isDragging ? 1 : 0, // Control visibility
+                transition: 'opacity 0.2s ease', // Smooth transition
+              }}
+            >
+              <p>Dragging a block...</p>
             </div>
           </div>
         )}

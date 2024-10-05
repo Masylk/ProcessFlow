@@ -24,7 +24,6 @@ export default function Canvas({
   const [handleDeleteBlock, setHandleDeleteBlock] = useState<
     ((blockId: number) => Promise<void>) | null
   >(null);
-  const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
   const [disableZoom, setDisableZoom] = useState(false); // State for zoom enabling/disabling
   const zoomRef = useRef<any>(null); // Ref to control zoom
 
@@ -50,7 +49,6 @@ export default function Canvas({
     setDisableZoom(disable);
   };
 
-  // Updated handleAddBlock function to match the expected type
   const handleAddBlock = (
     pathId: number,
     position: number,
@@ -60,37 +58,32 @@ export default function Canvas({
       position: number
     ) => Promise<void>
   ) => {
-    // You can open a form or directly handle block data here
     const blockData = {
-      // Example block data to be passed
       name: 'New Block',
       type: 'example',
     };
 
-    // Use the provided addBlockFn to handle the actual block addition
     addBlockFn(blockData, pathId, position).then(() => {
       console.log(`Block added at path ${pathId} at position ${position}`);
     });
   };
 
   return (
-    <div className="relative h-screen w-screen flex flex-col">
-      {/* Canvas Area with Zoom and Pan */}
+    <div className="relative h-full w-full flex flex-col">
       <div className="flex-1 w-full h-full overflow-hidden">
         {path ? (
           <TransformWrapper
-            ref={zoomRef} // Attach ref to TransformWrapper
+            ref={zoomRef}
             initialScale={1}
             minScale={0.5}
             maxScale={4}
             wheel={{ step: 0.1 }}
-            alignmentAnimation={{ disabled: true }} // Disable automatic centering
-            limitToBounds={false} // Allow free movement beyond bounds
-            disabled={disableZoom} // Disable zoom when dragging blocks
+            alignmentAnimation={{ disabled: true }}
+            limitToBounds={false}
+            disabled={disableZoom}
           >
             {({ zoomIn, zoomOut, resetTransform }) => (
               <>
-                {/* Zoom Controls */}
                 <div className="controls absolute top-4 right-4 z-20">
                   <button
                     onClick={() => zoomIn()}
@@ -116,7 +109,7 @@ export default function Canvas({
                   wrapperStyle={{
                     width: '100%',
                     height: '100%',
-                    overflow: 'hidden', // Ensure free movement
+                    overflow: 'hidden',
                   }}
                   contentStyle={{
                     width: '100%',
@@ -129,8 +122,8 @@ export default function Canvas({
                     workflowId={parseInt(workflowId)}
                     onBlockClick={handleBlockClick}
                     closeDetailSidebar={handleCloseSidebar}
-                    disableZoom={handleDisableZoom} // Pass disableZoom handler to Path
-                    handleAddBlock={handleAddBlock} // Pass the new handleAddBlock function to Path
+                    disableZoom={handleDisableZoom}
+                    handleAddBlock={handleAddBlock}
                   />
                 </TransformComponent>
               </>
@@ -141,7 +134,6 @@ export default function Canvas({
         )}
       </div>
 
-      {/* Sidebar for Block Details */}
       {selectedBlock && handleUpdateBlock && handleDeleteBlock && (
         <BlockDetailsSidebar
           block={selectedBlock}
