@@ -88,8 +88,8 @@ export default function WorkflowPage() {
   };
 
   return (
-    <body className=" overflow-hidden h-full">
-      <div className="relative flex flex-col overflow-hidden">
+    <body className=" overflow-hidden h-screen w-screen">
+      <div className="relative flex flex-col w-full">
         <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
 
         <div className="flex flex-1">
@@ -106,7 +106,7 @@ export default function WorkflowPage() {
           </div>
 
           {/* Main content area remains full width and unaffected by the sidebar */}
-          <main className="flex-1 bg-gray-100 p-6 ml-0 overflow-hidden">
+          <main className="flex-1 bg-gray-100 p-6 ml-0 h-full w-full overflow-hidden">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-4">
                 <button

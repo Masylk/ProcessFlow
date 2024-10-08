@@ -164,7 +164,7 @@ const BlockList: React.FC<BlockListProps> = ({
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              className={`flex flex-col w-full ${
+              className={`flex flex-col w-96 items-center ${
                 draggingBlockId === block.id ? draggingClass : ''
               }`}
             >
@@ -209,7 +209,7 @@ const BlockList: React.FC<BlockListProps> = ({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex justify-center overflow-hidden"
+            className="flex justify-center overflow-hidden w-full"
           >
             <div>
               {renderBlocksWithOptions(blockList)}

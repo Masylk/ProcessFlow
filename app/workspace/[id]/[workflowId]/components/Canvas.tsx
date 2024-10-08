@@ -3,6 +3,7 @@ import { Block } from '@/types/block';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
+import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 interface CanvasProps {
@@ -27,6 +28,13 @@ export default function Canvas({
   const [disableZoom, setDisableZoom] = useState(false); // State for zoom enabling/disabling
   const zoomRef = useRef<any>(null); // Ref to control zoom
 
+  const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
+  const [addBlockPathId, setAddBlockPathId] = useState<number>(0);
+  const [addBlockPosition, setAddBlockPosition] = useState<number | null>(null);
+  const [handlePathAddBlock, setHandlePathAddBlock] = useState<
+    ((blockData: any, pathId: number, position: number) => Promise<void>) | null
+  >(null);
+
   useEffect(() => {
     setPath(initialPath);
   }, [initialPath]);
@@ -49,7 +57,7 @@ export default function Canvas({
     setDisableZoom(disable);
   };
 
-  const handleAddBlock = (
+  const handleOpenForm = (
     pathId: number,
     position: number,
     addBlockFn: (
@@ -58,18 +66,25 @@ export default function Canvas({
       position: number
     ) => Promise<void>
   ) => {
-    const blockData = {
-      name: 'New Block',
-      type: 'example',
-    };
+    setIsAddBlockFormOpen(true);
+    setAddBlockPathId(pathId);
+    setAddBlockPosition(position);
+    setHandlePathAddBlock(() => addBlockFn);
+  };
 
-    addBlockFn(blockData, pathId, position).then(() => {
-      console.log(`Block added at path ${pathId} at position ${position}`);
-    });
+  const handleAddBlock = async (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => {
+    setIsAddBlockFormOpen(false);
+    if (handlePathAddBlock)
+      await handlePathAddBlock(blockData, pathId, position);
+    setAddBlockPosition(null);
   };
 
   return (
-    <div className="relative h-full w-full flex flex-col">
+    <div className="relative h-screen w-screen flex flex-col">
       <div className="flex-1 w-full h-full overflow-hidden">
         {path ? (
           <TransformWrapper
@@ -123,7 +138,7 @@ export default function Canvas({
                     onBlockClick={handleBlockClick}
                     closeDetailSidebar={handleCloseSidebar}
                     disableZoom={handleDisableZoom}
-                    handleAddBlock={handleAddBlock}
+                    handleAddBlock={handleOpenForm} // Trigger Add Block Form
                   />
                 </TransformComponent>
               </>
@@ -146,6 +161,19 @@ export default function Canvas({
             await handleDeleteBlock(blockId);
             handleCloseSidebar();
           }}
+        />
+      )}
+
+      {isAddBlockFormOpen && addBlockPosition !== null && (
+        <AddBlockForm
+          onSubmit={async (blockData: any, pathId: number, position: number) =>
+            await handleAddBlock(blockData, pathId, position)
+          }
+          onCancel={() => setIsAddBlockFormOpen(false)}
+          initialPosition={addBlockPosition}
+          workflowId={parseInt(workflowId)}
+          pathId={addBlockPathId}
+          position={addBlockPosition}
         />
       )}
     </div>

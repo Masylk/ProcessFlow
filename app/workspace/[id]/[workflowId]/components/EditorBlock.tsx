@@ -14,7 +14,7 @@ export default function EditorBlock({ block, onClick }: EditorBlockProps) {
 
   return (
     <div
-      className="border border-black bg-white p-4 m-4 rounded flex flex-col items-center"
+      className="border border-black bg-white p-4 m-4 rounded w-80"
       onClick={handleClick}
     >
       <div className="flex-1 w-full">
@@ -22,7 +22,6 @@ export default function EditorBlock({ block, onClick }: EditorBlockProps) {
         {block.icon && <img src={block.icon} alt="icon" className="my-2" />}
         {block.description && <p className="text-sm">{block.description}</p>}
       </div>
-      {/* Ensure the vertical rectangle is centered and spaced properly */}
     </div>
   );
 }
