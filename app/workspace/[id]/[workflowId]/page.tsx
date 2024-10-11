@@ -106,7 +106,7 @@ export default function WorkflowPage() {
           </div>
 
           {/* Main content area remains full width and unaffected by the sidebar */}
-          <main className="flex-1 bg-gray-100 p-6 ml-0 h-full w-full overflow-hidden">
+          <main className="flex-1 bg-gray-100 p-6 ml-0 h-screen w-screen overflow-hidden">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-4">
                 <button
