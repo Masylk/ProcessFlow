@@ -246,6 +246,8 @@ const Path: React.FC<PathProps> = ({
           handleBlockClick={handleBlockClick}
           closeDetailSidebar={closeDetailSidebar}
           handleAddBlock={handleAddBlock}
+          handleAddBlockFn={handleAddBlockFn}
+          handleDeleteBlockFn={handleDeleteBlock}
           disableZoom={disableZoom} // Pass down to BlockList
         />
       ) : (

@@ -1,60 +1,67 @@
 import { useState, useEffect, useRef } from 'react';
-import BlockOptions from './BlockOptions'; // Import BlockOptions component
+import BlockOptions from './BlockOptions';
+import { Block } from '@/types/block';
 
-const BlockOptionsToggle = () => {
+interface BlockOptionsToggleProps {
+  block: Block; // New prop for the block
+  handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
+  handleDeleteBlockFn: (blockId: number) => void;
+}
+
+const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
+  block,
+  handleAddBlockFn,
+  handleDeleteBlockFn,
+}) => {
   const [isBlack, setIsBlack] = useState(false);
   const toggleRef = useRef<HTMLDivElement>(null);
 
-  // Handle click on the toggle
   const handleToggleClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevents the click from bubbling up
-    setIsBlack(true); // Set to black when clicked
+    event.stopPropagation();
+    setIsBlack(true);
   };
 
-  // Handle clicks outside of the toggle
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         toggleRef.current &&
         !toggleRef.current.contains(event.target as Node)
       ) {
-        setIsBlack(false); // Set back to gray when clicking outside
+        setIsBlack(false);
       }
     };
 
-    // Add event listener for clicks on the entire document
     document.addEventListener('mousedown', handleClickOutside);
-
-    // Clean up the event listener
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  // Action handlers
   const handleDelete = () => {
-    console.log('Delete action triggered');
-    // Add delete logic here
+    handleDeleteBlockFn(block.id);
+    console.log('Delete action triggered for block:', block);
+    // Add delete logic using block here
   };
 
   const handleCopy = () => {
-    console.log('Copy action triggered');
-    // Add copy logic here
+    console.log('Copy action triggered for block:', block);
+    // Add copy logic using block here
   };
 
   const handleCopyLink = () => {
-    console.log('Copy Link action triggered');
-    // Add copy link logic here
+    console.log('Copy Link action triggered for block:', block);
+    // Add copy link logic using block here
   };
 
   const handleDuplicate = () => {
-    console.log('Duplicate action triggered');
-    // Add duplicate logic here
+    if (block.pathId) handleAddBlockFn(block, block.pathId, block.position);
+    setIsBlack(false);
+    console.log('Duplicate action triggered for block:', block);
+    // Add duplicate logic using block here
   };
 
   return (
     <div ref={toggleRef} className="relative">
-      {/* The square button */}
       <div
         className={`w-12 h-12 cursor-pointer ${
           isBlack ? 'bg-black' : 'bg-gray-400'
@@ -62,7 +69,6 @@ const BlockOptionsToggle = () => {
         onClick={handleToggleClick}
       ></div>
 
-      {/* BlockOptions appears directly below the square */}
       {isBlack && (
         <div className="absolute top-full left-0 z-50">
           <BlockOptions

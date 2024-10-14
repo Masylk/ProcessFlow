@@ -35,6 +35,8 @@ interface BlockListProps {
       position: number
     ) => Promise<void>
   ) => void;
+  handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
+  handleDeleteBlockFn: (blockId: number) => void;
   disableZoom: (isDisabled: boolean) => void;
 }
 
@@ -48,6 +50,8 @@ const BlockList: React.FC<BlockListProps> = ({
   handleBlockClick,
   closeDetailSidebar,
   handleAddBlock,
+  handleAddBlockFn,
+  handleDeleteBlockFn,
   disableZoom,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
@@ -168,7 +172,12 @@ const BlockList: React.FC<BlockListProps> = ({
                 draggingBlockId === block.id ? draggingClass : ''
               }`}
             >
-              <EditorBlock block={block} onClick={handleClick} />
+              <EditorBlock
+                block={block}
+                handleAddBlockFn={handleAddBlockFn}
+                handleDeleteBlockFn={handleDeleteBlockFn}
+                onClick={handleClick}
+              />
               {paths && (
                 <div className="flex flex-row items-center gap-2 mt-2 w-full">
                   {paths.map((path, key) => (
@@ -179,7 +188,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       workflowId={block.workflowId}
                       onBlockClick={onBlockClick}
                       closeDetailSidebar={closeDetailSidebar}
-                      handleAddBlock={handleAddBlock}
+                      handleAddBlock={handleAddBlock} // Passing handleAddBlock to Path
                       disableZoom={disableZoom}
                     />
                   ))}
