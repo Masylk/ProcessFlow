@@ -6,12 +6,14 @@ interface BlockOptionsToggleProps {
   block: Block; // New prop for the block
   handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
   handleDeleteBlockFn: (blockId: number) => void;
+  copyBlockFn: (blockdata: Block) => void;
 }
 
 const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   block,
   handleAddBlockFn,
   handleDeleteBlockFn,
+  copyBlockFn,
 }) => {
   const [isBlack, setIsBlack] = useState(false);
   const toggleRef = useRef<HTMLDivElement>(null);
@@ -40,12 +42,11 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   const handleDelete = () => {
     handleDeleteBlockFn(block.id);
     console.log('Delete action triggered for block:', block);
-    // Add delete logic using block here
   };
 
   const handleCopy = () => {
+    copyBlockFn(block);
     console.log('Copy action triggered for block:', block);
-    // Add copy logic using block here
   };
 
   const handleCopyLink = () => {
@@ -57,7 +58,6 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
     if (block.pathId) handleAddBlockFn(block, block.pathId, block.position);
     setIsBlack(false);
     console.log('Duplicate action triggered for block:', block);
-    // Add duplicate logic using block here
   };
 
   return (

@@ -29,7 +29,8 @@ interface PathProps {
       position: number
     ) => Promise<void>
   ) => void;
-  disableZoom: (isDisabled: boolean) => void; // New prop for controlling zoom/pan
+  disableZoom: (isDisabled: boolean) => void;
+  copyBlockFn: (blockdata: Block) => void;
 }
 
 const Path: React.FC<PathProps> = ({
@@ -39,7 +40,8 @@ const Path: React.FC<PathProps> = ({
   onBlockClick,
   closeDetailSidebar,
   handleAddBlock,
-  disableZoom, // Pass down the prop
+  disableZoom,
+  copyBlockFn
 }) => {
   const [blockList, setBlockList] = useState<Block[]>([]);
   const [pathData, setPathData] = useState<PathData | null>(null);
@@ -248,7 +250,8 @@ const Path: React.FC<PathProps> = ({
           handleAddBlock={handleAddBlock}
           handleAddBlockFn={handleAddBlockFn}
           handleDeleteBlockFn={handleDeleteBlock}
-          disableZoom={disableZoom} // Pass down to BlockList
+          disableZoom={disableZoom}
+          copyBlockFn={copyBlockFn}
         />
       ) : (
         <p>Loading blocks...</p>

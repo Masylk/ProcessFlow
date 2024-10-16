@@ -28,6 +28,7 @@ export default function Canvas({
   const [disableZoom, setDisableZoom] = useState(false); // State for zoom enabling/disabling
   const zoomRef = useRef<any>(null); // Ref to control zoom
 
+  const [savedBlock, setSavedBlock] = useState<Block | null>(null);
   const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
   const [addBlockPathId, setAddBlockPathId] = useState<number>(0);
   const [addBlockPosition, setAddBlockPosition] = useState<number | null>(null);
@@ -38,6 +39,11 @@ export default function Canvas({
   useEffect(() => {
     setPath(initialPath);
   }, [initialPath]);
+
+  const copyBlockFn = (blockdata: Block) => {
+    console.log('copying ', blockdata);
+    setSavedBlock(blockdata);
+  };
 
   const handleBlockClick = (
     block: Block,
@@ -137,8 +143,9 @@ export default function Canvas({
                     workflowId={parseInt(workflowId)}
                     onBlockClick={handleBlockClick}
                     closeDetailSidebar={handleCloseSidebar}
+                    handleAddBlock={handleOpenForm}
                     disableZoom={handleDisableZoom}
-                    handleAddBlock={handleOpenForm} // Trigger Add Block Form
+                    copyBlockFn={copyBlockFn}
                   />
                 </TransformComponent>
               </>
@@ -174,6 +181,7 @@ export default function Canvas({
           workflowId={parseInt(workflowId)}
           pathId={addBlockPathId}
           position={addBlockPosition}
+          savedBlock={savedBlock}
         />
       )}
     </div>

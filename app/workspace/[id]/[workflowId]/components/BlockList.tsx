@@ -38,6 +38,7 @@ interface BlockListProps {
   handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
   handleDeleteBlockFn: (blockId: number) => void;
   disableZoom: (isDisabled: boolean) => void;
+  copyBlockFn: (blockdata: Block) => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -53,6 +54,7 @@ const BlockList: React.FC<BlockListProps> = ({
   handleAddBlockFn,
   handleDeleteBlockFn,
   disableZoom,
+  copyBlockFn
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -176,6 +178,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 block={block}
                 handleAddBlockFn={handleAddBlockFn}
                 handleDeleteBlockFn={handleDeleteBlockFn}
+                copyBlockFn={copyBlockFn}
                 onClick={handleClick}
               />
               {paths && (
@@ -190,6 +193,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       closeDetailSidebar={closeDetailSidebar}
                       handleAddBlock={handleAddBlock} // Passing handleAddBlock to Path
                       disableZoom={disableZoom}
+                      copyBlockFn={copyBlockFn}
                     />
                   ))}
                 </div>

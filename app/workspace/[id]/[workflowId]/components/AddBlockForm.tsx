@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import DelayForm from '@/app/workspace/[id]/[workflowId]/components/DelayForm';
 import PathForm from '@/app/workspace/[id]/[workflowId]/components/PathForm';
 import StepForm from '@/app/workspace/[id]/[workflowId]/components/StepForm';
+import { Block } from '@/types/block';
 
 interface AddBlockFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
@@ -10,6 +11,7 @@ interface AddBlockFormProps {
   workflowId: number;
   pathId: number;
   position: number;
+  savedBlock: Block | null;
 }
 
 const AddBlockForm: React.FC<AddBlockFormProps> = ({

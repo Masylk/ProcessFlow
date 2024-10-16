@@ -7,6 +7,7 @@ interface EditorBlockProps {
   onClick: (block: Block, event: React.MouseEvent) => void;
   handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
   handleDeleteBlockFn: (blockId: number) => void;
+  copyBlockFn: (blockdata: Block) => void;
 }
 
 export default function EditorBlock({
@@ -14,6 +15,7 @@ export default function EditorBlock({
   onClick,
   handleAddBlockFn,
   handleDeleteBlockFn,
+  copyBlockFn,
 }: EditorBlockProps) {
   const handleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -31,6 +33,7 @@ export default function EditorBlock({
           block={block}
           handleAddBlockFn={handleAddBlockFn}
           handleDeleteBlockFn={handleDeleteBlockFn}
+          copyBlockFn={copyBlockFn}
         />
       </div>
 
