@@ -35,10 +35,23 @@ interface BlockListProps {
       position: number
     ) => Promise<void>
   ) => void;
-  handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
-  handleDeleteBlockFn: (blockId: number) => void;
+  handleAddBlockFn: (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => Promise<void>;
+  handleDeleteBlockFn: (blockId: number) => Promise<void>;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
+  setPathFn: (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -54,7 +67,8 @@ const BlockList: React.FC<BlockListProps> = ({
   handleAddBlockFn,
   handleDeleteBlockFn,
   disableZoom,
-  copyBlockFn
+  copyBlockFn,
+  setPathFn,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -194,6 +208,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       handleAddBlock={handleAddBlock} // Passing handleAddBlock to Path
                       disableZoom={disableZoom}
                       copyBlockFn={copyBlockFn}
+                      setPathFn={setPathFn}
                     />
                   ))}
                 </div>
@@ -212,6 +227,7 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const handleClick = (block: Block, event: React.MouseEvent) => {
     event.stopPropagation();
+    setPathFn(pathId, block.position, handleAddBlockFn);
     handleBlockClick(block);
   };
 

@@ -21,6 +21,7 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
   workflowId,
   pathId,
   position,
+  savedBlock,
 }) => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
 
@@ -93,7 +94,21 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
           </div>
         )}
         {!selectedForm && (
-          <div className="mt-4">
+          <div className="mt-4 flex space-x-4">
+            {/* Add Paste Block button */}
+            <button
+              onClick={() =>
+                savedBlock && onSubmit(savedBlock, pathId, position)
+              }
+              disabled={!savedBlock}
+              className={`${
+                savedBlock
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-gray-400 text-gray-700'
+              } px-4 py-2 rounded`}
+            >
+              Paste Block
+            </button>
             <button
               onClick={onCancel}
               className="bg-gray-300 px-4 py-2 rounded"

@@ -73,6 +73,19 @@ export default function Canvas({
     ) => Promise<void>
   ) => {
     setIsAddBlockFormOpen(true);
+    handleSetPath(pathId, position, addBlockFn);
+  };
+
+  const handleSetPath = (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => {
+    console.log('setting Path : ', pathId);
     setAddBlockPathId(pathId);
     setAddBlockPosition(position);
     setHandlePathAddBlock(() => addBlockFn);
@@ -88,6 +101,32 @@ export default function Canvas({
       await handlePathAddBlock(blockData, pathId, position);
     setAddBlockPosition(null);
   };
+
+  // Add keydown listener for Ctrl + V
+  useEffect(() => {
+    const handlePasteShortcut = async (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 'v') {
+        console.log('Paste!');
+
+        // Only proceed if we have a savedBlock and valid pathId/position
+        if (savedBlock && addBlockPathId && addBlockPosition !== null) {
+          await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
+        } else {
+          console.warn(
+            'No block saved or invalid path/position for adding the block.'
+          );
+        }
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handlePasteShortcut);
+
+    // Clean up event listener
+    return () => {
+      window.removeEventListener('keydown', handlePasteShortcut);
+    };
+  }, [savedBlock, addBlockPathId, addBlockPosition, handleAddBlock]);
 
   return (
     <div className="relative h-screen w-screen flex flex-col">
@@ -146,6 +185,7 @@ export default function Canvas({
                     handleAddBlock={handleOpenForm}
                     disableZoom={handleDisableZoom}
                     copyBlockFn={copyBlockFn}
+                    setPathFn={handleSetPath}
                   />
                 </TransformComponent>
               </>

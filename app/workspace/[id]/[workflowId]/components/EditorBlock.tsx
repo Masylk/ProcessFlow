@@ -5,8 +5,12 @@ import BlockOptionsToggle from './BlockOptionsToggle';
 interface EditorBlockProps {
   block: Block;
   onClick: (block: Block, event: React.MouseEvent) => void;
-  handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
-  handleDeleteBlockFn: (blockId: number) => void;
+  handleAddBlockFn: (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => Promise<void>;
+  handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockdata: Block) => void;
 }
 

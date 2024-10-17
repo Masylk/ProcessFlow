@@ -4,8 +4,12 @@ import { Block } from '@/types/block';
 
 interface BlockOptionsToggleProps {
   block: Block; // New prop for the block
-  handleAddBlockFn: (blockData: any, pathId: number, position: number) => void;
-  handleDeleteBlockFn: (blockId: number) => void;
+  handleAddBlockFn: (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => Promise<void>;
+  handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockdata: Block) => void;
 }
 
@@ -39,13 +43,14 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
     };
   }, []);
 
-  const handleDelete = () => {
-    handleDeleteBlockFn(block.id);
+  const handleDelete = async () => {
+    await handleDeleteBlockFn(block.id);
     console.log('Delete action triggered for block:', block);
   };
 
   const handleCopy = () => {
     copyBlockFn(block);
+    setIsBlack(false);
     console.log('Copy action triggered for block:', block);
   };
 
