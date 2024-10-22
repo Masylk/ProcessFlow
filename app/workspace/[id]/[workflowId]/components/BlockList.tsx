@@ -52,6 +52,15 @@ interface BlockListProps {
       position: number
     ) => Promise<void>
   ) => void;
+  setDefaultPathFn: (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -69,6 +78,7 @@ const BlockList: React.FC<BlockListProps> = ({
   disableZoom,
   copyBlockFn,
   setPathFn,
+  setDefaultPathFn
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -209,6 +219,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       disableZoom={disableZoom}
                       copyBlockFn={copyBlockFn}
                       setPathFn={setPathFn}
+                      setDefaultPathFn={setDefaultPathFn}
                     />
                   ))}
                 </div>

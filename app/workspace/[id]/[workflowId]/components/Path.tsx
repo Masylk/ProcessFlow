@@ -40,6 +40,15 @@ interface PathProps {
       position: number
     ) => Promise<void>
   ) => void;
+  setDefaultPathFn: (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => void;
 }
 
 const Path: React.FC<PathProps> = ({
@@ -52,12 +61,14 @@ const Path: React.FC<PathProps> = ({
   disableZoom,
   copyBlockFn,
   setPathFn,
+  setDefaultPathFn,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>([]);
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
     const fetchPathData = async () => {
       setLoading(true);
       try {
@@ -263,6 +274,7 @@ const Path: React.FC<PathProps> = ({
           disableZoom={disableZoom}
           copyBlockFn={copyBlockFn}
           setPathFn={setPathFn}
+          setDefaultPathFn={setDefaultPathFn}
         />
       ) : (
         <p>Loading blocks...</p>

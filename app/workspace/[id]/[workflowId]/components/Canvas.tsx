@@ -35,6 +35,15 @@ export default function Canvas({
   const [handlePathAddBlock, setHandlePathAddBlock] = useState<
     ((blockData: any, pathId: number, position: number) => Promise<void>) | null
   >(null);
+  const [addBlockDefaultPathId, setAddBlockDefaultPathId] = useState<
+    number | null
+  >(null);
+  const [addBlockDefaultPosition, setAddBlockDefaultPosition] = useState<
+    number | null
+  >(null);
+  const [handleDefaultPathAddBlock, setHandleDefaultPathAddBlock] = useState<
+    ((blockData: any, pathId: number, position: number) => Promise<void>) | null
+  >(null);
 
   useEffect(() => {
     setPath(initialPath);
@@ -91,14 +100,42 @@ export default function Canvas({
     setHandlePathAddBlock(() => addBlockFn);
   };
 
+  const handleSetDefaultPath = (
+    pathId: number,
+    position: number,
+    addBlockFn: (
+      blockData: any,
+      pathId: number,
+      position: number
+    ) => Promise<void>
+  ) => {
+    if (
+      !addBlockDefaultPathId &&
+      !addBlockDefaultPosition &&
+      !handleDefaultPathAddBlock
+    ) {
+      console.log('setting Default Path : ', pathId);
+      setAddBlockDefaultPathId(pathId);
+      setAddBlockDefaultPosition(position);
+      setHandleDefaultPathAddBlock(() => addBlockFn);
+    }
+  };
+
+  const updateDefaultPosition = () => {
+    if (addBlockDefaultPosition)
+      setAddBlockDefaultPosition(addBlockDefaultPosition + 1);
+  };
+
   const handleAddBlock = async (
     blockData: any,
     pathId: number,
     position: number
   ) => {
     setIsAddBlockFormOpen(false);
-    if (handlePathAddBlock)
+    if (handlePathAddBlock) {
+      if (pathId === addBlockDefaultPathId) updateDefaultPosition();
       await handlePathAddBlock(blockData, pathId, position);
+    }
     setAddBlockPosition(null);
   };
 
@@ -106,10 +143,9 @@ export default function Canvas({
   useEffect(() => {
     const handlePasteShortcut = async (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === 'v') {
-        console.log('Paste!');
-
         // Only proceed if we have a savedBlock and valid pathId/position
         if (savedBlock && addBlockPathId && addBlockPosition !== null) {
+          console.log('Paste at :', addBlockPosition);
           await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
         } else {
           console.warn(
@@ -128,8 +164,27 @@ export default function Canvas({
     };
   }, [savedBlock, addBlockPathId, addBlockPosition, handleAddBlock]);
 
+  const handleCanvasClick = () => {
+    if (
+      addBlockDefaultPathId !== null &&
+      addBlockDefaultPosition !== null &&
+      handleDefaultPathAddBlock
+    ) {
+      handleSetPath(
+        addBlockDefaultPathId,
+        addBlockDefaultPosition,
+        handleDefaultPathAddBlock
+      );
+    } else {
+      console.warn('Default path or position not set.');
+    }
+  };
+
   return (
-    <div className="relative h-screen w-screen flex flex-col">
+    <div
+      className="relative h-screen w-screen flex flex-col"
+      onClick={handleCanvasClick}
+    >
       <div className="flex-1 w-full h-full overflow-hidden">
         {path ? (
           <TransformWrapper
@@ -186,6 +241,7 @@ export default function Canvas({
                     disableZoom={handleDisableZoom}
                     copyBlockFn={copyBlockFn}
                     setPathFn={handleSetPath}
+                    setDefaultPathFn={handleSetDefaultPath}
                   />
                 </TransformComponent>
               </>
