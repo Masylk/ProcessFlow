@@ -52,6 +52,19 @@ export default function Canvas({
   const copyBlockFn = (blockdata: Block) => {
     console.log('copying ', blockdata);
     setSavedBlock(blockdata);
+    if (
+      addBlockDefaultPathId !== null &&
+      addBlockDefaultPosition !== null &&
+      handleDefaultPathAddBlock
+    ) {
+      handleSetPath(
+        addBlockDefaultPathId,
+        addBlockDefaultPosition,
+        handleDefaultPathAddBlock
+      );
+    } else {
+      console.warn('Default path or position not set.');
+    }
   };
 
   const handleBlockClick = (
@@ -164,27 +177,8 @@ export default function Canvas({
     };
   }, [savedBlock, addBlockPathId, addBlockPosition, handleAddBlock]);
 
-  const handleCanvasClick = () => {
-    if (
-      addBlockDefaultPathId !== null &&
-      addBlockDefaultPosition !== null &&
-      handleDefaultPathAddBlock
-    ) {
-      handleSetPath(
-        addBlockDefaultPathId,
-        addBlockDefaultPosition,
-        handleDefaultPathAddBlock
-      );
-    } else {
-      console.warn('Default path or position not set.');
-    }
-  };
-
   return (
-    <div
-      className="relative h-screen w-screen flex flex-col"
-      onClick={handleCanvasClick}
-    >
+    <div className="relative h-screen w-screen flex flex-col">
       <div className="flex-1 w-full h-full overflow-hidden">
         {path ? (
           <TransformWrapper

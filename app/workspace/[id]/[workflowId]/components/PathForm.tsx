@@ -38,20 +38,23 @@ const PathForm: React.FC<PathFormProps> = ({
     setFormData((prev) => ({ ...prev, pathOptions: newPathOptions }));
   };
 
-  const addPathOption = () => {
+  const addPathOption = (event: React.MouseEvent) => {
+    event.stopPropagation();
     setFormData((prev) => ({
       ...prev,
       pathOptions: [...prev.pathOptions, ''],
     }));
   };
 
-  const removePathOption = (index: number) => {
+  const removePathOption = (index: number, event: React.MouseEvent) => {
+    event.stopPropagation();
     const newPathOptions = formData.pathOptions.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, pathOptions: newPathOptions }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     onSubmit(
       {
         ...formData,
@@ -99,7 +102,7 @@ const PathForm: React.FC<PathFormProps> = ({
             />
             <button
               type="button"
-              onClick={() => removePathOption(index)}
+              onClick={(event) => removePathOption(index, event)}
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
             >
               Remove
@@ -117,7 +120,10 @@ const PathForm: React.FC<PathFormProps> = ({
       <div className="flex justify-end space-x-2">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={(event) => {
+            event.stopPropagation();
+            onCancel();
+          }}
           className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
         >
           Cancel

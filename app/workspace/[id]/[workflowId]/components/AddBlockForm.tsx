@@ -110,7 +110,10 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
               Paste Block
             </button>
             <button
-              onClick={onCancel}
+              onClick={(event) => {
+                event.stopPropagation(); // Stop propagation
+                onCancel();
+              }}
               className="bg-gray-300 px-4 py-2 rounded"
             >
               Cancel
