@@ -179,7 +179,7 @@ export default function Canvas({
 
   return (
     <div className="relative h-screen w-screen flex flex-col">
-      <div className="flex-1 w-full h-full overflow-hidden">
+      <div className="flex-1 w-full h-full">
         {path ? (
           <TransformWrapper
             ref={zoomRef}

@@ -18,7 +18,7 @@ const BlockOptions = ({
   };
 
   return (
-    <div className="w-32 bg-white border border-black p-2">
+    <div className="fixed z-50 w-32 bg-white border border-black p-2 shadow-lg">
       <ul className="space-y-2">
         <li>
           <button
