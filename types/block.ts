@@ -10,6 +10,7 @@ export interface Block {
   position: number;
   icon?: string; // Optional field
   description?: string; // Optional field
+  image?: string;
   workflowId: number;
   workflow?: Workflow; // Optional, representing the workflow this block belongs to
   pathBlock?: PathBlock; // Optional, if the block has a PathBlock

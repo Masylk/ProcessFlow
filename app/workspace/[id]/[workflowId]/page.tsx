@@ -1,26 +1,46 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Sidebar from './components/Sidebar';
+import Sidebar, { PathObject, SidebarBlock } from './components/Sidebar';
 import Canvas from './components/Canvas';
 import StatusIndicator from './components/StatusIndicator';
 import TitleBar from './components/TitleBar';
 import { Path } from '@/types/path';
-import { BlockProvider } from './components/BlockContext'; // Adjust path as needed
+import { BlockProvider } from './components/BlockContext';
+import { Block } from '@/types/block';
+
+export enum CanvasEventType {
+  PATH_CREATION,
+  SUBPATH_CREATION,
+  BLOCK_ADD,
+  BLOCK_DEL,
+  BLOCK_REORDER,
+  BLOCK_UPDATE,
+}
+
+export interface CanvasEvent {
+  type: CanvasEventType;
+  pathId: number;
+  blockId?: number;
+  pathName?: string;
+  blocks?: Block[];
+  subpaths?: PathObject[];
+}
 
 export default function WorkflowPage() {
   const pathname = usePathname();
   const router = useRouter();
   const pathSegments = pathname.split('/');
   const workflowId = pathSegments[pathSegments.length - 1];
-  const id = pathSegments[pathSegments.length - 2]; // This is your workspaceId
+  const id = pathSegments[pathSegments.length - 2];
   const [path, setPath] = useState<Path | null>(null);
   const [workflowTitle, setWorkflowTitle] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
     null
   );
+  const [sidebarPath, setSidebarPath] = useState<PathObject | null>(null);
 
   useEffect(() => {
     if (id && workflowId) {
@@ -34,9 +54,8 @@ export default function WorkflowPage() {
       const response = await fetch(
         `/api/workspace/${id}/paths?workflowId=${workflowId}`
       );
-      if (!response.ok) {
-        throw new Error('Failed to fetch paths');
-      }
+      if (!response.ok) throw new Error('Failed to fetch paths');
+
       const data = await response.json();
       setPath(data.paths && data.paths[0] ? data.paths[0] : null);
       setLastRequestStatus(true);
@@ -49,9 +68,8 @@ export default function WorkflowPage() {
   const fetchWorkflowTitle = async (workflowId: string) => {
     try {
       const response = await fetch(`/api/workflow/${workflowId}/title`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch workflow title');
-      }
+      if (!response.ok) throw new Error('Failed to fetch workflow title');
+
       const data = await response.json();
       setWorkflowTitle(data.title);
     } catch (error) {
@@ -69,9 +87,7 @@ export default function WorkflowPage() {
         body: JSON.stringify({ title: newTitle }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update workflow title');
-      }
+      if (!response.ok) throw new Error('Failed to update workflow title');
 
       setWorkflowTitle(newTitle);
     } catch (error) {
@@ -87,13 +103,144 @@ export default function WorkflowPage() {
     router.back();
   };
 
+  const handleCanvasEvent = (eventData: CanvasEvent) => {
+    console.log("handle canvas event called")
+    setSidebarPath((prevSidebarPath) => {
+      const updatedPath = handleEventLogic(prevSidebarPath, eventData);
+      return updatedPath;
+    });
+  };
+
+  const handleEventLogic = (
+    sidebarPath: PathObject | null,
+    eventData: CanvasEvent
+  ): PathObject | null => {
+    if (
+      eventData.type === CanvasEventType.PATH_CREATION &&
+      !sidebarPath &&
+      eventData.blocks &&
+      eventData.pathName
+    ) {
+      const newSidebarPath: PathObject = {
+        id: eventData.pathId,
+        name: eventData.pathName,
+        blocks: eventData.blocks.map((block) => ({
+          id: block.id,
+          type: block.type,
+          position: block.position,
+          icon: block.icon,
+          description: block.description,
+        })),
+      };
+      return newSidebarPath;
+    } else if (sidebarPath) {
+      if (
+        eventData.type === CanvasEventType.SUBPATH_CREATION &&
+        eventData.subpaths &&
+        eventData.blockId &&
+        sidebarPath.blocks
+      ) {
+        const updatedSidebarPath = updateBlockInNestedPaths(
+          sidebarPath.blocks,
+          eventData.blockId,
+          eventData.subpaths
+        );
+        return { ...sidebarPath, blocks: updatedSidebarPath };
+      } else if (
+        eventData.type === CanvasEventType.PATH_CREATION &&
+        sidebarPath.blocks &&
+        eventData.blocks
+      ) {
+        console.log('path creation');
+        const newBlocks = eventData.blocks;
+        const updatedBlocks = updateSubpathBlocks(
+          sidebarPath.blocks,
+          eventData.pathId,
+          newBlocks
+        );
+        return { ...sidebarPath, blocks: updatedBlocks };
+      }
+    }
+    return sidebarPath;
+  };
+
+  const updateSubpathBlocks = (
+    blocks: SidebarBlock[],
+    pathId: number,
+    newBlocks: Block[]
+  ): SidebarBlock[] => {
+    return blocks.map((block) => {
+      if (block.subpaths) {
+        return {
+          ...block,
+          subpaths: block.subpaths.map((subpath) => {
+            if (subpath.id === pathId) {
+              return {
+                ...subpath,
+                blocks: [
+                  ...(subpath.blocks || []),
+                  ...newBlocks.map((newBlock) => ({
+                    id: newBlock.id,
+                    type: newBlock.type,
+                    position: newBlock.position,
+                    icon: newBlock.icon,
+                    description: newBlock.description,
+                  })),
+                ],
+              };
+            }
+            return {
+              ...subpath,
+              blocks: updateSubpathBlocks(
+                subpath.blocks || [],
+                pathId,
+                newBlocks
+              ),
+            };
+          }),
+        };
+      }
+      return block;
+    });
+  };
+
+  const updateBlockInNestedPaths = (
+    blocks: SidebarBlock[],
+    blockId: number,
+    newSubpaths: PathObject[]
+  ): SidebarBlock[] => {
+    return blocks.map((block) => {
+      if (block.id === blockId) {
+        return { ...block, subpaths: newSubpaths };
+      }
+
+      if (block.subpaths) {
+        return {
+          ...block,
+          subpaths: block.subpaths.map((subpath) => ({
+            ...subpath,
+            blocks: updateBlockInNestedPaths(
+              subpath.blocks ?? [],
+              blockId,
+              newSubpaths
+            ),
+          })),
+        };
+      }
+
+      return block;
+    });
+  };
+
+  // useEffect(() => {
+  //   console.log('sidebar useeffect');
+  // }, [sidebarPath]);
+
   return (
     <body className=" overflow-hidden h-screen w-screen">
       <div className="relative flex flex-col w-full">
         <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
-
         <div className="flex flex-1">
-          {/* Sidebar with absolute positioning to avoid affecting the canvas size */}
           <div
             className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
               isSidebarOpen
@@ -101,11 +248,17 @@ export default function WorkflowPage() {
                 : '-translate-x-full w-0 hidden'
             }`}
           >
-            <Sidebar onHideSidebar={toggleSidebar} />{' '}
-            {/* Pass the toggleSidebar function */}
+            {sidebarPath ? (
+              <Sidebar
+                onHideSidebar={toggleSidebar}
+                initialPath={sidebarPath}
+                workspaceId={id}
+                workflowId={workflowId}
+              />
+            ) : (
+              <p></p>
+            )}
           </div>
-
-          {/* Main content area remains full width and unaffected by the sidebar */}
           <main className="flex-1 bg-gray-100 p-6 ml-0 h-screen w-screen overflow-hidden">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-4">
@@ -130,6 +283,7 @@ export default function WorkflowPage() {
                   initialPath={path}
                   workspaceId={id}
                   workflowId={workflowId}
+                  onCanvasEvent={handleCanvasEvent}
                 />
               </BlockProvider>
             ) : (

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Block, BlockType } from '@/types/block';
+import ImageUploader from './ImageUploader';
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
   onClose: () => void;
-  onUpdate: (updatedBlock: Block) => void;
+  onUpdate: (updatedBlock: Block, imageFile?: File) => void; // Update to accept imageFile
   onDelete: (blockId: number) => void;
 }
 
@@ -20,6 +21,7 @@ export default function BlockDetailsSidebar({
   const [newDescription, setNewDescription] = useState(
     block?.description || ''
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (block) {
@@ -35,7 +37,7 @@ export default function BlockDetailsSidebar({
         type: newType as Block['type'],
         description: newDescription,
       };
-      onUpdate(updatedBlock);
+      onUpdate(updatedBlock, imageFile || undefined);
       onClose(); // Close the component after updating
     }
   };
@@ -79,6 +81,13 @@ export default function BlockDetailsSidebar({
               className="border rounded p-1 w-full"
             />
           </div>
+
+          {/* Integrate the ImageUploader component */}
+          <ImageUploader
+            onImageUpload={setImageFile}
+            initialImageUrl={block?.image || ''}
+          />
+
           <button
             onClick={handleUpdate}
             className="bg-blue-500 text-white py-2 px-4 rounded mb-2"

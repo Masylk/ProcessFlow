@@ -12,6 +12,7 @@ import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
+import { CanvasEvent, CanvasEventType } from '../page';
 
 interface BlockListProps {
   blocks: Block[];
@@ -61,6 +62,7 @@ interface BlockListProps {
       position: number
     ) => Promise<void>
   ) => void;
+  onCanvasEvent: (eventData: CanvasEvent) => void;
 }
 
 const BlockList: React.FC<BlockListProps> = ({
@@ -78,7 +80,8 @@ const BlockList: React.FC<BlockListProps> = ({
   disableZoom,
   copyBlockFn,
   setPathFn,
-  setDefaultPathFn
+  setDefaultPathFn,
+  onCanvasEvent,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>(blocks);
   const [pathsByBlockId, setPathsByBlockId] = useState<
@@ -95,26 +98,33 @@ const BlockList: React.FC<BlockListProps> = ({
   }, [blocks]);
 
   useEffect(() => {
-    const fetchPaths = async (blockId: number) => {
+    const fetchPaths = async (pathBlockId: number, blockId: number) => {
       try {
-        const response = await fetch(`/api/blocks/${blockId}/paths`);
+        const response = await fetch(`/api/blocks/${pathBlockId}/paths`);
         if (response.ok) {
           const paths: PathType[] = await response.json();
+          console.log('subpathcreation ', pathId);
+          onCanvasEvent({
+            type: CanvasEventType.SUBPATH_CREATION,
+            pathId: pathId,
+            blockId: blockId,
+            subpaths: paths,
+          });
           setPathsByBlockId((prev) => ({
             ...prev,
-            [blockId]: paths,
+            [pathBlockId]: paths,
           }));
         } else {
-          console.error(`Failed to fetch paths for block ${blockId}`);
+          console.error(`Failed to fetch paths for block ${pathBlockId}`);
         }
       } catch (error) {
-        console.error(`Error fetching paths for block ${blockId}:`, error);
+        console.error(`Error fetching paths for block ${pathBlockId}:`, error);
       }
     };
 
     blockList.forEach((block) => {
       if (block.type === 'PATH' && block.pathBlock) {
-        fetchPaths(block.pathBlock?.id);
+        fetchPaths(block.pathBlock.id, block.id);
       }
     });
   }, [blockList]);
@@ -220,6 +230,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       copyBlockFn={copyBlockFn}
                       setPathFn={setPathFn}
                       setDefaultPathFn={setDefaultPathFn}
+                      onCanvasEvent={onCanvasEvent}
                     />
                   ))}
                 </div>
@@ -264,7 +275,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 </div>
               )}
             </div>
-            {/* Div that follows the mouse */}
+            {/* Div that follows the mouse on Drag and Drop*/}
             <div
               style={{
                 position: 'absolute',

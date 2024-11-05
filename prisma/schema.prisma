@@ -22,7 +22,9 @@ enum BlockType {
 
 model User {
   id            Int         @id @default(autoincrement())
-  name          String
+  first_name    String
+  last_name     String
+  full_name     String
   email         String      @unique
   password      String
   actions       Action[]    @relation("UserActions")
@@ -76,6 +78,7 @@ model Block {
   position          Int
   icon              String?      // Optional field
   description       String?      // Optional field
+  image             String?      // Optional field for image URL
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]
@@ -85,6 +88,7 @@ model Block {
   pathId            Int          // Required field to link to Path
   path              Path         @relation("PathBlocks", fields: [pathId], references: [id])
 }
+
 
 model PathBlock {
   id           Int         @id @default(autoincrement())

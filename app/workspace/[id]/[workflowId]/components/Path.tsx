@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { Block } from '@/types/block';
+import { CanvasEvent, CanvasEventType } from '../page';
 
 interface PathData {
   id: number;
@@ -49,6 +50,7 @@ interface PathProps {
       position: number
     ) => Promise<void>
   ) => void;
+  onCanvasEvent: (eventData: CanvasEvent) => void;
 }
 
 const Path: React.FC<PathProps> = ({
@@ -62,12 +64,15 @@ const Path: React.FC<PathProps> = ({
   copyBlockFn,
   setPathFn,
   setDefaultPathFn,
+  onCanvasEvent,
 }) => {
   const [blockList, setBlockList] = useState<Block[]>([]);
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('called path useeffect');
+    
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
     const fetchPathData = async () => {
       setLoading(true);
@@ -81,6 +86,13 @@ const Path: React.FC<PathProps> = ({
 
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
             setBlockList(fetchedPathData.blocks);
+            console.log('sending path creation event');
+            onCanvasEvent({
+              type: CanvasEventType.PATH_CREATION,
+              pathId: pathId,
+              pathName: fetchedPathData.name,
+              blocks: fetchedPathData.blocks,
+            });
           } else {
             setBlockList([]);
           }
@@ -126,6 +138,13 @@ const Path: React.FC<PathProps> = ({
 
       if (response.ok) {
         setBlockList(reorderedBlocks);
+        if (pathData)
+          onCanvasEvent({
+            type: CanvasEventType.BLOCK_REORDER,
+            pathId: pathId,
+            pathName: pathData.name,
+            blocks: reorderedBlocks,
+          });
       } else {
         console.error('Failed to update block positions');
       }
@@ -168,7 +187,14 @@ const Path: React.FC<PathProps> = ({
         // Update blockList with the newly created block
         setBlockList((prevBlockList) => {
           const updatedBlockList = [...prevBlockList];
-          updatedBlockList.splice(position, 0, newBlock); // Add the new block at the correct position
+          updatedBlockList.splice(position, 0, newBlock);
+          if (pathData)
+            onCanvasEvent({
+              type: CanvasEventType.BLOCK_ADD,
+              pathId: pathId,
+              pathName: pathData?.name,
+              blocks: updatedBlockList,
+            });
           return updatedBlockList;
         });
       } else {
@@ -180,7 +206,8 @@ const Path: React.FC<PathProps> = ({
     }
   };
 
-  const handleUpdateBlock = async (updatedBlock: Block) => {
+  const handleUpdateBlock = async (updatedBlock: Block, imageFile?: File) => {
+    console.log(imageFile);
     try {
       const response = await fetch(`/api/blocks/${updatedBlock.id}`, {
         method: 'PATCH',
@@ -199,8 +226,9 @@ const Path: React.FC<PathProps> = ({
 
       if (response?.ok) {
         const updatedBlockData: Block = await response.json();
-        setBlockList((prevBlocks) =>
-          prevBlocks.map((block) => {
+
+        setBlockList((prevBlocks) => {
+          const updatedBlockList = prevBlocks.map((block) => {
             if (block.id !== updatedBlockData.id) {
               return block;
             }
@@ -226,8 +254,16 @@ const Path: React.FC<PathProps> = ({
                 workflowId: updatedBlockData.workflowId,
               }),
             };
-          })
-        );
+          });
+          if (pathData)
+            onCanvasEvent({
+              type: CanvasEventType.BLOCK_UPDATE,
+              pathId: pathId,
+              pathName: pathData.name,
+              blocks: updatedBlockList,
+            });
+          return updatedBlockList;
+        });
       } else {
         console.error('Failed to update block');
       }
@@ -243,9 +279,19 @@ const Path: React.FC<PathProps> = ({
       });
 
       if (response.ok) {
-        setBlockList((prevBlocks) =>
-          prevBlocks.filter((block) => block.id !== blockId)
-        );
+        setBlockList((prevBlocks) => {
+          const updatedBlockList = prevBlocks.filter(
+            (block) => block.id !== blockId
+          );
+          if (pathData)
+            onCanvasEvent({
+              type: CanvasEventType.BLOCK_DEL,
+              pathId: pathId,
+              pathName: pathData.name,
+              blocks: updatedBlockList,
+            });
+          return updatedBlockList;
+        });
         closeDetailSidebar();
       } else {
         console.error('Failed to delete block');
@@ -275,6 +321,7 @@ const Path: React.FC<PathProps> = ({
           copyBlockFn={copyBlockFn}
           setPathFn={setPathFn}
           setDefaultPathFn={setDefaultPathFn}
+          onCanvasEvent={onCanvasEvent}
         />
       ) : (
         <p>Loading blocks...</p>

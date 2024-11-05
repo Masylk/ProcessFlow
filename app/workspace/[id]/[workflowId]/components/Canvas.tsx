@@ -5,22 +5,25 @@ import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
 import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { CanvasEvent } from '../page';
 
 interface CanvasProps {
   initialPath: PathType;
   workspaceId: string;
   workflowId: string;
+  onCanvasEvent: (eventData: CanvasEvent) => void;
 }
 
 export default function Canvas({
   initialPath,
   workspaceId,
   workflowId,
+  onCanvasEvent,
 }: CanvasProps) {
   const [path, setPath] = useState<PathType | null>(initialPath);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [handleUpdateBlock, setHandleUpdateBlock] = useState<
-    ((updatedBlock: Block) => Promise<void>) | null
+    ((updatedBlock: Block, imageFile?: File) => Promise<void>) | null
   >(null);
   const [handleDeleteBlock, setHandleDeleteBlock] = useState<
     ((blockId: number) => Promise<void>) | null
@@ -236,6 +239,7 @@ export default function Canvas({
                     copyBlockFn={copyBlockFn}
                     setPathFn={handleSetPath}
                     setDefaultPathFn={handleSetDefaultPath}
+                    onCanvasEvent={onCanvasEvent}
                   />
                 </TransformComponent>
               </>
@@ -250,8 +254,8 @@ export default function Canvas({
         <BlockDetailsSidebar
           block={selectedBlock}
           onClose={handleCloseSidebar}
-          onUpdate={async (updatedBlock) => {
-            await handleUpdateBlock(updatedBlock);
+          onUpdate={async (updatedBlock, imageFile?) => {
+            await handleUpdateBlock(updatedBlock, imageFile);
             handleCloseSidebar();
           }}
           onDelete={async (blockId) => {
