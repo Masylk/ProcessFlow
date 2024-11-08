@@ -1,5 +1,3 @@
-// app/api/blocks/[id]/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -17,10 +15,10 @@ export async function PATCH(req: NextRequest) {
   const blockId = Number(id);
 
   try {
-    const { type, position, icon, description, pathId, workflowId } =
+    const { type, position, icon, description, pathId, workflowId, image } =
       await req.json();
 
-    // Update the block in the database
+    // Update the block in the database, including the image field if provided
     const updatedBlock = await prisma.block.update({
       where: { id: blockId },
       data: {
@@ -30,6 +28,7 @@ export async function PATCH(req: NextRequest) {
         description,
         pathId,
         workflowId,
+        image,
       },
     });
 

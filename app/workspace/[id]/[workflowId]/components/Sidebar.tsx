@@ -25,11 +25,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onHideSidebar, initialPath }) => {
-  // Log initialPath whenever it changes
-  useEffect(() => {
-    console.log('Initial Path:', initialPath);
-  }, [initialPath]);
-
   return (
     <div className="flex flex-col h-full p-4 bg-gray-200">
       <button

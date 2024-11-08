@@ -43,8 +43,21 @@ export default function EditorBlock({
 
       <div className="flex-1 w-full">
         <h3 className="text-lg font-bold">{block.type}</h3>
+
+        {/* Render the icon if it exists */}
         {block.icon && <img src={block.icon} alt="icon" className="my-2" />}
+
+        {/* Render the description if it exists */}
         {block.description && <p className="text-sm">{block.description}</p>}
+
+        {/* Render the block image if it exists */}
+        {block.image && (
+          <img
+            src={block.image}
+            alt="block image"
+            className="my-2 w-full h-auto object-cover rounded"
+          />
+        )}
       </div>
     </div>
   );

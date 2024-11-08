@@ -9,6 +9,7 @@ import TitleBar from './components/TitleBar';
 import { Path } from '@/types/path';
 import { BlockProvider } from './components/BlockContext';
 import { Block } from '@/types/block';
+import { conformsTo } from 'lodash';
 
 export enum CanvasEventType {
   PATH_CREATION,
@@ -104,7 +105,6 @@ export default function WorkflowPage() {
   };
 
   const handleCanvasEvent = (eventData: CanvasEvent) => {
-    console.log("handle canvas event called")
     setSidebarPath((prevSidebarPath) => {
       const updatedPath = handleEventLogic(prevSidebarPath, eventData);
       return updatedPath;
@@ -153,10 +153,27 @@ export default function WorkflowPage() {
       ) {
         console.log('path creation');
         const newBlocks = eventData.blocks;
-        const updatedBlocks = updateSubpathBlocks(
+        const updatedBlocks = createBlocks(
           sidebarPath.blocks,
           eventData.pathId,
           newBlocks
+        );
+        return { ...sidebarPath, blocks: updatedBlocks };
+      } else if (
+        (eventData.type === CanvasEventType.BLOCK_ADD ||
+          eventData.type === CanvasEventType.BLOCK_REORDER ||
+          eventData.type === CanvasEventType.BLOCK_DEL ||
+          eventData.type === CanvasEventType.BLOCK_UPDATE) &&
+        sidebarPath.blocks &&
+        eventData.blocks
+      ) {
+        console.log('blocklist update');
+        const updatedBlocks = updateBlocks(
+          sidebarPath.blocks,
+          sidebarPath.id,
+          eventData.pathId,
+          eventData.blocks,
+          eventData.type
         );
         return { ...sidebarPath, blocks: updatedBlocks };
       }
@@ -164,7 +181,93 @@ export default function WorkflowPage() {
     return sidebarPath;
   };
 
-  const updateSubpathBlocks = (
+  const updateBlocks = (
+    blocks: SidebarBlock[],
+    sidebarPathId: number,
+    eventPathId: number,
+    updatedBlocks: Block[],
+    eventType: CanvasEventType
+  ): SidebarBlock[] => {
+    // Check if the sidebarPathId matches the eventPathId
+    if (sidebarPathId !== eventPathId) {
+      // If the IDs don't match, return the blocks unchanged
+      return blocks;
+    }
+
+    switch (eventType) {
+      case CanvasEventType.BLOCK_UPDATE:
+        // Update existing blocks by applying changes from updatedBlocks
+        return blocks.map((block) => {
+          const updatedBlock = updatedBlocks.find((b) => b.id === block.id);
+          return updatedBlock
+            ? {
+                ...block,
+                type: updatedBlock.type,
+                position: updatedBlock.position,
+                icon: updatedBlock.icon,
+                description: updatedBlock.description,
+                subpaths: block.subpaths, // keep subpaths unchanged
+              }
+            : block;
+        });
+
+      case CanvasEventType.BLOCK_ADD:
+        // Add new blocks from updatedBlocks
+        const newBlocks = updatedBlocks.filter(
+          (newBlock) => !blocks.some((block) => block.id === newBlock.id)
+        );
+
+        // Insert new blocks and adjust positions to avoid conflicts
+        const updatedBlocksList = [
+          ...blocks,
+          ...newBlocks.map((newBlock) => ({
+            id: newBlock.id,
+            type: newBlock.type,
+            position: newBlock.position,
+            icon: newBlock.icon,
+            description: newBlock.description,
+            subpaths: [], // Initialize with no subpaths
+          })),
+        ];
+
+        // Sort by position, and if there's a conflict, adjust positions
+        return updatedBlocksList
+          .sort((a, b) => a.position - b.position)
+          .map((block, index) => ({
+            ...block,
+            position: index, // Reassign sequential positions to maintain order
+          }));
+
+      case CanvasEventType.BLOCK_DEL:
+        // Keep only blocks that are in updatedBlocks
+        return blocks.filter((block) =>
+          updatedBlocks.some((keepBlock) => keepBlock.id === block.id)
+        );
+
+      case CanvasEventType.BLOCK_REORDER:
+        // Reorder blocks based on updatedBlocks' positions
+        return blocks
+          .map((block) => {
+            const reorderedBlock = updatedBlocks.find((b) => b.id === block.id);
+            return reorderedBlock
+              ? {
+                  ...block,
+                  position: reorderedBlock.position,
+                }
+              : block;
+          })
+          .sort((a, b) => a.position - b.position) // Sort by position after reordering
+          .map((block, index) => ({
+            ...block,
+            position: index, // Reassign sequential positions to ensure no gaps or conflicts
+          }));
+
+      default:
+        return blocks;
+    }
+  };
+
+  const createBlocks = (
     blocks: SidebarBlock[],
     pathId: number,
     newBlocks: Block[]
@@ -177,25 +280,24 @@ export default function WorkflowPage() {
             if (subpath.id === pathId) {
               return {
                 ...subpath,
-                blocks: [
-                  ...(subpath.blocks || []),
-                  ...newBlocks.map((newBlock) => ({
-                    id: newBlock.id,
-                    type: newBlock.type,
-                    position: newBlock.position,
-                    icon: newBlock.icon,
-                    description: newBlock.description,
-                  })),
-                ],
+                blocks:
+                  subpath.blocks && subpath.blocks.length > 0
+                    ? subpath.blocks // Keep existing blocks if present
+                    : [
+                        ...(subpath.blocks || []),
+                        ...newBlocks.map((newBlock) => ({
+                          id: newBlock.id,
+                          type: newBlock.type,
+                          position: newBlock.position,
+                          icon: newBlock.icon,
+                          description: newBlock.description,
+                        })),
+                      ],
               };
             }
             return {
               ...subpath,
-              blocks: updateSubpathBlocks(
-                subpath.blocks || [],
-                pathId,
-                newBlocks
-              ),
+              blocks: createBlocks(subpath.blocks || [], pathId, newBlocks),
             };
           }),
         };
@@ -211,7 +313,19 @@ export default function WorkflowPage() {
   ): SidebarBlock[] => {
     return blocks.map((block) => {
       if (block.id === blockId) {
-        return { ...block, subpaths: newSubpaths };
+        // Check if each newSubpath already exists in the block's subpaths.
+        const updatedSubpaths = newSubpaths.filter(
+          (newSubpath) =>
+            !block.subpaths?.some(
+              (existingSubpath) => existingSubpath.id === newSubpath.id
+            )
+        );
+
+        // Add only the new subpaths that don't already exist
+        return {
+          ...block,
+          subpaths: [...(block.subpaths ?? []), ...updatedSubpaths],
+        };
       }
 
       if (block.subpaths) {
@@ -231,10 +345,6 @@ export default function WorkflowPage() {
       return block;
     });
   };
-
-  // useEffect(() => {
-  //   console.log('sidebar useeffect');
-  // }, [sidebarPath]);
 
   return (
     <body className=" overflow-hidden h-screen w-screen">

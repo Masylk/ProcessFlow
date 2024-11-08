@@ -72,7 +72,7 @@ const Path: React.FC<PathProps> = ({
 
   useEffect(() => {
     console.log('called path useeffect');
-    
+
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
     const fetchPathData = async () => {
       setLoading(true);
@@ -207,7 +207,30 @@ const Path: React.FC<PathProps> = ({
   };
 
   const handleUpdateBlock = async (updatedBlock: Block, imageFile?: File) => {
-    console.log(imageFile);
+    let imageUrl;
+
+    // If there is an image file, upload it and get the URL
+    if (imageFile) {
+      const formData = new FormData();
+      formData.append('file', imageFile);
+
+      try {
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (uploadResponse.ok) {
+          const { url } = await uploadResponse.json();
+          imageUrl = url; // Set the image URL to be sent with the block update
+        } else {
+          console.error('Image upload failed');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
+    }
+
     try {
       const response = await fetch(`/api/blocks/${updatedBlock.id}`, {
         method: 'PATCH',
@@ -221,6 +244,7 @@ const Path: React.FC<PathProps> = ({
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
+          image: imageUrl || updatedBlock.image, // Include the image URL or keep existing one
         }),
       });
 
@@ -253,15 +277,21 @@ const Path: React.FC<PathProps> = ({
               ...(updatedBlockData.workflowId !== undefined && {
                 workflowId: updatedBlockData.workflowId,
               }),
+              ...(updatedBlockData.image !== undefined && {
+                image: updatedBlockData.image,
+              }),
             };
           });
-          if (pathData)
+
+          if (pathData) {
             onCanvasEvent({
               type: CanvasEventType.BLOCK_UPDATE,
               pathId: pathId,
               pathName: pathData.name,
               blocks: updatedBlockList,
             });
+          }
+
           return updatedBlockList;
         });
       } else {

@@ -159,14 +159,40 @@ export default function Canvas({
   useEffect(() => {
     const handlePasteShortcut = async (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === 'v') {
-        // Only proceed if we have a savedBlock and valid pathId/position
-        if (savedBlock && addBlockPathId && addBlockPosition !== null) {
-          console.log('Paste at :', addBlockPosition);
-          await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
-        } else {
-          console.warn(
-            'No block saved or invalid path/position for adding the block.'
-          );
+        try {
+          if (savedBlock && addBlockPathId && addBlockPosition !== null) {
+            console.log('Paste at :', addBlockPosition);
+            await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
+          } else {
+            console.warn(
+              'No block saved or invalid path/position for adding the block.'
+            );
+          }
+          // New code for logging clipboard content
+          const clipboardItems = await navigator.clipboard.read();
+          for (const item of clipboardItems) {
+            // Check if the clipboard item is an image
+            if (item.types.includes('image/png')) {
+              const blob = await item.getType('image/png');
+              console.log('Clipboard contains an image:', blob);
+
+              // Optionally, you could display the image in the UI by creating an object URL
+              const imageUrl = URL.createObjectURL(blob);
+              console.log('Image URL:', imageUrl);
+              // Example: add this URL to an <img> element if desired
+            } else if (item.types.includes('text/plain')) {
+              const text = await item.getType('text/plain');
+              const textContent = await text.text();
+              console.log('Clipboard contains text:', textContent);
+            } else {
+              console.log(
+                'Clipboard contains unsupported data type:',
+                item.types
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Failed to read clipboard content:', error);
         }
       }
     };
