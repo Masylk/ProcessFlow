@@ -212,31 +212,39 @@ export default function WorkflowPage() {
         });
 
       case CanvasEventType.BLOCK_ADD:
-        // Add new blocks from updatedBlocks
-        const newBlocks = updatedBlocks.filter(
-          (newBlock) => !blocks.some((block) => block.id === newBlock.id)
-        );
+        // Make a shallow copy of blocks to avoid mutating the original array
+        let updatedBlockList = [...blocks];
 
-        // Insert new blocks and adjust positions to avoid conflicts
-        const updatedBlocksList = [
-          ...blocks,
-          ...newBlocks.map((newBlock) => ({
-            id: newBlock.id,
-            type: newBlock.type,
-            position: newBlock.position,
-            icon: newBlock.icon,
-            description: newBlock.description,
-            subpaths: [], // Initialize with no subpaths
-          })),
-        ];
+        // Process each block in updatedBlocks
+        updatedBlocks.forEach((newBlock, index) => {
+          const existingBlockIndex = updatedBlockList.findIndex(
+            (block) => block.id === newBlock.id
+          );
 
-        // Sort by position, and if there's a conflict, adjust positions
-        return updatedBlocksList
-          .sort((a, b) => a.position - b.position)
-          .map((block, index) => ({
-            ...block,
-            position: index, // Reassign sequential positions to maintain order
-          }));
+          if (existingBlockIndex !== -1) {
+            // Update existing block's properties
+            updatedBlockList[existingBlockIndex] = {
+              ...updatedBlockList[existingBlockIndex],
+              position: newBlock.position,
+            };
+          } else {
+            // Insert new block at the corresponding index
+            updatedBlockList.splice(index, 0, {
+              id: newBlock.id,
+              type: newBlock.type,
+              position: index, // Use the index as the position
+              icon: newBlock.icon,
+              description: newBlock.description,
+              subpaths: [], // Initialize with no subpaths
+            });
+          }
+        });
+
+        // Update positions to match the array indices if needed
+        return updatedBlockList.map((block, index) => ({
+          ...block,
+          position: index,
+        }));
 
       case CanvasEventType.BLOCK_DEL:
         // Keep only blocks that are in updatedBlocks
@@ -245,22 +253,22 @@ export default function WorkflowPage() {
         );
 
       case CanvasEventType.BLOCK_REORDER:
-        // Reorder blocks based on updatedBlocks' positions
+        console.log('reordering');
+
+        // Create a lookup map for `updatedBlocks` by `id`, with their new positions
+        const updatedPositionMap = new Map(
+          updatedBlocks.map((updatedBlock, index) => [updatedBlock.id, index])
+        );
+
+        // Update the `position` in `blocks` based on the order defined by `updatedBlocks`
         return blocks
           .map((block) => {
-            const reorderedBlock = updatedBlocks.find((b) => b.id === block.id);
-            return reorderedBlock
-              ? {
-                  ...block,
-                  position: reorderedBlock.position,
-                }
-              : block;
+            const newPosition = updatedPositionMap.get(block.id);
+            return newPosition !== undefined
+              ? { ...block, position: newPosition } // Update position while preserving nested data
+              : block; // Leave unchanged if not found in `updatedBlocks`
           })
-          .sort((a, b) => a.position - b.position) // Sort by position after reordering
-          .map((block, index) => ({
-            ...block,
-            position: index, // Reassign sequential positions to ensure no gaps or conflicts
-          }));
+          .sort((a, b) => a.position - b.position); // Sort by the new position values
 
       default:
         return blocks;

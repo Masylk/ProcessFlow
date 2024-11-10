@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
       return newBlock;
     });
-
+    console.log(result);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Failed to create block:', error);

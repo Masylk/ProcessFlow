@@ -155,31 +155,47 @@ export default function Canvas({
     setAddBlockPosition(null);
   };
 
-  // Add keydown listener for Ctrl + V
   useEffect(() => {
     const handlePasteShortcut = async (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === 'v') {
         try {
           if (savedBlock && addBlockPathId && addBlockPosition !== null) {
-            console.log('Paste at :', addBlockPosition);
+            // If there's a saved block, add it as usual
+            console.log('Pasting block at:', addBlockPosition);
             await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
           } else {
             console.warn(
               'No block saved or invalid path/position for adding the block.'
             );
           }
-          // New code for logging clipboard content
+
+          // Check clipboard for an image
           const clipboardItems = await navigator.clipboard.read();
           for (const item of clipboardItems) {
-            // Check if the clipboard item is an image
             if (item.types.includes('image/png')) {
               const blob = await item.getType('image/png');
               console.log('Clipboard contains an image:', blob);
 
-              // Optionally, you could display the image in the UI by creating an object URL
-              const imageUrl = URL.createObjectURL(blob);
-              console.log('Image URL:', imageUrl);
-              // Example: add this URL to an <img> element if desired
+              // Prepare to upload image
+              const formData = new FormData();
+              formData.append('file', blob, 'clipboard-image.png'); // Name the image as needed
+
+              // Send the image to the upload route
+              const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+              });
+
+              if (response.ok) {
+                const { url } = await response.json();
+                console.log('Image uploaded successfully. URL:', url);
+
+                // Call handleAddBlock with the image URL if needed
+                // For instance, you could call handleAddBlock with updated blockData
+                // await handleAddBlock({ ...savedBlock, imageUrl: url }, addBlockPathId, addBlockPosition);
+              } else {
+                console.error('Image upload failed');
+              }
             } else if (item.types.includes('text/plain')) {
               const text = await item.getType('text/plain');
               const textContent = await text.text();

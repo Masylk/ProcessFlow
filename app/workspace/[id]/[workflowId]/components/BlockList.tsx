@@ -103,10 +103,10 @@ const BlockList: React.FC<BlockListProps> = ({
         const response = await fetch(`/api/blocks/${pathBlockId}/paths`);
         if (response.ok) {
           const paths: PathType[] = await response.json();
-          console.log('subpathcreation ', pathId);
+          console.log('subpathcreation ', pathBlockId);
           onCanvasEvent({
             type: CanvasEventType.SUBPATH_CREATION,
-            pathId: pathId,
+            pathId: pathBlockId,
             blockId: blockId,
             subpaths: paths,
           });
@@ -123,11 +123,15 @@ const BlockList: React.FC<BlockListProps> = ({
     };
 
     blockList.forEach((block) => {
-      if (block.type === 'PATH' && block.pathBlock) {
+      if (
+        block.type === 'PATH' &&
+        block.pathBlock &&
+        !(block.pathBlock.id in pathsByBlockId)
+      ) {
         fetchPaths(block.pathBlock.id, block.id);
       }
     });
-  }, [blockList]);
+  }, [blockList, pathsByBlockId]);
 
   const handleDragStart = (start: DragStart) => {
     setDraggingBlockId(Number(start.draggableId));

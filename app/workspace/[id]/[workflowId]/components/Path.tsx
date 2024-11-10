@@ -71,8 +71,6 @@ const Path: React.FC<PathProps> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('called path useeffect');
-
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
     const fetchPathData = async () => {
       setLoading(true);
@@ -86,7 +84,6 @@ const Path: React.FC<PathProps> = ({
 
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
             setBlockList(fetchedPathData.blocks);
-            console.log('sending path creation event');
             onCanvasEvent({
               type: CanvasEventType.PATH_CREATION,
               pathId: pathId,
@@ -109,6 +106,36 @@ const Path: React.FC<PathProps> = ({
 
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
+
+  // useEffect(() => {
+  //   const fetchUpdatedBlockList = async () => {
+  //     console.log('Updated blockList:', blockList);
+  //     // Refetch the block list from the API using the same route
+  //     try {
+  //       const response = await fetch(
+  //         `/api/workspace/${workspaceId}/paths/${pathId}?workflowId=${workflowId}`
+  //       );
+  //       if (response.ok) {
+  //         const fetchedPathData: PathData = await response.json();
+  //         const fetchedBlocks = fetchedPathData.blocks;
+  //         onCanvasEvent({
+  //           type: CanvasEventType.BLOCK_REORDER,
+  //           pathId: pathId,
+  //           pathName: fetchedPathData.name,
+  //           blocks: fetchedBlocks,
+  //         });
+  //         // Log the fetched block list
+  //         console.log('Fetched block list from API:', fetchedBlocks);
+  //       } else {
+  //         console.error('Failed to fetch updated block list');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching updated block list:', error);
+  //     }
+  //   };
+
+  //   fetchUpdatedBlockList();
+  // }, [blockList]);
 
   const handleBlockClick = (block: Block) => {
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
@@ -137,6 +164,7 @@ const Path: React.FC<PathProps> = ({
       );
 
       if (response.ok) {
+        console.log(reorderedBlocks);
         setBlockList(reorderedBlocks);
         if (pathData)
           onCanvasEvent({
