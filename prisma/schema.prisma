@@ -71,7 +71,6 @@ model Path {
   workflow    Workflow     @relation("WorkflowPaths", fields: [workflowId], references: [id])
 }
 
-
 model Block {
   id                Int          @id @default(autoincrement())
   type              BlockType
@@ -79,6 +78,7 @@ model Block {
   icon              String?      // Optional field
   description       String?      // Optional field
   image             String?      // Optional field for image URL
+  imageDescription  String?
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]
@@ -87,6 +87,7 @@ model Block {
   pathBlock         PathBlock?
   pathId            Int          // Required field to link to Path
   path              Path         @relation("PathBlocks", fields: [pathId], references: [id])
+  clickPosition     Json?        // Optional JSON field for storing click position
 }
 
 

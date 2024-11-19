@@ -8,10 +8,12 @@ export async function POST(req: NextRequest) {
     icon,
     description,
     workflowId,
-    pathId, // Ensure pathId is correctly passed and used
+    pathId,
     delayBlock,
     stepBlock,
     pathBlock,
+    imageUrl, // New field for the image URL
+    clickPosition, // New field for click position
   } = await req.json();
 
   // Validate block type
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
       await prisma.block.updateMany({
         where: {
           workflowId,
-          pathId, // Ensure updates are scoped within the path
+          pathId,
           position: {
             gte: position,
           },
@@ -53,8 +55,10 @@ export async function POST(req: NextRequest) {
         position,
         icon,
         description,
-        workflow: { connect: { id: workflowId } }, // Correctly connect the workflow
-        path: { connect: { id: pathId } }, // Link the block to the specific path
+        image: imageUrl || null, // Set the image field if imageUrl is provided
+        workflow: { connect: { id: workflowId } },
+        path: { connect: { id: pathId } },
+        clickPosition: clickPosition || null, // Set the clickPosition if provided
       };
 
       // Add specific block data based on the block type
@@ -71,8 +75,8 @@ export async function POST(req: NextRequest) {
           create: {
             paths: {
               create: pathBlock.pathOptions.map((option: string) => ({
-                name: option, // Update to the correct field name in your schema
-                workflow: { connect: { id: workflowId } }, // Ensure the path has a linked workflow
+                name: option,
+                workflow: { connect: { id: workflowId } },
               })),
             },
           },
@@ -95,6 +99,7 @@ export async function POST(req: NextRequest) {
 
       return newBlock;
     });
+
     console.log(result);
     return NextResponse.json(result);
   } catch (error) {

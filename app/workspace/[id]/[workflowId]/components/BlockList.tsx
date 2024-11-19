@@ -14,6 +14,11 @@ import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
 
+interface BlockPosition {
+  x: number;
+  y: number;
+}
+
 interface BlockListProps {
   blocks: Block[];
   workspaceId: number;
@@ -92,6 +97,38 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [blockPositions, setBlockPositions] = useState<
+    Record<number, BlockPosition>
+  >({});
+
+  // Update each block's position in the transformWrapper based on transformState
+  useEffect(() => {
+    const updateBlockPositions = () => {
+      const newPositions = blocks.reduce((positions, block) => {
+        const element = document.getElementById(`editor-block-${block.id}`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          // Calculate adjusted position based on zoom and pan offset
+          positions[block.id] = {
+            x: (rect.left - transformState.positionX) / transformState.scale,
+            y: (rect.top - transformState.positionY) / transformState.scale,
+          };
+        }
+        return positions;
+      }, {} as Record<number, BlockPosition>);
+      setBlockPositions(newPositions);
+    };
+
+    updateBlockPositions();
+    console.log('updating positions');
+
+    // Recalculate positions when transformState changes
+    // You can debounce this if performance becomes an issue
+  }, [blocks, transformState]);
+
+  useEffect(() => {
+    console.log(transformState);
+  }, [transformState]);
 
   useEffect(() => {
     setBlockList(blocks);
@@ -213,12 +250,14 @@ const BlockList: React.FC<BlockListProps> = ({
               }`}
             >
               <EditorBlock
+                id={`editor-block-${block.id}`} // Add unique id here
                 block={block}
                 handleAddBlockFn={handleAddBlockFn}
                 handleDeleteBlockFn={handleDeleteBlockFn}
                 copyBlockFn={copyBlockFn}
                 onClick={handleClick}
               />
+
               {paths && (
                 <div className="flex flex-row items-center gap-2 mt-2 w-full">
                   {paths.map((path, key) => (
@@ -252,7 +291,7 @@ const BlockList: React.FC<BlockListProps> = ({
   };
 
   const handleClick = (block: Block, event: React.MouseEvent) => {
-    event.stopPropagation();
+    // event.stopPropagation();
     setPathFn(pathId, block.position, handleAddBlockFn);
     handleBlockClick(block);
   };

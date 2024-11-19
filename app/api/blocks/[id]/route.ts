@@ -15,10 +15,19 @@ export async function PATCH(req: NextRequest) {
   const blockId = Number(id);
 
   try {
-    const { type, position, icon, description, pathId, workflowId, image } =
-      await req.json();
+    const {
+      type,
+      position,
+      icon,
+      description,
+      pathId,
+      workflowId,
+      image,
+      imageDescription,
+      clickPosition, // Include clickPosition in the request body
+    } = await req.json();
 
-    // Update the block in the database, including the image field if provided
+    // Update the block in the database, including clickPosition if provided
     const updatedBlock = await prisma.block.update({
       where: { id: blockId },
       data: {
@@ -29,6 +38,8 @@ export async function PATCH(req: NextRequest) {
         pathId,
         workflowId,
         image,
+        imageDescription: imageDescription || null,
+        clickPosition: clickPosition || null, // Update clickPosition
       },
     });
 

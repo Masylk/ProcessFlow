@@ -11,6 +11,8 @@ export interface Block {
   icon?: string; // Optional field
   description?: string; // Optional field
   image?: string;
+  imageDescription?: string;
+  clickPosition?: { x: number; y: number } | null;
   workflowId: number;
   workflow?: Workflow; // Optional, representing the workflow this block belongs to
   pathBlock?: PathBlock; // Optional, if the block has a PathBlock
@@ -19,6 +21,7 @@ export interface Block {
   actions?: Action[]; // Optional, actions related to this block
   pathId?: number; // Optional field for the path relationship
   path?: Path; // Optional, the path this block belongs to
+  coordinates?: { x: number; y: number } | null;
 }
 
 // Enum for Block types

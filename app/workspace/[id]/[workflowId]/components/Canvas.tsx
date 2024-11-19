@@ -6,12 +6,15 @@ import BlockDetailsSidebar from './BlockDetailsSidebar';
 import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { CanvasEvent } from '../page';
+import TransformStateTracker from './TransformStateTracker';
+import { TransformState } from '@/types/transformstate';
 
 interface CanvasProps {
   initialPath: PathType;
   workspaceId: string;
   workflowId: string;
   onCanvasEvent: (eventData: CanvasEvent) => void;
+  onTransformChange: (state: TransformState) => void;
 }
 
 export default function Canvas({
@@ -19,6 +22,7 @@ export default function Canvas({
   workspaceId,
   workflowId,
   onCanvasEvent,
+  onTransformChange,
 }: CanvasProps) {
   const [path, setPath] = useState<PathType | null>(initialPath);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
@@ -176,7 +180,7 @@ export default function Canvas({
               const blob = await item.getType('image/png');
               console.log('Clipboard contains an image:', blob);
 
-              // Prepare to upload image
+              // Prepare to upload the image
               const formData = new FormData();
               formData.append('file', blob, 'clipboard-image.png'); // Name the image as needed
 
@@ -190,9 +194,27 @@ export default function Canvas({
                 const { url } = await response.json();
                 console.log('Image uploaded successfully. URL:', url);
 
-                // Call handleAddBlock with the image URL if needed
-                // For instance, you could call handleAddBlock with updated blockData
-                // await handleAddBlock({ ...savedBlock, imageUrl: url }, addBlockPathId, addBlockPosition);
+                // Define default values for the new block with the image URL
+                const defaultBlockData = {
+                  type: 'STEP', // Default block type, e.g., 'STEP'
+                  position: addBlockPosition ?? 0, // Default to current or initial position
+                  icon: '📷', // Default icon
+                  description: 'New block with pasted image', // Default description
+                  imageUrl: url, // Set the image URL from upload response
+                };
+
+                // Add the new block with the uploaded image URL
+                if (addBlockPathId && addBlockPosition !== null) {
+                  await handleAddBlock(
+                    defaultBlockData,
+                    addBlockPathId,
+                    addBlockPosition
+                  );
+                } else {
+                  console.warn(
+                    'No default path or position set for adding the image block.'
+                  );
+                }
               } else {
                 console.error('Image upload failed');
               }
@@ -258,6 +280,8 @@ export default function Canvas({
                     Reset Zoom
                   </button>
                 </div>
+
+                <TransformStateTracker onTransformChange={onTransformChange} />
 
                 <TransformComponent
                   wrapperStyle={{

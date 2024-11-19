@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { Block } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '../page';
+import { useTransformContext } from 'react-zoom-pan-pinch';
 
 interface PathData {
   id: number;
@@ -69,6 +70,15 @@ const Path: React.FC<PathProps> = ({
   const [blockList, setBlockList] = useState<Block[]>([]);
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [loading, setLoading] = useState(true);
+  // Get transform state from context
+  const { transformState } = useTransformContext();
+
+  // Log the transform state whenever it changes
+  useEffect(() => {
+    if (transformState) {
+      console.log('Current Transform State:', transformState);
+    }
+  }, [transformState]); // Re-run whenever transformState changes
 
   useEffect(() => {
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
@@ -106,36 +116,6 @@ const Path: React.FC<PathProps> = ({
 
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
-
-  // useEffect(() => {
-  //   const fetchUpdatedBlockList = async () => {
-  //     console.log('Updated blockList:', blockList);
-  //     // Refetch the block list from the API using the same route
-  //     try {
-  //       const response = await fetch(
-  //         `/api/workspace/${workspaceId}/paths/${pathId}?workflowId=${workflowId}`
-  //       );
-  //       if (response.ok) {
-  //         const fetchedPathData: PathData = await response.json();
-  //         const fetchedBlocks = fetchedPathData.blocks;
-  //         onCanvasEvent({
-  //           type: CanvasEventType.BLOCK_REORDER,
-  //           pathId: pathId,
-  //           pathName: fetchedPathData.name,
-  //           blocks: fetchedBlocks,
-  //         });
-  //         // Log the fetched block list
-  //         console.log('Fetched block list from API:', fetchedBlocks);
-  //       } else {
-  //         console.error('Failed to fetch updated block list');
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching updated block list:', error);
-  //     }
-  //   };
-
-  //   fetchUpdatedBlockList();
-  // }, [blockList]);
 
   const handleBlockClick = (block: Block) => {
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
@@ -184,7 +164,8 @@ const Path: React.FC<PathProps> = ({
   const handleAddBlockFn = async (
     blockData: any,
     pathId: number,
-    position: number
+    position: number,
+    imageUrl?: string // Optional image URL parameter
   ) => {
     if (position === null) return;
 
@@ -195,6 +176,7 @@ const Path: React.FC<PathProps> = ({
         icon: 'default-icon',
         pathId,
         workflowId: workflowId,
+        image: imageUrl || null, // Include the image URL if provided
         pathBlock:
           blockData.type === 'PATH'
             ? { pathOptions: blockData.pathOptions }
@@ -273,6 +255,8 @@ const Path: React.FC<PathProps> = ({
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
           image: imageUrl || updatedBlock.image, // Include the image URL or keep existing one
+          imageDescription: updatedBlock.imageDescription,
+          clickPosition: updatedBlock.clickPosition, // Include the updated clickPosition
         }),
       });
 
@@ -307,6 +291,12 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.image !== undefined && {
                 image: updatedBlockData.image,
+              }),
+              ...(updatedBlockData.clickPosition !== undefined && {
+                clickPosition: updatedBlockData.clickPosition,
+              }),
+              ...(updatedBlockData.imageDescription !== undefined && {
+                imageDescription: updatedBlockData.imageDescription,
               }),
             };
           });

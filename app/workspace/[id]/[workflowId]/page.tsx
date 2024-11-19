@@ -10,6 +10,7 @@ import { Path } from '@/types/path';
 import { BlockProvider } from './components/BlockContext';
 import { Block } from '@/types/block';
 import { conformsTo } from 'lodash';
+import { TransformState } from '@/types/transformstate';
 
 export enum CanvasEventType {
   PATH_CREATION,
@@ -27,6 +28,7 @@ export interface CanvasEvent {
   pathName?: string;
   blocks?: Block[];
   subpaths?: PathObject[];
+  coordinates?: { x: number; y: number };
 }
 
 export default function WorkflowPage() {
@@ -42,6 +44,15 @@ export default function WorkflowPage() {
     null
   );
   const [sidebarPath, setSidebarPath] = useState<PathObject | null>(null);
+  const [transformState, setTransformState] = useState<TransformState>({
+    scale: 1,
+    positionX: 0,
+    positionY: 0,
+  });
+
+  const handleTransformChange = (state: TransformState) => {
+    setTransformState(state);
+  };
 
   useEffect(() => {
     if (id && workflowId) {
@@ -181,6 +192,91 @@ export default function WorkflowPage() {
     return sidebarPath;
   };
 
+  const updateBlockPositions = (blocks: SidebarBlock[]): SidebarBlock[] => {
+    // Update positions to match the array indices
+    return blocks.map((block, index) => ({
+      ...block,
+      position: index,
+    }));
+  };
+
+  const addBlocks = (
+    blocks: SidebarBlock[],
+    updatedBlocks: Block[]
+  ): SidebarBlock[] => {
+    let updatedBlockList = [...blocks];
+
+    updatedBlocks.forEach((newBlock, index) => {
+      const existingBlockIndex = updatedBlockList.findIndex(
+        (block) => block.id === newBlock.id
+      );
+
+      if (existingBlockIndex !== -1) {
+        updatedBlockList[existingBlockIndex] = {
+          ...updatedBlockList[existingBlockIndex],
+          position: newBlock.position,
+        };
+      } else {
+        updatedBlockList.splice(index, 0, {
+          id: newBlock.id,
+          type: newBlock.type,
+          position: index,
+          icon: newBlock.icon,
+          description: newBlock.description,
+          subpaths: [],
+        });
+      }
+    });
+
+    return updateBlockPositions(updatedBlockList);
+  };
+
+  const updateBlocksDetails = (
+    blocks: SidebarBlock[],
+    updatedBlocks: Block[]
+  ): SidebarBlock[] => {
+    return blocks.map((block) => {
+      const updatedBlock = updatedBlocks.find((b) => b.id === block.id);
+      return updatedBlock
+        ? {
+            ...block,
+            type: updatedBlock.type,
+            position: updatedBlock.position,
+            icon: updatedBlock.icon,
+            description: updatedBlock.description,
+            subpaths: block.subpaths,
+          }
+        : block;
+    });
+  };
+
+  const deleteBlocks = (
+    blocks: SidebarBlock[],
+    updatedBlocks: Block[]
+  ): SidebarBlock[] => {
+    return blocks.filter((block) =>
+      updatedBlocks.some((keepBlock) => keepBlock.id === block.id)
+    );
+  };
+
+  const reorderBlocks = (
+    blocks: SidebarBlock[],
+    updatedBlocks: Block[]
+  ): SidebarBlock[] => {
+    const updatedPositionMap = new Map(
+      updatedBlocks.map((updatedBlock, index) => [updatedBlock.id, index])
+    );
+
+    return blocks
+      .map((block) => {
+        const newPosition = updatedPositionMap.get(block.id);
+        return newPosition !== undefined
+          ? { ...block, position: newPosition }
+          : block;
+      })
+      .sort((a, b) => a.position - b.position);
+  };
+
   const updateBlocks = (
     blocks: SidebarBlock[],
     sidebarPathId: number,
@@ -188,91 +284,78 @@ export default function WorkflowPage() {
     updatedBlocks: Block[],
     eventType: CanvasEventType
   ): SidebarBlock[] => {
-    // Check if the sidebarPathId matches the eventPathId
-    if (sidebarPathId !== eventPathId) {
-      // If the IDs don't match, return the blocks unchanged
-      return blocks;
-    }
+    // Helper function to recursively update the blocks within a matching subpath
+    const updateSubpathBlocks = (
+      blocks: SidebarBlock[],
+      pathId: number
+    ): SidebarBlock[] => {
+      return blocks.map((block) => {
+        if (block.subpaths) {
+          block.subpaths = block.subpaths.map((subpath) => {
+            if (subpath.id === pathId) {
+              // Update the subpath blocks based on the event type
+              switch (eventType) {
+                case CanvasEventType.BLOCK_ADD:
+                  subpath.blocks = addBlocks(
+                    subpath.blocks || [],
+                    updatedBlocks
+                  );
+                  break;
 
-    switch (eventType) {
-      case CanvasEventType.BLOCK_UPDATE:
-        // Update existing blocks by applying changes from updatedBlocks
-        return blocks.map((block) => {
-          const updatedBlock = updatedBlocks.find((b) => b.id === block.id);
-          return updatedBlock
-            ? {
-                ...block,
-                type: updatedBlock.type,
-                position: updatedBlock.position,
-                icon: updatedBlock.icon,
-                description: updatedBlock.description,
-                subpaths: block.subpaths, // keep subpaths unchanged
+                case CanvasEventType.BLOCK_UPDATE:
+                  subpath.blocks = updateBlocksDetails(
+                    subpath.blocks || [],
+                    updatedBlocks
+                  );
+                  break;
+
+                case CanvasEventType.BLOCK_DEL:
+                  subpath.blocks = deleteBlocks(
+                    subpath.blocks || [],
+                    updatedBlocks
+                  );
+                  break;
+
+                case CanvasEventType.BLOCK_REORDER:
+                  subpath.blocks = reorderBlocks(
+                    subpath.blocks || [],
+                    updatedBlocks
+                  );
+                  break;
               }
-            : block;
-        });
+            } else if (subpath.blocks) {
+              // Recursively search and update nested subpaths
+              subpath.blocks = updateSubpathBlocks(subpath.blocks, pathId);
+            }
+            return subpath;
+          });
+        }
+        return block;
+      });
+    };
 
-      case CanvasEventType.BLOCK_ADD:
-        // Make a shallow copy of blocks to avoid mutating the original array
-        let updatedBlockList = [...blocks];
+    // If the event path ID matches the sidebar path ID, update the top-level blocks
+    if (sidebarPathId === eventPathId) {
+      switch (eventType) {
+        case CanvasEventType.BLOCK_ADD:
+          return addBlocks(blocks, updatedBlocks);
 
-        // Process each block in updatedBlocks
-        updatedBlocks.forEach((newBlock, index) => {
-          const existingBlockIndex = updatedBlockList.findIndex(
-            (block) => block.id === newBlock.id
-          );
+        case CanvasEventType.BLOCK_UPDATE:
+          return updateBlocksDetails(blocks, updatedBlocks);
 
-          if (existingBlockIndex !== -1) {
-            // Update existing block's properties
-            updatedBlockList[existingBlockIndex] = {
-              ...updatedBlockList[existingBlockIndex],
-              position: newBlock.position,
-            };
-          } else {
-            // Insert new block at the corresponding index
-            updatedBlockList.splice(index, 0, {
-              id: newBlock.id,
-              type: newBlock.type,
-              position: index, // Use the index as the position
-              icon: newBlock.icon,
-              description: newBlock.description,
-              subpaths: [], // Initialize with no subpaths
-            });
-          }
-        });
+        case CanvasEventType.BLOCK_DEL:
+          return deleteBlocks(blocks, updatedBlocks);
 
-        // Update positions to match the array indices if needed
-        return updatedBlockList.map((block, index) => ({
-          ...block,
-          position: index,
-        }));
+        case CanvasEventType.BLOCK_REORDER:
+          return reorderBlocks(blocks, updatedBlocks);
 
-      case CanvasEventType.BLOCK_DEL:
-        // Keep only blocks that are in updatedBlocks
-        return blocks.filter((block) =>
-          updatedBlocks.some((keepBlock) => keepBlock.id === block.id)
-        );
-
-      case CanvasEventType.BLOCK_REORDER:
-        console.log('reordering');
-
-        // Create a lookup map for `updatedBlocks` by `id`, with their new positions
-        const updatedPositionMap = new Map(
-          updatedBlocks.map((updatedBlock, index) => [updatedBlock.id, index])
-        );
-
-        // Update the `position` in `blocks` based on the order defined by `updatedBlocks`
-        return blocks
-          .map((block) => {
-            const newPosition = updatedPositionMap.get(block.id);
-            return newPosition !== undefined
-              ? { ...block, position: newPosition } // Update position while preserving nested data
-              : block; // Leave unchanged if not found in `updatedBlocks`
-          })
-          .sort((a, b) => a.position - b.position); // Sort by the new position values
-
-      default:
-        return blocks;
+        default:
+          return blocks;
+      }
     }
+
+    // If the event path ID does not match the sidebar path ID, update the relevant subpath
+    return updateSubpathBlocks(blocks, eventPathId);
   };
 
   const createBlocks = (
@@ -402,6 +485,7 @@ export default function WorkflowPage() {
                   workspaceId={id}
                   workflowId={workflowId}
                   onCanvasEvent={handleCanvasEvent}
+                  onTransformChange={handleTransformChange}
                 />
               </BlockProvider>
             ) : (
