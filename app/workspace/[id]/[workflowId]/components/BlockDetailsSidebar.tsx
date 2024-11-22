@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block, BlockType } from '@/types/block';
 import ImageUploader from './ImageUploader';
+import IconUploader from './IconUploader'; // Import the IconUploader component
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
   onClose: () => void;
-  onUpdate: (updatedBlock: Block, imageFile?: File) => void;
+  onUpdate: (updatedBlock: Block, imageFile?: File, iconFile?: File) => void;
   onDelete: (blockId: number) => void;
 }
 
@@ -25,6 +26,7 @@ export default function BlockDetailsSidebar({
     block?.imageDescription || ''
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [iconFile, setIconFile] = useState<File | null>(null); // Track the icon file
   const [clickPosition, setClickPosition] = useState<{
     x: number;
     y: number;
@@ -93,7 +95,7 @@ export default function BlockDetailsSidebar({
         imageDescription: newImageDescription,
         clickPosition,
       };
-      onUpdate(updatedBlock, imageFile || undefined);
+      onUpdate(updatedBlock, imageFile || undefined, iconFile || undefined); // Pass iconFile
       onClose();
     }
   };
@@ -181,6 +183,10 @@ export default function BlockDetailsSidebar({
             <ImageUploader
               onImageUpload={setImageFile}
               initialImageUrl={block?.image || ''}
+            />
+            <IconUploader
+              onIconUpload={setIconFile} // Handle icon file
+              initialIconUrl={block?.icon || ''} // Display existing icon if any
             />
             <button
               onClick={handleUpdate}

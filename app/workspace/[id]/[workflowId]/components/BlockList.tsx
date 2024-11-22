@@ -13,11 +13,7 @@ import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
-
-interface BlockPosition {
-  x: number;
-  y: number;
-}
+import ButtonCTA from '@/app/components/ButtonCTA';
 
 interface BlockListProps {
   blocks: Block[];
@@ -97,34 +93,6 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [blockPositions, setBlockPositions] = useState<
-    Record<number, BlockPosition>
-  >({});
-
-  // Update each block's position in the transformWrapper based on transformState
-  useEffect(() => {
-    const updateBlockPositions = () => {
-      const newPositions = blocks.reduce((positions, block) => {
-        const element = document.getElementById(`editor-block-${block.id}`);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          // Calculate adjusted position based on zoom and pan offset
-          positions[block.id] = {
-            x: (rect.left - transformState.positionX) / transformState.scale,
-            y: (rect.top - transformState.positionY) / transformState.scale,
-          };
-        }
-        return positions;
-      }, {} as Record<number, BlockPosition>);
-      setBlockPositions(newPositions);
-    };
-
-    updateBlockPositions();
-    console.log('updating positions');
-
-    // Recalculate positions when transformState changes
-    // You can debounce this if performance becomes an issue
-  }, [blocks, transformState]);
 
   useEffect(() => {
     console.log(transformState);
@@ -250,7 +218,6 @@ const BlockList: React.FC<BlockListProps> = ({
               }`}
             >
               <EditorBlock
-                id={`editor-block-${block.id}`} // Add unique id here
                 block={block}
                 handleAddBlockFn={handleAddBlockFn}
                 handleDeleteBlockFn={handleDeleteBlockFn}

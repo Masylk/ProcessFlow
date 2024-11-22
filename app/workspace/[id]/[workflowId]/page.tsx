@@ -11,6 +11,8 @@ import { BlockProvider } from './components/BlockContext';
 import { Block } from '@/types/block';
 import { conformsTo } from 'lodash';
 import { TransformState } from '@/types/transformstate';
+import ButtonCTA from '@/app/components/ButtonCTA';
+import WorkflowHeader from './components/WorkflowHeader';
 
 export enum CanvasEventType {
   PATH_CREATION,
@@ -19,6 +21,12 @@ export enum CanvasEventType {
   BLOCK_DEL,
   BLOCK_REORDER,
   BLOCK_UPDATE,
+  BLOCK_POSITION,
+}
+
+export enum SidebarEventType {
+  FOCUS,
+  REORDER,
 }
 
 export interface CanvasEvent {
@@ -29,6 +37,13 @@ export interface CanvasEvent {
   blocks?: Block[];
   subpaths?: PathObject[];
   coordinates?: { x: number; y: number };
+}
+
+export interface SidebarEvent {
+  type: SidebarEventType;
+  pathId?: number;
+  blocks?: Block[];
+  focusPos?: DOMRect;
 }
 
 export default function WorkflowPage() {
@@ -43,6 +58,7 @@ export default function WorkflowPage() {
   const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
     null
   );
+  const [focusRect, setFocusRect] = useState<DOMRect | null>(null);
   const [sidebarPath, setSidebarPath] = useState<PathObject | null>(null);
   const [transformState, setTransformState] = useState<TransformState>({
     scale: 1,
@@ -51,7 +67,8 @@ export default function WorkflowPage() {
   });
 
   const handleTransformChange = (state: TransformState) => {
-    setTransformState(state);
+    // console.log(state);
+    // setTransformState(state);
   };
 
   useEffect(() => {
@@ -113,6 +130,14 @@ export default function WorkflowPage() {
 
   const goBack = () => {
     router.back();
+  };
+
+  const handleSidebarEvent = (evenData: SidebarEvent) => {
+    console.log('sidebar event !');
+    if (evenData.type === SidebarEventType.FOCUS && evenData.focusPos) {
+      setFocusRect(evenData.focusPos);
+    }
+    return null;
   };
 
   const handleCanvasEvent = (eventData: CanvasEvent) => {
@@ -438,10 +463,15 @@ export default function WorkflowPage() {
   };
 
   return (
-    <body className=" overflow-hidden h-screen w-screen">
+    <div className="overflow-hidden h-screen w-screen">
       <div className="relative flex flex-col w-full">
-        <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
+        {/* Use WorkflowHeader */}
+        <WorkflowHeader
+          workflowTitle={workflowTitle}
+          updateWorkflowTitle={updateWorkflowTitle}
+        />
         <div className="flex flex-1">
+          {/* Sidebar */}
           <div
             className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
               isSidebarOpen
@@ -455,13 +485,17 @@ export default function WorkflowPage() {
                 initialPath={sidebarPath}
                 workspaceId={id}
                 workflowId={workflowId}
+                transformState={transformState}
+                onSidebarEvent={handleSidebarEvent}
               />
             ) : (
               <p></p>
             )}
           </div>
+
+          {/* Main Content */}
           <main className="flex-1 bg-gray-100 p-6 ml-0 h-screen w-screen overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
+            {/* <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-4">
                 <button
                   onClick={toggleSidebar}
@@ -469,21 +503,16 @@ export default function WorkflowPage() {
                 >
                   {isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'}
                 </button>
-                <button
-                  onClick={goBack}
-                  className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
-                >
-                  Back
-                </button>
               </div>
-              <StatusIndicator isSuccess={lastRequestStatus} />
-            </div>
+            </div> */}
+
             {path ? (
               <BlockProvider>
                 <Canvas
                   initialPath={path}
                   workspaceId={id}
                   workflowId={workflowId}
+                  focusRect={focusRect}
                   onCanvasEvent={handleCanvasEvent}
                   onTransformChange={handleTransformChange}
                 />
@@ -494,6 +523,6 @@ export default function WorkflowPage() {
           </main>
         </div>
       </div>
-    </body>
+    </div>
   );
 }

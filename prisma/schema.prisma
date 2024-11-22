@@ -61,6 +61,12 @@ model Workflow {
   @@unique([name, workspaceId])
 }
 
+model PopularIcon {
+  id       Int    @id @default(autoincrement())
+  name     String @unique // Icon name, e.g., "Google", "Facebook"
+  imageUrl String         // URL of the icon image
+}
+
 model Path {
   id          Int          @id @default(autoincrement())
   name        String       // Optional name for easier management of paths

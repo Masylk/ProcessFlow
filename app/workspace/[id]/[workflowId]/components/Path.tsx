@@ -216,8 +216,13 @@ const Path: React.FC<PathProps> = ({
     }
   };
 
-  const handleUpdateBlock = async (updatedBlock: Block, imageFile?: File) => {
-    let imageUrl;
+  const handleUpdateBlock = async (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => {
+    let imageUrl: string | undefined;
+    let iconUrl: string | undefined; // For storing the uploaded icon URL
 
     // If there is an image file, upload it and get the URL
     if (imageFile) {
@@ -241,6 +246,28 @@ const Path: React.FC<PathProps> = ({
       }
     }
 
+    // If there is an icon file, upload it and get the URL
+    if (iconFile) {
+      const formData = new FormData();
+      formData.append('file', iconFile);
+
+      try {
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (uploadResponse.ok) {
+          const { url } = await uploadResponse.json();
+          iconUrl = url; // Set the icon URL to be sent with the block update
+        } else {
+          console.error('Icon upload failed');
+        }
+      } catch (error) {
+        console.error('Error uploading icon:', error);
+      }
+    }
+
     try {
       const response = await fetch(`/api/blocks/${updatedBlock.id}`, {
         method: 'PATCH',
@@ -250,7 +277,7 @@ const Path: React.FC<PathProps> = ({
         body: JSON.stringify({
           type: updatedBlock.type,
           position: updatedBlock.position,
-          icon: updatedBlock.icon,
+          icon: iconUrl || updatedBlock.icon, // Include the icon URL or keep existing one
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,

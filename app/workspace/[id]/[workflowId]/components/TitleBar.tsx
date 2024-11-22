@@ -1,67 +1,48 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import Breadcrumbs from '@/app/components/Breadcrumbs';
+import React, { useState } from 'react';
 
 interface TitleBarProps {
   title: string;
-  onUpdateTitle: (newTitle: string) => Promise<void>; // Callback function to handle title update
+  onUpdateTitle: (newTitle: string) => Promise<void>;
 }
 
-export default function TitleBar({ title, onUpdateTitle }: TitleBarProps) {
+const TitleBar: React.FC<TitleBarProps> = ({ title, onUpdateTitle }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [currentTitle, setCurrentTitle] = useState(title);
+  const [newTitle, setNewTitle] = useState(title);
 
-  useEffect(() => {
-    setCurrentTitle(title); // Update currentTitle when title prop changes
-  }, [title]);
-
-  const handleTitleClick = () => {
-    setIsEditing(true);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTitle(e.target.value);
-  };
-
-  const handleInputBlur = async () => {
+  const handleSaveTitle = async () => {
+    if (newTitle !== title) {
+      await onUpdateTitle(newTitle);
+    }
     setIsEditing(false);
-    if (currentTitle !== title) {
-      await onUpdateTitle(currentTitle);
-    }
-  };
-
-  const handleKeyDown = async (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      setIsEditing(false);
-      if (currentTitle !== title) {
-        await onUpdateTitle(currentTitle);
-      }
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setCurrentTitle(title); // Revert changes on escape
-    }
   };
 
   return (
-    <div className="w-full bg-white shadow-md py-4 mb-6">
-      {isEditing ? (
-        <input
-          type="text"
-          value={currentTitle}
-          onChange={handleInputChange}
-          onBlur={handleInputBlur}
-          onKeyDown={handleKeyDown}
-          className="text-center text-2xl font-semibold w-full"
-          autoFocus
+    <div className="flex items-center gap-2">
+      {!isEditing ? (
+        <Breadcrumbs
+          first_text="Test"
+          second_text={title}
+          onSecondTextClick={() => setIsEditing(true)}
         />
       ) : (
-        <h1
-          onClick={handleTitleClick}
-          className="text-center text-2xl font-semibold cursor-pointer"
-        >
-          {currentTitle}
-        </h1>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring focus:ring-blue-300"
+          />
+          <button
+            onClick={handleSaveTitle}
+            className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+          >
+            Save
+          </button>
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default TitleBar;

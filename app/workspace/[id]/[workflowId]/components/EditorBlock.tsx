@@ -3,7 +3,6 @@ import { Block } from '@/types/block';
 import BlockOptionsToggle from './BlockOptionsToggle';
 
 interface EditorBlockProps {
-  id: string;
   block: Block;
   onClick: (block: Block, event: React.MouseEvent) => void;
   handleAddBlockFn: (
@@ -46,7 +45,6 @@ const ImageOverlay = ({
 };
 
 export default function EditorBlock({
-  id,
   block,
   onClick,
   handleAddBlockFn,
@@ -56,19 +54,20 @@ export default function EditorBlock({
   const [isOverlayVisible, setOverlayVisible] = useState(false);
 
   const handleClick = (event: React.MouseEvent) => {
-    // event.stopPropagation();
     onClick(block, event);
   };
 
   const handleImageClick = (event: React.MouseEvent) => {
-    // event.stopPropagation();
     console.log('clicked on image');
     setOverlayVisible(true);
   };
 
+  // Construct the id in the desired format
+  const constructedId = `block:${block.id}`;
+
   return (
     <div
-      id={id}
+      id={constructedId}
       className="relative border border-black bg-white p-4 m-4 rounded w-80 cursor-pointer"
       onClick={handleClick}
     >

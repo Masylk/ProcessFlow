@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import SidebarPath from './SidebarPath';
 import { BlockType } from '@/types/block';
+import { TransformState } from '@/types/transformstate';
+import { SidebarEvent } from '../page';
 
 export interface SidebarBlock {
   id: number;
@@ -22,9 +24,18 @@ interface SidebarProps {
   initialPath: PathObject;
   workspaceId: string;
   workflowId: string;
+  transformState: TransformState;
+  onSidebarEvent: (eventData: SidebarEvent) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onHideSidebar, initialPath }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  onHideSidebar,
+  initialPath,
+  workspaceId,
+  workflowId,
+  transformState,
+  onSidebarEvent,
+}) => {
   return (
     <div className="flex flex-col h-full p-4 bg-gray-200">
       <button
@@ -33,7 +44,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onHideSidebar, initialPath }) => {
       >
         Hide Sidebar
       </button>
-      <SidebarPath path={initialPath} />
+      <SidebarPath
+        path={initialPath}
+        transformState={transformState}
+        onSidebarEvent={onSidebarEvent}
+      />
     </div>
   );
 };
