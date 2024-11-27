@@ -30,7 +30,11 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
             ? 'bg-[#f2f4f7] border-[#e4e7ec] text-[#98a1b2] cursor-not-allowed'
             : 'border-white focus:outline-none focus:ring-2 focus:ring-offset-2 group'
         } 
-        ${bgColor !== 'transparent' ? 'shadow' : ''} 
+        ${
+          bgColor !== 'transparent'
+            ? 'shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18),inset_0px_-2px_0px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]'
+            : ''
+        } 
         transition-all duration-200 ease-in-out`}
       style={{
         backgroundColor: disabled

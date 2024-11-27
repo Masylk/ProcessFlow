@@ -1,5 +1,7 @@
 import type { Config } from 'tailwindcss';
 
+const myTheme = require('./theme');
+
 const config: Config = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,6 +11,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: myTheme.colors,
+      fontSize: myTheme.fontSize,
+      boxShadow: myTheme.boxShadow,
+      borderRadius: myTheme.borderRadius,
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':

@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BlockOptions from './BlockOptions';
 import { Block } from '@/types/block';
 
 interface BlockOptionsToggleProps {
-  block: Block; // New prop for the block
+  block: Block;
   handleAddBlockFn: (
     blockData: any,
     pathId: number,
     position: number
   ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
-  copyBlockFn: (blockdata: Block) => void;
+  copyBlockFn: (blockData: Block) => void;
 }
 
 const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
@@ -19,21 +19,24 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   handleDeleteBlockFn,
   copyBlockFn,
 }) => {
-  const [isBlack, setIsBlack] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const toggleRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleToggleClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    setIsBlack(true);
+    setIsOpen((prevState) => !prevState);
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         toggleRef.current &&
-        !toggleRef.current.contains(event.target as Node)
+        !toggleRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
       ) {
-        setIsBlack(false);
+        setIsOpen(false);
       }
     };
 
@@ -45,37 +48,50 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
 
   const handleDelete = async () => {
     await handleDeleteBlockFn(block.id);
-    console.log('Delete action triggered for block:', block);
+    setIsOpen(false);
   };
 
   const handleCopy = () => {
     copyBlockFn(block);
-    setIsBlack(false);
-    console.log('Copy action triggered for block:', block);
+    setIsOpen(false);
   };
 
   const handleCopyLink = () => {
-    console.log('Copy Link action triggered for block:', block);
-    // Add copy link logic using block here
+    setIsOpen(false);
   };
 
   const handleDuplicate = () => {
-    if (block.pathId) handleAddBlockFn(block, block.pathId, block.position);
-    setIsBlack(false);
-    console.log('Duplicate action triggered for block:', block);
+    if (block.pathId) {
+      handleAddBlockFn(block, block.pathId, block.position);
+    }
+    setIsOpen(false);
   };
 
   return (
     <div ref={toggleRef} className="relative">
+      {/* Dots Horizontal Button */}
       <div
-        className={`w-12 h-12 cursor-pointer ${
-          isBlack ? 'bg-black' : 'bg-gray-400'
-        }`}
+        className="w-8 h-8 flex justify-center items-center cursor-pointer"
         onClick={handleToggleClick}
-      ></div>
+      >
+        <img
+          src="/assets/shared_components/dots-horizontal.svg"
+          alt="Options"
+          className="w-6 h-6"
+        />
+      </div>
 
-      {isBlack && (
-        <div className="absolute top-full left-0 z-50">
+      {/* Block Options Dropdown */}
+      {isOpen && (
+        <div
+          ref={dropdownRef}
+          className="absolute z-50"
+          style={{
+            top: '100%', // Adjust dropdown position as before (top-full)
+            left: '0', // Align left
+            overflow: 'visible', // Ensure overflow is visible and dropdown isn't clipped
+          }}
+        >
           <BlockOptions
             onDelete={handleDelete}
             onCopy={handleCopy}

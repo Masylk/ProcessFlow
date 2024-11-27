@@ -8,6 +8,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { CanvasEvent } from '../page';
 import TransformStateTracker from './TransformStateTracker';
 import { TransformState } from '@/types/transformstate';
+import ZoomBar from './ZoomBar';
 
 interface CanvasProps {
   initialPath: PathType;
@@ -255,7 +256,7 @@ export default function Canvas({
     <div className="relative h-screen w-screen flex flex-col">
       <div className="flex-1 w-full h-full">
         {path ? (
-          <div className="relative w-full h-full overflow-hidden">
+          <div className="relative w-full h-full overflow-visible">
             <TransformWrapper
               ref={zoomRef}
               initialScale={1}
@@ -265,82 +266,79 @@ export default function Canvas({
               alignmentAnimation={{ disabled: true }}
               limitToBounds={false}
               disabled={disableZoom}
+              // TODO : Bounds do not work
+              // minPositionX={-5} // Set the minimum horizontal pan limit
+              // minPositionY={-5} // Set the maximum vertical pan limit
+              // maxPositionX={500} // Set the maximum horizontal pan limit
+              // maxPositionY={500} // Set the maximum vertical pan limit
             >
               {({ zoomIn, zoomOut, resetTransform, setTransform }) => (
                 <>
-                  {/* Zoom controls */}
-                  <div className="controls absolute top-4 right-4 z-20">
-                    <button
-                      onClick={() => zoomIn()}
-                      className="px-4 py-2 mx-2 bg-gray-200 rounded"
-                    >
-                      Zoom In
-                    </button>
-                    <button
-                      onClick={() => zoomOut()}
-                      className="px-4 py-2 mx-2 bg-gray-200 rounded"
-                    >
-                      Zoom Out
-                    </button>
-                    <button
-                      onClick={() => resetTransform()}
-                      className="px-4 py-2 mx-2 bg-gray-200 rounded"
-                    >
-                      Reset Zoom
-                    </button>
-                  </div>
-
-                  {/* Track Transform State */}
-                  <TransformStateTracker
-                    onTransformChange={onTransformChange}
-                    setTransform={setTransform}
-                    focusRect={focusRect}
-                  />
-                  <TransformComponent
-                    wrapperStyle={{
-                      width: '100%',
-                      height: '100%',
-                      overflow: 'hidden',
-                    }}
-                    contentStyle={{
-                      width: '100%',
-                      height: '100%',
-                      position: 'relative',
-                    }}
-                  >
-                    <div className="relative w-full h-full">
-                      {/* Background pattern */}
-                      <div
-                        className="absolute inset-0 -z-10"
-                        style={{
-                          width: '50009vw', // Background is much larger than the content area
-                          height: '50000vh',
-                          top: '-550vh', // Center it around the content
-                          left: '-600vw',
-                          backgroundImage:
-                            "url('/assets/workflow/background_pattern.svg')",
-                          backgroundSize: 'auto', // Prevent stretching of the image
-                          backgroundRepeat: 'repeat', // Repeat the image seamlessly
-                          backgroundPosition: 'center', // Keep the pattern centered
-                        }}
-                      ></div>
-
-                      {/* Path component */}
-                      <Path
-                        pathId={path.id}
-                        workspaceId={parseInt(workspaceId)}
-                        workflowId={parseInt(workflowId)}
-                        onBlockClick={handleBlockClick}
-                        closeDetailSidebar={handleCloseSidebar}
-                        handleAddBlock={handleOpenForm}
-                        disableZoom={handleDisableZoom}
-                        copyBlockFn={copyBlockFn}
-                        setPathFn={handleSetPath}
-                        setDefaultPathFn={handleSetDefaultPath}
-                        onCanvasEvent={onCanvasEvent}
+                  {/* Wrapper div to ensure correct positioning */}
+                  <div className="relative w-full h-full">
+                    {/* ZoomBar positioned slightly to the left from the right edge */}
+                    <div className="absolute right-10 top-2 p-4 z-10">
+                      <ZoomBar
+                        zoomIn={zoomIn}
+                        zoomOut={zoomOut}
+                        setTransform={setTransform}
                       />
                     </div>
-                  </TransformComponent>
+
+                    {/* Track Transform State */}
+                    <TransformStateTracker
+                      onTransformChange={onTransformChange}
+                      setTransform={setTransform}
+                      focusRect={focusRect}
+                    />
+
+                    {/* Content and Background */}
+                    <TransformComponent
+                      wrapperStyle={{
+                        width: '100%',
+                        height: '100%',
+                        overflow: 'visible',
+                      }}
+                      contentStyle={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                      }}
+                    >
+                      <div className="relative w-full h-full">
+                        {/* Background pattern */}
+                        <div
+                          className="absolute inset-0 -z-10"
+                          style={{
+                            width: '50000vw', // Background is much larger than the content area
+                            height: '50000vh',
+                            top: '-20000vh', // Center it around the content
+                            left: '-20000vw',
+                            backgroundImage:
+                              "url('/assets/workflow/background_pattern.svg')",
+                            backgroundSize: 'auto', // Prevent stretching of the image
+                            backgroundRepeat: 'repeat', // Repeat the image seamlessly
+                            backgroundPosition: 'center', // Keep the pattern centered
+                          }}
+                        ></div>
+
+                        {/* Path component */}
+                        <Path
+                          pathId={path.id}
+                          workspaceId={parseInt(workspaceId)}
+                          workflowId={parseInt(workflowId)}
+                          onBlockClick={handleBlockClick}
+                          closeDetailSidebar={handleCloseSidebar}
+                          handleAddBlock={handleOpenForm}
+                          disableZoom={handleDisableZoom}
+                          copyBlockFn={copyBlockFn}
+                          setPathFn={handleSetPath}
+                          setDefaultPathFn={handleSetDefaultPath}
+                          onCanvasEvent={onCanvasEvent}
+                        />
+                      </div>
+                    </TransformComponent>
+                  </div>
                 </>
               )}
             </TransformWrapper>

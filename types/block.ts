@@ -8,6 +8,7 @@ export interface Block {
   id: number;
   type: BlockType; // Use BlockType enum
   position: number;
+  title: string;
   icon?: string; // Optional field
   description?: string; // Optional field
   image?: string;

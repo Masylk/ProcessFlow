@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface BlockOptionsProps {
   onDelete: () => void;
   onCopy: () => void;
@@ -5,54 +7,84 @@ interface BlockOptionsProps {
   onDuplicate: () => void;
 }
 
-const BlockOptions = ({
+const BlockOptions: React.FC<BlockOptionsProps> = ({
   onDelete,
   onCopy,
   onCopyLink,
   onDuplicate,
-}: BlockOptionsProps) => {
-  // Prevent the event from bubbling up
+}) => {
   const handleOptionClick = (event: React.MouseEvent, action: () => void) => {
     event.stopPropagation();
-    action(); // Trigger the actual action
+    action();
   };
 
   return (
-    <div className="fixed z-50 w-32 bg-white border border-black p-2 shadow-lg">
-      <ul className="space-y-2">
-        <li>
-          <button
-            className="w-full text-left hover:bg-gray-100 p-1"
-            onClick={(event) => handleOptionClick(event, onDelete)}
-          >
-            Delete
-          </button>
-        </li>
-        <li>
-          <button
-            className="w-full text-left hover:bg-gray-100 p-1"
-            onClick={(event) => handleOptionClick(event, onCopy)}
-          >
-            Copy
-          </button>
-        </li>
-        <li>
-          <button
-            className="w-full text-left hover:bg-gray-100 p-1"
-            onClick={(event) => handleOptionClick(event, onCopyLink)}
-          >
-            Copy Link
-          </button>
-        </li>
-        <li>
-          <button
-            className="w-full text-left hover:bg-gray-100 p-1"
-            onClick={(event) => handleOptionClick(event, onDuplicate)}
-          >
-            Duplicate
-          </button>
-        </li>
-      </ul>
+    <div className="w-[226px] py-1 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+      {/* Duplicate */}
+      <div
+        className="self-stretch px-1.5 py-px flex items-center"
+        onClick={(event) => handleOptionClick(event, onDuplicate)}
+      >
+        <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
+          <img
+            src="/assets/shared_components/duplicate-icon.svg"
+            alt="Duplicate Icon"
+            className="w-4 h-4"
+          />
+          <div className="text-xs font-medium text-[#344054]">Duplicate</div>
+          <div className="text-xs text-[#667085] ml-auto">⌘D</div>
+        </div>
+      </div>
+
+      {/* Copy */}
+      <div
+        className="self-stretch px-1.5 py-px flex items-center"
+        onClick={(event) => handleOptionClick(event, onCopy)}
+      >
+        <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
+          <img
+            src="/assets/shared_components/copy-icon.svg"
+            alt="Copy Icon"
+            className="w-4 h-4"
+          />
+          <div className="text-xs font-medium text-[#344054]">Copy</div>
+          <div className="text-xs text-[#667085] ml-auto">⌘C</div>
+        </div>
+      </div>
+
+      {/* Copy Link */}
+      <div
+        className="self-stretch px-1.5 py-px flex items-center"
+        onClick={(event) => handleOptionClick(event, onCopyLink)}
+      >
+        <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
+          <img
+            src="/assets/shared_components/copy-link-icon.svg"
+            alt="Copy Link Icon"
+            className="w-4 h-4"
+          />
+          <div className="text-xs font-medium text-[#344054]">
+            Copy link to this step
+          </div>
+          <div className="text-xs text-[#667085] ml-auto">⌘L</div>
+        </div>
+      </div>
+
+      {/* Delete */}
+      <div
+        className="self-stretch px-1.5 py-px flex items-center"
+        onClick={(event) => handleOptionClick(event, onDelete)}
+      >
+        <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
+          <img
+            src="/assets/shared_components/delete-icon.svg"
+            alt="Delete Icon"
+            className="w-4 h-4"
+          />
+          <div className="text-xs font-medium text-[#344054]">Delete step</div>
+          <div className="text-xs text-[#667085] ml-auto">DEL</div>
+        </div>
+      </div>
     </div>
   );
 };

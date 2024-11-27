@@ -270,7 +270,7 @@ const BlockList: React.FC<BlockListProps> = ({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="flex justify-center overflow-hidden w-full"
+            className="flex justify-center overflow-visible w-full"
           >
             <div>
               {renderBlocksWithOptions(blockList)}
