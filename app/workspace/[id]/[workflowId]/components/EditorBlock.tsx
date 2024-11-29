@@ -69,6 +69,7 @@ export default function EditorBlock({
 
   return (
     <div
+      id={`block:${block.id}`}
       className={`w-[481px] ${parentHeight} px-6 py-5 bg-white rounded-2xl shadow shadow-inner border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer`}
       onClick={handleClick}
     >

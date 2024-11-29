@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { useTransformEffect } from 'react-zoom-pan-pinch';
+import {
+  ReactZoomPanPinchContextState,
+  useTransformEffect,
+} from 'react-zoom-pan-pinch';
 
 interface TransformStateTrackerProps {
   onTransformChange: (state: any) => void;
@@ -13,7 +16,7 @@ const TransformStateTracker: React.FC<TransformStateTrackerProps> = ({
   focusRect,
 }) => {
   // Create a local ref to store the transformState
-  const transformStateRef = useRef<any>({});
+  const transformStateRef = useRef<ReactZoomPanPinchContextState | null>(null);
 
   // Update the local transformState and notify parent whenever transform changes
   useTransformEffect((newState) => {
@@ -27,18 +30,38 @@ const TransformStateTracker: React.FC<TransformStateTrackerProps> = ({
   });
 
   useEffect(() => {
-    if (focusRect) {
-      // Calculate the center of the focusRect
-      const centerX = focusRect.left + focusRect.width / 2;
-      const centerY = focusRect.top + focusRect.height / 2;
+    if (focusRect && transformStateRef.current) {
+      const { state } = transformStateRef.current;
+      const { positionX, positionY, scale } = state;
 
-      // Center the view based on focusRect dimensions
-      const targetX = -centerX + window.innerWidth / 2;
-      const targetY = -centerY + window.innerHeight / 2;
+      // Log the current transform state
+      console.log('Current Transform State:', {
+        positionX,
+        positionY,
+        scale,
+      });
 
-      // Set the transform using the current scale from transformState
-      const currentScale = transformStateRef.current.scale || 1;
-      setTransform(targetX, targetY, currentScale);
+      // Calculate the center of the block (focusRect) in its local (untransformed) coordinates
+      const blockCenterX = focusRect.left + focusRect.width / 2;
+      const blockCenterY = focusRect.top + focusRect.height / 2;
+
+      // Transform the block center into the zoomed/panned coordinate space
+      const transformedCenterX = blockCenterX * scale + positionX;
+      const transformedCenterY = blockCenterY * scale + positionY;
+
+      // Calculate the new position to center the block in the viewport
+      const targetX = -transformedCenterX + window.innerWidth / 2;
+      const targetY = -transformedCenterY + window.innerHeight / 2;
+
+      // Log the target transform
+      console.log('Target Transform:', {
+        targetX,
+        targetY,
+        scale,
+      });
+
+      // Set the new transform
+      setTransform(targetX, targetY, scale);
     }
   }, [focusRect, setTransform]);
 

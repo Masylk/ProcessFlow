@@ -85,6 +85,9 @@ model Block {
   description       String?      // Optional field
   image             String?      // Optional field for image URL
   imageDescription  String?
+  lastModified      DateTime?
+  AverageTime       Int?
+  TaskType          String?
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]

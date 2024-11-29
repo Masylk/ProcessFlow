@@ -109,97 +109,63 @@ export default function BlockDetailsSidebar({
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-center justify-center">
-        {block && block.image && (
-          <div className="relative">
-            <img
-              ref={imageRef}
-              src={block.image}
-              alt="Overlay"
-              className="max-h-full max-w-full object-contain"
-              onClick={handleImageClick}
-            />
-            {/* Render the circle at the current click position */}
-            {clickPosition && (
-              <div
-                className="absolute bg-blue-500 bg-opacity-50 rounded-full"
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  left: `${clickPosition.x - 25}px`,
-                  top: `${clickPosition.y - 25}px`,
-                  pointerEvents: 'none',
-                }}
-              ></div>
-            )}
-            {/* Image Description Textarea */}
-            <textarea
-              ref={textareaRef}
-              value={newImageDescription || ''} // Ensure it's a valid string
-              onChange={(e) => setNewImageDescription(e.target.value)}
-              placeholder="Enter image description"
-              className="w-full mt-2 p-2 border rounded"
-            />
-          </div>
-        )}
-      </div>
-
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="fixed top-0 right-0 bottom-0 bg-gray-100 p-4 w-64 border-l z-40"
+        className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-40 flex flex-col"
       >
+        {/* Close Button at the Top Left, Adjusted Slightly to the Right */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg shadow shadow-inner border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
+        >
+          <div className="w-4 h-4 relative flex items-center justify-center">
+            <img
+              src="/assets/shared_components/close-drawer.svg"
+              alt="Close"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </button>
+
+        {/* Icon and Title */}
+        <div className="flex items-center mt-8 mb-4 space-x-4">
+          {/* Icon Container with 40px x 40px */}
+          <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
+            <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
+              <span className="text-gray-500 font-bold text-sm">i</span>
+            </div>
+          </div>
+          {block && (
+            <h1 className="text-lg font-semibold text-gray-800">
+              {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
+            </h1>
+          )}
+        </div>
+
         {block ? (
           <>
-            <button onClick={onClose} className="text-red-500 mb-4">
-              Close
-            </button>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Type
-              </label>
-              <select
-                value={newType}
-                onChange={(e) => setNewType(e.target.value as Block['type'])}
-                className="border rounded p-1 w-full"
-              >
-                <option value="DELAY">DELAY</option>
-                <option value="STEP">STEP</option>
-                <option value="PATH">PATH</option>
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <input
-                type="text"
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                className="border rounded p-1 w-full"
+            {/* Block Details Section */}
+
+            {/* Image & Icon Uploaders */}
+
+            {/* Actions */}
+
+            {/* Media Section moved to bottom */}
+            <div className="flex flex-col justify-end mt-auto h-[293px]">
+              <div className="justify-start items-center gap-0.5 mb-4">
+                <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                  Media
+                </div>
+              </div>
+              <img
+                ref={imageRef}
+                className="self-stretch h-[267px] px-6 py-4 rounded-xl border border-[#e4e7ec]"
+                src={block.image || 'https://via.placeholder.com/492x267'}
+                alt="Block Media"
+                onClick={handleImageClick}
               />
             </div>
-            <ImageUploader
-              onImageUpload={setImageFile}
-              initialImageUrl={block?.image || ''}
-            />
-            <IconUploader
-              onIconUpload={setIconFile} // Handle icon file
-              initialIconUrl={block?.icon || ''} // Display existing icon if any
-            />
-            <button
-              onClick={handleUpdate}
-              className="bg-blue-500 text-white py-2 px-4 rounded mb-2"
-            >
-              Update
-            </button>
-            <button
-              onClick={handleDelete}
-              className="bg-red-500 text-white py-2 px-4 rounded"
-            >
-              Delete
-            </button>
           </>
         ) : (
           <p>Select a block to see details</p>
