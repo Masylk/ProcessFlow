@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block, BlockType } from '@/types/block';
 import ImageUploader from './ImageUploader';
-import IconUploader from './IconUploader'; // Import the IconUploader component
+import IconUploader from './IconUploader';
+import TextEditor from './TextEditor';
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
@@ -47,7 +48,6 @@ export default function BlockDetailsSidebar({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore Escape if focused on the textarea
       if (
         e.key === 'Escape' &&
         document.activeElement !== textareaRef.current
@@ -63,7 +63,7 @@ export default function BlockDetailsSidebar({
         textareaRef.current &&
         !sidebarRef.current.contains(e.target as Node) &&
         !imageRef.current.contains(e.target as Node) &&
-        !textareaRef.current.contains(e.target as Node) // Exclude textarea
+        !textareaRef.current.contains(e.target as Node)
       ) {
         onClose();
       }
@@ -80,10 +80,10 @@ export default function BlockDetailsSidebar({
 
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     const rect = (e.target as HTMLImageElement).getBoundingClientRect();
-    const x = e.clientX - rect.left; // X-coordinate relative to the image
-    const y = e.clientY - rect.top; // Y-coordinate relative to the image
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    setClickPosition({ x, y }); // Update the single circle's position
+    setClickPosition({ x, y });
   };
 
   const handleUpdate = () => {
@@ -95,7 +95,7 @@ export default function BlockDetailsSidebar({
         imageDescription: newImageDescription,
         clickPosition,
       };
-      onUpdate(updatedBlock, imageFile || undefined, iconFile || undefined); // Pass iconFile
+      onUpdate(updatedBlock, imageFile || undefined, iconFile || undefined);
       onClose();
     }
   };
@@ -108,69 +108,97 @@ export default function BlockDetailsSidebar({
   };
 
   return (
-    <>
-      {/* Sidebar */}
-      <div
-        ref={sidebarRef}
-        className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-40 flex flex-col"
+    <div className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-40 flex flex-col">
+      <button
+        onClick={onClose}
+        className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg shadow shadow-inner border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
       >
-        {/* Close Button at the Top Left, Adjusted Slightly to the Right */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg shadow shadow-inner border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
-        >
-          <div className="w-4 h-4 relative flex items-center justify-center">
-            <img
-              src="/assets/shared_components/close-drawer.svg"
-              alt="Close"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </button>
+        <img
+          src="/assets/shared_components/close-drawer.svg"
+          alt="Close"
+          className="w-4 h-4"
+        />
+      </button>
 
-        {/* Icon and Title */}
-        <div className="flex items-center mt-8 mb-4 space-x-4">
-          {/* Icon Container with 40px x 40px */}
-          <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
-            <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
-              <span className="text-gray-500 font-bold text-sm">i</span>
-            </div>
+      <div className="flex items-center mt-8 mb-4 space-x-4">
+        <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
+          <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
+            <span className="text-gray-500 font-bold text-sm">i</span>
           </div>
-          {block && (
-            <h1 className="text-lg font-semibold text-gray-800">
-              {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
-            </h1>
-          )}
         </div>
-
-        {block ? (
-          <>
-            {/* Block Details Section */}
-
-            {/* Image & Icon Uploaders */}
-
-            {/* Actions */}
-
-            {/* Media Section moved to bottom */}
-            <div className="flex flex-col justify-end mt-auto h-[293px]">
-              <div className="justify-start items-center gap-0.5 mb-4">
-                <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
-                  Media
-                </div>
-              </div>
-              <img
-                ref={imageRef}
-                className="self-stretch h-[267px] px-6 py-4 rounded-xl border border-[#e4e7ec]"
-                src={block.image || 'https://via.placeholder.com/492x267'}
-                alt="Block Media"
-                onClick={handleImageClick}
-              />
-            </div>
-          </>
-        ) : (
-          <p>Select a block to see details</p>
+        {block && (
+          <h1 className="text-lg font-semibold text-gray-800">
+            {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
+          </h1>
         )}
       </div>
-    </>
+
+      {block && (
+        <>
+          {/* Information Section */}
+          <div className="border-t border-b border-[#e4e7ec] my-6 py-4">
+            <div className="h-36 justify-start items-start gap-6 inline-flex">
+              <div className="self-stretch flex-col justify-between items-start inline-flex">
+                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                  Assignee
+                </div>
+                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                  Last Modified
+                </div>
+                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                  Average time
+                </div>
+                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                  Type
+                </div>
+              </div>
+              <div className="h-36 flex-col justify-between items-start inline-flex">
+                <div className="h-[18px] justify-start items-center gap-2 inline-flex">
+                  <div className="px-1.5 py-0.5 bg-[#eef3ff] rounded-md border-[#c6d7fe] justify-start items-center flex">
+                    <div className="text-center text-[#3537cc] text-xs font-medium font-['Inter'] leading-[18px]">
+                      Human Resources
+                    </div>
+                  </div>
+                </div>
+                <div className="justify-start items-center gap-2 inline-flex">
+                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
+                    17/08/2024
+                  </div>
+                </div>
+                <div className="justify-start items-center gap-2 inline-flex">
+                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
+                    10min
+                  </div>
+                </div>
+                <div className="justify-start items-center gap-2 inline-flex">
+                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
+                    Manual
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Text Editor Section */}
+          <TextEditor value={newDescription} onChange={setNewDescription} />
+
+          {/* Media Section */}
+          <div className="flex flex-col justify-end mt-auto h-[293px]">
+            <div className="justify-start items-center gap-0.5 mb-4">
+              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                Media
+              </div>
+            </div>
+            <img
+              ref={imageRef}
+              className="self-stretch h-[267px] px-6 py-4 rounded-xl border border-[#e4e7ec]"
+              src={block.image || 'https://via.placeholder.com/492x267'}
+              alt="Block Media"
+              onClick={handleImageClick}
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
