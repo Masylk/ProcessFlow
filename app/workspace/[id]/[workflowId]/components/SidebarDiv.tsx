@@ -16,35 +16,9 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
   onSidebarEvent,
 }) => {
   const handleClick = () => {
-    const targetElement = document.getElementById(`block:${block.id}`);
-    if (targetElement) {
-      // Get the target element's bounding box
-      const rect = targetElement.getBoundingClientRect();
+    const targetElement = `block:${block.id}`;
 
-      onSidebarEvent({ type: SidebarEventType.FOCUS, focusPos: rect });
-      // Calculate the actual position within the canvas, considering the transform state
-      // const canvasX =
-      //   (rect.left + rect.width / 2 - window.innerWidth / 2) /
-      //     transformState.scale -
-      //   transformState.positionX;
-      // const canvasY =
-      //   (rect.top + rect.height / 2 - window.innerHeight / 2) /
-      //     transformState.scale -
-      //   transformState.positionY;
-
-      // // Apply the new position to center the target element
-      // const container = document.querySelector('.react-transform-wrapper');
-      // if (container) {
-      //   container.scrollBy({
-      //     left: canvasX,
-      //     top: canvasY,
-      //     behavior: 'smooth', // Smooth scrolling for better UX
-      //   });
-      //   console.log(`Scrolled to block:${block.id}`);
-      // }
-    } else {
-      console.log(`Element with ID block:${block.id} not found.`);
-    }
+    onSidebarEvent({ type: SidebarEventType.FOCUS, focusId: targetElement });
   };
 
   return (

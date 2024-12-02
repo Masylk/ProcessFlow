@@ -14,7 +14,7 @@ interface CanvasProps {
   initialPath: PathType;
   workspaceId: string;
   workflowId: string;
-  focusRect?: DOMRect | null;
+  focusId?: string | null;
   onCanvasEvent: (eventData: CanvasEvent) => void;
   onTransformChange: (state: TransformState) => void;
 }
@@ -23,7 +23,7 @@ export default function Canvas({
   initialPath,
   workspaceId,
   workflowId,
-  focusRect,
+  focusId,
   onCanvasEvent,
   onTransformChange,
 }: CanvasProps) {
@@ -272,7 +272,13 @@ export default function Canvas({
               // maxPositionX={500} // Set the maximum horizontal pan limit
               // maxPositionY={500} // Set the maximum vertical pan limit
             >
-              {({ zoomIn, zoomOut, resetTransform, setTransform }) => (
+              {({
+                zoomIn,
+                zoomOut,
+                resetTransform,
+                setTransform,
+                zoomToElement,
+              }) => (
                 <>
                   {/* Wrapper div to ensure correct positioning */}
                   <div className="relative w-full h-full">
@@ -288,8 +294,8 @@ export default function Canvas({
                     {/* Track Transform State */}
                     <TransformStateTracker
                       onTransformChange={onTransformChange}
-                      setTransform={setTransform}
-                      focusRect={focusRect}
+                      zoomToElement={zoomToElement}
+                      focusId={focusId}
                     />
 
                     {/* Content and Background */}

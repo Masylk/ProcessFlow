@@ -61,16 +61,15 @@ export default function EditorBlock({
     setOverlayVisible(true);
   };
 
-  // Default title fallback
   const defaultTitle = 'Untitled Block';
-
-  // Determine parent height based on the presence of an image
   const parentHeight = block.image ? 'h-[455px]' : 'h-[154px]';
 
   return (
     <div
       id={`block:${block.id}`}
-      className={`w-[481px] ${parentHeight} px-6 py-5 bg-white rounded-2xl shadow shadow-inner border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer`}
+      className={`w-[481px] ${
+        block.image ? 'h-[455px]' : 'h-auto'
+      } px-6 py-5 bg-white rounded-2xl shadow shadow-inner border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer`}
       onClick={handleClick}
     >
       {/* Header */}
@@ -90,7 +89,7 @@ export default function EditorBlock({
           {/* Title */}
           <div className="flex-col justify-start items-start gap-1 inline-flex">
             <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
-              {`${block.position + 1}. ${block.title || defaultTitle}`}
+              {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
             </h3>
           </div>
         </div>
@@ -113,24 +112,18 @@ export default function EditorBlock({
         </p>
       )}
 
-      {/* Image or Placeholder */}
-      {block.image ? (
+      {/* Image */}
+      {block.image && (
         <img
           src={block.image}
           alt="block image"
-          className="self-stretch h-[267px] px-6 py-4 rounded-xl border border-[#e4e7ec] object-cover cursor-pointer"
+          className="self-stretch h-[267px] rounded-xl border border-[#e4e7ec] object-cover cursor-pointer"
           onClick={handleImageClick}
         />
-      ) : (
-        <div className="self-stretch h-[10px] rounded-xl border border-[#e4e7ec] bg-white flex items-center justify-center">
-          <span className="text-[#667085] text-xs font-normal font-['Inter']">
-            No Image Available
-          </span>
-        </div>
       )}
 
       {/* Footer */}
-      <div className="w-full flex justify-between items-center">
+      <div className="w-full flex justify-between items-center mt-3">
         {/* Time */}
         <div className="h-[22px] px-2 py-0.5 bg-gray-50 rounded-full border border-[#e4e7ec] justify-start items-center flex">
           <span className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">

@@ -43,7 +43,7 @@ export interface SidebarEvent {
   type: SidebarEventType;
   pathId?: number;
   blocks?: Block[];
-  focusPos?: DOMRect;
+  focusId?: string;
 }
 
 export default function WorkflowPage() {
@@ -58,7 +58,7 @@ export default function WorkflowPage() {
   const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
     null
   );
-  const [focusRect, setFocusRect] = useState<DOMRect | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [sidebarPath, setSidebarPath] = useState<PathObject | null>(null);
   const [transformState, setTransformState] = useState<TransformState>({
     scale: 1,
@@ -134,8 +134,8 @@ export default function WorkflowPage() {
 
   const handleSidebarEvent = (evenData: SidebarEvent) => {
     console.log('sidebar event !');
-    if (evenData.type === SidebarEventType.FOCUS && evenData.focusPos) {
-      setFocusRect(evenData.focusPos);
+    if (evenData.type === SidebarEventType.FOCUS && evenData.focusId) {
+      setFocusId(evenData.focusId);
     }
     return null;
   };
@@ -512,7 +512,7 @@ export default function WorkflowPage() {
                   initialPath={path}
                   workspaceId={id}
                   workflowId={workflowId}
-                  focusRect={focusRect}
+                  focusId={focusId}
                   onCanvasEvent={handleCanvasEvent}
                   onTransformChange={handleTransformChange}
                 />
