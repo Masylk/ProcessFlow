@@ -15,9 +15,11 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
   transformState,
   onSidebarEvent,
 }) => {
-  const handleClick = () => {
-    const targetElement = `block:${block.id}`;
+  const handleClick = (event: React.MouseEvent) => {
+    event.stopPropagation(); // Stops the click event from propagating to parent elements
 
+    const targetElement = `block:${block.id}`;
+    console.log('target element is: ', targetElement);
     onSidebarEvent({ type: SidebarEventType.FOCUS, focusId: targetElement });
   };
 

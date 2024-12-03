@@ -132,10 +132,15 @@ export default function WorkflowPage() {
     router.back();
   };
 
-  const handleSidebarEvent = (evenData: SidebarEvent) => {
-    console.log('sidebar event !');
-    if (evenData.type === SidebarEventType.FOCUS && evenData.focusId) {
-      setFocusId(evenData.focusId);
+  const handleSidebarEvent = (eventData: SidebarEvent) => {
+    console.log('sidebar event!');
+    if (eventData.type === SidebarEventType.FOCUS && eventData.focusId) {
+      setFocusId(eventData.focusId);
+
+      // Reset focusId to null after 0.1 second
+      setTimeout(() => {
+        setFocusId(null);
+      }, 100);
     }
     return null;
   };

@@ -3,6 +3,9 @@ import { Block, BlockType } from '@/types/block';
 import ImageUploader from './ImageUploader';
 import IconUploader from './IconUploader';
 import TextEditor from './TextEditor';
+import BlockMediaVisualizer from './BlockMediaVisualizer';
+import MediaUploader from './MediaUploader';
+import BlockInformations from './BlockInformations';
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
@@ -139,48 +142,7 @@ export default function BlockDetailsSidebar({
       {block && (
         <>
           {/* Information Section */}
-          <div className="border-t border-b border-[#e4e7ec] my-4 py-4">
-            <div className="h-36 justify-start items-start gap-6 inline-flex">
-              <div className="self-stretch flex-col justify-between items-start inline-flex">
-                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-                  Assignee
-                </div>
-                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-                  Last Modified
-                </div>
-                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-                  Average time
-                </div>
-                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-                  Type
-                </div>
-              </div>
-              <div className="h-36 flex-col justify-between items-start inline-flex">
-                <div className="h-[18px] justify-start items-center gap-2 inline-flex">
-                  <div className="px-1.5 py-0.5 bg-[#eef3ff] rounded-md border-[#c6d7fe] justify-start items-center flex">
-                    <div className="text-center text-[#3537cc] text-xs font-medium font-['Inter'] leading-[18px]">
-                      Human Resources
-                    </div>
-                  </div>
-                </div>
-                <div className="justify-start items-center gap-2 inline-flex">
-                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
-                    17/08/2024
-                  </div>
-                </div>
-                <div className="justify-start items-center gap-2 inline-flex">
-                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
-                    10min
-                  </div>
-                </div>
-                <div className="justify-start items-center gap-2 inline-flex">
-                  <div className="text-center text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
-                    Manual
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <BlockInformations block={block} />
 
           {/* Description Section */}
           <div className="mt-0">
@@ -197,39 +159,18 @@ export default function BlockDetailsSidebar({
             </div>
 
             {block.image ? (
-              <img
-                className="self-stretch h-[267px] rounded-xl border border-[#e4e7ec]"
-                src={block.image}
-                alt="Block Media"
-                onClick={handleImageClick}
+              <BlockMediaVisualizer
+                mediaSrc={block.image}
+                altText="Block Media"
+                onMediaClick={handleImageClick}
               />
             ) : (
-              <div className="h-[126px] px-6 py-4 bg-white rounded-xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-1">
-                <div className="self-stretch h-[94px] flex flex-col justify-start items-center gap-3">
-                  <div className="w-10 h-10 p-2.5 bg-white rounded-lg shadow shadow-inner border border-[#e4e7ec] flex justify-center items-center">
-                    <div className="w-5 h-5 bg-gray-200 rounded-full flex justify-center items-center">
-                      <img
-                        src="/assets/shared_components/upload-cloud-icon.svg"
-                        alt="Upload Icon"
-                        className="w-4 h-4"
-                      />
-                    </div>
-                  </div>
-                  <div className="self-stretch h-[42px] flex flex-col justify-start items-center gap-1">
-                    <div className="self-stretch flex justify-center items-center gap-3">
-                      <div className="text-[#374c99] text-sm font-semibold leading-tight">
-                        Click to upload
-                      </div>
-                      <div className="text-[#475467] text-sm font-normal leading-tight">
-                        or drag and drop
-                      </div>
-                    </div>
-                    <div className="self-stretch text-center text-[#475467] text-xs font-normal leading-[18px]">
-                      SVG, PNG, JPG, GIF, or MP4
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <MediaUploader
+                onUpload={(file) => {
+                  setImageFile(file);
+                  console.log('Uploaded file:', file);
+                }}
+              />
             )}
           </div>
         </>

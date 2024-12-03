@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSidebarEvent,
 }) => {
   return (
-    <div className="flex flex-col h-full p-4 bg-gray-200">
+    <div className="flex flex-col overflow-auto h-full p-4 bg-gray-200">
       <button
         onClick={onHideSidebar}
         className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors mb-4 self-end"
