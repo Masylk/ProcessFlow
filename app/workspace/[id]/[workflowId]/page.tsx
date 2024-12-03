@@ -192,7 +192,6 @@ export default function WorkflowPage() {
         sidebarPath.blocks &&
         eventData.blocks
       ) {
-        console.log('path creation');
         const newBlocks = eventData.blocks;
         const updatedBlocks = createBlocks(
           sidebarPath.blocks,

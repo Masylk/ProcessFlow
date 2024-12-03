@@ -4,6 +4,7 @@ import { Action } from './action'; // Import Action type if needed
 import { Path } from './path';
 
 // Represents a Block, which might include different types of blocks
+// Represents a Block, which might include different types of blocks
 export interface Block {
   id: number;
   type: BlockType; // Use BlockType enum
@@ -11,18 +12,21 @@ export interface Block {
   title: string;
   icon?: string; // Optional field
   description?: string; // Optional field
-  image?: string;
-  imageDescription?: string;
-  clickPosition?: { x: number; y: number } | null;
+  image?: string; // Optional, URL for an image
+  imageDescription?: string; // Optional, description for the image
+  clickPosition?: { x: number; y: number } | null; // Optional, coordinates of click position
+  lastModified?: Date; // Optional, last modified date
+  averageTime?: string; // Optional, average time for the block
+  taskType?: 'MANUAL' | 'AUTOMATIC'; // Optional, enum values as string literals
   workflowId: number;
   workflow?: Workflow; // Optional, representing the workflow this block belongs to
-  pathBlock?: PathBlock; // Optional, if the block has a PathBlock
-  stepBlock?: StepBlock; // Optional, if the block has a StepBlock
-  delayBlock?: DelayBlock; // Optional, if the block has a DelayBlock
   actions?: Action[]; // Optional, actions related to this block
-  pathId?: number; // Optional field for the path relationship
+  delayBlock?: DelayBlock; // Optional, if the block has a DelayBlock
+  stepBlock?: StepBlock; // Optional, if the block has a StepBlock
+  pathBlock?: PathBlock; // Optional, if the block has a PathBlock
+  pathId: number; // Required field for the path relationship
   path?: Path; // Optional, the path this block belongs to
-  coordinates?: { x: number; y: number } | null;
+  coordinates?: { x: number; y: number } | null; // Optional, block coordinates
 }
 
 // Enum for Block types

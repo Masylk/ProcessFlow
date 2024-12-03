@@ -95,10 +95,6 @@ const BlockList: React.FC<BlockListProps> = ({
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    console.log(transformState);
-  }, [transformState]);
-
-  useEffect(() => {
     setBlockList(blocks);
   }, [blocks]);
 

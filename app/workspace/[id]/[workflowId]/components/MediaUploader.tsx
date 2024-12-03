@@ -15,8 +15,8 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
   return (
     <div className="h-[126px] px-6 py-4 bg-white rounded-xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-1">
       <div className="self-stretch h-[94px] flex flex-col justify-start items-center gap-3">
-        <div className="w-10 h-10 p-2.5 bg-white rounded-lg shadow shadow-inner border border-[#e4e7ec] flex justify-center items-center">
-          <div className="w-5 h-5 bg-gray-200 rounded-full flex justify-center items-center">
+        <div className="w-10 h-10 p-2.5 bg-white rounded-lg border border-[#e4e7ec] flex justify-center items-center">
+          <div className="w-5 h-5 rounded-full flex justify-center items-center">
             <img
               src="/assets/shared_components/upload-cloud-icon.svg"
               alt="Upload Icon"

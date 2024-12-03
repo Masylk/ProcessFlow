@@ -3,6 +3,7 @@ import BlockList from './BlockList';
 import { Block } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '../page';
 import { useTransformContext } from 'react-zoom-pan-pinch';
+import { title } from 'process';
 
 interface PathData {
   id: number;
@@ -277,10 +278,13 @@ const Path: React.FC<PathProps> = ({
         body: JSON.stringify({
           type: updatedBlock.type,
           position: updatedBlock.position,
+          title: updatedBlock.title,
           icon: iconUrl || updatedBlock.icon, // Include the icon URL or keep existing one
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
+          averageTime: updatedBlock.averageTime,
+          taskType: updatedBlock.taskType,
           image: imageUrl || updatedBlock.image, // Include the image URL or keep existing one
           imageDescription: updatedBlock.imageDescription,
           clickPosition: updatedBlock.clickPosition, // Include the updated clickPosition
@@ -324,6 +328,15 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.imageDescription !== undefined && {
                 imageDescription: updatedBlockData.imageDescription,
+              }),
+              ...(updatedBlockData.title !== undefined && {
+                title: updatedBlockData.title,
+              }),
+              ...(updatedBlockData.averageTime !== undefined && {
+                averageTime: updatedBlockData.averageTime,
+              }),
+              ...(updatedBlockData.taskType !== undefined && {
+                taskType: updatedBlockData.taskType,
               }),
             };
           });

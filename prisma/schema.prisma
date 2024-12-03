@@ -77,17 +77,23 @@ model Path {
   workflow    Workflow     @relation("WorkflowPaths", fields: [workflowId], references: [id])
 }
 
+enum TaskType {
+  MANUAL
+  AUTOMATIC
+}
+
 model Block {
   id                Int          @id @default(autoincrement())
   type              BlockType
   position          Int
+  title             String?      // Optional field for the title
   icon              String?      // Optional field
   description       String?      // Optional field
   image             String?      // Optional field for image URL
   imageDescription  String?
   lastModified      DateTime?
-  AverageTime       Int?
-  TaskType          String?
+  averageTime       String?
+  taskType          TaskType?    // Enum field, optional
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]
@@ -98,6 +104,7 @@ model Block {
   path              Path         @relation("PathBlocks", fields: [pathId], references: [id])
   clickPosition     Json?        // Optional JSON field for storing click position
 }
+
 
 
 model PathBlock {

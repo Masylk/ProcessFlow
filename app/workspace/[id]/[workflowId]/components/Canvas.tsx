@@ -360,7 +360,7 @@ export default function Canvas({
           onClose={handleCloseSidebar}
           onUpdate={async (updatedBlock, imageFile?, iconFile?) => {
             await handleUpdateBlock(updatedBlock, imageFile, iconFile);
-            handleCloseSidebar();
+            // handleCloseSidebar();
           }}
           onDelete={async (blockId) => {
             await handleDeleteBlock(blockId);

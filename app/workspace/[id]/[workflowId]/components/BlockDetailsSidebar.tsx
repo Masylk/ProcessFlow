@@ -20,34 +20,19 @@ export default function BlockDetailsSidebar({
   onUpdate,
   onDelete,
 }: BlockDetailsSidebarProps) {
-  const [newType, setNewType] = useState<Block['type']>(
-    block?.type || BlockType.STEP
-  );
-  const [newDescription, setNewDescription] = useState(
-    block?.description || ''
-  );
-  const [newImageDescription, setNewImageDescription] = useState<string>(
-    block?.imageDescription || ''
-  );
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [iconFile, setIconFile] = useState<File | null>(null); // Track the icon file
-  const [clickPosition, setClickPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(block?.clickPosition || null);
+  const [imageFile, setImageFile] = useState<File | undefined>(undefined);
+  const [iconFile, setIconFile] = useState<File | undefined>(undefined); // Track the icon file
 
+  const [updateBlock, setUpdateBlock] = useState<Block | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (block) {
-      setNewType(block.type);
-      setNewDescription(block.description || '');
-      setNewImageDescription(block.imageDescription || '');
-      setClickPosition(block?.clickPosition || null);
+      setUpdateBlock(block);
     }
-  }, [block]);
+  }, [block]); // This ensures the updateBlock state will change when the block prop changes
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -81,25 +66,19 @@ export default function BlockDetailsSidebar({
     };
   }, [onClose]);
 
-  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    const rect = (e.target as HTMLImageElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    setClickPosition({ x, y });
-  };
-
-  const handleUpdate = () => {
+  const handleUpdate = (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => {
     if (block) {
-      const updatedBlock: Block = {
-        ...block,
-        type: newType as Block['type'],
-        description: newDescription,
-        imageDescription: newImageDescription,
-        clickPosition,
-      };
+      // Use a callback to ensure you're updating based on the previous state
+      setUpdateBlock((prevBlock) => {
+        const newBlock = { ...prevBlock, ...updatedBlock };
+        // You can further modify the block if needed before returning
+        return newBlock;
+      });
       onUpdate(updatedBlock, imageFile || undefined, iconFile || undefined);
-      onClose();
     }
   };
 
@@ -117,7 +96,7 @@ export default function BlockDetailsSidebar({
     >
       <button
         onClick={onClose}
-        className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg shadow shadow-inner border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
+        className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
       >
         <img
           src="/assets/shared_components/close-drawer.svg"
@@ -132,24 +111,34 @@ export default function BlockDetailsSidebar({
             <span className="text-gray-500 font-bold text-sm">i</span>
           </div>
         </div>
-        {block && (
+        {updateBlock && (
           <h1 className="text-lg font-semibold text-gray-800">
-            {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
+            {`${updateBlock.position + 1}. ${
+              updateBlock.title || 'Untitled Block'
+            }`}
           </h1>
         )}
       </div>
 
-      {block && (
+      {updateBlock && (
         <>
           {/* Information Section */}
-          <BlockInformations block={block} />
+          <BlockInformations
+            block={updateBlock}
+            onUpdate={(updatedFields) => {
+              if (updateBlock) {
+                const updatedBlock = { ...updateBlock, ...updatedFields };
+                handleUpdate(updatedBlock, imageFile, iconFile);
+              }
+            }}
+          />
 
           {/* Description Section */}
           <div className="mt-0">
             <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-3">
               Description
             </div>
-            <TextEditor value={newDescription} onChange={setNewDescription} />
+            {/* <TextEditor value={newDescription} onChange={setNewDescription} /> */}
           </div>
 
           {/* Media Section */}
@@ -158,17 +147,16 @@ export default function BlockDetailsSidebar({
               Media
             </div>
 
-            {block.image ? (
+            {updateBlock.image ? (
               <BlockMediaVisualizer
-                mediaSrc={block.image}
+                mediaSrc={updateBlock.image}
                 altText="Block Media"
-                onMediaClick={handleImageClick}
+                // onMediaClick={handleImageClick}
               />
             ) : (
               <MediaUploader
                 onUpload={(file) => {
                   setImageFile(file);
-                  console.log('Uploaded file:', file);
                 }}
               />
             )}
