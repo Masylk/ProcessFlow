@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import SidebarPath from './SidebarPath';
-import { BlockType } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import { TransformState } from '@/types/transformstate';
 import { SidebarEvent } from '../page';
 
@@ -17,6 +17,7 @@ export interface PathObject {
   id: number;
   name: string;
   blocks?: SidebarBlock[];
+  handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>;
 }
 
 interface SidebarProps {
@@ -48,6 +49,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         path={initialPath}
         transformState={transformState}
         onSidebarEvent={onSidebarEvent}
+        workspaceId={workspaceId}
+        workflowId={workflowId}
       />
     </div>
   );

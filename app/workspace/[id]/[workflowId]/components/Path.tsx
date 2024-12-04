@@ -100,6 +100,7 @@ const Path: React.FC<PathProps> = ({
               pathId: pathId,
               pathName: fetchedPathData.name,
               blocks: fetchedPathData.blocks,
+              handleBlocksReorder: handleBlocksReorder,
             });
           } else {
             setBlockList([]);

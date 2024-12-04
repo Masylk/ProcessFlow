@@ -13,7 +13,7 @@ import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
-import ButtonCTA from '@/app/components/ButtonCTA';
+import { PathObject } from './Sidebar';
 
 interface BlockListProps {
   blocks: Block[];
@@ -25,7 +25,7 @@ interface BlockListProps {
     deleteBlockFn: (blockId: number) => Promise<void>
   ) => void;
   onAddBlockClick: (position: number) => void;
-  onBlocksReorder: (reorderedBlocks: Block[]) => void;
+  onBlocksReorder: (reorderedBlocks: Block[]) => Promise<void>;
   handleBlockClick: (block: Block) => void;
   closeDetailSidebar: () => void;
   handleAddBlock: (
@@ -104,12 +104,13 @@ const BlockList: React.FC<BlockListProps> = ({
         const response = await fetch(`/api/blocks/${pathBlockId}/paths`);
         if (response.ok) {
           const paths: PathType[] = await response.json();
-          console.log('subpathcreation ', pathBlockId);
+
           onCanvasEvent({
             type: CanvasEventType.SUBPATH_CREATION,
             pathId: pathBlockId,
             blockId: blockId,
             subpaths: paths,
+            handleBlocksReorder: onBlocksReorder,
           });
           setPathsByBlockId((prev) => ({
             ...prev,

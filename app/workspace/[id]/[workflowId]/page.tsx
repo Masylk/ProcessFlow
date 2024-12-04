@@ -37,6 +37,7 @@ export interface CanvasEvent {
   blocks?: Block[];
   subpaths?: PathObject[];
   coordinates?: { x: number; y: number };
+  handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>;
 }
 
 export interface SidebarEvent {
@@ -160,7 +161,8 @@ export default function WorkflowPage() {
       eventData.type === CanvasEventType.PATH_CREATION &&
       !sidebarPath &&
       eventData.blocks &&
-      eventData.pathName
+      eventData.pathName &&
+      eventData.handleBlocksReorder
     ) {
       const newSidebarPath: PathObject = {
         id: eventData.pathId,
@@ -172,6 +174,7 @@ export default function WorkflowPage() {
           icon: block.icon,
           description: block.description,
         })),
+        handleBlocksReorder: eventData.handleBlocksReorder,
       };
       return newSidebarPath;
     } else if (sidebarPath) {
@@ -179,8 +182,12 @@ export default function WorkflowPage() {
         eventData.type === CanvasEventType.SUBPATH_CREATION &&
         eventData.subpaths &&
         eventData.blockId &&
+        eventData.handleBlocksReorder &&
         sidebarPath.blocks
       ) {
+        eventData.subpaths.forEach((subpath) => {
+          subpath.handleBlocksReorder = eventData.handleBlocksReorder;
+        });
         const updatedSidebarPath = updateBlockInNestedPaths(
           sidebarPath.blocks,
           eventData.blockId,
@@ -190,15 +197,21 @@ export default function WorkflowPage() {
       } else if (
         eventData.type === CanvasEventType.PATH_CREATION &&
         sidebarPath.blocks &&
-        eventData.blocks
+        eventData.blocks &&
+        eventData.handleBlocksReorder
       ) {
         const newBlocks = eventData.blocks;
         const updatedBlocks = createBlocks(
           sidebarPath.blocks,
           eventData.pathId,
-          newBlocks
+          newBlocks,
+          eventData.handleBlocksReorder
         );
-        return { ...sidebarPath, blocks: updatedBlocks };
+        return {
+          ...sidebarPath,
+          blocks: updatedBlocks,
+          handleBlocksReorder: eventData.handleBlocksReorder,
+        };
       } else if (
         (eventData.type === CanvasEventType.BLOCK_ADD ||
           eventData.type === CanvasEventType.BLOCK_REORDER ||
@@ -390,7 +403,8 @@ export default function WorkflowPage() {
   const createBlocks = (
     blocks: SidebarBlock[],
     pathId: number,
-    newBlocks: Block[]
+    newBlocks: Block[],
+    handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>
   ): SidebarBlock[] => {
     return blocks.map((block) => {
       if (block.subpaths) {
@@ -413,6 +427,7 @@ export default function WorkflowPage() {
                           description: newBlock.description,
                         })),
                       ],
+                handleBlocksReorder: handleBlocksReorder,
               };
             }
             return {
