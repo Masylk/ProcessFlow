@@ -94,6 +94,7 @@ export default function BlockDetailsSidebar({
       className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-40 flex flex-col"
       ref={sidebarRef}
     >
+      {/* Close Button */}
       <button
         onClick={onClose}
         className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
@@ -105,7 +106,34 @@ export default function BlockDetailsSidebar({
         />
       </button>
 
-      <div className="flex items-center mt-8 mb-4 space-x-4">
+      {/* Container for the buttons to be aligned to the far right */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        {/* Link Button */}
+        <button
+          onClick={() => console.log('Link button clicked')} // Placeholder action
+          className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
+        >
+          <img
+            src="/assets/shared_components/link-icon.svg"
+            alt="Link"
+            className="w-4 h-4"
+          />
+        </button>
+
+        {/* Message Button */}
+        <button
+          onClick={() => console.log('Message button clicked')} // Placeholder action
+          className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
+        >
+          <img
+            src="/assets/shared_components/message-icon.svg"
+            alt="Message"
+            className="w-4 h-4"
+          />
+        </button>
+      </div>
+
+      {/* <div className="flex items-center mt-8 mb-4 space-x-4">
         <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
           <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
             <span className="text-gray-500 font-bold text-sm">i</span>
@@ -118,7 +146,7 @@ export default function BlockDetailsSidebar({
             }`}
           </h1>
         )}
-      </div>
+      </div> */}
 
       {updateBlock && (
         <>
