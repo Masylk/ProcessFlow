@@ -12,15 +12,10 @@ interface EditorBlockProps {
   ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockdata: Block) => void;
+  isFocused: boolean;
 }
 
-const ImageOverlay = ({
-  src,
-  onClose,
-}: {
-  src: string;
-  onClose: () => void;
-}) => {
+const ImageOverlay = ({ onClose }: { onClose: () => void }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -31,16 +26,9 @@ const ImageOverlay = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center"
+      className="fixed w-[50000vw] h-[50000vh]  left-[-20000vw] top-[-20000vh] inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center"
       onClick={onClose}
-    >
-      <img
-        src={src}
-        alt="Full screen"
-        className="max-w-2/3 max-h-2/3 object-cover rounded shadow-lg"
-        onClick={(e) => e.stopPropagation()} // Prevents closing when clicking on the image
-      />
-    </div>
+    ></div>
   );
 };
 
@@ -50,26 +38,20 @@ export default function EditorBlock({
   handleAddBlockFn,
   handleDeleteBlockFn,
   copyBlockFn,
+  isFocused,
 }: EditorBlockProps) {
-  const [isOverlayVisible, setOverlayVisible] = useState(false);
-
   const handleClick = (event: React.MouseEvent) => {
     onClick(block, event);
   };
-
-  const handleImageClick = (event: React.MouseEvent) => {
-    setOverlayVisible(true);
-  };
-
-  const defaultTitle = 'Untitled Block';
-  const parentHeight = block.image ? 'h-[455px]' : 'h-[154px]';
 
   return (
     <div
       id={`block:${block.id}`}
       className={`w-[481px] ${
         block.image ? 'h-[455px]' : 'h-auto'
-      } px-6 py-5 bg-white rounded-2xl shadow shadow-inner border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer`}
+      } px-6 py-5 rounded-2xl bg-white border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer ${
+        isFocused ? 'z-40' : 'z-10'
+      } relative`}
       onClick={handleClick}
     >
       {/* Header */}
@@ -118,7 +100,6 @@ export default function EditorBlock({
           src={block.image}
           alt="block image"
           className="self-stretch h-[267px] rounded-xl border border-[#e4e7ec] object-cover cursor-pointer"
-          onClick={handleImageClick}
         />
       )}
 
@@ -139,13 +120,6 @@ export default function EditorBlock({
           </span>
         </div>
       </div>
-
-      {isOverlayVisible && block.image && (
-        <ImageOverlay
-          src={block.image}
-          onClose={() => setOverlayVisible(false)}
-        />
-      )}
     </div>
   );
 }

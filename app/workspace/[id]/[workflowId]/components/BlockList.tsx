@@ -13,7 +13,7 @@ import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
-import { PathObject } from './Sidebar';
+import ImageOverlay from './ImageOverlay';
 
 interface BlockListProps {
   blocks: Block[];
@@ -89,10 +89,14 @@ const BlockList: React.FC<BlockListProps> = ({
     Record<number, PathType[]>
   >({});
   const [draggingBlockId, setDraggingBlockId] = useState<number | null>(null);
+  const [focusedBlockId, setFocusedBlockId] = useState<number | null>(null);
   const { transformState } = useTransformContext();
 
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // New state for overlay visibility
+  const [overlayVisible, setOverlayVisible] = useState(false);
 
   useEffect(() => {
     setBlockList(blocks);
@@ -110,7 +114,6 @@ const BlockList: React.FC<BlockListProps> = ({
             pathId: pathBlockId,
             blockId: blockId,
             subpaths: paths,
-            handleBlocksReorder: onBlocksReorder,
           });
           setPathsByBlockId((prev) => ({
             ...prev,
@@ -135,6 +138,17 @@ const BlockList: React.FC<BlockListProps> = ({
     });
   }, [blockList, pathsByBlockId]);
 
+  const handleClick = (block: Block, event: React.MouseEvent) => {
+    setFocusedBlockId(block.id);
+    setOverlayVisible(true); // Show overlay on block click
+    setPathFn(pathId, block.position, handleAddBlockFn);
+    handleBlockClick(block);
+  };
+
+  const handleOverlayClose = () => {
+    setOverlayVisible(false); // Close overlay
+  };
+
   const handleDragStart = (start: DragStart) => {
     setDraggingBlockId(Number(start.draggableId));
     setIsDragging(true);
@@ -155,43 +169,11 @@ const BlockList: React.FC<BlockListProps> = ({
     setBlockList(reorderedBlocks);
 
     try {
-      onBlocksReorder(reorderedBlocks);
+      await onBlocksReorder(reorderedBlocks);
     } catch (error) {
       console.error('Failed to update block order:', error);
     }
   };
-
-  const handleMouseMove = (event: MouseEvent) => {
-    // Include scroll position offsets
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-
-    if (isDragging) {
-      // Adjust the offsets according to zoom level
-      let baseOffsetX = 70;
-      let baseOffsetY = 180;
-
-      // Apply zoom scaling to the offsets
-      const offsetX = baseOffsetX;
-      const offsetY = baseOffsetY;
-
-      const adjustedX =
-        (event.clientX + scrollX - transformState.positionX - offsetX) /
-        transformState.scale;
-      const adjustedY =
-        (event.clientY + scrollY - transformState.positionY - offsetY) /
-        transformState.scale;
-
-      setMousePosition({ x: adjustedX, y: adjustedY });
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isDragging]);
 
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
@@ -210,9 +192,7 @@ const BlockList: React.FC<BlockListProps> = ({
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
-              className={`flex flex-col w-96 items-center ${
-                draggingBlockId === block.id ? draggingClass : ''
-              }`}
+              className={`flex flex-col w-96 items-center ${draggingClass}`}
             >
               <EditorBlock
                 block={block}
@@ -220,6 +200,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 handleDeleteBlockFn={handleDeleteBlockFn}
                 copyBlockFn={copyBlockFn}
                 onClick={handleClick}
+                isFocused={focusedBlockId === block.id} // Check if this block is focused
               />
 
               {paths && (
@@ -232,7 +213,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       workflowId={block.workflowId}
                       onBlockClick={onBlockClick}
                       closeDetailSidebar={closeDetailSidebar}
-                      handleAddBlock={handleAddBlock} // Passing handleAddBlock to Path
+                      handleAddBlock={handleAddBlock}
                       disableZoom={disableZoom}
                       copyBlockFn={copyBlockFn}
                       setPathFn={setPathFn}
@@ -254,55 +235,35 @@ const BlockList: React.FC<BlockListProps> = ({
     });
   };
 
-  const handleClick = (block: Block, event: React.MouseEvent) => {
-    // event.stopPropagation();
-    setPathFn(pathId, block.position, handleAddBlockFn);
-    handleBlockClick(block);
-  };
-
   return (
-    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <StrictModeDroppable droppableId="blocks">
-        {(provided) => (
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className="flex justify-center overflow-visible w-full"
-          >
-            <div>
-              {renderBlocksWithOptions(blockList)}
-              <div>{provided.placeholder}</div>
-              {blockList.length === 0 && (
-                <div>
-                  <AddBlock
-                    id={0}
-                    onAdd={() => onAddBlockClick(0)}
-                    label="Add Block"
-                  />
-                </div>
-              )}
-            </div>
-            {/* Div that follows the mouse on Drag and Drop*/}
+    <div>
+      {overlayVisible && <ImageOverlay onClose={handleOverlayClose} />}
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <StrictModeDroppable droppableId="blocks">
+          {(provided) => (
             <div
-              style={{
-                position: 'absolute',
-                left: mousePosition.x + 10,
-                top: mousePosition.y + 10,
-                backgroundColor: 'rgba(200, 200, 200, 0.8)',
-                padding: '8px',
-                borderRadius: '4px',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
-                pointerEvents: 'none', // Prevent blocking mouse events
-                opacity: isDragging ? 1 : 0, // Control visibility
-                transition: 'opacity 0.2s ease', // Smooth transition
-              }}
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex justify-center overflow-visible w-full"
             >
-              <p>Dragging a block...</p>
+              <div>
+                {renderBlocksWithOptions(blockList)}
+                <div>{provided.placeholder}</div>
+                {blockList.length === 0 && (
+                  <div>
+                    <AddBlock
+                      id={0}
+                      onAdd={() => onAddBlockClick(0)}
+                      label="Add Block"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </StrictModeDroppable>
-    </DragDropContext>
+          )}
+        </StrictModeDroppable>
+      </DragDropContext>
+    </div>
   );
 };
 

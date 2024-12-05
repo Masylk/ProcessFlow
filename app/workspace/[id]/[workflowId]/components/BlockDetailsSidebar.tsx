@@ -91,7 +91,7 @@ export default function BlockDetailsSidebar({
 
   return (
     <div
-      className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-40 flex flex-col"
+      className="overflow-hidden absolute top-[-3vh] right-6 h-[94vh] w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-20 flex flex-col"
       ref={sidebarRef}
     >
       {/* Close Button */}
@@ -132,21 +132,6 @@ export default function BlockDetailsSidebar({
           />
         </button>
       </div>
-
-      {/* <div className="flex items-center mt-8 mb-4 space-x-4">
-        <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
-          <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
-            <span className="text-gray-500 font-bold text-sm">i</span>
-          </div>
-        </div>
-        {updateBlock && (
-          <h1 className="text-lg font-semibold text-gray-800">
-            {`${updateBlock.position + 1}. ${
-              updateBlock.title || 'Untitled Block'
-            }`}
-          </h1>
-        )}
-      </div> */}
 
       {updateBlock && (
         <>

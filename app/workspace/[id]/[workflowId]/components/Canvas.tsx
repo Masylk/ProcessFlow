@@ -283,7 +283,7 @@ export default function Canvas({
                   {/* Wrapper div to ensure correct positioning */}
                   <div className="relative w-full h-full">
                     {/* ZoomBar positioned slightly to the left from the right edge */}
-                    <div className="absolute right-10 top-2 p-4 z-10">
+                    <div className="absolute right-10 top-2 p-4 z-20">
                       <ZoomBar
                         zoomIn={zoomIn}
                         zoomOut={zoomOut}
@@ -314,7 +314,7 @@ export default function Canvas({
                       <div className="relative w-full h-full">
                         {/* Background pattern */}
                         <div
-                          className="absolute inset-0 -z-10"
+                          className="absolute inset-0 z-10"
                           style={{
                             width: '50000vw', // Background is much larger than the content area
                             height: '50000vh',
@@ -355,18 +355,20 @@ export default function Canvas({
       </div>
 
       {selectedBlock && handleUpdateBlock && handleDeleteBlock && (
-        <BlockDetailsSidebar
-          block={selectedBlock}
-          onClose={handleCloseSidebar}
-          onUpdate={async (updatedBlock, imageFile?, iconFile?) => {
-            await handleUpdateBlock(updatedBlock, imageFile, iconFile);
-            // handleCloseSidebar();
-          }}
-          onDelete={async (blockId) => {
-            await handleDeleteBlock(blockId);
-            handleCloseSidebar();
-          }}
-        />
+        <>
+          <BlockDetailsSidebar
+            block={selectedBlock}
+            onClose={handleCloseSidebar}
+            onUpdate={async (updatedBlock, imageFile?, iconFile?) => {
+              await handleUpdateBlock(updatedBlock, imageFile, iconFile);
+              // handleCloseSidebar();
+            }}
+            onDelete={async (blockId) => {
+              await handleDeleteBlock(blockId);
+              handleCloseSidebar();
+            }}
+          />
+        </>
       )}
 
       {isAddBlockFormOpen && addBlockPosition !== null && (

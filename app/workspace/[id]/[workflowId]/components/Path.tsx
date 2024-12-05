@@ -74,13 +74,6 @@ const Path: React.FC<PathProps> = ({
   // Get transform state from context
   const { transformState } = useTransformContext();
 
-  // Log the transform state whenever it changes
-  useEffect(() => {
-    if (transformState) {
-      console.log('Current Transform State:', transformState);
-    }
-  }, [transformState]); // Re-run whenever transformState changes
-
   useEffect(() => {
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
     const fetchPathData = async () => {
@@ -133,6 +126,9 @@ const Path: React.FC<PathProps> = ({
       position: index,
     }));
 
+    console.log('path id: ', pathId);
+    console.log('original blocklist: ', blockList);
+    console.log('path data: ', pathData);
     try {
       const response = await fetch(
         `/api/workflows/${workflowId}/reorder-blocks`,
@@ -146,15 +142,28 @@ const Path: React.FC<PathProps> = ({
       );
 
       if (response.ok) {
-        console.log(reorderedBlocks);
-        setBlockList(reorderedBlocks);
-        if (pathData)
+        // Create a new reordered list using a map and find
+        const reorderedBlockList = reorderedBlocks.map((reorderedBlock) =>
+          blockList.find((block) => block.id === reorderedBlock.id)
+        );
+
+        console.log('reordered blocks param: ', reorderedBlocks);
+        console.log('reordered blocklist: ', reorderedBlockList);
+        // Check if all blocks were found and ensure the array is new
+        if (reorderedBlockList.every((block) => block !== undefined)) {
+          setBlockList([...(reorderedBlockList as Block[])]); // Create a new array reference
+        } else {
+          console.error('Some blocks from the reordered list were not found.');
+        }
+
+        if (pathData) {
           onCanvasEvent({
             type: CanvasEventType.BLOCK_REORDER,
             pathId: pathId,
             pathName: pathData.name,
-            blocks: reorderedBlocks,
+            blocks: reorderedBlockList as Block[],
           });
+        }
       } else {
         console.error('Failed to update block positions');
       }

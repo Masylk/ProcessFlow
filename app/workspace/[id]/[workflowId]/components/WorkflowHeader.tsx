@@ -24,7 +24,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   ];
 
   return (
-    <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center">
+    <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
       {/* Back to Dashboard Section */}
       <ButtonCTA
         start_icon="/assets/shared_components/arrow-left.svg"

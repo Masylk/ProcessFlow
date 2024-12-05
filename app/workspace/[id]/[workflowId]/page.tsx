@@ -182,12 +182,8 @@ export default function WorkflowPage() {
         eventData.type === CanvasEventType.SUBPATH_CREATION &&
         eventData.subpaths &&
         eventData.blockId &&
-        eventData.handleBlocksReorder &&
         sidebarPath.blocks
       ) {
-        eventData.subpaths.forEach((subpath) => {
-          subpath.handleBlocksReorder = eventData.handleBlocksReorder;
-        });
         const updatedSidebarPath = updateBlockInNestedPaths(
           sidebarPath.blocks,
           eventData.blockId,
@@ -210,7 +206,6 @@ export default function WorkflowPage() {
         return {
           ...sidebarPath,
           blocks: updatedBlocks,
-          handleBlocksReorder: eventData.handleBlocksReorder,
         };
       } else if (
         (eventData.type === CanvasEventType.BLOCK_ADD ||
