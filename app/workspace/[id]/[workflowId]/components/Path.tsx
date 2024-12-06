@@ -93,7 +93,8 @@ const Path: React.FC<PathProps> = ({
               pathId: pathId,
               pathName: fetchedPathData.name,
               blocks: fetchedPathData.blocks,
-              handleBlocksReorder: handleBlocksReorder,
+              handleBlocksReorder: async (reorderedBlocks) =>
+                await handleBlocksReorder(reorderedBlocks),
             });
           } else {
             setBlockList([]);
@@ -121,15 +122,14 @@ const Path: React.FC<PathProps> = ({
   };
 
   const handleBlocksReorder = async (reorderedBlocks: Block[]) => {
-    const updatedPositions = reorderedBlocks.map((block, index) => ({
-      id: block.id,
-      position: index,
-    }));
+    // Calculate the updated positions
 
-    console.log('path id: ', pathId);
-    console.log('original blocklist: ', blockList);
-    console.log('path data: ', pathData);
     try {
+      const updatedPositions = reorderedBlocks.map((block, index) => ({
+        id: block.id,
+        position: index,
+      }));
+      // Perform the fetch request to reorder blocks
       const response = await fetch(
         `/api/workflows/${workflowId}/reorder-blocks`,
         {
@@ -141,34 +141,40 @@ const Path: React.FC<PathProps> = ({
         }
       );
 
-      if (response.ok) {
-        // Create a new reordered list using a map and find
-        const reorderedBlockList = reorderedBlocks.map((reorderedBlock) =>
-          blockList.find((block) => block.id === reorderedBlock.id)
+      if (!response.ok) {
+        throw new Error('Failed to reorder blocks');
+      }
+
+      // Update blockList state
+      setBlockList((prevBlockList) => {
+        // Update positions in the block list
+        const updatedBlockList = prevBlockList.map((block) => {
+          const updatedBlock = updatedPositions.find(
+            (updated) => updated.id === block.id
+          );
+          return updatedBlock
+            ? { ...block, position: updatedBlock.position }
+            : block;
+        });
+
+        // Sort the blocks by their updated position
+        const sortedBlockList = updatedBlockList.sort(
+          (a, b) => a.position - b.position
         );
 
-        console.log('reordered blocks param: ', reorderedBlocks);
-        console.log('reordered blocklist: ', reorderedBlockList);
-        // Check if all blocks were found and ensure the array is new
-        if (reorderedBlockList.every((block) => block !== undefined)) {
-          setBlockList([...(reorderedBlockList as Block[])]); // Create a new array reference
-        } else {
-          console.error('Some blocks from the reordered list were not found.');
-        }
+        // Trigger onCanvasEvent with BLOCK_REORDER if pathData is available
+        onCanvasEvent({
+          type: CanvasEventType.BLOCK_REORDER,
+          pathId: pathId,
+          blocks: sortedBlockList,
+        });
 
-        if (pathData) {
-          onCanvasEvent({
-            type: CanvasEventType.BLOCK_REORDER,
-            pathId: pathId,
-            pathName: pathData.name,
-            blocks: reorderedBlockList as Block[],
-          });
-        }
-      } else {
-        console.error('Failed to update block positions');
-      }
+        return sortedBlockList; // Return the sorted block list
+      });
+
+      console.log('Blocks reordered successfully');
     } catch (error) {
-      console.error('Error updating block positions:', error);
+      console.error('Error reordering blocks:', error);
     }
   };
 
@@ -235,6 +241,7 @@ const Path: React.FC<PathProps> = ({
     let imageUrl: string | undefined;
     let iconUrl: string | undefined; // For storing the uploaded icon URL
 
+    console.log('blocklist in update: ', blockList);
     // If there is an image file, upload it and get the URL
     if (imageFile) {
       const formData = new FormData();
