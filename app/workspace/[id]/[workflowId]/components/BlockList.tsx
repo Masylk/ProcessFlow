@@ -175,6 +175,38 @@ const BlockList: React.FC<BlockListProps> = ({
     }
   };
 
+  const handleMouseMove = (event: MouseEvent) => {
+    // Include scroll position offsets
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
+    if (isDragging) {
+      // Adjust the offsets according to zoom level
+      let baseOffsetX = 70;
+      let baseOffsetY = 180;
+
+      // Apply zoom scaling to the offsets
+      const offsetX = baseOffsetX;
+      const offsetY = baseOffsetY;
+
+      const adjustedX =
+        (event.clientX + scrollX - transformState.positionX - offsetX) /
+        transformState.scale;
+      const adjustedY =
+        (event.clientY + scrollY - transformState.positionY - offsetY) /
+        transformState.scale;
+
+      setMousePosition({ x: adjustedX, y: adjustedY });
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isDragging]);
+  
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
       const paths = block.pathBlock ? pathsByBlockId[block.pathBlock?.id] : [];
@@ -258,6 +290,23 @@ const BlockList: React.FC<BlockListProps> = ({
                     />
                   </div>
                 )}
+              </div>
+              {/* Div that follows the mouse on Drag and Drop*/}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: mousePosition.x + 10,
+                  top: mousePosition.y + 10,
+                  backgroundColor: 'rgba(200, 200, 200, 0.8)',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+                  pointerEvents: 'none', // Prevent blocking mouse events
+                  opacity: isDragging ? 1 : 0, // Control visibility
+                  transition: 'opacity 0.2s ease', // Smooth transition
+                }}
+              >
+                <p>Dragging a block...</p>
               </div>
             </div>
           )}
