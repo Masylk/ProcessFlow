@@ -1,21 +1,63 @@
-import React from 'react';
+import React, { ChangeEvent, DragEvent, useState } from 'react';
+import { Block } from '@/types/block';
 
 interface MediaUploaderProps {
-  onUpload: (file: File) => void;
+  block: Block;
+  onUpdate: (updatedBlock: Block, imageFile?: File, iconFile?: File) => void;
 }
 
-export default function MediaUploader({ onUpload }: MediaUploaderProps) {
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      onUpload(file);
+      updateBlockWithFile(file);
     }
   };
 
+  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault(); // Prevent default to allow drop
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragOver(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      updateBlockWithFile(file);
+    }
+  };
+
+  const updateBlockWithFile = (file: File) => {
+    onUpdate(block, file);
+  };
+
   return (
-    <div className="h-[126px] px-6 py-4 bg-white rounded-xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-1">
+    <label
+      htmlFor="media-upload-input"
+      className={`h-[126px] px-6 py-4 rounded-xl border flex flex-col justify-start items-center gap-1 cursor-pointer ${
+        isDragOver ? 'bg-blue-100 border-blue-400' : 'bg-white border-[#e4e7ec]'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <input
+        id="media-upload-input"
+        type="file"
+        accept="image/svg+xml, image/png, image/jpeg, image/gif, video/mp4"
+        onChange={handleFileChange}
+        className="hidden"
+      />
       <div className="self-stretch h-[94px] flex flex-col justify-start items-center gap-3">
-        <div className="w-10 h-10 p-2.5 bg-white rounded-lg border border-[#e4e7ec] flex justify-center items-center">
+        <div className="w-10 h-10 p-2.5 rounded-lg border border-[#e4e7ec] flex justify-center items-center">
           <div className="w-5 h-5 rounded-full flex justify-center items-center">
             <img
               src="/assets/shared_components/upload-cloud-icon.svg"
@@ -38,12 +80,6 @@ export default function MediaUploader({ onUpload }: MediaUploaderProps) {
           </div>
         </div>
       </div>
-      <input
-        type="file"
-        className="hidden"
-        onChange={handleFileUpload}
-        accept=".svg,.png,.jpg,.jpeg,.gif,.mp4"
-      />
-    </div>
+    </label>
   );
 }

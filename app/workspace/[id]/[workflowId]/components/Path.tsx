@@ -17,6 +17,7 @@ interface PathProps {
   pathId: number;
   workspaceId: number;
   workflowId: number;
+  selectedBlock: Block | null;
   onBlockClick: (
     block: Block,
     updateBlockFn: (updatedBlock: Block) => Promise<void>,
@@ -59,6 +60,7 @@ const Path: React.FC<PathProps> = ({
   pathId,
   workspaceId,
   workflowId,
+  selectedBlock,
   onBlockClick,
   closeDetailSidebar,
   handleAddBlock,
@@ -86,16 +88,16 @@ const Path: React.FC<PathProps> = ({
         if (response.ok) {
           const fetchedPathData: PathData = await response.json();
 
+          onCanvasEvent({
+            type: CanvasEventType.PATH_CREATION,
+            pathId: pathId,
+            pathName: fetchedPathData.name,
+            blocks: fetchedPathData.blocks,
+            handleBlocksReorder: async (reorderedBlocks) =>
+              await handleBlocksReorder(reorderedBlocks),
+          });
           if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
             setBlockList(fetchedPathData.blocks);
-            onCanvasEvent({
-              type: CanvasEventType.PATH_CREATION,
-              pathId: pathId,
-              pathName: fetchedPathData.name,
-              blocks: fetchedPathData.blocks,
-              handleBlocksReorder: async (reorderedBlocks) =>
-                await handleBlocksReorder(reorderedBlocks),
-            });
           } else {
             setBlockList([]);
           }
@@ -414,6 +416,7 @@ const Path: React.FC<PathProps> = ({
           blocks={blockList}
           workspaceId={workspaceId}
           pathId={pathId}
+          selectedBlock={selectedBlock}
           onBlockClick={onBlockClick}
           onAddBlockClick={handleAddBlockClick}
           onBlocksReorder={handleBlocksReorder}

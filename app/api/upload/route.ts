@@ -11,6 +11,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
   }
 
+  // Validate file type
+  const allowedMimeTypes = [
+    'image/svg+xml',
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'video/mp4',
+  ];
+  if (!allowedMimeTypes.includes(file.type)) {
+    return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+  }
+
   const buffer = await file.arrayBuffer();
   const fileData = new Uint8Array(buffer); // Convert to Uint8Array
 

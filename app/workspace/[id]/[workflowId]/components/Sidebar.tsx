@@ -22,7 +22,7 @@ export interface PathObject {
 
 interface SidebarProps {
   onHideSidebar: () => void;
-  initialPath: PathObject;
+  initialPath: PathObject | null;
   workspaceId: string;
   workflowId: string;
   transformState: TransformState;
@@ -45,13 +45,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         Hide Sidebar
       </button>
-      <SidebarPath
-        path={initialPath}
-        transformState={transformState}
-        onSidebarEvent={onSidebarEvent}
-        workspaceId={workspaceId}
-        workflowId={workflowId}
-      />
+      {initialPath ? (
+        <SidebarPath
+          path={initialPath}
+          transformState={transformState}
+          onSidebarEvent={onSidebarEvent}
+          workspaceId={workspaceId}
+          workflowId={workflowId}
+        />
+      ) : (
+        <p> Loading... </p>
+      )}
     </div>
   );
 };

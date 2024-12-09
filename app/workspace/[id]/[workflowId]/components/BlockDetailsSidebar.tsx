@@ -6,6 +6,7 @@ import TextEditor from './TextEditor';
 import BlockMediaVisualizer from './BlockMediaVisualizer';
 import MediaUploader from './MediaUploader';
 import BlockInformations from './BlockInformations';
+import FakeMediaVisualizer from './FakeMediaVisualizer';
 
 interface BlockDetailsSidebarProps {
   block: Block | null;
@@ -78,6 +79,8 @@ export default function BlockDetailsSidebar({
         // You can further modify the block if needed before returning
         return newBlock;
       });
+      if (imageFile) setImageFile(imageFile);
+      if (iconFile) setIconFile(iconFile);
       onUpdate(updatedBlock, imageFile || undefined, iconFile || undefined);
     }
   };
@@ -164,14 +167,16 @@ export default function BlockDetailsSidebar({
               <BlockMediaVisualizer
                 mediaSrc={updateBlock.image}
                 altText="Block Media"
-                // onMediaClick={handleImageClick}
+                onUpdate={handleUpdate}
+              />
+            ) : imageFile ? (
+              <FakeMediaVisualizer
+                imageFile={imageFile}
+                altText="Uploaded Image"
+                handleDelete={() => setImageFile(undefined)}
               />
             ) : (
-              <MediaUploader
-                onUpload={(file) => {
-                  setImageFile(file);
-                }}
-              />
+              <MediaUploader block={updateBlock} onUpdate={handleUpdate} />
             )}
           </div>
         </>

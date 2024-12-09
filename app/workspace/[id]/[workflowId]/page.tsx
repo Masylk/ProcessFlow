@@ -493,18 +493,14 @@ export default function WorkflowPage() {
                 : '-translate-x-full w-0 hidden'
             }`}
           >
-            {sidebarPath ? (
-              <Sidebar
-                onHideSidebar={toggleSidebar}
-                initialPath={sidebarPath}
-                workspaceId={id}
-                workflowId={workflowId}
-                transformState={transformState}
-                onSidebarEvent={handleSidebarEvent}
-              />
-            ) : (
-              <p></p>
-            )}
+            <Sidebar
+              onHideSidebar={toggleSidebar}
+              initialPath={sidebarPath}
+              workspaceId={id}
+              workflowId={workflowId}
+              transformState={transformState}
+              onSidebarEvent={handleSidebarEvent}
+            />
           </div>
 
           {/* Main Content */}

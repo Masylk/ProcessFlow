@@ -19,6 +19,7 @@ interface BlockListProps {
   blocks: Block[];
   workspaceId: number;
   pathId: number;
+  selectedBlock: Block | null;
   onBlockClick: (
     block: Block,
     updateBlockFn: (updatedBlock: Block) => Promise<void>,
@@ -70,6 +71,7 @@ const BlockList: React.FC<BlockListProps> = ({
   blocks,
   workspaceId,
   pathId,
+  selectedBlock,
   onBlockClick,
   onAddBlockClick,
   onBlocksReorder,
@@ -206,7 +208,7 @@ const BlockList: React.FC<BlockListProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
     };
   }, [isDragging]);
-  
+
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
       const paths = block.pathBlock ? pathsByBlockId[block.pathBlock?.id] : [];
@@ -218,6 +220,7 @@ const BlockList: React.FC<BlockListProps> = ({
           key={block.id}
           draggableId={block.id.toString()}
           index={index}
+          isDragDisabled={!(selectedBlock === null)}
         >
           {(provided) => (
             <div
@@ -243,6 +246,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       pathId={path.id}
                       workspaceId={workspaceId}
                       workflowId={block.workflowId}
+                      selectedBlock={selectedBlock}
                       onBlockClick={onBlockClick}
                       closeDetailSidebar={closeDetailSidebar}
                       handleAddBlock={handleAddBlock}
@@ -269,7 +273,9 @@ const BlockList: React.FC<BlockListProps> = ({
 
   return (
     <div>
-      {overlayVisible && <ImageOverlay onClose={handleOverlayClose} />}
+      {overlayVisible && selectedBlock && (
+        <ImageOverlay onClose={handleOverlayClose} />
+      )}
       <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <StrictModeDroppable droppableId="blocks">
           {(provided) => (
@@ -295,8 +301,8 @@ const BlockList: React.FC<BlockListProps> = ({
               <div
                 style={{
                   position: 'absolute',
-                  left: mousePosition.x + 10,
-                  top: mousePosition.y + 10,
+                  left: mousePosition.x + 20,
+                  top: mousePosition.y + 150,
                   backgroundColor: 'rgba(200, 200, 200, 0.8)',
                   padding: '8px',
                   borderRadius: '4px',

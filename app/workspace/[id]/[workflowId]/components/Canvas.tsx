@@ -314,7 +314,7 @@ export default function Canvas({
                       <div className="relative w-full h-full">
                         {/* Background pattern */}
                         <div
-                          className="absolute inset-0 z-10"
+                          className="absolute inset-0 z-[-90]"
                           style={{
                             width: '50000vw', // Background is much larger than the content area
                             height: '50000vh',
@@ -333,6 +333,7 @@ export default function Canvas({
                           pathId={path.id}
                           workspaceId={parseInt(workspaceId)}
                           workflowId={parseInt(workflowId)}
+                          selectedBlock={selectedBlock}
                           onBlockClick={handleBlockClick}
                           closeDetailSidebar={handleCloseSidebar}
                           handleAddBlock={handleOpenForm}

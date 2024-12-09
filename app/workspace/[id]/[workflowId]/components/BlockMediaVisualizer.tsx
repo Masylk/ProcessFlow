@@ -1,32 +1,34 @@
+import { Block } from '@/types/block';
 import React from 'react';
 
 interface BlockMediaVisualizerProps {
   mediaSrc: string | null;
   altText: string;
-  // onMediaClick?: (e: React.MouseEvent<HTMLImageElement>) => void;
+  onUpdate: (updatedBlock: Block, imageFile?: File, iconFile?: File) => void;
 }
 
 export default function BlockMediaVisualizer({
   mediaSrc,
   altText,
-}: // onMediaClick,
-BlockMediaVisualizerProps) {
+}: BlockMediaVisualizerProps) {
   if (!mediaSrc) return null;
 
-  // const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-  //   const rect = (e.target as HTMLImageElement).getBoundingClientRect();
-  //   const x = e.clientX - rect.left;
-  //   const y = e.clientY - rect.top;
-
-  //   setClickPosition({ x, y });
-  // };
-
   return (
-    <img
-      className="self-stretch h-[267px] rounded-xl border border-[#e4e7ec]"
-      src={mediaSrc}
-      alt={altText}
-      // onClick={onMediaClick}
-    />
+    <div className="relative w-full h-[267px]">
+      {/* Image */}
+      <img
+        className="w-full h-full object-cover rounded-xl"
+        src={mediaSrc}
+        alt={altText}
+      />
+      {/* Trash Icon */}
+      <div className="absolute top-2 right-2 h-9 p-2 bg-white rounded-lg shadow shadow-inner border border-[#d0d5dd] flex justify-center items-center cursor-pointer">
+        <img
+          src="/assets/shared_components/trash-icon.svg"
+          alt="Trash Icon"
+          className="w-5 h-5"
+        />
+      </div>
+    </div>
   );
 }
