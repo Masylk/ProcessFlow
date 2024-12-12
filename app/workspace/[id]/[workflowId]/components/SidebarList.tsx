@@ -8,16 +8,18 @@ import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 
 interface SidebarListProps {
   blocks: SidebarBlock[];
-  transformState: TransformState;
   onSidebarEvent: (eventData: SidebarEvent) => void;
   onReorder: (newBlocks: SidebarBlock[]) => void; // Add a callback for reordering
+  workspaceId: string;
+  workflowId: string;
 }
 
 const SidebarList: React.FC<SidebarListProps> = ({
   blocks,
-  transformState,
   onSidebarEvent,
   onReorder,
+  workspaceId,
+  workflowId,
 }) => {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -39,7 +41,11 @@ const SidebarList: React.FC<SidebarListProps> = ({
             {...provided.droppableProps}
           >
             {blocks.map((block, index) => (
-              <Draggable key={block.id} draggableId={block.id.toString()} index={index}>
+              <Draggable
+                key={block.id}
+                draggableId={block.id.toString()}
+                index={index}
+              >
                 {(provided) => (
                   <li
                     ref={provided.innerRef}
@@ -48,8 +54,9 @@ const SidebarList: React.FC<SidebarListProps> = ({
                   >
                     <SidebarDiv
                       block={block}
-                      transformState={transformState}
                       onSidebarEvent={onSidebarEvent}
+                      workspaceId={workspaceId}
+                      workflowId={workflowId}
                     />
                   </li>
                 )}

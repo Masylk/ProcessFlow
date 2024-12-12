@@ -165,7 +165,7 @@ export default function BlockDetailsSidebar({
 
             {updateBlock.image ? (
               <BlockMediaVisualizer
-                mediaSrc={updateBlock.image}
+                block={updateBlock}
                 altText="Block Media"
                 onUpdate={handleUpdate}
               />
@@ -173,7 +173,11 @@ export default function BlockDetailsSidebar({
               <FakeMediaVisualizer
                 imageFile={imageFile}
                 altText="Uploaded Image"
-                handleDelete={() => setImageFile(undefined)}
+                handleDelete={() => {
+                  const updatedBlock = { ...updateBlock, image: '' }; // Set image to undefined
+                  handleUpdate(updatedBlock); // Call onUpdate with the updated block
+                  setImageFile(undefined);
+                }}
               />
             ) : (
               <MediaUploader block={updateBlock} onUpdate={handleUpdate} />

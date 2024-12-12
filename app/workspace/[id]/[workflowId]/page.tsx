@@ -485,24 +485,6 @@ export default function WorkflowPage() {
           updateWorkflowTitle={updateWorkflowTitle}
         />
         <div className="flex flex-1">
-          {/* Sidebar */}
-          <div
-            className={`absolute inset-y-0 left-0 z-10 bg-white transition-transform duration-300 ease-in-out ${
-              isSidebarOpen
-                ? 'translate-x-0 w-64'
-                : '-translate-x-full w-0 hidden'
-            }`}
-          >
-            <Sidebar
-              onHideSidebar={toggleSidebar}
-              initialPath={sidebarPath}
-              workspaceId={id}
-              workflowId={workflowId}
-              transformState={transformState}
-              onSidebarEvent={handleSidebarEvent}
-            />
-          </div>
-
           {/* Main Content */}
           <main className="flex-1 bg-gray-100 p-6 ml-0 h-screen w-screen overflow-hidden">
             {/* <div className="flex justify-between items-center mb-4">
@@ -525,6 +507,8 @@ export default function WorkflowPage() {
                   focusId={focusId}
                   onCanvasEvent={handleCanvasEvent}
                   onTransformChange={handleTransformChange}
+                  sidebarPath={sidebarPath}
+                  onSidebarEvent={handleSidebarEvent}
                 />
               </BlockProvider>
             ) : (

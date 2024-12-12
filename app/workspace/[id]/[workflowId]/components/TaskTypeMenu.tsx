@@ -32,7 +32,7 @@ const TaskTypeMenu: React.FC<TaskTypeMenuProps> = ({
         <div className="w-4 h-4 relative">
           <img
             src={`/assets/shared_components/chevron-${
-              isDropdownOpen ? 'up' : 'down'
+              isDropdownOpen ? 'down' : 'up'
             }.svg`}
             alt="Chevron icon"
             className="absolute top-1/2 transform -translate-y-1/2 right-0"

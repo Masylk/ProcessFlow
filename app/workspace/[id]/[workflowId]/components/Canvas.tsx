@@ -5,10 +5,11 @@ import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
 import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { CanvasEvent } from '../page';
+import { CanvasEvent, SidebarEvent } from '../page';
 import TransformStateTracker from './TransformStateTracker';
 import { TransformState } from '@/types/transformstate';
 import ZoomBar from './ZoomBar';
+import Sidebar, { PathObject } from './Sidebar';
 
 interface CanvasProps {
   initialPath: PathType;
@@ -17,6 +18,8 @@ interface CanvasProps {
   focusId?: string | null;
   onCanvasEvent: (eventData: CanvasEvent) => void;
   onTransformChange: (state: TransformState) => void;
+  sidebarPath: PathObject | null;
+  onSidebarEvent: (eventData: SidebarEvent) => void;
 }
 
 export default function Canvas({
@@ -26,6 +29,8 @@ export default function Canvas({
   focusId,
   onCanvasEvent,
   onTransformChange,
+  sidebarPath,
+  onSidebarEvent,
 }: CanvasProps) {
   const [path, setPath] = useState<PathType | null>(initialPath);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
@@ -253,7 +258,7 @@ export default function Canvas({
   }, [savedBlock, addBlockPathId, addBlockPosition, handleAddBlock]);
 
   return (
-    <div className="relative h-screen w-screen flex flex-col">
+    <div className="relative h-screen w-screen z-1 flex flex-col">
       <div className="flex-1 w-full h-full">
         {path ? (
           <div className="relative w-full h-full overflow-visible">
@@ -291,6 +296,16 @@ export default function Canvas({
                       />
                     </div>
 
+                    {/* Sidebar */}
+                    <div className="absolute left-[-25px]">
+                      <Sidebar
+                        sidebarPath={sidebarPath}
+                        workspaceId={workspaceId}
+                        workflowId={workflowId}
+                        onSidebarEvent={onSidebarEvent}
+                        selectedBlock={selectedBlock}
+                      />
+                    </div>
                     {/* Track Transform State */}
                     <TransformStateTracker
                       onTransformChange={onTransformChange}

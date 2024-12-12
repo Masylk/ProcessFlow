@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Block } from '@/types/block';
 import TaskTypeMenu from './TaskTypeMenu';
+import IconModifier from './IconModifier';
 
 interface BlockInformationsProps {
   block: Block;
@@ -98,11 +99,7 @@ export default function BlockInformations({
     <>
       {/* New block of code outside the container */}
       <div className="flex items-center mt-8 h-[50px] space-x-4">
-        <div className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10">
-          <div className="w-6 h-6 bg-gray-200 rounded-full flex justify-center items-center">
-            <span className="text-gray-500 font-bold text-sm">i</span>
-          </div>
-        </div>
+        <IconModifier onUpdate={() => console.log('Icon clicked!')} />
         {localBlock && (
           <h1 className="text-lg font-semibold text-gray-800">
             <input
