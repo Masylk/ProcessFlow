@@ -19,6 +19,10 @@ export default function IconModifier({
     setShowSelector(false);
   };
 
+  const handleOverlayClick = () => {
+    setShowSelector(false);
+  };
+
   return (
     <div className="relative">
       {/* Icon Display */}
@@ -35,8 +39,20 @@ export default function IconModifier({
         )}
       </div>
 
+      {/* Black transparent overlay */}
+      {showSelector && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-10"
+          onClick={handleOverlayClick}
+        />
+      )}
+
       {/* Icon Selector */}
-      {showSelector && <IconSelector />}
+      {showSelector && (
+        <div className="absolute top-12 left-0 z-20">
+          <IconSelector onSelect={handleIconSelect} />
+        </div>
+      )}
     </div>
   );
 }

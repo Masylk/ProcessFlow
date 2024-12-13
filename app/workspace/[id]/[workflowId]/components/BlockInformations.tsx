@@ -95,11 +95,19 @@ export default function BlockInformations({
     setIsDropdownOpen((prev) => !prev); // Toggle dropdown state
   };
 
+  const handleIconUpdate = (newIcon: string) => {
+    setLocalBlock((prev) => ({
+      ...prev,
+      icon: newIcon,
+    }));
+    onUpdate({ icon: newIcon });
+  };
+
   return (
     <>
       {/* New block of code outside the container */}
       <div className="flex items-center mt-8 h-[50px] space-x-4">
-        <IconModifier onUpdate={() => console.log('Icon clicked!')} />
+        <IconModifier initialIcon={localBlock.icon} onUpdate={handleIconUpdate} />
         {localBlock && (
           <h1 className="text-lg font-semibold text-gray-800">
             <input

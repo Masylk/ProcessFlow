@@ -1,23 +1,73 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
-const IconSelector = () => {
+interface IconSelectorProps {
+  onSelect: (icon: string) => void;
+}
+
+const IconSelector = ({ onSelect }: IconSelectorProps) => {
+  const [applist, setAppList] = useState<string[]>([]);
+  const [iconlist, setIconList] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIcons = async () => {
+      try {
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) {
+          throw new Error('Failed to fetch icons');
+        }
+        const data = await response.json();
+        setAppList(data.applist);
+        setIconList(data.iconlist);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchIcons();
+  }, []);
+
+  // Filter apps and icons based on the search term
+  const filteredApps = applist.filter((app) =>
+    app.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const filteredIcons = iconlist.filter((icon) =>
+    icon.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Function to format the app name (capitalize first letter, lowercase the rest)
+  const formatAppName = (name: string) => {
+    const nameWithoutExtension = name.split('.')[0]; // Remove extension
+    return (
+      nameWithoutExtension.charAt(0).toUpperCase() +
+      nameWithoutExtension.slice(1).toLowerCase()
+    );
+  };
+
   return (
     <div className="w-[492px] h-[340px] bg-white rounded-xl border border-[#e4e7ec] flex flex-col">
-      {/* Header */}
+      {/* Header with Search Bar */}
       <div className="self-stretch p-4 bg-white rounded-tl-xl rounded-tr-xl border-b border-[#e4e7ec] flex items-center gap-2">
-        <div className="w-5 h-5" />
-        <div className="flex-grow text-[#667085] text-base font-normal font-['Inter'] leading-normal">
-          Search for an app or an icon
+        <div className="w-5 h-5">
+          <img
+            src="/assets/shared_components/search-icon.svg"
+            alt="Search Icon"
+            className="w-full h-full object-contain"
+          />
         </div>
-        <div className="w-4 h-4 flex justify-center items-center">
-          <div className="w-4 h-4" />
-        </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search for an app or an icon"
+          className="flex-grow text-[#667085] text-base font-normal font-['Inter'] leading-normal bg-transparent focus:outline-none"
+        />
       </div>
 
       {/* Content */}
-      <div className="self-stretch h-[284px] flex flex-col">
+      <div className="self-stretch h-[284px] flex flex-col overflow-y-auto hide-scrollbar">
         {/* Apps Section */}
-        <div className="self-stretch h-[186px] py-4 flex flex-col gap-0.5">
+        <div className="self-stretch py-4 flex flex-col gap-0.5">
           {/* Category Label */}
           <div className="self-stretch px-[18px] flex items-center gap-1">
             <div className="flex-grow text-[#475467] text-sm font-medium font-['Inter'] leading-tight">
@@ -25,16 +75,72 @@ const IconSelector = () => {
             </div>
           </div>
 
-          {/* Icons Grid */}
-          <div className="self-stretch h-[132px] flex flex-wrap gap-2 px-2 py-1.5">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <div
+          {/* Apps Grid */}
+          <div className="self-stretch flex-1 flex flex-wrap gap-1 px-2 mt-3">
+            {filteredApps.map((app, index) => (
+              <button
                 key={index}
-                className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100"
+                onClick={() => onSelect(`/step-icons/apps/${app}`)}
+                onMouseEnter={() => setHoveredIcon(app)} // Set hovered icon
+                onMouseLeave={() => setHoveredIcon(null)} // Reset on mouse leave
+                className="w-10 h-10 flex items-center justify-center focus:outline-none relative"
               >
-                {/* Placeholder for individual icon */}
-                <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
-              </div>
+                <img
+                  src={`/step-icons/apps/${app}`}
+                  alt={app}
+                  className="w-8 h-8 object-contain"
+                />
+                {hoveredIcon === app && (
+                  <div className="absolute bottom-[70%] mb-2 w-24 left-5 transform -translate-x-1/2 z-10">
+                    <div className="h-7 flex-col justify-start items-center inline-flex">
+                      <div className="self-stretch h-[22px] px-2 py-0.5 bg-[#4761c4] rounded-lg flex-col justify-start items-start flex">
+                        <div className="text-center text-white text-[10px] font-semibold font-['Inter'] leading-[18px]">
+                          {formatAppName(app)}
+                        </div>
+                      </div>
+                      <div className="w-7 h-4 relative" />
+                    </div>
+                    {/* Tooltip Icon */}
+                    <div className="absolute bottom-[3%] left-1/2 transform -translate-x-1/2">
+                      <img
+                        src="/assets/shared_components/tooltip-icon.svg"
+                        alt="Tooltip Icon"
+                        className="w-7 h-3 object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Icons Section */}
+        <div className="self-stretch py-4 flex flex-col gap-0.5">
+          {/* Category Label */}
+          <div className="self-stretch px-[18px] flex items-center gap-1">
+            <div className="flex-grow text-[#475467] text-sm font-medium font-['Inter'] leading-tight">
+              Icons
+            </div>
+          </div>
+
+          {/* Icons Grid */}
+          <div className="self-stretch flex-1 flex flex-wrap gap-2 px-2 mt-3">
+            {filteredIcons.length === 0 && searchTerm !== '' && (
+              <div className="text-[#667085] text-sm">No icons found</div>
+            )}
+            {filteredIcons.map((icon, index) => (
+              <button
+                key={index}
+                onClick={() => onSelect(`/step-icons/default-icons/${icon}`)}
+                className="w-10 h-10 flex items-center justify-center focus:outline-none"
+              >
+                <img
+                  src={`/step-icons/default-icons/${icon}`}
+                  alt={icon}
+                  className="w-8 h-8 object-contain"
+                />
+              </button>
             ))}
           </div>
         </div>
