@@ -126,9 +126,6 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
 
           {/* Icons Grid */}
           <div className="self-stretch flex-1 flex flex-wrap gap-2 px-2 mt-3">
-            {filteredIcons.length === 0 && searchTerm !== '' && (
-              <div className="text-[#667085] text-sm">No icons found</div>
-            )}
             {filteredIcons.map((icon, index) => (
               <button
                 key={index}
