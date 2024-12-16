@@ -63,7 +63,7 @@ export default function EditorBlock({
               <img
                 src={block.icon}
                 alt="icon"
-                className="w-[30px] h-[30px] object-cover"
+                className="w-8 h-8"
               />
             )}
           </div>

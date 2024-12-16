@@ -37,6 +37,10 @@ const config: Config = {
         '.hide-scrollbar::-webkit-scrollbar': {
           display: 'none' /* For Chrome, Safari, and Edge */,
         },
+        '.resize-x': {
+          resize: 'horizontal',
+          overflow: 'auto', // Ensure the content can overflow
+        },
       });
     },
   ],

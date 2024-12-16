@@ -226,9 +226,15 @@ const BlockList: React.FC<BlockListProps> = ({
             <div
               ref={provided.innerRef}
               {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              className={`flex flex-col w-96 items-center ${draggingClass}`}
+              className={`flex flex-col w-full items-center ${draggingClass}`}
             >
+              {/* Wrapping div that acts as the drag handle */}
+              <div
+                {...provided.dragHandleProps} // Attach drag handle here
+                className=""
+              >
+                
+              {/* EditorBlock component */}
               <EditorBlock
                 block={block}
                 handleAddBlockFn={handleAddBlockFn}
@@ -237,9 +243,11 @@ const BlockList: React.FC<BlockListProps> = ({
                 onClick={handleClick}
                 isFocused={focusedBlockId === block.id} // Check if this block is focused
               />
+              </div>
+
 
               {paths && (
-                <div className="flex flex-row items-center gap-2 mt-2 w-full">
+                <div className="flex flex-row gap-8">
                   {paths.map((path, key) => (
                     <Path
                       key={`${block.id}-path-${key}`}
@@ -282,7 +290,7 @@ const BlockList: React.FC<BlockListProps> = ({
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="flex justify-center overflow-visible w-full"
+              className="flex justify-center overflow-visible"
             >
               <div>
                 {renderBlocksWithOptions(blockList)}

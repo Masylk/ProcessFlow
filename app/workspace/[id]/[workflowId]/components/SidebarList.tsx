@@ -2,7 +2,6 @@ import React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import SidebarDiv from './SidebarDiv';
 import { SidebarBlock } from './Sidebar';
-import { TransformState } from '@/types/transformstate';
 import { SidebarEvent } from '../page';
 import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 
@@ -12,6 +11,7 @@ interface SidebarListProps {
   onReorder: (newBlocks: SidebarBlock[]) => void; // Add a callback for reordering
   workspaceId: string;
   workflowId: string;
+  searchFilter: string; // Add the searchFilter prop
 }
 
 const SidebarList: React.FC<SidebarListProps> = ({
@@ -20,6 +20,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
   onReorder,
   workspaceId,
   workflowId,
+  searchFilter, // Destructure searchFilter
 }) => {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -57,6 +58,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
                       onSidebarEvent={onSidebarEvent}
                       workspaceId={workspaceId}
                       workflowId={workflowId}
+                      searchFilter={searchFilter} // Pass searchFilter to SidebarDiv
                     />
                   </li>
                 )}

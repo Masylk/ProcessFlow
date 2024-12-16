@@ -35,18 +35,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedBlock,
 }) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
+  const [searchFilter, setSearchFilter] = useState<string>(''); // State for search filter
 
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
   };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchFilter(event.target.value); // Update the search filter state
+  };
+
   return (
-    <div className="fixed z-10 bg-white flex h-full top-[67px]">
+    <div className="fixed z-10 bg-white flex h-[93vh] top-[7vh]">
       {/* Sidebar with icons */}
       <div
-        className={`w-15 h-full bg-white ${
-          isSidebarVisible ? '' : ''
-        } border border-[#e4e7ec] flex flex-col justify-between`}
+        className={`w-15 h-full bg-white border border-[#e4e7ec] flex flex-col justify-between`}
       >
         <div className="flex flex-col pt-4 px-4 gap-6">
           {/* Implementing the icon */}
@@ -65,28 +68,36 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Main Sidebar Content */}
       {isSidebarVisible && (
-        <div className="flex-1 flex flex-col overflow-auto p-0 hide-scrollbar">
+        <div
+          className="flex-1 flex flex-col overflow-auto p-0 hide-scrollbar resize-x border border-gray-200"
+          style={{
+            minWidth: '250px', // Minimum width for the sidebar
+            maxWidth: '500px', // Maximum width for the sidebar
+          }}
+        >
           {/* Header Section */}
           <div className="sticky top-0 z-10 h-[98px] left-0 px-2 pt-3 pb-7 border-b border-[#e4e7ec] flex-col justify-start items-start gap-4 inline-flex bg-white">
             <div className="self-stretch text-[#101828] text-base font-medium font-['Inter'] leading-normal">
               Navigation
             </div>
             {/* Search bar */}
-            <div className="self-stretch h-[26px] flex-col justify-start items-start gap-1.5 flex">
-              <div className="self-stretch h-[26px] flex-col justify-start items-start gap-1.5 flex">
-                <div className="self-stretch px-2 py-1 bg-white rounded-md shadow border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
-                  <div className="grow shrink basis-0 h-[18px] justify-start items-center gap-2 flex">
-                    <div className="w-4 h-4 relative">
-                      <img
-                        src="/assets/shared_components/search-icon.svg"
-                        alt="Search Icon"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <div className="w-[22px] text-[#667085] text-xs font-normal font-['Inter'] leading-[18px]">
-                      Search
-                    </div>
+            <div className="h-[26px] flex-col justify-start items-start gap-1.5 flex">
+              <div className="px-2 py-1 bg-white rounded-md shadow border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
+                <div className="grow shrink basis-0 h-[18px] justify-start items-center gap-2 flex">
+                  <div className="w-4 h-4 relative">
+                    <img
+                      src="/assets/shared_components/search-icon.svg"
+                      alt="Search Icon"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={handleSearchChange}
+                    placeholder="Search"
+                    className="w-[150px] text-[#667085] text-xs font-normal font-['Inter'] leading-[18px] outline-none"
+                  />
                 </div>
               </div>
             </div>
@@ -100,6 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               workspaceId={workspaceId}
               workflowId={workflowId}
               displayTitle={false}
+              searchFilter={searchFilter} // Pass the filter as a prop
             />
           ) : (
             <p>Loading...</p>

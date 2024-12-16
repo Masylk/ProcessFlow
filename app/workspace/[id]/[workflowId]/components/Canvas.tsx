@@ -265,7 +265,7 @@ export default function Canvas({
             <TransformWrapper
               ref={zoomRef}
               initialScale={1}
-              minScale={0.5}
+              minScale={0.1}
               maxScale={4}
               wheel={{ step: 0.1 }}
               alignmentAnimation={{ disabled: true }}

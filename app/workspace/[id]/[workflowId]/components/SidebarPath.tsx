@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import SidebarList from './SidebarList';
 import { PathObject, SidebarBlock } from './Sidebar';
-import { TransformState } from '@/types/transformstate';
 import { SidebarEvent } from '../page';
 import { Block } from '@/types/block';
 
@@ -12,6 +11,7 @@ interface SidebarPathProps {
   workflowId: string;
   defaultVisibility?: boolean; // Add prop to control default visibility
   displayTitle?: boolean;
+  searchFilter: string; // Add searchFilter prop
 }
 
 const SidebarPath: React.FC<SidebarPathProps> = ({
@@ -21,6 +21,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   workflowId,
   defaultVisibility = true, // Default to true if not provided
   displayTitle = false,
+  searchFilter, // Destructure searchFilter prop
 }) => {
   const [isContentVisible, setIsContentVisible] = useState(defaultVisibility);
 
@@ -54,7 +55,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   };
 
   return (
-    <div className="p-0 pt-2 rounded mb-0">
+    <div className="py-1 rounded mb-0">
       {/* Header with Toggle Icon */}
       {displayTitle && (
         <div className="flex justify-start items-start">
@@ -80,11 +81,12 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
       {isContentVisible && path.blocks && path.blocks.length > 0 && (
         <div className={`${displayTitle ? 'ml-2' : ''}`}>
           <SidebarList
-            blocks={path.blocks}
+            blocks={path.blocks} // Pass all blocks
             onSidebarEvent={onSidebarEvent}
             onReorder={handleReorder}
             workspaceId={workspaceId}
             workflowId={workflowId}
+            searchFilter={searchFilter} // Pass the searchFilter as a new prop
           />
         </div>
       )}
