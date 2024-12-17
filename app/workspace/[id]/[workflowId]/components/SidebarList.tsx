@@ -50,8 +50,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
                 {(provided) => (
                   <li
                     ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
+                    {...provided.draggableProps} // Keep draggableProps on the parent
                   >
                     <SidebarDiv
                       block={block}
@@ -59,6 +58,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
                       workspaceId={workspaceId}
                       workflowId={workflowId}
                       searchFilter={searchFilter} // Pass searchFilter to SidebarDiv
+                      dragHandleProps={provided.dragHandleProps} // Pass dragHandleProps to SidebarDiv
                     />
                   </li>
                 )}

@@ -233,18 +233,16 @@ const BlockList: React.FC<BlockListProps> = ({
                 {...provided.dragHandleProps} // Attach drag handle here
                 className=""
               >
-                
-              {/* EditorBlock component */}
-              <EditorBlock
-                block={block}
-                handleAddBlockFn={handleAddBlockFn}
-                handleDeleteBlockFn={handleDeleteBlockFn}
-                copyBlockFn={copyBlockFn}
-                onClick={handleClick}
-                isFocused={focusedBlockId === block.id} // Check if this block is focused
-              />
+                {/* EditorBlock component */}
+                <EditorBlock
+                  block={block}
+                  handleAddBlockFn={handleAddBlockFn}
+                  handleDeleteBlockFn={handleDeleteBlockFn}
+                  copyBlockFn={copyBlockFn}
+                  onClick={handleClick}
+                  isFocused={focusedBlockId === block.id} // Check if this block is focused
+                />
               </div>
-
 
               {paths && (
                 <div className="flex flex-row gap-8">

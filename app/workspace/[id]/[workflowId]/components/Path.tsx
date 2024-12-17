@@ -75,9 +75,11 @@ const Path: React.FC<PathProps> = ({
   const [loading, setLoading] = useState(true);
   // Get transform state from context
   const { transformState } = useTransformContext();
+  const DEFAULT_ICON = '/step-icons/default-icons/container.svg';
 
   useEffect(() => {
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
+
     const fetchPathData = async () => {
       setLoading(true);
       try {
@@ -88,19 +90,34 @@ const Path: React.FC<PathProps> = ({
         if (response.ok) {
           const fetchedPathData: PathData = await response.json();
 
+          // Trigger the onCanvasEvent first
           onCanvasEvent({
             type: CanvasEventType.PATH_CREATION,
             pathId: pathId,
             pathName: fetchedPathData.name,
-            blocks: fetchedPathData.blocks,
+            blocks: fetchedPathData.blocks || [],
             handleBlocksReorder: async (reorderedBlocks) =>
               await handleBlocksReorder(reorderedBlocks),
           });
-          if (fetchedPathData.blocks && fetchedPathData.blocks.length > 0) {
-            setBlockList(fetchedPathData.blocks);
+
+          // If there are no blocks, create the default block
+          if (!fetchedPathData.blocks || fetchedPathData.blocks.length === 0) {
+            const defaultBlockData = {
+              type: 'STEP',
+              title: 'Default Step',
+              description: 'This is the default step block',
+              position: 0,
+              pathId: pathId,
+              workflowId: workflowId,
+              icon: '/step-icons/default-icons/container.svg',
+              default: true,
+            };
+
+            await handleAddBlockFn(defaultBlockData, pathId, 0);
           } else {
-            setBlockList([]);
+            setBlockList(fetchedPathData.blocks);
           }
+
           setPathData(fetchedPathData);
         } else {
           console.error('Failed to fetch path data:', response.statusText);
@@ -184,7 +201,7 @@ const Path: React.FC<PathProps> = ({
     blockData: any,
     pathId: number,
     position: number,
-    imageUrl?: string // Optional image URL parameter
+    imageUrl?: string
   ) => {
     if (position === null) return;
 
@@ -192,10 +209,10 @@ const Path: React.FC<PathProps> = ({
       const requestBody = {
         ...blockData,
         position: position,
-        icon: 'default-icon',
+        icon: blockData.icon || DEFAULT_ICON,
         pathId,
         workflowId: workflowId,
-        image: imageUrl || null, // Include the image URL if provided
+        image: imageUrl || null,
         pathBlock:
           blockData.type === 'PATH'
             ? { pathOptions: blockData.pathOptions }
@@ -241,10 +258,9 @@ const Path: React.FC<PathProps> = ({
     iconFile?: File
   ) => {
     let imageUrl: string | undefined;
-    let iconUrl: string | undefined; // For storing the uploaded icon URL
+    let iconUrl: string | undefined;
 
     console.log('blocklist in update: ', blockList);
-    // If there is an image file, upload it and get the URL
     if (imageFile) {
       const formData = new FormData();
       formData.append('file', imageFile);
@@ -257,7 +273,7 @@ const Path: React.FC<PathProps> = ({
 
         if (uploadResponse.ok) {
           const { url } = await uploadResponse.json();
-          imageUrl = url; // Set the image URL to be sent with the block update
+          imageUrl = url;
         } else {
           console.error('Image upload failed');
         }
@@ -266,7 +282,6 @@ const Path: React.FC<PathProps> = ({
       }
     }
 
-    // If there is an icon file, upload it and get the URL
     if (iconFile) {
       const formData = new FormData();
       formData.append('file', iconFile);
@@ -279,7 +294,7 @@ const Path: React.FC<PathProps> = ({
 
         if (uploadResponse.ok) {
           const { url } = await uploadResponse.json();
-          iconUrl = url; // Set the icon URL to be sent with the block update
+          iconUrl = url;
         } else {
           console.error('Icon upload failed');
         }
@@ -298,15 +313,15 @@ const Path: React.FC<PathProps> = ({
           type: updatedBlock.type,
           position: updatedBlock.position,
           title: updatedBlock.title,
-          icon: iconUrl || updatedBlock.icon, // Include the icon URL or keep existing one
+          icon: iconUrl || updatedBlock.icon,
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
           averageTime: updatedBlock.averageTime,
           taskType: updatedBlock.taskType,
-          image: imageUrl || updatedBlock.image, // Include the image URL or keep existing one
+          image: imageUrl || updatedBlock.image,
           imageDescription: updatedBlock.imageDescription,
-          clickPosition: updatedBlock.clickPosition, // Include the updated clickPosition
+          clickPosition: updatedBlock.clickPosition,
         }),
       });
 

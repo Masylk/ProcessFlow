@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import SidebarPath from './SidebarPath';
 import { SidebarBlock } from './Sidebar';
 import { SidebarEvent, SidebarEventType } from '../page';
+import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd'; // Import type
 
 export interface SidebarDivProps {
   block: SidebarBlock;
   onSidebarEvent: (eventData: SidebarEvent) => void;
   workspaceId: string;
   workflowId: string;
-  searchFilter: string; // Add the searchFilter prop
+  searchFilter: string;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null; // Update type
 }
 
 const SidebarDiv: React.FC<SidebarDivProps> = ({
@@ -16,31 +18,28 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
   onSidebarEvent,
   workspaceId,
   workflowId,
-  searchFilter, // Destructure searchFilter
+  searchFilter,
+  dragHandleProps,
 }) => {
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(true);
 
-  const MAX_DESCRIPTION_LENGTH = 15; // Set the maximum length for the description
+  const MAX_DESCRIPTION_LENGTH = 15;
 
-  // Truncate text if it exceeds the maximum length
-  const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-  };
+  const truncateText = (text: string, maxLength: number) =>
+    text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 
   const handleClick = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Stops the click event from propagating to parent elements
-
+    event.stopPropagation();
     const targetElement = `block:${block.id}`;
     console.log('target element is: ', targetElement);
     onSidebarEvent({ type: SidebarEventType.FOCUS, focusId: targetElement });
   };
 
   const toggleSubpathsVisibility = (event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent parent click events
+    event.stopPropagation();
     setIsSubpathsVisible((prev) => !prev);
   };
 
-  // Check if the block matches the search filter
   const matchesSearchFilter = block.description
     ?.toLowerCase()
     .includes(searchFilter.toLowerCase());
@@ -50,16 +49,15 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
       className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px] cursor-pointer"
       onClick={handleClick}
     >
-      {/* Block Content */}
       {matchesSearchFilter && (
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center">
             {/* Drag Icon */}
-            <div className="mr-0">
+            <div className="mr-0" {...(dragHandleProps || {})}>
               <img
                 src="/assets/shared_components/drag-icon.svg"
                 alt="Drag Icon"
-                className="w-4 h-4"
+                className="w-4 h-4 cursor-grab"
               />
             </div>
 
@@ -101,7 +99,6 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
         </div>
       )}
 
-      {/* Render subpaths if they exist and are visible */}
       {isSubpathsVisible && block.subpaths && block.subpaths.length > 0 && (
         <div className="ml-4 mt-0">
           {block.subpaths.map((subpath) => (

@@ -12,8 +12,9 @@ export async function POST(req: NextRequest) {
     delayBlock,
     stepBlock,
     pathBlock,
-    imageUrl, // New field for the image URL
-    clickPosition, // New field for click position
+    imageUrl,
+    clickPosition,
+    defaultBlock,
   } = await req.json();
 
   // Validate block type
