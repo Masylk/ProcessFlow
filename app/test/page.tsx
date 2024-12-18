@@ -1,4 +1,4 @@
-'use client'; // Add this line to mark the component as a Client Component
+'use client'; // Mark the component as a Client Component
 
 import React, { useEffect, useState } from 'react';
 import ReactFlow, {
@@ -14,6 +14,11 @@ interface Block {
   description: string;
   subpaths: Block[][];
 }
+
+// Constants for positioning
+const NODE_SPACING = 20; // Vertical and horizontal spacing between nodes
+const BLOCK_HEIGHT = 50; // Height of each block
+const BLOCK_WIDTH = 100; // Width of each block
 
 // Function to generate a list of blocks with 2 subpaths each
 const generateBlocks = (): Block[] => {
@@ -61,26 +66,32 @@ const generateBlocks = (): Block[] => {
 const convertBlocksToNodes = (
   blocks: Block[],
   parentId: string = '',
-  level: number = 0,
+  stage: number = 0,
   xOffset: number = 0
 ): any[] => {
   const nodes: any[] = [];
-  const nodeSpacing = 150; // Vertical distance between nodes
-  const horizontalSpacing = 200; // Horizontal distance between nodes
   let nodeId = 1;
 
   const addNode = (
     block: Block,
     parentId: string,
-    level: number,
-    sublevel: number,
-    xOffset: number
+    stage: number,
+    positionIndex: number,
+    totalNodes: number
   ) => {
+    // Calculate x position for the node
+    const totalLineLength = totalNodes * (BLOCK_WIDTH + NODE_SPACING);
+    const maxLeft = -totalLineLength / 2;
+    const x = maxLeft + positionIndex * (totalLineLength / totalNodes);
+
+    // Calculate y position for the node
+    const y = stage * (BLOCK_HEIGHT + NODE_SPACING);
+
     const node = {
       id: `${parentId}-${nodeId}`,
       type: 'default',
       data: { label: block.name },
-      position: { x: xOffset, y: level * nodeSpacing },
+      position: { x, y },
       draggable: true, // Ensure the node is draggable
     };
     nodes.push(node);
@@ -89,15 +100,22 @@ const convertBlocksToNodes = (
 
   blocks.forEach((block, index) => {
     // Add the parent node
-    addNode(block, parentId, index, 0, xOffset);
+    addNode(block, parentId, stage, index, blocks.length);
+
+    // Recursively add subpaths
     block.subpaths.forEach((subpath, subpathIndex) => {
-      // For each subpath, calculate its sublevel and position it below the parent node
-      const newXOffset = xOffset + subpathIndex * horizontalSpacing;
       subpath.forEach((subBlock, subBlockIndex) => {
-        // Add subpath node with sublevel based on its index
-        addNode(subBlock, parentId, index + 1, subBlockIndex, newXOffset);
+        addNode(
+          subBlock,
+          parentId,
+          stage + 1,
+          subpathIndex * subpath.length + subBlockIndex,
+          subpath.length * block.subpaths.length
+        );
       });
+      stage += 1;
     });
+    stage += 1;
   });
 
   return nodes;
@@ -113,14 +131,14 @@ const ReactFlowExample: React.FC = () => {
     // Convert blocks to ReactFlow nodes
     const nodes = convertBlocksToNodes(blocks);
 
-    // Generate edges between nodes (for simplicity, we can assume a direct connection between parent and child)
+    // Generate edges between nodes (for simplicity, assume direct connections)
     const edges = nodes
       .map((node, index) => {
         if (index === 0) return null; // Skip first node as it has no parent
         return {
           id: `e${index - 1}-${index}`,
-          source: `${index - 1}`,
-          target: `${index}`,
+          source: `${nodes[index - 1].id}`,
+          target: `${node.id}`,
         };
       })
       .filter(Boolean);

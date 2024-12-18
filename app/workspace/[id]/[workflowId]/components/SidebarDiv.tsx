@@ -45,10 +45,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     .includes(searchFilter.toLowerCase());
 
   return (
-    <li
-      className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px] cursor-pointer"
-      onClick={handleClick}
-    >
+    <li className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px] ">
       {matchesSearchFilter && (
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center">
@@ -69,7 +66,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
             )}
 
             {/* Description */}
-            <div>
+            <div className="cursor-pointer" onClick={handleClick}>
               {block.type}:{' '}
               {truncateText(
                 block.description || 'No description',

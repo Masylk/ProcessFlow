@@ -100,24 +100,7 @@ const Path: React.FC<PathProps> = ({
               await handleBlocksReorder(reorderedBlocks),
           });
 
-          // If there are no blocks, create the default block
-          if (!fetchedPathData.blocks || fetchedPathData.blocks.length === 0) {
-            const defaultBlockData = {
-              type: 'STEP',
-              title: 'Default Step',
-              description: 'This is the default step block',
-              position: 0,
-              pathId: pathId,
-              workflowId: workflowId,
-              icon: '/step-icons/default-icons/container.svg',
-              default: true,
-            };
-
-            await handleAddBlockFn(defaultBlockData, pathId, 0);
-          } else {
-            setBlockList(fetchedPathData.blocks);
-          }
-
+          setBlockList(fetchedPathData.blocks);
           setPathData(fetchedPathData);
         } else {
           console.error('Failed to fetch path data:', response.statusText);

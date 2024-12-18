@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
           create: { stepDetails: stepBlock.stepDetails },
         };
       } else if (type === 'PATH' && pathBlock) {
+        // Create paths and their default blocks
         blockData.pathBlock = {
           create: {
             paths: {
@@ -97,6 +98,34 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+
+      // Create default blocks inside each path created
+      if (type === 'PATH' && newBlock.pathBlock?.paths?.length) {
+        await Promise.all(
+          newBlock.pathBlock.paths.map(async (path) => {
+            const defaultBlockData: any = {
+              type: 'STEP', // Default block type
+              position: 0, // Default position
+              icon: '/step-icons/default-icons/container.svg', // Default icon
+              description: 'This is a default block', // Default description
+              workflow: { connect: { id: workflowId } },
+              path: { connect: { id: path.id } },
+              stepBlock: {
+                create: {
+                  stepDetails: 'Default step details', // Default step details
+                },
+              },
+            };
+
+            await prisma.block.create({
+              data: defaultBlockData,
+              include: {
+                stepBlock: true,
+              },
+            });
+          })
+        );
+      }
 
       return newBlock;
     });

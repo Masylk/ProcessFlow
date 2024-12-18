@@ -18,7 +18,6 @@ export async function GET(
   }
 
   try {
-    // Use a transaction to safely check and create if necessary
     const result = await prisma.$transaction(async (prisma) => {
       const parsedWorkflowId = parseInt(workflowId);
 
@@ -30,7 +29,7 @@ export async function GET(
         include: {
           blocks: {
             orderBy: {
-              position: 'asc', // Order blocks within each path if necessary
+              position: 'asc',
             },
             include: {
               pathBlock: {
@@ -39,9 +38,9 @@ export async function GET(
                     include: {
                       blocks: {
                         include: {
-                          pathBlock: true, // Include nested pathBlock relations
-                          stepBlock: true, // Include step block relations
-                          delayBlock: true, // Include delay block relations
+                          pathBlock: true,
+                          stepBlock: true,
+                          delayBlock: true,
                         },
                       },
                     },
@@ -55,43 +54,41 @@ export async function GET(
         },
       });
 
-      // If no paths are found, create a new Path (without linking to a PathBlock since it's optional)
       if (existingPaths.length === 0) {
         const newPath = await prisma.path.create({
           data: {
-            name: 'First Path', // Set a default or customizable name
+            name: 'First Path',
             workflowId: parsedWorkflowId,
-            pathBlockId: null, // Optional relationship with PathBlock
-          },
-          include: {
-            blocks: {
-              include: {
-                pathBlock: {
-                  include: {
-                    paths: {
-                      include: {
-                        blocks: {
-                          include: {
-                            pathBlock: true,
-                            stepBlock: true,
-                            delayBlock: true,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-                stepBlock: true,
-                delayBlock: true,
-              },
-            },
+            pathBlockId: null,
           },
         });
-        console.log(newPath);
-        return { paths: [newPath] };
+
+        // Create the default step block inside the new path
+        const defaultBlockData: any = {
+          type: 'STEP',
+          position: 0,
+          icon: '/step-icons/default-icons/container.svg',
+          description: 'This is the default step block',
+          workflow: { connect: { id: parsedWorkflowId } },
+          path: { connect: { id: newPath.id } },
+          stepBlock: {
+            create: {
+              stepDetails: 'Default step details',
+            },
+          },
+        };
+
+        const defaultBlock = await prisma.block.create({
+          data: defaultBlockData,
+          include: {
+            stepBlock: true,
+          },
+        });
+
+        return { paths: [{ ...newPath, blocks: [defaultBlock] }] };
       }
-      console.log(existingPaths);
-      // Return existing paths with their associated blocks if they exist
+
+      // Return existing paths with their associated blocks
       return { paths: existingPaths };
     });
 
