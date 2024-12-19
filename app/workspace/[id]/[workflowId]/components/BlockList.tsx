@@ -240,7 +240,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 />
               </div>
 
-              {!paths && (
+              {(!paths || paths.length === 0) && (
                 <div>
                   <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
                     <line
@@ -256,23 +256,45 @@ const BlockList: React.FC<BlockListProps> = ({
               )}
 
               {paths && (
-                <div className="flex flex-row gap-8">
+                <div
+                  className={`grid grid-cols-${paths.length} gap-x-48`}
+                  style={{
+                    gridTemplateColumns: `repeat(${paths.length}, auto)`,
+                  }}
+                >
                   {paths.map((path, key) => (
-                    <Path
-                      key={`${block.id}-path-${key}`}
-                      pathId={path.id}
-                      workspaceId={workspaceId}
-                      workflowId={block.workflowId}
-                      selectedBlock={selectedBlock}
-                      onBlockClick={onBlockClick}
-                      closeDetailSidebar={closeDetailSidebar}
-                      handleAddBlock={handleAddBlock}
-                      disableZoom={disableZoom}
-                      copyBlockFn={copyBlockFn}
-                      setPathFn={setPathFn}
-                      setDefaultPathFn={setDefaultPathFn}
-                      onCanvasEvent={onCanvasEvent}
-                    />
+                    <div
+                      key={`${block.id}-container-${key}`}
+                      className="flex flex-col items-center"
+                    >
+                      {/* SVG line */}
+                      <svg width="5" height="100%">
+                        <line
+                          x1="50%"
+                          y1="0%"
+                          x2="50%"
+                          y2="100%"
+                          stroke="black"
+                          strokeWidth="2"
+                        />
+                      </svg>
+                      {/* Path component */}
+                      <Path
+                        key={`${block.id}-path-${key}`}
+                        pathId={path.id}
+                        workspaceId={workspaceId}
+                        workflowId={block.workflowId}
+                        selectedBlock={selectedBlock}
+                        onBlockClick={onBlockClick}
+                        closeDetailSidebar={closeDetailSidebar}
+                        handleAddBlock={handleAddBlock}
+                        disableZoom={disableZoom}
+                        copyBlockFn={copyBlockFn}
+                        setPathFn={setPathFn}
+                        setDefaultPathFn={setDefaultPathFn}
+                        onCanvasEvent={onCanvasEvent}
+                      />
+                    </div>
                   ))}
                 </div>
               )}

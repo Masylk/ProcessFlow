@@ -407,8 +407,8 @@ const Path: React.FC<PathProps> = ({
   };
 
   return (
-    <div className="w-full h-full pt-36">
-      <div className="text-center">{pathData?.name || 'Loading...'}</div>
+    <div className="w-full h-full pt-0">
+      {/* <div className="text-center">{pathData?.name || 'Loading...'}</div> */}
       {!loading ? (
         <BlockList
           blocks={blockList}
