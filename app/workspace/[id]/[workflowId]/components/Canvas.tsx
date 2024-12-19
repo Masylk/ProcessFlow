@@ -267,15 +267,17 @@ export default function Canvas({
               initialScale={1}
               minScale={0.1}
               maxScale={4}
+              doubleClick={{ disabled: true }}
               wheel={{ step: 0.1 }}
               alignmentAnimation={{ disabled: true }}
               limitToBounds={false}
               disabled={disableZoom}
+              // centerOnInit={true}
               // TODO : Bounds do not work
-              // minPositionX={-5} // Set the minimum horizontal pan limit
-              // minPositionY={-5} // Set the maximum vertical pan limit
-              // maxPositionX={500} // Set the maximum horizontal pan limit
-              // maxPositionY={500} // Set the maximum vertical pan limit
+              // minPositionX={-10000000} // Set the minimum horizontal pan limit
+              // minPositionY={-10000000} // Set the maximum vertical pan limit
+              // maxPositionX={500000000} // Set the maximum horizontal pan limit
+              // maxPositionY={500000000} // Set the maximum vertical pan limit
             >
               {({
                 zoomIn,

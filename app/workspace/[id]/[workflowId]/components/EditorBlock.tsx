@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
 import BlockOptionsToggle from './BlockOptionsToggle';
 
@@ -15,23 +15,6 @@ interface EditorBlockProps {
   isFocused: boolean;
 }
 
-const ImageOverlay = ({ onClose }: { onClose: () => void }) => {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed w-[50000vw] h-[50000vh]  left-[-20000vw] top-[-20000vh] inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center"
-      onClick={onClose}
-    ></div>
-  );
-};
-
 export default function EditorBlock({
   block,
   onClick,
@@ -40,16 +23,19 @@ export default function EditorBlock({
   copyBlockFn,
   isFocused,
 }: EditorBlockProps) {
+  const blockRef = useRef<HTMLDivElement>(null);
+
   const handleClick = (event: React.MouseEvent) => {
     onClick(block, event);
   };
 
   return (
     <div
+      ref={blockRef}
       id={`block:${block.id}`}
       className={`w-[481px] ${
         block.image ? 'h-[455px]' : 'h-auto'
-      } px-6 py-5 rounded-2xl bg-white border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer ${
+      } px-6 py-5 rounded-2xl bg-white border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer overflow-visible ${
         isFocused ? 'z-40' : 'z-10'
       } relative`}
       onClick={handleClick}
@@ -60,11 +46,7 @@ export default function EditorBlock({
           {/* Icon */}
           <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] justify-center items-center flex">
             {block.icon && (
-              <img
-                src={block.icon}
-                alt="icon"
-                className="w-8 h-8"
-              />
+              <img src={block.icon} alt="icon" className="w-8 h-8" />
             )}
           </div>
 

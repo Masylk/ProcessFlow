@@ -14,6 +14,7 @@ import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
 import ImageOverlay from './ImageOverlay';
+import VectorStraightSVG from '@/public/assets/workflow/vector-straight.svg';
 
 interface BlockListProps {
   blocks: Block[];
@@ -67,6 +68,8 @@ interface BlockListProps {
   onCanvasEvent: (eventData: CanvasEvent) => void;
 }
 
+const VERTICAL_LINE_LENGTH = '50';
+
 const BlockList: React.FC<BlockListProps> = ({
   blocks,
   workspaceId,
@@ -97,8 +100,10 @@ const BlockList: React.FC<BlockListProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  // New state for overlay visibility
   const [overlayVisible, setOverlayVisible] = useState(false);
+
+  // New state to track hover for AddBlock component and SVG tags
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setBlockList(blocks);
@@ -142,13 +147,13 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const handleClick = (block: Block, event: React.MouseEvent) => {
     setFocusedBlockId(block.id);
-    setOverlayVisible(true); // Show overlay on block click
+    setOverlayVisible(true);
     setPathFn(pathId, block.position, handleAddBlockFn);
     handleBlockClick(block);
   };
 
   const handleOverlayClose = () => {
-    setOverlayVisible(false); // Close overlay
+    setOverlayVisible(false);
   };
 
   const handleDragStart = (start: DragStart) => {
@@ -162,7 +167,6 @@ const BlockList: React.FC<BlockListProps> = ({
     setDraggingBlockId(null);
     setIsDragging(false);
     setMousePosition({ x: 0, y: 0 });
-
     if (!result.destination) return;
 
     const reorderedBlocks = Array.from(blockList);
@@ -178,16 +182,13 @@ const BlockList: React.FC<BlockListProps> = ({
   };
 
   const handleMouseMove = (event: MouseEvent) => {
-    // Include scroll position offsets
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
 
     if (isDragging) {
-      // Adjust the offsets according to zoom level
-      let baseOffsetX = 70;
-      let baseOffsetY = 180;
+      let baseOffsetX = 100;
+      let baseOffsetY = 120;
 
-      // Apply zoom scaling to the offsets
       const offsetX = baseOffsetX;
       const offsetY = baseOffsetY;
 
@@ -228,21 +229,31 @@ const BlockList: React.FC<BlockListProps> = ({
               {...provided.draggableProps}
               className={`flex flex-col w-full items-center ${draggingClass}`}
             >
-              {/* Wrapping div that acts as the drag handle */}
-              <div
-                {...provided.dragHandleProps} // Attach drag handle here
-                className=""
-              >
-                {/* EditorBlock component */}
+              <div {...provided.dragHandleProps} className="">
                 <EditorBlock
                   block={block}
                   handleAddBlockFn={handleAddBlockFn}
                   handleDeleteBlockFn={handleDeleteBlockFn}
                   copyBlockFn={copyBlockFn}
                   onClick={handleClick}
-                  isFocused={focusedBlockId === block.id} // Check if this block is focused
+                  isFocused={focusedBlockId === block.id}
                 />
               </div>
+
+              {!paths && (
+                <div>
+                  <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
+                    <line
+                      x1="50%"
+                      y1="0%"
+                      x2="50%"
+                      y2="100%"
+                      stroke="#98a1b2"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
+              )}
 
               {paths && (
                 <div className="flex flex-row gap-8">
@@ -265,11 +276,25 @@ const BlockList: React.FC<BlockListProps> = ({
                   ))}
                 </div>
               )}
+
               <AddBlock
                 id={index + 1}
                 onAdd={() => onAddBlockClick(index + 1)}
-                label="Add Block"
+                alwaysDisplay={index === blocks.length - 1} // Always display for the last index
               />
+
+              {index !== blocks.length - 1 && (
+                <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
+                  <line
+                    x1="50%"
+                    y1="0%"
+                    x2="50%"
+                    y2="100%"
+                    stroke="#98a1b2"
+                    strokeWidth="2"
+                  />
+                </svg>
+              )}
             </div>
           )}
         </Draggable>
@@ -295,27 +320,22 @@ const BlockList: React.FC<BlockListProps> = ({
                 <div>{provided.placeholder}</div>
                 {blockList.length === 0 && (
                   <div>
-                    <AddBlock
-                      id={0}
-                      onAdd={() => onAddBlockClick(0)}
-                      label="Add Block"
-                    />
+                    <AddBlock id={0} onAdd={() => onAddBlockClick(0)} />
                   </div>
                 )}
               </div>
-              {/* Div that follows the mouse on Drag and Drop*/}
               <div
                 style={{
                   position: 'absolute',
-                  left: mousePosition.x + 20,
-                  top: mousePosition.y + 150,
+                  left: mousePosition.x,
+                  top: mousePosition.y,
                   backgroundColor: 'rgba(200, 200, 200, 0.8)',
                   padding: '8px',
                   borderRadius: '4px',
                   boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
-                  pointerEvents: 'none', // Prevent blocking mouse events
-                  opacity: isDragging ? 1 : 0, // Control visibility
-                  transition: 'opacity 0.2s ease', // Smooth transition
+                  pointerEvents: 'none',
+                  opacity: isDragging ? 1 : 0,
+                  transition: 'opacity 0.2s ease',
                 }}
               >
                 <p>Dragging a block...</p>

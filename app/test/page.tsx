@@ -1,179 +1,122 @@
-'use client'; // Mark the component as a Client Component
+'use client';
 
-import React, { useEffect, useState } from 'react';
-import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
-  ReactFlowProvider,
-} from 'react-flow-renderer';
+import { useEffect, useRef, useState } from 'react';
 
-// Define the Block interface
-interface Block {
-  name: string;
-  description: string;
-  subpaths: Block[][];
-}
-
-// Constants for positioning
-const NODE_SPACING = 20; // Vertical and horizontal spacing between nodes
-const BLOCK_HEIGHT = 50; // Height of each block
-const BLOCK_WIDTH = 100; // Width of each block
-
-// Function to generate a list of blocks with 2 subpaths each
-const generateBlocks = (): Block[] => {
-  const blocks: Block[] = [];
-
-  for (let i = 1; i <= 5; i++) {
-    const block: Block = {
-      name: `Block ${i}`,
-      description: `Description for Block ${i}`,
-      subpaths: [
-        [
-          {
-            name: `Block ${i}-Subpath 1-1`,
-            description: `Description for Block ${i}-Subpath 1-1`,
-            subpaths: [],
-          },
-          {
-            name: `Block ${i}-Subpath 1-2`,
-            description: `Description for Block ${i}-Subpath 1-2`,
-            subpaths: [],
-          },
-        ],
-        [
-          {
-            name: `Block ${i}-Subpath 2-1`,
-            description: `Description for Block ${i}-Subpath 2-1`,
-            subpaths: [],
-          },
-          {
-            name: `Block ${i}-Subpath 2-2`,
-            description: `Description for Block ${i}-Subpath 2-2`,
-            subpaths: [],
-          },
-        ],
-      ],
-    };
-
-    blocks.push(block);
-  }
-
-  return blocks;
-};
-
-// Function to convert Block list to ReactFlow nodes
-const convertBlocksToNodes = (
-  blocks: Block[],
-  parentId: string = '',
-  stage: number = 0,
-  xOffset: number = 0
-): any[] => {
-  const nodes: any[] = [];
-  let nodeId = 1;
-
-  const addNode = (
-    block: Block,
-    parentId: string,
-    stage: number,
-    positionIndex: number,
-    totalNodes: number
-  ) => {
-    // Calculate x position for the node
-    const totalLineLength = totalNodes * (BLOCK_WIDTH + NODE_SPACING);
-    const maxLeft = -totalLineLength / 2;
-    const x = maxLeft + positionIndex * (totalLineLength / totalNodes);
-
-    // Calculate y position for the node
-    const y = stage * (BLOCK_HEIGHT + NODE_SPACING);
-
-    const node = {
-      id: `${parentId}-${nodeId}`,
-      type: 'default',
-      data: { label: block.name },
-      position: { x, y },
-      draggable: true, // Ensure the node is draggable
-    };
-    nodes.push(node);
-    nodeId++;
-  };
-
-  blocks.forEach((block, index) => {
-    // Add the parent node
-    addNode(block, parentId, stage, index, blocks.length);
-
-    // Recursively add subpaths
-    block.subpaths.forEach((subpath, subpathIndex) => {
-      subpath.forEach((subBlock, subBlockIndex) => {
-        addNode(
-          subBlock,
-          parentId,
-          stage + 1,
-          subpathIndex * subpath.length + subBlockIndex,
-          subpath.length * block.subpaths.length
-        );
-      });
-      stage += 1;
-    });
-    stage += 1;
+const HomePage = () => {
+  const div1Ref = useRef<HTMLDivElement>(null);
+  const div2Ref = useRef<HTMLDivElement>(null);
+  const [svgPosition, setSvgPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
   });
 
-  return nodes;
-};
+  const updateSvgPosition = () => {
+    if (div1Ref.current && div2Ref.current) {
+      const rect1 = div1Ref.current.getBoundingClientRect();
+      const rect2 = div2Ref.current.getBoundingClientRect();
 
-const ReactFlowExample: React.FC = () => {
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
+      // Calculate start and end points
+      const startX = rect1.left + rect1.width / 2;
+      const startY = rect1.top + rect1.height / 2;
+      const endX = rect2.left + rect2.width / 2;
+      const endY = rect2.top + rect2.height / 2;
+
+      // Set SVG container dimensions and position
+      setSvgPosition({
+        top: Math.min(startY, endY),
+        left: Math.min(startX, endX),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY),
+      });
+    }
+  };
 
   useEffect(() => {
-    const blocks = generateBlocks();
-
-    // Convert blocks to ReactFlow nodes
-    const nodes = convertBlocksToNodes(blocks);
-
-    // Generate edges between nodes (for simplicity, assume direct connections)
-    const edges = nodes
-      .map((node, index) => {
-        if (index === 0) return null; // Skip first node as it has no parent
-        return {
-          id: `e${index - 1}-${index}`,
-          source: `${nodes[index - 1].id}`,
-          target: `${node.id}`,
-        };
-      })
-      .filter(Boolean);
-
-    setNodes(nodes);
-    setEdges(edges);
+    // Update position on window resize
+    window.addEventListener('resize', updateSvgPosition);
+    return () => {
+      window.removeEventListener('resize', updateSvgPosition);
+    };
   }, []);
 
-  const onNodeDragStop = (event: any, node: any) => {
-    // Update the position of the dragged node in the state
-    setNodes((prevNodes) =>
-      prevNodes.map((n) =>
-        n.id === node.id ? { ...n, position: node.position } : n
-      )
-    );
+  useEffect(() => {
+    // Initial position update
+    updateSvgPosition();
+  }, []);
+
+  const handleDrag = (
+    event: React.MouseEvent<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement>
+  ) => {
+    const element = ref.current;
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const left = moveEvent.clientX - offsetX;
+      const top = moveEvent.clientY - offsetY;
+
+      element.style.left = `${left}px`;
+      element.style.top = `${top}px`;
+
+      // Update the SVG position dynamically
+      updateSvgPosition();
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   };
 
   return (
-    <div style={{ height: '100vh' }}>
-      <div style={{ height: '90%' }}>
-        <ReactFlowProvider>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodeDragStop={onNodeDragStop} // Handle node drag stop event
-            fitView
-          >
-            <MiniMap />
-            <Controls />
-            <Background />
-          </ReactFlow>
-        </ReactFlowProvider>
+    <div className="relative h-screen w-screen bg-gray-100">
+      {/* Div 1 */}
+      <div
+        ref={div1Ref}
+        className="absolute bg-blue-500 text-white flex items-center justify-center w-20 h-20 rounded-lg z-20 cursor-move"
+        style={{ top: '20%', left: '30%' }}
+        onMouseDown={(e) => handleDrag(e, div1Ref)}
+      >
+        Div 1
+      </div>
+
+      {/* Div 2 */}
+      <div
+        ref={div2Ref}
+        className="absolute bg-green-500 text-white flex items-center justify-center w-20 h-20 rounded-lg z-20 cursor-move"
+        style={{ top: '60%', left: '70%' }}
+        onMouseDown={(e) => handleDrag(e, div2Ref)}
+      >
+        Div 2
+      </div>
+
+      {/* External SVG */}
+      <div
+        className="absolute pointer-events-none z-1"
+        style={{
+          top: svgPosition.top,
+          left: svgPosition.left,
+          width: svgPosition.width,
+          height: svgPosition.height,
+        }}
+      >
+        <img
+          src="/assets/workflow/vector-right.svg"
+          alt="Connector"
+          className="w-full h-full"
+        />
       </div>
     </div>
   );
 };
 
-export default ReactFlowExample;
+export default HomePage;
