@@ -53,7 +53,7 @@ export default function EditorBlock({
           {/* Title */}
           <div className="flex-col justify-start items-start gap-1 inline-flex">
             <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
-              {`${block.position + 1}. ${block.title || 'Untitled Block'}`}
+              {`${block.title || 'Untitled Block'}`}
             </h3>
           </div>
         </div>
@@ -81,12 +81,12 @@ export default function EditorBlock({
         <img
           src={block.image}
           alt="block image"
-          className="self-stretch h-[267px] rounded-xl border border-[#e4e7ec] object-cover cursor-pointer"
+          className="self-stretch h-[260px] rounded-xl border border-[#e4e7ec] object-cover cursor-pointer overflow-hidden"
         />
       )}
 
       {/* Footer */}
-      <div className="w-full flex justify-between items-center mt-3">
+      <div className="w-full flex justify-between items-center mt-1.5">
         {/* Time */}
         <div className="h-[22px] px-2 py-0.5 bg-gray-50 rounded-full border border-[#e4e7ec] justify-start items-center flex">
           <span className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">

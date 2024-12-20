@@ -313,6 +313,7 @@ export default function Canvas({
                       onTransformChange={onTransformChange}
                       zoomToElement={zoomToElement}
                       focusId={focusId}
+                      selectedBlock={selectedBlock}
                     />
 
                     {/* Content and Background */}

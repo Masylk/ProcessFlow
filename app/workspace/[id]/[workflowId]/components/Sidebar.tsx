@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Sidebar Content */}
-      {isSidebarVisible && (
+      {isSidebarVisible && !selectedBlock && (
         <div
           className="flex-1 flex flex-col overflow-auto p-0 hide-scrollbar resize-x border border-gray-200"
           style={{
