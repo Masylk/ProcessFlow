@@ -24,6 +24,9 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'sans-serif'], // Default 'sans' is now Inter
       },
+      spacing: {
+        half: '50%',
+      },
     },
   },
   plugins: [
@@ -40,6 +43,73 @@ const config: Config = {
         '.resize-x': {
           resize: 'horizontal',
           overflow: 'auto', // Ensure the content can overflow
+        },
+        // Custom utility for left and top borders starting from the middle with rounded corners
+        '.custom-border-left-top': {
+          position: 'relative',
+        },
+        '.custom-border-left-top::before': {
+          content: '""',
+          position: 'absolute',
+          top: '-80px',
+          left: '50%',
+          width: '3px',
+          height: '20%',
+          backgroundColor: '#98A2B3',
+          borderTopLeftRadius: '100px',
+          borderBottomLeftRadius: '100px',
+        },
+        '.custom-border-left-top::after': {
+          content: '""',
+          position: 'absolute',
+          top: '-80px',
+          left: '50%',
+          width: 'calc(50% + 240px)',
+          height: '2px',
+          backgroundColor: '#98A2B3',
+          borderTopLeftRadius: '100px',
+          borderTopRightRadius: '100px',
+        },
+        // Custom utility for right and top borders starting from the middle with rounded corners
+        '.custom-border-right-top': {
+          position: 'relative',
+        },
+        '.custom-border-right-top::before': {
+          content: '""',
+          position: 'absolute',
+          top: '-80px',
+          right: '50%',
+          width: '2px',
+          height: '20%',
+          backgroundColor: '#98A2B3',
+          borderTopRightRadius: '100px',
+          borderBottomRightRadius: '100px',
+        },
+        '.custom-border-right-top::after': {
+          content: '""',
+          position: 'absolute',
+          top: '-80px',
+          right: '50%',
+          width: 'calc(50% + 240px)',
+          height: '2px',
+          backgroundColor: '#98A2B3',
+          borderTopLeftRadius: '100px',
+          borderTopRightRadius: '100px',
+        },
+        // Custom utility for middle columns with a full top border
+        '.custom-border-middle-top': {
+          position: 'relative',
+        },
+        '.custom-border-middle-top::after': {
+          content: '""',
+          position: 'absolute',
+          top: '-80px',
+          left: '0',
+          width: 'calc(100% + 240px)' /* Full width */,
+          height: '2px',
+          backgroundColor: '#98A2B3',
+          borderTopLeftRadius: '100px',
+          borderTopRightRadius: '100px',
         },
       });
     },

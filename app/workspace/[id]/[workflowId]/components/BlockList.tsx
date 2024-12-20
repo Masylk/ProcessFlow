@@ -241,13 +241,13 @@ const BlockList: React.FC<BlockListProps> = ({
               </div>
 
               {(!paths || paths.length === 0) && (
-                <div>
+                <div className="overflow-visible">
                   <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
                     <line
                       x1="50%"
                       y1="0%"
                       x2="50%"
-                      y2="100%"
+                      y2="200%"
                       stroke="#98a1b2"
                       strokeWidth="2"
                     />
@@ -262,40 +262,66 @@ const BlockList: React.FC<BlockListProps> = ({
                     gridTemplateColumns: `repeat(${paths.length}, auto)`,
                   }}
                 >
-                  {paths.map((path, key) => (
-                    <div
-                      key={`${block.id}-container-${key}`}
-                      className="flex flex-col items-center"
-                    >
-                      {/* SVG line */}
-                      <svg width="5" height="100%">
-                        <line
-                          x1="50%"
-                          y1="0%"
-                          x2="50%"
-                          y2="100%"
-                          stroke="black"
-                          strokeWidth="2"
+                  {paths.map((path, key) => {
+                    // Determine if the current index is on the left, right, or middle
+                    const isFirstColumn = paths.length !== 1 && key === 0;
+                    const isLastColumn =
+                      paths.length !== 1 && key === paths.length - 1;
+                    const isMiddleColumn =
+                      paths.length !== 1 && !isFirstColumn && !isLastColumn;
+
+                    // Apply the appropriate border class only if there is more than one path
+                    const borderClass =
+                      paths.length === 1
+                        ? '' // No border classes if there's only one path
+                        : isFirstColumn
+                        ? 'custom-border-left-top' // Apply left-top border for the first column
+                        : isLastColumn
+                        ? 'custom-border-right-top' // Apply right-top border for the last column
+                        : 'custom-border-left-top custom-border-right-top'; // Apply both left and right borders for middle columns
+
+                    // Apply the middle border class if it's not the first or last column, but only if there's more than one path
+                    const middleClass =
+                      paths.length !== 1 && isMiddleColumn
+                        ? 'custom-border-middle-top'
+                        : '';
+
+                    return (
+                      <div
+                        key={`${block.id}-container-${key}`}
+                        className={`flex flex-col items-center ${borderClass} ${middleClass}`}
+                      >
+                        {/* Vertical SVG Line */}
+                        <svg width="5" height="100%">
+                          <line
+                            x1="50%"
+                            y1="0%"
+                            x2="50%"
+                            y2="100%"
+                            stroke="#98A2B3"
+                            strokeWidth="2"
+                          />
+                        </svg>
+
+                        {/* Path Component */}
+                        <Path
+                          key={`${block.id}-path-${key}`}
+                          pathId={path.id}
+                          workspaceId={workspaceId}
+                          workflowId={block.workflowId}
+                          selectedBlock={selectedBlock}
+                          onBlockClick={onBlockClick}
+                          closeDetailSidebar={closeDetailSidebar}
+                          handleAddBlock={handleAddBlock}
+                          disableZoom={disableZoom}
+                          copyBlockFn={copyBlockFn}
+                          setPathFn={setPathFn}
+                          setDefaultPathFn={setDefaultPathFn}
+                          onCanvasEvent={onCanvasEvent}
                         />
-                      </svg>
-                      {/* Path component */}
-                      <Path
-                        key={`${block.id}-path-${key}`}
-                        pathId={path.id}
-                        workspaceId={workspaceId}
-                        workflowId={block.workflowId}
-                        selectedBlock={selectedBlock}
-                        onBlockClick={onBlockClick}
-                        closeDetailSidebar={closeDetailSidebar}
-                        handleAddBlock={handleAddBlock}
-                        disableZoom={disableZoom}
-                        copyBlockFn={copyBlockFn}
-                        setPathFn={setPathFn}
-                        setDefaultPathFn={setDefaultPathFn}
-                        onCanvasEvent={onCanvasEvent}
-                      />
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
