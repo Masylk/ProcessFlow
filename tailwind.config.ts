@@ -44,7 +44,6 @@ const config: Config = {
           resize: 'horizontal',
           overflow: 'auto', // Ensure the content can overflow
         },
-        // Custom utility for left and top borders starting from the middle with rounded corners
         '.custom-border-left-top': {
           position: 'relative',
         },
@@ -54,10 +53,11 @@ const config: Config = {
           top: '-80px',
           left: '50%',
           width: '3px',
-          height: '20%',
+          height: 'calc(10% + 80px)',
           backgroundColor: '#98A2B3',
           borderTopLeftRadius: '100px',
           borderBottomLeftRadius: '100px',
+          zIndex: '-1',
         },
         '.custom-border-left-top::after': {
           content: '""',
@@ -69,8 +69,8 @@ const config: Config = {
           backgroundColor: '#98A2B3',
           borderTopLeftRadius: '100px',
           borderTopRightRadius: '100px',
+          zIndex: '-1',
         },
-        // Custom utility for right and top borders starting from the middle with rounded corners
         '.custom-border-right-top': {
           position: 'relative',
         },
@@ -80,10 +80,11 @@ const config: Config = {
           top: '-80px',
           right: '50%',
           width: '2px',
-          height: '20%',
+          height: 'calc(10% + 80px)',
           backgroundColor: '#98A2B3',
           borderTopRightRadius: '100px',
           borderBottomRightRadius: '100px',
+          zIndex: '-1',
         },
         '.custom-border-right-top::after': {
           content: '""',
@@ -95,8 +96,8 @@ const config: Config = {
           backgroundColor: '#98A2B3',
           borderTopLeftRadius: '100px',
           borderTopRightRadius: '100px',
+          zIndex: '-1',
         },
-        // Custom utility for middle columns with a full top border
         '.custom-border-middle-top': {
           position: 'relative',
         },
@@ -110,6 +111,23 @@ const config: Config = {
           backgroundColor: '#98A2B3',
           borderTopLeftRadius: '100px',
           borderTopRightRadius: '100px',
+          zIndex: '-1',
+        },
+        '.custom-border-middle-side': {
+          position: 'relative',
+        },
+        '.custom-border-middle-side::before': {
+          content: '""',
+          position: 'absolute',
+          top: '0px',
+          left: '50%',
+          transform: 'translateY(-50%)',
+          width: '3px',
+          height: 'calc(160px)',
+          backgroundColor: '#98A2B3',
+          borderTopLeftRadius: '100px',
+          borderTopRightRadius: '100px',
+          zIndex: '-1',
         },
       });
     },

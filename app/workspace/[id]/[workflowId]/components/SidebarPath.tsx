@@ -59,6 +59,13 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
       {/* Header with Toggle Icon */}
       {displayTitle && (
         <div className="flex justify-start items-start">
+          <div className="mr-1">
+            <img
+              src="/assets/shared_components/git-branch-icon.svg"
+              alt="Git Branch Icon"
+              className="w-4 h-4"
+            />
+          </div>
           <h2 className="text-sm font-semibold">{path.name}</h2>
           <div
             className="cursor-pointer"
@@ -77,6 +84,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
           </div>
         </div>
       )}
+
       {/* Conditional Rendering Based on isContentVisible */}
       {isContentVisible && path.blocks && path.blocks.length > 0 && (
         <div className={`${displayTitle ? 'ml-2' : ''}`}>

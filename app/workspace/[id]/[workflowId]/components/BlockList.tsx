@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import EditorBlock from './EditorBlock';
 import AddBlock from './AddBlock';
 import {
@@ -15,6 +15,8 @@ import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '../page';
 import ImageOverlay from './ImageOverlay';
 import VectorStraightSVG from '@/public/assets/workflow/vector-straight.svg';
+import DelayBlock from './DelayBlock';
+import PathBlock from './PathBlock';
 
 interface BlockListProps {
   blocks: Block[];
@@ -230,16 +232,21 @@ const BlockList: React.FC<BlockListProps> = ({
               className={`flex flex-col w-full items-center ${draggingClass}`}
             >
               <div {...provided.dragHandleProps} className="">
-                <EditorBlock
-                  block={block}
-                  handleAddBlockFn={handleAddBlockFn}
-                  handleDeleteBlockFn={handleDeleteBlockFn}
-                  copyBlockFn={copyBlockFn}
-                  onClick={handleClick}
-                  isFocused={focusedBlockId === block.id}
-                />
+                {block.type === BlockType.STEP && (
+                  <EditorBlock
+                    block={block}
+                    handleAddBlockFn={handleAddBlockFn}
+                    handleDeleteBlockFn={handleDeleteBlockFn}
+                    copyBlockFn={copyBlockFn}
+                    onClick={handleClick}
+                    isFocused={focusedBlockId === block.id}
+                  />
+                )}
+                {block.type === BlockType.DELAY && <DelayBlock block={block} />}
+                {block.type === BlockType.PATH && <PathBlock block={block} />}
               </div>
 
+              {/* Vertical bottom ending line */}
               {(!paths || paths.length === 0) && (
                 <div className="overflow-visible">
                   <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
@@ -291,7 +298,7 @@ const BlockList: React.FC<BlockListProps> = ({
                         key={`${block.id}-container-${key}`}
                         className={`flex flex-col items-center ${borderClass} ${middleClass}`}
                       >
-                        {/* Vertical SVG Line */}
+                        {/* Vertical TOP SVG Line */}
                         <svg width="5" height="100%">
                           <line
                             x1="50%"
@@ -331,6 +338,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 alwaysDisplay={index === blocks.length - 1} // Always display for the last index
               />
 
+              {/* Vertical bottom Link line */}
               {index !== blocks.length - 1 && (
                 <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
                   <line
