@@ -122,7 +122,7 @@ const config: Config = {
           top: '0px',
           left: '50%',
           transform: 'translateY(-50%)',
-          width: '3px',
+          width: '2px',
           height: 'calc(160px)',
           backgroundColor: '#98A2B3',
           borderTopLeftRadius: '100px',

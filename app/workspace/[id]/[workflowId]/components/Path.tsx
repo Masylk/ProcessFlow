@@ -14,6 +14,7 @@ interface PathData {
 }
 
 interface PathProps {
+  firstPath?: boolean;
   pathId: number;
   workspaceId: number;
   workflowId: number;
@@ -57,6 +58,7 @@ interface PathProps {
 }
 
 const Path: React.FC<PathProps> = ({
+  firstPath = false,
   pathId,
   workspaceId,
   workflowId,
@@ -408,7 +410,42 @@ const Path: React.FC<PathProps> = ({
 
   return (
     <div className="w-full h-full pt-0">
-      {/* <div className="text-center">{pathData?.name || 'Loading...'}</div> */}
+      <div className="relative w-full flex justify-center items-center">
+        {/* Conditionally render text div based on firstPath */}
+        {firstPath ? (
+          <div className="absolute top-[50%] h-[22px] pl-1.5 pr-2 py-0.5 bg-[#edf0fb] rounded-full border border-[#aebbed] justify-start items-center gap-0.5 inline-flex">
+            <div className="w-3 h-3 relative overflow-hidden">
+              <img
+                src="/assets/workflow/magic-wand-icon.svg"
+                alt="Magic Wand Icon"
+                className="w-full h-full"
+              />
+            </div>
+            <div className="text-center text-[#374c99] text-xs font-medium font-['Inter'] leading-[18px]">
+              This is where your process starts
+            </div>
+          </div>
+        ) : (
+          <div className="absolute top-[50%] h-[22px] px-1.5 py-0.5 bg-white rounded-md shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center inline-flex">
+            <div className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">
+              {pathData?.name || 'Loading...'}
+            </div>
+          </div>
+        )}
+
+        {/* Vertical TOP SVG Line */}
+        <svg width="5" height="10%">
+          <line
+            x1="50%"
+            y1="50%"
+            x2="50%"
+            y2={firstPath ? '100%' : '100%'}
+            stroke="#98A2B3"
+            strokeWidth="2"
+          />
+        </svg>
+      </div>
+
       {!loading ? (
         <BlockList
           blocks={blockList}

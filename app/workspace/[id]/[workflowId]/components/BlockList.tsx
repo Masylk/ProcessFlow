@@ -249,10 +249,14 @@ const BlockList: React.FC<BlockListProps> = ({
               {/* Vertical bottom ending line */}
               {(!paths || paths.length === 0) && (
                 <div className="overflow-visible">
-                  <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    width="5"
+                    height="100"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <line
                       x1="50%"
-                      y1="0%"
+                      y1="-100%"
                       x2="50%"
                       y2="200%"
                       stroke="#98a1b2"
@@ -291,15 +295,15 @@ const BlockList: React.FC<BlockListProps> = ({
                     const middleClass =
                       paths.length !== 1 && isMiddleColumn
                         ? 'custom-border-middle-top'
-                        : '';
+                        : 'custom-border-middle-side';
 
                     return (
                       <div
                         key={`${block.id}-container-${key}`}
                         className={`flex flex-col items-center ${borderClass} ${middleClass}`}
                       >
-                        {/* Vertical TOP SVG Line */}
-                        <svg width="5" height="100%">
+                        {/* Vertical TOP SVG Line in branches */}
+                        {/* <svg width="5" height="100%">
                           <line
                             x1="50%"
                             y1="0%"
@@ -308,8 +312,8 @@ const BlockList: React.FC<BlockListProps> = ({
                             stroke="#98A2B3"
                             strokeWidth="2"
                           />
-                        </svg>
-
+                        </svg> */}
+                        
                         {/* Path Component */}
                         <Path
                           key={`${block.id}-path-${key}`}

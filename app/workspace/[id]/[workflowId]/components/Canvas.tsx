@@ -348,6 +348,7 @@ export default function Canvas({
 
                         {/* Path component */}
                         <Path
+                          firstPath={true}
                           pathId={path.id}
                           workspaceId={parseInt(workspaceId)}
                           workflowId={parseInt(workflowId)}

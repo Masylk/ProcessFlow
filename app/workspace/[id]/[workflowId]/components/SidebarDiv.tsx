@@ -59,11 +59,17 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
             </div>
 
             {/* Block Icon */}
-            {block.icon && (
-              <div className="mr-1">
-                <img src={block.icon} alt="Block Icon" className="w-4 h-4" />
-              </div>
-            )}
+            <div className="mr-1">
+              <img
+                src={
+                  block.type === 'DELAY'
+                    ? '/assets/workflow/delay-clock-icon.svg'
+                    : block.icon
+                }
+                alt="Block Icon"
+                className="w-4 h-4"
+              />
+            </div>
 
             {/* Description */}
             <div className="cursor-pointer" onClick={handleClick}>
