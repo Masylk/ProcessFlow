@@ -313,7 +313,7 @@ const BlockList: React.FC<BlockListProps> = ({
                             strokeWidth="2"
                           />
                         </svg> */}
-                        
+
                         {/* Path Component */}
                         <Path
                           key={`${block.id}-path-${key}`}
@@ -338,8 +338,9 @@ const BlockList: React.FC<BlockListProps> = ({
 
               <AddBlock
                 id={index + 1}
-                onAdd={() => onAddBlockClick(index + 1)}
+                // onAdd={() => onAddBlockClick(index + 1)}
                 alwaysDisplay={index === blocks.length - 1} // Always display for the last index
+                selectedBlock={selectedBlock !== null}
               />
 
               {/* Vertical bottom Link line */}

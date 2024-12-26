@@ -391,7 +391,7 @@ export default function Canvas({
         </>
       )}
 
-      {isAddBlockFormOpen && addBlockPosition !== null && (
+      {/* {isAddBlockFormOpen && addBlockPosition !== null && (
         <AddBlockForm
           onSubmit={async (blockData: any, pathId: number, position: number) =>
             await handleAddBlock(blockData, pathId, position)
@@ -403,7 +403,7 @@ export default function Canvas({
           position={addBlockPosition}
           savedBlock={savedBlock}
         />
-      )}
+      )} */}
     </div>
   );
 }
