@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import DelayDropdownMenu from './DelayDropdownMenu'; // Assuming you have this component
 import PathDropdownPreview from './PathDropdownPreview'; // Assuming you have this component
 
-const AddBlockMenu = () => {
+interface AddBlockMenuProps {
+  addStepBlock: () => Promise<void>;
+}
+
+const AddBlockMenu: React.FC<AddBlockMenuProps> = ({ addStepBlock }) => {
   const [isHoveringDelay, setIsHoveringDelay] = useState(false);
   const [isHoveringCondition, setIsHoveringCondition] = useState(false);
   const [isHoveringDelayMenu, setIsHoveringDelayMenu] = useState(false); // Hover state for DelayDropdownMenu
@@ -26,7 +30,10 @@ const AddBlockMenu = () => {
         <div className="w-full py-1 flex-col justify-start items-start flex overflow-hidden">
           {/* Step */}
           <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex group">
-            <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden group-hover:bg-[#edf0fb]">
+            <div
+              className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden group-hover:bg-[#edf0fb]"
+              onClick={addStepBlock}
+            >
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                 <div className="w-4 h-4 relative overflow-hidden">
                   <img

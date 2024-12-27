@@ -32,7 +32,7 @@ interface PathProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -43,7 +43,7 @@ interface PathProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   setDefaultPathFn: (
     pathId: number,
@@ -52,7 +52,7 @@ interface PathProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   onCanvasEvent: (eventData: CanvasEvent) => void;
 }
@@ -187,8 +187,8 @@ const Path: React.FC<PathProps> = ({
     pathId: number,
     position: number,
     imageUrl?: string
-  ) => {
-    if (position === null) return;
+  ): Promise<Block | null> => {
+    if (position === null) return null;
 
     try {
       const requestBody = {
@@ -228,12 +228,16 @@ const Path: React.FC<PathProps> = ({
             });
           return updatedBlockList;
         });
+
+        return newBlock; // Return the newly created block
       } else {
         const errorData = await response.json();
         console.error('Failed to create new block:', errorData);
+        return null;
       }
     } catch (error) {
       console.error('Error creating new block:', error);
+      return null;
     }
   };
 

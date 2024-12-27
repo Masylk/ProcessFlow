@@ -8,7 +8,7 @@ interface BlockOptionsToggleProps {
     blockData: any,
     pathId: number,
     position: number
-  ) => Promise<void>;
+  ) => Promise<Block | null>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockData: Block) => void;
 }

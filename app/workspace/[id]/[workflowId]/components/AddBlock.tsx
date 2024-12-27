@@ -1,16 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import AddBlockMenu from './AddBlockMenu';
+import { Block, BlockType } from '@/types/block';
 
 interface AddBlockProps {
   id: number;
+  selectedBlock: boolean;
+  pathId: number;
+  handleAddBlockFn: (
+    blockData: any,
+    pathId: number,
+    position: number
+  ) => Promise<Block | null>;
+  handleClick: (block: Block) => void;
   alwaysDisplay?: boolean;
-  selectedBlock: boolean; // New prop to determine z-index
 }
 
 export default function AddBlock({
   id,
-  alwaysDisplay = false,
+  pathId,
+  handleAddBlockFn,
+  handleClick,
   selectedBlock,
+  alwaysDisplay = false,
 }: AddBlockProps) {
   const [hovered, setHovered] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -24,8 +35,24 @@ export default function AddBlock({
     setHovered(false);
   };
 
-  const toggleMenu = () => {
+  const addStepBlock = async () => {
+    closeMenu();
+    const emptyStepBlockData = {
+      type: BlockType.STEP, // Specify the type as STEP
+      title: '', // Title is required, so set it to an empty string
+      description: '', // Optional, leave as an empty string
+    };
+
+    const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
+    if (newBlock) handleClick(newBlock);
+  };
+
+  const toggleMenu = async () => {
     setMenuVisible((prev) => !prev);
+  };
+
+  const closeMenu = () => {
+    setMenuVisible(false);
   };
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -84,7 +111,7 @@ export default function AddBlock({
       )}
       {menuVisible && (
         <div ref={menuRef} className="absolute top-full left-8 mt-2 z-10">
-          <AddBlockMenu />
+          <AddBlockMenu addStepBlock={addStepBlock} />
         </div>
       )}
       {/* Invisible hover area */}

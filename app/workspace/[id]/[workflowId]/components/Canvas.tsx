@@ -53,7 +53,12 @@ export default function Canvas({
   const [addBlockPathId, setAddBlockPathId] = useState<number>(0);
   const [addBlockPosition, setAddBlockPosition] = useState<number | null>(null);
   const [handlePathAddBlock, setHandlePathAddBlock] = useState<
-    ((blockData: any, pathId: number, position: number) => Promise<void>) | null
+    | ((
+        blockData: any,
+        pathId: number,
+        position: number
+      ) => Promise<Block | null>)
+    | null
   >(null);
   const [addBlockDefaultPathId, setAddBlockDefaultPathId] = useState<
     number | null
@@ -62,7 +67,12 @@ export default function Canvas({
     number | null
   >(null);
   const [handleDefaultPathAddBlock, setHandleDefaultPathAddBlock] = useState<
-    ((blockData: any, pathId: number, position: number) => Promise<void>) | null
+    | ((
+        blockData: any,
+        pathId: number,
+        position: number
+      ) => Promise<Block | null>)
+    | null
   >(null);
 
   useEffect(() => {
@@ -112,7 +122,7 @@ export default function Canvas({
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => {
     setIsAddBlockFormOpen(true);
     handleSetPath(pathId, position, addBlockFn);
@@ -125,7 +135,7 @@ export default function Canvas({
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => {
     console.log('setting Path : ', pathId);
     setAddBlockPathId(pathId);
@@ -140,7 +150,7 @@ export default function Canvas({
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => {
     if (
       !addBlockDefaultPathId &&

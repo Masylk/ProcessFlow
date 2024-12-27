@@ -107,21 +107,24 @@ export default function BlockInformations({
     <>
       {/* New block of code outside the container */}
       <div className="flex items-center mt-8 h-[50px] space-x-4">
-        <IconModifier initialIcon={localBlock.icon} onUpdate={handleIconUpdate} />
+        <IconModifier
+          initialIcon={localBlock.icon}
+          onUpdate={handleIconUpdate}
+        />
         {localBlock && (
           <h1 className="text-lg font-semibold text-gray-800">
             <input
               type="text"
-              value={
-                isEditingTitle
-                  ? localBlock.title || 'Untitled Block'
-                  : `${localBlock.position + 1}. ${
-                      localBlock.title || 'Untitled Block'
-                    }`
-              }
+              value={localBlock.title || 'Untitled Block'}
               onChange={handleTitleChange}
               onBlur={handleBlur}
               onFocus={() => handleFocus('title')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur(); // Remove focus
+                  handleBlur(); // Trigger the blur logic
+                }
+              }}
               className={`text-lg font-semibold text-gray-800 outline-none ${
                 isEditingTitle
                   ? 'h-[46px] px-3 py-2 bg-white rounded-lg shadow border-2 border-[#4e6bd7] justify-start items-center gap-2 inline-flex'
@@ -166,6 +169,12 @@ export default function BlockInformations({
               onChange={handleAverageTimeChange}
               onBlur={handleBlur}
               onFocus={() => handleFocus('averageTime')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur(); // Remove focus
+                  handleBlur(); // Trigger the blur logic
+                }
+              }}
               className={`text-xs font-normal font-['Inter'] outline-none ${
                 isEditingAverageTime
                   ? 'h-[30px] px-3 py-1.5 rounded-lg shadow border-2 bg-white border-[#4e6bd7] text-[#101828]'

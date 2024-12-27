@@ -9,7 +9,7 @@ interface EditorBlockProps {
     blockData: any,
     pathId: number,
     position: number
-  ) => Promise<void>;
+  ) => Promise<Block | null>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockdata: Block) => void;
   isFocused: boolean;

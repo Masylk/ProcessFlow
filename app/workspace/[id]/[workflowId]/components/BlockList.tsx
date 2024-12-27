@@ -39,13 +39,13 @@ interface BlockListProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   handleAddBlockFn: (
     blockData: any,
     pathId: number,
     position: number
-  ) => Promise<void>;
+  ) => Promise<Block | null>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -56,7 +56,7 @@ interface BlockListProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   setDefaultPathFn: (
     pathId: number,
@@ -65,7 +65,7 @@ interface BlockListProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<void>
+    ) => Promise<Block | null>
   ) => void;
   onCanvasEvent: (eventData: CanvasEvent) => void;
 }
@@ -147,7 +147,7 @@ const BlockList: React.FC<BlockListProps> = ({
     });
   }, [blockList, pathsByBlockId]);
 
-  const handleClick = (block: Block, event: React.MouseEvent) => {
+  const handleClick = (block: Block) => {
     setFocusedBlockId(block.id);
     setOverlayVisible(true);
     setPathFn(pathId, block.position, handleAddBlockFn);
@@ -339,8 +339,11 @@ const BlockList: React.FC<BlockListProps> = ({
               <AddBlock
                 id={index + 1}
                 // onAdd={() => onAddBlockClick(index + 1)}
-                alwaysDisplay={index === blocks.length - 1} // Always display for the last index
+                pathId={pathId}
+                handleAddBlockFn={handleAddBlockFn}
+                handleClick={handleClick}
                 selectedBlock={selectedBlock !== null}
+                alwaysDisplay={index === blocks.length - 1} // Always display for the last index
               />
 
               {/* Vertical bottom Link line */}
@@ -381,7 +384,14 @@ const BlockList: React.FC<BlockListProps> = ({
                 <div>{provided.placeholder}</div>
                 {blockList.length === 0 && (
                   <div>
-                    <AddBlock id={0} onAdd={() => onAddBlockClick(0)} />
+                    <AddBlock
+                      id={0}
+                      pathId={pathId}
+                      handleAddBlockFn={handleAddBlockFn}
+                      handleClick={handleClick}
+                      selectedBlock={selectedBlock !== null}
+                      alwaysDisplay={true}
+                    />
                   </div>
                 )}
               </div>
