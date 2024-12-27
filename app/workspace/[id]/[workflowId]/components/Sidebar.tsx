@@ -24,7 +24,7 @@ interface SidebarProps {
   workspaceId: string;
   workflowId: string;
   onSidebarEvent: (eventData: SidebarEvent) => void;
-  selectedBlock: Block | null;
+  isBackground: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   workspaceId,
   workflowId,
   onSidebarEvent,
-  selectedBlock,
+  isBackground,
 }) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>(''); // State for search filter
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Sidebar Content */}
-      {isSidebarVisible && !selectedBlock && (
+      {isSidebarVisible && !isBackground && (
         <div
           className="flex-1 flex flex-col overflow-auto p-0 hide-scrollbar resize-x border border-gray-200"
           style={{
@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Overlay */}
-      {selectedBlock && (
+      {isBackground && (
         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 z-20 pointer-events-auto"></div>
       )}
     </div>

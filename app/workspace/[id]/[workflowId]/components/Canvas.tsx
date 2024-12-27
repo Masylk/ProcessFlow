@@ -305,6 +305,9 @@ export default function Canvas({
                         zoomIn={zoomIn}
                         zoomOut={zoomOut}
                         setTransform={setTransform}
+                        isBackground={
+                          isAddBlockFormOpen || selectedBlock !== null
+                        }
                       />
                     </div>
 
@@ -315,7 +318,9 @@ export default function Canvas({
                         workspaceId={workspaceId}
                         workflowId={workflowId}
                         onSidebarEvent={onSidebarEvent}
-                        selectedBlock={selectedBlock}
+                        isBackground={
+                          isAddBlockFormOpen || selectedBlock !== null
+                        }
                       />
                     </div>
                     {/* Track Transform State */}
@@ -401,7 +406,7 @@ export default function Canvas({
         </>
       )}
 
-      {/* {isAddBlockFormOpen && addBlockPosition !== null && (
+      {isAddBlockFormOpen && addBlockPosition !== null && (
         <AddBlockForm
           onSubmit={async (blockData: any, pathId: number, position: number) =>
             await handleAddBlock(blockData, pathId, position)
@@ -413,7 +418,7 @@ export default function Canvas({
           position={addBlockPosition}
           savedBlock={savedBlock}
         />
-      )} */}
+      )}
     </div>
   );
 }

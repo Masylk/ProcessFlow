@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import AddBlockMenu from './AddBlockMenu';
 import { Block, BlockType } from '@/types/block';
 
+export enum CreationType {
+  PATH = 'PATH',
+  DELAY_CUSTOM = 'DELAY_CUSTOM',
+}
+
 interface AddBlockProps {
   id: number;
   selectedBlock: boolean;
@@ -12,6 +17,7 @@ interface AddBlockProps {
     position: number
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
+  onAddBlockClick: (position: number) => void;
   alwaysDisplay?: boolean;
 }
 
@@ -20,6 +26,7 @@ export default function AddBlock({
   pathId,
   handleAddBlockFn,
   handleClick,
+  onAddBlockClick,
   selectedBlock,
   alwaysDisplay = false,
 }: AddBlockProps) {
@@ -111,7 +118,13 @@ export default function AddBlock({
       )}
       {menuVisible && (
         <div ref={menuRef} className="absolute top-full left-8 mt-2 z-10">
-          <AddBlockMenu addStepBlock={addStepBlock} />
+          <AddBlockMenu
+            addStepBlock={addStepBlock}
+            onAddBlockClick={(type) => {
+              console.log('opening modal for : ' + type);
+              onAddBlockClick(id);
+            }}
+          />
         </div>
       )}
       {/* Invisible hover area */}

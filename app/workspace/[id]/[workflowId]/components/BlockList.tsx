@@ -338,10 +338,10 @@ const BlockList: React.FC<BlockListProps> = ({
 
               <AddBlock
                 id={index + 1}
-                // onAdd={() => onAddBlockClick(index + 1)}
                 pathId={pathId}
                 handleAddBlockFn={handleAddBlockFn}
                 handleClick={handleClick}
+                onAddBlockClick={(i) => onAddBlockClick(i)}
                 selectedBlock={selectedBlock !== null}
                 alwaysDisplay={index === blocks.length - 1} // Always display for the last index
               />
@@ -389,6 +389,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       pathId={pathId}
                       handleAddBlockFn={handleAddBlockFn}
                       handleClick={handleClick}
+                      onAddBlockClick={(i) => onAddBlockClick(i)}
                       selectedBlock={selectedBlock !== null}
                       alwaysDisplay={true}
                     />

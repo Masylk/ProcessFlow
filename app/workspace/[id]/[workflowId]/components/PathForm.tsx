@@ -22,7 +22,7 @@ const PathForm: React.FC<PathFormProps> = ({
     description: '',
     position: initialPosition,
     workflowId: workflowId,
-    pathOptions: [''],
+    pathOptions: ['', ''], // Always two options: "if" and "else"
   });
 
   const handleChange = (
@@ -38,20 +38,6 @@ const PathForm: React.FC<PathFormProps> = ({
     setFormData((prev) => ({ ...prev, pathOptions: newPathOptions }));
   };
 
-  const addPathOption = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setFormData((prev) => ({
-      ...prev,
-      pathOptions: [...prev.pathOptions, ''],
-    }));
-  };
-
-  const removePathOption = (index: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    const newPathOptions = formData.pathOptions.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, pathOptions: newPathOptions }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -61,7 +47,7 @@ const PathForm: React.FC<PathFormProps> = ({
         pathBlock: {
           pathOptions: formData.pathOptions
             .filter((option) => option.trim() !== '')
-            .map((option) => ({ pathOption: option })), // Adjusted to correct format
+            .map((option) => ({ pathOption: option })),
         },
       },
       pathId,
@@ -70,72 +56,99 @@ const PathForm: React.FC<PathFormProps> = ({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-4 max-w-md mx-auto p-6 bg-white rounded-lg shadow-md"
-    >
-      <h2 className="text-2xl font-semibold mb-4">Add Path Block</h2>
-      <div>
-        <label htmlFor="description" className="block mb-1 font-medium">
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
+    <div className="w-[512px] h-[566px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center inline-flex overflow-hidden">
+      <div className="w-[336px] h-[336px] relative">
+        {/* <div className="w-[336px] h-[336px] left-0 top-0 absolute justify-center items-center inline-flex"></div> */}
+        <div className="w-[336px] h-[336px] left-[-208.5px] top-[-120px] absolute">
+          <div className="w-24 h-24 left-[120px] top-[120px] absolute rounded-full border border-[#e4e7ec] opacity-100" />
+          <div className="w-24 h-24 left-[120px] top-[120px] absolute rounded-full border border-[#e4e7ec] opacity-90" />
+          <div className="w-36 h-36 left-[96px] top-[96px] absolute rounded-full border border-[#e4e7ec] opacity-80" />
+          <div className="w-48 h-48 left-[72px] top-[72px] absolute rounded-full border border-[#e4e7ec] opacity-70" />
+          <div className="w-60 h-60 left-[48px] top-[48px] absolute rounded-full border border-[#e4e7ec] opacity-60" />
+          <div className="w-72 h-72 left-[24px] top-[24px] absolute rounded-full border border-[#e4e7ec] opacity-40" />
+          <div className="w-[336px] h-[336px] left-0 top-0 absolute rounded-full border border-[#e4e7ec] opacity-20"/>
+        </div>
       </div>
-      <div>
-        <label className="block mb-1 font-medium">Path Options</label>
-        {formData.pathOptions.map((option, index) => (
-          <div key={index} className="flex mb-2">
-            <input
-              type="text"
-              value={option}
-              onChange={(e) => handlePathOptionChange(index, e.target.value)}
-              className="flex-grow border rounded px-3 py-2 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={`Option ${index + 1}`}
-              required
-            />
-            <button
-              type="button"
-              onClick={(event) => removePathOption(index, event)}
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-            >
-              Remove
-            </button>
+      <div className="self-stretch h-40 flex-col justify-start items-center flex">
+        <div className="self-stretch h-[140px] px-6 pt-6 flex-col justify-start items-start gap-4 flex">
+          <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
+            <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden" />
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={addPathOption}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-2"
-        >
-          Add Option
-        </button>
+          <div className="self-stretch h-[52px] flex-col justify-start items-start gap-1 flex">
+            <div className="self-stretch text-[#101828] text-lg font-semibold font-['Inter'] leading-7 z-10">
+              Double branch
+            </div>
+            <div className="self-stretch text-[#475467] text-sm font-normal font-['Inter'] leading-tight z-10">
+              Name your branches
+            </div>
+          </div>
+        </div>
+        <div className="w-11 h-11 p-2 rounded-lg justify-center items-center inline-flex overflow-hidden">
+          <div className="w-6 h-6 relative overflow-hidden" />
+        </div>
+        <div className="self-stretch h-5" />
       </div>
-      <div className="flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onCancel();
-          }}
-          className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Add Path
-        </button>
+      <div className="self-stretch h-[306px] px-6 flex-col justify-start items-start gap-5 flex z-10">
+        <div className="pl-[102px] pr-[101px] pt-6 pb-[14.26px] bg-gray-50 rounded-lg justify-center items-center inline-flex overflow-hidden">
+          <div className="w-[261px] h-[181.74px] relative">
+            {/* Branch connections */}
+            {/* {[
+              { left: 126.34, top: 0 },
+              { left: 126.34, top: 63.17 },
+              { left: 209.61, top: 63.17 },
+              { left: 51.69, top: 63.17 },
+            ].map((circle, i) => (
+              <div
+                key={i}
+                className={`w-[8.61px] h-[8.61px] absolute bg-[#75dfa6] rounded-full`}
+                style={circle}
+              />
+            ))} */}
+          </div>
+        </div>
+        <div className="self-stretch justify-start items-start gap-3 inline-flex">
+          {['Branch n°1', 'Branch n°2'].map((branch, index) => (
+            <div
+              key={index}
+              className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex"
+            >
+              <div className="self-stretch h-[66px] flex-col justify-start items-start gap-1.5 flex">
+                <div className="justify-start items-start gap-0.5 inline-flex">
+                  <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                    {branch}
+                  </div>
+                </div>
+                <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
+                  <div className="grow shrink basis-0 h-6 justify-start items-center gap-2 flex">
+                    <div className="grow shrink basis-0 text-[#667085] text-base font-normal font-['Inter'] leading-normal">
+                      {index === 0 ? 'If' : 'Else'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </form>
+      <div className="self-stretch h-[100px] pt-8 flex-col justify-start items-start flex">
+        <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
+          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden">
+            <div className="px-0.5 justify-center items-center flex">
+              <div className="text-[#344054] text-base font-semibold font-['Inter'] leading-normal">
+                Cancel
+              </div>
+            </div>
+          </div>
+          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden">
+            <div className="px-0.5 justify-center items-center flex">
+              <div className="text-white text-base font-semibold font-['Inter'] leading-normal">
+                Confirm
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

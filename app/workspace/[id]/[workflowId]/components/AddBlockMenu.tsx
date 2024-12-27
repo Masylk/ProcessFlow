@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import DelayDropdownMenu from './DelayDropdownMenu'; // Assuming you have this component
 import PathDropdownPreview from './PathDropdownPreview'; // Assuming you have this component
+import { CreationType } from './AddBlock';
 
 interface AddBlockMenuProps {
   addStepBlock: () => Promise<void>;
+  onAddBlockClick: (type: CreationType) => void;
 }
 
-const AddBlockMenu: React.FC<AddBlockMenuProps> = ({ addStepBlock }) => {
+const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
+  addStepBlock,
+  onAddBlockClick,
+}) => {
   const [isHoveringDelay, setIsHoveringDelay] = useState(false);
   const [isHoveringCondition, setIsHoveringCondition] = useState(false);
   const [isHoveringDelayMenu, setIsHoveringDelayMenu] = useState(false); // Hover state for DelayDropdownMenu
@@ -14,6 +19,10 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({ addStepBlock }) => {
 
   const showDelayDropdown = isHoveringDelay || isHoveringDelayMenu;
   const showPathPreview = isHoveringCondition || isHoveringPreview;
+
+  const onClickConditional = () => {
+    onAddBlockClick(CreationType.PATH);
+  };
 
   return (
     <>
@@ -53,6 +62,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({ addStepBlock }) => {
             className="self-stretch px-1.5 py-px justify-start items-center inline-flex group relative"
             onMouseEnter={() => setIsHoveringCondition(true)}
             onMouseLeave={() => setIsHoveringCondition(false)}
+            onClick={onClickConditional}
           >
             <div
               className={`grow shrink basis-0 h-[38px] px-2.5 py-[9px] justify-start items-center gap-3 flex overflow-hidden rounded-md ${

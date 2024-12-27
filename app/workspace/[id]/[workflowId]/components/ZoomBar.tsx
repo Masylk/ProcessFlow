@@ -36,9 +36,15 @@ type ZoomBarProps = {
   zoomIn: ZoomFunction;
   zoomOut: ZoomFunction;
   setTransform: SetTransformFunction;
+  isBackground: boolean;
 };
 
-const ZoomBar: React.FC<ZoomBarProps> = ({ zoomIn, zoomOut, setTransform }) => {
+const ZoomBar: React.FC<ZoomBarProps> = ({
+  zoomIn,
+  zoomOut,
+  setTransform,
+  isBackground,
+}) => {
   const [zoomPercentage, setZoomPercentage] = useState(100); // Default to 100%
   const [isDropdownVisible, setIsDropdownVisible] = useState(false); // State to track dropdown visibility
 
@@ -60,6 +66,11 @@ const ZoomBar: React.FC<ZoomBarProps> = ({ zoomIn, zoomOut, setTransform }) => {
     const scale = zoomPercentage / 100; // Convert percentage to scale
     setTransform(0, 0, scale); // Set the scale, keeping x and y as 0
   };
+
+  // Do not render the component if isBackground is true
+  if (isBackground) {
+    return null;
+  }
 
   return (
     <div className="h-10 overflow-hidden rounded-lg border border-[#d0d5dd] justify-start items-start inline-flex shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18),inset_0px_-2px_0px_rgba(16,24,40,0.05),0px_1px_2px_rgba(16,24,40,0.05)]">

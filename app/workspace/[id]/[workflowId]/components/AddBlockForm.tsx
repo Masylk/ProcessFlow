@@ -67,60 +67,55 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg">
-        <h2 className="text-xl font-bold mb-4">Add New Block</h2>
-        {selectedForm ? (
-          renderForm()
-        ) : (
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setSelectedForm('Delay')}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Delay
-            </button>
-            <button
-              onClick={() => setSelectedForm('Path')}
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              Path
-            </button>
-            <button
-              onClick={() => setSelectedForm('Step')}
-              className="bg-yellow-500 text-white px-4 py-2 rounded"
-            >
-              Step
-            </button>
-          </div>
-        )}
-        {!selectedForm && (
-          <div className="mt-4 flex space-x-4">
-            {/* Add Paste Block button */}
-            <button
-              onClick={() =>
-                savedBlock && onSubmit(savedBlock, pathId, position)
-              }
-              disabled={!savedBlock}
-              className={`${
-                savedBlock
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-400 text-gray-700'
-              } px-4 py-2 rounded`}
-            >
-              Paste Block
-            </button>
-            <button
-              onClick={(event) => {
-                event.stopPropagation(); // Stop propagation
-                onCancel();
-              }}
-              className="bg-gray-300 px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
+      {selectedForm ? (
+        renderForm()
+      ) : (
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setSelectedForm('Delay')}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Delay
+          </button>
+          <button
+            onClick={() => setSelectedForm('Path')}
+            className="bg-green-500 text-white px-4 py-2 rounded"
+          >
+            Path
+          </button>
+          <button
+            onClick={() => setSelectedForm('Step')}
+            className="bg-yellow-500 text-white px-4 py-2 rounded"
+          >
+            Step
+          </button>
+        </div>
+      )}
+      {!selectedForm && (
+        <div className="mt-4 flex space-x-4">
+          {/* Add Paste Block button */}
+          <button
+            onClick={() => savedBlock && onSubmit(savedBlock, pathId, position)}
+            disabled={!savedBlock}
+            className={`${
+              savedBlock
+                ? 'bg-purple-500 text-white'
+                : 'bg-gray-400 text-gray-700'
+            } px-4 py-2 rounded`}
+          >
+            Paste Block
+          </button>
+          <button
+            onClick={(event) => {
+              event.stopPropagation(); // Stop propagation
+              onCancel();
+            }}
+            className="bg-gray-300 px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 };
