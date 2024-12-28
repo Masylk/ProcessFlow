@@ -23,7 +23,7 @@ export default function BlockDetailsSidebar({
 }: BlockDetailsSidebarProps) {
   const [imageFile, setImageFile] = useState<File | undefined>(undefined);
   const [iconFile, setIconFile] = useState<File | undefined>(undefined); // Track the icon file
-
+  const [newDescription, setNewDescription] = useState<string>('');
   const [updateBlock, setUpdateBlock] = useState<Block | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -154,7 +154,18 @@ export default function BlockDetailsSidebar({
             <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-3">
               Description
             </div>
-            {/* <TextEditor value={newDescription} onChange={setNewDescription} /> */}
+            <TextEditor
+              value={updateBlock.description || ''} // Use the description from updateBlock
+              onChange={(newDescription) => {
+                if (updateBlock) {
+                  const updatedBlock = {
+                    ...updateBlock,
+                    description: newDescription,
+                  }; // Update the description
+                  handleUpdate(updatedBlock); // Call handleUpdate to propagate the change
+                }
+              }}
+            />
           </div>
 
           {/* Media Section */}

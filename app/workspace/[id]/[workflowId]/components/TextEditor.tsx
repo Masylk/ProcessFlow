@@ -27,14 +27,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
     if (maxCharacters && content.length > maxCharacters) return;
 
     setEditorValue(content);
-    onChange(content);
+    onChange(content); // Pass the updated content to the parent component
   };
 
   return (
     <div className="overflow-hidden flex flex-col h-[180px] rounded-sm">
       <ReactQuill
         value={editorValue}
-        onChange={handleEditorChange}
+        onChange={(content) => handleEditorChange(content)} // Correctly handle content
         theme="snow"
         modules={{
           toolbar: [
@@ -52,23 +52,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
           'bullet',
           'link',
         ]}
-        placeholder="Write an email presenting yourself to the team following this structure: - - -"
+        placeholder={editorValue.trim() === '' ? value : ''} // Use `value` as placeholder when editor is empty
         className="h-full text-sm font-['Inter'] rounded-lg"
         style={{
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
         }}
-      >
-        {/* Add styling to the editor content to make it scrollable */}
-        <div
-          className="ql-container ql-snow"
-          style={{
-            flex: '1',
-            overflowY: 'auto',
-          }}
-        />
-      </ReactQuill>
+      />
     </div>
   );
 };

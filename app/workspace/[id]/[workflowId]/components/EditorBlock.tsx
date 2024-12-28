@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
 import BlockOptionsToggle from './BlockOptionsToggle';
+import DOMPurify from 'dompurify';
 
 interface EditorBlockProps {
   block: Block;
@@ -14,6 +15,13 @@ interface EditorBlockProps {
   copyBlockFn: (blockdata: Block) => void;
   isFocused: boolean;
 }
+
+const sanitizeDescription = (description: string) => {
+  // Sanitize the description
+  const sanitizedDescription = DOMPurify.sanitize(description);
+
+  return sanitizedDescription;
+};
 
 export default function EditorBlock({
   block,
@@ -71,9 +79,12 @@ export default function EditorBlock({
 
       {/* Description */}
       {block.description && (
-        <p className="w-full text-[#667085] text-base font-normal font-['Inter'] leading-normal">
-          {block.description}
-        </p>
+        <div
+          className="w-full h-6 overflow-hidden text-[#667085] text-base font-normal font-['Inter'] leading-normal"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeDescription(block.description),
+          }}
+        />
       )}
 
       {/* Image */}
