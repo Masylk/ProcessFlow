@@ -81,6 +81,11 @@ export default function EditorBlock({
       {block.description && (
         <div
           className="w-full h-6 overflow-hidden text-[#667085] text-base font-normal font-['Inter'] leading-normal"
+          style={{
+            maskImage: 'linear-gradient(to right, black 50%, transparent)',
+            WebkitMaskImage:
+              'linear-gradient(to right, black 50%, transparent)',
+          }}
           dangerouslySetInnerHTML={{
             __html: sanitizeDescription(block.description),
           }}

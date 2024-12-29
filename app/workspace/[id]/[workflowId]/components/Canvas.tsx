@@ -281,7 +281,7 @@ export default function Canvas({
               wheel={{ step: 0.1 }}
               alignmentAnimation={{ disabled: true }}
               limitToBounds={false}
-              disabled={disableZoom}
+              disabled={disableZoom || selectedBlock !== null}
               // centerOnInit={true}
               // TODO : Bounds do not work
               // minPositionX={-10000000} // Set the minimum horizontal pan limit
