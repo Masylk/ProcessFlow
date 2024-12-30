@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import DelayForm from '@/app/workspace/[id]/[workflowId]/components/DelayForm';
 import PathForm from '@/app/workspace/[id]/[workflowId]/components/PathForm';
 import StepForm from '@/app/workspace/[id]/[workflowId]/components/StepForm';
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 
 interface AddBlockFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
@@ -12,6 +12,7 @@ interface AddBlockFormProps {
   pathId: number;
   position: number;
   savedBlock: Block | null;
+  chosenType?: BlockType;
 }
 
 const AddBlockForm: React.FC<AddBlockFormProps> = ({
@@ -22,38 +23,41 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
   pathId,
   position,
   savedBlock,
+  chosenType = null,
 }) => {
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [selectedForm, setSelectedForm] = useState<BlockType | null>(
+    chosenType
+  );
 
   const renderForm = () => {
     switch (selectedForm) {
-      case 'Delay':
+      case BlockType.DELAY:
         return (
           <DelayForm
             onSubmit={onSubmit}
-            onCancel={() => setSelectedForm(null)}
+            onCancel={onCancel}
             initialPosition={initialPosition}
             workflowId={workflowId}
             pathId={pathId}
             position={position}
           />
         );
-      case 'Path':
+      case BlockType.PATH:
         return (
           <PathForm
             onSubmit={onSubmit}
-            onCancel={() => setSelectedForm(null)}
+            onCancel={onCancel}
             initialPosition={initialPosition}
             workflowId={workflowId}
             pathId={pathId}
             position={position}
           />
         );
-      case 'Step':
+      case BlockType.STEP:
         return (
           <StepForm
             onSubmit={onSubmit}
-            onCancel={() => setSelectedForm(null)}
+            onCancel={onCancel}
             initialPosition={initialPosition}
             workflowId={workflowId}
             pathId={pathId}
@@ -72,19 +76,19 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
       ) : (
         <div className="flex space-x-4">
           <button
-            onClick={() => setSelectedForm('Delay')}
+            onClick={() => setSelectedForm(BlockType.DELAY)}
             className="bg-blue-500 text-white px-4 py-2 rounded"
           >
             Delay
           </button>
           <button
-            onClick={() => setSelectedForm('Path')}
+            onClick={() => setSelectedForm(BlockType.PATH)}
             className="bg-green-500 text-white px-4 py-2 rounded"
           >
             Path
           </button>
           <button
-            onClick={() => setSelectedForm('Step')}
+            onClick={() => setSelectedForm(BlockType.STEP)}
             className="bg-yellow-500 text-white px-4 py-2 rounded"
           >
             Step

@@ -2,11 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import AddBlockMenu from './AddBlockMenu';
 import { Block, BlockType } from '@/types/block';
 
-export enum CreationType {
-  PATH = 'PATH',
-  DELAY_CUSTOM = 'DELAY_CUSTOM',
-}
-
 interface AddBlockProps {
   id: number;
   selectedBlock: boolean;
@@ -17,7 +12,7 @@ interface AddBlockProps {
     position: number
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
-  onAddBlockClick: (position: number) => void;
+  onAddBlockClick: (position: number, chosenType: BlockType) => void;
   alwaysDisplay?: boolean;
 }
 
@@ -122,7 +117,7 @@ export default function AddBlock({
             addStepBlock={addStepBlock}
             onAddBlockClick={(type) => {
               console.log('opening modal for : ' + type);
-              onAddBlockClick(id);
+              onAddBlockClick(id, type);
             }}
           />
         </div>

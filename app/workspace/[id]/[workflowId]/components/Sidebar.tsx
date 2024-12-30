@@ -8,6 +8,7 @@ export interface SidebarBlock {
   type: BlockType;
   position: number;
   icon?: string;
+  title?: string;
   description?: string;
   subpaths?: PathObject[];
 }

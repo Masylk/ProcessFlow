@@ -28,7 +28,7 @@ interface BlockListProps {
     updateBlockFn: (updatedBlock: Block) => Promise<void>,
     deleteBlockFn: (blockId: number) => Promise<void>
   ) => void;
-  onAddBlockClick: (position: number) => void;
+  onAddBlockClick: (position: number, chosenType?: BlockType) => void;
   onBlocksReorder: (reorderedBlocks: Block[]) => Promise<void>;
   handleBlockClick: (block: Block) => void;
   closeDetailSidebar: () => void;
@@ -341,7 +341,7 @@ const BlockList: React.FC<BlockListProps> = ({
                 pathId={pathId}
                 handleAddBlockFn={handleAddBlockFn}
                 handleClick={handleClick}
-                onAddBlockClick={(i) => onAddBlockClick(i)}
+                onAddBlockClick={(i, type) => onAddBlockClick(i, type)}
                 selectedBlock={selectedBlock !== null}
                 alwaysDisplay={index === blocks.length - 1} // Always display for the last index
               />
@@ -389,7 +389,7 @@ const BlockList: React.FC<BlockListProps> = ({
                       pathId={pathId}
                       handleAddBlockFn={handleAddBlockFn}
                       handleClick={handleClick}
-                      onAddBlockClick={(i) => onAddBlockClick(i)}
+                      onAddBlockClick={(i, type) => onAddBlockClick(i, type)}
                       selectedBlock={selectedBlock !== null}
                       alwaysDisplay={true}
                     />

@@ -3,6 +3,7 @@ import SidebarPath from './SidebarPath';
 import { SidebarBlock } from './Sidebar';
 import { SidebarEvent, SidebarEventType } from '../page';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd'; // Import type
+import DOMPurify from 'dompurify';
 
 export interface SidebarDivProps {
   block: SidebarBlock;
@@ -40,6 +41,19 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     setIsSubpathsVisible((prev) => !prev);
   };
 
+  function sanitizeAndTruncate(text: string, maxLength: number): string {
+    // Create a temporary DOM element to strip tags
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = DOMPurify.sanitize(text); // Sanitize the input
+    const sanitizedText =
+      tempElement.textContent || tempElement.innerText || '';
+
+    // Truncate the sanitized text
+    return sanitizedText.length > maxLength
+      ? sanitizedText.slice(0, maxLength) + '...'
+      : sanitizedText;
+  }
+
   const matchesSearchFilter = block.description
     ?.toLowerCase()
     .includes(searchFilter.toLowerCase());
@@ -74,7 +88,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
             {/* Description */}
             <div className="cursor-pointer" onClick={handleClick}>
               {block.type}:{' '}
-              {truncateText(
+              {sanitizeAndTruncate(
                 block.description || 'No description',
                 MAX_DESCRIPTION_LENGTH
               )}

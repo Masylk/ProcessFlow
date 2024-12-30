@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import DelayDropdownMenu from './DelayDropdownMenu'; // Assuming you have this component
 import PathDropdownPreview from './PathDropdownPreview'; // Assuming you have this component
-import { CreationType } from './AddBlock';
+import { BlockType } from '@/types/block';
 
 interface AddBlockMenuProps {
   addStepBlock: () => Promise<void>;
-  onAddBlockClick: (type: CreationType) => void;
+  onAddBlockClick: (type: BlockType) => void;
 }
 
 const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
@@ -21,7 +21,11 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
   const showPathPreview = isHoveringCondition || isHoveringPreview;
 
   const onClickConditional = () => {
-    onAddBlockClick(CreationType.PATH);
+    onAddBlockClick(BlockType.PATH);
+  };
+
+  const onClickCustomDelay = () => {
+    onAddBlockClick(BlockType.DELAY);
   };
 
   return (
@@ -145,7 +149,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
           onMouseEnter={() => setIsHoveringDelayMenu(true)}
           onMouseLeave={() => setIsHoveringDelayMenu(false)}
         >
-          <DelayDropdownMenu />
+          <DelayDropdownMenu onClickCustomDelay={onClickCustomDelay} />
         </div>
       )}
     </>

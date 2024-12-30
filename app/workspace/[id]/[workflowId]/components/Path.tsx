@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '../page';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { title } from 'process';
@@ -32,7 +32,8 @@ interface PathProps {
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<Block | null>
+    ) => Promise<Block | null>,
+    chosenType?: BlockType
   ) => void;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -121,8 +122,8 @@ const Path: React.FC<PathProps> = ({
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
   };
 
-  const handleAddBlockClick = (position: number) => {
-    handleAddBlock(pathId, position, handleAddBlockFn);
+  const handleAddBlockClick = (position: number, chosenType?: BlockType) => {
+    handleAddBlock(pathId, position, handleAddBlockFn, chosenType);
   };
 
   const handleBlocksReorder = async (reorderedBlocks: Block[]) => {

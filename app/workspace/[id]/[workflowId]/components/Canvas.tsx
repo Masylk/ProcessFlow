@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
@@ -74,7 +74,8 @@ export default function Canvas({
       ) => Promise<Block | null>)
     | null
   >(null);
-
+  const [addBlockChosenType, setAddBlockChosenType] =
+    useState<BlockType | null>(null);
   useEffect(() => {
     setPath(initialPath);
   }, [initialPath]);
@@ -122,9 +123,11 @@ export default function Canvas({
       blockData: any,
       pathId: number,
       position: number
-    ) => Promise<Block | null>
+    ) => Promise<Block | null>,
+    chosenType?: BlockType
   ) => {
     setIsAddBlockFormOpen(true);
+    if (chosenType) setAddBlockChosenType(chosenType);
     handleSetPath(pathId, position, addBlockFn);
   };
 
@@ -406,19 +409,24 @@ export default function Canvas({
         </>
       )}
 
-      {isAddBlockFormOpen && addBlockPosition !== null && (
-        <AddBlockForm
-          onSubmit={async (blockData: any, pathId: number, position: number) =>
-            await handleAddBlock(blockData, pathId, position)
-          }
-          onCancel={() => setIsAddBlockFormOpen(false)}
-          initialPosition={addBlockPosition}
-          workflowId={parseInt(workflowId)}
-          pathId={addBlockPathId}
-          position={addBlockPosition}
-          savedBlock={savedBlock}
-        />
-      )}
+      {isAddBlockFormOpen &&
+        addBlockChosenType &&
+        addBlockPosition !== null && (
+          <AddBlockForm
+            onSubmit={async (
+              blockData: any,
+              pathId: number,
+              position: number
+            ) => await handleAddBlock(blockData, pathId, position)}
+            onCancel={() => setIsAddBlockFormOpen(false)}
+            initialPosition={addBlockPosition}
+            workflowId={parseInt(workflowId)}
+            pathId={addBlockPathId}
+            position={addBlockPosition}
+            savedBlock={savedBlock}
+            chosenType={addBlockChosenType}
+          />
+        )}
     </div>
   );
 }

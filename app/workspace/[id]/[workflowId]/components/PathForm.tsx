@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 
 interface PathFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
@@ -24,6 +24,14 @@ const PathForm: React.FC<PathFormProps> = ({
     workflowId: workflowId,
     pathOptions: ['', ''], // Always two options: "if" and "else"
   });
+
+  const [inputs, setInputs] = useState<string[]>(['If', 'Else']);
+
+  const handleInputChange = (index: number, value: string) => {
+    const updatedInputs = [...inputs];
+    updatedInputs[index] = value;
+    setInputs(updatedInputs);
+  };
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -55,6 +63,19 @@ const PathForm: React.FC<PathFormProps> = ({
     );
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onCancel]);
+
   return (
     <div className="w-[512px] h-[566px] bg-white rounded-xl shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center inline-flex overflow-hidden">
       <div className="w-[336px] h-[336px] relative">
@@ -69,7 +90,7 @@ const PathForm: React.FC<PathFormProps> = ({
         </div>
       </div>
       {/* Flex container for the cloned icons */}
-      <div className="self-stretch pb-6 px-6 flex justify-between items-start">
+      <div className="self-stretch pb-5 px-6 flex justify-between items-start">
         {/* Original icon */}
         <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
           <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
@@ -82,11 +103,14 @@ const PathForm: React.FC<PathFormProps> = ({
         </div>
 
         {/* Cloned icon */}
-        <div className="w-12 h-12 p-3 bg-white rounded-[10px] justify-center items-center inline-flex overflow-hidden">
+        <div
+          className="w-12 h-12 p-3 bg-white rounded-[10px] justify-center items-center inline-flex overflow-hidden cursor-pointer"
+          onClick={onCancel}
+        >
           <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
             <img
               src="/assets/shared_components/x-close-icon.svg"
-              alt="Git Branch Icon"
+              alt="Close Icon"
               className="w-full h-full object-contain"
             />
           </div>
@@ -130,12 +154,13 @@ const PathForm: React.FC<PathFormProps> = ({
                     {branch}
                   </div>
                 </div>
-                <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
-                  <div className="grow shrink basis-0 h-6 justify-start items-center gap-2 flex">
-                    <div className="grow shrink basis-0 text-[#667085] text-base font-normal font-['Inter'] leading-normal">
-                      {index === 0 ? 'If' : 'Else'}
-                    </div>
-                  </div>
+                <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start w-[220px] items-center gap-2 inline-flex">
+                  <input
+                    type="text"
+                    value={inputs[index]}
+                    onChange={(e) => handleInputChange(index, e.target.value)}
+                    className="grow shrink basis-0 h-6 text-[#667085] w-2 text-base font-normal font-['Inter'] leading-normal border-none outline-none"
+                  />
                 </div>
               </div>
             </div>
@@ -144,14 +169,17 @@ const PathForm: React.FC<PathFormProps> = ({
       </div>
       <div className="self-stretch h-[100px] pt-8 flex-col justify-start items-start flex">
         <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
-          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden">
+          <div
+            className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden cursor-pointer"
+            onClick={onCancel}
+          >
             <div className="px-0.5 justify-center items-center flex">
               <div className="text-[#344054] text-base font-semibold font-['Inter'] leading-normal">
                 Cancel
               </div>
             </div>
           </div>
-          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden">
+          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden cursor-pointer">
             <div className="px-0.5 justify-center items-center flex">
               <div className="text-white text-base font-semibold font-['Inter'] leading-normal">
                 Confirm
