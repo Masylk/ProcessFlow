@@ -22,15 +22,16 @@ const PathForm: React.FC<PathFormProps> = ({
     description: '',
     position: initialPosition,
     workflowId: workflowId,
-    pathOptions: ['', ''], // Always two options: "if" and "else"
+    pathOptions: ['If', 'Else'], // Always two options: "if" and "else"
   });
 
-  const [inputs, setInputs] = useState<string[]>(['If', 'Else']);
-
   const handleInputChange = (index: number, value: string) => {
-    const updatedInputs = [...inputs];
+    const updatedInputs = [...formData.pathOptions];
     updatedInputs[index] = value;
-    setInputs(updatedInputs);
+    setFormData((prevFormData) => ({
+      ...prevFormData, // Spread the previous form data
+      pathOptions: updatedInputs, // Update `pathOptions` with the new inputs
+    }));
   };
 
   const handleChange = (
@@ -54,6 +55,7 @@ const PathForm: React.FC<PathFormProps> = ({
         ...formData,
         pathBlock: {
           pathOptions: formData.pathOptions
+            .reverse()
             .filter((option) => option.trim() !== '')
             .map((option) => ({ pathOption: option })),
         },
@@ -157,7 +159,7 @@ const PathForm: React.FC<PathFormProps> = ({
                 <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start w-[220px] items-center gap-2 inline-flex">
                   <input
                     type="text"
-                    value={inputs[index]}
+                    value={formData.pathOptions[index]}
                     onChange={(e) => handleInputChange(index, e.target.value)}
                     className="grow shrink basis-0 h-6 text-[#667085] w-2 text-base font-normal font-['Inter'] leading-normal border-none outline-none"
                   />
@@ -179,7 +181,10 @@ const PathForm: React.FC<PathFormProps> = ({
               </div>
             </div>
           </div>
-          <div className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden cursor-pointer">
+          <div
+            className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden cursor-pointer"
+            onClick={handleSubmit}
+          >
             <div className="px-0.5 justify-center items-center flex">
               <div className="text-white text-base font-semibold font-['Inter'] leading-normal">
                 Confirm

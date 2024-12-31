@@ -13,6 +13,7 @@ import { conformsTo } from 'lodash';
 import { TransformState } from '@/types/transformstate';
 import ButtonCTA from '@/app/components/ButtonCTA';
 import WorkflowHeader from './components/WorkflowHeader';
+import { title } from 'process';
 
 export enum CanvasEventType {
   PATH_CREATION,
@@ -172,6 +173,7 @@ export default function WorkflowPage() {
           type: block.type,
           position: block.position,
           icon: block.icon,
+          title: block.title,
           description: block.description,
         })),
         handleBlocksReorder: eventData.handleBlocksReorder,
@@ -259,6 +261,7 @@ export default function WorkflowPage() {
           type: newBlock.type,
           position: index,
           icon: newBlock.icon,
+          title: newBlock.title,
           description: newBlock.description,
           subpaths: [],
         });
@@ -280,6 +283,7 @@ export default function WorkflowPage() {
             type: updatedBlock.type,
             position: updatedBlock.position,
             icon: updatedBlock.icon,
+            title: updatedBlock.title,
             description: updatedBlock.description,
             subpaths: block.subpaths,
           }
@@ -419,6 +423,7 @@ export default function WorkflowPage() {
                           type: newBlock.type,
                           position: newBlock.position,
                           icon: newBlock.icon,
+                          title: newBlock.title,
                           description: newBlock.description,
                         })),
                       ],

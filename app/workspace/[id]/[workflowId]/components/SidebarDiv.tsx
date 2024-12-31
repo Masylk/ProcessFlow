@@ -87,11 +87,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
 
             {/* Description */}
             <div className="cursor-pointer" onClick={handleClick}>
-              {block.type}:{' '}
-              {sanitizeAndTruncate(
-                block.description || 'No description',
-                MAX_DESCRIPTION_LENGTH
-              )}
+              {block.title || block.type}
             </div>
           </div>
 

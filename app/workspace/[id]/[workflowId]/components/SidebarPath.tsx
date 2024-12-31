@@ -41,7 +41,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
         id: sidebarBlock.id,
         type: sidebarBlock.type,
         position: sidebarBlock.position,
-        title: sidebarBlock.description || 'Default Title',
+        title: sidebarBlock.title || 'Default Title',
         icon: sidebarBlock.icon,
         description: sidebarBlock.description,
         pathId: path.id,
