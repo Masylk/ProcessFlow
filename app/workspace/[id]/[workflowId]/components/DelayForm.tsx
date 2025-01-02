@@ -55,9 +55,9 @@ export default function DelayForm({
       <div className="self-stretch pb-5 px-6 flex justify-between items-start">
         {/* Original icon */}
         <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
-          <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
+          <div className="w-7 h-7 relative flex-col justify-start items-start flex overflow-hidden">
             <img
-              src="/assets/shared_components/git-branch-icon.svg"
+              src="/assets/shared_components/clock-stopwatch.svg"
               alt="Git Branch Icon"
               className="w-full h-full object-contain"
             />
@@ -93,8 +93,8 @@ export default function DelayForm({
       </div>
       <div className="flex-col justify-start items-start gap-5 inline-flex">
         <div className="self-stretch justify-start items-start gap-1 inline-flex">
-          <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[66px] flex-col justify-start items-start gap-1.5 flex">
+          <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Days
@@ -102,23 +102,35 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[122.67px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
+                  <div className="w-[100px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
                     2
                   </div>
                   <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex overflow-hidden">
-                    <div className="px-1.5 py-1 bg-white border-r border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                  <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-up.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-down.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[66px] flex-col justify-start items-start gap-1.5 flex">
+          <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Hours
@@ -126,23 +138,35 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[122.67px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
+                  <div className="w-[100px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
                     4
                   </div>
                   <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex overflow-hidden">
-                    <div className="px-1.5 py-1 bg-white border-r border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-up.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-down.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[66px] flex-col justify-start items-start gap-1.5 flex">
+          <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Minutes
@@ -150,15 +174,27 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[122.67px] text-[#667085] text-base font-normal font-['Inter'] leading-normal">
+                  <div className="w-[100px] text-[#667085] text-base font-normal font-['Inter'] leading-normal">
                     0
                   </div>
-                  <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex overflow-hidden">
-                    <div className="px-1.5 py-1 bg-white border-r border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                  <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex">
+                    <div className=" px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-up.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd] justify-center items-center gap-1 inline-flex">
-                      <div className="w-2.5 h-2.5 px-[2.50px] justify-center items-center flex overflow-hidden" />
+                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
+                      <div className="w-2.5 h-2.5 overflow-hidden">
+                        <img
+                          src="/assets/shared_components/chevron-down.svg"
+                          alt="Close Icon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -166,10 +202,14 @@ export default function DelayForm({
             </div>
           </div>
         </div>
-        <div className="self-stretch mx-10 px-3 py-2 bg-white rounded-xl border border-[#d0d5dd] justify-start items-start gap-4 inline-flex overflow-hidden">
+        <div className="self-stretch px-3 py-2 bg-white rounded-xl border border-[#d0d5dd] justify-start items-start gap-4 inline-flex overflow-hidden">
           <div className="grow shrink basis-0 h-[22px] pr-2 justify-start items-center gap-2 flex">
             <div className="w-5 h-5 rounded-full justify-center items-center flex">
-              <div className="w-5 h-5 relative flex-col justify-start items-start flex overflow-hidden" />
+              <img
+                src="/assets/shared_components/alert-circle.svg"
+                alt="Close Icon"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="grow shrink basis-0 pt-0.5 flex-col justify-start items-start gap-3 inline-flex">
               <div className="self-stretch h-5 flex-col justify-start items-start gap-1 flex">
