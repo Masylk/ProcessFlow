@@ -91,7 +91,7 @@ model Block {
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]
-  delayBlock        DelayBlock?
+  delay             Int?
   stepBlock         StepBlock?
   pathBlock         PathBlock?
   pathId            Int          // Required field to link to Path
@@ -100,19 +100,11 @@ model Block {
 }
 
 
-
 model PathBlock {
   id           Int         @id @default(autoincrement())
   blockId      Int         @unique
   block        Block       @relation(fields: [blockId], references: [id])
   paths        Path[]      @relation("PathBlockPath")
-}
-
-model DelayBlock {
-  id          Int   @id @default(autoincrement())
-  blockId     Int   @unique
-  delay       Int   // Specific field for Delay block
-  block       Block @relation(fields: [blockId], references: [id])
 }
 
 model StepBlock {

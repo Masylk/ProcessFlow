@@ -9,18 +9,17 @@ export async function POST(req: NextRequest) {
     description,
     workflowId,
     pathId,
-    delayBlock,
     stepBlock,
     pathBlock,
     imageUrl,
     clickPosition,
-    defaultBlock,
+    delay, // New optional field
   } = await req.json();
 
   // Validate block type
-  if (!['DELAY', 'STEP', 'PATH'].includes(type)) {
+  if (!['STEP', 'PATH'].includes(type)) {
     return NextResponse.json(
-      { error: 'Invalid block type. Expected DELAY, STEP, or PATH.' },
+      { error: 'Invalid block type. Expected STEP or PATH.' },
       { status: 400 }
     );
   }
@@ -63,13 +62,12 @@ export async function POST(req: NextRequest) {
       };
 
       // Add specific block data based on the block type
-      if (type === 'DELAY' && delayBlock) {
-        blockData.delayBlock = {
-          create: { delay: delayBlock.delay },
-        };
-      } else if (type === 'STEP' && stepBlock) {
+      if (type === 'STEP' && stepBlock) {
         blockData.stepBlock = {
-          create: { stepDetails: stepBlock.stepDetails },
+          create: {
+            stepDetails: stepBlock.stepDetails,
+            delay: delay || null, // Include delay if provided
+          },
         };
       } else if (type === 'PATH' && pathBlock) {
         // Create paths and their default blocks
@@ -79,6 +77,7 @@ export async function POST(req: NextRequest) {
               create: pathBlock.pathOptions.map((option: string) => ({
                 name: option,
                 workflow: { connect: { id: workflowId } },
+                delay: delay || null, // Include delay for each path if provided
               })),
             },
           },
@@ -89,7 +88,6 @@ export async function POST(req: NextRequest) {
       const newBlock = await prisma.block.create({
         data: blockData,
         include: {
-          delayBlock: type === 'DELAY',
           stepBlock: type === 'STEP',
           pathBlock: {
             include: {
@@ -113,6 +111,7 @@ export async function POST(req: NextRequest) {
               stepBlock: {
                 create: {
                   stepDetails: 'Default step details', // Default step details
+                  delay: delay || null, // Include delay for default block if provided
                 },
               },
             };

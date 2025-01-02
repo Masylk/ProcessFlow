@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import path according to your setup
-import { describe } from 'node:test';
 
 export async function GET(
   req: NextRequest,
@@ -29,7 +28,7 @@ export async function GET(
       );
     }
 
-    // Fetch path data including blocks, pathBlock, delayBlock, and stepBlock
+    // Fetch path data including blocks, pathBlock, stepBlock, and delay field
     const pathData = await prisma.path.findUnique({
       where: { id: pathId },
       include: {
@@ -37,7 +36,6 @@ export async function GET(
           where: { workflowId: parsedWorkflowId }, // Adjust to match your data structure
           include: {
             pathBlock: true, // Include related pathBlock information
-            delayBlock: true, // Include related delayBlock information
             stepBlock: true, // Include related stepBlock information
           },
           orderBy: {

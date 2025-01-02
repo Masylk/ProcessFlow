@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest) {
       clickPosition, // Include clickPosition in the request body
       averageTime, // Include averageTime
       taskType, // Include taskType
+      delay, // New optional field
     } = await req.json();
 
     // Update the block in the database
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest) {
         lastModified: new Date(), // Set to the current timestamp
         averageTime: averageTime || null,
         taskType: taskType || null,
+        delay: delay || null, // Include delay if provided
       },
     });
 
@@ -86,7 +88,6 @@ export async function DELETE(req: NextRequest) {
     const block = await prisma.block.findUnique({
       where: { id: blockId },
       include: {
-        delayBlock: true,
         stepBlock: true,
         pathBlock: true,
       },
@@ -106,11 +107,6 @@ export async function DELETE(req: NextRequest) {
       } else if (block.type === 'STEP' && block.stepBlock) {
         // Delete the step block
         await transactionPrisma.stepBlock.delete({
-          where: { blockId: blockId },
-        });
-      } else if (block.type === 'DELAY' && block.delayBlock) {
-        // Delete the delay block
-        await transactionPrisma.delayBlock.delete({
           where: { blockId: blockId },
         });
       }

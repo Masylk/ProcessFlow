@@ -53,7 +53,6 @@ export async function GET(
                         include: {
                           pathBlock: true,
                           stepBlock: true,
-                          delayBlock: true,
                         },
                       },
                     },
@@ -61,7 +60,6 @@ export async function GET(
                 },
               },
               stepBlock: true,
-              delayBlock: true,
             },
           },
         },
@@ -86,7 +84,6 @@ export async function GET(
                           include: {
                             pathBlock: true,
                             stepBlock: true,
-                            delayBlock: true,
                           },
                         },
                       },
@@ -94,7 +91,6 @@ export async function GET(
                   },
                 },
                 stepBlock: true,
-                delayBlock: true,
               },
             },
           },
