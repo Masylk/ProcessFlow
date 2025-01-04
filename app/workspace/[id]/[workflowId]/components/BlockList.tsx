@@ -107,6 +107,14 @@ const BlockList: React.FC<BlockListProps> = ({
   // New state to track hover for AddBlock component and SVG tags
   const [isHovered, setIsHovered] = useState(false);
 
+  const updateBlockDelay = (blockId: string | number, newDelay: number) => {
+    setBlockList((prevBlocks) =>
+      prevBlocks.map((block) =>
+        block.id === blockId ? { ...block, delay: newDelay } : block
+      )
+    );
+  };
+
   useEffect(() => {
     setBlockList(blocks);
   }, [blocks]);
@@ -218,6 +226,9 @@ const BlockList: React.FC<BlockListProps> = ({
       const draggingClass =
         draggingBlockId === block.id ? 'invisible' : 'visible';
 
+      // Determine the next block or null if it's the last one
+      const nextBlock = index < blocks.length - 1 ? blocks[index + 1] : null;
+
       return (
         <Draggable
           key={block.id}
@@ -242,7 +253,6 @@ const BlockList: React.FC<BlockListProps> = ({
                     isFocused={focusedBlockId === block.id}
                   />
                 )}
-                {block.type === BlockType.DELAY && <DelayBlock block={block} />}
                 {block.type === BlockType.PATH && <PathBlock block={block} />}
               </div>
 
@@ -274,24 +284,21 @@ const BlockList: React.FC<BlockListProps> = ({
                   }}
                 >
                   {paths.map((path, key) => {
-                    // Determine if the current index is on the left, right, or middle
                     const isFirstColumn = paths.length !== 1 && key === 0;
                     const isLastColumn =
                       paths.length !== 1 && key === paths.length - 1;
                     const isMiddleColumn =
                       paths.length !== 1 && !isFirstColumn && !isLastColumn;
 
-                    // Apply the appropriate border class only if there is more than one path
                     const borderClass =
                       paths.length === 1
-                        ? '' // No border classes if there's only one path
+                        ? ''
                         : isFirstColumn
-                        ? 'custom-border-left-top' // Apply left-top border for the first column
+                        ? 'custom-border-left-top'
                         : isLastColumn
-                        ? 'custom-border-right-top' // Apply right-top border for the last column
-                        : 'custom-border-left-top custom-border-right-top'; // Apply both left and right borders for middle columns
+                        ? 'custom-border-right-top'
+                        : 'custom-border-left-top custom-border-right-top';
 
-                    // Apply the middle border class if it's not the first or last column, but only if there's more than one path
                     const middleClass =
                       paths.length !== 1 && isMiddleColumn
                         ? 'custom-border-middle-top'
@@ -302,19 +309,6 @@ const BlockList: React.FC<BlockListProps> = ({
                         key={`${block.id}-container-${key}`}
                         className={`flex flex-col items-center ${borderClass} ${middleClass}`}
                       >
-                        {/* Vertical TOP SVG Line in branches */}
-                        {/* <svg width="5" height="100%">
-                          <line
-                            x1="50%"
-                            y1="0%"
-                            x2="50%"
-                            y2="100%"
-                            stroke="#98A2B3"
-                            strokeWidth="2"
-                          />
-                        </svg> */}
-
-                        {/* Path Component */}
                         <Path
                           key={`${block.id}-path-${key}`}
                           pathId={path.id}
@@ -342,13 +336,15 @@ const BlockList: React.FC<BlockListProps> = ({
                 handleAddBlockFn={handleAddBlockFn}
                 handleClick={handleClick}
                 onAddBlockClick={(i, type) => onAddBlockClick(i, type)}
+                updateBlockDelay={updateBlockDelay}
                 selectedBlock={selectedBlock !== null}
-                alwaysDisplay={index === blocks.length - 1} // Always display for the last index
+                alwaysDisplay={index === blocks.length - 1}
+                nextBlock={nextBlock}
               />
 
               {/* Vertical bottom Link line */}
               {index !== blocks.length - 1 && (
-                <svg width="5" height="50" xmlns="http://www.w3.org/2000/svg">
+                <svg width="5" height="100" xmlns="http://www.w3.org/2000/svg">
                   <line
                     x1="50%"
                     y1="0%"
@@ -390,8 +386,10 @@ const BlockList: React.FC<BlockListProps> = ({
                       handleAddBlockFn={handleAddBlockFn}
                       handleClick={handleClick}
                       onAddBlockClick={(i, type) => onAddBlockClick(i, type)}
+                      updateBlockDelay={updateBlockDelay}
                       selectedBlock={selectedBlock !== null}
                       alwaysDisplay={true}
+                      nextBlock={null}
                     />
                   </div>
                 )}

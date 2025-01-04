@@ -191,11 +191,13 @@ const Path: React.FC<PathProps> = ({
   ): Promise<Block | null> => {
     if (position === null) return null;
 
+    console.log('adding: ' + blockData.delay);
     try {
       const requestBody = {
         ...blockData,
         position: position,
         icon: blockData.icon || DEFAULT_ICON,
+        delay: blockData.delay || null,
         pathId,
         workflowId: workflowId,
         image: imageUrl || null,
@@ -304,6 +306,7 @@ const Path: React.FC<PathProps> = ({
           position: updatedBlock.position,
           title: updatedBlock.title,
           icon: iconUrl || updatedBlock.icon,
+          delay: updatedBlock.delay || null,
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
@@ -334,6 +337,9 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.icon !== undefined && {
                 icon: updatedBlockData.icon,
+              }),
+              ...(updatedBlockData.delay !== undefined && {
+                delay: updatedBlockData.delay,
               }),
               ...(updatedBlockData.description !== undefined && {
                 description: updatedBlockData.description,

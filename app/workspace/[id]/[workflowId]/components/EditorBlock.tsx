@@ -37,6 +37,19 @@ export default function EditorBlock({
     onClick(block, event);
   };
 
+  function formatDelay(seconds: number) {
+    const days = Math.floor(seconds / (24 * 3600));
+    const hours = Math.floor((seconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes}min`);
+
+    return parts.join(' ');
+  }
+
   return (
     <div
       ref={blockRef}
@@ -45,10 +58,28 @@ export default function EditorBlock({
         block.image ? 'h-[455px]' : 'h-auto'
       } px-6 py-5 rounded-2xl bg-white border border-[#d0d5dd] flex-col justify-start items-start gap-3 inline-flex cursor-pointer overflow-visible ${
         isFocused ? 'z-40' : 'z-10'
-      } relative`}
+      } relative`} // Make the parent container relative
       onClick={handleClick}
     >
-      {/* Header */}
+      {/* Delay Block */}
+      {block.delay && (
+        <div
+          className="absolute -top-[60px] left-1/2 transform -translate-x-1/2 z-50" // Position directly above the block
+        >
+          <div className="h-[25px] pl-1.5 pr-2 bg-[#fcead7] rounded-full shadow-[0px_4px_8px_-2px_rgba(16,24,40,0.10)] border border-[#fe692d] justify-start items-center gap-1 inline-flex">
+            <img
+              src="/assets/workflow/delay-clock-icon.svg"
+              alt="Delay Icon"
+              className="w-[10.51px] h-[10.51px]"
+            />
+            <div className="text-center text-[#b54707] text-xs font-medium font-['Inter'] leading-[18px]">
+              Delay: {formatDelay(block.delay)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Block */}
       <div className="w-full flex justify-start items-center gap-2">
         <div className="h-12 flex justify-start items-center gap-4">
           {/* Icon */}

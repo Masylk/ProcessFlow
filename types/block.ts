@@ -11,6 +11,7 @@ export interface Block {
   position: number;
   title: string;
   icon?: string; // Optional field
+  delay?: number; // delay in seconds
   description?: string; // Optional field
   image?: string; // Optional, URL for an image
   imageDescription?: string; // Optional, description for the image
@@ -21,7 +22,6 @@ export interface Block {
   workflowId: number;
   workflow?: Workflow; // Optional, representing the workflow this block belongs to
   actions?: Action[]; // Optional, actions related to this block
-  delayBlock?: DelayBlock; // Optional, if the block has a DelayBlock
   stepBlock?: StepBlock; // Optional, if the block has a StepBlock
   pathBlock?: PathBlock; // Optional, if the block has a PathBlock
   pathId: number; // Required field for the path relationship

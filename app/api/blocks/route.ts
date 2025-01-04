@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
         type,
         position,
         icon,
+        delay,
         description,
         image: imageUrl || null, // Set the image field if imageUrl is provided
         workflow: { connect: { id: workflowId } },
@@ -66,7 +67,6 @@ export async function POST(req: NextRequest) {
         blockData.stepBlock = {
           create: {
             stepDetails: stepBlock.stepDetails,
-            delay: delay || null, // Include delay if provided
           },
         };
       } else if (type === 'PATH' && pathBlock) {
@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
               create: pathBlock.pathOptions.map((option: string) => ({
                 name: option,
                 workflow: { connect: { id: workflowId } },
-                delay: delay || null, // Include delay for each path if provided
               })),
             },
           },

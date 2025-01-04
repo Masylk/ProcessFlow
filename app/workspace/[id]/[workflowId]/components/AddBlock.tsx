@@ -13,7 +13,9 @@ interface AddBlockProps {
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
   onAddBlockClick: (position: number, chosenType: BlockType) => void;
+  updateBlockDelay: (blockId: string | number, newDelay: number) => void;
   alwaysDisplay?: boolean;
+  nextBlock: Block | null;
 }
 
 export default function AddBlock({
@@ -22,8 +24,10 @@ export default function AddBlock({
   handleAddBlockFn,
   handleClick,
   onAddBlockClick,
+  updateBlockDelay,
   selectedBlock,
   alwaysDisplay = false,
+  nextBlock,
 }: AddBlockProps) {
   const [hovered, setHovered] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
@@ -47,6 +51,28 @@ export default function AddBlock({
 
     const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
     if (newBlock) handleClick(newBlock);
+  };
+
+  const addStepBlockWithDelay = async (seconds: number) => {
+    closeMenu();
+    if (nextBlock) {
+      updateBlockDelay(nextBlock.id, seconds);
+      console.log('added delay to existing block: ' + seconds);
+    } else {
+      const emptyStepBlockData = {
+        type: BlockType.STEP, // Specify the type as STEP
+        title: '', // Title is required, so set it to an empty string
+        description: '', // Optional, leave as an empty string
+        delay: seconds,
+      };
+
+      console.log('added block with delay: ' + emptyStepBlockData.delay);
+      const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
+      if (newBlock) {
+        console.log(newBlock);
+        handleClick(newBlock);
+      }
+    }
   };
 
   const toggleMenu = async () => {
@@ -115,6 +141,7 @@ export default function AddBlock({
         <div ref={menuRef} className="absolute top-full left-8 mt-2 z-10">
           <AddBlockMenu
             addStepBlock={addStepBlock}
+            addDelayBlock={addStepBlockWithDelay}
             onAddBlockClick={(type) => {
               console.log('opening modal for : ' + type);
               onAddBlockClick(id, type);

@@ -5,12 +5,14 @@ import { BlockType } from '@/types/block';
 
 interface AddBlockMenuProps {
   addStepBlock: () => Promise<void>;
+  addDelayBlock: (seconds: number) => Promise<void>;
   onAddBlockClick: (type: BlockType) => void;
 }
 
 const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
   addStepBlock,
   onAddBlockClick,
+  addDelayBlock,
 }) => {
   const [isHoveringDelay, setIsHoveringDelay] = useState(false);
   const [isHoveringCondition, setIsHoveringCondition] = useState(false);
@@ -149,7 +151,10 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
           onMouseEnter={() => setIsHoveringDelayMenu(true)}
           onMouseLeave={() => setIsHoveringDelayMenu(false)}
         >
-          <DelayDropdownMenu onClickCustomDelay={onClickCustomDelay} />
+          <DelayDropdownMenu
+            onClickCustomDelay={onClickCustomDelay}
+            onClickDelay={addDelayBlock}
+          />
         </div>
       )}
     </>
