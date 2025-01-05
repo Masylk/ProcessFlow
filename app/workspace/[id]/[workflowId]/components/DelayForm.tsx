@@ -19,6 +19,29 @@ export default function DelayForm({
 }: DelayFormProps) {
   const [description, setDescription] = useState('');
   const [delay, setDelay] = useState(0);
+  const [days, setDays] = useState<number>(0);
+  const [hours, setHours] = useState<number>(0);
+  const [minutes, setMinutes] = useState<number>(0);
+
+  // Increment function with optional max constraint
+  const increment = (
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    value: number,
+    max: number | null = null
+  ): void => {
+    setter((prev) => (max !== null && prev >= max ? prev : prev + value));
+  };
+
+  // Decrement function with optional min constraint
+  const decrement = (
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    value: number,
+    min: number = 0
+  ): void => {
+    setter((prev) => (prev <= min ? prev : prev - value));
+  };
+
+  const calculateDelay = () => days * 86400 + hours * 3600 + minutes * 60;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,8 +116,9 @@ export default function DelayForm({
       </div>
       <div className="flex-col justify-start items-start gap-5 inline-flex">
         <div className="self-stretch justify-start items-start gap-1 inline-flex">
+          {/* Day Counter */}
           <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex z-50">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Days
@@ -102,35 +126,43 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[100px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
-                    2
+                  <div
+                    className={`w-[110px] text-base font-normal font-['Inter'] leading-normal ${
+                      days === 0 ? 'text-[#667085]' : 'text-[#101828]'
+                    }`}
+                  >
+                    {days}
                   </div>
                   <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex overflow-hidden">
-                  <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-up.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-down.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => increment(setDays, 1)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-up.svg"
+                        alt="Increase Days"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
+                    <button
+                      onClick={() => decrement(setDays, 1)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-down.svg"
+                        alt="Decrease Days"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Hour Counter */}
           <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex z-50">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Hours
@@ -138,35 +170,43 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[100px] text-[#101828] text-base font-normal font-['Inter'] leading-normal">
-                    4
+                  <div
+                    className={`w-[110px] text-base font-normal font-['Inter'] leading-normal ${
+                      hours === 0 ? 'text-[#667085]' : 'text-[#101828]'
+                    }`}
+                  >
+                    {hours}
                   </div>
                   <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex overflow-hidden">
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-up.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-down.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => increment(setHours, 1, 23)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-up.svg"
+                        alt="Increase Hours"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
+                    <button
+                      onClick={() => decrement(setHours, 1)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-down.svg"
+                        alt="Decrease Hours"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Minute Counter */}
           <div className="grow shrink basis-0 flex-col w-36 justify-start items-start gap-1.5 inline-flex">
-            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex">
+            <div className="self-stretch h-[62px] flex-col justify-start items-start gap-1.5 flex z-50">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Minutes
@@ -174,28 +214,34 @@ export default function DelayForm({
               </div>
               <div className="self-stretch px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-center gap-2 inline-flex overflow-hidden">
                 <div className="justify-start items-center gap-2 flex">
-                  <div className="w-[100px] text-[#667085] text-base font-normal font-['Inter'] leading-normal">
-                    0
+                  <div
+                    className={`w-[110px] text-base font-normal font-['Inter'] leading-normal ${
+                      minutes === 0 ? 'text-[#667085]' : 'text-[#101828]'
+                    }`}
+                  >
+                    {minutes}
                   </div>
                   <div className="shadow-[inset_0px_0px_0px_0.5000000596046448px_rgba(16,24,40,0.18)] border-l border-[#d0d5dd] flex-col justify-start items-start inline-flex">
-                    <div className=" px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-up.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                    <div className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]">
-                      <div className="w-2.5 h-2.5 overflow-hidden">
-                        <img
-                          src="/assets/shared_components/chevron-down.svg"
-                          alt="Close Icon"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
+                    <button
+                      onClick={() => increment(setMinutes, 1, 59)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-up.svg"
+                        alt="Increase Minutes"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
+                    <button
+                      onClick={() => decrement(setMinutes, 1)}
+                      className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
+                    >
+                      <img
+                        src="/assets/shared_components/chevron-down.svg"
+                        alt="Decrease Minutes"
+                        className="w-2.5 h-2.5 object-contain"
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

@@ -41,6 +41,11 @@ interface BlockListProps {
       position: number
     ) => Promise<Block | null>
   ) => void;
+  handleUpdateBlockFn: (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => Promise<void>;
   handleAddBlockFn: (
     blockData: any,
     pathId: number,
@@ -83,6 +88,7 @@ const BlockList: React.FC<BlockListProps> = ({
   handleBlockClick,
   closeDetailSidebar,
   handleAddBlock,
+  handleUpdateBlockFn,
   handleAddBlockFn,
   handleDeleteBlockFn,
   disableZoom,
@@ -107,12 +113,13 @@ const BlockList: React.FC<BlockListProps> = ({
   // New state to track hover for AddBlock component and SVG tags
   const [isHovered, setIsHovered] = useState(false);
 
-  const updateBlockDelay = (blockId: string | number, newDelay: number) => {
-    setBlockList((prevBlocks) =>
-      prevBlocks.map((block) =>
-        block.id === blockId ? { ...block, delay: newDelay } : block
-      )
-    );
+  const updateBlockDelay = (block: Block) => {
+    handleUpdateBlockFn(block);
+    // setBlockList((prevBlocks) =>
+    //   prevBlocks.map((block) =>
+    //     block.id === blockId ? { ...block, delay: newDelay } : block
+    //   )
+    // );
   };
 
   useEffect(() => {

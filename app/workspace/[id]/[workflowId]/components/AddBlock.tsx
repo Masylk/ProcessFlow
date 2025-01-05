@@ -13,7 +13,7 @@ interface AddBlockProps {
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
   onAddBlockClick: (position: number, chosenType: BlockType) => void;
-  updateBlockDelay: (blockId: string | number, newDelay: number) => void;
+  updateBlockDelay: (block: Block) => void;
   alwaysDisplay?: boolean;
   nextBlock: Block | null;
 }
@@ -56,7 +56,8 @@ export default function AddBlock({
   const addStepBlockWithDelay = async (seconds: number) => {
     closeMenu();
     if (nextBlock) {
-      updateBlockDelay(nextBlock.id, seconds);
+      nextBlock.delay = seconds;
+      updateBlockDelay(nextBlock);
       console.log('added delay to existing block: ' + seconds);
     } else {
       const emptyStepBlockData = {

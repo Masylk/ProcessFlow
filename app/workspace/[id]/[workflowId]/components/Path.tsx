@@ -469,6 +469,7 @@ const Path: React.FC<PathProps> = ({
           handleBlockClick={handleBlockClick}
           closeDetailSidebar={closeDetailSidebar}
           handleAddBlock={handleAddBlock}
+          handleUpdateBlockFn={handleUpdateBlock}
           handleAddBlockFn={handleAddBlockFn}
           handleDeleteBlockFn={handleDeleteBlock}
           disableZoom={disableZoom}
