@@ -110,7 +110,6 @@ export async function POST(req: NextRequest) {
               stepBlock: {
                 create: {
                   stepDetails: 'Default step details', // Default step details
-                  delay: delay || null, // Include delay for default block if provided
                 },
               },
             };
