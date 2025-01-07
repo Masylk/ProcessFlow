@@ -192,6 +192,31 @@ const Path: React.FC<PathProps> = ({
     if (position === null) return null;
 
     console.log('adding: ' + blockData.delay);
+
+    // Check if blockData.position matches any existing block position
+    const matchingBlock = blockList.find(
+      (block) => block.position === position
+    );
+    if (matchingBlock) {
+      console.log(`Conflict: A block already exists at position ${position}`);
+
+      // Check if blockData.delay is different from the matchingBlock.delay
+      if (blockData.delay !== matchingBlock.delay) {
+        console.log(
+          `Delay mismatch: blockData.delay (${blockData.delay}) is different from matchingBlock.delay (${matchingBlock.delay})`
+        );
+
+        // Call handleUpdateBlock with updatedBlock and skip the rest of the function
+        await handleUpdateBlock(
+          { ...matchingBlock, delay: blockData.delay }, // Update the delay in the matching block
+          undefined, // No image file provided
+          undefined // No icon file provided
+        );
+
+        return null; // Exit the function early
+      }
+    }
+
     try {
       const requestBody = {
         ...blockData,

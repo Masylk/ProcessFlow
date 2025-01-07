@@ -1,3 +1,4 @@
+import { BlockType } from '@/types/block';
 import React, { useState } from 'react';
 
 interface DelayFormProps {
@@ -41,20 +42,26 @@ export default function DelayForm({
     setter((prev) => (prev <= min ? prev : prev - value));
   };
 
+  const delayText = (days: number, hours: number, minutes: number) => {
+    if (days === 0 && hours === 0 && minutes === 0) {
+      return 'No delay';
+    }
+    return `Delay of ${days} ${days === 1 ? 'day' : 'days'}, ${hours} ${
+      hours === 1 ? 'hour' : 'hours'
+    }, and ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`;
+  };
+
   const calculateDelay = () => days * 86400 + hours * 3600 + minutes * 60;
 
   const handleSubmit = (e: React.FormEvent) => {
+    console.log('adding a custom delay of : ' + calculateDelay());
     e.preventDefault();
     onSubmit(
       {
-        type: 'DELAY',
-        position: initialPosition,
-        icon: 'clock-icon',
-        description,
-        workflowId,
-        delayBlock: {
-          delay: delay,
-        },
+        type: BlockType.STEP, // Specify the type as STEP
+        title: '', // Title is required, so set it to an empty string
+        description: '', // Optional, leave as an empty string
+        delay: calculateDelay(),
       },
       pathId,
       position
@@ -260,7 +267,7 @@ export default function DelayForm({
             <div className="grow shrink basis-0 pt-0.5 flex-col justify-start items-start gap-3 inline-flex">
               <div className="self-stretch h-5 flex-col justify-start items-start gap-1 flex">
                 <div className="self-stretch text-[#101828] text-sm font-semibold font-['Inter'] leading-tight">
-                  Delay of 2 days and 4 hours.
+                  {delayText(days, hours, minutes)}
                 </div>
               </div>
             </div>
