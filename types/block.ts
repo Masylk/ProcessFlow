@@ -11,7 +11,6 @@ export interface Block {
   position: number;
   title: string;
   icon?: string; // Optional field
-  delay?: number; // delay in seconds
   description?: string; // Optional field
   image?: string; // Optional, URL for an image
   imageDescription?: string; // Optional, description for the image
@@ -24,6 +23,7 @@ export interface Block {
   actions?: Action[]; // Optional, actions related to this block
   stepBlock?: StepBlock; // Optional, if the block has a StepBlock
   pathBlock?: PathBlock; // Optional, if the block has a PathBlock
+  delayBlock?: DelayBlock;
   pathId: number; // Required field for the path relationship
   path?: Path; // Optional, the path this block belongs to
   coordinates?: { x: number; y: number } | null; // Optional, block coordinates
@@ -48,7 +48,7 @@ export interface StepBlock {
 export interface DelayBlock {
   id: number;
   blockId: number;
-  delay: number; // Duration of the delay
+  seconds: number; // Duration of the delay
   block?: Block; // Optional reference back to the block
 }
 

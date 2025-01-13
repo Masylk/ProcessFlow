@@ -91,9 +91,9 @@ model Block {
   workflowId        Int
   workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
   actions           Action[]
-  delay             Int?
   stepBlock         StepBlock?
   pathBlock         PathBlock?
+  delayBlock        DelayBlock?
   pathId            Int          // Required field to link to Path
   path              Path         @relation("PathBlocks", fields: [pathId], references: [id])
   clickPosition     Json?        // Optional JSON field for storing click position
@@ -104,7 +104,14 @@ model PathBlock {
   id           Int         @id @default(autoincrement())
   blockId      Int         @unique
   block        Block       @relation(fields: [blockId], references: [id])
-  paths        Path[]      @relation("PathBlockPath")
+  paths        Path[]      @relation("PathBlockPath") // Specific field for Path Block
+}
+
+model DelayBlock {
+  id          Int   @id @default(autoincrement())
+  blockId     Int   @unique
+  block       Block @relation(fields: [blockId], references: [id])
+  seconds     Int // Specific field for Delay Block
 }
 
 model StepBlock {

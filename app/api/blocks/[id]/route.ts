@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
 
 // Handler for PATCH requests to update a block
@@ -84,7 +85,7 @@ export async function DELETE(req: NextRequest) {
   const blockId = Number(id);
 
   try {
-    // Fetch the block to determine its type and relations
+    // Fetch the block to determine its type, relations, and associated files
     const block = await prisma.block.findUnique({
       where: { id: blockId },
       include: {
@@ -97,6 +98,33 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
+    const imageUrl = block.image; // Only delete the image file now
+    // Removed iconUrl logic
+
+    // Prepare for file deletion from Supabase storage
+    const deleteFile = async (fileUrl: string | null) => {
+      if (fileUrl) {
+        const filePath = fileUrl.replace(
+          'https://your-project.supabase.co/storage/v1/object/public/',
+          ''
+        );
+        const { error } = await supabase.storage
+          .from('user-assets')
+          .remove([filePath]);
+        if (error) {
+          console.error(`Failed to delete file: ${fileUrl}`, error);
+        } else {
+          console.log(`File deleted successfully: ${fileUrl}`);
+        }
+      } else {
+        console.log('no file url to delete');
+      }
+    };
+
+    // Delete only the image file from Supabase storage
+    await deleteFile(imageUrl);
+
+    // Perform the database transaction to delete the block and related records
     await prisma.$transaction(async (transactionPrisma) => {
       // Delete related records based on block type
       if (block.type === 'PATH' && block.pathBlock) {

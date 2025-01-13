@@ -277,20 +277,21 @@ const Path: React.FC<PathProps> = ({
     let imageUrl: string | undefined;
     let iconUrl: string | undefined;
 
-    console.log('blocklist in update: ', blockList);
     if (imageFile) {
       const formData = new FormData();
       formData.append('file', imageFile);
 
       try {
+        console.log('uploading an image');
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formData,
         });
 
         if (uploadResponse.ok) {
-          const { url } = await uploadResponse.json();
-          imageUrl = url;
+          const { filePath } = await uploadResponse.json();
+          imageUrl = filePath;
+          console.log('uploaded: ' + imageUrl);
         } else {
           console.error('Image upload failed');
         }
