@@ -261,6 +261,7 @@ const BlockList: React.FC<BlockListProps> = ({
                   />
                 )}
                 {block.type === BlockType.PATH && <PathBlock block={block} />}
+                {block.type === BlockType.DELAY && <DelayBlock block={block} />}
               </div>
 
               {/* Vertical bottom ending line */}

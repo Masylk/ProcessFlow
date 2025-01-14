@@ -13,13 +13,12 @@ export async function POST(req: NextRequest) {
     pathBlock,
     imageUrl,
     clickPosition,
-    delay, // New optional field
   } = await req.json();
 
   // Validate block type
-  if (!['STEP', 'PATH'].includes(type)) {
+  if (!['STEP', 'PATH', 'DELAY'].includes(type)) {
     return NextResponse.json(
-      { error: 'Invalid block type. Expected STEP or PATH.' },
+      { error: 'Invalid block type. Expected STEP, PATH, or DELAY.' },
       { status: 400 }
     );
   }
@@ -54,7 +53,6 @@ export async function POST(req: NextRequest) {
         type,
         position,
         icon,
-        delay,
         description,
         image: imageUrl || null, // Set the image field if imageUrl is provided
         workflow: { connect: { id: workflowId } },
@@ -81,6 +79,13 @@ export async function POST(req: NextRequest) {
             },
           },
         };
+      } else if (type === 'DELAY') {
+        // Create DelayBlock for DELAY type
+        blockData.delayBlock = {
+          create: {
+            seconds: 0, // Default value for delay, adjust if needed
+          },
+        };
       }
 
       // Create the new block with its related data
@@ -93,6 +98,7 @@ export async function POST(req: NextRequest) {
               paths: true,
             },
           },
+          delayBlock: type === 'DELAY', // Include DelayBlock if DELAY type
         },
       });
 

@@ -28,10 +28,19 @@ export async function POST(req: NextRequest) {
   // Generate a unique file name and specify the folder
   const fileName = `${uuidv4()}-${file.name}`;
   const filePath = `uploads/${fileName}`; // Upload inside the "uploads" folder
-  const bucketName = 'user-assets'; // Bucket name
+
+  // Retrieve bucket name from environment variable
+  const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+
+  if (!bucketName) {
+    return NextResponse.json(
+      { error: 'Bucket name is not defined in environment variables' },
+      { status: 500 }
+    );
+  }
 
   try {
-    // Upload the file to the "uploads" folder in the "user-assets" bucket
+    // Upload the file to the "uploads" folder in the specified bucket
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, fileData, {

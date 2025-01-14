@@ -29,7 +29,6 @@ export async function PATCH(req: NextRequest) {
       clickPosition, // Include clickPosition in the request body
       averageTime, // Include averageTime
       taskType, // Include taskType
-      delay, // New optional field
     } = await req.json();
 
     // Update the block in the database
@@ -51,6 +50,17 @@ export async function PATCH(req: NextRequest) {
         taskType: taskType || null,
       },
     });
+
+    // Handle block type-specific updates
+    if (type === 'DELAY') {
+      // Handle DelayBlock updates if type is DELAY
+      await prisma.delayBlock.update({
+        where: { blockId },
+        data: {
+          seconds: 0, // Set default value or update accordingly
+        },
+      });
+    }
 
     return NextResponse.json(updatedBlock);
   } catch (error: unknown) {
@@ -90,6 +100,7 @@ export async function DELETE(req: NextRequest) {
       include: {
         stepBlock: true,
         pathBlock: true,
+        delayBlock: true, // Include delayBlock if present
       },
     });
 
@@ -98,7 +109,6 @@ export async function DELETE(req: NextRequest) {
     }
 
     const imageUrl = block.image; // Only delete the image file now
-    // Removed iconUrl logic
 
     // Prepare for file deletion from Supabase storage
     const deleteFile = async (fileUrl: string | null) => {
@@ -107,9 +117,20 @@ export async function DELETE(req: NextRequest) {
           'https://your-project.supabase.co/storage/v1/object/public/',
           ''
         );
+
+        // Check if the bucket name is defined
+        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+        if (!bucketName) {
+          console.error(
+            'Bucket name is not defined in the environment variables.'
+          );
+          return;
+        }
+
         const { error } = await supabase.storage
-          .from('user-assets')
+          .from(bucketName) // Use the environment variable for the bucket name
           .remove([filePath]);
+
         if (error) {
           console.error(`Failed to delete file: ${fileUrl}`, error);
         } else {
@@ -134,6 +155,11 @@ export async function DELETE(req: NextRequest) {
       } else if (block.type === 'STEP' && block.stepBlock) {
         // Delete the step block
         await transactionPrisma.stepBlock.delete({
+          where: { blockId: blockId },
+        });
+      } else if (block.type === 'DELAY' && block.delayBlock) {
+        // Delete the delay block
+        await transactionPrisma.delayBlock.delete({
           where: { blockId: blockId },
         });
       }
