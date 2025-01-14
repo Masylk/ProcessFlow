@@ -12,7 +12,7 @@ import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import { useTransformContext } from 'react-zoom-pan-pinch';
-import { CanvasEvent, CanvasEventType } from '../page';
+import { CanvasEvent, CanvasEventType } from '../edit/page';
 import ImageOverlay from './ImageOverlay';
 import VectorStraightSVG from '@/public/assets/workflow/vector-straight.svg';
 import DelayBlock from './DelayBlock';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import SidebarPath from './SidebarPath';
 import { Block, BlockType } from '@/types/block';
-import { SidebarEvent } from '../page';
+import { SidebarEvent } from '../edit/page';
 
 export interface SidebarBlock {
   id: number;

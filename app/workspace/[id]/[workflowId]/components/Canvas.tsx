@@ -5,7 +5,7 @@ import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
 import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { CanvasEvent, SidebarEvent } from '../page';
+import { CanvasEvent, SidebarEvent } from '../edit/page';
 import TransformStateTracker from './TransformStateTracker';
 import { TransformState } from '@/types/transformstate';
 import ZoomBar from './ZoomBar';

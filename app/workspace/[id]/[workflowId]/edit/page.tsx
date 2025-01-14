@@ -2,17 +2,17 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Sidebar, { PathObject, SidebarBlock } from './components/Sidebar';
-import Canvas from './components/Canvas';
-import StatusIndicator from './components/StatusIndicator';
-import TitleBar from './components/TitleBar';
+import Sidebar, { PathObject, SidebarBlock } from '../components/Sidebar';
+import Canvas from '../components/Canvas';
+import StatusIndicator from '../components/StatusIndicator';
+import TitleBar from '../components/TitleBar';
 import { Path } from '@/types/path';
-import { BlockProvider } from './components/BlockContext';
+import { BlockProvider } from '../components/BlockContext';
 import { Block } from '@/types/block';
 import { conformsTo } from 'lodash';
 import { TransformState } from '@/types/transformstate';
 import ButtonCTA from '@/app/components/ButtonCTA';
-import WorkflowHeader from './components/WorkflowHeader';
+import WorkflowHeader from '../components/WorkflowHeader';
 import { title } from 'process';
 
 export enum CanvasEventType {
@@ -52,8 +52,8 @@ export default function WorkflowPage() {
   const pathname = usePathname();
   const router = useRouter();
   const pathSegments = pathname.split('/');
-  const workflowId = pathSegments[pathSegments.length - 1];
-  const id = pathSegments[pathSegments.length - 2];
+  const workflowId = pathSegments[pathSegments.length - 2];
+  const id = pathSegments[pathSegments.length - 3];
   const [path, setPath] = useState<Path | null>(null);
   const [workflowTitle, setWorkflowTitle] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

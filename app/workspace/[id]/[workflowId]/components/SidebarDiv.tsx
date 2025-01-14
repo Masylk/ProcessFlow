@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import SidebarPath from './SidebarPath';
 import { SidebarBlock } from './Sidebar';
-import { SidebarEvent, SidebarEventType } from '../page';
+import { SidebarEvent, SidebarEventType } from '../edit/page';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd'; // Import type
 import DOMPurify from 'dompurify';
 

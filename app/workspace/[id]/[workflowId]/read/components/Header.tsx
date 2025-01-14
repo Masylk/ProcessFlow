@@ -1,16 +1,18 @@
+'use client';
+
 import ButtonCTA from '@/app/components/ButtonCTA';
 import React from 'react';
-// import TitleBar from './TitleBar';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import FakeButtonCTA from '@/app/components/FakeButtonCTA';
 import AvatarGroup from '@/app/components/AvatarGroup';
 
 interface HeaderProps {
-  currentPath: string;
+  currentPath: string; // Keep this prop for other uses
 }
 
 const Header: React.FC<HeaderProps> = ({ currentPath }) => {
   const router = useRouter();
+  const pathname = usePathname();
 
   // URLs for avatars
   const avatarUrls = [
@@ -19,12 +21,25 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
     '/images/placeholder-avatar3.png',
   ];
 
+  // Function to navigate to the first segment after "workspace"
+  const navigateToFirstSegment = () => {
+    const segments = pathname.split('/'); // Split the path into segments
+    const workspaceIndex = segments.indexOf('workspace'); // Find the "workspace" segment
+    if (workspaceIndex !== -1 && workspaceIndex + 1 < segments.length) {
+      // Get the first segment after "workspace"
+      const targetSegment = segments.slice(0, workspaceIndex + 2).join('/');
+      router.push(targetSegment);
+    } else {
+      router.push('/'); // Default to root if "workspace" or its next segment is not found
+    }
+  };
+
   return (
     <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
       {/* Back to Dashboard Section */}
       <ButtonCTA
         start_icon="/assets/shared_components/arrow-left.svg"
-        onClick={() => router.back()}
+        onClick={navigateToFirstSegment}
         bgColor="transparent"
         hoverBgColor="transparent"
         textColor="#475467"
@@ -34,7 +49,8 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
 
       {/* Breadcrumb Section */}
       <div className="pl-24 flex items-center">
-        {/* <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} /> */}
+        {/* You can still use currentPath for other logic here */}
+        {/* Example: <span>{currentPath}</span> */}
       </div>
 
       {/* Action Section */}

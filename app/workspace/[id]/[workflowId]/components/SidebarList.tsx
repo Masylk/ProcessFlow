@@ -2,7 +2,7 @@ import React from 'react';
 import { DragDropContext, Draggable, DropResult } from 'react-beautiful-dnd';
 import SidebarDiv from './SidebarDiv';
 import { SidebarBlock } from './Sidebar';
-import { SidebarEvent } from '../page';
+import { SidebarEvent } from '../edit/page';
 import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 
 interface SidebarListProps {

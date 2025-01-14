@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { Block, BlockType } from '@/types/block';
-import { CanvasEvent, CanvasEventType } from '../page';
+import { CanvasEvent, CanvasEventType } from '../edit/page';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { title } from 'process';
 

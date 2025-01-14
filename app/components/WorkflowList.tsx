@@ -18,7 +18,7 @@ function WorkflowList({ workflows, workspaceId }: WorkflowListProps) {
       <ul>
         {workflows.map((workflow) => (
           <li key={workflow.id}>
-            <Link href={`/workspace/${workspaceId}/${workflow.id}`}>
+            <Link href={`/workspace/${workspaceId}/${workflow.id}/edit`}>
               {workflow.name}
             </Link>
           </li>
