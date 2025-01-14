@@ -194,28 +194,28 @@ const Path: React.FC<PathProps> = ({
     console.log('adding: ' + blockData.delay);
 
     // Check if blockData.position matches any existing block position
-    const matchingBlock = blockList.find(
-      (block) => block.position === position
-    );
-    if (matchingBlock) {
-      console.log(`Conflict: A block already exists at position ${position}`);
+    // const matchingBlock = blockList.find(
+    //   (block) => block.position === position
+    // );
+    // if (matchingBlock) {
+    //   console.log(`Conflict: A block already exists at position ${position}`);
 
-      // Check if blockData.delay is different from the matchingBlock.delay
-      if (blockData.delay !== matchingBlock.delay) {
-        console.log(
-          `Delay mismatch: blockData.delay (${blockData.delay}) is different from matchingBlock.delay (${matchingBlock.delay})`
-        );
+    //   // Check if blockData.delay is different from the matchingBlock.delay
+    //   // if (blockData.delay !== matchingBlock.delay) {
+    //   //   console.log(
+    //   //     `Delay mismatch: blockData.delay (${blockData.delay}) is different from matchingBlock.delay (${matchingBlock.delay})`
+    //   //   );
 
-        // Call handleUpdateBlock with updatedBlock and skip the rest of the function
-        await handleUpdateBlock(
-          { ...matchingBlock, delay: blockData.delay }, // Update the delay in the matching block
-          undefined, // No image file provided
-          undefined // No icon file provided
-        );
+    //   //   // Call handleUpdateBlock with updatedBlock and skip the rest of the function
+    //   //   // await handleUpdateBlock(
+    //   //   //   { ...matchingBlock, delay: blockData.delay }, // Update the delay in the matching block
+    //   //   //   undefined, // No image file provided
+    //   //   //   undefined // No icon file provided
+    //   //   // );
 
-        return null; // Exit the function early
-      }
-    }
+    //   //   return null; // Exit the function early
+    //   // }
+    // }
 
     try {
       const requestBody = {
@@ -332,7 +332,6 @@ const Path: React.FC<PathProps> = ({
           position: updatedBlock.position,
           title: updatedBlock.title,
           icon: iconUrl || updatedBlock.icon,
-          delay: updatedBlock.delay || null,
           description: updatedBlock.description,
           pathId: updatedBlock.pathId,
           workflowId: updatedBlock.workflowId,
@@ -363,9 +362,6 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.icon !== undefined && {
                 icon: updatedBlockData.icon,
-              }),
-              ...(updatedBlockData.delay !== undefined && {
-                delay: updatedBlockData.delay,
               }),
               ...(updatedBlockData.description !== undefined && {
                 description: updatedBlockData.description,

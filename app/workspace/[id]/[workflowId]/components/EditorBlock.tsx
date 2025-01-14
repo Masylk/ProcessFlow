@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Block } from '@/types/block';
 import BlockOptionsToggle from './BlockOptionsToggle';
 import DOMPurify from 'dompurify';
@@ -17,9 +17,7 @@ interface EditorBlockProps {
 }
 
 const sanitizeDescription = (description: string) => {
-  // Sanitize the description
   const sanitizedDescription = DOMPurify.sanitize(description);
-
   return sanitizedDescription;
 };
 
@@ -32,6 +30,32 @@ export default function EditorBlock({
   isFocused,
 }: EditorBlockProps) {
   const blockRef = useRef<HTMLDivElement>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchImageUrl = async () => {
+      if (block.image) {
+        try {
+          const response = await fetch(
+            `/api/get-signed-url?path=${block.image}`
+          );
+          const data = await response.json();
+
+          if (response.ok && data.signedUrl) {
+            setImageUrl(data.signedUrl);
+          } else {
+            console.error('Error fetching signed URL:', data.error);
+            setImageUrl(null);
+          }
+        } catch (error) {
+          console.error('Error fetching signed URL:', error);
+          setImageUrl(null);
+        }
+      }
+    };
+
+    fetchImageUrl();
+  }, [block.image]);
 
   const handleClick = (event: React.MouseEvent) => {
     onClick(block, event);
@@ -39,7 +63,6 @@ export default function EditorBlock({
 
   return (
     <div className="flex flex-col gap-3 w-[481px]">
-      {/* Main Block */}
       <div
         ref={blockRef}
         id={`block:${block.id}`}
@@ -52,14 +75,12 @@ export default function EditorBlock({
       >
         <div className="w-full flex justify-start items-center gap-2">
           <div className="h-12 flex justify-start items-center gap-4">
-            {/* Icon */}
             <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] justify-center items-center flex">
               {block.icon && (
                 <img src={block.icon} alt="icon" className="w-8 h-8" />
               )}
             </div>
 
-            {/* Title */}
             <div className="flex-col justify-start items-start gap-1 inline-flex">
               <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
                 {`${block.title || 'Untitled Block'}`}
@@ -67,7 +88,6 @@ export default function EditorBlock({
             </div>
           </div>
 
-          {/* Options */}
           <div className="ml-auto flex items-center">
             <BlockOptionsToggle
               block={block}
@@ -78,7 +98,6 @@ export default function EditorBlock({
           </div>
         </div>
 
-        {/* Description */}
         {block.description && (
           <div
             className="w-full h-6 overflow-hidden text-[#667085] text-base font-normal font-['Inter'] leading-normal"
@@ -93,25 +112,21 @@ export default function EditorBlock({
           />
         )}
 
-        {/* Image */}
-        {block.image && (
+        {imageUrl && (
           <img
-            src={block.image}
+            src={imageUrl}
             alt="block image"
             className="self-stretch h-[260px] rounded-xl border border-[#e4e7ec] object-cover cursor-pointer overflow-hidden"
           />
         )}
 
-        {/* Footer */}
         <div className="w-full flex justify-between items-center mt-1.5">
-          {/* Time */}
           <div className="h-[22px] px-2 py-0.5 bg-gray-50 rounded-full border border-[#e4e7ec] justify-start items-center flex">
             <span className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">
               10 min
             </span>
           </div>
 
-          {/* HR Label */}
           <div className="w-10 h-10 relative bg-[#c6d7fe] rounded-full flex justify-center items-center">
             <div className="absolute inset-0 rounded-full border border-black/10"></div>
             <span className="text-[#4761c4] text-base font-semibold font-['Inter'] leading-normal">

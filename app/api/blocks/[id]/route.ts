@@ -49,7 +49,6 @@ export async function PATCH(req: NextRequest) {
         lastModified: new Date(), // Set to the current timestamp
         averageTime: averageTime || null,
         taskType: taskType || null,
-        delay: delay || null, // Include delay if provided
       },
     });
 

@@ -1,5 +1,5 @@
 import { Block } from '@/types/block';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface BlockMediaVisualizerProps {
   block: Block;
@@ -12,19 +12,46 @@ export default function BlockMediaVisualizer({
   altText,
   onUpdate,
 }: BlockMediaVisualizerProps) {
+  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (block.image) {
+        try {
+          const response = await fetch(
+            `/api/get-signed-url?path=${block.image}`
+          );
+          const data = await response.json();
+
+          if (response.ok && data.signedUrl) {
+            setSignedImageUrl(data.signedUrl);
+          } else {
+            console.error('Error fetching signed URL:', data.error);
+            setSignedImageUrl(null);
+          }
+        } catch (err) {
+          console.error('Unexpected error fetching signed URL:', err);
+          setSignedImageUrl(null);
+        }
+      }
+    };
+
+    fetchSignedUrl();
+  }, [block.image]);
+
   const handleRemoveImage = () => {
     const updatedBlock = { ...block, image: '' };
     onUpdate(updatedBlock); // Call onUpdate with the updated block
   };
 
-  if (!block.image) return null;
+  if (!signedImageUrl) return null;
 
   return (
     <div className="relative w-full h-[267px]">
       {/* Image */}
       <img
         className="w-full h-full object-cover rounded-xl"
-        src={block.image}
+        src={signedImageUrl}
         alt={altText}
       />
       {/* Trash Icon */}
