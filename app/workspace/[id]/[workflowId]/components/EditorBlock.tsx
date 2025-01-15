@@ -31,31 +31,37 @@ export default function EditorBlock({
 }: EditorBlockProps) {
   const blockRef = useRef<HTMLDivElement>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchImageUrl = async () => {
-      if (block.image) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${block.image}`
-          );
-          const data = await response.json();
-
-          if (response.ok && data.signedUrl) {
-            setImageUrl(data.signedUrl);
-          } else {
-            console.error('Error fetching signed URL:', data.error);
-            setImageUrl(null);
-          }
-        } catch (error) {
-          console.error('Error fetching signed URL:', error);
-          setImageUrl(null);
+    const fetchSignedUrl = async (path: string) => {
+      try {
+        const response = await fetch(`/api/get-signed-url?path=${path}`);
+        const data = await response.json();
+        if (response.ok && data.signedUrl) {
+          return data.signedUrl;
+        } else {
+          console.error('Error fetching signed URL:', data.error);
+          return null;
         }
+      } catch (error) {
+        console.error('Error fetching signed URL:', error);
+        return null;
       }
     };
 
-    fetchImageUrl();
-  }, [block.image]);
+    if (block.image) {
+      fetchSignedUrl(block.image).then(setImageUrl);
+    } else {
+      setImageUrl(null);
+    }
+
+    if (block.icon) {
+      fetchSignedUrl(block.icon).then(setIconUrl);
+    } else {
+      setIconUrl(null);
+    }
+  }, [block.image, block.icon]);
 
   const handleClick = (event: React.MouseEvent) => {
     onClick(block, event);
@@ -76,9 +82,7 @@ export default function EditorBlock({
         <div className="w-full flex justify-start items-center gap-2">
           <div className="h-12 flex justify-start items-center gap-4">
             <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] justify-center items-center flex">
-              {block.icon && (
-                <img src={block.icon} alt="icon" className="w-8 h-8" />
-              )}
+              {iconUrl && <img src={iconUrl} alt="icon" className="w-8 h-8" />}
             </div>
 
             <div className="flex-col justify-start items-start gap-1 inline-flex">

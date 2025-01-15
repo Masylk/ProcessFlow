@@ -277,6 +277,8 @@ const Path: React.FC<PathProps> = ({
     let imageUrl: string | undefined;
     let iconUrl: string | undefined;
 
+    console.log('updating the block');
+
     if (imageFile) {
       const formData = new FormData();
       formData.append('file', imageFile);
@@ -346,6 +348,7 @@ const Path: React.FC<PathProps> = ({
       if (response?.ok) {
         const updatedBlockData: Block = await response.json();
 
+        console.log('updated block: ' + updatedBlockData.image);
         setBlockList((prevBlocks) => {
           const updatedBlockList = prevBlocks.map((block) => {
             if (block.id !== updatedBlockData.id) {

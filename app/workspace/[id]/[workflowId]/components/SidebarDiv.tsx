@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SidebarPath from './SidebarPath';
 import { SidebarBlock } from './Sidebar';
 import { SidebarEvent, SidebarEventType } from '../edit/page';
@@ -23,6 +23,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
   dragHandleProps,
 }) => {
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(true);
+  const [iconUrl, setIconUrl] = useState<string | null>(null); // State for signed URL
 
   const MAX_DESCRIPTION_LENGTH = 15;
 
@@ -41,22 +42,41 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     setIsSubpathsVisible((prev) => !prev);
   };
 
-  function sanitizeAndTruncate(text: string, maxLength: number): string {
-    // Create a temporary DOM element to strip tags
+  const sanitizeAndTruncate = (text: string, maxLength: number): string => {
     const tempElement = document.createElement('div');
     tempElement.innerHTML = DOMPurify.sanitize(text); // Sanitize the input
     const sanitizedText =
       tempElement.textContent || tempElement.innerText || '';
 
-    // Truncate the sanitized text
     return sanitizedText.length > maxLength
       ? sanitizedText.slice(0, maxLength) + '...'
       : sanitizedText;
-  }
+  };
 
   const matchesSearchFilter = block.description
     ?.toLowerCase()
     .includes(searchFilter.toLowerCase());
+
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      try {
+        if (block.icon) {
+          const response = await fetch(
+            `/api/get-signed-url?path=${encodeURIComponent(block.icon)}`
+          );
+          if (!response.ok) {
+            throw new Error('Failed to fetch signed URL');
+          }
+          const { signedUrl } = await response.json();
+          setIconUrl(signedUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching signed URL:', error);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [block.icon]);
 
   return (
     <li className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px] ">
@@ -78,7 +98,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
                 src={
                   block.type === 'DELAY'
                     ? '/assets/workflow/delay-clock-icon.svg'
-                    : block.icon
+                    : iconUrl || block.icon
                 }
                 alt="Block Icon"
                 className="w-4 h-4"

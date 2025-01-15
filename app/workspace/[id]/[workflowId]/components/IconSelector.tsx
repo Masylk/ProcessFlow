@@ -4,40 +4,75 @@ interface IconSelectorProps {
   onSelect: (icon: string) => void;
 }
 
+interface Entity {
+  basicUrl: string;
+  signedUrl: string;
+}
+
 const IconSelector = ({ onSelect }: IconSelectorProps) => {
-  const [applist, setAppList] = useState<string[]>([]);
-  const [iconlist, setIconList] = useState<string[]>([]);
+  const [applist, setAppList] = useState<Entity[]>([]);
+  const [iconlist, setIconList] = useState<Entity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchIcons = async () => {
       try {
+        // Fetch the list of icons
         const response = await fetch('/api/step-icons');
         if (!response.ok) {
           throw new Error('Failed to fetch icons');
         }
         const data = await response.json();
-        setAppList(data.applist);
-        setIconList(data.iconlist);
+
+        // Fetch signed URLs for apps and icons
+        const fetchSignedUrls = async (path: string) => {
+          const res = await fetch(
+            `/api/get-signed-url?path=${encodeURIComponent(path)}`
+          );
+          if (!res.ok) {
+            throw new Error(`Failed to fetch signed URL for ${path}`);
+          }
+          const { signedUrl } = await res.json();
+          return signedUrl;
+        };
+
+        const applistPromises = data.applist.map(async (app: string) => {
+          const basicUrl = `step-icons/apps/${app}`;
+          const signedUrl = await fetchSignedUrls(basicUrl);
+          return { basicUrl, signedUrl };
+        });
+
+        const iconlistPromises = data.iconlist.map(async (icon: string) => {
+          const basicUrl = `step-icons/default-icons/${icon}`;
+          const signedUrl = await fetchSignedUrls(basicUrl);
+          return { basicUrl, signedUrl };
+        });
+
+        const applistResult = await Promise.all(applistPromises);
+        const iconlistResult = await Promise.all(iconlistPromises);
+
+        setAppList(applistResult);
+        setIconList(iconlistResult);
       } catch (error) {
         console.error(error);
       }
     };
+
     fetchIcons();
   }, []);
 
   // Filter apps and icons based on the search term
   const filteredApps = applist.filter((app) =>
-    app.toLowerCase().includes(searchTerm.toLowerCase())
+    app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const filteredIcons = iconlist.filter((icon) =>
-    icon.toLowerCase().includes(searchTerm.toLowerCase())
+    icon.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Function to format the app name (capitalize first letter, lowercase the rest)
   const formatAppName = (name: string) => {
-    const nameWithoutExtension = name.split('.')[0]; // Remove extension
+    const nameWithoutExtension = name.split('/').pop()?.split('.')[0] || ''; // Extract after the last '/' and remove extension
     return (
       nameWithoutExtension.charAt(0).toUpperCase() +
       nameWithoutExtension.slice(1).toLowerCase()
@@ -80,22 +115,22 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
             {filteredApps.map((app, index) => (
               <button
                 key={index}
-                onClick={() => onSelect(`/step-icons/apps/${app}`)}
-                onMouseEnter={() => setHoveredIcon(app)} // Set hovered icon
+                onClick={() => onSelect(app.basicUrl)} // Use basic URL for selection
+                onMouseEnter={() => setHoveredIcon(app.basicUrl)} // Set hovered icon
                 onMouseLeave={() => setHoveredIcon(null)} // Reset on mouse leave
                 className="w-10 h-10 flex items-center justify-center focus:outline-none relative"
               >
                 <img
-                  src={`/step-icons/apps/${app}`}
-                  alt={app}
+                  src={app.signedUrl}
+                  alt={app.basicUrl}
                   className="w-8 h-8 object-contain"
                 />
-                {hoveredIcon === app && (
+                {hoveredIcon === app.basicUrl && (
                   <div className="absolute bottom-[70%] mb-2 w-24 left-5 transform -translate-x-1/2 z-10">
                     <div className="h-7 flex-col justify-start items-center inline-flex">
                       <div className="self-stretch h-[22px] px-2 py-0.5 bg-[#4761c4] rounded-lg flex-col justify-start items-start flex">
                         <div className="text-center text-white text-[10px] font-semibold font-['Inter'] leading-[18px]">
-                          {formatAppName(app)}
+                          {formatAppName(app.basicUrl)}
                         </div>
                       </div>
                       <div className="w-7 h-4 relative" />
@@ -129,12 +164,12 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
             {filteredIcons.map((icon, index) => (
               <button
                 key={index}
-                onClick={() => onSelect(`/step-icons/default-icons/${icon}`)}
+                onClick={() => onSelect(icon.basicUrl)} // Use basic URL for selection
                 className="w-10 h-10 flex items-center justify-center focus:outline-none"
               >
                 <img
-                  src={`/step-icons/default-icons/${icon}`}
-                  alt={icon}
+                  src={icon.signedUrl}
+                  alt={icon.basicUrl}
                   className="w-8 h-8 object-contain"
                 />
               </button>

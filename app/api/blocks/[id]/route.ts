@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
 
-// Handler for PATCH requests to update a block
 export async function PATCH(req: NextRequest) {
   const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
 
@@ -26,10 +25,55 @@ export async function PATCH(req: NextRequest) {
       workflowId,
       image,
       imageDescription,
-      clickPosition, // Include clickPosition in the request body
-      averageTime, // Include averageTime
-      taskType, // Include taskType
+      clickPosition,
+      averageTime,
+      taskType,
     } = await req.json();
+
+    // Fetch the existing block to get the current image URL
+    const existingBlock = await prisma.block.findUnique({
+      where: { id: blockId },
+      select: { image: true },
+    });
+
+    if (!existingBlock) {
+      return NextResponse.json({ error: 'Block not found' }, { status: 404 });
+    }
+
+    const existingImageUrl = existingBlock.image;
+
+    // Prepare for file deletion from Supabase storage
+    const deleteFile = async (fileUrl: string | null) => {
+      if (fileUrl) {
+        const filePath = fileUrl.replace(
+          'https://your-project.supabase.co/storage/v1/object/public/',
+          ''
+        );
+
+        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+        if (!bucketName) {
+          console.error(
+            'Bucket name is not defined in the environment variables.'
+          );
+          return;
+        }
+
+        const { error } = await supabase.storage
+          .from(bucketName)
+          .remove([filePath]);
+
+        if (error) {
+          console.error(`Failed to delete file: ${fileUrl}`, error);
+        } else {
+          console.log(`File deleted successfully: ${fileUrl}`);
+        }
+      }
+    };
+
+    // Delete the previous image if the image URL has changed
+    if (existingImageUrl && existingImageUrl !== image) {
+      await deleteFile(existingImageUrl);
+    }
 
     // Update the block in the database
     const updatedBlock = await prisma.block.update({
@@ -45,7 +89,7 @@ export async function PATCH(req: NextRequest) {
         image,
         imageDescription: imageDescription || null,
         clickPosition: clickPosition || null,
-        lastModified: new Date(), // Set to the current timestamp
+        lastModified: new Date(),
         averageTime: averageTime || null,
         taskType: taskType || null,
       },
@@ -53,7 +97,6 @@ export async function PATCH(req: NextRequest) {
 
     // Handle block type-specific updates
     if (type === 'DELAY') {
-      // Handle DelayBlock updates if type is DELAY
       await prisma.delayBlock.update({
         where: { blockId },
         data: {
