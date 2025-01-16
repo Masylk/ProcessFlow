@@ -4,12 +4,14 @@ import ButtonCTA from '@/app/components/ButtonCTA';
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import AvatarGroup from '@/app/components/AvatarGroup';
+import BreadCrumbs from './BreadCrumbs'; // Corrected import path
 
 interface HeaderProps {
-  currentPath: string; // Keep this prop for other uses
+  workspaceName: string;
+  workflowName: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentPath }) => {
+const Header: React.FC<HeaderProps> = ({ workspaceName, workflowName }) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -46,28 +48,24 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
 
   return (
     <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
-      {/* Back to Dashboard Section */}
-      <ButtonCTA
-        start_icon="/assets/shared_components/arrow-left.svg"
-        onClick={navigateToFirstSegment}
-        bgColor="transparent"
-        hoverBgColor="transparent"
-        textColor="#475467"
-      ></ButtonCTA>
+      {/* Left Section: ButtonCTA and Breadcrumbs */}
+      <div className="flex items-center gap-4">
+        <ButtonCTA
+          start_icon="/assets/shared_components/arrow-left.svg"
+          onClick={navigateToFirstSegment}
+          bgColor="transparent"
+          hoverBgColor="transparent"
+          textColor="#475467"
+        ></ButtonCTA>
 
-      {/* Breadcrumb Section */}
-      <div className="pl-24 flex items-center">
-        {/* You can still use currentPath for other logic here */}
-        {/* Example: <span>{currentPath}</span> */}
+        {/* Breadcrumb Section */}
+        <BreadCrumbs items={[workspaceName, workflowName]} />
       </div>
 
-      {/* Action Section */}
+      {/* Right Section: User Avatars and Action Buttons */}
       <div className="flex items-center gap-4">
-        {/* User Avatars */}
-        <AvatarGroup urls={avatarUrls} />
-
         {/* Button Section with Line */}
-        <div className="pl-4 border-l border-[#d0d5dd] justify-start items-center gap-2 flex">
+        <div className="pl-4 border-[#d0d5dd] justify-start items-center gap-2 flex">
           {/* Button edit */}
           <ButtonCTA
             start_icon="/assets/shared_components/edit-icon.svg"
