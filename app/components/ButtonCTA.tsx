@@ -1,12 +1,19 @@
-import React, { ReactNode, ButtonHTMLAttributes, useState } from 'react';
+import React, {
+  ReactNode,
+  ButtonHTMLAttributes,
+  useState,
+  useEffect,
+} from 'react';
+import { supabasePublic } from '@/lib/supabasePublicClient'; // Import your public Supabase client
 
 interface ButtonCTAProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode; // Make children optional
-  start_icon?: string;
-  end_icon?: string;
+  start_icon?: string; // Path to the start icon in Supabase
+  end_icon?: string; // Path to the end icon in Supabase
   bgColor?: string; // Background color when not disabled
   textColor?: string; // Text color when not disabled
   hoverBgColor?: string; // Hover background color when not disabled
+  borderColor?: string; // Border color when not disabled
 }
 
 const ButtonCTA: React.FC<ButtonCTAProps> = ({
@@ -17,8 +24,32 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
   bgColor = '#4e6bd7', // Default background color
   textColor = 'white', // Default text color
   hoverBgColor = '#374c99', // Default hover background color
+  borderColor = 'transparent', // Default border color
   ...props
 }) => {
+  const [startIconUrl, setStartIconUrl] = useState<string | null>(null);
+  const [endIconUrl, setEndIconUrl] = useState<string | null>(null);
+
+  // Fetch the public URLs for icons
+  useEffect(() => {
+    const fetchIcons = async () => {
+      if (start_icon) {
+        const { data } = supabasePublic.storage
+          .from('public-assets')
+          .getPublicUrl(start_icon);
+        setStartIconUrl(data?.publicUrl || null);
+      }
+      if (end_icon) {
+        const { data } = supabasePublic.storage
+          .from('public-assets')
+          .getPublicUrl(end_icon);
+        setEndIconUrl(data?.publicUrl || null);
+      }
+    };
+
+    fetchIcons();
+  }, [start_icon, end_icon]);
+
   // State to handle the hover effect
   const [isHovered, setIsHovered] = useState(false);
 
@@ -28,7 +59,7 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
         ${
           disabled
             ? 'bg-[#f2f4f7] border-[#e4e7ec] text-[#98a1b2] cursor-not-allowed'
-            : 'border-white focus:outline-none focus:ring-2 focus:ring-offset-2 group'
+            : 'focus:outline-none group'
         } 
         ${
           bgColor !== 'transparent'
@@ -43,7 +74,8 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
           ? hoverBgColor
           : bgColor,
         color: disabled ? undefined : textColor,
-        borderColor: disabled ? undefined : bgColor,
+        borderColor: disabled ? undefined : borderColor,
+        outline: 'none', // Remove the outline
       }}
       disabled={disabled}
       onMouseEnter={() => !disabled && setIsHovered(true)} // Handle hover state
@@ -51,9 +83,9 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
       {...props}
     >
       {/* Start Icon */}
-      {start_icon && (
+      {startIconUrl && (
         <div className="w-5 h-5 justify-center items-center flex">
-          <img src={start_icon} alt="Start Icon" className="w-full h-full" />
+          <img src={startIconUrl} alt="Start Icon" className="w-full h-full" />
         </div>
       )}
 
@@ -65,9 +97,9 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
       )}
 
       {/* End Icon */}
-      {end_icon && (
+      {endIconUrl && (
         <div className="w-5 h-5 justify-center items-center flex">
-          <img src={end_icon} alt="End Icon" className="w-full h-full" />
+          <img src={endIconUrl} alt="End Icon" className="w-full h-full" />
         </div>
       )}
     </button>

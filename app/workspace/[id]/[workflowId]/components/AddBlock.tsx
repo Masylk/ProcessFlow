@@ -55,13 +55,13 @@ export default function AddBlock({
 
   const addStepBlockWithDelay = async (seconds: number) => {
     closeMenu();
-    if (nextBlock) {
-      nextBlock.delay = seconds;
+    if (nextBlock && nextBlock.delayBlock) {
+      nextBlock.delayBlock.seconds = seconds;
       updateBlockDelay(nextBlock);
       console.log('added delay to existing block: ' + seconds);
     } else {
       const emptyStepBlockData = {
-        type: BlockType.STEP, // Specify the type as STEP
+        type: BlockType.DELAY, // Specify the type as STEP
         title: '', // Title is required, so set it to an empty string
         description: '', // Optional, leave as an empty string
         delay: seconds,
@@ -71,7 +71,7 @@ export default function AddBlock({
       const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
       if (newBlock) {
         console.log(newBlock);
-        handleClick(newBlock);
+        // handleClick(newBlock);
       }
     }
   };

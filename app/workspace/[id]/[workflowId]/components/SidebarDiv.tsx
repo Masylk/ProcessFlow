@@ -4,6 +4,7 @@ import { SidebarBlock } from './Sidebar';
 import { SidebarEvent, SidebarEventType } from '../edit/page';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd'; // Import type
 import DOMPurify from 'dompurify';
+import { supabasePublic } from '@/lib/supabasePublicClient'; // Import the supabasePublic client
 
 export interface SidebarDivProps {
   block: SidebarBlock;
@@ -24,6 +25,14 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
 }) => {
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(true);
   const [iconUrl, setIconUrl] = useState<string | null>(null); // State for signed URL
+  const [dragIconUrl, setDragIconUrl] = useState<string | null>(null);
+  const [delayClockIconUrl, setDelayClockIconUrl] = useState<string | null>(
+    null
+  );
+  const [chevronDownIconUrl, setChevronDownIconUrl] = useState<string | null>(
+    null
+  );
+  const [chevronUpIconUrl, setChevronUpIconUrl] = useState<string | null>(null);
 
   const MAX_DESCRIPTION_LENGTH = 15;
 
@@ -57,7 +66,30 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     ?.toLowerCase()
     .includes(searchFilter.toLowerCase());
 
+  // Fetch public URLs for the icons
   useEffect(() => {
+    const fetchIconUrls = async () => {
+      const { data: dragIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/drag-icon.svg');
+      const { data: delayClockIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/workflow/delay-clock-icon.svg');
+      const { data: chevronDownIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/chevron-down.svg');
+      const { data: chevronUpIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/chevron-up.svg');
+
+      if (dragIconData) setDragIconUrl(dragIconData.publicUrl);
+      if (delayClockIconData)
+        setDelayClockIconUrl(delayClockIconData.publicUrl);
+      if (chevronDownIconData)
+        setChevronDownIconUrl(chevronDownIconData.publicUrl);
+      if (chevronUpIconData) setChevronUpIconUrl(chevronUpIconData.publicUrl);
+    };
+
     const fetchSignedUrl = async () => {
       try {
         if (block.icon) {
@@ -76,20 +108,23 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     };
 
     fetchSignedUrl();
-  }, [block.icon]);
+    fetchIconUrls();
+  }, []);
 
   return (
-    <li className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px] ">
+    <li className="flex flex-col items-start w-[181px] text-[#667085] text-xs font-medium font-['Inter'] leading-[18px]">
       {matchesSearchFilter && (
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center">
             {/* Drag Icon */}
             <div className="mr-0" {...(dragHandleProps || {})}>
-              <img
-                src="/assets/shared_components/drag-icon.svg"
-                alt="Drag Icon"
-                className="w-4 h-4 cursor-grab"
-              />
+              {dragIconUrl && (
+                <img
+                  src={dragIconUrl}
+                  alt="Drag Icon"
+                  className="w-4 h-4 cursor-grab"
+                />
+              )}
             </div>
 
             {/* Block Icon */}
@@ -97,7 +132,8 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
               <img
                 src={
                   block.type === 'DELAY'
-                    ? '/assets/workflow/delay-clock-icon.svg'
+                    ? delayClockIconUrl ||
+                      '/assets/workflow/delay-clock-icon.svg'
                     : iconUrl || block.icon
                 }
                 alt="Block Icon"
@@ -121,8 +157,8 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
               <img
                 src={
                   isSubpathsVisible
-                    ? '/assets/shared_components/chevron-down.svg'
-                    : '/assets/shared_components/chevron-up.svg'
+                    ? chevronDownIconUrl || ''
+                    : chevronUpIconUrl || ''
                 }
                 alt={isSubpathsVisible ? 'Collapse' : 'Expand'}
                 className="w-4 h-4"

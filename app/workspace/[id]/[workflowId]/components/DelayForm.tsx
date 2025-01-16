@@ -58,7 +58,7 @@ export default function DelayForm({
     e.preventDefault();
     onSubmit(
       {
-        type: BlockType.STEP, // Specify the type as STEP
+        type: BlockType.DELAY, // Specify the type as STEP
         title: '', // Title is required, so set it to an empty string
         description: '', // Optional, leave as an empty string
         delay: calculateDelay(),

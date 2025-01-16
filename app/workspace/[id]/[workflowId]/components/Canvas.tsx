@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabasePublic } from '@/lib/supabasePublicClient';
 import { Block, BlockType } from '@/types/block';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
@@ -76,9 +77,30 @@ export default function Canvas({
   >(null);
   const [addBlockChosenType, setAddBlockChosenType] =
     useState<BlockType | null>(null);
+  const [backgroundPatternUrl, setBackgroundPatternUrl] = useState<string>('');
+
   useEffect(() => {
     setPath(initialPath);
   }, [initialPath]);
+
+  useEffect(() => {
+    const fetchPublicUrl = async (path: string) => {
+      const { data } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl(path);
+
+      return data?.publicUrl || '';
+    };
+
+    const getBackgroundPatternUrl = async () => {
+      const url = await fetchPublicUrl(
+        'assets/workflow/background_pattern.svg'
+      );
+      setBackgroundPatternUrl(url);
+    };
+
+    getBackgroundPatternUrl();
+  }, []);
 
   const copyBlockFn = (blockdata: Block) => {
     console.log('copying ', blockdata);
@@ -356,8 +378,7 @@ export default function Canvas({
                             height: '50000vh',
                             top: '-20000vh', // Center it around the content
                             left: '-20000vw',
-                            backgroundImage:
-                              "url('/assets/workflow/background_pattern.svg')",
+                            backgroundImage: `url(${backgroundPatternUrl})`, // Use the fetched URL
                             backgroundSize: 'auto', // Prevent stretching of the image
                             backgroundRepeat: 'repeat', // Repeat the image seamlessly
                             backgroundPosition: 'center', // Keep the pattern centered

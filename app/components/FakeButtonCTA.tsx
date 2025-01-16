@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { supabasePublic } from '@/lib/supabasePublicClient';
 
 interface FakeButtonCTAProps {
   children: ReactNode;
@@ -15,6 +16,28 @@ const FakeButtonCTA: React.FC<FakeButtonCTAProps> = ({
   bgColor = '#4e6bd7', // Default background color
   textColor = 'white', // Default text color
 }) => {
+  const [startIconUrl, setStartIconUrl] = useState<string | null>(null);
+  const [endIconUrl, setEndIconUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIcons = async () => {
+      if (start_icon) {
+        const { data } = supabasePublic.storage
+          .from('public-assets')
+          .getPublicUrl(start_icon);
+        setStartIconUrl(data?.publicUrl || null);
+      }
+      if (end_icon) {
+        const { data } = supabasePublic.storage
+          .from('public-assets')
+          .getPublicUrl(end_icon);
+        setEndIconUrl(data?.publicUrl || null);
+      }
+    };
+
+    fetchIcons();
+  }, [start_icon, end_icon]);
+
   return (
     <div
       className={`h-9 px-3 py-2 rounded-lg border justify-center items-center gap-1 inline-flex 
@@ -28,9 +51,9 @@ const FakeButtonCTA: React.FC<FakeButtonCTAProps> = ({
       }}
     >
       {/* Start Icon */}
-      {start_icon && (
+      {startIconUrl && (
         <div className="w-5 h-5 justify-center items-center flex">
-          <img src={start_icon} alt="Start Icon" className="w-full h-full" />
+          <img src={startIconUrl} alt="Start Icon" className="w-full h-full" />
         </div>
       )}
       {/* Button Text */}
@@ -40,9 +63,9 @@ const FakeButtonCTA: React.FC<FakeButtonCTAProps> = ({
         </div>
       </div>
       {/* End Icon */}
-      {end_icon && (
+      {endIconUrl && (
         <div className="w-5 h-5 justify-center items-center flex">
-          <img src={end_icon} alt="End Icon" className="w-full h-full" />
+          <img src={endIconUrl} alt="End Icon" className="w-full h-full" />
         </div>
       )}
     </div>

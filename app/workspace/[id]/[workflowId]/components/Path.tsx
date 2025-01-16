@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
+import { supabasePublic } from '@/lib/supabasePublicClient';
 import { Block, BlockType } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '../edit/page';
 import { useTransformContext } from 'react-zoom-pan-pinch';
@@ -79,6 +80,7 @@ const Path: React.FC<PathProps> = ({
   // Get transform state from context
   const { transformState } = useTransformContext();
   const DEFAULT_ICON = '/step-icons/default-icons/container.svg';
+  const [magicWandUrl, setMagicWandUrl] = useState<string>('');
 
   useEffect(() => {
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
@@ -118,6 +120,22 @@ const Path: React.FC<PathProps> = ({
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
 
+  useEffect(() => {
+    const fetchPublicUrl = async (path: string) => {
+      const { data } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl(path);
+
+      return data?.publicUrl || '';
+    };
+
+    const getPublicUrl = async () => {
+      const url = await fetchPublicUrl('/assets/workflow/magic-wand-icon.svg');
+      setMagicWandUrl(url);
+    };
+
+    getPublicUrl();
+  }, []);
   const handleBlockClick = (block: Block) => {
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
   };
@@ -190,32 +208,6 @@ const Path: React.FC<PathProps> = ({
     imageUrl?: string
   ): Promise<Block | null> => {
     if (position === null) return null;
-
-    console.log('adding: ' + blockData.delay);
-
-    // Check if blockData.position matches any existing block position
-    // const matchingBlock = blockList.find(
-    //   (block) => block.position === position
-    // );
-    // if (matchingBlock) {
-    //   console.log(`Conflict: A block already exists at position ${position}`);
-
-    //   // Check if blockData.delay is different from the matchingBlock.delay
-    //   // if (blockData.delay !== matchingBlock.delay) {
-    //   //   console.log(
-    //   //     `Delay mismatch: blockData.delay (${blockData.delay}) is different from matchingBlock.delay (${matchingBlock.delay})`
-    //   //   );
-
-    //   //   // Call handleUpdateBlock with updatedBlock and skip the rest of the function
-    //   //   // await handleUpdateBlock(
-    //   //   //   { ...matchingBlock, delay: blockData.delay }, // Update the delay in the matching block
-    //   //   //   undefined, // No image file provided
-    //   //   //   undefined // No icon file provided
-    //   //   // );
-
-    //   //   return null; // Exit the function early
-    //   // }
-    // }
 
     try {
       const requestBody = {
@@ -452,7 +444,7 @@ const Path: React.FC<PathProps> = ({
           <div className="absolute top-[50%] h-[22px] pl-1.5 pr-2 py-0.5 bg-[#edf0fb] rounded-full border border-[#aebbed] justify-start items-center gap-0.5 inline-flex">
             <div className="w-3 h-3 relative overflow-hidden">
               <img
-                src="/assets/workflow/magic-wand-icon.svg"
+                src={magicWandUrl}
                 alt="Magic Wand Icon"
                 className="w-full h-full"
               />

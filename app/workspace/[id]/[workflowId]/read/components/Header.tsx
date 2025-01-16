@@ -3,7 +3,6 @@
 import ButtonCTA from '@/app/components/ButtonCTA';
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import FakeButtonCTA from '@/app/components/FakeButtonCTA';
 import AvatarGroup from '@/app/components/AvatarGroup';
 
 interface HeaderProps {
@@ -34,6 +33,17 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
     }
   };
 
+  // Function to navigate to the edit page
+  const navigateToEdit = () => {
+    const segments = pathname.split('/');
+    if (segments[segments.length - 1] === 'read') {
+      // Replace 'read' with 'edit'
+      segments[segments.length - 1] = 'edit';
+      const editPath = segments.join('/');
+      router.push(editPath);
+    }
+  };
+
   return (
     <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
       {/* Back to Dashboard Section */}
@@ -43,9 +53,7 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
         bgColor="transparent"
         hoverBgColor="transparent"
         textColor="#475467"
-      >
-        Back to Dashboard
-      </ButtonCTA>
+      ></ButtonCTA>
 
       {/* Breadcrumb Section */}
       <div className="pl-24 flex items-center">
@@ -60,14 +68,17 @@ const Header: React.FC<HeaderProps> = ({ currentPath }) => {
 
         {/* Button Section with Line */}
         <div className="pl-4 border-l border-[#d0d5dd] justify-start items-center gap-2 flex">
-          {/* Button saved disabled */}
-          <FakeButtonCTA
-            start_icon="/assets/shared_components/cloud.svg"
+          {/* Button edit */}
+          <ButtonCTA
+            start_icon="/assets/shared_components/edit-icon.svg"
             bgColor="transparent"
+            hoverBgColor="transparent"
             textColor="#475467"
+            borderColor="#D0D5DD"
+            onClick={navigateToEdit} // Add onClick handler
           >
-            Saved
-          </FakeButtonCTA>
+            Edit
+          </ButtonCTA>
 
           {/* Button share */}
           <ButtonCTA

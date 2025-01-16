@@ -6,6 +6,7 @@ export async function POST(req: NextRequest) {
     type,
     position,
     icon,
+    delay,
     description,
     workflowId,
     pathId,
@@ -26,6 +27,17 @@ export async function POST(req: NextRequest) {
   if (!pathId) {
     return NextResponse.json(
       { error: 'Path ID is required to create a block.' },
+      { status: 400 }
+    );
+  }
+
+  // Validate delay for DELAY type
+  if (type === 'DELAY' && (delay === undefined || delay < 0)) {
+    return NextResponse.json(
+      {
+        error:
+          'A valid delay value (non-negative number) is required for DELAY blocks.',
+      },
       { status: 400 }
     );
   }
@@ -80,10 +92,10 @@ export async function POST(req: NextRequest) {
           },
         };
       } else if (type === 'DELAY') {
-        // Create DelayBlock for DELAY type
+        // Use the delay value to create DelayBlock
         blockData.delayBlock = {
           create: {
-            seconds: 0, // Default value for delay, adjust if needed
+            seconds: delay, // Use the provided delay value
           },
         };
       }

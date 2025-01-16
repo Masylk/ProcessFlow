@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SidebarList from './SidebarList';
 import { PathObject, SidebarBlock } from './Sidebar';
 import { SidebarEvent } from '../edit/page';
 import { Block } from '@/types/block';
+import { supabasePublic } from '@/lib/supabasePublicClient'; // Import the supabasePublic client
 
 interface SidebarPathProps {
   path: PathObject;
@@ -24,6 +25,11 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   searchFilter, // Destructure searchFilter prop
 }) => {
   const [isContentVisible, setIsContentVisible] = useState(defaultVisibility);
+  const [gitBranchIconUrl, setGitBranchIconUrl] = useState<string | null>(null);
+  const [chevronDownIconUrl, setChevronDownIconUrl] = useState<string | null>(
+    null
+  );
+  const [chevronUpIconUrl, setChevronUpIconUrl] = useState<string | null>(null);
 
   const toggleContentVisibility = (event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering parent events
@@ -54,17 +60,50 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
     }
   };
 
+  // Fetch the public URLs for the icons
+  useEffect(() => {
+    const fetchIconUrls = async () => {
+      const { data: gitBranchIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/git-branch-icon.svg');
+
+      const { data: chevronDownIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/chevron-down.svg');
+
+      const { data: chevronUpIconData } = await supabasePublic.storage
+        .from('public-assets')
+        .getPublicUrl('/assets/shared_components/chevron-up.svg');
+
+      if (gitBranchIconData) {
+        setGitBranchIconUrl(gitBranchIconData.publicUrl);
+      }
+
+      if (chevronDownIconData) {
+        setChevronDownIconUrl(chevronDownIconData.publicUrl);
+      }
+
+      if (chevronUpIconData) {
+        setChevronUpIconUrl(chevronUpIconData.publicUrl);
+      }
+    };
+
+    fetchIconUrls();
+  }, []);
+
   return (
     <div className="py-1 rounded mb-0">
       {/* Header with Toggle Icon */}
       {displayTitle && (
         <div className="flex justify-start items-start">
           <div className="mr-1">
-            <img
-              src="/assets/shared_components/git-branch-icon.svg"
-              alt="Git Branch Icon"
-              className="w-4 h-4"
-            />
+            {gitBranchIconUrl && (
+              <img
+                src={gitBranchIconUrl}
+                alt="Git Branch Icon"
+                className="w-4 h-4"
+              />
+            )}
           </div>
           <h2 className="text-sm font-semibold">{path.name}</h2>
           <div
@@ -72,15 +111,19 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
             onClick={toggleContentVisibility}
             aria-label="Toggle Content Visibility"
           >
-            <img
-              src={
-                isContentVisible
-                  ? '/assets/shared_components/chevron-down.svg'
-                  : '/assets/shared_components/chevron-up.svg'
-              }
-              alt={isContentVisible ? 'Collapse' : 'Expand'}
-              className="w-3 h-3 mt-1 ml-1"
-            />
+            {isContentVisible && chevronDownIconUrl ? (
+              <img
+                src={chevronDownIconUrl}
+                alt="Collapse"
+                className="w-3 h-3 mt-1 ml-1"
+              />
+            ) : chevronUpIconUrl ? (
+              <img
+                src={chevronUpIconUrl}
+                alt="Expand"
+                className="w-3 h-3 mt-1 ml-1"
+              />
+            ) : null}
           </div>
         </div>
       )}

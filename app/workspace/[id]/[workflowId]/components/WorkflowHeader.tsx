@@ -1,11 +1,12 @@
 'use client';
 
 import ButtonCTA from '@/app/components/ButtonCTA';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import TitleBar from './TitleBar';
 import { useRouter, usePathname } from 'next/navigation';
 import FakeButtonCTA from '@/app/components/FakeButtonCTA';
 import AvatarGroup from '@/app/components/AvatarGroup';
+import { supabasePublic } from '@/lib/supabasePublicClient';
 
 interface WorkflowHeaderProps {
   workflowTitle: string;
@@ -18,13 +19,26 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const [avatarUrls, setAvatarUrls] = useState<string[]>([]);
 
-  // URLs for avatars
-  const avatarUrls = [
-    '/images/placeholder-avatar1.png',
-    '/images/placeholder-avatar2.png',
-    '/images/placeholder-avatar3.png',
-  ];
+  // Fetch public URLs for avatars
+  useEffect(() => {
+    const fetchAvatarUrls = async () => {
+      const files = [
+        'images/placeholder-avatar1.png',
+        'images/placeholder-avatar2.png',
+        'images/placeholder-avatar3.png',
+      ];
+      const urls = files.map(
+        (file) =>
+          supabasePublic.storage.from('public-assets').getPublicUrl(file).data
+            ?.publicUrl
+      );
+      setAvatarUrls(urls.filter((url): url is string => !!url)); // Filter out null or undefined values
+    };
+
+    fetchAvatarUrls();
+  }, []);
 
   // Function to navigate to the first segment after "workspace"
   const navigateToFirstSegment = () => {
