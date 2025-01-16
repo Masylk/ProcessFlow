@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Block } from '@/types/block';
 import { supabasePublic } from '@/lib/supabasePublicClient';
+import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
 
 function formatDelay(seconds: number) {
   const days = Math.floor(seconds / (24 * 3600));
@@ -23,6 +24,7 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
   const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
   const [clockUrl, setClockUrl] = useState<string>('');
   const [dotUrl, setDotUrl] = useState<string>('');
+  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
 
   useEffect(() => {
     const fetchPublicUrl = async (path: string) => {
@@ -44,10 +46,17 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
 
     getPublicUrl();
   }, []);
+
+  const toggleMenu = () => setIsMenuVisible((prev) => !prev);
+
   return (
-    <div className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-hidden">
+    <div className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible">
+      {' '}
+      {/* Set overflow-visible */}
       {/* Top Row: Icon, Text, and Dots */}
-      <div className="w-full flex justify-between items-center">
+      <div className="w-full flex justify-between items-center relative">
+        {' '}
+        {/* Added relative positioning */}
         {/* Left Section: Delay Icon and Text */}
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 p-3 bg-[#FDEAD7] rounded-[13.50px] border border-[#FFE5D5] justify-center items-center flex overflow-hidden">
@@ -59,13 +68,20 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
             </div>
           </div>
         </div>
-
         {/* Right Section: Dots Icon */}
-        <div className="w-6 h-6 flex justify-center items-center">
+        <div
+          className="w-6 h-6 flex justify-center items-center cursor-pointer"
+          onClick={toggleMenu} // Toggle menu visibility on click
+        >
           <img src={dotUrl} alt="Options" className="w-6 h-6" />
         </div>
+        {/* Conditional Rendering of the Menu */}
+        {isMenuVisible && (
+          <div className="absolute top-[30px] right-[-150px] mt-2">
+            <DelayBlockMenu />
+          </div>
+        )}
       </div>
-
       {/* Bottom Row: Delay Description */}
       <div className="w-full">
         <span className="text-[#E04F16] text-base font-normal font-['Inter'] leading-normal">
