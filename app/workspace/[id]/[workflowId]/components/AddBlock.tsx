@@ -119,7 +119,7 @@ export default function AddBlock({
           <div className="self-stretch p-1 justify-center items-center inline-flex overflow-hidden">
             <div className="w-10 h-10 relative overflow-hidden">
               <img
-                src="/assets/shared_components/plus-icon.svg"
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
                 alt="Plus Icon"
                 className="w-10 h-10"
               />

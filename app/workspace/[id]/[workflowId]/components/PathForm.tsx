@@ -97,7 +97,7 @@ const PathForm: React.FC<PathFormProps> = ({
         <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
           <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
             <img
-              src="/assets/shared_components/git-branch-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
               alt="Git Branch Icon"
               className="w-full h-full object-contain"
             />
@@ -111,7 +111,7 @@ const PathForm: React.FC<PathFormProps> = ({
         >
           <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
             <img
-              src="/assets/shared_components/x-close-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
               alt="Close Icon"
               className="w-full h-full object-contain"
             />
@@ -137,7 +137,7 @@ const PathForm: React.FC<PathFormProps> = ({
           style={{
             width: '460px',
             height: '306px',
-            backgroundImage: 'url(/assets/workflow/pathform-preview.png)',
+            backgroundImage: `url(${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/pathform-preview.png)`, 
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',

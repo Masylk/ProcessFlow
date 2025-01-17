@@ -85,7 +85,7 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
       <div className="self-stretch p-4 bg-white rounded-tl-xl rounded-tr-xl border-b border-[#e4e7ec] flex items-center gap-2">
         <div className="w-5 h-5">
           <img
-            src="/assets/shared_components/search-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
             alt="Search Icon"
             className="w-full h-full object-contain"
           />
@@ -138,7 +138,7 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
                     {/* Tooltip Icon */}
                     <div className="absolute bottom-[3%] left-1/2 transform -translate-x-1/2">
                       <img
-                        src="/assets/shared_components/tooltip-icon.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/tooltip-icon.svg`}
                         alt="Tooltip Icon"
                         className="w-7 h-3 object-contain"
                       />

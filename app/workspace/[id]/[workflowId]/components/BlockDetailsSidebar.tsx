@@ -103,7 +103,7 @@ export default function BlockDetailsSidebar({
         className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
       >
         <img
-          src="/assets/shared_components/close-drawer.svg"
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/close-drawer.svg`}
           alt="Close"
           className="w-4 h-4"
         />
@@ -117,7 +117,7 @@ export default function BlockDetailsSidebar({
           className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
         >
           <img
-            src="/assets/shared_components/link-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
             alt="Link"
             className="w-4 h-4"
           />
@@ -129,7 +129,7 @@ export default function BlockDetailsSidebar({
           className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
         >
           <img
-            src="/assets/shared_components/message-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-icon.svg`}
             alt="Message"
             className="w-4 h-4"
           />

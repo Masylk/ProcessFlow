@@ -52,7 +52,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                 <div className="w-4 h-4 relative overflow-hidden">
                   <img
-                    src="/assets/workflow/addstep-icon.svg"
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/addstep-icon.svg`}
                     alt="Step Icon"
                     className="group-hover:stroke-[#4761c4] transition-colors duration-200"
                   />
@@ -78,7 +78,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                 <div className="w-4 h-4 relative overflow-hidden">
                   <img
-                    src="/assets/workflow/addbranch-icon.svg"
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/addbranch-icon.svg`}
                     alt="Conditional Icon"
                     className="transition-colors duration-200"
                   />
@@ -92,7 +92,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
                   }`}
                 >
                   <img
-                    src="/assets/shared_components/chevron-right.svg"
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-right.svg`}
                     alt="Chevron Right Icon"
                   />
                 </div>
@@ -113,7 +113,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                 <div className="w-4 h-4 relative overflow-hidden">
                   <img
-                    src="/assets/workflow/adddelay-icon.svg"
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/adddelay-icon.svg`}
                     alt="Delay Icon"
                     className="transition-colors duration-200"
                   />
@@ -127,7 +127,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
                   }`}
                 >
                   <img
-                    src="/assets/shared_components/chevron-right.svg"
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-right.svg`}
                     alt="Chevron Right Icon"
                   />
                 </div>

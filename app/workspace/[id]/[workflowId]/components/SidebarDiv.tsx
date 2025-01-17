@@ -25,14 +25,12 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
 }) => {
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(true);
   const [iconUrl, setIconUrl] = useState<string | null>(null); // State for signed URL
-  const [dragIconUrl, setDragIconUrl] = useState<string | null>(null);
-  const [delayClockIconUrl, setDelayClockIconUrl] = useState<string | null>(
-    null
-  );
-  const [chevronDownIconUrl, setChevronDownIconUrl] = useState<string | null>(
-    null
-  );
-  const [chevronUpIconUrl, setChevronUpIconUrl] = useState<string | null>(null);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
+  const dragIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/drag-icon.svg`;
+  const delayClockIconUrl = `${supabaseUrl}${storagePath}/assets/workflow/delay-clock-icon.svg`;
+  const chevronDownIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-down.svg`;
+  const chevronUpIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-up.svg`;
 
   const MAX_DESCRIPTION_LENGTH = 15;
 
@@ -68,28 +66,6 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
 
   // Fetch public URLs for the icons
   useEffect(() => {
-    const fetchIconUrls = async () => {
-      const { data: dragIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/shared_components/drag-icon.svg');
-      const { data: delayClockIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/workflow/delay-clock-icon.svg');
-      const { data: chevronDownIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/shared_components/chevron-down.svg');
-      const { data: chevronUpIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/shared_components/chevron-up.svg');
-
-      if (dragIconData) setDragIconUrl(dragIconData.publicUrl);
-      if (delayClockIconData)
-        setDelayClockIconUrl(delayClockIconData.publicUrl);
-      if (chevronDownIconData)
-        setChevronDownIconUrl(chevronDownIconData.publicUrl);
-      if (chevronUpIconData) setChevronUpIconUrl(chevronUpIconData.publicUrl);
-    };
-
     const fetchSignedUrl = async () => {
       try {
         if (block.icon) {
@@ -108,7 +84,6 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
     };
 
     fetchSignedUrl();
-    fetchIconUrls();
   }, []);
 
   return (

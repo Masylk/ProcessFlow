@@ -79,8 +79,8 @@ const Path: React.FC<PathProps> = ({
   const [loading, setLoading] = useState(true);
   // Get transform state from context
   const { transformState } = useTransformContext();
-  const DEFAULT_ICON = '/step-icons/default-icons/container.svg';
-  const [magicWandUrl, setMagicWandUrl] = useState<string>('');
+  const DEFAULT_ICON = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/step-icons/default-icons/container.svg`;
+  const magicWandUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/magic-wand-icon.svg`;
 
   useEffect(() => {
     setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
@@ -120,22 +120,6 @@ const Path: React.FC<PathProps> = ({
     fetchPathData();
   }, [pathId, workspaceId, workflowId]);
 
-  useEffect(() => {
-    const fetchPublicUrl = async (path: string) => {
-      const { data } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl(path);
-
-      return data?.publicUrl || '';
-    };
-
-    const getPublicUrl = async () => {
-      const url = await fetchPublicUrl('/assets/workflow/magic-wand-icon.svg');
-      setMagicWandUrl(url);
-    };
-
-    getPublicUrl();
-  }, []);
   const handleBlockClick = (block: Block) => {
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
   };

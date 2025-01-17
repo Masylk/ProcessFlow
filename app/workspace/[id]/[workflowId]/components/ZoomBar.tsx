@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTransformEffect } from 'react-zoom-pan-pinch';
 import ZoomBarDropdownMenu from './ZoomBarDropdownMenu';
-import { supabasePublic } from '@/lib/supabasePublicClient';
 
 type AnimationType =
   | 'easeOut'
@@ -48,25 +47,9 @@ const ZoomBar: React.FC<ZoomBarProps> = ({
 }) => {
   const [zoomPercentage, setZoomPercentage] = useState(100); // Default to 100%
   const [isDropdownVisible, setIsDropdownVisible] = useState(false); // Dropdown visibility
-  const [zoomInIconUrl, setZoomInIconUrl] = useState<string | null>(null);
-  const [zoomOutIconUrl, setZoomOutIconUrl] = useState<string | null>(null);
 
-  // Fetch icon URLs from Supabase
-  useEffect(() => {
-    const fetchIcons = async () => {
-      const { data: zoomInData } = supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('assets/shared_components/zoom-in.svg');
-      const { data: zoomOutData } = supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('assets/shared_components/zoom-out.svg');
-
-      setZoomInIconUrl(zoomInData?.publicUrl || null);
-      setZoomOutIconUrl(zoomOutData?.publicUrl || null);
-    };
-
-    fetchIcons();
-  }, []);
+  const zoomInIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/zoom-in.svg`;
+  const zoomOutIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/zoom-out.svg`;
 
   // Sync zoom percentage with the transform state
   useTransformEffect(({ state }) => {
@@ -99,9 +82,7 @@ const ZoomBar: React.FC<ZoomBarProps> = ({
         onClick={() => zoomOut()}
         className="px-3 py-2 h-full bg-white border-[#d0d5dd] justify-center items-center gap-2 flex cursor-pointer"
       >
-        {zoomOutIconUrl && (
-          <img src={zoomOutIconUrl} alt="Zoom Out" className="w-5 h-5" />
-        )}
+        <img src={zoomOutIconUrl} alt="Zoom Out" className="w-5 h-5" />
       </div>
 
       {/* Zoom Percentage Button */}
@@ -119,9 +100,7 @@ const ZoomBar: React.FC<ZoomBarProps> = ({
         onClick={() => zoomIn()}
         className="px-3 py-2 h-full bg-white border-[#d0d5dd] justify-center items-center gap-2 flex cursor-pointer"
       >
-        {zoomInIconUrl && (
-          <img src={zoomInIconUrl} alt="Zoom In" className="w-5 h-5" />
-        )}
+        <img src={zoomInIconUrl} alt="Zoom In" className="w-5 h-5" />
       </div>
 
       {/* Zoom Bar Dropdown Menu */}

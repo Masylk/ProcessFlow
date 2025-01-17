@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import SidebarPath from './SidebarPath';
 import { Block, BlockType } from '@/types/block';
 import { SidebarEvent } from '../edit/page';
-import { supabasePublic } from '@/lib/supabasePublicClient'; // Import the supabasePublic client
 
 export interface SidebarBlock {
   id: number;
@@ -38,10 +37,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>(''); // State for search filter
-  const [navigationIconUrl, setNavigationIconUrl] = useState<string | null>(
-    null
-  );
-  const [searchIconUrl, setSearchIconUrl] = useState<string | null>(null);
 
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
@@ -51,28 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     setSearchFilter(event.target.value); // Update the search filter state
   };
 
-  // Fetch the public URLs for the icons
-  useEffect(() => {
-    const fetchIconUrls = async () => {
-      const { data: navigationIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/shared_components/navigation-icon.svg');
-
-      const { data: searchIconData } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl('/assets/shared_components/search-icon.svg');
-
-      if (navigationIconData) {
-        setNavigationIconUrl(navigationIconData.publicUrl);
-      }
-
-      if (searchIconData) {
-        setSearchIconUrl(searchIconData.publicUrl);
-      }
-    };
-
-    fetchIconUrls();
-  }, []);
+  // Static URLs for the icons
+  const navigationIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/navigation-icon.svg`;
+  const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
 
   return (
     <div className="fixed z-10 bg-white flex h-[93vh] top-[7vh]">
@@ -81,18 +57,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`w-15 h-full bg-white border border-[#e4e7ec] flex flex-col justify-between`}
       >
         <div className="flex flex-col pt-4 px-4 gap-6">
-          {/* Implementing the icon */}
+          {/* Navigation Icon */}
           <div
             className="w-6 h-6 bg-white rounded-md cursor-pointer"
             onClick={toggleSidebar}
           >
-            {navigationIconUrl && (
-              <img
-                src={navigationIconUrl}
-                alt="Navigation Icon"
-                className="w-full h-full object-contain"
-              />
-            )}
+            <img
+              src={navigationIconUrl}
+              alt="Navigation Icon"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
       </div>
@@ -116,13 +90,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="px-2 py-1 bg-white rounded-md shadow border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
                 <div className="grow shrink basis-0 h-[18px] justify-start items-center gap-2 flex">
                   <div className="w-4 h-4 relative">
-                    {searchIconUrl && (
-                      <img
-                        src={searchIconUrl}
-                        alt="Search Icon"
-                        className="w-full h-full object-contain"
-                      />
-                    )}
+                    <img
+                      src={searchIconUrl}
+                      alt="Search Icon"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <input
                     type="text"

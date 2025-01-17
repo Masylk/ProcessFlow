@@ -26,7 +26,7 @@ export default function FakeMediaVisualizer({
         onClick={handleDelete} // Attach the delete handler here
       >
         <img
-          src="/assets/shared_components/trash-icon.svg"
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
           alt="Trash Icon"
           className="w-5 h-5"
         />

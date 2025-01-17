@@ -75,7 +75,7 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
         onClick={handleToggleClick}
       >
         <img
-          src="/assets/shared_components/dots-horizontal.svg"
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
           alt="Options"
           className="w-6 h-6"
         />

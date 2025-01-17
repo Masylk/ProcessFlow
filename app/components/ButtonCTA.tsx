@@ -4,7 +4,6 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { supabasePublic } from '@/lib/supabasePublicClient'; // Import your public Supabase client
 
 interface ButtonCTAProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode; // Make children optional
@@ -27,31 +26,11 @@ const ButtonCTA: React.FC<ButtonCTAProps> = ({
   borderColor = 'transparent', // Default border color
   ...props
 }) => {
-  const [startIconUrl, setStartIconUrl] = useState<string | null>(null);
-  const [endIconUrl, setEndIconUrl] = useState<string | null>(null);
-
-  // Fetch the public URLs for icons
-  useEffect(() => {
-    const fetchIcons = async () => {
-      if (start_icon) {
-        const { data } = supabasePublic.storage
-          .from('public-assets')
-          .getPublicUrl(start_icon);
-        setStartIconUrl(data?.publicUrl || null);
-      }
-      if (end_icon) {
-        const { data } = supabasePublic.storage
-          .from('public-assets')
-          .getPublicUrl(end_icon);
-        setEndIconUrl(data?.publicUrl || null);
-      }
-    };
-
-    fetchIcons();
-  }, [start_icon, end_icon]);
-
-  // State to handle the hover effect
   const [isHovered, setIsHovered] = useState(false);
+
+  const baseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}`;
+  const startIconUrl = start_icon ? `${baseUrl}/${start_icon}` : null;
+  const endIconUrl = end_icon ? `${baseUrl}/${end_icon}` : null;
 
   return (
     <button

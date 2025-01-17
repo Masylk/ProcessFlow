@@ -31,7 +31,9 @@ const TaskTypeMenu: React.FC<TaskTypeMenuProps> = ({
         </div>
         <div className="w-4 h-4 relative">
           <img
-            src={`/assets/shared_components/chevron-${
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
+              process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
+            }/assets/shared_components/chevron-${
               isDropdownOpen ? 'down' : 'up'
             }.svg`}
             alt="Chevron icon"
@@ -49,7 +51,7 @@ const TaskTypeMenu: React.FC<TaskTypeMenuProps> = ({
             Manual
             {selectedType === 'MANUAL' && (
               <img
-                src="/assets/shared_components/check-icon2.svg"
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
                 alt="Check icon"
                 className="w-4 h-4"
               />
@@ -62,7 +64,7 @@ const TaskTypeMenu: React.FC<TaskTypeMenuProps> = ({
             Automatic
             {selectedType === 'AUTOMATIC' && (
               <img
-                src="/assets/shared_components/check-icon2.svg"
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
                 alt="Check icon"
                 className="w-4 h-4"
               />

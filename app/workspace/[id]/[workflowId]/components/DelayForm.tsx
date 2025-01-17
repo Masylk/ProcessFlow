@@ -87,7 +87,7 @@ export default function DelayForm({
         <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
           <div className="w-7 h-7 relative flex-col justify-start items-start flex overflow-hidden">
             <img
-              src="/assets/shared_components/clock-stopwatch.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch.svg`}
               alt="Git Branch Icon"
               className="w-full h-full object-contain"
             />
@@ -101,7 +101,7 @@ export default function DelayForm({
         >
           <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
             <img
-              src="/assets/shared_components/x-close-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
               alt="Close Icon"
               className="w-full h-full object-contain"
             />
@@ -146,7 +146,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-up.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-up.svg`}
                         alt="Increase Days"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -156,7 +156,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-down.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
                         alt="Decrease Days"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -190,7 +190,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-up.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-up.svg`}
                         alt="Increase Hours"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -200,7 +200,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-down.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
                         alt="Decrease Hours"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -234,7 +234,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-up.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-up.svg`}
                         alt="Increase Minutes"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -244,7 +244,7 @@ export default function DelayForm({
                       className="px-1.5 py-1 bg-white border-t border-[#d0d5dd]"
                     >
                       <img
-                        src="/assets/shared_components/chevron-down.svg"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
                         alt="Decrease Minutes"
                         className="w-2.5 h-2.5 object-contain"
                       />
@@ -259,7 +259,7 @@ export default function DelayForm({
           <div className="grow shrink basis-0 h-[22px] pr-2 justify-start items-center gap-2 flex">
             <div className="w-5 h-5 rounded-full justify-center items-center flex">
               <img
-                src="/assets/shared_components/alert-circle.svg"
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/alert-circle.svg`}
                 alt="Close Icon"
                 className="w-full h-full object-contain"
               />

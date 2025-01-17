@@ -13,7 +13,10 @@ const BlockOptions: React.FC<BlockOptionsProps> = ({
   onCopyLink,
   onDuplicate,
 }) => {
-  const handleOptionClick = (event: React.MouseEvent, action: () => void) => {
+  const handleOptionClick = (
+    event: React.MouseEvent,
+    action: () => void
+  ): void => {
     event.stopPropagation();
     action();
   };
@@ -27,7 +30,7 @@ const BlockOptions: React.FC<BlockOptionsProps> = ({
       >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
           <img
-            src="/assets/shared_components/duplicate-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/duplicate-icon.svg`}
             alt="Duplicate Icon"
             className="w-4 h-4"
           />
@@ -43,7 +46,7 @@ const BlockOptions: React.FC<BlockOptionsProps> = ({
       >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
           <img
-            src="/assets/shared_components/copy-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
             alt="Copy Icon"
             className="w-4 h-4"
           />
@@ -59,7 +62,7 @@ const BlockOptions: React.FC<BlockOptionsProps> = ({
       >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
           <img
-            src="/assets/shared_components/copy-link-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-link-icon.svg`}
             alt="Copy Link Icon"
             className="w-4 h-4"
           />
@@ -77,7 +80,7 @@ const BlockOptions: React.FC<BlockOptionsProps> = ({
       >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md hover:bg-gray-50 items-center gap-3 cursor-pointer">
           <img
-            src="/assets/shared_components/delete-icon.svg"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon.svg`}
             alt="Delete Icon"
             className="w-4 h-4"
           />

@@ -24,7 +24,7 @@ const DelayDropdownMenu: React.FC<DelayDropdownkMenuProps> = ({
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src="/assets/workflow/clock-plus-icon.svg"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-plus-icon.svg`}
                   alt="Clock Plus Icon"
                   className="w-full h-full object-contain"
                 />
@@ -45,7 +45,7 @@ const DelayDropdownMenu: React.FC<DelayDropdownkMenuProps> = ({
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src="/assets/workflow/clock-plus-icon.svg"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-plus-icon.svg`}
                   alt="Clock Plus Icon"
                   className="w-full h-full object-contain"
                 />
@@ -66,7 +66,7 @@ const DelayDropdownMenu: React.FC<DelayDropdownkMenuProps> = ({
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src="/assets/workflow/clock-plus-icon.svg"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-plus-icon.svg`}
                   alt="Clock Plus Icon"
                   className="w-full h-full object-contain"
                 />
@@ -87,7 +87,7 @@ const DelayDropdownMenu: React.FC<DelayDropdownkMenuProps> = ({
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src="/assets/workflow/clock-plus-icon.svg"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-plus-icon.svg`}
                   alt="Clock Plus Icon"
                   className="w-full h-full object-contain"
                 />

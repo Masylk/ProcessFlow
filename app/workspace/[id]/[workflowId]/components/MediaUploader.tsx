@@ -60,7 +60,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
         <div className="w-10 h-10 p-2.5 rounded-lg border border-[#e4e7ec] flex justify-center items-center">
           <div className="w-5 h-5 rounded-full flex justify-center items-center">
             <img
-              src="/assets/shared_components/upload-cloud-icon.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-cloud-icon.svg`}
               alt="Upload Icon"
               className="w-4 h-4"
             />

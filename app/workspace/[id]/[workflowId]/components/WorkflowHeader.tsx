@@ -6,7 +6,6 @@ import TitleBar from './TitleBar';
 import { useRouter, usePathname } from 'next/navigation';
 import FakeButtonCTA from '@/app/components/FakeButtonCTA';
 import AvatarGroup from '@/app/components/AvatarGroup';
-import { supabasePublic } from '@/lib/supabasePublicClient';
 
 interface WorkflowHeaderProps {
   workflowTitle: string;
@@ -21,41 +20,30 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   const pathname = usePathname();
   const [avatarUrls, setAvatarUrls] = useState<string[]>([]);
 
-  // Fetch public URLs for avatars
   useEffect(() => {
-    const fetchAvatarUrls = async () => {
-      const files = [
-        'images/placeholder-avatar1.png',
-        'images/placeholder-avatar2.png',
-        'images/placeholder-avatar3.png',
-      ];
-      const urls = files.map(
-        (file) =>
-          supabasePublic.storage.from('public-assets').getPublicUrl(file).data
-            ?.publicUrl
-      );
-      setAvatarUrls(urls.filter((url): url is string => !!url)); // Filter out null or undefined values
-    };
-
-    fetchAvatarUrls();
+    const files = [
+      'images/placeholder-avatar1.png',
+      'images/placeholder-avatar2.png',
+      'images/placeholder-avatar3.png',
+    ];
+    const baseUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}`;
+    const urls = files.map((file) => `${baseUrl}/${file}`);
+    setAvatarUrls(urls);
   }, []);
 
-  // Function to navigate to the first segment after "workspace"
   const navigateToFirstSegment = () => {
-    const segments = pathname.split('/'); // Split the path into segments
-    const workspaceIndex = segments.indexOf('workspace'); // Find the "workspace" segment
+    const segments = pathname.split('/');
+    const workspaceIndex = segments.indexOf('workspace');
     if (workspaceIndex !== -1 && workspaceIndex + 1 < segments.length) {
-      // Get the first segment after "workspace"
       const targetSegment = segments.slice(0, workspaceIndex + 2).join('/');
       router.push(targetSegment);
     } else {
-      router.push('/'); // Default to root if "workspace" or its next segment is not found
+      router.push('/');
     }
   };
 
   return (
     <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
-      {/* Back to Dashboard Section */}
       <ButtonCTA
         start_icon="/assets/shared_components/arrow-left.svg"
         onClick={navigateToFirstSegment}
@@ -66,19 +54,14 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
         Back to Dashboard
       </ButtonCTA>
 
-      {/* Breadcrumb Section */}
       <div className="pl-24 flex items-center">
         <TitleBar title={workflowTitle} onUpdateTitle={updateWorkflowTitle} />
       </div>
 
-      {/* Action Section */}
       <div className="flex items-center gap-4">
-        {/* User Avatars */}
         <AvatarGroup urls={avatarUrls} />
 
-        {/* Button Section with Line */}
         <div className="pl-4 border-l border-[#d0d5dd] justify-start items-center gap-2 flex">
-          {/* Button saved disabled */}
           <FakeButtonCTA
             start_icon="/assets/shared_components/cloud.svg"
             bgColor="transparent"
@@ -87,7 +70,6 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
             Saved
           </FakeButtonCTA>
 
-          {/* Button share */}
           <ButtonCTA
             start_icon="/assets/workflow/share.svg"
             onClick={() => alert('Share button clicked!')}

@@ -22,45 +22,25 @@ function formatDelay(seconds: number) {
 
 const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
   const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
-  const [clockUrl, setClockUrl] = useState<string>('');
-  const [dotUrl, setDotUrl] = useState<string>('');
+
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
-
-  useEffect(() => {
-    const fetchPublicUrl = async (path: string) => {
-      const { data } = await supabasePublic.storage
-        .from('public-assets')
-        .getPublicUrl(path);
-
-      return data?.publicUrl || '';
-    };
-
-    const getPublicUrl = async () => {
-      setClockUrl(
-        await fetchPublicUrl('/assets/workflow/clock-stopwatch-orange.svg')
-      );
-      setDotUrl(
-        await fetchPublicUrl('/assets/shared_components/dots-horizontal.svg')
-      );
-    };
-
-    getPublicUrl();
-  }, []);
 
   const toggleMenu = () => setIsMenuVisible((prev) => !prev);
 
   return (
     <div className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible">
-      {' '}
       {/* Set overflow-visible */}
       {/* Top Row: Icon, Text, and Dots */}
       <div className="w-full flex justify-between items-center relative">
-        {' '}
         {/* Added relative positioning */}
         {/* Left Section: Delay Icon and Text */}
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 p-3 bg-[#FDEAD7] rounded-[13.50px] border border-[#FFE5D5] justify-center items-center flex overflow-hidden">
-            <img src={clockUrl} alt="Delay Icon" className="w-6 h-6" />
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-stopwatch-orange.svg`}
+              alt="Delay Icon"
+              className="w-6 h-6"
+            />
           </div>
           <div className="flex flex-col justify-start items-start">
             <div className="text-[#E04F16] text-base font-semibold font-['Inter'] leading-normal">
@@ -73,7 +53,11 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
           className="w-6 h-6 flex justify-center items-center cursor-pointer"
           onClick={toggleMenu} // Toggle menu visibility on click
         >
-          <img src={dotUrl} alt="Options" className="w-6 h-6" />
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+            alt="Options"
+            className="w-6 h-6"
+          />
         </div>
         {/* Conditional Rendering of the Menu */}
         {isMenuVisible && (

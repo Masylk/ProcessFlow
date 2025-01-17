@@ -1,5 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
-import { supabasePublic } from '@/lib/supabasePublicClient';
+import React, { ReactNode } from 'react';
 
 interface FakeButtonCTAProps {
   children: ReactNode;
@@ -16,27 +15,13 @@ const FakeButtonCTA: React.FC<FakeButtonCTAProps> = ({
   bgColor = '#4e6bd7', // Default background color
   textColor = 'white', // Default text color
 }) => {
-  const [startIconUrl, setStartIconUrl] = useState<string | null>(null);
-  const [endIconUrl, setEndIconUrl] = useState<string | null>(null);
+  const startIconUrl = start_icon
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${start_icon}`
+    : null;
 
-  useEffect(() => {
-    const fetchIcons = async () => {
-      if (start_icon) {
-        const { data } = supabasePublic.storage
-          .from('public-assets')
-          .getPublicUrl(start_icon);
-        setStartIconUrl(data?.publicUrl || null);
-      }
-      if (end_icon) {
-        const { data } = supabasePublic.storage
-          .from('public-assets')
-          .getPublicUrl(end_icon);
-        setEndIconUrl(data?.publicUrl || null);
-      }
-    };
-
-    fetchIcons();
-  }, [start_icon, end_icon]);
+  const endIconUrl = end_icon
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${end_icon}`
+    : null;
 
   return (
     <div
