@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabasePublic } from '@/lib/supabasePublicClient';
-import { Block, BlockType } from '@/types/block';
+import { Block, BlockType, FormType } from '@/types/block';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
@@ -77,6 +77,8 @@ export default function Canvas({
   >(null);
   const [addBlockChosenType, setAddBlockChosenType] =
     useState<BlockType | null>(null);
+  const [formType, setFormType] = useState<FormType | null>(null);
+  const [formDefaultValues, setFormDefaultValues] = useState<any | null>(null);
   const [backgroundPatternUrl] = useState<string>(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/background_pattern.svg`
   );
@@ -128,10 +130,14 @@ export default function Canvas({
       pathId: number,
       position: number
     ) => Promise<Block | null>,
-    chosenType?: BlockType
+    chosenType?: BlockType,
+    form_type?: FormType,
+    default_values?: any
   ) => {
     setIsAddBlockFormOpen(true);
     if (chosenType) setAddBlockChosenType(chosenType);
+    if (form_type) setFormType(form_type);
+    if (default_values) setFormDefaultValues(default_values);
     handleSetPath(pathId, position, addBlockFn);
   };
 
@@ -421,7 +427,10 @@ export default function Canvas({
               pathId: number,
               position: number
             ) => await handleAddBlock(blockData, pathId, position)}
-            onCancel={() => setIsAddBlockFormOpen(false)}
+            onCancel={() => {
+              setIsAddBlockFormOpen(false);
+              setAddBlockChosenType(null);
+            }}
             initialPosition={addBlockPosition}
             workflowId={parseInt(workflowId)}
             pathId={addBlockPathId}

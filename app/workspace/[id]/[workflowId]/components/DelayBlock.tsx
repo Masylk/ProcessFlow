@@ -3,6 +3,11 @@ import { Block } from '@/types/block';
 import { supabasePublic } from '@/lib/supabasePublicClient';
 import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
 
+interface DelayBlockProps {
+  block: Block;
+  handleDeleteBlockFn: (blockId: number) => Promise<void>;
+}
+
 function formatDelay(seconds: number) {
   const days = Math.floor(seconds / (24 * 3600));
   const hours = Math.floor((seconds % (24 * 3600)) / 3600);
@@ -20,7 +25,10 @@ function formatDelay(seconds: number) {
     : parts[0];
 }
 
-const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
+const DelayBlock: React.FC<DelayBlockProps> = ({
+  block,
+  handleDeleteBlockFn,
+}) => {
   const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
 
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
@@ -28,7 +36,10 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
   const toggleMenu = () => setIsMenuVisible((prev) => !prev);
 
   return (
-    <div className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible">
+    <div
+      id={`block:${block.id}`}
+      className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible"
+    >
       {/* Set overflow-visible */}
       {/* Top Row: Icon, Text, and Dots */}
       <div className="w-full flex justify-between items-center relative">
@@ -62,7 +73,10 @@ const DelayBlock: React.FC<{ block: Block }> = ({ block }) => {
         {/* Conditional Rendering of the Menu */}
         {isMenuVisible && (
           <div className="absolute top-[30px] right-[-150px] mt-2">
-            <DelayBlockMenu />
+            <DelayBlockMenu
+              blockId={block.id}
+              handleDeleteBlockFn={handleDeleteBlockFn}
+            />
           </div>
         )}
       </div>

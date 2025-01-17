@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Block, BlockType } from '@/types/block';
+import { Block, BlockType, FormType } from '@/types/block';
 import EditorBlock from './EditorBlock';
 import AddBlock from './AddBlock';
 import {
@@ -28,7 +28,12 @@ interface BlockListProps {
     updateBlockFn: (updatedBlock: Block) => Promise<void>,
     deleteBlockFn: (blockId: number) => Promise<void>
   ) => void;
-  onAddBlockClick: (position: number, chosenType?: BlockType) => void;
+  onAddBlockClick: (
+    position: number,
+    chosenType?: BlockType,
+    form_type?: FormType,
+    default_values?: any
+  ) => void;
   onBlocksReorder: (reorderedBlocks: Block[]) => Promise<void>;
   handleBlockClick: (block: Block) => void;
   closeDetailSidebar: () => void;
@@ -261,7 +266,12 @@ const BlockList: React.FC<BlockListProps> = ({
                   />
                 )}
                 {block.type === BlockType.PATH && <PathBlock block={block} />}
-                {block.type === BlockType.DELAY && <DelayBlock block={block} />}
+                {block.type === BlockType.DELAY && (
+                  <DelayBlock
+                    block={block}
+                    handleDeleteBlockFn={handleDeleteBlockFn}
+                  />
+                )}
               </div>
 
               {/* Vertical bottom ending line */}
@@ -343,7 +353,9 @@ const BlockList: React.FC<BlockListProps> = ({
                 pathId={pathId}
                 handleAddBlockFn={handleAddBlockFn}
                 handleClick={handleClick}
-                onAddBlockClick={(i, type) => onAddBlockClick(i, type)}
+                onAddBlockClick={(i, type, form_type, default_values) =>
+                  onAddBlockClick(i, type, form_type, default_values)
+                }
                 updateBlockDelay={updateBlockDelay}
                 selectedBlock={selectedBlock !== null}
                 alwaysDisplay={index === blocks.length - 1}

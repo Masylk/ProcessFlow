@@ -1,6 +1,14 @@
 import React from 'react';
 
-const DelayBlockMenu: React.FC = () => {
+interface DelayBlockMenuProps {
+  blockId: number;
+  handleDeleteBlockFn: (blockId: number) => Promise<void>;
+}
+
+const DelayBlockMenu: React.FC<DelayBlockMenuProps> = ({
+  blockId,
+  handleDeleteBlockFn,
+}) => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseStoragePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH;
 
@@ -32,7 +40,10 @@ const DelayBlockMenu: React.FC = () => {
       </div>
 
       {/* Delete Delay Option */}
-      <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
+      <div
+        className="self-stretch px-1.5 py-px justify-start items-center inline-flex"
+        onClick={() => handleDeleteBlockFn(blockId)}
+      >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 overflow-hidden hover:bg-gray-50">
           <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
             <div className="w-4 h-4 relative overflow-hidden">

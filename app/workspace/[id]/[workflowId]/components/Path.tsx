@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { supabasePublic } from '@/lib/supabasePublicClient';
-import { Block, BlockType } from '@/types/block';
+import { Block, BlockType, FormType } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '../edit/page';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { title } from 'process';
@@ -34,7 +34,9 @@ interface PathProps {
       pathId: number,
       position: number
     ) => Promise<Block | null>,
-    chosenType?: BlockType
+    chosenType?: BlockType,
+    form_type?: FormType,
+    default_values?: any
   ) => void;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -124,8 +126,20 @@ const Path: React.FC<PathProps> = ({
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
   };
 
-  const handleAddBlockClick = (position: number, chosenType?: BlockType) => {
-    handleAddBlock(pathId, position, handleAddBlockFn, chosenType);
+  const handleAddBlockClick = (
+    position: number,
+    chosenType?: BlockType,
+    form_type?: FormType,
+    default_values?: any
+  ) => {
+    handleAddBlock(
+      pathId,
+      position,
+      handleAddBlockFn,
+      chosenType,
+      form_type,
+      default_values
+    );
   };
 
   const handleBlocksReorder = async (reorderedBlocks: Block[]) => {

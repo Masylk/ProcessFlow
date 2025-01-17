@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import DelayDropdownMenu from './DelayDropdownMenu'; // Assuming you have this component
 import PathDropdownPreview from './PathDropdownPreview'; // Assuming you have this component
-import { BlockType } from '@/types/block';
+import { BlockType, FormType } from '@/types/block';
 
 interface AddBlockMenuProps {
   addStepBlock: () => Promise<void>;
   addDelayBlock: (seconds: number) => Promise<void>;
-  onAddBlockClick: (type: BlockType) => void;
+  onAddBlockClick: (
+    type: BlockType,
+    form_type?: FormType,
+    default_values?: any
+  ) => void;
 }
 
 const AddBlockMenu: React.FC<AddBlockMenuProps> = ({

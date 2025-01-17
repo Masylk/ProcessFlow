@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import AddBlockMenu from './AddBlockMenu';
-import { Block, BlockType } from '@/types/block';
+import { Block, BlockType, FormType } from '@/types/block';
 
 interface AddBlockProps {
   id: number;
@@ -12,7 +12,12 @@ interface AddBlockProps {
     position: number
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
-  onAddBlockClick: (position: number, chosenType: BlockType) => void;
+  onAddBlockClick: (
+    position: number,
+    chosenType: BlockType,
+    form_type?: FormType,
+    default_values?: any
+  ) => void;
   updateBlockDelay: (block: Block) => void;
   alwaysDisplay?: boolean;
   nextBlock: Block | null;
@@ -144,7 +149,6 @@ export default function AddBlock({
             addStepBlock={addStepBlock}
             addDelayBlock={addStepBlockWithDelay}
             onAddBlockClick={(type) => {
-              console.log('opening modal for : ' + type);
               onAddBlockClick(id, type);
             }}
           />

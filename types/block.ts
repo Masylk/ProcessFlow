@@ -36,6 +36,11 @@ export enum BlockType {
   PATH = 'PATH',
 }
 
+export enum FormType {
+  ADD = 'ADD',
+  UPDATE = 'UPDATE',
+}
+
 // Represents a StepBlock, specific for STEP type blocks
 export interface StepBlock {
   id: number;
