@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
         // Create default blocks inside each path created
         if (type === 'PATH' && newBlock.pathBlock?.paths?.length) {
           await Promise.all(
-            newBlock.pathBlock.paths.map(async (path) => {
+            newBlock.pathBlock.paths.map(async (path: { id: number }) => {
               const defaultBlockData: any = {
                 type: 'STEP', // Default block type
                 position: 0, // Default position
