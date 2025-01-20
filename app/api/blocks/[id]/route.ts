@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function PATCH(req: NextRequest) {
   const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
@@ -188,30 +189,32 @@ export async function DELETE(req: NextRequest) {
     await deleteFile(imageUrl);
 
     // Perform the database transaction to delete the block and related records
-    await prisma.$transaction(async (transactionPrisma) => {
-      // Delete related records based on block type
-      if (block.type === 'PATH' && block.pathBlock) {
-        // Delete the path block itself
-        await transactionPrisma.pathBlock.delete({
-          where: { blockId: blockId },
-        });
-      } else if (block.type === 'STEP' && block.stepBlock) {
-        // Delete the step block
-        await transactionPrisma.stepBlock.delete({
-          where: { blockId: blockId },
-        });
-      } else if (block.type === 'DELAY' && block.delayBlock) {
-        // Delete the delay block
-        await transactionPrisma.delayBlock.delete({
-          where: { blockId: blockId },
+    await prisma.$transaction(
+      async (transactionPrisma: Prisma.TransactionClient) => {
+        // Delete related records based on block type
+        if (block.type === 'PATH' && block.pathBlock) {
+          // Delete the path block itself
+          await transactionPrisma.pathBlock.delete({
+            where: { blockId: blockId },
+          });
+        } else if (block.type === 'STEP' && block.stepBlock) {
+          // Delete the step block
+          await transactionPrisma.stepBlock.delete({
+            where: { blockId: blockId },
+          });
+        } else if (block.type === 'DELAY' && block.delayBlock) {
+          // Delete the delay block
+          await transactionPrisma.delayBlock.delete({
+            where: { blockId: blockId },
+          });
+        }
+
+        // Finally, delete the block itself
+        await transactionPrisma.block.delete({
+          where: { id: blockId },
         });
       }
-
-      // Finally, delete the block itself
-      await transactionPrisma.block.delete({
-        where: { id: blockId },
-      });
-    });
+    );
 
     // Return a response with no content
     return new NextResponse(null, { status: 204 });
