@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import SidebarList from './SidebarList';
-import { PathObject, SidebarBlock } from './Sidebar';
-import { SidebarEvent } from '../edit/page';
 import { Block } from '@/types/block';
+import { PathObject, SidebarBlock } from '@/types/sidebar';
+import { SidebarEvent } from '@/types/sidebarevent';
 
 interface SidebarPathProps {
   path: PathObject;

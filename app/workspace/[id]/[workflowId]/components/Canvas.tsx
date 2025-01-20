@@ -6,11 +6,13 @@ import Path from './Path';
 import BlockDetailsSidebar from './BlockDetailsSidebar';
 import AddBlockForm from './AddBlockForm'; // Import AddBlockForm
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { CanvasEvent, SidebarEvent } from '../edit/page';
 import TransformStateTracker from './TransformStateTracker';
 import { TransformState } from '@/types/transformstate';
 import ZoomBar from './ZoomBar';
-import Sidebar, { PathObject } from './Sidebar';
+import { CanvasEvent } from '@/types/canvasevent';
+import { PathObject } from '@/types/sidebar';
+import { SidebarEvent } from '@/types/sidebarevent';
+import Sidebar from './Sidebar';
 
 interface CanvasProps {
   initialPath: PathType;

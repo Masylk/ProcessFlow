@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
 import { supabasePublic } from '@/lib/supabasePublicClient';
 import { Block, BlockType, FormType } from '@/types/block';
-import { CanvasEvent, CanvasEventType } from '../edit/page';
+import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import { useTransformContext } from 'react-zoom-pan-pinch';
 import { title } from 'process';
 

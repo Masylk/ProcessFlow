@@ -1,24 +1,10 @@
 import React, { useState } from 'react';
 import SidebarPath from './SidebarPath';
 import { Block, BlockType } from '@/types/block';
-import { SidebarEvent } from '../edit/page';
+import { SidebarEvent } from '@/types/sidebarevent';
+import { PathObject } from '@/types/sidebar';
 
-export interface SidebarBlock {
-  id: number;
-  type: BlockType;
-  position: number;
-  icon?: string;
-  title?: string;
-  description?: string;
-  subpaths?: PathObject[];
-}
 
-export interface PathObject {
-  id: number;
-  name: string;
-  blocks?: SidebarBlock[];
-  handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>;
-}
 
 interface SidebarProps {
   sidebarPath: PathObject | null;

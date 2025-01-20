@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Sidebar, { PathObject, SidebarBlock } from '../components/Sidebar';
+import Sidebar from '../components/Sidebar';
+import { PathObject, SidebarBlock } from '@/types/sidebar';
 import Canvas from '../components/Canvas';
 import StatusIndicator from '../components/StatusIndicator';
 import TitleBar from '../components/TitleBar';
@@ -14,39 +15,8 @@ import { TransformState } from '@/types/transformstate';
 import ButtonCTA from '@/app/components/ButtonCTA';
 import WorkflowHeader from '../components/WorkflowHeader';
 import { title } from 'process';
-
-export enum CanvasEventType {
-  PATH_CREATION,
-  SUBPATH_CREATION,
-  BLOCK_ADD,
-  BLOCK_DEL,
-  BLOCK_REORDER,
-  BLOCK_UPDATE,
-  BLOCK_POSITION,
-}
-
-export enum SidebarEventType {
-  FOCUS,
-  REORDER,
-}
-
-export interface CanvasEvent {
-  type: CanvasEventType;
-  pathId: number;
-  blockId?: number;
-  pathName?: string;
-  blocks?: Block[];
-  subpaths?: PathObject[];
-  coordinates?: { x: number; y: number };
-  handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>;
-}
-
-export interface SidebarEvent {
-  type: SidebarEventType;
-  pathId?: number;
-  blocks?: Block[];
-  focusId?: string;
-}
+import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
+import { SidebarEvent, SidebarEventType } from '@/types/sidebarevent';
 
 export default function WorkflowPage() {
   const pathname = usePathname();

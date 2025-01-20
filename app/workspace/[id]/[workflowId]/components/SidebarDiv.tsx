@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import SidebarPath from './SidebarPath';
-import { SidebarBlock } from './Sidebar';
-import { SidebarEvent, SidebarEventType } from '../edit/page';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd'; // Import type
 import DOMPurify from 'dompurify';
 import { supabasePublic } from '@/lib/supabasePublicClient'; // Import the supabasePublic client
+import { SidebarBlock } from '@/types/sidebar';
+import { SidebarEvent, SidebarEventType } from '@/types/sidebarevent';
 
 export interface SidebarDivProps {
   block: SidebarBlock;
