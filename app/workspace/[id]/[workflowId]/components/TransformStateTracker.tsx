@@ -1,4 +1,4 @@
-import { Block } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import React, { useEffect } from 'react';
 import { useTransformEffect } from 'react-zoom-pan-pinch';
 
@@ -46,7 +46,7 @@ const TransformStateTracker: React.FC<TransformStateTrackerProps> = ({
       } else {
         console.warn(`Element with ID "${focusId}" not found.`);
       }
-    } else if (selectedBlock) {
+    } else if (selectedBlock && selectedBlock.type === BlockType.STEP) {
       const originalElement = document.getElementById(
         `block:${selectedBlock.id}`
       );

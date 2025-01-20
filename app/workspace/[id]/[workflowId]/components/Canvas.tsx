@@ -13,6 +13,7 @@ import { CanvasEvent } from '@/types/canvasevent';
 import { PathObject } from '@/types/sidebar';
 import { SidebarEvent } from '@/types/sidebarevent';
 import Sidebar from './Sidebar';
+import DelayForm from './DelayForm';
 
 interface CanvasProps {
   initialPath: PathType;
@@ -41,7 +42,8 @@ export default function Canvas({
     | ((
         updatedBlock: Block,
         imageFile?: File,
-        iconFile?: File
+        iconFile?: File,
+        delay?: number
       ) => Promise<void>)
     | null
   >(null);
@@ -80,7 +82,9 @@ export default function Canvas({
   const [addBlockChosenType, setAddBlockChosenType] =
     useState<BlockType | null>(null);
   const [formType, setFormType] = useState<FormType | null>(null);
-  const [formDefaultValues, setFormDefaultValues] = useState<any | null>(null);
+  const [formDefaultValues, setFormDefaultValues] = useState<Block | null>(
+    null
+  );
   const [backgroundPatternUrl] = useState<string>(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/background_pattern.svg`
   );
@@ -108,7 +112,12 @@ export default function Canvas({
 
   const handleBlockClick = (
     block: Block,
-    updateBlockFn: (updatedBlock: Block) => Promise<void>,
+    updateBlockFn: (
+      updatedBlock: Block,
+      imageFile?: File,
+      iconFile?: File,
+      delay?: number
+    ) => Promise<void>,
     deleteBlockFn: (blockId: number) => Promise<void>
   ) => {
     setSelectedBlock(block);
@@ -134,7 +143,7 @@ export default function Canvas({
     ) => Promise<Block | null>,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => {
     setIsAddBlockFormOpen(true);
     if (chosenType) setAddBlockChosenType(chosenType);
@@ -403,22 +412,47 @@ export default function Canvas({
         )}
       </div>
 
-      {selectedBlock && handleUpdateBlock && handleDeleteBlock && (
-        <>
-          <BlockDetailsSidebar
-            block={selectedBlock}
-            onClose={handleCloseSidebar}
-            onUpdate={async (updatedBlock, imageFile?, iconFile?) => {
-              await handleUpdateBlock(updatedBlock, imageFile, iconFile);
-              // handleCloseSidebar();
-            }}
-            onDelete={async (blockId) => {
-              await handleDeleteBlock(blockId);
-              handleCloseSidebar();
-            }}
-          />
-        </>
-      )}
+      {selectedBlock &&
+        selectedBlock.type === BlockType.STEP &&
+        handleUpdateBlock &&
+        handleDeleteBlock && (
+          <>
+            <BlockDetailsSidebar
+              block={selectedBlock}
+              onClose={handleCloseSidebar}
+              onUpdate={async (updatedBlock, imageFile?, iconFile?) => {
+                await handleUpdateBlock(updatedBlock, imageFile, iconFile);
+                // handleCloseSidebar();
+              }}
+              onDelete={async (blockId) => {
+                await handleDeleteBlock(blockId);
+                handleCloseSidebar();
+              }}
+            />
+          </>
+        )}
+
+      {selectedBlock &&
+        selectedBlock.type === BlockType.DELAY &&
+        handleUpdateBlock && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <DelayForm
+              onSubmit={async (blockdata) => {
+                await handleUpdateBlock(
+                  selectedBlock,
+                  undefined,
+                  undefined,
+                  blockdata.delay
+                );
+                setSelectedBlock(null);
+              }}
+              onCancel={() => {
+                setSelectedBlock(null);
+              }}
+              update_mode={true}
+            />
+          </div>
+        )}
 
       {isAddBlockFormOpen &&
         addBlockChosenType &&

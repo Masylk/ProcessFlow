@@ -36,7 +36,7 @@ interface PathProps {
     ) => Promise<Block | null>,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => void;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -130,7 +130,7 @@ const Path: React.FC<PathProps> = ({
     position: number,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => {
     handleAddBlock(
       pathId,
@@ -262,7 +262,8 @@ const Path: React.FC<PathProps> = ({
   const handleUpdateBlock = async (
     updatedBlock: Block,
     imageFile?: File,
-    iconFile?: File
+    iconFile?: File,
+    delay?: number
   ) => {
     let imageUrl: string | undefined;
     let iconUrl: string | undefined;
@@ -332,6 +333,7 @@ const Path: React.FC<PathProps> = ({
           image: imageUrl || updatedBlock.image,
           imageDescription: updatedBlock.imageDescription,
           clickPosition: updatedBlock.clickPosition,
+          delay: delay,
         }),
       });
 
@@ -382,6 +384,9 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.taskType !== undefined && {
                 taskType: updatedBlockData.taskType,
+              }),
+              ...(updatedBlockData.delayBlock !== undefined && {
+                delayBlock: updatedBlockData.delayBlock,
               }),
             };
           });

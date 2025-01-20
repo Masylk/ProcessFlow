@@ -32,7 +32,7 @@ interface BlockListProps {
     position: number,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => void;
   onBlocksReorder: (reorderedBlocks: Block[]) => Promise<void>;
   handleBlockClick: (block: Block) => void;
@@ -270,6 +270,7 @@ const BlockList: React.FC<BlockListProps> = ({
                   <DelayBlock
                     block={block}
                     handleDeleteBlockFn={handleDeleteBlockFn}
+                    handleBlockClick={handleBlockClick}
                   />
                 )}
               </div>

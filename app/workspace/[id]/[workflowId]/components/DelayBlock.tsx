@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
 import { supabasePublic } from '@/lib/supabasePublicClient';
 import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
@@ -6,6 +6,7 @@ import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
 interface DelayBlockProps {
   block: Block;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
+  handleBlockClick: (block: Block) => void;
 }
 
 function formatDelay(seconds: number) {
@@ -28,22 +29,40 @@ function formatDelay(seconds: number) {
 const DelayBlock: React.FC<DelayBlockProps> = ({
   block,
   handleDeleteBlockFn,
+  handleBlockClick,
 }) => {
   const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
 
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
+  const menuRef = useRef<HTMLDivElement | null>(null); // Ref for the menu container
 
   const toggleMenu = () => setIsMenuVisible((prev) => !prev);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      setIsMenuVisible(false); // Hide the menu if clicked outside
+    }
+  };
+
+  useEffect(() => {
+    if (isMenuVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuVisible]);
 
   return (
     <div
       id={`block:${block.id}`}
       className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible"
     >
-      {/* Set overflow-visible */}
       {/* Top Row: Icon, Text, and Dots */}
       <div className="w-full flex justify-between items-center relative">
-        {/* Added relative positioning */}
         {/* Left Section: Delay Icon and Text */}
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 p-3 bg-[#FDEAD7] rounded-[13.50px] border border-[#FFE5D5] justify-center items-center flex overflow-hidden">
@@ -72,10 +91,16 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
         </div>
         {/* Conditional Rendering of the Menu */}
         {isMenuVisible && (
-          <div className="absolute top-[30px] right-[-150px] mt-2">
+          <div
+            ref={menuRef} // Attach ref to the menu
+            className="absolute top-[30px] right-[-150px] mt-2"
+          >
             <DelayBlockMenu
               blockId={block.id}
               handleDeleteBlockFn={handleDeleteBlockFn}
+              handleBlockUpdate={() => {
+                handleBlockClick(block);
+              }}
             />
           </div>
         )}

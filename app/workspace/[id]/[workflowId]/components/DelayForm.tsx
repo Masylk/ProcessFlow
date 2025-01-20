@@ -1,13 +1,15 @@
-import { BlockType } from '@/types/block';
+import { Block, BlockType } from '@/types/block';
 import React, { useState } from 'react';
 
 interface DelayFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
-  initialPosition: number;
-  workflowId: number;
-  pathId: number;
-  position: number;
+  initialPosition?: number;
+  workflowId?: number;
+  pathId?: number;
+  position?: number;
+  default_block?: Block;
+  update_mode?: boolean;
 }
 
 export default function DelayForm({
@@ -17,13 +19,24 @@ export default function DelayForm({
   workflowId,
   pathId,
   position,
+  default_block,
+  update_mode,
 }: DelayFormProps) {
   const [description, setDescription] = useState('');
   const [delay, setDelay] = useState(0);
-  const [days, setDays] = useState<number>(0);
-  const [hours, setHours] = useState<number>(0);
-  const [minutes, setMinutes] = useState<number>(0);
 
+  // Extract seconds from the delayBlock
+  const totalSeconds = default_block?.delayBlock?.seconds || 0;
+
+  // Calculate default values
+  const defaultDays = Math.floor(totalSeconds / (24 * 60 * 60));
+  const defaultHours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+  const defaultMinutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+
+  // Initialize state with default values
+  const [days, setDays] = useState<number>(defaultDays);
+  const [hours, setHours] = useState<number>(defaultHours);
+  const [minutes, setMinutes] = useState<number>(defaultMinutes);
   // Increment function with optional max constraint
   const increment = (
     setter: React.Dispatch<React.SetStateAction<number>>,
@@ -56,16 +69,20 @@ export default function DelayForm({
   const handleSubmit = (e: React.FormEvent) => {
     console.log('adding a custom delay of : ' + calculateDelay());
     e.preventDefault();
-    onSubmit(
-      {
-        type: BlockType.DELAY, // Specify the type as STEP
-        title: '', // Title is required, so set it to an empty string
-        description: '', // Optional, leave as an empty string
-        delay: calculateDelay(),
-      },
-      pathId,
-      position
-    );
+    if (pathId && position) {
+      onSubmit(
+        {
+          type: BlockType.DELAY, // Specify the type as STEP
+          title: '', // Title is required, so set it to an empty string
+          description: '', // Optional, leave as an empty string
+          delay: calculateDelay(),
+        },
+        pathId,
+        position
+      );
+    } else if (update_mode) {
+      onSubmit({ delay: calculateDelay() }, 0, 0);
+    }
   };
 
   return (

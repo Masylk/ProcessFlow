@@ -1,13 +1,16 @@
+import { Block } from '@/types/block';
 import React from 'react';
 
 interface DelayBlockMenuProps {
   blockId: number;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
+  handleBlockUpdate: () => void;
 }
 
 const DelayBlockMenu: React.FC<DelayBlockMenuProps> = ({
   blockId,
   handleDeleteBlockFn,
+  handleBlockUpdate,
 }) => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseStoragePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH;
@@ -19,7 +22,10 @@ const DelayBlockMenu: React.FC<DelayBlockMenuProps> = ({
   return (
     <div className="h-[90px] py-1 flex-col justify-start items-start inline-flex overflow-hidden bg-white border border-gray-200 rounded-md">
       {/* Modify Delay Option */}
-      <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex border-b border-gray-200">
+      <div
+        className="self-stretch px-1.5 py-px justify-start items-center inline-flex border-b border-gray-200"
+        onClick={handleBlockUpdate}
+      >
         <div className="flex grow h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 overflow-hidden hover:bg-gray-100">
           <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
             <div className="w-4 h-4 relative overflow-hidden">

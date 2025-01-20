@@ -3,10 +3,10 @@ import React, { useState, ChangeEvent, useEffect } from 'react';
 interface PathFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
-  initialPosition: number;
-  workflowId: number;
-  pathId: number;
-  position: number;
+  initialPosition?: number;
+  workflowId?: number;
+  pathId?: number;
+  position?: number;
 }
 
 const PathForm: React.FC<PathFormProps> = ({
@@ -50,19 +50,20 @@ const PathForm: React.FC<PathFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onSubmit(
-      {
-        ...formData,
-        pathBlock: {
-          pathOptions: formData.pathOptions
-            .reverse()
-            .filter((option) => option.trim() !== '')
-            .map((option) => ({ pathOption: option })),
+    if (pathId && position)
+      onSubmit(
+        {
+          ...formData,
+          pathBlock: {
+            pathOptions: formData.pathOptions
+              .reverse()
+              .filter((option) => option.trim() !== '')
+              .map((option) => ({ pathOption: option })),
+          },
         },
-      },
-      pathId,
-      position
-    );
+        pathId,
+        position
+      );
   };
 
   useEffect(() => {
@@ -137,7 +138,7 @@ const PathForm: React.FC<PathFormProps> = ({
           style={{
             width: '460px',
             height: '306px',
-            backgroundImage: `url(${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/pathform-preview.png)`, 
+            backgroundImage: `url(${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/pathform-preview.png)`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',

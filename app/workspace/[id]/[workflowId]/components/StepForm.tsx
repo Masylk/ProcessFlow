@@ -3,10 +3,10 @@ import React, { useState, ChangeEvent } from 'react';
 interface StepFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
-  initialPosition: number;
-  workflowId: number;
-  pathId: number;
-  position: number;
+  initialPosition?: number;
+  workflowId?: number;
+  pathId?: number;
+  position?: number;
 }
 
 const StepForm: React.FC<StepFormProps> = ({
@@ -34,12 +34,17 @@ const StepForm: React.FC<StepFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      stepBlock: {
-        stepDetails: formData.stepDetails,
-      },
-    }, pathId, position);
+    if (pathId && position)
+      onSubmit(
+        {
+          ...formData,
+          stepBlock: {
+            stepDetails: formData.stepDetails,
+          },
+        },
+        pathId,
+        position
+      );
   };
 
   return (
