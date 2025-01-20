@@ -1,17 +1,43 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+type BlockUpdate = {
+  id: number;
+  position: number;
+};
+
 export async function PUT(
   request: Request,
   { params }: { params: { workflowId: string } }
 ) {
   try {
     const workflowId = parseInt(params.workflowId, 10);
-    const updatedPositions = await request.json();
+
+    // Validate workflowId
+    if (isNaN(workflowId)) {
+      return NextResponse.json(
+        { error: 'Invalid workflow ID' },
+        { status: 400 }
+      );
+    }
+
+    const updatedPositions: BlockUpdate[] = await request.json();
 
     // Validate input
-    if (!Array.isArray(updatedPositions) || updatedPositions.length === 0) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    if (
+      !Array.isArray(updatedPositions) ||
+      updatedPositions.some(
+        (block) =>
+          typeof block.id !== 'number' || typeof block.position !== 'number'
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Invalid input. Expected an array of objects with numeric id and position.',
+        },
+        { status: 400 }
+      );
     }
 
     // Update block positions in a transaction

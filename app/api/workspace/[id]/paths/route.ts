@@ -1,6 +1,7 @@
 // app/api/workspace/[id]/paths/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   req: NextRequest,
@@ -18,77 +19,79 @@ export async function GET(
   }
 
   try {
-    const result = await prisma.$transaction(async (prisma) => {
-      const parsedWorkflowId = parseInt(workflowId);
+    const result = await prisma.$transaction(
+      async (prisma: Prisma.TransactionClient) => {
+        const parsedWorkflowId = parseInt(workflowId, 10);
 
-      // Fetch paths for the given workflowId
-      const existingPaths = await prisma.path.findMany({
-        where: {
-          workflowId: parsedWorkflowId,
-        },
-        include: {
-          blocks: {
-            orderBy: {
-              position: 'asc',
-            },
-            include: {
-              pathBlock: {
-                include: {
-                  paths: {
-                    include: {
-                      blocks: {
-                        include: {
-                          pathBlock: true,
-                          stepBlock: true,
+        // Fetch paths for the given workflowId
+        const existingPaths = await prisma.path.findMany({
+          where: {
+            workflowId: parsedWorkflowId,
+          },
+          include: {
+            blocks: {
+              orderBy: {
+                position: 'asc',
+              },
+              include: {
+                pathBlock: {
+                  include: {
+                    paths: {
+                      include: {
+                        blocks: {
+                          include: {
+                            pathBlock: true,
+                            stepBlock: true,
+                          },
                         },
                       },
                     },
                   },
                 },
+                stepBlock: true,
               },
+            },
+          },
+        });
+
+        if (existingPaths.length === 0) {
+          const newPath = await prisma.path.create({
+            data: {
+              name: 'First Path',
+              workflowId: parsedWorkflowId,
+              pathBlockId: null,
+            },
+          });
+
+          // Create the default step block inside the new path
+          const defaultBlockData: any = {
+            type: 'STEP',
+            position: 0,
+            icon: '/step-icons/default-icons/container.svg',
+            description: 'This is the default step block',
+            workflow: { connect: { id: parsedWorkflowId } },
+            path: { connect: { id: newPath.id } },
+            stepBlock: {
+              create: {
+                stepDetails: 'Default step details',
+              },
+            },
+          };
+
+          const defaultBlock = await prisma.block.create({
+            data: defaultBlockData,
+            include: {
               stepBlock: true,
             },
-          },
-        },
-      });
+          });
 
-      if (existingPaths.length === 0) {
-        const newPath = await prisma.path.create({
-          data: {
-            name: 'First Path',
-            workflowId: parsedWorkflowId,
-            pathBlockId: null,
-          },
-        });
+          return { paths: [{ ...newPath, blocks: [defaultBlock] }] };
+        }
 
-        // Create the default step block inside the new path
-        const defaultBlockData: any = {
-          type: 'STEP',
-          position: 0,
-          icon: '/step-icons/default-icons/container.svg',
-          description: 'This is the default step block',
-          workflow: { connect: { id: parsedWorkflowId } },
-          path: { connect: { id: newPath.id } },
-          stepBlock: {
-            create: {
-              stepDetails: 'Default step details',
-            },
-          },
-        };
-
-        const defaultBlock = await prisma.block.create({
-          data: defaultBlockData,
-          include: {
-            stepBlock: true,
-          },
-        });
-
-        return { paths: [{ ...newPath, blocks: [defaultBlock] }] };
+        // Return existing paths with their associated blocks
+        return { paths: existingPaths };
       }
-
-      // Return existing paths with their associated blocks
-      return { paths: existingPaths };
-    });
+    );
 
     return NextResponse.json(result);
   } catch (error) {
