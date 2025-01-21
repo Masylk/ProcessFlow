@@ -42,6 +42,17 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
     }
   };
 
+  // Function to navigate to the read page
+  const navigateToRead = () => {
+    const segments = pathname.split('/');
+    if (segments[segments.length - 1] === 'edit') {
+      // Replace 'edit' with 'read'
+      segments[segments.length - 1] = 'read';
+      const editPath = segments.join('/');
+      router.push(editPath);
+    }
+  };
+
   return (
     <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
       <ButtonCTA
