@@ -9,6 +9,11 @@ interface BlockOptionsToggleProps {
     pathId: number,
     position: number
   ) => Promise<Block | null>;
+  handleUpdateBlockFn: (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockData: Block) => void;
 }
@@ -16,6 +21,7 @@ interface BlockOptionsToggleProps {
 const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   block,
   handleAddBlockFn,
+  handleUpdateBlockFn,
   handleDeleteBlockFn,
   copyBlockFn,
 }) => {
@@ -48,6 +54,11 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
 
   const handleDelete = async () => {
     await handleDeleteBlockFn(block.id);
+    if (block.image && block.icon)
+    {
+
+      // await handleUpdateBlockFn(block, block.image, block.icon);
+    }
     setIsOpen(false);
   };
 
@@ -60,9 +71,9 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
     setIsOpen(false);
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (block.pathId) {
-      handleAddBlockFn(block, block.pathId, block.position);
+      await handleAddBlockFn(block, block.pathId, block.position);
     }
     setIsOpen(false);
   };

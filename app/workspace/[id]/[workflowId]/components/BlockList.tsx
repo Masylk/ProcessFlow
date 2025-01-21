@@ -259,6 +259,7 @@ const BlockList: React.FC<BlockListProps> = ({
                   <EditorBlock
                     block={block}
                     handleAddBlockFn={handleAddBlockFn}
+                    handleUpdateBlockFn={handleUpdateBlockFn}
                     handleDeleteBlockFn={handleDeleteBlockFn}
                     copyBlockFn={copyBlockFn}
                     onClick={handleClick}
