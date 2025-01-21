@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabasePublic } from '@/lib/supabasePublicClient';
 import { Block, BlockType, FormType } from '@/types/block';
 import { Path as PathType } from '@/types/path';
 import Path from './Path';

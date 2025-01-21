@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
-import { supabasePublic } from '@/lib/supabasePublicClient';
 import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
 
 interface DelayBlockProps {
