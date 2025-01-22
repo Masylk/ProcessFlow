@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import BlockOptions from './BlockOptions';
 import { Block } from '@/types/block';
+import { createClient } from '@/utils/supabase/client';
 
 interface BlockOptionsToggleProps {
   block: Block;
@@ -16,7 +17,10 @@ interface BlockOptionsToggleProps {
   ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockData: Block) => void;
+  image: string | null;
 }
+
+const supabase = createClient();
 
 const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   block,
@@ -24,6 +28,7 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   handleUpdateBlockFn,
   handleDeleteBlockFn,
   copyBlockFn,
+  image,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleRef = useRef<HTMLDivElement>(null);
@@ -54,9 +59,7 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
 
   const handleDelete = async () => {
     await handleDeleteBlockFn(block.id);
-    if (block.image && block.icon)
-    {
-
+    if (block.image && block.icon) {
       // await handleUpdateBlockFn(block, block.image, block.icon);
     }
     setIsOpen(false);
@@ -71,11 +74,102 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
     setIsOpen(false);
   };
 
+  const fetchSignedUrl = async (path: string): Promise<string | null> => {
+    try {
+      const response = await fetch(`/api/get-signed-url?path=${path}`);
+      const data = await response.json();
+      if (response.ok && data.signedUrl) {
+        return data.signedUrl;
+      } else {
+        console.error('Error fetching signed URL:', data.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching signed URL:', error);
+      return null;
+    }
+  };
+
+  const duplicateImage = async (
+    originalFileName: string
+  ): Promise<string | undefined> => {
+    try {
+      // Fetch the signed URL for the original image
+      const signedUrl = await fetchSignedUrl(originalFileName);
+
+      if (!signedUrl) {
+        throw new Error('Failed to fetch signed URL for the original image');
+      }
+
+      // Fetch the original image file using the signed URL
+      const response = await fetch(signedUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch the original image');
+      }
+
+      const fileBlob = await response.blob();
+
+      // Create a FormData object to send the file to the server for upload
+      const formData = new FormData();
+      formData.append('file', fileBlob);
+
+      // Upload the image to the server
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (uploadResponse.ok) {
+        const { filePath } = await uploadResponse.json();
+        console.log('Image uploaded successfully: ' + filePath);
+        return filePath; // Return the file path from the server response
+      } else {
+        console.error('Image upload failed');
+        return undefined;
+      }
+    } catch (error) {
+      console.error('Error duplicating image:', error);
+      return undefined; // Return undefined in case of error
+    }
+  };
+
   const handleDuplicate = async () => {
     if (block.pathId) {
-      await handleAddBlockFn(block, block.pathId, block.position);
+      // Create a new block with the updated image URL
+
+      // Add the new block with the duplicated image
+      const clone_block = await handleAddBlockFn(
+        block,
+        block.pathId,
+        block.position
+      );
+
+      // Check if block has an image, then duplicate it
+      if (block.image) {
+        // Fetch the signed URL for the original image
+        const signedUrl = await fetchSignedUrl(block.image);
+
+        if (!signedUrl) {
+          throw new Error('Failed to fetch signed URL for the original image');
+        }
+
+        // Fetch the original image file using the signed URL
+        const response = await fetch(signedUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch the original image');
+        }
+
+        const fileBlob = await response.blob();
+
+        // Create a File object from the Blob with a default name
+        const file = new File([fileBlob], `duplicate_${block.image}`, {
+          type: fileBlob.type,
+        });
+        if (clone_block) await handleUpdateBlockFn(clone_block, file);
+      }
+
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   return (
@@ -98,9 +192,9 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
           ref={dropdownRef}
           className="absolute z-50"
           style={{
-            top: '100%', // Adjust dropdown position as before (top-full)
-            left: '0', // Align left
-            overflow: 'visible', // Ensure overflow is visible and dropdown isn't clipped
+            top: '100%',
+            left: '0',
+            overflow: 'visible',
           }}
         >
           <BlockOptions

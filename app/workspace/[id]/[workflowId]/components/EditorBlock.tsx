@@ -105,6 +105,7 @@ export default function EditorBlock({
               handleUpdateBlockFn={handleUpdateBlockFn}
               handleDeleteBlockFn={handleDeleteBlockFn}
               copyBlockFn={copyBlockFn}
+              image={imageUrl}
             />
           </div>
         </div>
