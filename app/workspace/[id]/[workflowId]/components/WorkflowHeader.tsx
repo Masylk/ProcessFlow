@@ -82,6 +82,14 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
           </FakeButtonCTA>
 
           <ButtonCTA
+            start_icon="/assets/shared_components/play-icon.svg"
+            onClick={navigateToRead}
+            bgColor="transparent"
+            hoverBgColor="transparent"
+            textColor="#475467"
+          ></ButtonCTA>
+
+          <ButtonCTA
             start_icon="/assets/workflow/share.svg"
             onClick={() => alert('Share button clicked!')}
           >
