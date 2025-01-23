@@ -42,6 +42,7 @@ export default function EditorBlock({
   useEffect(() => {
     const fetchSignedUrl = async (path: string) => {
       try {
+        console.log('fetching for : ' + path);
         const response = await fetch(`/api/get-signed-url?path=${path}`);
         const data = await response.json();
         if (response.ok && data.signedUrl) {

@@ -3,6 +3,7 @@ import BlockList from './BlockList';
 import { Block, BlockType, FormType } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import { useTransformContext } from 'react-zoom-pan-pinch';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 interface PathData {
   id: number;
@@ -79,7 +80,7 @@ const Path: React.FC<PathProps> = ({
   const [loading, setLoading] = useState(true);
   // Get transform state from context
   const { transformState } = useTransformContext();
-  const DEFAULT_ICON = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/step-icons/default-icons/container.svg`;
+  const DEFAULT_ICON = `/step-icons/default-icons/container.svg`;
   const magicWandUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/magic-wand-icon.svg`;
 
   useEffect(() => {
@@ -231,6 +232,7 @@ const Path: React.FC<PathProps> = ({
       if (response.ok) {
         const newBlock = await response.json();
 
+        console.log('newblock image url: ' + newBlock.image);
         // Update blockList with the newly created block
         setBlockList((prevBlockList) => {
           const updatedBlockList = [...prevBlockList];
