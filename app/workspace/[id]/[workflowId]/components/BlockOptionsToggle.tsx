@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import BlockOptions from './BlockOptions';
 import { Block } from '@/types/block';
 import { createClient } from '@/utils/supabase/client';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 interface BlockOptionsToggleProps {
   block: Block;
@@ -72,65 +73,6 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
 
   const handleCopyLink = () => {
     setIsOpen(false);
-  };
-
-  const fetchSignedUrl = async (path: string): Promise<string | null> => {
-    try {
-      const response = await fetch(`/api/get-signed-url?path=${path}`);
-      const data = await response.json();
-      if (response.ok && data.signedUrl) {
-        return data.signedUrl;
-      } else {
-        console.error('Error fetching signed URL:', data.error);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching signed URL:', error);
-      return null;
-    }
-  };
-
-  const duplicateImage = async (
-    originalFileName: string
-  ): Promise<string | undefined> => {
-    try {
-      // Fetch the signed URL for the original image
-      const signedUrl = await fetchSignedUrl(originalFileName);
-
-      if (!signedUrl) {
-        throw new Error('Failed to fetch signed URL for the original image');
-      }
-
-      // Fetch the original image file using the signed URL
-      const response = await fetch(signedUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch the original image');
-      }
-
-      const fileBlob = await response.blob();
-
-      // Create a FormData object to send the file to the server for upload
-      const formData = new FormData();
-      formData.append('file', fileBlob);
-
-      // Upload the image to the server
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (uploadResponse.ok) {
-        const { filePath } = await uploadResponse.json();
-        console.log('Image uploaded successfully: ' + filePath);
-        return filePath; // Return the file path from the server response
-      } else {
-        console.error('Image upload failed');
-        return undefined;
-      }
-    } catch (error) {
-      console.error('Error duplicating image:', error);
-      return undefined; // Return undefined in case of error
-    }
   };
 
   const handleDuplicate = async () => {
