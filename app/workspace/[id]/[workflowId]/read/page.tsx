@@ -13,6 +13,7 @@ const WorkspacePage = () => {
   const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [stepCount, setStepCount] = useState<number>(0); // State to store the number of STEP blocks
   const [error, setError] = useState<string | null>(null);
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -33,6 +34,7 @@ const WorkspacePage = () => {
           (w: Workflow) => w.id === parseInt(workflowId.toString(), 10)
         );
         if (workflow) {
+          setWorkflow(workflow);
           setWorkflowName(workflow.name);
 
           // Count the number of STEP blocks
@@ -53,7 +55,7 @@ const WorkspacePage = () => {
 
   return (
     <div className="flex h-screen">
-      <Sidebar stepCount={stepCount} /> {/* Pass the stepCount prop */}
+      {workflow && <Sidebar stepCount={stepCount} blocks={workflow.blocks} />}
       {/* Main Content */}
       <div className="flex-1">
         {workspaceName && workflowName ? (
