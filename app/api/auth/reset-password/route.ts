@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient(); // Ensure you await this
+  const supabase = await createClient();
   const { email } = await req.json();
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
   }
 
-  // Specify the URL where the user should be redirected after clicking the reset link
+  // Dynamically determine the base URL
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`,
+    redirectTo: `${baseUrl}/reset-password`,
   });
 
   if (error) {
