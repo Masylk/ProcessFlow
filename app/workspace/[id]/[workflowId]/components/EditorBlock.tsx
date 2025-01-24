@@ -8,7 +8,7 @@ interface EditorBlockProps {
   onClick: (block: Block, event: React.MouseEvent) => void;
   handleAddBlockFn: (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number
   ) => Promise<Block | null>;
   handleUpdateBlockFn: (

@@ -8,16 +8,16 @@ import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 interface PathData {
   id: number;
   name: string;
-  workflowId: number;
-  pathblockId?: number;
+  workflow_id: number;
+  path_blockId?: number;
   blocks: Block[];
 }
 
 interface PathProps {
   firstPath?: boolean;
-  pathId: number;
+  path_id: number;
   workspaceId: number;
-  workflowId: number;
+  workflow_id: number;
   selectedBlock: Block | null;
   onBlockClick: (
     block: Block,
@@ -26,11 +26,11 @@ interface PathProps {
   ) => void;
   closeDetailSidebar: () => void;
   handleAddBlock: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>,
     chosenType?: BlockType,
@@ -40,20 +40,20 @@ interface PathProps {
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
   setPathFn: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => void;
   setDefaultPathFn: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => void;
@@ -62,9 +62,9 @@ interface PathProps {
 
 const Path: React.FC<PathProps> = ({
   firstPath = false,
-  pathId,
+  path_id,
   workspaceId,
-  workflowId,
+  workflow_id,
   selectedBlock,
   onBlockClick,
   closeDetailSidebar,
@@ -84,13 +84,13 @@ const Path: React.FC<PathProps> = ({
   const magicWandUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/magic-wand-icon.svg`;
 
   useEffect(() => {
-    setDefaultPathFn(pathId, blockList.length + 1, handleAddBlockFn);
+    setDefaultPathFn(path_id, blockList.length + 1, handleAddBlockFn);
 
     const fetchPathData = async () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/workspace/${workspaceId}/paths/${pathId}?workflowId=${workflowId}`
+          `/api/workspace/${workspaceId}/paths/${path_id}?workflow_id=${workflow_id}`
         );
 
         if (response.ok) {
@@ -99,7 +99,7 @@ const Path: React.FC<PathProps> = ({
           // Trigger the onCanvasEvent first
           onCanvasEvent({
             type: CanvasEventType.PATH_CREATION,
-            pathId: pathId,
+            path_id: path_id,
             pathName: fetchedPathData.name,
             blocks: fetchedPathData.blocks || [],
             handleBlocksReorder: async (reorderedBlocks) =>
@@ -119,7 +119,7 @@ const Path: React.FC<PathProps> = ({
     };
 
     fetchPathData();
-  }, [pathId, workspaceId, workflowId]);
+  }, [path_id, workspaceId, workflow_id]);
 
   const handleBlockClick = (block: Block) => {
     onBlockClick(block, handleUpdateBlock, handleDeleteBlock);
@@ -132,7 +132,7 @@ const Path: React.FC<PathProps> = ({
     default_values?: Block
   ) => {
     handleAddBlock(
-      pathId,
+      path_id,
       position,
       handleAddBlockFn,
       chosenType,
@@ -151,7 +151,7 @@ const Path: React.FC<PathProps> = ({
       }));
       // Perform the fetch request to reorder blocks
       const response = await fetch(
-        `/api/workflows/${workflowId}/reorder-blocks`,
+        `/api/workflows/${workflow_id}/reorder-blocks`,
         {
           method: 'PUT',
           headers: {
@@ -185,7 +185,7 @@ const Path: React.FC<PathProps> = ({
         // Trigger onCanvasEvent with BLOCK_REORDER if pathData is available
         onCanvasEvent({
           type: CanvasEventType.BLOCK_REORDER,
-          pathId: pathId,
+          path_id: path_id,
           blocks: sortedBlockList,
         });
 
@@ -200,7 +200,7 @@ const Path: React.FC<PathProps> = ({
 
   const handleAddBlockFn = async (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number,
     imageUrl?: string
   ): Promise<Block | null> => {
@@ -212,10 +212,10 @@ const Path: React.FC<PathProps> = ({
         position: position,
         icon: blockData.icon || DEFAULT_ICON,
         delay: blockData.delay || null,
-        pathId,
-        workflowId: workflowId,
+        path_id,
+        workflow_id: workflow_id,
         image: imageUrl || null,
-        pathBlock:
+        path_block:
           blockData.type === 'PATH'
             ? { pathOptions: blockData.pathOptions }
             : undefined,
@@ -240,7 +240,7 @@ const Path: React.FC<PathProps> = ({
           if (pathData)
             onCanvasEvent({
               type: CanvasEventType.BLOCK_ADD,
-              pathId: pathId,
+              path_id: path_id,
               pathName: pathData?.name,
               blocks: updatedBlockList,
             });
@@ -326,13 +326,13 @@ const Path: React.FC<PathProps> = ({
           title: updatedBlock.title,
           icon: iconUrl || updatedBlock.icon,
           description: updatedBlock.description,
-          pathId: updatedBlock.pathId,
-          workflowId: updatedBlock.workflowId,
+          path_id: updatedBlock.path_id,
+          workflow_id: updatedBlock.workflow_id,
           averageTime: updatedBlock.averageTime,
           taskType: updatedBlock.taskType,
           image: imageUrl || updatedBlock.image,
           imageDescription: updatedBlock.imageDescription,
-          clickPosition: updatedBlock.clickPosition,
+          click_position: updatedBlock.click_position,
           delay: delay,
         }),
       });
@@ -361,17 +361,17 @@ const Path: React.FC<PathProps> = ({
               ...(updatedBlockData.description !== undefined && {
                 description: updatedBlockData.description,
               }),
-              ...(updatedBlockData.pathId !== undefined && {
-                pathId: updatedBlockData.pathId,
+              ...(updatedBlockData.path_id !== undefined && {
+                path_id: updatedBlockData.path_id,
               }),
-              ...(updatedBlockData.workflowId !== undefined && {
-                workflowId: updatedBlockData.workflowId,
+              ...(updatedBlockData.workflow_id !== undefined && {
+                workflow_id: updatedBlockData.workflow_id,
               }),
               ...(updatedBlockData.image !== undefined && {
                 image: updatedBlockData.image,
               }),
-              ...(updatedBlockData.clickPosition !== undefined && {
-                clickPosition: updatedBlockData.clickPosition,
+              ...(updatedBlockData.click_position !== undefined && {
+                click_position: updatedBlockData.click_position,
               }),
               ...(updatedBlockData.imageDescription !== undefined && {
                 imageDescription: updatedBlockData.imageDescription,
@@ -385,8 +385,8 @@ const Path: React.FC<PathProps> = ({
               ...(updatedBlockData.taskType !== undefined && {
                 taskType: updatedBlockData.taskType,
               }),
-              ...(updatedBlockData.delayBlock !== undefined && {
-                delayBlock: updatedBlockData.delayBlock,
+              ...(updatedBlockData.delay_block !== undefined && {
+                delay_block: updatedBlockData.delay_block,
               }),
             };
           });
@@ -394,7 +394,7 @@ const Path: React.FC<PathProps> = ({
           if (pathData) {
             onCanvasEvent({
               type: CanvasEventType.BLOCK_UPDATE,
-              pathId: pathId,
+              path_id: path_id,
               pathName: pathData.name,
               blocks: updatedBlockList,
             });
@@ -424,7 +424,7 @@ const Path: React.FC<PathProps> = ({
           if (pathData)
             onCanvasEvent({
               type: CanvasEventType.BLOCK_DEL,
-              pathId: pathId,
+              path_id: path_id,
               pathName: pathData.name,
               blocks: updatedBlockList,
             });
@@ -481,7 +481,7 @@ const Path: React.FC<PathProps> = ({
         <BlockList
           blocks={blockList}
           workspaceId={workspaceId}
-          pathId={pathId}
+          path_id={path_id}
           selectedBlock={selectedBlock}
           onBlockClick={onBlockClick}
           onAddBlockClick={handleAddBlockClick}

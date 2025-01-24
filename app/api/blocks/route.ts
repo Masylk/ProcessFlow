@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
     icon,
     delay,
     description,
-    workflowId,
-    pathId,
-    stepBlock,
-    pathBlock,
+    workflow_id,
+    path_id,
+    step_block,
+    path_block,
     imageUrl,
-    clickPosition,
+    click_position,
   } = await req.json();
 
   // Validate block type
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!pathId) {
+  if (!path_id) {
     return NextResponse.json(
       { error: 'Path ID is required to create a block.' },
       { status: 400 }
@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
         // Update positions of existing blocks in the specified path
         await prisma.block.updateMany({
           where: {
-            workflowId,
-            pathId,
+            workflow_id,
+            path_id,
             position: {
               gte: position,
             },
@@ -69,33 +69,33 @@ export async function POST(req: NextRequest) {
           icon,
           description,
           image: imageUrl || null, // Set the image field if imageUrl is provided
-          workflow: { connect: { id: workflowId } },
-          path: { connect: { id: pathId } },
-          clickPosition: clickPosition || null, // Set the clickPosition if provided
+          workflow: { connect: { id: workflow_id } },
+          path: { connect: { id: path_id } },
+          click_position: click_position || null, // Set the click_position if provided
         };
 
         // Add specific block data based on the block type
-        if (type === 'STEP' && stepBlock) {
-          blockData.stepBlock = {
+        if (type === 'STEP' && step_block) {
+          blockData.step_block = {
             create: {
-              stepDetails: stepBlock.stepDetails,
+              step_details: step_block.step_details,
             },
           };
-        } else if (type === 'PATH' && pathBlock) {
+        } else if (type === 'PATH' && path_block) {
           // Create paths and their default blocks
-          blockData.pathBlock = {
+          blockData.path_block = {
             create: {
               paths: {
-                create: pathBlock.pathOptions.map((option: string) => ({
+                create: path_block.pathOptions.map((option: string) => ({
                   name: option,
-                  workflow: { connect: { id: workflowId } },
+                  workflow: { connect: { id: workflow_id } },
                 })),
               },
             },
           };
         } else if (type === 'DELAY') {
-          // Use the delay value to create DelayBlock
-          blockData.delayBlock = {
+          // Use the delay value to create delay_block
+          blockData.delay_block = {
             create: {
               seconds: delay, // Use the provided delay value
             },
@@ -106,30 +106,30 @@ export async function POST(req: NextRequest) {
         const newBlock = await prisma.block.create({
           data: blockData,
           include: {
-            stepBlock: type === 'STEP',
-            pathBlock: {
+            step_block: type === 'STEP',
+            path_block: {
               include: {
                 paths: true,
               },
             },
-            delayBlock: type === 'DELAY', // Include DelayBlock if DELAY type
+            delay_block: type === 'DELAY', // Include delay_block if DELAY type
           },
         });
 
         // Create default blocks inside each path created
-        if (type === 'PATH' && newBlock.pathBlock?.paths?.length) {
+        if (type === 'PATH' && newBlock.path_block?.paths?.length) {
           await Promise.all(
-            newBlock.pathBlock.paths.map(async (path: { id: number }) => {
+            newBlock.path_block.paths.map(async (path: { id: number }) => {
               const defaultBlockData: any = {
                 type: 'STEP', // Default block type
                 position: 0, // Default position
                 icon: '/step-icons/default-icons/container.svg', // Default icon
                 description: 'This is a default block', // Default description
-                workflow: { connect: { id: workflowId } },
+                workflow: { connect: { id: workflow_id } },
                 path: { connect: { id: path.id } },
-                stepBlock: {
+                step_block: {
                   create: {
-                    stepDetails: 'Default step details', // Default step details
+                    step_details: 'Default step details', // Default step details
                   },
                 },
               };
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
               await prisma.block.create({
                 data: defaultBlockData,
                 include: {
-                  stepBlock: true,
+                  step_block: true,
                 },
               });
             })

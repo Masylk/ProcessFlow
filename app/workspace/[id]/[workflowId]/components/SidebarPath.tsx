@@ -8,7 +8,7 @@ interface SidebarPathProps {
   path: PathObject;
   onSidebarEvent: (eventData: SidebarEvent) => void;
   workspaceId: string;
-  workflowId: string;
+  workflow_id: string;
   defaultVisibility?: boolean; // Add prop to control default visibility
   displayTitle?: boolean;
   searchFilter: string; // Add searchFilter prop
@@ -18,7 +18,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   path,
   onSidebarEvent,
   workspaceId,
-  workflowId,
+  workflow_id,
   defaultVisibility = true, // Default to true if not provided
   displayTitle = false,
   searchFilter, // Destructure searchFilter prop
@@ -51,8 +51,8 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
         title: sidebarBlock.title || 'Default Title',
         icon: sidebarBlock.icon,
         description: sidebarBlock.description,
-        pathId: path.id,
-        workflowId: Number(workflowId),
+        path_id: path.id,
+        workflow_id: Number(workflow_id),
       }));
 
       if (path.handleBlocksReorder) {
@@ -104,7 +104,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
             onSidebarEvent={onSidebarEvent}
             onReorder={handleReorder}
             workspaceId={workspaceId}
-            workflowId={workflowId}
+            workflow_id={workflow_id}
             searchFilter={searchFilter} // Pass the searchFilter as a new prop
           />
         </div>

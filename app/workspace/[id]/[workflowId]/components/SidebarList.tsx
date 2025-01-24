@@ -10,7 +10,7 @@ interface SidebarListProps {
   onSidebarEvent: (eventData: SidebarEvent) => void;
   onReorder: (newBlocks: SidebarBlock[]) => void; // Add a callback for reordering
   workspaceId: string;
-  workflowId: string;
+  workflow_id: string;
   searchFilter: string; // Add the searchFilter prop
 }
 
@@ -19,7 +19,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
   onSidebarEvent,
   onReorder,
   workspaceId,
-  workflowId,
+  workflow_id,
   searchFilter, // Destructure searchFilter
 }) => {
   const handleDragEnd = (result: DropResult) => {
@@ -56,7 +56,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
                       block={block}
                       onSidebarEvent={onSidebarEvent}
                       workspaceId={workspaceId}
-                      workflowId={workflowId}
+                      workflow_id={workflow_id}
                       searchFilter={searchFilter} // Pass searchFilter to SidebarDiv
                       dragHandleProps={provided.dragHandleProps} // Pass dragHandleProps to SidebarDiv
                     />

@@ -6,10 +6,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const workspaceId = parseInt(params.id);
+  const workspace_id = parseInt(params.id);
   const workflows = await prisma.workflow.findMany({
     where: {
-      workspaceId,
+      workspace_id,
     },
   });
   return NextResponse.json(workflows);

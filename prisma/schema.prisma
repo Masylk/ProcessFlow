@@ -8,140 +8,140 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
+enum role {
   ADMIN
   EDITOR
   READER
 }
 
-enum BlockType {
+enum block_type {
   DELAY
   STEP
   PATH
 }
 
-model User {
-  id            Int         @id @default(autoincrement())
+model user {
+  id            Int          @id @default(autoincrement())
   first_name    String
   last_name     String
   full_name     String
-  email         String      @unique
+  email         String       @unique
   password      String
-  actions       Action[]    @relation("UserActions")
-  userTeams     UserTeam[]
+  actions       action[]     @relation("user_actions")
+  user_teams    user_team[]
 }
 
-model Team {
+model team {
   id         Int         @id @default(autoincrement())
   name       String
-  userTeams  UserTeam[]
-  workspaces Workspace[]
+  user_teams user_team[]
+  workspaces workspace[]
 }
 
-model UserTeam {
-  id     Int     @id @default(autoincrement())
-  userId Int
-  teamId Int
-  role   Role
-  poles  String[]
-  user   User    @relation(fields: [userId], references: [id])
-  team   Team    @relation(fields: [teamId], references: [id])
+model user_team {
+  id      Int     @id @default(autoincrement())
+  user_id Int
+  team_id Int
+  role    role
+  poles   String[]
+  user    user    @relation(fields: [user_id], references: [id])
+  team    team    @relation(fields: [team_id], references: [id])
 
-  @@unique([userId, teamId])
-}
-model Workflow {
-  id           Int        @id @default(autoincrement())
-  name         String
-  workspaceId  Int
-  workspace    Workspace  @relation(fields: [workspaceId], references: [id])
-  blocks       Block[]    @relation("WorkflowBlocks")
-  history      Action[]   @relation("WorkflowActions")
-  paths        Path[]     @relation("WorkflowPaths") // One-to-many relation with Path
-
-  @@unique([name, workspaceId])
+  @@unique([user_id, team_id])
 }
 
-model Path {
-  id          Int          @id @default(autoincrement())
-  name        String       // Optional name for easier management of paths
-  blocks      Block[]      @relation("PathBlocks") // One-to-many relation with Block
-  pathBlockId Int?         // Make this field optional by adding "?"
-  pathBlock   PathBlock?   @relation("PathBlockPath", fields: [pathBlockId], references: [id]) // Mark the relation as optional
-  workflowId  Int          // Foreign key to Workflow
-  workflow    Workflow     @relation("WorkflowPaths", fields: [workflowId], references: [id])
+model workflow {
+  id            Int        @id @default(autoincrement())
+  name          String
+  workspace_id  Int
+  workspace     workspace  @relation(fields: [workspace_id], references: [id])
+  blocks        block[]    @relation("workflow_blocks")
+  history       action[]   @relation("workflow_actions")
+  paths         path[]     @relation("workflow_paths")
+
+  @@unique([name, workspace_id])
 }
 
-enum TaskType {
+model path {
+  id           Int         @id @default(autoincrement())
+  name         String      // Optional name for easier management of paths
+  blocks       block[]     @relation("path_blocks")
+  path_block_id Int?       // Optional field
+  path_block   path_block? @relation("path_block_path", fields: [path_block_id], references: [id])
+  workflow_id  Int         // Foreign key to workflow
+  workflow     workflow    @relation("workflow_paths", fields: [workflow_id], references: [id])
+}
+
+enum task_type {
   MANUAL
   AUTOMATIC
 }
 
-model Block {
+model block {
   id                Int          @id @default(autoincrement())
-  type              BlockType
+  type              block_type
   position          Int
-  title             String?      // Optional field for the title
+  title             String?      // Optional field
   icon              String?      // Optional field
   description       String?      // Optional field
-  image             String?      // Optional field for image URL
-  imageDescription  String?
-  lastModified      DateTime?
-  averageTime       String?
-  taskType          TaskType?    // Enum field, optional
-  workflowId        Int
-  workflow          Workflow     @relation("WorkflowBlocks", fields: [workflowId], references: [id])
-  actions           Action[]
-  stepBlock         StepBlock?
-  pathBlock         PathBlock?
-  delayBlock        DelayBlock?
-  pathId            Int          // Required field to link to Path
-  path              Path         @relation("PathBlocks", fields: [pathId], references: [id])
-  clickPosition     Json?        // Optional JSON field for storing click position
+  image             String?      // Optional field
+  image_description String?
+  last_modified     DateTime?
+  average_time      String?
+  task_type         task_type?   // Optional enum field
+  workflow_id       Int
+  workflow          workflow     @relation("workflow_blocks", fields: [workflow_id], references: [id])
+  actions           action[]
+  step_block        step_block?
+  path_block        path_block?
+  delay_block       delay_block?
+  path_id           Int
+  path              path         @relation("path_blocks", fields: [path_id], references: [id])
+  click_position    Json?        // Optional JSON field
 }
 
-
-model PathBlock {
-  id           Int         @id @default(autoincrement())
-  blockId      Int         @unique
-  block        Block       @relation(fields: [blockId], references: [id])
-  paths        Path[]      @relation("PathBlockPath") // Specific field for Path Block
+model path_block {
+  id           Int        @id @default(autoincrement())
+  block_id     Int        @unique
+  block        block      @relation(fields: [block_id], references: [id])
+  paths        path[]     @relation("path_block_path")
 }
 
-model DelayBlock {
+model delay_block {
   id          Int   @id @default(autoincrement())
-  blockId     Int   @unique
-  block       Block @relation(fields: [blockId], references: [id])
-  seconds     Int // Specific field for Delay Block
+  block_id    Int   @unique
+  block       block @relation(fields: [block_id], references: [id])
+  seconds     Int   // Specific field for delay block
 }
 
-model StepBlock {
-  id          Int   @id @default(autoincrement())
-  blockId     Int   @unique
-  stepDetails String // Specific field for Step block
-  block       Block @relation(fields: [blockId], references: [id])
+model step_block {
+  id           Int   @id @default(autoincrement())
+  block_id     Int   @unique
+  step_details String // Specific field for step block
+  block        block  @relation(fields: [block_id], references: [id])
 }
 
-model Action {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  user       User     @relation("UserActions", fields: [userId], references: [id])
-  type       String
-  targetId   Int
-  target     Block    @relation(fields: [targetId], references: [id])
-  workflowId Int
-  workflow   Workflow @relation("WorkflowActions", fields: [workflowId], references: [id])
-  value      Int
+model action {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  user        user      @relation("user_actions", fields: [user_id], references: [id])
+  type        String
+  target_id   Int
+  target      block     @relation(fields: [target_id], references: [id])
+  workflow_id Int
+  workflow    workflow  @relation("workflow_actions", fields: [workflow_id], references: [id])
+  value       Int
 }
 
-model Todo {
-  id    Int @id @default(autoincrement())
+model todo {
+  id    Int    @id @default(autoincrement())
   title String
 }
 
-model Workspace {
-  id        Int        @id @default(autoincrement())
-  name      String
-  teamId    Int
-  team      Team       @relation(fields: [teamId], references: [id])
-  workflows Workflow[]
+model workspace {
+  id         Int         @id @default(autoincrement())
+  name       String
+  team_id    Int
+  team       team        @relation(fields: [team_id], references: [id])
+  workflows  workflow[]
 }

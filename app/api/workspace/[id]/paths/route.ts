@@ -8,12 +8,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const url = new URL(req.url);
-  const workflowId = url.searchParams.get('workflowId');
+  const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
 
-  if (!workflowId) {
+  if (!workflow_id) {
     return NextResponse.json(
-      { error: 'workflowId is required' },
+      { error: 'workflow_id is required' },
       { status: 400 }
     );
   }
@@ -21,12 +21,12 @@ export async function GET(
   try {
     const result = await prisma.$transaction(
       async (prisma: Prisma.TransactionClient) => {
-        const parsedWorkflowId = parseInt(workflowId, 10);
+        const parsedworkflow_id = parseInt(workflow_id, 10);
 
-        // Fetch paths for the given workflowId
+        // Fetch paths for the given workflow_id
         const existingPaths = await prisma.path.findMany({
           where: {
-            workflowId: parsedWorkflowId,
+            workflow_id: parsedworkflow_id, // Use `workflow_id` instead of `workflow_id`
           },
           include: {
             blocks: {
@@ -34,21 +34,21 @@ export async function GET(
                 position: 'asc',
               },
               include: {
-                pathBlock: {
+                path_block: {
                   include: {
                     paths: {
                       include: {
                         blocks: {
                           include: {
-                            pathBlock: true,
-                            stepBlock: true,
+                            path_block: true,
+                            step_block: true,
                           },
                         },
                       },
                     },
                   },
                 },
-                stepBlock: true,
+                step_block: true,
               },
             },
           },
@@ -58,8 +58,8 @@ export async function GET(
           const newPath = await prisma.path.create({
             data: {
               name: 'First Path',
-              workflowId: parsedWorkflowId,
-              pathBlockId: null,
+              workflow_id: parsedworkflow_id,
+              path_block_id: null,
             },
           });
 
@@ -69,11 +69,11 @@ export async function GET(
             position: 0,
             icon: '/step-icons/default-icons/container.svg',
             description: 'This is the default step block',
-            workflow: { connect: { id: parsedWorkflowId } },
+            workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            stepBlock: {
+            step_block: {
               create: {
-                stepDetails: 'Default step details',
+                step_details: 'Default step details',
               },
             },
           };
@@ -81,7 +81,7 @@ export async function GET(
           const defaultBlock = await prisma.block.create({
             data: defaultBlockData,
             include: {
-              stepBlock: true,
+              step_block: true,
             },
           });
 

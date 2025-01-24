@@ -8,13 +8,13 @@ type BlockUpdate = {
 
 export async function PUT(
   request: Request,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: { workflow_id: string } }
 ) {
   try {
-    const workflowId = parseInt(params.workflowId, 10);
+    const workflow_id = parseInt(params.workflow_id, 10);
 
-    // Validate workflowId
-    if (isNaN(workflowId)) {
+    // Validate workflow_id
+    if (isNaN(workflow_id)) {
       return NextResponse.json(
         { error: 'Invalid workflow ID' },
         { status: 400 }

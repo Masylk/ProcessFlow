@@ -4,12 +4,10 @@ import { Block, BlockType } from '@/types/block';
 import { SidebarEvent } from '@/types/sidebarevent';
 import { PathObject } from '@/types/sidebar';
 
-
-
 interface SidebarProps {
   sidebarPath: PathObject | null;
   workspaceId: string;
-  workflowId: string;
+  workflow_id: string;
   onSidebarEvent: (eventData: SidebarEvent) => void;
   isBackground: boolean;
 }
@@ -17,7 +15,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   sidebarPath,
   workspaceId,
-  workflowId,
+  workflow_id,
   onSidebarEvent,
   isBackground,
 }) => {
@@ -100,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               path={sidebarPath}
               onSidebarEvent={onSidebarEvent}
               workspaceId={workspaceId}
-              workflowId={workflowId}
+              workflow_id={workflow_id}
               displayTitle={false}
               searchFilter={searchFilter} // Pass the filter as a prop
             />

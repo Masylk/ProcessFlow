@@ -7,7 +7,7 @@ interface DelayBlockMenuProps {
   handleBlockUpdate: () => void;
 }
 
-const DelayBlockMenu: React.FC<DelayBlockMenuProps> = ({
+const delay_blockMenu: React.FC<DelayBlockMenuProps> = ({
   blockId,
   handleDeleteBlockFn,
   handleBlockUpdate,
@@ -72,4 +72,4 @@ const DelayBlockMenu: React.FC<DelayBlockMenuProps> = ({
   );
 };
 
-export default DelayBlockMenu;
+export default delay_blockMenu;

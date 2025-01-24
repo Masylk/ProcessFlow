@@ -9,7 +9,7 @@ export interface SidebarDivProps {
   block: SidebarBlock;
   onSidebarEvent: (eventData: SidebarEvent) => void;
   workspaceId: string;
-  workflowId: string;
+  workflow_id: string;
   searchFilter: string;
   dragHandleProps?: DraggableProvidedDragHandleProps | null; // Update type
 }
@@ -18,7 +18,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
   block,
   onSidebarEvent,
   workspaceId,
-  workflowId,
+  workflow_id,
   searchFilter,
   dragHandleProps,
 }) => {
@@ -147,7 +147,7 @@ const SidebarDiv: React.FC<SidebarDivProps> = ({
           {block.subpaths.map((subpath) => (
             <SidebarPath
               workspaceId={workspaceId}
-              workflowId={workflowId}
+              workflow_id={workflow_id}
               key={subpath.id}
               path={subpath}
               onSidebarEvent={onSidebarEvent}

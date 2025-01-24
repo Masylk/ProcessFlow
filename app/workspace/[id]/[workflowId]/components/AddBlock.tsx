@@ -5,10 +5,10 @@ import { Block, BlockType, FormType } from '@/types/block';
 interface AddBlockProps {
   id: number;
   selectedBlock: boolean;
-  pathId: number;
+  path_id: number;
   handleAddBlockFn: (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number
   ) => Promise<Block | null>;
   handleClick: (block: Block) => void;
@@ -25,7 +25,7 @@ interface AddBlockProps {
 
 export default function AddBlock({
   id,
-  pathId,
+  path_id,
   handleAddBlockFn,
   handleClick,
   onAddBlockClick,
@@ -46,34 +46,34 @@ export default function AddBlock({
     setHovered(false);
   };
 
-  const addStepBlock = async () => {
+  const addstep_block = async () => {
     closeMenu();
-    const emptyStepBlockData = {
+    const emptystep_blockData = {
       type: BlockType.STEP, // Specify the type as STEP
       title: '', // Title is required, so set it to an empty string
       description: '', // Optional, leave as an empty string
     };
 
-    const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
+    const newBlock = await handleAddBlockFn(emptystep_blockData, path_id, id);
     if (newBlock) handleClick(newBlock);
   };
 
-  const addStepBlockWithDelay = async (seconds: number) => {
+  const addstep_blockWithDelay = async (seconds: number) => {
     closeMenu();
-    if (nextBlock && nextBlock.delayBlock) {
-      nextBlock.delayBlock.seconds = seconds;
+    if (nextBlock && nextBlock.delay_block) {
+      nextBlock.delay_block.seconds = seconds;
       updateBlockDelay(nextBlock);
       console.log('added delay to existing block: ' + seconds);
     } else {
-      const emptyStepBlockData = {
+      const emptystep_blockData = {
         type: BlockType.DELAY, // Specify the type as STEP
         title: '', // Title is required, so set it to an empty string
         description: '', // Optional, leave as an empty string
         delay: seconds,
       };
 
-      console.log('added block with delay: ' + emptyStepBlockData.delay);
-      const newBlock = await handleAddBlockFn(emptyStepBlockData, pathId, id);
+      console.log('added block with delay: ' + emptystep_blockData.delay);
+      const newBlock = await handleAddBlockFn(emptystep_blockData, path_id, id);
       if (newBlock) {
         console.log(newBlock);
         // handleClick(newBlock);
@@ -146,8 +146,8 @@ export default function AddBlock({
       {menuVisible && (
         <div ref={menuRef} className="absolute top-full left-8 mt-2 z-10">
           <AddBlockMenu
-            addStepBlock={addStepBlock}
-            addDelayBlock={addStepBlockWithDelay}
+            addstep_block={addstep_block}
+            adddelay_block={addstep_blockWithDelay}
             onAddBlockClick={(type) => {
               onAddBlockClick(id, type);
             }}

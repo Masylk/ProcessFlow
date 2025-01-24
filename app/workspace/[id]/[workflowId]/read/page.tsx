@@ -8,7 +8,7 @@ import { Workspace } from '@/types/workspace';
 import { Workflow } from '@/types/workflow';
 
 const WorkspacePage = () => {
-  const { id, workflowId } = useParams(); // Get workspace and workflow IDs from the URL
+  const { id, workflow_id } = useParams(); // Get workspace and workflow IDs from the URL
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [stepCount, setStepCount] = useState<number>(0); // State to store the number of STEP blocks
@@ -16,7 +16,7 @@ const WorkspacePage = () => {
 
   useEffect(() => {
     const fetchWorkspace = async () => {
-      if (!id || !workflowId) return;
+      if (!id || !workflow_id) return;
 
       try {
         const response = await fetch(`/api/workspace/${id}`);
@@ -30,16 +30,16 @@ const WorkspacePage = () => {
 
         // Find the workflow by ID
         const workflow = data.workflows.find(
-          (w: Workflow) => w.id === parseInt(workflowId.toString(), 10)
+          (w: Workflow) => w.id === parseInt(workflow_id.toString(), 10)
         );
         if (workflow) {
           setWorkflowName(workflow.name);
 
           // Count the number of STEP blocks
-          const stepBlocksCount = workflow.blocks.filter(
+          const step_blocksCount = workflow.blocks.filter(
             (block) => block.type === 'STEP'
           ).length;
-          setStepCount(stepBlocksCount); // Set the count in the state
+          setStepCount(step_blocksCount); // Set the count in the state
         } else {
           throw new Error('Workflow not found in the workspace');
         }
@@ -49,7 +49,7 @@ const WorkspacePage = () => {
     };
 
     fetchWorkspace();
-  }, [id, workflowId]);
+  }, [id, workflow_id]);
 
   return (
     <div className="flex h-screen">
