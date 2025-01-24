@@ -1,6 +1,6 @@
 import React from 'react';
 import { Block } from '@/types/block'; // Adjust the import path as needed
-import Sidebardiv from './Sidebardiv';
+import SidebarList from './SidebarList';
 
 interface SidebarProps {
   blocks: Block[];
@@ -8,9 +8,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ blocks, stepCount }) => {
-  // Sort blocks by position
-  const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
-
   return (
     <div className="w-[292px] bg-white border-r border-[#e4e7ec] justify-start items-start inline-flex overflow-hidden">
       <div className="flex-col justify-start items-start gap-6 inline-flex">
@@ -34,17 +31,8 @@ const Sidebar: React.FC<SidebarProps> = ({ blocks, stepCount }) => {
           </div>
         </div>
 
-        {/* Blocks */}
-        <div className="p-6 flex-col justify-start items-center gap-2 inline-flex">
-          <div className="w-[199px] h-[31px] text-black text-sm font-semibold font-['Inter'] leading-tight">
-            {stepCount} Steps
-          </div>
-          <div className="self-stretch flex-col justify-start items-start gap-1 flex">
-            {sortedBlocks.map((block) => (
-              <Sidebardiv key={block.id} block={block} />
-            ))}
-          </div>
-        </div>
+        {/* Sidebar List */}
+        <SidebarList blocks={blocks} stepCount={stepCount} />
       </div>
     </div>
   );
