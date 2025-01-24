@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
-import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
+import DelayBlockMenu from './DelayBlockMenu'; // Import delay_blockMenu
 
 interface DelayBlockProps {
   block: Block;
@@ -30,7 +30,7 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
   handleDeleteBlockFn,
   handleBlockClick,
 }) => {
-  const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
+  const delay = block.delay_block?.seconds ?? 0; // Fallback to 0 if delay_block or delay is undefined
 
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
   const menuRef = useRef<HTMLDivElement | null>(null); // Ref for the menu container

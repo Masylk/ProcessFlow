@@ -1,4 +1,4 @@
-import { Block } from "./block";
+import { Block } from './block';
 
 export enum SidebarEventType {
   FOCUS,
@@ -7,7 +7,7 @@ export enum SidebarEventType {
 
 export interface SidebarEvent {
   type: SidebarEventType;
-  pathId?: number;
+  path_id?: number;
   blocks?: Block[];
   focusId?: string;
 }

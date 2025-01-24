@@ -9,11 +9,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, teamId } = await req.json();
-    
+    const { name, team_id } = await req.json();
+
     // Check if the team exists
     const team = await prisma.team.findUnique({
-      where: { id: Number(teamId) },
+      where: { id: Number(team_id) },
     });
 
     if (!team) {
@@ -23,12 +23,15 @@ export async function POST(req: NextRequest) {
     const newWorkspace = await prisma.workspace.create({
       data: {
         name,
-        teamId: Number(teamId),
+        team_id: Number(team_id),
       },
     });
     return NextResponse.json(newWorkspace, { status: 201 });
   } catch (error) {
     console.error('Error creating workspace:', error);
-    return NextResponse.json({ error: 'Failed to create workspace' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create workspace' },
+      { status: 500 }
+    );
   }
 }

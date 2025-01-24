@@ -1,11 +1,11 @@
 import React, { useState, ChangeEvent } from 'react';
 
 interface StepFormProps {
-  onSubmit: (blockData: any, pathId: number, position: number) => void;
+  onSubmit: (blockData: any, path_id: number, position: number) => void;
   onCancel: () => void;
   initialPosition?: number;
-  workflowId?: number;
-  pathId?: number;
+  workflow_id?: number;
+  path_id?: number;
   position?: number;
 }
 
@@ -13,15 +13,15 @@ const StepForm: React.FC<StepFormProps> = ({
   onSubmit,
   onCancel,
   initialPosition,
-  workflowId,
-  pathId,
+  workflow_id,
+  path_id,
   position,
 }) => {
   const [formData, setFormData] = useState({
     type: 'STEP',
     description: '',
     position: initialPosition,
-    workflowId: workflowId,
+    workflow_id: workflow_id,
     stepDetails: '',
   });
 
@@ -34,15 +34,15 @@ const StepForm: React.FC<StepFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pathId && position)
+    if (path_id && position)
       onSubmit(
         {
           ...formData,
-          stepBlock: {
+          step_block: {
             stepDetails: formData.stepDetails,
           },
         },
-        pathId,
+        path_id,
         position
       );
   };

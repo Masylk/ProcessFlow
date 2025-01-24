@@ -3,18 +3,18 @@ import prisma from '@/lib/prisma'; // Adjust the path to where you initialize Pr
 
 export async function GET(
   req: Request,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: { workflow_id: string } }
 ) {
-  const workflowId = parseInt(params.workflowId);
+  const workflow_id = parseInt(params.workflow_id);
 
-  if (isNaN(workflowId)) {
+  if (isNaN(workflow_id)) {
     return NextResponse.json({ error: 'Invalid workflow ID' }, { status: 400 });
   }
 
   try {
     const workflow = await prisma.workflow.findUnique({
       where: {
-        id: workflowId,
+        id: workflow_id,
       },
       select: {
         name: true,
@@ -40,11 +40,11 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: { workflow_id: string } }
 ) {
-  const workflowId = parseInt(params.workflowId);
+  const workflow_id = parseInt(params.workflow_id);
 
-  if (isNaN(workflowId)) {
+  if (isNaN(workflow_id)) {
     return NextResponse.json({ error: 'Invalid workflow ID' }, { status: 400 });
   }
 
@@ -53,7 +53,7 @@ export async function PUT(
 
     const updatedWorkflow = await prisma.workflow.update({
       where: {
-        id: workflowId,
+        id: workflow_id,
       },
       data: {
         name: title,

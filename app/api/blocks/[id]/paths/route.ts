@@ -17,7 +17,7 @@ export async function GET(
     // Fetch paths linked to the block
     const paths = await prisma.path.findMany({
       where: {
-        pathBlockId: blockId, // Adjust based on your schema
+        path_block_id: blockId, // Adjust based on your schema
       },
       select: {
         id: true,
