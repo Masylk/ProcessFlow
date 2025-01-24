@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const blockId = Number(id);
+  const block_id = Number(id);
 
   try {
     const {
@@ -22,19 +22,19 @@ export async function PATCH(req: NextRequest) {
       title,
       icon,
       description,
-      pathId,
-      workflowId,
+      path_id,
+      workflow_id,
       image,
-      imageDescription,
-      clickPosition,
-      averageTime,
-      taskType,
+      image_description,
+      click_position,
+      average_time,
+      task_type,
       delay,
     } = await req.json();
 
     // Fetch the existing block to get the current image URL
     const existingBlock = await prisma.block.findUnique({
-      where: { id: blockId },
+      where: { id: block_id },
       select: { image: true },
     });
 
@@ -79,21 +79,21 @@ export async function PATCH(req: NextRequest) {
 
     // Update the block in the database
     const updatedBlock = await prisma.block.update({
-      where: { id: blockId },
+      where: { id: block_id },
       data: {
         type,
         position,
         title,
         icon,
         description,
-        pathId,
-        workflowId,
+        path_id,
+        workflow_id,
         image,
-        imageDescription: imageDescription || null,
-        clickPosition: clickPosition || null,
-        lastModified: new Date(),
-        averageTime: averageTime || null,
-        taskType: taskType || null,
+        image_description: image_description || null,
+        click_position: click_position || null,
+        last_modified: new Date(),
+        average_time: average_time || null,
+        task_type: task_type || null,
       },
     });
 
@@ -101,8 +101,8 @@ export async function PATCH(req: NextRequest) {
     if (type === 'DELAY') {
       console.log('UPDATE DELAY: ' + delay);
 
-      await prisma.delayBlock.update({
-        where: { blockId },
+      await prisma.delay_block.update({
+        where: { block_id },
         data: {
           seconds: delay,
         },
@@ -110,11 +110,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updatedBlockWithRelations = await prisma.block.findUnique({
-      where: { id: blockId },
+      where: { id: block_id },
       include: {
-        stepBlock: true,
-        pathBlock: true,
-        delayBlock: true,
+        step_block: true,
+        path_block: true,
+        delay_block: true,
       },
     });
 
@@ -147,16 +147,16 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  const blockId = Number(id);
+  const block_id = Number(id);
 
   try {
     // Fetch the block to determine its type, relations, and associated files
     const block = await prisma.block.findUnique({
-      where: { id: blockId },
+      where: { id: block_id },
       include: {
-        stepBlock: true,
-        pathBlock: true,
-        delayBlock: true, // Include delayBlock if present
+        step_block: true,
+        path_block: true,
+        delay_block: true, // Include delay_block if present
       },
     });
 
@@ -204,26 +204,26 @@ export async function DELETE(req: NextRequest) {
     await prisma.$transaction(
       async (transactionPrisma: Prisma.TransactionClient) => {
         // Delete related records based on block type
-        if (block.type === 'PATH' && block.pathBlock) {
+        if (block.type === 'PATH' && block.path_block) {
           // Delete the path block itself
-          await transactionPrisma.pathBlock.delete({
-            where: { blockId: blockId },
+          await transactionPrisma.path_block.delete({
+            where: { block_id: block_id },
           });
-        } else if (block.type === 'STEP' && block.stepBlock) {
+        } else if (block.type === 'STEP' && block.step_block) {
           // Delete the step block
-          await transactionPrisma.stepBlock.delete({
-            where: { blockId: blockId },
+          await transactionPrisma.step_block.delete({
+            where: { block_id: block_id },
           });
-        } else if (block.type === 'DELAY' && block.delayBlock) {
+        } else if (block.type === 'DELAY' && block.delay_block) {
           // Delete the delay block
-          await transactionPrisma.delayBlock.delete({
-            where: { blockId: blockId },
+          await transactionPrisma.delay_block.delete({
+            where: { block_id: block_id },
           });
         }
 
         // Finally, delete the block itself
         await transactionPrisma.block.delete({
-          where: { id: blockId },
+          where: { id: block_id },
         });
       }
     );

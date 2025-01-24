@@ -4,8 +4,8 @@ import PathDropdownPreview from './PathDropdownPreview'; // Assuming you have th
 import { BlockType, FormType } from '@/types/block';
 
 interface AddBlockMenuProps {
-  addStepBlock: () => Promise<void>;
-  addDelayBlock: (seconds: number) => Promise<void>;
+  addstep_block: () => Promise<void>;
+  adddelay_block: (seconds: number) => Promise<void>;
   onAddBlockClick: (
     type: BlockType,
     form_type?: FormType,
@@ -14,9 +14,9 @@ interface AddBlockMenuProps {
 }
 
 const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
-  addStepBlock,
+  addstep_block,
   onAddBlockClick,
-  addDelayBlock,
+  adddelay_block,
 }) => {
   const [isHoveringDelay, setIsHoveringDelay] = useState(false);
   const [isHoveringCondition, setIsHoveringCondition] = useState(false);
@@ -51,7 +51,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
           <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex group">
             <div
               className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden group-hover:bg-[#edf0fb]"
-              onClick={addStepBlock}
+              onClick={addstep_block}
             >
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                 <div className="w-4 h-4 relative overflow-hidden">
@@ -157,7 +157,7 @@ const AddBlockMenu: React.FC<AddBlockMenuProps> = ({
         >
           <DelayDropdownMenu
             onClickCustomDelay={onClickCustomDelay}
-            onClickDelay={addDelayBlock}
+            onClickDelay={adddelay_block}
           />
         </div>
       )}

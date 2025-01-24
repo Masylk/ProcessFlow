@@ -15,13 +15,13 @@ import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import ImageOverlay from './ImageOverlay';
 import VectorStraightSVG from '@/public/assets/workflow/vector-straight.svg';
-import DelayBlock from './DelayBlock';
-import PathBlock from './PathBlock';
+import delay_block from './delay_block';
+import path_block from './path_block';
 
 interface BlockListProps {
   blocks: Block[];
   workspaceId: number;
-  pathId: number;
+  path_id: number;
   selectedBlock: Block | null;
   onBlockClick: (
     block: Block,
@@ -38,11 +38,11 @@ interface BlockListProps {
   handleBlockClick: (block: Block) => void;
   closeDetailSidebar: () => void;
   handleAddBlock: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => void;
@@ -53,27 +53,27 @@ interface BlockListProps {
   ) => Promise<void>;
   handleAddBlockFn: (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number
   ) => Promise<Block | null>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
   setPathFn: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => void;
   setDefaultPathFn: (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => void;
@@ -85,7 +85,7 @@ const VERTICAL_LINE_LENGTH = '50';
 const BlockList: React.FC<BlockListProps> = ({
   blocks,
   workspaceId,
-  pathId,
+  path_id,
   selectedBlock,
   onBlockClick,
   onAddBlockClick,
@@ -132,37 +132,37 @@ const BlockList: React.FC<BlockListProps> = ({
   }, [blocks]);
 
   useEffect(() => {
-    const fetchPaths = async (pathBlockId: number, blockId: number) => {
+    const fetchPaths = async (path_blockId: number, blockId: number) => {
       try {
-        const response = await fetch(`/api/blocks/${pathBlockId}/paths`);
+        const response = await fetch(`/api/blocks/${path_blockId}/paths`);
         if (response.ok) {
           const paths: PathType[] = await response.json();
 
           onCanvasEvent({
             type: CanvasEventType.SUBPATH_CREATION,
-            pathId: pathBlockId,
+            path_id: path_blockId,
             blockId: blockId,
             subpaths: paths,
           });
           setPathsByBlockId((prev) => ({
             ...prev,
-            [pathBlockId]: paths,
+            [path_blockId]: paths,
           }));
         } else {
-          console.error(`Failed to fetch paths for block ${pathBlockId}`);
+          console.error(`Failed to fetch paths for block ${path_blockId}`);
         }
       } catch (error) {
-        console.error(`Error fetching paths for block ${pathBlockId}:`, error);
+        console.error(`Error fetching paths for block ${path_blockId}:`, error);
       }
     };
 
     blockList.forEach((block) => {
       if (
         block.type === 'PATH' &&
-        block.pathBlock &&
-        !(block.pathBlock.id in pathsByBlockId)
+        block.path_block &&
+        !(block.path_block.id in pathsByBlockId)
       ) {
-        fetchPaths(block.pathBlock.id, block.id);
+        fetchPaths(block.path_block.id, block.id);
       }
     });
   }, [blockList, pathsByBlockId]);
@@ -170,7 +170,7 @@ const BlockList: React.FC<BlockListProps> = ({
   const handleClick = (block: Block) => {
     setFocusedBlockId(block.id);
     setOverlayVisible(true);
-    setPathFn(pathId, block.position, handleAddBlockFn);
+    setPathFn(path_id, block.position, handleAddBlockFn);
     handleBlockClick(block);
   };
 
@@ -234,7 +234,9 @@ const BlockList: React.FC<BlockListProps> = ({
 
   const renderBlocksWithOptions = (blocks: Block[]) => {
     return blocks.map((block, index) => {
-      const paths = block.pathBlock ? pathsByBlockId[block.pathBlock?.id] : [];
+      const paths = block.path_block
+        ? pathsByBlockId[block.path_block?.id]
+        : [];
       const draggingClass =
         draggingBlockId === block.id ? 'invisible' : 'visible';
 
@@ -266,9 +268,9 @@ const BlockList: React.FC<BlockListProps> = ({
                     isFocused={focusedBlockId === block.id}
                   />
                 )}
-                {block.type === BlockType.PATH && <PathBlock block={block} />}
+                {block.type === BlockType.PATH && <path_block block={block} />}
                 {block.type === BlockType.DELAY && (
-                  <DelayBlock
+                  <delay_block
                     block={block}
                     handleDeleteBlockFn={handleDeleteBlockFn}
                     handleBlockClick={handleBlockClick}
@@ -331,9 +333,9 @@ const BlockList: React.FC<BlockListProps> = ({
                       >
                         <Path
                           key={`${block.id}-path-${key}`}
-                          pathId={path.id}
+                          path_id={path.id}
                           workspaceId={workspaceId}
-                          workflowId={block.workflowId}
+                          workflow_id={block.workflow_id}
                           selectedBlock={selectedBlock}
                           onBlockClick={onBlockClick}
                           closeDetailSidebar={closeDetailSidebar}
@@ -352,7 +354,7 @@ const BlockList: React.FC<BlockListProps> = ({
 
               <AddBlock
                 id={index + 1}
-                pathId={pathId}
+                path_id={path_id}
                 handleAddBlockFn={handleAddBlockFn}
                 handleClick={handleClick}
                 onAddBlockClick={(i, type, form_type, default_values) =>
@@ -404,7 +406,7 @@ const BlockList: React.FC<BlockListProps> = ({
                   <div>
                     <AddBlock
                       id={0}
-                      pathId={pathId}
+                      path_id={path_id}
                       handleAddBlockFn={handleAddBlockFn}
                       handleClick={handleClick}
                       onAddBlockClick={(i, type) => onAddBlockClick(i, type)}

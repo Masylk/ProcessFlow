@@ -8,7 +8,7 @@ interface BlockOptionsToggleProps {
   block: Block;
   handleAddBlockFn: (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number
   ) => Promise<Block | null>;
   handleUpdateBlockFn: (
@@ -76,14 +76,14 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   };
 
   const handleDuplicate = async () => {
-    if (block.pathId) {
+    if (block.path_id) {
       // Create a new block with the updated image URL
 
       console.log('position duplicate block at : ' + block.position);
       // Add the new block with the duplicated image
       const clone_block = await handleAddBlockFn(
         block,
-        block.pathId,
+        block.path_id,
         block.position
       );
 

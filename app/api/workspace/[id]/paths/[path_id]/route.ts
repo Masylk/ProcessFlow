@@ -3,41 +3,41 @@ import prisma from '@/lib/prisma'; // Adjust the import path according to your s
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string; pathId: string } }
+  { params }: { params: { id: string; path_id: string } }
 ) {
   const url = new URL(req.url);
-  const workflowId = url.searchParams.get('workflowId');
+  const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
-  const pathId = parseInt(params.pathId);
+  const path_id = parseInt(params.path_id);
 
   // Validate parameters
-  if (!workflowId || isNaN(workspaceId) || isNaN(pathId)) {
+  if (!workflow_id || isNaN(workspaceId) || isNaN(path_id)) {
     return NextResponse.json(
-      { error: 'Valid workspaceId, pathId, and workflowId are required' },
+      { error: 'Valid workspaceId, path_id, and workflow_id are required' },
       { status: 400 }
     );
   }
 
   try {
-    const parsedWorkflowId = parseInt(workflowId);
+    const parsedworkflow_id = parseInt(workflow_id);
 
-    if (isNaN(parsedWorkflowId)) {
+    if (isNaN(parsedworkflow_id)) {
       return NextResponse.json(
-        { error: 'Invalid workflowId' },
+        { error: 'Invalid workflow_id' },
         { status: 400 }
       );
     }
 
-    // Fetch path data including blocks, pathBlock, stepBlock, and delay field
+    // Fetch path data including blocks, path_block, step_block, and delay field
     const pathData = await prisma.path.findUnique({
-      where: { id: pathId },
+      where: { id: path_id },
       include: {
         blocks: {
-          where: { workflowId: parsedWorkflowId }, // Adjust to match your data structure
+          where: { workflow_id: parsedworkflow_id }, // Adjust to match your data structure
           include: {
-            pathBlock: true, // Include related pathBlock information
-            stepBlock: true, // Include related stepBlock information
-            delayBlock: true,
+            path_block: true, // Include related path_block information
+            step_block: true, // Include related step_block information
+            delay_block: true,
           },
           orderBy: {
             position: 'asc',

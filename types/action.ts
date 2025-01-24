@@ -9,7 +9,7 @@ export interface Action {
   type: string;
   targetId: number;
   target: Block;
-  workflowId: number;
+  workflow_id: number;
   workflow: Workflow;
   value: number;
 }

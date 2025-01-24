@@ -22,7 +22,7 @@ export default function WorkflowPage() {
   const pathname = usePathname();
   const router = useRouter();
   const pathSegments = pathname.split('/');
-  const workflowId = pathSegments[pathSegments.length - 2];
+  const workflow_id = pathSegments[pathSegments.length - 2];
   const id = pathSegments[pathSegments.length - 3];
   const [path, setPath] = useState<Path | null>(null);
   const [workflowTitle, setWorkflowTitle] = useState<string>('');
@@ -44,16 +44,16 @@ export default function WorkflowPage() {
   };
 
   useEffect(() => {
-    if (id && workflowId) {
-      fetchPaths(id, workflowId);
-      fetchWorkflowTitle(workflowId);
+    if (id && workflow_id) {
+      fetchPaths(id, workflow_id);
+      fetchWorkflowTitle(workflow_id);
     }
-  }, [id, workflowId]);
+  }, [id, workflow_id]);
 
-  const fetchPaths = async (id: string, workflowId: string) => {
+  const fetchPaths = async (id: string, workflow_id: string) => {
     try {
       const response = await fetch(
-        `/api/workspace/${id}/paths?workflowId=${workflowId}`
+        `/api/workspace/${id}/paths?workflow_id=${workflow_id}`
       );
       if (!response.ok) throw new Error('Failed to fetch paths');
 
@@ -66,9 +66,9 @@ export default function WorkflowPage() {
     }
   };
 
-  const fetchWorkflowTitle = async (workflowId: string) => {
+  const fetchWorkflowTitle = async (workflow_id: string) => {
     try {
-      const response = await fetch(`/api/workflow/${workflowId}/title`);
+      const response = await fetch(`/api/workflow/${workflow_id}/title`);
       if (!response.ok) throw new Error('Failed to fetch workflow title');
 
       const data = await response.json();
@@ -80,7 +80,7 @@ export default function WorkflowPage() {
 
   const updateWorkflowTitle = async (newTitle: string) => {
     try {
-      const response = await fetch(`/api/workflow/${workflowId}/title`, {
+      const response = await fetch(`/api/workflow/${workflow_id}/title`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export default function WorkflowPage() {
       eventData.handleBlocksReorder
     ) {
       const newSidebarPath: PathObject = {
-        id: eventData.pathId,
+        id: eventData.path_id,
         name: eventData.pathName,
         blocks: eventData.blocks.map((block) => ({
           id: block.id,
@@ -171,7 +171,7 @@ export default function WorkflowPage() {
         const newBlocks = eventData.blocks;
         const updatedBlocks = createBlocks(
           sidebarPath.blocks,
-          eventData.pathId,
+          eventData.path_id,
           newBlocks,
           eventData.handleBlocksReorder
         );
@@ -191,7 +191,7 @@ export default function WorkflowPage() {
         const updatedBlocks = updateBlocks(
           sidebarPath.blocks,
           sidebarPath.id,
-          eventData.pathId,
+          eventData.path_id,
           eventData.blocks,
           eventData.type
         );
@@ -290,20 +290,20 @@ export default function WorkflowPage() {
 
   const updateBlocks = (
     blocks: SidebarBlock[],
-    sidebarPathId: number,
-    eventPathId: number,
+    sidebarpath_id: number,
+    eventpath_id: number,
     updatedBlocks: Block[],
     eventType: CanvasEventType
   ): SidebarBlock[] => {
     // Helper function to recursively update the blocks within a matching subpath
-    const updateSubpathBlocks = (
+    const updateSubpath_blocks = (
       blocks: SidebarBlock[],
-      pathId: number
+      path_id: number
     ): SidebarBlock[] => {
       return blocks.map((block) => {
         if (block.subpaths) {
           block.subpaths = block.subpaths.map((subpath) => {
-            if (subpath.id === pathId) {
+            if (subpath.id === path_id) {
               // Update the subpath blocks based on the event type
               switch (eventType) {
                 case CanvasEventType.BLOCK_ADD:
@@ -336,7 +336,7 @@ export default function WorkflowPage() {
               }
             } else if (subpath.blocks) {
               // Recursively search and update nested subpaths
-              subpath.blocks = updateSubpathBlocks(subpath.blocks, pathId);
+              subpath.blocks = updateSubpath_blocks(subpath.blocks, path_id);
             }
             return subpath;
           });
@@ -346,7 +346,7 @@ export default function WorkflowPage() {
     };
 
     // If the event path ID matches the sidebar path ID, update the top-level blocks
-    if (sidebarPathId === eventPathId) {
+    if (sidebarpath_id === eventpath_id) {
       switch (eventType) {
         case CanvasEventType.BLOCK_ADD:
           return addBlocks(blocks, updatedBlocks);
@@ -366,12 +366,12 @@ export default function WorkflowPage() {
     }
 
     // If the event path ID does not match the sidebar path ID, update the relevant subpath
-    return updateSubpathBlocks(blocks, eventPathId);
+    return updateSubpath_blocks(blocks, eventpath_id);
   };
 
   const createBlocks = (
     blocks: SidebarBlock[],
-    pathId: number,
+    path_id: number,
     newBlocks: Block[],
     handleBlocksReorder?: (reorderedBlocks: Block[]) => Promise<void>
   ): SidebarBlock[] => {
@@ -380,7 +380,7 @@ export default function WorkflowPage() {
         return {
           ...block,
           subpaths: block.subpaths.map((subpath) => {
-            if (subpath.id === pathId) {
+            if (subpath.id === path_id) {
               return {
                 ...subpath,
                 blocks:
@@ -402,7 +402,7 @@ export default function WorkflowPage() {
             }
             return {
               ...subpath,
-              blocks: createBlocks(subpath.blocks || [], pathId, newBlocks),
+              blocks: createBlocks(subpath.blocks || [], path_id, newBlocks),
             };
           }),
         };
@@ -478,7 +478,7 @@ export default function WorkflowPage() {
                 <Canvas
                   initialPath={path}
                   workspaceId={id}
-                  workflowId={workflowId}
+                  workflow_id={workflow_id}
                   focusId={focusId}
                   onCanvasEvent={handleCanvasEvent}
                   onTransformChange={handleTransformChange}

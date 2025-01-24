@@ -17,7 +17,7 @@ import DelayForm from './DelayForm';
 interface CanvasProps {
   initialPath: PathType;
   workspaceId: string;
-  workflowId: string;
+  workflow_id: string;
   focusId?: string | null;
   onCanvasEvent: (eventData: CanvasEvent) => void;
   onTransformChange: (state: TransformState) => void;
@@ -28,7 +28,7 @@ interface CanvasProps {
 export default function Canvas({
   initialPath,
   workspaceId,
-  workflowId,
+  workflow_id,
   focusId,
   onCanvasEvent,
   onTransformChange,
@@ -54,17 +54,17 @@ export default function Canvas({
 
   const [savedBlock, setSavedBlock] = useState<Block | null>(null);
   const [isAddBlockFormOpen, setIsAddBlockFormOpen] = useState(false);
-  const [addBlockPathId, setAddBlockPathId] = useState<number>(0);
+  const [addBlockpath_id, setAddBlockpath_id] = useState<number>(0);
   const [addBlockPosition, setAddBlockPosition] = useState<number | null>(null);
   const [handlePathAddBlock, setHandlePathAddBlock] = useState<
     | ((
         blockData: any,
-        pathId: number,
+        path_id: number,
         position: number
       ) => Promise<Block | null>)
     | null
   >(null);
-  const [addBlockDefaultPathId, setAddBlockDefaultPathId] = useState<
+  const [addBlockDefaultpath_id, setAddBlockDefaultpath_id] = useState<
     number | null
   >(null);
   const [addBlockDefaultPosition, setAddBlockDefaultPosition] = useState<
@@ -73,7 +73,7 @@ export default function Canvas({
   const [handleDefaultPathAddBlock, setHandleDefaultPathAddBlock] = useState<
     | ((
         blockData: any,
-        pathId: number,
+        path_id: number,
         position: number
       ) => Promise<Block | null>)
     | null
@@ -95,12 +95,12 @@ export default function Canvas({
     console.log('copying ', blockdata);
     setSavedBlock(blockdata);
     if (
-      addBlockDefaultPathId !== null &&
+      addBlockDefaultpath_id !== null &&
       addBlockDefaultPosition !== null &&
       handleDefaultPathAddBlock
     ) {
       handleSetPath(
-        addBlockDefaultPathId,
+        addBlockDefaultpath_id,
         addBlockDefaultPosition,
         handleDefaultPathAddBlock
       );
@@ -133,11 +133,11 @@ export default function Canvas({
   };
 
   const handleOpenForm = (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>,
     chosenType?: BlockType,
@@ -148,40 +148,40 @@ export default function Canvas({
     if (chosenType) setAddBlockChosenType(chosenType);
     if (form_type) setFormType(form_type);
     if (default_values) setFormDefaultValues(default_values);
-    handleSetPath(pathId, position, addBlockFn);
+    handleSetPath(path_id, position, addBlockFn);
   };
 
   const handleSetPath = (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => {
-    console.log('setting Path : ', pathId);
-    setAddBlockPathId(pathId);
+    console.log('setting Path : ', path_id);
+    setAddBlockpath_id(path_id);
     setAddBlockPosition(position);
     setHandlePathAddBlock(() => addBlockFn);
   };
 
   const handleSetDefaultPath = (
-    pathId: number,
+    path_id: number,
     position: number,
     addBlockFn: (
       blockData: any,
-      pathId: number,
+      path_id: number,
       position: number
     ) => Promise<Block | null>
   ) => {
     if (
-      !addBlockDefaultPathId &&
+      !addBlockDefaultpath_id &&
       !addBlockDefaultPosition &&
       !handleDefaultPathAddBlock
     ) {
-      console.log('setting Default Path : ', pathId);
-      setAddBlockDefaultPathId(pathId);
+      console.log('setting Default Path : ', path_id);
+      setAddBlockDefaultpath_id(path_id);
       setAddBlockDefaultPosition(position);
       setHandleDefaultPathAddBlock(() => addBlockFn);
     }
@@ -194,13 +194,13 @@ export default function Canvas({
 
   const handleAddBlock = async (
     blockData: any,
-    pathId: number,
+    path_id: number,
     position: number
   ) => {
     setIsAddBlockFormOpen(false);
     if (handlePathAddBlock) {
-      if (pathId === addBlockDefaultPathId) updateDefaultPosition();
-      await handlePathAddBlock(blockData, pathId, position);
+      if (path_id === addBlockDefaultpath_id) updateDefaultPosition();
+      await handlePathAddBlock(blockData, path_id, position);
     }
     setAddBlockPosition(null);
   };
@@ -209,10 +209,10 @@ export default function Canvas({
     const handlePasteShortcut = async (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === 'v') {
         try {
-          if (savedBlock && addBlockPathId && addBlockPosition !== null) {
+          if (savedBlock && addBlockpath_id && addBlockPosition !== null) {
             // If there's a saved block, add it as usual
             console.log('Pasting block at:', addBlockPosition);
-            await handleAddBlock(savedBlock, addBlockPathId, addBlockPosition);
+            await handleAddBlock(savedBlock, addBlockpath_id, addBlockPosition);
           } else {
             console.warn(
               'No block saved or invalid path/position for adding the block.'
@@ -250,10 +250,10 @@ export default function Canvas({
                 };
 
                 // Add the new block with the uploaded image URL
-                if (addBlockPathId && addBlockPosition !== null) {
+                if (addBlockpath_id && addBlockPosition !== null) {
                   await handleAddBlock(
                     defaultBlockData,
-                    addBlockPathId,
+                    addBlockpath_id,
                     addBlockPosition
                   );
                 } else {
@@ -288,7 +288,7 @@ export default function Canvas({
     return () => {
       window.removeEventListener('keydown', handlePasteShortcut);
     };
-  }, [savedBlock, addBlockPathId, addBlockPosition, handleAddBlock]);
+  }, [savedBlock, addBlockpath_id, addBlockPosition, handleAddBlock]);
 
   return (
     <div className="relative h-screen w-screen z-1 flex flex-col">
@@ -339,7 +339,7 @@ export default function Canvas({
                       <Sidebar
                         sidebarPath={sidebarPath}
                         workspaceId={workspaceId}
-                        workflowId={workflowId}
+                        workflow_id={workflow_id}
                         onSidebarEvent={onSidebarEvent}
                         isBackground={
                           isAddBlockFormOpen || selectedBlock !== null
@@ -386,9 +386,9 @@ export default function Canvas({
                         {/* Path component */}
                         <Path
                           firstPath={true}
-                          pathId={path.id}
+                          path_id={path.id}
                           workspaceId={parseInt(workspaceId)}
-                          workflowId={parseInt(workflowId)}
+                          workflow_id={parseInt(workflow_id)}
                           selectedBlock={selectedBlock}
                           onBlockClick={handleBlockClick}
                           closeDetailSidebar={handleCloseSidebar}
@@ -459,16 +459,16 @@ export default function Canvas({
           <AddBlockForm
             onSubmit={async (
               blockData: any,
-              pathId: number,
+              path_id: number,
               position: number
-            ) => await handleAddBlock(blockData, pathId, position)}
+            ) => await handleAddBlock(blockData, path_id, position)}
             onCancel={() => {
               setIsAddBlockFormOpen(false);
               setAddBlockChosenType(null);
             }}
             initialPosition={addBlockPosition}
-            workflowId={parseInt(workflowId)}
-            pathId={addBlockPathId}
+            workflow_id={parseInt(workflow_id)}
+            path_id={addBlockpath_id}
             position={addBlockPosition}
             savedBlock={savedBlock}
             chosenType={addBlockChosenType}

@@ -1,5 +1,5 @@
-import { Block } from "./block";
-import { PathObject } from "./sidebar";
+import { Block } from './block';
+import { PathObject } from './sidebar';
 
 export enum CanvasEventType {
   PATH_CREATION,
@@ -13,7 +13,7 @@ export enum CanvasEventType {
 
 export interface CanvasEvent {
   type: CanvasEventType;
-  pathId: number;
+  path_id: number;
   blockId?: number;
   pathName?: string;
   blocks?: Block[];

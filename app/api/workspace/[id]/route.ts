@@ -20,7 +20,7 @@ export async function GET(
       include: {
         team: {
           include: {
-            userTeams: {
+            user_teams: {
               include: {
                 user: true,
               },

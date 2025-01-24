@@ -1,7 +1,7 @@
 import React from 'react';
 import { Block } from '@/types/block'; // Adjust the import path as necessary
 
-const PathBlock: React.FC<{ block: Block }> = ({ block }) => {
+const path_block: React.FC<{ block: Block }> = ({ block }) => {
   // Helper function to format delay in days/hours/minutes
   const formatDelay = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
@@ -26,4 +26,4 @@ const PathBlock: React.FC<{ block: Block }> = ({ block }) => {
   );
 };
 
-export default PathBlock;
+export default path_block;

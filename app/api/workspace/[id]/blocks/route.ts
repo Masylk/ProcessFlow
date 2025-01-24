@@ -8,38 +8,38 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const url = new URL(req.url);
-  const workflowId = url.searchParams.get('workflowId');
+  const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
 
-  // Validate workflowId and workspaceId
-  if (!workflowId || isNaN(workspaceId)) {
+  // Validate workflow_id and workspaceId
+  if (!workflow_id || isNaN(workspaceId)) {
     return NextResponse.json(
-      { error: 'workflowId and valid workspaceId are required' },
+      { error: 'workflow_id and valid workspaceId are required' },
       { status: 400 }
     );
   }
 
   try {
-    // Convert workflowId to a number for further processing
-    const parsedWorkflowId = parseInt(workflowId);
+    // Convert workflow_id to a number for further processing
+    const parsedworkflow_id = parseInt(workflow_id);
 
-    if (isNaN(parsedWorkflowId)) {
+    if (isNaN(parsedworkflow_id)) {
       return NextResponse.json(
-        { error: 'Invalid workflowId' },
+        { error: 'Invalid workflow_id' },
         { status: 400 }
       );
     }
 
     // Log the request data
-    console.log('Fetching paths for:', { workspaceId, parsedWorkflowId });
+    console.log('Fetching paths for:', { workspaceId, parsedworkflow_id });
 
-    // Fetch or create paths with blocks for the given workflowId
+    // Fetch or create paths with blocks for the given workflow_id
     const result = await prisma.$transaction(
       async (prisma: Prisma.TransactionClient) => {
-        // Fetch paths for the given workflowId
+        // Fetch paths for the given workflow_id
         const existingPaths = await prisma.path.findMany({
           where: {
-            workflowId: parsedWorkflowId,
+            workflow_id: parsedworkflow_id,
           },
           include: {
             blocks: {
@@ -47,52 +47,52 @@ export async function GET(
                 position: 'asc',
               },
               include: {
-                pathBlock: {
+                path_block: {
                   include: {
                     paths: {
                       include: {
                         blocks: {
                           include: {
-                            pathBlock: true,
-                            stepBlock: true,
+                            path_block: true,
+                            step_block: true,
                           },
                         },
                       },
                     },
                   },
                 },
-                stepBlock: true,
+                step_block: true,
               },
             },
           },
         });
 
-        // If no paths are found, create a new Path without linking to a PathBlock
+        // If no paths are found, create a new Path without linking to a path_block
         if (existingPaths.length === 0) {
           const newPath = await prisma.path.create({
             data: {
               name: 'First Path',
-              workflowId: parsedWorkflowId,
-              pathBlockId: null,
+              workflow_id: parsedworkflow_id,
+              path_block_id: null,
             },
             include: {
               blocks: {
                 include: {
-                  pathBlock: {
+                  path_block: {
                     include: {
                       paths: {
                         include: {
                           blocks: {
                             include: {
-                              pathBlock: true,
-                              stepBlock: true,
+                              path_block: true,
+                              step_block: true,
                             },
                           },
                         },
                       },
                     },
                   },
-                  stepBlock: true,
+                  step_block: true,
                 },
               },
             },

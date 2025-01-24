@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('FILEPATH: ' + filePath);
     return NextResponse.json({
       message: `File uploaded successfully: ${filePath}`,
       filePath,

@@ -5,11 +5,11 @@ import StepForm from '@/app/workspace/[id]/[workflowId]/components/StepForm';
 import { Block, BlockType } from '@/types/block';
 
 interface AddBlockFormProps {
-  onSubmit: (blockData: any, pathId: number, position: number) => void;
+  onSubmit: (blockData: any, path_id: number, position: number) => void;
   onCancel: () => void;
   initialPosition?: number;
-  workflowId?: number;
-  pathId?: number;
+  workflow_id?: number;
+  path_id?: number;
   position?: number;
   savedBlock?: Block | null;
   chosenType?: BlockType;
@@ -19,8 +19,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
   onSubmit,
   onCancel,
   initialPosition,
-  workflowId,
-  pathId,
+  workflow_id,
+  path_id,
   position,
   savedBlock,
   chosenType = null,
@@ -37,8 +37,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onSubmit={onSubmit}
             onCancel={onCancel}
             initialPosition={initialPosition}
-            workflowId={workflowId}
-            pathId={pathId}
+            workflow_id={workflow_id}
+            path_id={path_id}
             position={position}
           />
         );
@@ -48,8 +48,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onSubmit={onSubmit}
             onCancel={onCancel}
             initialPosition={initialPosition}
-            workflowId={workflowId}
-            pathId={pathId}
+            workflow_id={workflow_id}
+            path_id={path_id}
             position={position}
           />
         );
@@ -59,8 +59,8 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
             onSubmit={onSubmit}
             onCancel={onCancel}
             initialPosition={initialPosition}
-            workflowId={workflowId}
-            pathId={pathId}
+            workflow_id={workflow_id}
+            path_id={path_id}
             position={position}
           />
         );
@@ -98,10 +98,10 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
       {!selectedForm && (
         <div className="mt-4 flex space-x-4">
           {/* Add Paste Block button */}
-          {pathId && position && (
+          {path_id && position && (
             <button
               onClick={() =>
-                savedBlock && onSubmit(savedBlock, pathId, position)
+                savedBlock && onSubmit(savedBlock, path_id, position)
               }
               disabled={!savedBlock}
               className={`${

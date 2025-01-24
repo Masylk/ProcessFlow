@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
-import DelayBlockMenu from './DelayBlockMenu'; // Import DelayBlockMenu
+import delay_blockMenu from './delay_blockMenu'; // Import delay_blockMenu
 
-interface DelayBlockProps {
+interface delay_blockProps {
   block: Block;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   handleBlockClick: (block: Block) => void;
@@ -25,12 +25,12 @@ function formatDelay(seconds: number) {
     : parts[0];
 }
 
-const DelayBlock: React.FC<DelayBlockProps> = ({
+const delay_block: React.FC<delay_blockProps> = ({
   block,
   handleDeleteBlockFn,
   handleBlockClick,
 }) => {
-  const delay = block.delayBlock?.seconds ?? 0; // Fallback to 0 if delayBlock or delay is undefined
+  const delay = block.delay_block?.seconds ?? 0; // Fallback to 0 if delay_block or delay is undefined
 
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
   const menuRef = useRef<HTMLDivElement | null>(null); // Ref for the menu container
@@ -94,7 +94,7 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
             ref={menuRef} // Attach ref to the menu
             className="absolute top-[30px] right-[-150px] mt-2"
           >
-            <DelayBlockMenu
+            <delay_blockMenu
               blockId={block.id}
               handleDeleteBlockFn={handleDeleteBlockFn}
               handleBlockUpdate={() => {
@@ -117,4 +117,4 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
   );
 };
 
-export default DelayBlock;
+export default delay_block;

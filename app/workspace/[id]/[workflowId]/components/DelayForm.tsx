@@ -2,11 +2,11 @@ import { Block, BlockType } from '@/types/block';
 import React, { useState } from 'react';
 
 interface DelayFormProps {
-  onSubmit: (blockData: any, pathId: number, position: number) => void;
+  onSubmit: (blockData: any, path_id: number, position: number) => void;
   onCancel: () => void;
   initialPosition?: number;
-  workflowId?: number;
-  pathId?: number;
+  workflow_id?: number;
+  path_id?: number;
   position?: number;
   default_block?: Block;
   update_mode?: boolean;
@@ -16,8 +16,8 @@ export default function DelayForm({
   onSubmit,
   onCancel,
   initialPosition,
-  workflowId,
-  pathId,
+  workflow_id,
+  path_id,
   position,
   default_block,
   update_mode,
@@ -25,8 +25,8 @@ export default function DelayForm({
   const [description, setDescription] = useState('');
   const [delay, setDelay] = useState(0);
 
-  // Extract seconds from the delayBlock
-  const totalSeconds = default_block?.delayBlock?.seconds || 0;
+  // Extract seconds from the delay_block
+  const totalSeconds = default_block?.delay_block?.seconds || 0;
 
   // Calculate default values
   const defaultDays = Math.floor(totalSeconds / (24 * 60 * 60));
@@ -69,7 +69,7 @@ export default function DelayForm({
   const handleSubmit = (e: React.FormEvent) => {
     console.log('adding a custom delay of : ' + calculateDelay());
     e.preventDefault();
-    if (pathId && position) {
+    if (path_id && position) {
       onSubmit(
         {
           type: BlockType.DELAY, // Specify the type as STEP
@@ -77,7 +77,7 @@ export default function DelayForm({
           description: '', // Optional, leave as an empty string
           delay: calculateDelay(),
         },
-        pathId,
+        path_id,
         position
       );
     } else if (update_mode) {
