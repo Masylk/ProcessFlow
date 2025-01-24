@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import BlockOptions from './BlockOptions';
 import { Block } from '@/types/block';
+import { createClient } from '@/utils/supabase/client';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 interface BlockOptionsToggleProps {
   block: Block;
@@ -9,15 +11,25 @@ interface BlockOptionsToggleProps {
     pathId: number,
     position: number
   ) => Promise<Block | null>;
+  handleUpdateBlockFn: (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockData: Block) => void;
+  image: string | null;
 }
+
+const supabase = createClient();
 
 const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
   block,
   handleAddBlockFn,
+  handleUpdateBlockFn,
   handleDeleteBlockFn,
   copyBlockFn,
+  image,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleRef = useRef<HTMLDivElement>(null);
@@ -48,6 +60,9 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
 
   const handleDelete = async () => {
     await handleDeleteBlockFn(block.id);
+    if (block.image && block.icon) {
+      // await handleUpdateBlockFn(block, block.image, block.icon);
+    }
     setIsOpen(false);
   };
 
@@ -60,11 +75,44 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
     setIsOpen(false);
   };
 
-  const handleDuplicate = () => {
+  const handleDuplicate = async () => {
     if (block.pathId) {
-      handleAddBlockFn(block, block.pathId, block.position);
+      // Create a new block with the updated image URL
+
+      console.log('position duplicate block at : ' + block.position);
+      // Add the new block with the duplicated image
+      const clone_block = await handleAddBlockFn(
+        block,
+        block.pathId,
+        block.position
+      );
+
+      // Check if block has an image, then duplicate it
+      if (block.image) {
+        // Fetch the signed URL for the original image
+        const signedUrl = await fetchSignedUrl(block.image);
+
+        if (!signedUrl) {
+          throw new Error('Failed to fetch signed URL for the original image');
+        }
+
+        // Fetch the original image file using the signed URL
+        const response = await fetch(signedUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch the original image');
+        }
+
+        const fileBlob = await response.blob();
+
+        // Create a File object from the Blob with a default name
+        const file = new File([fileBlob], `duplicate_${block.image}`, {
+          type: fileBlob.type,
+        });
+        if (clone_block) await handleUpdateBlockFn(clone_block, file);
+      }
+
+      setIsOpen(false);
     }
-    setIsOpen(false);
   };
 
   return (
@@ -87,9 +135,9 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
           ref={dropdownRef}
           className="absolute z-50"
           style={{
-            top: '100%', // Adjust dropdown position as before (top-full)
-            left: '0', // Align left
-            overflow: 'visible', // Ensure overflow is visible and dropdown isn't clipped
+            top: '100%',
+            left: '0',
+            overflow: 'visible',
           }}
         >
           <BlockOptions

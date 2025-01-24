@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    console.log('Fetching for : ', path);
     // Generate a signed URL for the requested path
     const { data, error } = await supabase.storage
       .from(bucketName) // Use the bucket name from the environment variable

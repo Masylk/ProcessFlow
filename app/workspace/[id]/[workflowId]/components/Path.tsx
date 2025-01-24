@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import BlockList from './BlockList';
-import { supabasePublic } from '@/lib/supabasePublicClient';
 import { Block, BlockType, FormType } from '@/types/block';
 import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import { useTransformContext } from 'react-zoom-pan-pinch';
-import { title } from 'process';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 interface PathData {
   id: number;
@@ -36,7 +35,7 @@ interface PathProps {
     ) => Promise<Block | null>,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => void;
   disableZoom: (isDisabled: boolean) => void;
   copyBlockFn: (blockdata: Block) => void;
@@ -81,7 +80,7 @@ const Path: React.FC<PathProps> = ({
   const [loading, setLoading] = useState(true);
   // Get transform state from context
   const { transformState } = useTransformContext();
-  const DEFAULT_ICON = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/step-icons/default-icons/container.svg`;
+  const DEFAULT_ICON = `/step-icons/default-icons/container.svg`;
   const magicWandUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/magic-wand-icon.svg`;
 
   useEffect(() => {
@@ -130,7 +129,7 @@ const Path: React.FC<PathProps> = ({
     position: number,
     chosenType?: BlockType,
     form_type?: FormType,
-    default_values?: any
+    default_values?: Block
   ) => {
     handleAddBlock(
       pathId,
@@ -233,6 +232,7 @@ const Path: React.FC<PathProps> = ({
       if (response.ok) {
         const newBlock = await response.json();
 
+        console.log('newblock image url: ' + newBlock.image);
         // Update blockList with the newly created block
         setBlockList((prevBlockList) => {
           const updatedBlockList = [...prevBlockList];
@@ -262,7 +262,8 @@ const Path: React.FC<PathProps> = ({
   const handleUpdateBlock = async (
     updatedBlock: Block,
     imageFile?: File,
-    iconFile?: File
+    iconFile?: File,
+    delay?: number
   ) => {
     let imageUrl: string | undefined;
     let iconUrl: string | undefined;
@@ -332,6 +333,7 @@ const Path: React.FC<PathProps> = ({
           image: imageUrl || updatedBlock.image,
           imageDescription: updatedBlock.imageDescription,
           clickPosition: updatedBlock.clickPosition,
+          delay: delay,
         }),
       });
 
@@ -382,6 +384,9 @@ const Path: React.FC<PathProps> = ({
               }),
               ...(updatedBlockData.taskType !== undefined && {
                 taskType: updatedBlockData.taskType,
+              }),
+              ...(updatedBlockData.delayBlock !== undefined && {
+                delayBlock: updatedBlockData.delayBlock,
               }),
             };
           });

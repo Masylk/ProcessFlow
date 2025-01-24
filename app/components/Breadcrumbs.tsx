@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BreadcrumbButtonBase from './BreadcrumbButtonBase';
-import { supabasePublic } from '@/lib/supabasePublicClient';
+import { supabasePublicClient } from '@/lib/supabasePublicClient';
 
 interface BreadcrumbsProps {
   first_text: string;
@@ -17,7 +17,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
   useEffect(() => {
     const fetchDividerUrl = async () => {
-      const { data } = supabasePublic.storage
+      const { data } = supabasePublicClient.storage
         .from('public-assets')
         .getPublicUrl('assets/shared_components/slash-divider.svg');
       setDividerUrl(data?.publicUrl || null);

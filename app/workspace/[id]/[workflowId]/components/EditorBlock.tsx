@@ -11,6 +11,11 @@ interface EditorBlockProps {
     pathId: number,
     position: number
   ) => Promise<Block | null>;
+  handleUpdateBlockFn: (
+    updatedBlock: Block,
+    imageFile?: File,
+    iconFile?: File
+  ) => Promise<void>;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   copyBlockFn: (blockdata: Block) => void;
   isFocused: boolean;
@@ -25,6 +30,7 @@ export default function EditorBlock({
   block,
   onClick,
   handleAddBlockFn,
+  handleUpdateBlockFn,
   handleDeleteBlockFn,
   copyBlockFn,
   isFocused,
@@ -36,6 +42,7 @@ export default function EditorBlock({
   useEffect(() => {
     const fetchSignedUrl = async (path: string) => {
       try {
+        console.log('fetching for : ' + path);
         const response = await fetch(`/api/get-signed-url?path=${path}`);
         const data = await response.json();
         if (response.ok && data.signedUrl) {
@@ -96,8 +103,10 @@ export default function EditorBlock({
             <BlockOptionsToggle
               block={block}
               handleAddBlockFn={handleAddBlockFn}
+              handleUpdateBlockFn={handleUpdateBlockFn}
               handleDeleteBlockFn={handleDeleteBlockFn}
               copyBlockFn={copyBlockFn}
+              image={imageUrl}
             />
           </div>
         </div>

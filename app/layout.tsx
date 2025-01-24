@@ -22,7 +22,6 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
-
         {/* Favicon Links for different sizes */}
         <link rel="icon" type="image/png" sizes="32x32" href="/32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/48x48.png" />

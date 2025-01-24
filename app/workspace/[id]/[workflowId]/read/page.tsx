@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar'; // Import the Sidebar component
 import { Workspace } from '@/types/workspace';
 import { Workflow } from '@/types/workflow';
 
@@ -10,6 +11,7 @@ const WorkspacePage = () => {
   const { id, workflowId } = useParams(); // Get workspace and workflow IDs from the URL
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const [workflowName, setWorkflowName] = useState<string | null>(null);
+  const [stepCount, setStepCount] = useState<number>(0); // State to store the number of STEP blocks
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,6 +34,12 @@ const WorkspacePage = () => {
         );
         if (workflow) {
           setWorkflowName(workflow.name);
+
+          // Count the number of STEP blocks
+          const stepBlocksCount = workflow.blocks.filter(
+            (block) => block.type === 'STEP'
+          ).length;
+          setStepCount(stepBlocksCount); // Set the count in the state
         } else {
           throw new Error('Workflow not found in the workspace');
         }
@@ -44,23 +52,27 @@ const WorkspacePage = () => {
   }, [id, workflowId]);
 
   return (
-    <div>
-      {workspaceName && workflowName ? (
-        <Header workspaceName={workspaceName} workflowName={workflowName} />
-      ) : (
-        ''
-      )}
-      <div className="p-4">
-        {error ? (
-          <p className="text-red-500">Error: {error}</p>
-        ) : workspaceName && workflowName ? (
-          <>
-            <h1 className="text-2xl font-bold">Workspace: {workspaceName}</h1>
-            <h2 className="text-xl">Workflow: {workflowName}</h2>
-          </>
+    <div className="flex h-screen">
+      <Sidebar stepCount={stepCount} /> {/* Pass the stepCount prop */}
+      {/* Main Content */}
+      <div className="flex-1">
+        {workspaceName && workflowName ? (
+          <Header workspaceName={workspaceName} workflowName={workflowName} />
         ) : (
-          <p>Loading workspace and workflow...</p>
+          ''
         )}
+        <div className="p-4">
+          {error ? (
+            <p className="text-red-500">Error: {error}</p>
+          ) : workspaceName && workflowName ? (
+            <>
+              <h1 className="text-2xl font-bold">Workspace: {workspaceName}</h1>
+              <h2 className="text-xl">Workflow: {workflowName}</h2>
+            </>
+          ) : (
+            <p>Loading workspace and workflow...</p>
+          )}
+        </div>
       </div>
     </div>
   );

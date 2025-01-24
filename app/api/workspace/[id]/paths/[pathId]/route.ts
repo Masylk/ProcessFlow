@@ -37,6 +37,7 @@ export async function GET(
           include: {
             pathBlock: true, // Include related pathBlock information
             stepBlock: true, // Include related stepBlock information
+            delayBlock: true,
           },
           orderBy: {
             position: 'asc',

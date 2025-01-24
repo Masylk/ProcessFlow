@@ -7,11 +7,11 @@ import { Block, BlockType } from '@/types/block';
 interface AddBlockFormProps {
   onSubmit: (blockData: any, pathId: number, position: number) => void;
   onCancel: () => void;
-  initialPosition: number;
-  workflowId: number;
-  pathId: number;
-  position: number;
-  savedBlock: Block | null;
+  initialPosition?: number;
+  workflowId?: number;
+  pathId?: number;
+  position?: number;
+  savedBlock?: Block | null;
   chosenType?: BlockType;
 }
 
@@ -98,17 +98,21 @@ const AddBlockForm: React.FC<AddBlockFormProps> = ({
       {!selectedForm && (
         <div className="mt-4 flex space-x-4">
           {/* Add Paste Block button */}
-          <button
-            onClick={() => savedBlock && onSubmit(savedBlock, pathId, position)}
-            disabled={!savedBlock}
-            className={`${
-              savedBlock
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-400 text-gray-700'
-            } px-4 py-2 rounded`}
-          >
-            Paste Block
-          </button>
+          {pathId && position && (
+            <button
+              onClick={() =>
+                savedBlock && onSubmit(savedBlock, pathId, position)
+              }
+              disabled={!savedBlock}
+              className={`${
+                savedBlock
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-gray-400 text-gray-700'
+              } px-4 py-2 rounded`}
+            >
+              Paste Block
+            </button>
+          )}
           <button
             onClick={(event) => {
               event.stopPropagation(); // Stop propagation

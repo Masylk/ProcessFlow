@@ -29,6 +29,7 @@ export async function PATCH(req: NextRequest) {
       clickPosition,
       averageTime,
       taskType,
+      delay,
     } = await req.json();
 
     // Fetch the existing block to get the current image URL
@@ -98,15 +99,26 @@ export async function PATCH(req: NextRequest) {
 
     // Handle block type-specific updates
     if (type === 'DELAY') {
+      console.log('UPDATE DELAY: ' + delay);
+
       await prisma.delayBlock.update({
         where: { blockId },
         data: {
-          seconds: 0, // Set default value or update accordingly
+          seconds: delay,
         },
       });
     }
 
-    return NextResponse.json(updatedBlock);
+    const updatedBlockWithRelations = await prisma.block.findUnique({
+      where: { id: blockId },
+      include: {
+        stepBlock: true,
+        pathBlock: true,
+        delayBlock: true,
+      },
+    });
+
+    return NextResponse.json(updatedBlockWithRelations);
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('Failed to update block:', error.message);
