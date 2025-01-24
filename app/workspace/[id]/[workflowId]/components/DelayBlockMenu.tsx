@@ -1,13 +1,13 @@
 import { Block } from '@/types/block';
 import React from 'react';
 
-interface delay_blockMenuProps {
+interface DelayBlockMenuProps {
   blockId: number;
   handleDeleteBlockFn: (blockId: number) => Promise<void>;
   handleBlockUpdate: () => void;
 }
 
-const delay_blockMenu: React.FC<delay_blockMenuProps> = ({
+const delay_blockMenu: React.FC<DelayBlockMenuProps> = ({
   blockId,
   handleDeleteBlockFn,
   handleBlockUpdate,

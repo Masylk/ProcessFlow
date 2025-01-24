@@ -15,8 +15,8 @@ import { useTransformContext } from 'react-zoom-pan-pinch';
 import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import ImageOverlay from './ImageOverlay';
 import VectorStraightSVG from '@/public/assets/workflow/vector-straight.svg';
-import delay_block from './delay_block';
-import path_block from './path_block';
+import DelayBlock from './DelayBlock';
+import PathBlock from './PathBlock';
 
 interface BlockListProps {
   blocks: Block[];
@@ -268,9 +268,9 @@ const BlockList: React.FC<BlockListProps> = ({
                     isFocused={focusedBlockId === block.id}
                   />
                 )}
-                {block.type === BlockType.PATH && <path_block block={block} />}
+                {block.type === BlockType.PATH && <PathBlock block={block} />}
                 {block.type === BlockType.DELAY && (
-                  <delay_block
+                  <DelayBlock
                     block={block}
                     handleDeleteBlockFn={handleDeleteBlockFn}
                     handleBlockClick={handleBlockClick}
