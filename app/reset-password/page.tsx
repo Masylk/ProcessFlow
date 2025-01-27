@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client'; // Make sure you import the Supabase client
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -12,7 +13,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const token = new URLSearchParams(window.location.search).get('token');
+    const token = new URLSearchParams(window.location.search).get('token_hash');
+
     if (!token) {
       setMessage('Invalid or missing token.');
       return;
@@ -23,16 +25,16 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const response = await fetch('/api/auth/set-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password }),
-    });
+    // Create Supabase client
+    const supabase = createClient();
 
-    if (response.ok) {
-      router.push('/login');
+    // Attempt to update the user's password using the token
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      setMessage('Failed to reset password. Please try again.' + error.message);
     } else {
-      setMessage('Failed to reset password. Please try again.');
+      router.push('/login');
     }
   };
 
