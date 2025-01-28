@@ -17,8 +17,8 @@ const SidebarList: React.FC<SidebarListProps> = ({ blocks, stepCount }) => {
         {stepCount} Steps
       </div>
       <div className="self-stretch flex-col justify-start items-start gap-1 flex">
-        {sortedBlocks.map((block) => (
-          <Sidebardiv key={block.id} block={block} />
+        {sortedBlocks.map((block, index) => (
+          <Sidebardiv key={block.id} block={block} position={index} />
         ))}
       </div>
     </div>
