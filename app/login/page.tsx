@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { login, signup } from './actions';
 
 export default function LoginPage() {
@@ -51,6 +52,14 @@ export default function LoginPage() {
             >
               Sign up
             </button>
+          </div>
+          <div className="text-center mt-4">
+            <Link
+              href="/reset-password-request"
+              className="text-sm text-blue-500 hover:underline"
+            >
+              Forgot your password?
+            </Link>
           </div>
         </form>
       </div>

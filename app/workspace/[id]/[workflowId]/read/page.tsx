@@ -8,15 +8,16 @@ import { Workspace } from '@/types/workspace';
 import { Workflow } from '@/types/workflow';
 
 const WorkspacePage = () => {
-  const { id, workflow_id } = useParams(); // Get workspace and workflow IDs from the URL
+  const { id, workflowId } = useParams(); // Get workspace and workflow IDs from the URL
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [stepCount, setStepCount] = useState<number>(0); // State to store the number of STEP blocks
   const [error, setError] = useState<string | null>(null);
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
-      if (!id || !workflow_id) return;
+      if (!id || !workflowId) return;
 
       try {
         const response = await fetch(`/api/workspace/${id}`);
@@ -30,9 +31,10 @@ const WorkspacePage = () => {
 
         // Find the workflow by ID
         const workflow = data.workflows.find(
-          (w: Workflow) => w.id === parseInt(workflow_id.toString(), 10)
+          (w: Workflow) => w.id === parseInt(workflowId.toString(), 10)
         );
         if (workflow) {
+          setWorkflow(workflow);
           setWorkflowName(workflow.name);
 
           // Count the number of STEP blocks
@@ -49,11 +51,11 @@ const WorkspacePage = () => {
     };
 
     fetchWorkspace();
-  }, [id, workflow_id]);
+  }, [id, workflowId]);
 
   return (
     <div className="flex h-screen">
-      <Sidebar stepCount={stepCount} /> {/* Pass the stepCount prop */}
+      {workflow && <Sidebar stepCount={stepCount} blocks={workflow.blocks} />}
       {/* Main Content */}
       <div className="flex-1">
         {workspaceName && workflowName ? (
