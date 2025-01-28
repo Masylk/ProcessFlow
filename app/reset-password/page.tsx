@@ -13,13 +13,6 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const token = new URLSearchParams(window.location.search).get('token_hash');
-
-    if (!token) {
-      setMessage('Invalid or missing token.');
-      return;
-    }
-
     if (password !== confirmPassword) {
       setMessage('Passwords do not match.');
       return;
@@ -34,7 +27,17 @@ export default function ResetPasswordPage() {
     if (error) {
       setMessage('Failed to reset password. Please try again.' + error.message);
     } else {
-      router.push('/login');
+      // Call the API to clear the cookie
+      const res = await fetch('/api/clear-password-reset-cookie', {
+        method: 'POST',
+      });
+
+      if (res.ok) {
+        // Redirect to home page
+        router.push('/');
+      } else {
+        setMessage('Password reset succeeded, but failed to clear the cookie.');
+      }
     }
   };
 

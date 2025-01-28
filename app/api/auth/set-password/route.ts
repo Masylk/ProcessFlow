@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
   // Use the token to update the user's password
   const { data: user, error } = await supabase.auth.updateUser({
     password,
-    access_token: token, // Pass the token directly here
   });
 
   if (error) {
