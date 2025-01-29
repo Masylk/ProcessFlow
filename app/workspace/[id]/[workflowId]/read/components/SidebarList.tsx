@@ -9,7 +9,8 @@ interface SidebarListProps {
 
 const SidebarList: React.FC<SidebarListProps> = ({ blocks, stepCount }) => {
   // Sort blocks by position
-  const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
+  const sortedBlocks = blocks;
+  // [...blocks].sort((a, b) => a.position - b.position);
 
   return (
     <div className="p-6 flex-col justify-start items-center gap-2 inline-flex">
