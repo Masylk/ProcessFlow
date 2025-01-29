@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Block } from '@/types/block'; // Adjust the import path as needed
 
 interface SidebardivProps {
   block: Block;
   position: number;
-  isActive?: boolean;
 }
 
-const Sidebardiv: React.FC<SidebardivProps> = ({
-  block,
-  position,
-  isActive = false,
-}) => {
+const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -35,6 +32,19 @@ const Sidebardiv: React.FC<SidebardivProps> = ({
     fetchSignedUrl();
   }, [block.icon]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (divRef.current && !divRef.current.contains(event.target as Node)) {
+        setIsActive(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   // Utility function to strip HTML tags
   const stripTags = (html: string) => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -43,18 +53,16 @@ const Sidebardiv: React.FC<SidebardivProps> = ({
 
   // Function to crop the title if it's longer than 20 characters
   const cropTitle = (title: string, maxLength: number) => {
-    if (title.length > maxLength) {
-      return title.slice(0, maxLength) + '...';
-    }
-    return title;
+    return title.length > maxLength ? title.slice(0, maxLength) + '...' : title;
   };
 
   const cleanedTitle = block.title ? stripTags(block.title) : 'Untitled Block';
-  const croppedTitle = cropTitle(cleanedTitle, 20);
+  const croppedTitle = cropTitle(cleanedTitle, 15);
 
   return (
     <div
-      className={`px-3 py-1.5 rounded-lg justify-start items-start gap-3 inline-flex flex-row space-x-2 ${
+      ref={divRef}
+      className={`w-[250px] px-3 py-1.5 rounded-lg justify-start items-start gap-3 inline-flex flex-row space-x-2 ${
         isActive ? 'bg-[#4761c4]' : ''
       }`}
     >
@@ -78,10 +86,14 @@ const Sidebardiv: React.FC<SidebardivProps> = ({
           ) : null}
         </div>
         <div
-          className={`text-sm font-medium font-['Inter'] leading-tight ${
+          className={`w-[350px] text-sm font-medium font-['Inter'] leading-tight cursor-pointer ${
             isActive ? 'text-white' : 'text-[#667085]'
           }`}
-          style={{ maxWidth: '150px' }} // Adjust width as needed
+          style={{ maxWidth: '150px' }}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event from bubbling to the document
+            setIsActive(true);
+          }}
         >
           {croppedTitle}
         </div>
