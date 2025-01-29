@@ -14,6 +14,8 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
   const [iconlist, setIconList] = useState<Entity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
+  const [filteredApps, setFilteredApps] = useState<Entity[] | null>(null);
+  const [filteredIcons, setFilteredIcons] = useState<Entity[] | null>(null);
 
   useEffect(() => {
     const fetchIcons = async () => {
@@ -62,13 +64,27 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
     fetchIcons();
   }, []);
 
-  // Filter apps and icons based on the search term
-  const filteredApps = applist.filter((app) =>
-    app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const filteredIcons = iconlist.filter((icon) =>
-    icon.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    // Filter apps and icons based on the search term
+    setFilteredApps(
+      applist.filter((app) => {
+        const cleanedUrl = app.basicUrl
+          .replace(/^step-icons\/apps\//, '') // Remove prefix
+          .replace(/\.[^.]+$/, ''); // Remove file extension
+
+        return cleanedUrl.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+    );
+
+    // I don't filter basic icons for now
+    setFilteredIcons(iconlist.filter((icon) => true));
+  }, [searchTerm, applist, iconlist]);
+
+  // If I ever want to filter basic icons
+  // iconlist.filter((icon) => {
+  //   console.log(icon.basicUrl);
+  //   return icon.basicUrl.toLowerCase().includes(searchTerm.toLowerCase());
+  // })
 
   // Function to format the app name (capitalize first letter, lowercase the rest)
   const formatAppName = (name: string) => {
@@ -112,41 +128,42 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
 
           {/* Apps Grid */}
           <div className="self-stretch flex-1 flex flex-wrap gap-1 px-2 mt-3">
-            {filteredApps.map((app, index) => (
-              <button
-                key={index}
-                onClick={() => onSelect(app.basicUrl)} // Use basic URL for selection
-                onMouseEnter={() => setHoveredIcon(app.basicUrl)} // Set hovered icon
-                onMouseLeave={() => setHoveredIcon(null)} // Reset on mouse leave
-                className="w-10 h-10 flex items-center justify-center focus:outline-none relative"
-              >
-                <img
-                  src={app.signedUrl}
-                  alt={app.basicUrl}
-                  className="w-8 h-8 object-contain"
-                />
-                {hoveredIcon === app.basicUrl && (
-                  <div className="absolute bottom-[70%] mb-2 w-24 left-5 transform -translate-x-1/2 z-10">
-                    <div className="h-7 flex-col justify-start items-center inline-flex">
-                      <div className="self-stretch h-[22px] px-2 py-0.5 bg-[#4761c4] rounded-lg flex-col justify-start items-start flex">
-                        <div className="text-center text-white text-[10px] font-semibold font-['Inter'] leading-[18px]">
-                          {formatAppName(app.basicUrl)}
+            {filteredApps &&
+              filteredApps.map((app, index) => (
+                <button
+                  key={index}
+                  onClick={() => onSelect(app.basicUrl)} // Use basic URL for selection
+                  onMouseEnter={() => setHoveredIcon(app.basicUrl)} // Set hovered icon
+                  onMouseLeave={() => setHoveredIcon(null)} // Reset on mouse leave
+                  className="w-10 h-10 flex items-center justify-center focus:outline-none relative"
+                >
+                  <img
+                    src={app.signedUrl}
+                    alt={app.basicUrl}
+                    className="w-8 h-8 object-contain"
+                  />
+                  {hoveredIcon === app.basicUrl && (
+                    <div className="absolute bottom-[70%] mb-2 w-24 left-5 transform -translate-x-1/2 z-10">
+                      <div className="h-7 flex-col justify-start items-center inline-flex">
+                        <div className="self-stretch h-[22px] px-2 py-0.5 bg-[#4761c4] rounded-lg flex-col justify-start items-start flex">
+                          <div className="text-center text-white text-[10px] font-semibold font-['Inter'] leading-[18px]">
+                            {formatAppName(app.basicUrl)}
+                          </div>
                         </div>
+                        <div className="w-7 h-4 relative" />
                       </div>
-                      <div className="w-7 h-4 relative" />
+                      {/* Tooltip Icon */}
+                      <div className="absolute bottom-[3%] left-1/2 transform -translate-x-1/2">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/tooltip-icon.svg`}
+                          alt="Tooltip Icon"
+                          className="w-7 h-3 object-contain"
+                        />
+                      </div>
                     </div>
-                    {/* Tooltip Icon */}
-                    <div className="absolute bottom-[3%] left-1/2 transform -translate-x-1/2">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/tooltip-icon.svg`}
-                        alt="Tooltip Icon"
-                        className="w-7 h-3 object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-              </button>
-            ))}
+                  )}
+                </button>
+              ))}
           </div>
         </div>
 
@@ -161,19 +178,20 @@ const IconSelector = ({ onSelect }: IconSelectorProps) => {
 
           {/* Icons Grid */}
           <div className="self-stretch flex-1 flex flex-wrap gap-2 px-2 mt-3">
-            {filteredIcons.map((icon, index) => (
-              <button
-                key={index}
-                onClick={() => onSelect(icon.basicUrl)} // Use basic URL for selection
-                className="w-10 h-10 flex items-center justify-center focus:outline-none"
-              >
-                <img
-                  src={icon.signedUrl}
-                  alt={icon.basicUrl}
-                  className="w-8 h-8 object-contain"
-                />
-              </button>
-            ))}
+            {filteredIcons &&
+              filteredIcons.map((icon, index) => (
+                <button
+                  key={index}
+                  onClick={() => onSelect(icon.basicUrl)} // Use basic URL for selection
+                  className="w-10 h-10 flex items-center justify-center focus:outline-none"
+                >
+                  <img
+                    src={icon.signedUrl}
+                    alt={icon.basicUrl}
+                    className="w-8 h-8 object-contain"
+                  />
+                </button>
+              ))}
           </div>
         </div>
       </div>
