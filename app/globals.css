@@ -70,8 +70,3 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
-/* Make the scrollbar overlay the content instead of shifting it */
-html {
-  scrollbar-gutter: stable both-edges;
-}

@@ -77,7 +77,13 @@ const WorkspacePage = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {path && <Sidebar stepCount={path.blocks.length} path={path} />}
+      {path && (
+        <Sidebar
+          stepCount={path.blocks.length}
+          path={path}
+          workspaceId={parseInt(id.toString())}
+        />
+      )}
       {/* Main Content */}
       <div className="flex-1">
         {workspaceName && workflowTitle ? (

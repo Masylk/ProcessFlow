@@ -7,21 +7,16 @@ import { Path } from '@/types/path';
 interface SidebarProps {
   path: Path;
   stepCount: number;
+  workspaceId: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ path, stepCount }) => {
+const Sidebar: React.FC<SidebarProps> = ({ path, stepCount, workspaceId }) => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
   const logoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`;
 
   return (
-    <div
-      className="w-[292px] bg-white border-r border-[#e4e7ec] justify-start items-start inline-flex  border overflow-auto "
-      style={{
-        minWidth: '300px', // Minimum width for the sidebar
-        maxWidth: '500px', // Maximum width for the sidebar
-      }}
-    >
+    <div className="w-[250px] bg-white border-r border-[#e4e7ec] justify-start items-start inline-flex  border overflow-auto ">
       <div className="flex-col justify-start items-start gap-6 inline-flex">
         {/* Header Block */}
         <div className="h-[72px] flex-col justify-center items-start gap-6 inline-flex">
@@ -37,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ path, stepCount }) => {
                     />
                   </div>
                 </div>
-                Processflow
+                ProcessFlow
               </div>
             </div>
           </div>
@@ -50,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ path, stepCount }) => {
           {/* Sidebar List */}
           <SidebarPath
             path={path}
+            workspaceId={workspaceId}
             defaultVisibility={true}
             displayTitle={false}
           />

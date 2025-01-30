@@ -4,15 +4,21 @@ import Sidebardiv from './Sidebardiv';
 
 interface SidebarListProps {
   blocks: Block[];
+  workspaceId: number;
 }
 
-const SidebarList: React.FC<SidebarListProps> = ({ blocks }) => {
+const SidebarList: React.FC<SidebarListProps> = ({ blocks, workspaceId }) => {
   // Sort blocks by position
 
   return (
-    <div className="self-stretch flex-col justify-start items-start gap-1 flex overflow-auto">
+    <div className="self-stretch flex-col justify-start items-start gap-1 flex">
       {blocks.map((block, index) => (
-        <Sidebardiv key={block.id} block={block} position={index} />
+        <Sidebardiv
+          key={block.id}
+          block={block}
+          position={index}
+          workspaceId={workspaceId}
+        />
       ))}
     </div>
   );

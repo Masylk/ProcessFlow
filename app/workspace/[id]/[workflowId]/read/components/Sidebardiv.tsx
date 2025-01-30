@@ -2,13 +2,20 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Block } from '@/types/block';
 import SidebarList from './SidebarList'; // Import SidebarList
 import SidebarPath from './SidebarPath';
+import { Path } from '@/types/path';
+import path from 'path';
 
 interface SidebardivProps {
   block: Block;
   position: number;
+  workspaceId: number;
 }
 
-const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
+const Sidebardiv: React.FC<SidebardivProps> = ({
+  block,
+  position,
+  workspaceId,
+}) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -17,6 +24,35 @@ const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(false);
   const chevronDownIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-down.svg`;
   const chevronUpIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-right.svg`;
+  const [paths, setPaths] = useState<Path[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPaths = async () => {
+      if (!block.path_block) return;
+      try {
+        const response = await fetch(
+          `/api/blocks/${block.path_block.id}/paths`
+        );
+        if (response.ok) {
+          const fetchedPaths: Path[] = await response.json();
+
+          console.log('fetched paths for block condition : ' + fetchedPaths);
+          setPaths(fetchedPaths); // Set the paths fetched from the API
+        } else {
+          setError('Failed to fetch paths');
+        }
+      } catch (err) {
+        setError('Error fetching paths');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaths(); // Call the fetchPaths function on component mount
+  }, []);
 
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -72,10 +108,10 @@ const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
   const croppedTitle = cropTitle(cleanedTitle, 50);
 
   return (
-    <div ref={divRef}>
+    <div className="" ref={divRef}>
       {/* Block Content */}
       <div
-        className={` w-full px-3 py-1.5 rounded-lg justify-start items-start gap-3 inline-flex flex-row space-x-2 ${
+        className={`w-[250px] px-3 py-1.5 rounded-lg justify-start items-start gap-3 inline-flex flex-row space-x-2 ${
           isActive ? 'bg-[#4761c4]' : ''
         }`}
       >
@@ -111,8 +147,9 @@ const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
             {croppedTitle}
           </div>
         </div>
-        {/* Toggle Subpaths Icon */}
-        {block.path_block?.paths && block.path_block.paths.length > 0 && (
+
+        {/* Toggle Icon */}
+        {block.path_block && (
           <div
             className="cursor-pointer "
             onClick={toggleSubpathsVisibility}
@@ -132,15 +169,13 @@ const Sidebardiv: React.FC<SidebardivProps> = ({ block, position }) => {
       </div>
 
       {/* Render Nested SidebarList for path_blocks */}
-      {isSubpathsVisible &&
-        block.path_block?.paths &&
-        block.path_block.paths.length > 0 && (
-          <div className="ml-4 border-gray-300">
-            {block.path_block.paths.map((path) => (
-              <SidebarPath key={path.id} path={path} />
-            ))}
-          </div>
-        )}
+      {isSubpathsVisible && block.path_block && paths.length > 0 && (
+        <div className="ml-4 border-gray-300">
+          {paths.map((path) => (
+            <SidebarPath key={path.id} path={path} workspaceId={workspaceId} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

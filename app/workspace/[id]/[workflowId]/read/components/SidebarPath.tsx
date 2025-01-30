@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SidebarList from './SidebarList';
 import { Path } from '@/types/path';
+import { Block } from '@/types/block';
+
+interface PathData {
+  id: number;
+  name: string;
+  workflow_id: number;
+  path_blockId?: number;
+  blocks: Block[];
+}
 
 interface SidebarPathProps {
   path: Path;
+  workspaceId: number;
   defaultVisibility?: boolean;
   displayTitle?: boolean;
 }
 
 const SidebarPath: React.FC<SidebarPathProps> = ({
   path,
+  workspaceId,
   defaultVisibility = true,
   displayTitle = true,
 }) => {
+  const [pathData, setPathData] = useState<PathData | null>(null);
+  const [blockList, setBlockList] = useState<Block[]>([]);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
   const [isContentVisible, setIsContentVisible] = useState(defaultVisibility);
@@ -21,13 +34,37 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   const chevronDownIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-down.svg`;
   const chevronUpIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/chevron-right.svg`;
 
+  useEffect(() => {
+    const fetchPathData = async () => {
+      try {
+        const response = await fetch(
+          `/api/workspace/${workspaceId}/paths/${path.id}?workflow_id=${path.workflow_id}`
+        );
+
+        if (response.ok) {
+          const fetchedPathData: PathData = await response.json();
+
+          console.log(fetchedPathData.blocks);
+          setBlockList(fetchedPathData.blocks);
+          setPathData(fetchedPathData);
+        } else {
+          console.error('Failed to fetch path data:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching path data:', error);
+      }
+    };
+
+    fetchPathData();
+  }, []);
+
   const toggleContentVisibility = (event: React.MouseEvent) => {
     event.stopPropagation();
     setIsContentVisible((prev) => !prev);
   };
 
   return (
-    <div className="py-1 rounded mb-0 overflow-auto">
+    <div className="py-1 rounded mb-0">
       {/* Header with Toggle Icon */}
       {displayTitle && (
         <div className="flex justify-start items-start">
@@ -61,9 +98,9 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
         </div>
       )}
 
-      {isContentVisible && path.blocks && path.blocks.length > 0 && (
+      {isContentVisible && (
         <div className={`${displayTitle ? 'ml-2' : ''}`}>
-          <SidebarList blocks={path.blocks} />
+          <SidebarList blocks={blockList} workspaceId={workspaceId} />
         </div>
       )}
     </div>
