@@ -51,3 +51,27 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Apple-style scrollbar that doesn't take up extra space */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Make the scrollbar overlay the content instead of shifting it */
+html {
+  scrollbar-gutter: stable both-edges;
+}
