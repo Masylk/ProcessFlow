@@ -5,17 +5,17 @@ import prisma from '@/lib/prisma'; // Import your Prisma client
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
-  // Get the session from Supabase
-  const { data, error } = await supabase.auth.getSession();
+  // Get the user from Supabase and authenticate it
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (error || !data?.session) {
+  if (userError || !userData) {
     return NextResponse.json(
       { error: 'User not authenticated' },
       { status: 401 }
     );
   }
 
-  const userId = data.session.user.id; // Get the UID from the session
+  const userId = userData.user.id; // Get the UID from the user data
 
   // Query Prisma to find the user based on the Supabase UID
   try {

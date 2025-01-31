@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@contentsquare/tag-sdk": "^1.1.0",
     "@prisma/client": "^5.16.2",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.0",
