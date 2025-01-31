@@ -17,9 +17,44 @@ const WorkspacePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [path, setPath] = useState<Path | null>(null);
-  const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
-    null
-  );
+  const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const fetchWorkspace = async () => {
+      if (!id || !workflowId) return;
+      try {
+        const response = await fetch(`/api/workspace/${id}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching workspace: ${response.statusText}`);
+        }
+        const data: Workspace = await response.json();
+
+        // Set the workspace name
+        setWorkspaceName(data.name);
+
+        // Find the workflow by ID
+        const workflow = data.workflows.find(
+          (w: Workflow) => w.id === parseInt(workflowId.toString(), 10)
+        );
+        if (workflow) {
+          setWorkflow(workflow);
+          setWorkflowName(workflow.name);
+
+          // Count the number of STEP blocks
+          const step_blocksCount = workflow.blocks.filter(
+            (block) => block.type === 'STEP'
+          ).length;
+          setStepCount(step_blocksCount); // Set the count in the state
+        } else {
+          throw new Error('Workflow not found in the workspace');
+        }
+      } catch (err: any) {
+        setError(err.message);
+      }
+    };
+
+    fetchWorkspace();
+  }, [id, workflowId]);
 
   useEffect(() => {
     if (id && workflowId) {
@@ -55,25 +90,6 @@ const WorkspacePage = () => {
       console.error('Error fetching workflow title:', error);
     }
   };
-
-  useEffect(() => {
-    const fetchWorkspace = async () => {
-      try {
-        const response = await fetch(`/api/workspace/${id}`);
-        if (!response.ok) {
-          throw new Error(`Error fetching workspace: ${response.statusText}`);
-        }
-        const data: Workspace = await response.json();
-
-        // Set the workspace name
-        setWorkspaceName(data.name);
-      } catch (err: any) {
-        setError(err.message);
-      }
-    };
-
-    fetchWorkspace();
-  }, [id, workflowId]);
 
   return (
     <div className="flex h-screen overflow-hidden">

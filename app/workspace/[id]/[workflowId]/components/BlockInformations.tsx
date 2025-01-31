@@ -33,7 +33,7 @@ export default function BlockInformations({
   }, [block]);
 
   const handleAverageTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value || 'N/A';
+    const value = e.target.value;
     setLocalBlock((prev) => ({
       ...prev,
       averageTime: value,
@@ -50,11 +50,23 @@ export default function BlockInformations({
   const handleBlur = () => {
     setIsEditingTitle(false); // Exit editing mode for title
     setIsEditingAverageTime(false); // Exit editing mode for averageTime
+    console.log('local block title: ' + localBlock.title);
+    if (localBlock.averageTime?.length === 0) {
+      setLocalBlock((prev) => ({
+        ...prev,
+        averageTime: 'N/A',
+      }));
+    }
     const updatedAverageTime =
-      localBlock.averageTime === 'N/A' ? undefined : localBlock.averageTime;
-    const updatedTitle = localBlock.title || undefined; // Handle undefined title
+      localBlock.averageTime === 'N/A' ? 'N/A' : localBlock.averageTime;
+    if (localBlock.title.length === 0) {
+      setLocalBlock((prev) => ({
+        ...prev,
+        title: 'Untitled Block',
+      }));
+    }
+    const updatedTitle = localBlock.title || 'Untitled Block'; // Handle undefined title
     const updates: Partial<Block> = {};
-
     if (updatedAverageTime !== block.averageTime) {
       updates.averageTime = updatedAverageTime;
     }
@@ -115,7 +127,7 @@ export default function BlockInformations({
           <h1 className="text-lg font-semibold text-gray-800">
             <input
               type="text"
-              value={localBlock.title || 'Untitled Block'}
+              value={localBlock.title}
               onChange={handleTitleChange}
               onBlur={handleBlur}
               onFocus={() => handleFocus('title')}

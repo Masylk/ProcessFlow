@@ -175,6 +175,7 @@ const BlockList: React.FC<BlockListProps> = ({
   };
 
   const handleOverlayClose = () => {
+    closeDetailSidebar();
     setOverlayVisible(false);
   };
 

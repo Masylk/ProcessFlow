@@ -15,11 +15,17 @@ const ImageOverlay: React.FC<ImageOverlayProps> = ({ onClose }) => {
 
   return (
     <div
-      className="fixed w-[50000vw] h-[50000vh] left-[-20000vw] top-[-20000vh] inset-0 z-20 bg-black bg-opacity-20 flex items-center justify-center"
-      onClick={(e) => e.stopPropagation()}
+      id="overlay"
+      className="fixed w-[50000vw] h-[50000vh] left-[-20000vw] top-[-20000vh] z-20 bg-black bg-opacity-20 flex items-center justify-center"
+      onClick={onClose} // Trigger onClose when the overlay is clicked
     >
-      {/* Render your content here */}
-      <p className="text-white">Image Overlay Content</p>
+      <div
+        className="bg-white p-4 rounded shadow-lg"
+        onClick={(e) => e.stopPropagation()} // Prevent clicks inside the content from triggering onClose
+      >
+        {/* Render your content here */}
+        <p className="text-black">Image Overlay Content</p>
+      </div>
     </div>
   );
 };

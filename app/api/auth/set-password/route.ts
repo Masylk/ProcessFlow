@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
   const { token, password } = await req.json();
 
   if (!token || !password) {
@@ -12,12 +11,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Use the session token to update the password
+  // Initialize Supabase client
+  const supabase = await createClient(); // Await the client creation
+
+  // Use the token to update the user's password
   const { data: user, error } = await supabase.auth.updateUser({
     password,
   });
 
   if (error) {
+    console.error(error);
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
