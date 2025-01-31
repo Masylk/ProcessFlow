@@ -452,7 +452,7 @@ export default function WorkflowPage() {
   };
 
   return (
-    <div className="overflow-hidden h-screen w-screen">
+    <div className="overflow-hidden h-screen w-screen max-w-screen">
       <div className="relative flex flex-col w-full">
         {/* Use WorkflowHeader */}
         <WorkflowHeader
