@@ -3,7 +3,7 @@ import Link from 'next/link';
 interface Workspace {
   id: number;
   name: string;
-  teamId: number;
+  teamTags: string[];
 }
 
 interface WorkspaceListProps {
