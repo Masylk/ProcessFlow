@@ -18,13 +18,9 @@ export async function GET(
     const workspace = await prisma.workspace.findUnique({
       where: { id: parseInt(id) },
       include: {
-        team: {
+        user_workspaces: {
           include: {
-            user_teams: {
-              include: {
-                user: true,
-              },
-            },
+            user: true, // Include the user related to the workspace
           },
         },
         workflows: {
