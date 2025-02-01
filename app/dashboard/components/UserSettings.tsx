@@ -1,7 +1,7 @@
 // components/UserSettings.tsx
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface User {
   id: number;
@@ -17,7 +17,6 @@ interface User {
 interface UserSettingsProps {
   user: User;
   onClose: () => void;
-  // Optionally, if you have a function to update the user state in the parent:
   onUserUpdate?: (updatedUser: User) => void;
 }
 
@@ -28,73 +27,94 @@ export default function UserSettings({
 }: UserSettingsProps) {
   // Define the default avatar URL using environment variables.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
+  // Use the signed URL if available; otherwise, fallback to default.
   const avatarSrc = user.avatar_signed_url
     ? user.avatar_signed_url
     : defaultAvatar;
 
   // Reference to the hidden file input element
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // State to hold the selected file; upload will be performed on Save.
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // State to hold the preview URL for the selected file.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Trigger the file selector
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection and upload
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  // When a file is selected, store it in state and generate a preview URL.
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      // Create a FormData object and append the file
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Call the upload API route
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const uploadData = await uploadRes.json();
-
-      if (uploadRes.ok && uploadData.filePath) {
-        // Construct the public URL for the uploaded file.
-        // (Adjust the URL format as needed for your Supabase storage settings.)
-        const newAvatarUrl = uploadData.filePath;
-
-        // Call the update user API route to update the avatar URL
-        const updateRes = await fetch('/api/user/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: user.id,
-            // Only updating the avatar here; other fields remain unchanged.
-            avatar_url: newAvatarUrl,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            full_name: user.full_name,
-            email: user.email,
-          }),
-        });
-
-        if (updateRes.ok) {
-          const updatedUser = await updateRes.json();
-          // Optionally update local state in the parent component.
-          if (onUserUpdate) {
-            onUserUpdate(updatedUser);
-          }
-          console.log('Avatar updated successfully');
-        } else {
-          console.error('Failed to update user information');
-        }
-      } else {
-        console.error('File upload failed', uploadData.error);
-      }
-    } catch (error) {
-      console.error('Error during file upload:', error);
+    if (file) {
+      setSelectedFile(file);
+      // Generate an object URL for preview
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
     }
+  };
+
+  // Cleanup the preview URL when component unmounts or when a new file is selected.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Perform the upload and update only when Save is clicked.
+  const handleSave = async () => {
+    if (selectedFile) {
+      try {
+        // Create a FormData object and append the selected file.
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        // Call the upload API route.
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+
+        if (uploadRes.ok && uploadData.filePath) {
+          // Use the returned filePath (adjust if you need to construct a public URL)
+          const newAvatarUrl = uploadData.filePath;
+
+          // Call the update user API route to update the avatar URL.
+          const updateRes = await fetch('/api/user/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: user.id,
+              avatar_url: newAvatarUrl,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              full_name: user.full_name,
+              email: user.email,
+            }),
+          });
+
+          if (updateRes.ok) {
+            const updatedUser = await updateRes.json();
+            if (onUserUpdate) {
+              onUserUpdate(updatedUser);
+            }
+            console.log('Avatar updated successfully');
+          } else {
+            console.error('Failed to update user information');
+          }
+        } else {
+          console.error('File upload failed', uploadData.error);
+        }
+      } catch (error) {
+        console.error('Error during file upload:', error);
+      }
+    }
+    // Close the modal after saving.
+    onClose();
   };
 
   return (
@@ -157,7 +177,8 @@ export default function UserSettings({
                     <div className="w-16 h-16 rounded-full justify-center items-center flex">
                       <div className="w-16 h-16 relative rounded-full border border-black/10">
                         <img
-                          src={avatarSrc}
+                          // If previewUrl exists, display it; otherwise, display avatarSrc.
+                          src={previewUrl ? previewUrl : avatarSrc}
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
                         />
@@ -339,17 +360,20 @@ export default function UserSettings({
               <div className="self-stretch h-[61px] flex-col justify-start items-center gap-5 flex">
                 <div className="self-stretch justify-end items-center gap-5 inline-flex">
                   <div className="grow shrink basis-0 h-10 justify-end items-center gap-3 flex">
-                    <div className="px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden">
-                      <div
-                        className="px-0.5 justify-center items-center flex"
-                        onClick={onClose}
-                      >
+                    <div
+                      className="px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden cursor-pointer"
+                      onClick={onClose}
+                    >
+                      <div className="px-0.5 justify-center items-center flex">
                         <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                           Cancel
                         </div>
                       </div>
                     </div>
-                    <div className="px-3.5 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border-2 border-white justify-center items-center gap-1 flex overflow-hidden">
+                    <div
+                      className="px-3.5 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border-2 border-white justify-center items-center gap-1 flex overflow-hidden cursor-pointer"
+                      onClick={handleSave}
+                    >
                       <div className="px-0.5 justify-center items-center flex">
                         <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
                           Save
