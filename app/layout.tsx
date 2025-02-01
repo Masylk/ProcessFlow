@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -11,25 +12,59 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html className="font-sans" lang="en">
       <head>
+        {/* --- Insertion du code Google Tag Manager dans le <head> --- */}
+        <Script id="gtm-script" strategy="beforeInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-M8W79RZW');
+          `}
+        </Script>
+        {/* --- Fin du code Google Tag Manager --- */}
+
         {/* Google Font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
-        {/* Favicon Links for different sizes */}
+        {/* Liens favicon pour différentes tailles */}
         <link rel="icon" type="image/png" sizes="32x32" href="/32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/48x48.png" />
         <link rel="icon" type="image/png" sizes="64x64" href="/64x64.png" />
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* --- Insertion du code noscript Google Tag Manager juste après <body> --- */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-M8W79RZW"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          ></iframe>
+        </noscript>
+        {/* --- Fin du code noscript --- */}
+
+        {children}
+
+        {/* Exemple d’intégration d’un script tiers (HubSpot) */}
+        <Script
+          src="https://js-na1.hs-scripts.com/47874121.js"
+          strategy="afterInteractive"
+          id="hs-script-loader"
+          async
+          defer
+        />
+      </body>
     </html>
   );
 }

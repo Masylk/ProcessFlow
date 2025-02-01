@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import WorkspaceList from '@/app/components/WorskpaceList';
+import WorkspaceList from './components/WorskpaceList';
+import { env } from 'process';
+import Mixpanel from '@/utils/mixpanel';
 
 interface Workspace {
   id: number;
@@ -13,16 +15,18 @@ interface Workspace {
 interface User {
   id: string;
   email: string;
-  // Add more fields as needed
+  name?: string;
+  avatarURL?: string;
+  created?: string;
 }
 
 function HomePage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
-  const [newWorkspaceTeamId, setNewWorkspaceTeamId] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
-  const supabase = createClient(); // Initialize Supabase client
+  const supabase = createClient();
 
+  // 🔹 Fetch user on mount
   useEffect(() => {
     const fetchUser = async () => {
       const res = await fetch('/api/user');
@@ -31,38 +35,52 @@ function HomePage() {
       if (data.error) {
         console.error('Error fetching user:', data.error);
       } else {
-        setUser(data); // Store user in state if response is successful
+        setUser(data);
+        Mixpanel.identify(data.id); // Identify user in Mixpanel
+        Mixpanel.people.set({
+          $email: data.email,
+          $name: data.name || 'Anonymous',
+          $created: data.created
+            ? new Date(data.created).toISOString()
+            : new Date().toISOString(),
+        });
       }
     };
 
     fetchUser();
   }, []);
 
+  // 🔹 Fetch workspaces when user is set
   useEffect(() => {
     if (user) {
-      // Fetch workspaces specific to the user
-      const fetchWorkspaces = async (userId: string) => {
-        const res = await fetch(`/api/workspaces/${userId}`);
+      const fetchWorkspaces = async () => {
+        const res = await fetch(`/api/workspaces/${user.id}`);
         const data = await res.json();
 
         if (data.error) {
           console.error('Error fetching workspaces:', data.error);
         } else {
-          setWorkspaces(data); // Store user-specific workspaces
+          setWorkspaces(data);
         }
       };
 
-      fetchWorkspaces(user.id); // Fetch workspaces once the user is set
+      fetchWorkspaces();
     }
-  }, [user]); // Re-run when user state is updated
+  }, [user]);
 
+  // 🔹 Initialize Mixpanel after user is set
+  useEffect(() => {
+    // Track page view
+    Mixpanel.track('HomePage Viewed');
+  }, []);
+
+  // 🔹 Add a new workspace
   const addWorkspace = async () => {
     if (!user) return;
+
     const response = await fetch('/api/workspaces', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: newWorkspaceName,
         user_id: parseInt(user.id),
@@ -72,16 +90,19 @@ function HomePage() {
     const newWorkspace: Workspace = await response.json();
     setWorkspaces([...workspaces, newWorkspace]);
     setNewWorkspaceName('');
-    setNewWorkspaceTeamId('');
+
+    // Track workspace creation
+    Mixpanel.track('Workspace Created', { workspaceName: newWorkspaceName });
   };
 
+  // 🔹 Handle user logout
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut(); // Now supabase is defined
+    const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error logging out:', error.message);
     } else {
-      console.log('Successfully logged out');
-      window.location.href = '/login'; // Redirect to login page
+      Mixpanel.track('User Logged Out');
+      window.location.href = '/login';
     }
   };
 
@@ -96,16 +117,16 @@ function HomePage() {
           Log out
         </button>
       </header>
+
       <main className="p-4">
         {user ? (
-          <div className="mb-4">
-            <p className="text-lg font-bold">Hello, {user.email}</p>
-          </div>
+          <p className="text-lg font-bold">Hello, {user.email}</p>
         ) : (
           <p>Loading user info...</p>
         )}
 
         <WorkspaceList workspaces={workspaces} />
+
         <div className="mt-6">
           <h2 className="text-lg font-bold mb-2">Add a new workspace</h2>
           <div className="space-y-4">
