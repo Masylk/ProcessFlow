@@ -37,3 +37,5 @@ yarn-error.log*
 next-env.d.ts
 
 nftl.txt    
+# Sentry Config File
+.env.sentry-build-plugin
