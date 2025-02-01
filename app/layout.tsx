@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,7 +30,17 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Intégration du script HubSpot avec next/script */}
+        <Script
+          src="https://js-na1.hs-scripts.com/47874121.js"
+          strategy="afterInteractive"
+          id="hs-script-loader"
+          async
+          defer
+        />
+      </body>
     </html>
   );
 }
