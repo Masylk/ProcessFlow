@@ -8,15 +8,20 @@ interface User {
   last_name: string;
   full_name: string;
   avatar_url?: string;
+  avatar_signed_url?: string;
   email: string;
 }
 
 interface UserDropdownProps {
   user: User | null;
+  onOpenUserSettings: () => void;
 }
 
-export default function UserDropdown({ user }: UserDropdownProps) {
-  const supabase = createClient(); // Initialize Supabase client
+export default function UserDropdown({
+  user,
+  onOpenUserSettings,
+}: UserDropdownProps) {
+  const supabase = createClient();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -24,7 +29,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
       console.error('Error logging out:', error.message);
     } else {
       console.log('Successfully logged out');
-      window.location.href = '/login'; // Redirect to login page
+      window.location.href = '/login';
     }
   };
 
@@ -35,8 +40,11 @@ export default function UserDropdown({ user }: UserDropdownProps) {
   return (
     <div className="h-full bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex-col justify-start items-start inline-flex overflow-hidden">
       <div className="h-full py-1 flex-col justify-start items-start flex overflow-hidden">
-        {/* First Item: Settings */}
-        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
+        {/* Settings Item */}
+        <div
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          onClick={onOpenUserSettings}
+        >
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -56,7 +64,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         {/* Horizontal line spacer */}
         <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
 
-        {/* Second Item: Changelog & Roadmap */}
+        {/* Changelog & Roadmap Item */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div
             onClick={handleRoadmapClick}
@@ -77,27 +85,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
           </div>
         </div>
 
-        {/* (Optional) Third Item: Slack Community (currently commented out) */}
-        {/*
-        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
-            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
-              <div className="w-4 h-4 relative overflow-hidden">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-smile-circle.svg`}
-                  alt="Message Icon"
-                  className="w-4 h-4 object-contain"
-                />
-              </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
-                Slack Community
-              </div>
-            </div>
-          </div>
-        </div>
-        */}
-
-        {/* Fourth Item: Support */}
+        {/* Support Item */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -118,7 +106,7 @@ export default function UserDropdown({ user }: UserDropdownProps) {
         {/* Horizontal line spacer */}
         <div className="self-stretch h-px bg-[#e4e7ec] border-t my-1" />
 
-        {/* Fifth Item: Log out */}
+        {/* Log out Item */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">

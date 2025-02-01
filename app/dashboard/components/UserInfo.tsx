@@ -7,6 +7,7 @@ interface User {
   last_name: string;
   full_name: string;
   avatar_url?: string;
+  avatar_signed_url?: string;
   email: string;
 }
 
@@ -19,7 +20,8 @@ export default function UserInfo({ user }: UserInfoProps) {
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
 
   // Use user.avatar_url if it exists, otherwise fall back to the default avatar.
-  const avatarSrc = user && user.avatar_url ? user.avatar_url : defaultAvatar;
+  const avatarSrc =
+    user && user.avatar_signed_url ? user.avatar_signed_url : defaultAvatar;
 
   return (
     <div className="h-16 flex-col border-l border-gray-50 justify-start items-start inline-flex">
