@@ -10,14 +10,13 @@ export default function Home() {
       </Head>
       <div className="absolute inset-0 bg-[#0c111d]/70 opacity-70" />
       <div className="relative z-10 w-[480px] h-[304px] bg-white rounded-xl shadow-lg flex flex-col items-center overflow-hidden">
-        
         {/* Close Button */}
         <button className="absolute top-4 right-4 p-4 rounded-md transition duration-300 hover:bg-[#F9FAFB]">
-            <img
+          <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
             alt="Close"
             className="w-6 h-6"
-        />
+          />
         </button>
 
         <div className="self-stretch h-24 flex flex-col items-center">
@@ -33,8 +32,12 @@ export default function Home() {
 
             {/* Title & Subtitle */}
             <div className="w-[432px] flex flex-col justify-center gap-1">
-              <div className="text-[#101828] text-lg font-semibold leading-7">Help center</div>
-              <div className="text-[#475467] text-sm font-normal leading-tight">Everything you need</div>
+              <div className="text-[#101828] text-lg font-semibold leading-7">
+                Help center
+              </div>
+              <div className="text-[#475467] text-sm font-normal leading-tight">
+                Everything you need
+              </div>
             </div>
           </div>
         </div>
@@ -57,7 +60,9 @@ export default function Home() {
                   Reach out to us
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">⌘S</div>
+              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+                ⌘S
+              </div>
             </div>
           </div>
 
@@ -77,7 +82,9 @@ export default function Home() {
                   Take a look at our roadmap
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">⌘D</div>
+              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+                ⌘D
+              </div>
             </div>
           </div>
 
@@ -102,7 +109,9 @@ export default function Home() {
                   Join our Slack community
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">⌘X</div>
+              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+                ⌘X
+              </div>
             </div>
           </a>
         </div>
