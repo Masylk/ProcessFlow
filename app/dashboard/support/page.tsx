@@ -110,7 +110,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="text-[#667085] text-xs font-normal leading-[18px]">
-                ⌘Xo
+                ⌘X
               </div>
             </div>
           </a>
