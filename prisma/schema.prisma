@@ -37,6 +37,7 @@ model workspace {
   id        Int      @id @default(autoincrement())
   name      String
   team_tags String[]
+  icon_url  String?
 
   user_workspaces user_workspace[]
   folders         folder[]

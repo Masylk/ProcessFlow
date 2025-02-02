@@ -5,6 +5,7 @@ import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
+import Sidebar from './components/Sidebar';
 
 interface User {
   id: number;
@@ -17,7 +18,14 @@ interface User {
   email: string;
 }
 
+interface Workspace {
+  id: number;
+  name: string;
+  teamTags: string[];
+}
+
 export default function Page() {
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
@@ -36,7 +44,7 @@ export default function Page() {
     fetchUser();
   }, []);
 
-  // Fetch the signed URL only if the user has an avatar_url but no avatar_signed_url
+  // Fetch the signed URL if needed
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
@@ -60,27 +68,55 @@ export default function Page() {
     fetchSignedUrl();
   }, [user]);
 
+  // Fetch workspaces specific to the user
+  useEffect(() => {
+    if (user) {
+      const fetchWorkspaces = async (userId: string) => {
+        const res = await fetch(`/api/workspaces/${userId}`);
+        const data = await res.json();
+        if (data.error) {
+          console.error('Error fetching workspaces:', data.error);
+        } else {
+          setWorkspaces(data);
+        }
+      };
+
+      fetchWorkspaces(user.id.toString());
+    }
+  }, [user]);
+
+  const addWorkspace = async (workspaceName: string) => {
+    if (!user) return;
+    const response = await fetch('/api/workspaces', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: workspaceName,
+        user_id: user.id,
+      }),
+    });
+    // Vous pourrez rafraîchir la liste des workspaces ici si nécessaire
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  // Toggle the dropdown visibility
+  // Toggle du dropdown
   const toggleDropdown = () => {
     setDropdownVisible((prev) => !prev);
   };
 
-  // Open the UserSettings modal and close the dropdown
   const openUserSettings = () => {
     setUserSettingsVisible(true);
     setDropdownVisible(false);
   };
 
-  // Close the UserSettings modal
   const closeUserSettings = () => {
     setUserSettingsVisible(false);
   };
 
-  // Function to update the user state after updating user info
+  // Fonction pour mettre à jour l'utilisateur
   const updateUser = (user: User) => {
     setUser(user);
   };
@@ -88,22 +124,22 @@ export default function Page() {
   return (
     <>
       <div className="flex h-screen w-screen">
-        {/* Sidebar */}
-        <aside className="w-[240px] bg-white border-r border-gray-200"></aside>
+        {/* Sidebar avec le header et la liste des workspaces */}
+        {user && user.email && (
+          <Sidebar workspaces={workspaces} userEmail={user?.email} />
+        )}
 
         <div className="flex flex-col flex-1">
-          {/* Header */}
+          {/* Header de la page */}
           <header className="h-[72px] bg-white border-b border-gray-200 flex justify-between items-center px-4 relative">
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
             />
-            {/* Wrap UserInfo in a relative container to position the dropdown */}
             <div className="relative cursor-pointer" onClick={toggleDropdown}>
               <UserInfo user={user} />
               {dropdownVisible && (
                 <div className="absolute top-full right-0 mt-2">
-                  {/* Pass the onOpenUserSettings callback to UserDropdown */}
                   <UserDropdown
                     user={user}
                     onOpenUserSettings={openUserSettings}
@@ -113,12 +149,12 @@ export default function Page() {
             </div>
           </header>
 
-          {/* Main Content */}
+          {/* Contenu principal */}
           <main className="flex-1 bg-gray-100"></main>
         </div>
       </div>
 
-      {/* Render the UserSettings modal as an overlay if visible */}
+      {/* Modal pour les réglages utilisateur */}
       {user && userSettingsVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings

@@ -39,44 +39,16 @@ export default function UserSettings({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Local state for editable name fields.
+  // Local state for editable fields.
   const [firstName, setFirstName] = useState<string>(user.first_name);
   const [lastName, setLastName] = useState<string>(user.last_name);
-  // Local state for editable email.
   const [newEmail, setNewEmail] = useState<string>(user.email);
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  const [enteredCode, setEnteredCode] = useState('');
-  const [isCodeSent, setIsCodeSent] = useState(false);
 
-  // {!isCodeSent ? (
-  //   <button
-  //     onClick={handleSendCode}
-  //     disabled={newEmail === user.email}
-  //     className="px-3 py-2 bg-white rounded-lg border border-[#d0d5dd] disabled:opacity-50"
-  //   >
-  //     Envoyer le code de confirmation
-  //   </button>
-  // ) : (
-  //   <div className="space-y-2">
-  //     <input
-  //       type="text"
-  //       value={enteredCode}
-  //       onChange={(e) => setEnteredCode(e.target.value)}
-  //       placeholder="Entrez le code reçu"
-  //       className="px-3.5 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-base text-[#101828]"
-  //     />
-  //     <button
-  //       onClick={handleConfirmCode}
-  //       className="px-3 py-2 bg-white rounded-lg border border-[#d0d5dd]"
-  //     >
-  //       Confirmer la modification
-  //     </button>
-  //   </div>
-  // )}
-  // Update local name fields when user changes.
+  // Update local state when user changes.
   useEffect(() => {
     setFirstName(user.first_name);
     setLastName(user.last_name);
+    setNewEmail(user.email);
   }, [user]);
 
   // Trigger the file selector.
@@ -94,92 +66,34 @@ export default function UserSettings({
     }
   };
 
-  // Validation simple d'une adresse email.
+  // Simple email validation.
   const validateEmail = (email: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Fonction qui simule l'envoi du code par email via un endpoint API.
-  // Dans un cas réel, vous devrez créer une route (par exemple /api/send-confirmation-code)
-  // qui s'occupera d'envoyer l'email de manière sécurisée.
-  const sendConfirmationCode = async (
-    email: string,
-    code: string
-  ): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/send-confirmation-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
-      });
-      return response.ok;
-    } catch (error) {
-      console.error('Erreur lors de l’envoi du code:', error);
-      return false;
-    }
-  };
-
-  // Étape 1 : Envoi du code de confirmation.
-  const handleSendCode = async () => {
-    if (newEmail === user.email) return; // rien à changer
+  // Handle the change email button.
+  const handleChangeEmail = async () => {
+    if (newEmail === user.email) return; // Nothing to change.
     if (!validateEmail(newEmail)) {
       alert('Veuillez entrer une adresse email valide.');
       return;
     }
-    // Ici, vous pouvez ajouter un contrôle supplémentaire pour vérifier si l'email est déjà utilisé.
-
-    // Générer un code à 6 chiffres
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const emailSent = await sendConfirmationCode(newEmail, code);
-    if (!emailSent) {
-      alert(
-        "Erreur lors de l'envoi du code de confirmation. Veuillez réessayer."
-      );
-      return;
-    }
-    setGeneratedCode(code);
-    setIsCodeSent(true);
-    alert(
-      'Un code de confirmation a été envoyé à votre nouvelle adresse email.'
-    );
-  };
-
-  // Étape 2 : Vérification du code et mise à jour de l'email.
-  const handleConfirmCode = async () => {
-    if (!generatedCode) return;
-    if (enteredCode !== generatedCode) {
-      alert('Le code de confirmation est invalide.');
-      return;
-    }
-    // Mettre à jour l'email via Supabase
-    const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
     if (error) {
-      console.error('Erreur lors de la mise à jour de l’email:', error.message);
-      alert('Erreur lors de la mise à jour de l’email : ' + error.message);
+      console.error("Erreur lors de la mise à jour de l'email:", error.message);
+      alert("Erreur lors de la mise à jour de l'email : " + error.message);
       return;
     }
+    alert('Adresse email mise à jour avec succès via Supabase.');
+    // Optionally update the parent component.
     if (onUserUpdate) {
       onUserUpdate({ ...user, email: newEmail });
     }
-    alert('Adresse email mise à jour avec succès.');
-    // Réinitialiser l'état
-    setGeneratedCode(null);
-    setEnteredCode('');
-    setIsCodeSent(false);
   };
 
-  // Clean up the preview URL when it changes or when the component unmounts.
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-
-  // Save changes: upload new avatar (if selected) and update the user record.
+  // Save changes: upload new avatar (if selected) and update the user record (excluding email).
   const handleSave = async () => {
-    let newAvatarUrl = user.avatar_url; // default to current avatar_url
+    let newAvatarUrl = user.avatar_url; // Default to current avatar.
 
     // If a new file was selected, perform the upload.
     if (selectedFile) {
@@ -206,7 +120,7 @@ export default function UserSettings({
     // Compute full_name based on updated firstName and lastName.
     const fullName = `${firstName} ${lastName}`;
 
-    // Update the user record.
+    // Update the user record in your database (excluding the email update).
     try {
       const updateRes = await fetch('/api/user/update', {
         method: 'PUT',
@@ -217,7 +131,7 @@ export default function UserSettings({
           first_name: firstName,
           last_name: lastName,
           full_name: fullName,
-          email: user.email,
+          // Email update is handled separately.
         }),
       });
 
@@ -238,8 +152,16 @@ export default function UserSettings({
     onClose();
   };
 
+  // Clean up the preview URL when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   return (
-    // Modal overlay
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden">
         {/* Header */}
@@ -280,7 +202,7 @@ export default function UserSettings({
             {/* Main settings form */}
             <div className="self-stretch h-[664px] flex-col justify-start items-start gap-6 flex">
               <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex">
-                {/* Your photo & Name section */}
+                {/* Photo & Name section */}
                 <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
                   <div className="self-stretch h-10 flex-col justify-start items-start flex">
@@ -385,7 +307,6 @@ export default function UserSettings({
                   <div className="self-stretch justify-start items-center gap-4 inline-flex">
                     <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                       <div className="self-stretch h-10 flex-col justify-start items-start gap-1.5 flex">
-                        {/* Conteneur relatif pour positionner l'icône à l'intérieur de l'input */}
                         <div className="relative self-stretch">
                           <input
                             type="email"
@@ -393,7 +314,6 @@ export default function UserSettings({
                             onChange={(e) => setNewEmail(e.target.value)}
                             className="h-10 w-full px-3.5 py-2.5 pl-10 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#101828] text-base font-normal font-['Inter'] leading-normal"
                           />
-                          {/* Icône positionnée en absolu sur le côté gauche */}
                           <div className="absolute inset-y-0 left-0 flex items-center pl-3">
                             <img
                               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-icon.svg`}
@@ -405,7 +325,7 @@ export default function UserSettings({
                       </div>
                     </div>
                     <button
-                      onClick={handleSendCode}
+                      onClick={handleChangeEmail}
                       disabled={newEmail === user.email}
                       className="px-3 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 disabled:opacity-50"
                     >

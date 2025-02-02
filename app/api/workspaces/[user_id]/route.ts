@@ -29,11 +29,27 @@ export async function GET(
     // Extract workspaces from the user_workspaces relation
     const workspaces = user.user_workspaces.map((uw) => uw.workspace);
 
+    // If no workspaces are found, create a default one named "My Workspace"
     if (!workspaces || workspaces.length === 0) {
-      return NextResponse.json(
-        { error: 'No workspaces found for this user' },
-        { status: 404 }
-      );
+      // Create the default workspace
+      const newWorkspace = await prisma.workspace.create({
+        data: {
+          name: 'My Workspace',
+        },
+      });
+
+      // Create the relation linking the user with the new workspace.
+      // Adjust the field names according to your Prisma schema.
+      await prisma.user_workspace.create({
+        data: {
+          user_id: user.id,
+          workspace_id: newWorkspace.id,
+          role: 'ADMIN',
+        },
+      });
+
+      // Return the newly created workspace inside an array for consistency.
+      return NextResponse.json([newWorkspace]);
     }
 
     return NextResponse.json(workspaces);
