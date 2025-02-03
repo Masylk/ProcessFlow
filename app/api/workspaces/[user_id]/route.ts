@@ -8,7 +8,7 @@ export async function GET(
   const userId = parseInt(params.user_id); // Use the user_id from the URL
 
   try {
-    // Fetch the user and their workspaces based on user_id
+    // Fetch the user and their workspaces (with folders included) based on user_id
     const user = await prisma.user.findUnique({
       where: {
         id: userId, // Query by user_id
@@ -16,7 +16,11 @@ export async function GET(
       include: {
         user_workspaces: {
           include: {
-            workspace: true, // Include related workspaces
+            workspace: {
+              include: {
+                folders: true, // Include the folders relation
+              },
+            },
           },
         },
       },
@@ -29,11 +33,29 @@ export async function GET(
     // Extract workspaces from the user_workspaces relation
     const workspaces = user.user_workspaces.map((uw) => uw.workspace);
 
+    // If no workspaces are found, create a default one named "My Workspace"
     if (!workspaces || workspaces.length === 0) {
-      return NextResponse.json(
-        { error: 'No workspaces found for this user' },
-        { status: 404 }
-      );
+      // Create the default workspace and include folders (which will be empty)
+      const newWorkspace = await prisma.workspace.create({
+        data: {
+          name: 'My Workspace',
+        },
+        include: {
+          folders: true,
+        },
+      });
+
+      // Create the relation linking the user with the new workspace.
+      await prisma.user_workspace.create({
+        data: {
+          user_id: user.id,
+          workspace_id: newWorkspace.id,
+          role: 'ADMIN',
+        },
+      });
+
+      // Return the newly created workspace inside an array for consistency.
+      return NextResponse.json([newWorkspace]);
     }
 
     return NextResponse.json(workspaces);

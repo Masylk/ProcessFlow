@@ -5,23 +5,32 @@ import prisma from '@/lib/prisma'; // Import your Prisma client
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
-  // Get the session from Supabase
-  const { data, error } = await supabase.auth.getSession();
+  // Get the user from Supabase Auth
+  const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (error || !data?.session) {
+  if (userError || !userData || !userData.user) {
     return NextResponse.json(
       { error: 'User not authenticated' },
       { status: 401 }
     );
   }
 
-  const userId = data.session.user.id; // Get the UID from the session
+  const supabaseUser = userData.user;
+  const userId = supabaseUser.id; // Supabase UID
+  const supabaseEmail = supabaseUser.email;
 
-  // Query Prisma to find the user based on the Supabase UID
+  if (!supabaseEmail) {
+    return NextResponse.json(
+      { error: 'No email found in Supabase user data' },
+      { status: 400 }
+    );
+  }
+
   try {
+    // Fetch the Prisma user based on the Supabase UID
     const user = await prisma.user.findUnique({
       where: {
-        auth_id: userId, // assuming `auth_id` is the column storing the Supabase UID
+        auth_id: userId,
       },
     });
 
@@ -29,9 +38,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // If the email differs, update the Prisma user record
+    if (user.email !== supabaseEmail) {
+      const updatedUser = await prisma.user.update({
+        where: { auth_id: userId },
+        data: {
+          email: supabaseEmail,
+        },
+      });
+      return NextResponse.json(updatedUser);
+    }
+
     return NextResponse.json(user);
   } catch (dbError) {
-    console.error('Error fetching user from Prisma:', dbError);
+    console.error('Error fetching or updating user from Prisma:', dbError);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
