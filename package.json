@@ -9,20 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@contentsquare/tag-sdk": "^1.1.0",
     "@prisma/client": "^5.16.2",
-    "@sentry/nextjs": "^8.53.0",
+    "@sentry/nextjs": "^8.54.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.0",
     "dompurify": "^3.2.3",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
-    "mixpanel-browser": "^2.59.0",
     "next": "14.2.5",
     "posthog-js": "^1.215.1",
     "react": "^18",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18",
-    "react-flow-renderer": "^10.3.17",
     "react-quill": "^2.0.0",
     "react-zoom-pan-pinch": "^3.6.1",
     "reactflow": "^11.11.4",
@@ -30,7 +29,6 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.9",
-    "@types/mixpanel-browser": "^2.51.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-beautiful-dnd": "^13.1.8",
@@ -38,6 +36,7 @@
     "@types/tailwindcss": "^3.1.0",
     "@types/uuid": "^10.0.0",
     "postcss": "^8",
+    "prisma": "^5.16.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
