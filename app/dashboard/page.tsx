@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
@@ -15,13 +15,14 @@ interface User {
   full_name: string;
   avatar_url?: string;
   avatar_signed_url?: string;
+  active_workspace?: number;
   email: string;
 }
 
 interface Workspace {
   id: number;
   name: string;
-  teamTags: string[];
+  teamTags?: string[];
 }
 
 export default function Page() {
@@ -31,6 +32,12 @@ export default function Page() {
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
+  const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
+    null
+  );
+
+  // Ref used as a flag so that the active_workspace update is performed only once
+  const activeWorkspaceUpdatedRef = useRef(false);
 
   // Fetch user data from your API
   useEffect(() => {
@@ -85,6 +92,81 @@ export default function Page() {
     }
   }, [user]);
 
+  // Effect to set activeWorkspace.
+  // If user.active_workspace is not set, we choose the first workspace and update the user in the DB.
+  useEffect(() => {
+    if (user && workspaces.length > 0) {
+      // If active_workspace is not defined, update it with the first workspace.
+      if (!user.active_workspace) {
+        if (!activeWorkspaceUpdatedRef.current) {
+          // Only update if activeWorkspace is not already set to the first one
+          if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
+            setActiveWorkspace(workspaces[0]);
+          }
+          activeWorkspaceUpdatedRef.current = true; // Prevent further updates in subsequent renders
+          const updateActiveWorkspace = async () => {
+            const updateRes = await fetch('/api/user/update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: user.id,
+                active_workspace: workspaces[0].id,
+              }),
+            });
+            if (updateRes.ok) {
+              const updatedUser = await updateRes.json();
+              // Only update the user if the active_workspace changed
+              if (updatedUser.active_workspace !== user.active_workspace) {
+                setUser(updatedUser);
+              }
+            } else {
+              console.error('Error updating user active_workspace');
+            }
+          };
+          updateActiveWorkspace();
+        }
+      } else {
+        // If active_workspace exists, find it in the list.
+        const foundWorkspace = workspaces.find(
+          (ws) => ws.id === user.active_workspace
+        );
+        if (foundWorkspace) {
+          // Only update if different from current activeWorkspace
+          if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
+            setActiveWorkspace(foundWorkspace);
+          }
+        } else {
+          // If the workspace referenced by the user isn't found, use the first workspace
+          if (!activeWorkspaceUpdatedRef.current) {
+            if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
+              setActiveWorkspace(workspaces[0]);
+            }
+            activeWorkspaceUpdatedRef.current = true;
+            const updateActiveWorkspace = async () => {
+              const updateRes = await fetch('/api/user/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: user.id,
+                  active_workspace: workspaces[0].id,
+                }),
+              });
+              if (updateRes.ok) {
+                const updatedUser = await updateRes.json();
+                if (updatedUser.active_workspace !== user.active_workspace) {
+                  setUser(updatedUser);
+                }
+              } else {
+                console.error('Error updating user active_workspace');
+              }
+            };
+            updateActiveWorkspace();
+          }
+        }
+      }
+    }
+  }, [user, workspaces]); // Notice we do not include activeWorkspace in the dependency array
+
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
     const response = await fetch('/api/workspaces', {
@@ -95,14 +177,14 @@ export default function Page() {
         user_id: user.id,
       }),
     });
-    // Vous pourrez rafraîchir la liste des workspaces ici si nécessaire
+    // You may refresh the workspaces list here if necessary
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  // Toggle du dropdown
+  // Toggle the dropdown
   const toggleDropdown = () => {
     setDropdownVisible((prev) => !prev);
   };
@@ -116,21 +198,50 @@ export default function Page() {
     setUserSettingsVisible(false);
   };
 
-  // Fonction pour mettre à jour l'utilisateur
+  // Function to update the user in state
   const updateUser = (user: User) => {
     setUser(user);
+  };
+
+  const updateActiveWorkspace = async (workspace: Workspace) => {
+    if (user) {
+      const updateRes = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id,
+          active_workspace: workspace.id,
+        }),
+      });
+      if (updateRes.ok) {
+        const updatedUser = await updateRes.json();
+        if (updatedUser.active_workspace !== user.active_workspace) {
+          setUser(updatedUser);
+          setActiveWorkspace(workspace);
+        }
+      } else {
+        console.error('Error updating user active_workspace');
+      }
+    } else {
+      console.log('no user to update');
+    }
   };
 
   return (
     <>
       <div className="flex h-screen w-screen">
-        {/* Sidebar avec le header et la liste des workspaces */}
+        {/* Sidebar with header and list of workspaces */}
         {user && user.email && (
-          <Sidebar workspaces={workspaces} userEmail={user?.email} />
+          <Sidebar
+            workspaces={workspaces}
+            userEmail={user.email}
+            activeWorkspace={activeWorkspace}
+            setActiveWorkspace={updateActiveWorkspace}
+          />
         )}
 
         <div className="flex flex-col flex-1">
-          {/* Header de la page */}
+          {/* Page header */}
           <header className="h-[72px] bg-white border-b border-gray-200 flex justify-between items-center px-4 relative">
             <SearchBar
               searchTerm={searchTerm}
@@ -149,12 +260,12 @@ export default function Page() {
             </div>
           </header>
 
-          {/* Contenu principal */}
+          {/* Main content */}
           <main className="flex-1 bg-gray-100"></main>
         </div>
       </div>
 
-      {/* Modal pour les réglages utilisateur */}
+      {/* Modal for user settings */}
       {user && userSettingsVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings

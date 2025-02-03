@@ -28,6 +28,7 @@ model user {
   full_name       String
   email           String           @unique
   avatar_url      String?
+  active_workspace Int?
   actions         action[]         @relation("user_actions")
   user_workspaces user_workspace[]
 }

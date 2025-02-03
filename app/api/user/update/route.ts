@@ -5,7 +5,15 @@ import prisma from '@/lib/prisma'; // Import your Prisma client
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, first_name, last_name, full_name, email, avatar_url } = body;
+    const {
+      id,
+      first_name,
+      last_name,
+      full_name,
+      email,
+      avatar_url,
+      active_workspace,
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -14,17 +22,15 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Optionally, derive full_name if not provided
-    const computedFullName = full_name || `${first_name} ${last_name}`;
-
     const updatedUser = await prisma.user.update({
       where: { id: Number(id) },
       data: {
         first_name,
         last_name,
-        full_name: computedFullName,
+        full_name,
         email,
         avatar_url,
+        active_workspace,
       },
     });
 
