@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import WorkspaceList from './components/WorskpaceList';
 import { env } from 'process';
-import Mixpanel from '@/utils/mixpanel';
 
 interface Workspace {
   id: number;
@@ -36,14 +35,6 @@ function HomePage() {
         console.error('Error fetching user:', data.error);
       } else {
         setUser(data);
-        Mixpanel.identify(data.id); // Identify user in Mixpanel
-        Mixpanel.people.set({
-          $email: data.email,
-          $name: data.name || 'Anonymous',
-          $created: data.created
-            ? new Date(data.created).toISOString()
-            : new Date().toISOString(),
-        });
       }
     };
 
@@ -68,12 +59,6 @@ function HomePage() {
     }
   }, [user]);
 
-  // 🔹 Initialize Mixpanel after user is set
-  useEffect(() => {
-    // Track page view
-    Mixpanel.track('HomePage Viewed');
-  }, []);
-
   // 🔹 Add a new workspace
   const addWorkspace = async () => {
     if (!user) return;
@@ -90,9 +75,6 @@ function HomePage() {
     const newWorkspace: Workspace = await response.json();
     setWorkspaces([...workspaces, newWorkspace]);
     setNewWorkspaceName('');
-
-    // Track workspace creation
-    Mixpanel.track('Workspace Created', { workspaceName: newWorkspaceName });
   };
 
   // 🔹 Handle user logout
@@ -101,7 +83,6 @@ function HomePage() {
     if (error) {
       console.error('Error logging out:', error.message);
     } else {
-      Mixpanel.track('User Logged Out');
       window.location.href = '/login';
     }
   };
