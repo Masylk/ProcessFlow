@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     const { name, user_id } = await req.json();
 
-    // Check if the user exists
+    // Vérifier si l'utilisateur existe
     const user = await prisma.user.findUnique({
       where: { id: Number(user_id) },
     });
@@ -35,21 +35,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create the workspace and link the creator as an ADMIN
+    // Définir trois couleurs de fond dans les tons bleu, rouge et vert
+    const background_colours = ['#4299E1', '#F56565', '#48BB78'];
+    // Sélectionner aléatoirement une couleur parmi les trois
+    const randomIndex = Math.floor(Math.random() * background_colours.length);
+    const randomColour = background_colours[randomIndex];
+
+    // Créer le workspace et lier le créateur en tant qu'ADMIN, en assignant la couleur de fond aléatoire
     const newWorkspace = await prisma.workspace.create({
       data: {
         name,
+        background_colour: randomColour,
         user_workspaces: {
           create: {
             user_id: Number(user_id),
-            role: 'ADMIN', // Assign the creator as an ADMIN
+            role: 'ADMIN', // Assigner le créateur en tant qu'ADMIN
           },
         },
       },
       include: {
         user_workspaces: {
           include: {
-            user: true, // Return user details with the workspace
+            user: true, // Retourner les détails de l'utilisateur avec le workspace
           },
         },
       },

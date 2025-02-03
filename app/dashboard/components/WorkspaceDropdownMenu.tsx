@@ -1,12 +1,7 @@
 'use client';
 
+import { Workspace } from '@/types/workspace';
 import React from 'react';
-
-interface Workspace {
-  id: number;
-  name: string;
-  teamTags?: string[];
-}
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -70,7 +65,7 @@ export default function WorkspaceDropdownMenu({
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
                   style={{
-                    backgroundColor: getColorFromString(workspace.name),
+                    backgroundColor: workspace.background_colour || '#4299E1',
                   }}
                 >
                   {workspace.name.charAt(0).toUpperCase()}

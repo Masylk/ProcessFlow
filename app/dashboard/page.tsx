@@ -6,24 +6,8 @@ import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
-
-interface User {
-  id: number;
-  auth_id: string;
-  first_name: string;
-  last_name: string;
-  full_name: string;
-  avatar_url?: string;
-  avatar_signed_url?: string;
-  active_workspace?: number;
-  email: string;
-}
-
-interface Workspace {
-  id: number;
-  name: string;
-  teamTags?: string[];
-}
+import { Workspace } from '@/types/workspace';
+import { User } from '@/types/user';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -231,7 +215,7 @@ export default function Page() {
     <>
       <div className="flex h-screen w-screen">
         {/* Sidebar with header and list of workspaces */}
-        {user && user.email && (
+        {user && user.email && activeWorkspace && (
           <Sidebar
             workspaces={workspaces}
             userEmail={user.email}
@@ -242,7 +226,7 @@ export default function Page() {
 
         <div className="flex flex-col flex-1">
           {/* Page header */}
-          <header className="h-[72px] bg-white border-b border-gray-200 flex justify-between items-center px-4 relative">
+          <header className="h-[73px] bg-white border-b border-gray-200 flex justify-between items-center px-4 relative">
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}

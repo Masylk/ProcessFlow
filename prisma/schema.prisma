@@ -39,6 +39,7 @@ model workspace {
   name      String
   team_tags String[]
   icon_url  String?
+  background_colour String?
 
   user_workspaces user_workspace[]
   folders         folder[]
@@ -80,8 +81,8 @@ model workflow {
   blocks       block[]   @relation("workflow_blocks")
   history      action[]  @relation("workflow_actions")
   paths        path[]    @relation("workflow_paths")
-  folder       folder?   @relation(fields: [folderId], references: [id])
-  folderId     Int?
+  folder       folder?   @relation(fields: [folder_id], references: [id])
+  folder_id    Int?
 
   @@unique([name, workspace_id])
 }

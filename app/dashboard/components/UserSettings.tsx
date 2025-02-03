@@ -3,17 +3,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { User } from '@/types/user';
 
-interface User {
-  id: number;
-  auth_id: string;
-  first_name: string;
-  last_name: string;
-  full_name: string;
-  avatar_url?: string;
-  avatar_signed_url?: string;
-  email: string;
-}
 
 interface UserSettingsProps {
   user: User;
