@@ -8,8 +8,6 @@ import PostHogPageView from './PostHogPageView';
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
-console.log('PostHog Key:', process.env.NEXT_PUBLIC_POSTHOG_KEY);
-console.log('PostHog Host:', process.env.NEXT_PUBLIC_POSTHOG_HOST);
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (posthogKey && posthogHost) {
