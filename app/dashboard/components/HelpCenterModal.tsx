@@ -1,17 +1,30 @@
+// components/HelpCenterModal.tsx
 import Head from 'next/head';
+import { User } from '@/types/user';
 
-export default function Home() {
+interface HelpCenterModalProps {
+  onClose: () => void;
+  user: User;
+}
+
+export default function HelpCenterModal({
+  onClose,
+  user,
+}: HelpCenterModalProps) {
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-[#0c111d]/70 p-8 overflow-hidden relative">
       <Head>
-        <title>My Next.js App</title>
-        <meta name="description" content="A default Next.js page" />
+        <title>Help Center</title>
+        <meta name="description" content="Help center modal" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="absolute inset-0 bg-[#0c111d]/70 opacity-70" />
       <div className="relative z-10 w-[480px] h-[304px] bg-white rounded-xl shadow-lg flex flex-col items-center overflow-hidden">
         {/* Close Button */}
-        <button className="absolute top-4 right-4 p-4 rounded-md transition duration-300 hover:bg-[#F9FAFB]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-4 rounded-md transition duration-300 hover:bg-[#F9FAFB]"
+        >
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
             alt="Close"
@@ -45,7 +58,10 @@ export default function Home() {
         {/* Options List */}
         <div className="self-stretch h-52 p-6 flex flex-col gap-5">
           {/* Reach out to us */}
-          <div className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg">
+          <a
+            href="mailto:contact@process-flow.io"
+            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
+          >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
                 {/* Certificate Icon */}
@@ -64,10 +80,13 @@ export default function Home() {
                 ⌘S
               </div>
             </div>
-          </div>
+          </a>
 
           {/* Take a look at our roadmap */}
-          <div className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg">
+          <a
+            href="https://processflow.features.vote/roadmap"
+            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
+          >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
                 {/* Compass Icon */}
@@ -86,9 +105,9 @@ export default function Home() {
                 ⌘D
               </div>
             </div>
-          </div>
+          </a>
 
-          {/* Join our Slack community (With Slack Icon) */}
+          {/* Join our Slack community */}
           <a
             href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
             target="_blank"

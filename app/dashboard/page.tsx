@@ -6,8 +6,13 @@ import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
+import HelpCenterModal from './components/HelpCenterModal';
 import { Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
+import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
+
+// Make sure that supabase is correctly imported and configured.
+import { createClient } from '@/utils/supabase/client';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -16,9 +21,16 @@ export default function Page() {
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
+  const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
+  const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
+
+  const supabase = createClient();
+
+  // States for password change
+  const [newPassword, setNewPassword] = useState<string>(''); // if empty string, treat as not active
 
   // Ref used as a flag so that the active_workspace update is performed only once
   const activeWorkspaceUpdatedRef = useRef(false);
@@ -77,17 +89,14 @@ export default function Page() {
   }, [user]);
 
   // Effect to set activeWorkspace.
-  // If user.active_workspace is not set, we choose the first workspace and update the user in the DB.
   useEffect(() => {
     if (user && workspaces.length > 0) {
-      // If active_workspace is not defined, update it with the first workspace.
       if (!user.active_workspace) {
         if (!activeWorkspaceUpdatedRef.current) {
-          // Only update if activeWorkspace is not already set to the first one
           if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
             setActiveWorkspace(workspaces[0]);
           }
-          activeWorkspaceUpdatedRef.current = true; // Prevent further updates in subsequent renders
+          activeWorkspaceUpdatedRef.current = true;
           const updateActiveWorkspace = async () => {
             const updateRes = await fetch('/api/user/update', {
               method: 'PUT',
@@ -99,7 +108,6 @@ export default function Page() {
             });
             if (updateRes.ok) {
               const updatedUser = await updateRes.json();
-              // Only update the user if the active_workspace changed
               if (updatedUser.active_workspace !== user.active_workspace) {
                 setUser(updatedUser);
               }
@@ -110,17 +118,14 @@ export default function Page() {
           updateActiveWorkspace();
         }
       } else {
-        // If active_workspace exists, find it in the list.
         const foundWorkspace = workspaces.find(
           (ws) => ws.id === user.active_workspace
         );
         if (foundWorkspace) {
-          // Only update if different from current activeWorkspace
           if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
             setActiveWorkspace(foundWorkspace);
           }
         } else {
-          // If the workspace referenced by the user isn't found, use the first workspace
           if (!activeWorkspaceUpdatedRef.current) {
             if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
               setActiveWorkspace(workspaces[0]);
@@ -149,7 +154,7 @@ export default function Page() {
         }
       }
     }
-  }, [user, workspaces]); // Notice we do not include activeWorkspace in the dependency array
+  }, [user, workspaces]);
 
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
@@ -161,7 +166,7 @@ export default function Page() {
         user_id: user.id,
       }),
     });
-    // You may refresh the workspaces list here if necessary
+    // Refresh workspaces if needed.
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +185,17 @@ export default function Page() {
 
   const closeUserSettings = () => {
     setUserSettingsVisible(false);
+    setPasswordChanged(false);
+  };
+
+  // Open the modal for the Help Center
+  const openHelpCenter = () => {
+    setHelpCenterVisible(true);
+    setDropdownVisible(false);
+  };
+
+  const closeHelpCenter = () => {
+    setHelpCenterVisible(false);
   };
 
   // Function to update the user in state
@@ -211,6 +227,28 @@ export default function Page() {
     }
   };
 
+  // Handle updating the password.
+  const handleUpdatePassword = async () => {
+    // Example using Supabase. Adjust as needed for your auth logic.
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      console.error(
+        'Erreur lors de la mise à jour du mot de passe:',
+        error.message
+      );
+      alert('Erreur lors de la mise à jour du mot de passe : ' + error.message);
+      return;
+    }
+
+    setPasswordChanged(true);
+    handleCancelPasswordChange();
+  };
+
+  // Resets the password change state.
+  const handleCancelPasswordChange = () => {
+    setNewPassword('');
+  };
+
   return (
     <>
       <div className="flex h-screen w-screen">
@@ -238,6 +276,7 @@ export default function Page() {
                   <UserDropdown
                     user={user}
                     onOpenUserSettings={openUserSettings}
+                    onOpenHelpCenter={openHelpCenter}
                   />
                 </div>
               )}
@@ -254,9 +293,26 @@ export default function Page() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings
             user={user}
+            updateNewPassword={setNewPassword}
+            passwordChanged={passwordChanged}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
           />
+        </div>
+      )}
+
+      {/* Password Change Modal: Displayed only if newPassword is not empty */}
+      {newPassword !== '' && (
+        <ConfirmChangePasswordModal
+          onCancel={handleCancelPasswordChange}
+          onChangePassword={handleUpdatePassword}
+        />
+      )}
+
+      {/* Modal for Help Center */}
+      {helpCenterVisible && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <HelpCenterModal onClose={closeHelpCenter} user={user} />
         </div>
       )}
     </>

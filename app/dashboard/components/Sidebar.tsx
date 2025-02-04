@@ -92,7 +92,7 @@ export default function Sidebar({
             />
           </div>
           <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-            My Workflows
+            My Flows
           </div>
         </button>
       </div>
