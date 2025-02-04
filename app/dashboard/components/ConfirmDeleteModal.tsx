@@ -2,12 +2,15 @@
 
 import Head from 'next/head';
 
-export default function Home() {
+export default function ConfirmDeleteModal() {
   return (
     <>
       <Head>
         <title>Confirm Delete</title>
-        <meta name="description" content="Please enter your password to delete your account." />
+        <meta
+          name="description"
+          content="Please enter your password to delete your account."
+        />
       </Head>
 
       <main className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -26,7 +29,9 @@ export default function Home() {
                   />
                 </div>
                 <div className="self-stretch h-[52px] flex-col justify-start items-start gap-1 flex">
-                  <div className="self-stretch text-[#101828] text-lg font-semibold leading-7">Confirm delete</div>
+                  <div className="self-stretch text-[#101828] text-lg font-semibold leading-7">
+                    Confirm delete
+                  </div>
                   <div className="self-stretch text-[#475467] text-sm font-normal leading-tight">
                     Please enter your password to delete your account.
                   </div>
@@ -65,12 +70,16 @@ export default function Home() {
               <div className="self-stretch px-6 pb-6 flex items-center gap-3">
                 {/* Cancel Button with Hover Effect */}
                 <button className="w-full h-11 px-4 py-2.5 bg-white rounded-lg shadow border border-[#d0d5dd] flex justify-center items-center gap-1.5 transition-all duration-300 hover:bg-[#F9FAFB]">
-                  <span className="text-[#344054] text-base font-semibold">Cancel</span>
+                  <span className="text-[#344054] text-base font-semibold">
+                    Cancel
+                  </span>
                 </button>
 
                 {/* Delete Account Button with Hover Effect */}
                 <button className="w-full h-11 px-4 py-2.5 bg-[#d92c20] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#901f17] flex justify-center items-center gap-1.5 transition-all duration-300 hover:bg-[#B42318]">
-                  <span className="text-white text-base font-semibold font-['Inter'] leading-normal">Delete account</span>
+                  <span className="text-white text-base font-semibold font-['Inter'] leading-normal">
+                    Delete account
+                  </span>
                 </button>
               </div>
             </div>
