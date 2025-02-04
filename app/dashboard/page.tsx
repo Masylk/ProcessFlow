@@ -6,6 +6,7 @@ import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
+import HelpCenterModal from './components/HelpCenterModal'; // Assurez-vous que le chemin est correct
 import { Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 
@@ -16,6 +17,7 @@ export default function Page() {
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
+  const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -80,14 +82,12 @@ export default function Page() {
   // If user.active_workspace is not set, we choose the first workspace and update the user in the DB.
   useEffect(() => {
     if (user && workspaces.length > 0) {
-      // If active_workspace is not defined, update it with the first workspace.
       if (!user.active_workspace) {
         if (!activeWorkspaceUpdatedRef.current) {
-          // Only update if activeWorkspace is not already set to the first one
           if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
             setActiveWorkspace(workspaces[0]);
           }
-          activeWorkspaceUpdatedRef.current = true; // Prevent further updates in subsequent renders
+          activeWorkspaceUpdatedRef.current = true;
           const updateActiveWorkspace = async () => {
             const updateRes = await fetch('/api/user/update', {
               method: 'PUT',
@@ -99,7 +99,6 @@ export default function Page() {
             });
             if (updateRes.ok) {
               const updatedUser = await updateRes.json();
-              // Only update the user if the active_workspace changed
               if (updatedUser.active_workspace !== user.active_workspace) {
                 setUser(updatedUser);
               }
@@ -110,17 +109,14 @@ export default function Page() {
           updateActiveWorkspace();
         }
       } else {
-        // If active_workspace exists, find it in the list.
         const foundWorkspace = workspaces.find(
           (ws) => ws.id === user.active_workspace
         );
         if (foundWorkspace) {
-          // Only update if different from current activeWorkspace
           if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
             setActiveWorkspace(foundWorkspace);
           }
         } else {
-          // If the workspace referenced by the user isn't found, use the first workspace
           if (!activeWorkspaceUpdatedRef.current) {
             if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
               setActiveWorkspace(workspaces[0]);
@@ -149,7 +145,7 @@ export default function Page() {
         }
       }
     }
-  }, [user, workspaces]); // Notice we do not include activeWorkspace in the dependency array
+  }, [user, workspaces]);
 
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
@@ -161,7 +157,7 @@ export default function Page() {
         user_id: user.id,
       }),
     });
-    // You may refresh the workspaces list here if necessary
+    // Vous pouvez rafraîchir la liste des workspaces ici si nécessaire
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +176,16 @@ export default function Page() {
 
   const closeUserSettings = () => {
     setUserSettingsVisible(false);
+  };
+
+  // Ouvrir le modal du Help Center
+  const openHelpCenter = () => {
+    setHelpCenterVisible(true);
+    setDropdownVisible(false);
+  };
+
+  const closeHelpCenter = () => {
+    setHelpCenterVisible(false);
   };
 
   // Function to update the user in state
@@ -238,6 +244,7 @@ export default function Page() {
                   <UserDropdown
                     user={user}
                     onOpenUserSettings={openUserSettings}
+                    onOpenHelpCenter={openHelpCenter} // Passage du callback pour ouvrir le modal
                   />
                 </div>
               )}
@@ -257,6 +264,13 @@ export default function Page() {
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
           />
+        </div>
+      )}
+
+      {/* Modal for Help Center */}
+      {helpCenterVisible && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <HelpCenterModal onClose={closeHelpCenter} user={user} />
         </div>
       )}
     </>
