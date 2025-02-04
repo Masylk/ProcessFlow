@@ -6,9 +6,13 @@ import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
-import HelpCenterModal from './components/HelpCenterModal'; // Assurez-vous que le chemin est correct
+import HelpCenterModal from './components/HelpCenterModal';
 import { Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
+import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
+
+// Make sure that supabase is correctly imported and configured.
+import { createClient } from '@/utils/supabase/client';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -21,6 +25,12 @@ export default function Page() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
+  const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
+
+  const supabase = createClient();
+
+  // States for password change
+  const [newPassword, setNewPassword] = useState<string>(''); // if empty string, treat as not active
 
   // Ref used as a flag so that the active_workspace update is performed only once
   const activeWorkspaceUpdatedRef = useRef(false);
@@ -79,7 +89,6 @@ export default function Page() {
   }, [user]);
 
   // Effect to set activeWorkspace.
-  // If user.active_workspace is not set, we choose the first workspace and update the user in the DB.
   useEffect(() => {
     if (user && workspaces.length > 0) {
       if (!user.active_workspace) {
@@ -157,7 +166,7 @@ export default function Page() {
         user_id: user.id,
       }),
     });
-    // Vous pouvez rafraîchir la liste des workspaces ici si nécessaire
+    // Refresh workspaces if needed.
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,9 +185,10 @@ export default function Page() {
 
   const closeUserSettings = () => {
     setUserSettingsVisible(false);
+    setPasswordChanged(false);
   };
 
-  // Ouvrir le modal du Help Center
+  // Open the modal for the Help Center
   const openHelpCenter = () => {
     setHelpCenterVisible(true);
     setDropdownVisible(false);
@@ -217,6 +227,28 @@ export default function Page() {
     }
   };
 
+  // Handle updating the password.
+  const handleUpdatePassword = async () => {
+    // Example using Supabase. Adjust as needed for your auth logic.
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      console.error(
+        'Erreur lors de la mise à jour du mot de passe:',
+        error.message
+      );
+      alert('Erreur lors de la mise à jour du mot de passe : ' + error.message);
+      return;
+    }
+
+    setPasswordChanged(true);
+    handleCancelPasswordChange();
+  };
+
+  // Resets the password change state.
+  const handleCancelPasswordChange = () => {
+    setNewPassword('');
+  };
+
   return (
     <>
       <div className="flex h-screen w-screen">
@@ -244,7 +276,7 @@ export default function Page() {
                   <UserDropdown
                     user={user}
                     onOpenUserSettings={openUserSettings}
-                    onOpenHelpCenter={openHelpCenter} // Passage du callback pour ouvrir le modal
+                    onOpenHelpCenter={openHelpCenter}
                   />
                 </div>
               )}
@@ -261,10 +293,20 @@ export default function Page() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings
             user={user}
+            updateNewPassword={setNewPassword}
+            passwordChanged={passwordChanged}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
           />
         </div>
+      )}
+
+      {/* Password Change Modal: Displayed only if newPassword is not empty */}
+      {newPassword !== '' && (
+        <ConfirmChangePasswordModal
+          onCancel={handleCancelPasswordChange}
+          onChangePassword={handleUpdatePassword}
+        />
       )}
 
       {/* Modal for Help Center */}
