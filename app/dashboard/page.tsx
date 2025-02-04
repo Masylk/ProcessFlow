@@ -13,6 +13,7 @@ import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal'
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
+import CreateFolderModal from './components/CreateFolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -22,6 +23,8 @@ export default function Page() {
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
   const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
+  const [createFolderVisible, setCreateFolderVisible] =
+    useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -194,6 +197,17 @@ export default function Page() {
     setDropdownVisible(false);
   };
 
+  const openCreateFolder = (
+    fn: () => Promise<void> | ((parentId: number) => Promise<void>),
+    parentId?: number
+  ) => {
+    setCreateFolderVisible(true);
+  };
+
+  const closeCreateFolder = () => {
+    setCreateFolderVisible(false);
+  };
+
   const closeHelpCenter = () => {
     setHelpCenterVisible(false);
   };
@@ -259,6 +273,7 @@ export default function Page() {
             userEmail={user.email}
             activeWorkspace={activeWorkspace}
             setActiveWorkspace={updateActiveWorkspace}
+            onCreateFolder={openCreateFolder}
           />
         )}
 
@@ -307,6 +322,13 @@ export default function Page() {
           onCancel={handleCancelPasswordChange}
           onChangePassword={handleUpdatePassword}
         />
+      )}
+
+      {createFolderVisible && (
+        <CreateFolderModal
+          onClose={closeCreateFolder}
+          // onCreate={handleUpdatePassword}
+        ></CreateFolderModal>
       )}
 
       {/* Modal for Help Center */}

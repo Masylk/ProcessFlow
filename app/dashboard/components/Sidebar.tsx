@@ -10,6 +10,9 @@ interface SidebarProps {
   userEmail: string;
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => Promise<void>;
+  onCreateFolder: (
+    fn: () => Promise<void> | ((parentId: number) => Promise<void>)
+  ) => void;
 }
 
 export default function Sidebar({
@@ -17,6 +20,7 @@ export default function Sidebar({
   userEmail,
   activeWorkspace,
   setActiveWorkspace,
+  onCreateFolder,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -101,8 +105,11 @@ export default function Sidebar({
       <div className="self-stretch h-px border-t bg-[#e4e7ec] my-0" />
 
       {/* FolderSection Component */}
-      <div className='overflow-auto'>
-        <FolderSection activeWorkspace={activeWorkspace} />
+      <div className="overflow-auto">
+        <FolderSection
+          activeWorkspace={activeWorkspace}
+          onCreateFolder={onCreateFolder}
+        />
       </div>
     </aside>
   );

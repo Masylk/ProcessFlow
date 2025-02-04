@@ -5,9 +5,15 @@ import { Workspace, Folder } from '@/types/workspace';
 
 interface FolderSectionProps {
   activeWorkspace: Workspace;
+  onCreateFolder: (
+    fn: () => Promise<void> | ((parentId: number) => Promise<void>)
+  ) => void;
 }
 
-export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
+export default function FolderSection({
+  activeWorkspace,
+  onCreateFolder,
+}: FolderSectionProps) {
   // Local state for folders (assumes activeWorkspace.folders is an array of Folder)
   const [folders, setFolders] = useState<Folder[]>(
     activeWorkspace.folders || []
@@ -111,7 +117,7 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
             My folders
           </div>
           <button
-            onClick={handleAddFolder}
+            onClick={() => onCreateFolder(handleAddFolder)}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img
