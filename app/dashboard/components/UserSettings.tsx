@@ -25,7 +25,7 @@ export default function UserSettings({
   // Default avatar if none provided.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
   const avatarSrc = user.avatar_signed_url
-    ? user.avatar_signed_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
     : defaultAvatar;
 
   // Local state for file upload and preview.

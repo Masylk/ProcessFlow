@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
+import IconModifier from './IconModifier';
 
 interface CreateFolderModalProps {
   onClose: () => void;
-  onCreate: (folderName: string, icon_url?: string) => Promise<void>;
+  onCreate: (
+    folderName: string,
+    icon_url?: string,
+    emote?: string
+  ) => Promise<void>;
 }
 
 const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
@@ -10,12 +15,19 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   onCreate,
 }) => {
   const [folderName, setFolderName] = useState('');
-  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+  const [emote, setEmote] = useState<string | undefined>(undefined);
 
   const createFolder = (name: string) => {
     if (iconUrl) onCreate(name, iconUrl);
+    else if (emote) onCreate(name, undefined, emote);
     else onCreate(name);
     onClose();
+  };
+
+  const updateIcon = (icon?: string, emote?: string) => {
+    setIconUrl(icon);
+    setEmote(emote);
   };
 
   return (
@@ -41,13 +53,11 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
             Folder name <span className="text-[#4761c4]">*</span>
           </label>
           <div className="mt-2 flex items-center gap-2">
-            <div className="w-11 h-11 bg-white rounded-lg border border-[#d0d5dd] flex items-center justify-center">
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
-                alt="My folder icon"
-                className="w-6 h-6"
-              />
-            </div>
+            <IconModifier
+              initialIcon={iconUrl}
+              onUpdate={updateIcon}
+              emote={emote}
+            />
             <input
               type="text"
               className="flex-1 h-11 px-3.5 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-base text-[#101828]"

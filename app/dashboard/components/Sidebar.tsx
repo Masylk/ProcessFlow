@@ -11,11 +11,16 @@ interface SidebarProps {
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateFolder: (
-    fn: (name: string, icon_url?: string) => Promise<void>,
+    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
     parentId?: number
   ) => void;
   onCreateSubfolder: (
-    fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
+    fn: (
+      name: string,
+      parentId: number,
+      icon_url?: string,
+      emote?: string
+    ) => Promise<void>,
     parentFolder: Folder
   ) => void;
 }

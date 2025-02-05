@@ -33,10 +33,15 @@ export default function Page() {
   );
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
-    ((name: string, icon_url?: string) => Promise<void>) | null
+    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
   >(null);
   const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
-    | ((name: string, parentId: number, icon_url?: string) => Promise<void>)
+    | ((
+        name: string,
+        parentId: number,
+        icon_url?: string,
+        emote?: string
+      ) => Promise<void>)
     | null
   >(null);
 
@@ -66,20 +71,22 @@ export default function Page() {
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
-          );
-          if (!response.ok) {
-            throw new Error('Failed to fetch signed URL');
-          }
-          const data = await response.json();
-          setUser((prevUser) =>
-            prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
-          );
-        } catch (error) {
-          console.error(error);
-        }
+        // try {
+        //   const response = await fetch(
+        //     `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
+        //   );
+        //   if (!response.ok) {
+        //     throw new Error('Failed to fetch signed URL');
+        //   }
+        //   const data = await response.json();
+        //   setUser((prevUser) =>
+        //     prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
+        //   );
+        // } catch (error) {
+        //   console.error(error);
+        // }
+        console.log('getting avatar url : ' + user.avatar_url);
+        user.avatar_signed_url = user.avatar_url;
       }
     };
 
@@ -370,6 +377,7 @@ export default function Page() {
           onClose={closeCreateSubfolder}
           onCreate={onCreateSubfolderAction}
           parentId={folderParent?.id}
+          parent={folderParent}
         ></CreateSubfolderModal>
       )}
       {/* Modal for Help Center */}

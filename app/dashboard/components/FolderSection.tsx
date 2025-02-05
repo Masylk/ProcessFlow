@@ -26,7 +26,11 @@ export default function FolderSection({
   );
 
   // Handler to add a top-level folder (parent_id will be null)
-  const handleAddFolder = async (name: string, icon_url?: string) => {
+  const handleAddFolder = async (
+    name: string,
+    icon_url?: string,
+    emote?: string
+  ) => {
     try {
       const res = await fetch('/api/workspaces/folders', {
         method: 'POST',
@@ -37,6 +41,8 @@ export default function FolderSection({
           name: name,
           workspace_id: activeWorkspace.id,
           team_tags: [],
+          icon_url,
+          emote,
         }),
       });
 
@@ -55,7 +61,8 @@ export default function FolderSection({
   const handleAddSubfolder = async (
     name: string,
     parentId: number,
-    icon_url?: string
+    icon_url?: string,
+    emote?: string
   ) => {
     try {
       const res = await fetch('/api/workspaces/subfolders', {
@@ -68,6 +75,8 @@ export default function FolderSection({
           workspace_id: activeWorkspace.id,
           parent_id: parentId,
           team_tags: [],
+          icon_url,
+          emote,
         }),
       });
 
@@ -93,8 +102,22 @@ export default function FolderSection({
           className="flex items-center gap-1"
           style={{ paddingLeft: `${level * 1.5}rem` }}
         >
-          <div className="w-5 text-center text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-            📁
+          <div className="w-4 h-4 text-center text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+            {folder.icon_url ? (
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
+                alt="Add Subfolder"
+                className="w-4 h-4"
+              />
+            ) : folder.emote ? (
+              <div>{folder.emote}</div>
+            ) : (
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                alt="Selected Icon"
+                className="w-4 h-4"
+              />
+            )}
           </div>
           <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight flex-1">
             {folder.name}
