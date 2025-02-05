@@ -6,6 +6,8 @@ export interface Folder {
   workspace_id: number;
   parent_id?: number;
   team_tags: string[];
+  icon_url?: string;
+  emote?: string;
 }
 
 export interface Workspace {
