@@ -1,6 +1,6 @@
 // components/UserInfo.tsx
 
-import { User } from "@/types/user";
+import { User } from '@/types/user';
 
 interface UserInfoProps {
   user: User | null;
@@ -12,7 +12,9 @@ export default function UserInfo({ user }: UserInfoProps) {
 
   // Use user.avatar_url if it exists, otherwise fall back to the default avatar.
   const avatarSrc =
-    user && user.avatar_signed_url ? user.avatar_signed_url : defaultAvatar;
+    user && user.avatar_signed_url
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
+      : defaultAvatar;
 
   return (
     <div className="h-16 flex-col border-l border-gray-50 justify-start items-start inline-flex">

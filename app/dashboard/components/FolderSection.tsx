@@ -5,16 +5,32 @@ import { Workspace, Folder } from '@/types/workspace';
 
 interface FolderSectionProps {
   activeWorkspace: Workspace;
+  onCreateFolder: (
+    fn: (name: string, icon_url?: string) => Promise<void>,
+    parentId?: number
+  ) => void;
+  onCreateSubfolder: (
+    fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
+    parentFolder: Folder
+  ) => void;
 }
 
-export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
+export default function FolderSection({
+  activeWorkspace,
+  onCreateFolder,
+  onCreateSubfolder,
+}: FolderSectionProps) {
   // Local state for folders (assumes activeWorkspace.folders is an array of Folder)
   const [folders, setFolders] = useState<Folder[]>(
     activeWorkspace.folders || []
   );
 
   // Handler to add a top-level folder (parent_id will be null)
-  const handleAddFolder = async () => {
+  const handleAddFolder = async (
+    name: string,
+    icon_url?: string,
+    emote?: string
+  ) => {
     try {
       const res = await fetch('/api/workspaces/folders', {
         method: 'POST',
@@ -22,9 +38,11 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'New Folder',
+          name: name,
           workspace_id: activeWorkspace.id,
           team_tags: [],
+          icon_url,
+          emote,
         }),
       });
 
@@ -40,7 +58,12 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
   };
 
   // Handler to add a subfolder with a given parent folder id
-  const handleAddSubfolder = async (parentId: number) => {
+  const handleAddSubfolder = async (
+    name: string,
+    parentId: number,
+    icon_url?: string,
+    emote?: string
+  ) => {
     try {
       const res = await fetch('/api/workspaces/subfolders', {
         method: 'POST',
@@ -48,10 +71,12 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'New Subfolder',
+          name: name,
           workspace_id: activeWorkspace.id,
           parent_id: parentId,
           team_tags: [],
+          icon_url,
+          emote,
         }),
       });
 
@@ -77,14 +102,28 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
           className="flex items-center gap-1"
           style={{ paddingLeft: `${level * 1.5}rem` }}
         >
-          <div className="w-5 text-center text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-            📁
+          <div className="w-4 h-4 text-center text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+            {folder.icon_url ? (
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
+                alt="Add Subfolder"
+                className="w-4 h-4"
+              />
+            ) : folder.emote ? (
+              <div>{folder.emote}</div>
+            ) : (
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                alt="Selected Icon"
+                className="w-4 h-4"
+              />
+            )}
           </div>
           <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight flex-1">
             {folder.name}
           </div>
           <button
-            onClick={() => handleAddSubfolder(folder.id)}
+            onClick={() => onCreateSubfolder(handleAddSubfolder, folder)}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img
@@ -111,7 +150,7 @@ export default function FolderSection({ activeWorkspace }: FolderSectionProps) {
             My folders
           </div>
           <button
-            onClick={handleAddFolder}
+            onClick={() => onCreateFolder(handleAddFolder)}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img
