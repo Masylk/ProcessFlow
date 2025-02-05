@@ -7,12 +7,14 @@ import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
 import HelpCenterModal from './components/HelpCenterModal';
-import { Workspace } from '@/types/workspace';
+import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
+import CreateFolderModal from './components/CreateFolderModal';
+import CreateSubfolderModal from './components/CreateSubfolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -22,11 +24,29 @@ export default function Page() {
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
   const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
+  const [createFolderVisible, setCreateFolderVisible] =
+    useState<boolean>(false);
+  const [createSubfolderVisible, setCreateSubfolderVisible] =
+    useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
+  const [onCreateFolderAction, setOnCreateFolderAction] = useState<
+    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
+  >(null);
+  const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
+    | ((
+        name: string,
+        parentId: number,
+        icon_url?: string,
+        emote?: string
+      ) => Promise<void>)
+    | null
+  >(null);
 
+  const [folderParent, setFolderParent] = useState<Folder | null>(null);
+  const [folderParentId, setFolderParentId] = useState<number | null>(null);
   const supabase = createClient();
 
   // States for password change
@@ -51,20 +71,22 @@ export default function Page() {
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
-          );
-          if (!response.ok) {
-            throw new Error('Failed to fetch signed URL');
-          }
-          const data = await response.json();
-          setUser((prevUser) =>
-            prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
-          );
-        } catch (error) {
-          console.error(error);
-        }
+        // try {
+        //   const response = await fetch(
+        //     `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
+        //   );
+        //   if (!response.ok) {
+        //     throw new Error('Failed to fetch signed URL');
+        //   }
+        //   const data = await response.json();
+        //   setUser((prevUser) =>
+        //     prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
+        //   );
+        // } catch (error) {
+        //   console.error(error);
+        // }
+        console.log('getting avatar url : ' + user.avatar_url);
+        user.avatar_signed_url = user.avatar_url;
       }
     };
 
@@ -194,6 +216,38 @@ export default function Page() {
     setDropdownVisible(false);
   };
 
+  const openCreateFolder = (
+    fn: (name: string) => Promise<void>,
+    parentId?: number
+  ) => {
+    if (parentId) {
+      setFolderParentId(parentId);
+    } else {
+      setCreateFolderVisible(true);
+      setOnCreateFolderAction(() => fn);
+    }
+  };
+
+  const openCreateSubFolder = (
+    fn: (name: string, parentId: number) => Promise<void>,
+    parentFolder: Folder
+  ) => {
+    setCreateSubfolderVisible(true);
+    setOnCreateSubfolderAction(() => fn);
+    setFolderParent(parentFolder);
+  };
+
+  const closeCreateSubfolder = () => {
+    setOnCreateSubfolderAction(null);
+    setFolderParent(null);
+    setCreateSubfolderVisible(false);
+  };
+
+  const closeCreateFolder = () => {
+    setOnCreateFolderAction(null);
+    setCreateFolderVisible(false);
+  };
+
   const closeHelpCenter = () => {
     setHelpCenterVisible(false);
   };
@@ -259,6 +313,8 @@ export default function Page() {
             userEmail={user.email}
             activeWorkspace={activeWorkspace}
             setActiveWorkspace={updateActiveWorkspace}
+            onCreateFolder={openCreateFolder}
+            onCreateSubfolder={openCreateSubFolder}
           />
         )}
 
@@ -309,6 +365,21 @@ export default function Page() {
         />
       )}
 
+      {createFolderVisible && onCreateFolderAction && (
+        <CreateFolderModal
+          onClose={closeCreateFolder}
+          onCreate={onCreateFolderAction}
+        ></CreateFolderModal>
+      )}
+
+      {createSubfolderVisible && onCreateSubfolderAction && folderParent && (
+        <CreateSubfolderModal
+          onClose={closeCreateSubfolder}
+          onCreate={onCreateSubfolderAction}
+          parentId={folderParent?.id}
+          parent={folderParent}
+        ></CreateSubfolderModal>
+      )}
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
