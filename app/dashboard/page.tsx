@@ -7,13 +7,14 @@ import UserDropdown from './components/UserDropdown';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
 import HelpCenterModal from './components/HelpCenterModal';
-import { Workspace } from '@/types/workspace';
+import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
 import CreateFolderModal from './components/CreateFolderModal';
+import CreateSubfolderModal from './components/CreateSubfolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -25,11 +26,22 @@ export default function Page() {
   const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
   const [createFolderVisible, setCreateFolderVisible] =
     useState<boolean>(false);
+  const [createSubfolderVisible, setCreateSubfolderVisible] =
+    useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
+  const [onCreateFolderAction, setOnCreateFolderAction] = useState<
+    ((name: string, icon_url?: string) => Promise<void>) | null
+  >(null);
+  const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
+    | ((name: string, parentId: number, icon_url?: string) => Promise<void>)
+    | null
+  >(null);
 
+  const [folderParent, setFolderParent] = useState<Folder | null>(null);
+  const [folderParentId, setFolderParentId] = useState<number | null>(null);
   const supabase = createClient();
 
   // States for password change
@@ -198,13 +210,34 @@ export default function Page() {
   };
 
   const openCreateFolder = (
-    fn: () => Promise<void> | ((parentId: number) => Promise<void>),
+    fn: (name: string) => Promise<void>,
     parentId?: number
   ) => {
-    setCreateFolderVisible(true);
+    if (parentId) {
+      setFolderParentId(parentId);
+    } else {
+      setCreateFolderVisible(true);
+      setOnCreateFolderAction(() => fn);
+    }
+  };
+
+  const openCreateSubFolder = (
+    fn: (name: string, parentId: number) => Promise<void>,
+    parentFolder: Folder
+  ) => {
+    setCreateSubfolderVisible(true);
+    setOnCreateSubfolderAction(() => fn);
+    setFolderParent(parentFolder);
+  };
+
+  const closeCreateSubfolder = () => {
+    setOnCreateSubfolderAction(null);
+    setFolderParent(null);
+    setCreateSubfolderVisible(false);
   };
 
   const closeCreateFolder = () => {
+    setOnCreateFolderAction(null);
     setCreateFolderVisible(false);
   };
 
@@ -274,6 +307,7 @@ export default function Page() {
             activeWorkspace={activeWorkspace}
             setActiveWorkspace={updateActiveWorkspace}
             onCreateFolder={openCreateFolder}
+            onCreateSubfolder={openCreateSubFolder}
           />
         )}
 
@@ -324,13 +358,20 @@ export default function Page() {
         />
       )}
 
-      {createFolderVisible && (
+      {createFolderVisible && onCreateFolderAction && (
         <CreateFolderModal
           onClose={closeCreateFolder}
-          // onCreate={handleUpdatePassword}
+          onCreate={onCreateFolderAction}
         ></CreateFolderModal>
       )}
 
+      {createSubfolderVisible && onCreateSubfolderAction && folderParent && (
+        <CreateSubfolderModal
+          onClose={closeCreateSubfolder}
+          onCreate={onCreateSubfolderAction}
+          parentId={folderParent?.id}
+        ></CreateSubfolderModal>
+      )}
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

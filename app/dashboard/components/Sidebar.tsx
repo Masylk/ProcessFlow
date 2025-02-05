@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import WorkspaceDropdownMenu from './WorkspaceDropdownMenu';
 import FolderSection from './FolderSection';
-import { Workspace } from '@/types/workspace';
+import { Folder, Workspace } from '@/types/workspace';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -11,7 +11,12 @@ interface SidebarProps {
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateFolder: (
-    fn: () => Promise<void> | ((parentId: number) => Promise<void>)
+    fn: (name: string, icon_url?: string) => Promise<void>,
+    parentId?: number
+  ) => void;
+  onCreateSubfolder: (
+    fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
+    parentFolder: Folder
   ) => void;
 }
 
@@ -21,6 +26,7 @@ export default function Sidebar({
   activeWorkspace,
   setActiveWorkspace,
   onCreateFolder,
+  onCreateSubfolder,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -109,6 +115,7 @@ export default function Sidebar({
         <FolderSection
           activeWorkspace={activeWorkspace}
           onCreateFolder={onCreateFolder}
+          onCreateSubfolder={onCreateSubfolder}
         />
       </div>
     </aside>

@@ -6,13 +6,19 @@ import { Workspace, Folder } from '@/types/workspace';
 interface FolderSectionProps {
   activeWorkspace: Workspace;
   onCreateFolder: (
-    fn: () => Promise<void> | ((parentId: number) => Promise<void>)
+    fn: (name: string, icon_url?: string) => Promise<void>,
+    parentId?: number
+  ) => void;
+  onCreateSubfolder: (
+    fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
+    parentFolder: Folder
   ) => void;
 }
 
 export default function FolderSection({
   activeWorkspace,
   onCreateFolder,
+  onCreateSubfolder,
 }: FolderSectionProps) {
   // Local state for folders (assumes activeWorkspace.folders is an array of Folder)
   const [folders, setFolders] = useState<Folder[]>(
@@ -20,7 +26,7 @@ export default function FolderSection({
   );
 
   // Handler to add a top-level folder (parent_id will be null)
-  const handleAddFolder = async () => {
+  const handleAddFolder = async (name: string, icon_url?: string) => {
     try {
       const res = await fetch('/api/workspaces/folders', {
         method: 'POST',
@@ -28,7 +34,7 @@ export default function FolderSection({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'New Folder',
+          name: name,
           workspace_id: activeWorkspace.id,
           team_tags: [],
         }),
@@ -46,7 +52,11 @@ export default function FolderSection({
   };
 
   // Handler to add a subfolder with a given parent folder id
-  const handleAddSubfolder = async (parentId: number) => {
+  const handleAddSubfolder = async (
+    name: string,
+    parentId: number,
+    icon_url?: string
+  ) => {
     try {
       const res = await fetch('/api/workspaces/subfolders', {
         method: 'POST',
@@ -54,7 +64,7 @@ export default function FolderSection({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: 'New Subfolder',
+          name: name,
           workspace_id: activeWorkspace.id,
           parent_id: parentId,
           team_tags: [],
@@ -90,7 +100,7 @@ export default function FolderSection({
             {folder.name}
           </div>
           <button
-            onClick={() => handleAddSubfolder(folder.id)}
+            onClick={() => onCreateSubfolder(handleAddSubfolder, folder)}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img

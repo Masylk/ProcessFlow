@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
 
-interface CreateFolderModalProps {
+interface CreateSubfolderModalProps {
   onClose: () => void;
-  onCreate: (folderName: string, icon_url?: string) => Promise<void>;
+  onCreate: (
+    folderName: string,
+    parentId: number,
+    icon_url?: string
+  ) => Promise<void>;
+  parentId: number;
 }
 
-const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
+const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
   onClose,
   onCreate,
+  parentId,
 }) => {
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | null>(null);
 
   const createFolder = (name: string) => {
-    if (iconUrl) onCreate(name, iconUrl);
-    else onCreate(name);
+    if (iconUrl) onCreate(name, parentId, iconUrl);
+    else onCreate(name, parentId);
     onClose();
   };
 
@@ -31,7 +37,7 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
             />
           </div>
           <h2 className="text-[#101828] text-lg font-semibold">
-            Create a folder
+            Create a Subfolder
           </h2>
         </div>
 
