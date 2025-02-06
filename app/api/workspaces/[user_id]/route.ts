@@ -1,3 +1,4 @@
+// workspaces/[user_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -18,7 +19,11 @@ export async function GET(
           include: {
             workspace: {
               include: {
-                folders: true, // Include the folders relation
+                folders: {
+                  orderBy: {
+                    id: 'asc', // Ensure consistent order (change to name or id if needed)
+                  },
+                },
               },
             },
           },
@@ -41,7 +46,11 @@ export async function GET(
           name: 'My Workspace',
         },
         include: {
-          folders: true,
+          folders: {
+            orderBy: {
+              id: 'asc',
+            },
+          },
         },
       });
 
