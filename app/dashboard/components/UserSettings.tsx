@@ -5,16 +5,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
 
-
 interface UserSettingsProps {
   user: User;
   onClose: () => void;
+  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
+  passwordChanged: boolean;
   onUserUpdate?: (updatedUser: User) => void;
 }
 
 export default function UserSettings({
   user,
   onClose,
+  updateNewPassword,
+  passwordChanged,
   onUserUpdate,
 }: UserSettingsProps) {
   const supabase = createClient();
@@ -22,7 +25,7 @@ export default function UserSettings({
   // Default avatar if none provided.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
   const avatarSrc = user.avatar_signed_url
-    ? user.avatar_signed_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
     : defaultAvatar;
 
   // Local state for file upload and preview.
@@ -34,6 +37,17 @@ export default function UserSettings({
   const [firstName, setFirstName] = useState<string>(user.first_name);
   const [lastName, setLastName] = useState<string>(user.last_name);
   const [newEmail, setNewEmail] = useState<string>(user.email);
+
+  // New states for password change section.
+  const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
+  const [oldPassword, setOldPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
+
+  // Error messages for password fields.
+  const [oldPasswordError, setOldPasswordError] = useState<string>('');
+  const [newPasswordError, setNewPasswordError] = useState<string>('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
 
   // Update local state when user changes.
   useEffect(() => {
@@ -122,7 +136,6 @@ export default function UserSettings({
           first_name: firstName,
           last_name: lastName,
           full_name: fullName,
-          // Email update is handled separately.
         }),
       });
 
@@ -141,6 +154,55 @@ export default function UserSettings({
 
     // Close the modal after saving.
     onClose();
+  };
+
+  // Handle canceling the password change.
+  const handleCancelPasswordChange = () => {
+    setShowPasswordForm(false);
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setOldPasswordError('');
+    setNewPasswordError('');
+    setConfirmPasswordError('');
+  };
+
+  // Handle updating the password.
+  const handleUpdatePassword = async () => {
+    // Reset previous error messages.
+    setOldPasswordError('');
+    setNewPasswordError('');
+    setConfirmPasswordError('');
+
+    // Check that new password is at least 6 characters.
+    if (newPassword.length < 6) {
+      setNewPasswordError(
+        'Le nouveau mot de passe doit comporter au moins 6 caractères.'
+      );
+      return;
+    }
+
+    // Check that new password and confirm password match.
+    if (newPassword !== confirmNewPassword) {
+      setConfirmPasswordError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    // Verify that the old password is correct.
+    // Here we attempt to sign in with the current email and the provided old password.
+    const data = {
+      email: user.email as string,
+      password: oldPassword as string,
+    };
+
+    const { error } = await supabase.auth.signInWithPassword(data);
+    if (error) {
+      setOldPasswordError("L'ancien mot de passe est incorrect.");
+      return;
+    }
+
+    updateNewPassword(newPassword);
+    handleCancelPasswordChange();
   };
 
   // Clean up the preview URL when the component unmounts.
@@ -192,7 +254,7 @@ export default function UserSettings({
 
             {/* Main settings form */}
             <div className="self-stretch h-[664px] flex-col justify-start items-start gap-6 flex">
-              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex">
+              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex overflow-auto">
                 {/* Photo & Name section */}
                 <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
@@ -329,23 +391,142 @@ export default function UserSettings({
                   </div>
                 </div>
                 <div className="self-stretch h-px bg-[#e4e7ec]" />
+
+                {/* Divider */}
+                <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex" />
                 {/* Password section */}
-                <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
-                  <div className="self-stretch h-5 flex-col justify-start items-start flex">
-                    <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                        Password
+
+                {!showPasswordForm ? (
+                  // When the form is hidden, show the change password button.
+                  <div className="self-stretch flex flex-col gap-4">
+                    {/* Header and Change Password Button */}
+                    <div className="self-stretch flex flex-col gap-4">
+                      <div className="self-stretch h-5 flex items-center">
+                        <div className="inline-flex gap-0.5">
+                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                            Password
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => setShowPasswordForm(true)}
+                        className="w-fit px-4 py-3 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <div className="inline-flex items-center px-0.5">
+                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                            Change password
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Confirmation Message - displayed when passwordChanged is true */}
+                    {passwordChanged && (
+                      <div className="h-[52px] py-0 bg-white rounded-xl flex items-center gap-4 mt-0">
+                        <div className="w-5 h-5 bg-[#dbf9e6] rounded-full overflow-hidden">
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-green.svg`}
+                            alt="Mail Icon"
+                            className="w-5 h-5 object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                            Your password has been changed successfully
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="h-11 px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden">
-                    <div className="inline-flex items-center px-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                        Change password
+                ) : (
+                  // When the form is displayed, show the full password change section.
+                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
+                    <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      Password
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      {/* Old password field */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                          Old password
+                        </label>
+                        <input
+                          type="password"
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          placeholder="Old password"
+                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                        />
+                        {oldPasswordError && (
+                          <p className="text-red-500 text-sm">
+                            {oldPasswordError}
+                          </p>
+                        )}
+                      </div>
+                      {/* New password field */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                          New password
+                        </label>
+                        <input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="New password"
+                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                        />
+                        {newPasswordError && (
+                          <p className="text-red-500 text-sm">
+                            {newPasswordError}
+                          </p>
+                        )}
+                      </div>
+                      {/* Confirm new password field */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                          Confirm new password
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmNewPassword}
+                          onChange={(e) =>
+                            setConfirmNewPassword(e.target.value)
+                          }
+                          placeholder="Confirm new password"
+                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                        />
+                        {confirmPasswordError && (
+                          <p className="text-red-500 text-sm">
+                            {confirmPasswordError}
+                          </p>
+                        )}
                       </div>
                     </div>
+                    {/* Action buttons */}
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleCancelPasswordChange}
+                        className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex justify-center items-center"
+                      >
+                        <span className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          Cancel change
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleUpdatePassword}
+                        className="px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border-2 border-white flex justify-center items-center"
+                      >
+                        <span className="text-white text-sm font-semibold font-['Inter'] leading-tight">
+                          Update password
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Divider */}
+                <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex" />
+
                 <div className="self-stretch h-px bg-[#e4e7ec]" />
                 {/* Account Security section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">

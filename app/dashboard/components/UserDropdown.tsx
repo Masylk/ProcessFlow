@@ -81,6 +81,29 @@ export default function UserDropdown({
             </div>
           </div>
 
+          {/* Slack community */}
+          <a
+            href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          >
+            <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+              <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                <div className="w-4 h-4 relative overflow-hidden">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-smile-circle.svg`}
+                    alt="Slack Icon"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                  Slack Community
+                </div>
+              </div>
+            </div>
+          </a>
+
           {/* Support Item */}
           <div
             className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"

@@ -63,6 +63,8 @@ model folder {
   name         String
   workspace_id Int
   parent_id    Int? // Nullable field for nesting folders
+  icon_url     String?
+  emote        String?
   team_tags   String[]
 
   workspace  workspace @relation(fields: [workspace_id], references: [id])
