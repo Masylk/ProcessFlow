@@ -45,6 +45,10 @@ export async function DELETE(
  * PATCH /api/workspaces/folders/:id
  * Updates a folder by ID
  */
+/**
+ * PATCH /api/workspaces/folders/:id
+ * Updates a folder by ID
+ */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -63,16 +67,19 @@ export async function PATCH(
       return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
     }
 
+    // Ensure icon_url and emote are explicitly set to null if undefined
+    const updateData: Record<string, any> = {
+      name,
+      icon_url: icon_url ?? null, // If undefined, set to null
+      emote: emote ?? null, // If undefined, set to null
+      team_tags,
+      parent_id,
+    };
+
     // Update folder
     const updatedFolder = await prisma.folder.update({
       where: { id: folderId },
-      data: {
-        name,
-        icon_url,
-        emote,
-        team_tags,
-        parent_id,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updatedFolder, { status: 200 });
