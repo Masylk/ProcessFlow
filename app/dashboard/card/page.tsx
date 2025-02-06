@@ -118,10 +118,10 @@ export default function Home() {
               </div>
             </div>
             <div className="justify-start items-start gap-2 inline-flex">
-              <div className="px-1.5 py-0.5 bg-gray-50 rounded-md border border-[#e4e7ec] justify-start items-center flex">
+              <div className="px-1.5 py-0.5 bg-gray-50 rounded-md justify-start items-center flex">
                 <div className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">6 Steps</div>
               </div>
-              <div className="pl-1 pr-1.5 py-0.5 bg-gray-50 rounded-md border border-[#e4e7ec] justify-start items-center gap-1 flex">
+              <div className="pl-1 pr-1.5 py-0.5 bg-gray-50 rounded-md justify-start items-center gap-1 flex">
                 <img 
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle.svg`} 
                   alt="User Icon" 
