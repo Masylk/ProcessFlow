@@ -14,6 +14,10 @@ interface SidebarProps {
     fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
     parentId?: number
   ) => void;
+  onEditFolder: (
+    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
+    parentFolder: Folder
+  ) => void;
   onCreateSubfolder: (
     fn: (
       name: string,
@@ -31,6 +35,7 @@ export default function Sidebar({
   activeWorkspace,
   setActiveWorkspace,
   onCreateFolder,
+  onEditFolder,
   onCreateSubfolder,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -120,6 +125,7 @@ export default function Sidebar({
         <FolderSection
           activeWorkspace={activeWorkspace}
           onCreateFolder={onCreateFolder}
+          onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
         />
       </div>
