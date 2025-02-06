@@ -20,10 +20,17 @@ export default function FolderSection({
   onCreateFolder,
   onCreateSubfolder,
 }: FolderSectionProps) {
-  // Local state for folders (assumes activeWorkspace.folders is an array of Folder)
+  // Local state for folders
   const [folders, setFolders] = useState<Folder[]>(
     activeWorkspace.folders || []
   );
+
+  // Track expanded folders
+  const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
+    new Set()
+  );
+  // Track hovered folders
+  // const [hoveredFolder, setHoveredFolder] = useState<number | null>(null);
 
   // Handler to add a top-level folder (parent_id will be null)
   const handleAddFolder = async (
@@ -91,39 +98,98 @@ export default function FolderSection({
     }
   };
 
-  // Recursive function to render a folder and its subfolders
+  const toggleFolder = (folderId: number) => {
+    setExpandedFolders((prev) => {
+      const newExpandedFolders = new Set(prev);
+      if (newExpandedFolders.has(folderId)) {
+        newExpandedFolders.delete(folderId);
+      } else {
+        newExpandedFolders.add(folderId);
+      }
+      return newExpandedFolders;
+    });
+  };
+
+  const [hoveredParent, setHoveredParent] = useState<number | null>(null);
+  const [hoveredSubfolder, setHoveredSubfolder] = useState<number | null>(null);
+
+  const handleMouseEnterParent = (folderId: number) => {
+    setHoveredParent(folderId);
+    setHoveredSubfolder(null); // Reset subfolder hover when entering a new parent
+  };
+
+  const handleMouseLeaveParent = (folderId: number, e: React.MouseEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setHoveredParent(null);
+    }
+  };
+
+  const handleMouseEnterSubfolder = (folderId: number) => {
+    setHoveredSubfolder(folderId);
+  };
+
+  const handleMouseLeaveSubfolder = (folderId: number, e: React.MouseEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setHoveredSubfolder(null);
+    }
+  };
+
   const renderFolder = (folder: Folder, level: number = 0) => {
-    // Get subfolders by filtering folders with parent_id equal to current folder's id
     const subfolders = folders.filter((f) => f.parent_id === folder.id);
+    const isExpanded = expandedFolders.has(folder.id);
 
     return (
       <div key={folder.id} className="w-full">
         <div
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 cursor-pointer group relative"
           style={{ paddingLeft: `${level * 1.5}rem` }}
+          onClick={() => toggleFolder(folder.id)}
         >
-          <div className="w-4 h-4 text-center text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+          {/* Chevron Icon - Only visible on hover */}
+          <div className="w-4 h-4 hidden group-hover:block items-center justify-center">
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
+                process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
+              }/assets/shared_components/${
+                isExpanded ? 'chevron-down.svg' : 'chevron-right-black.svg'
+              }`}
+              alt="Toggle Subfolders"
+              className="w-4 h-4"
+            />
+          </div>
+
+          {/* Folder Icon / Emote - Hidden on hover */}
+          <div className="w-4 h-4 group-hover:hidden flex items-center justify-center">
             {folder.icon_url ? (
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
-                alt="Add Subfolder"
+                alt="Folder Icon"
                 className="w-4 h-4"
               />
             ) : folder.emote ? (
-              <div>{folder.emote}</div>
+              <div className="w-4 h-4 flex items-center justify-center leading-none">
+                {folder.emote}
+              </div> // Perfectly centered emoji
             ) : (
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
-                alt="Selected Icon"
+                alt="Folder Icon"
                 className="w-4 h-4"
               />
             )}
           </div>
+
+          {/* Folder Name */}
           <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight flex-1">
             {folder.name}
           </div>
+
+          {/* Add Subfolder Button */}
           <button
-            onClick={() => onCreateSubfolder(handleAddSubfolder, folder)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent toggling when clicking the button
+              onCreateSubfolder(handleAddSubfolder, folder);
+            }}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img
@@ -133,7 +199,13 @@ export default function FolderSection({
             />
           </button>
         </div>
-        {subfolders.map((subfolder) => renderFolder(subfolder, level + 1))}
+
+        {/* Render Subfolders If Expanded */}
+        {isExpanded && (
+          <div className="pl-6">
+            {subfolders.map((subfolder) => renderFolder(subfolder, level + 1))}
+          </div>
+        )}
       </div>
     );
   };
