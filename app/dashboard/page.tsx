@@ -15,6 +15,7 @@ import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal'
 import { createClient } from '@/utils/supabase/client';
 import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
+import EditFolderModal from './components/EditFolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -28,11 +29,15 @@ export default function Page() {
     useState<boolean>(false);
   const [createSubfolderVisible, setCreateSubfolderVisible] =
     useState<boolean>(false);
+  const [editFolderVisible, setEditFolderVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
+    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
+  >(null);
+  const [onEditFolderAction, setOnEditFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
   >(null);
   const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
@@ -237,6 +242,15 @@ export default function Page() {
     setFolderParent(parentFolder);
   };
 
+  const openEditFolder = (
+    fn: (name: string) => Promise<void>,
+    parentFolder: Folder
+  ) => {
+    setEditFolderVisible(true);
+    setOnEditFolderAction(() => fn);
+    setFolderParent(parentFolder);
+  };
+
   const closeCreateSubfolder = () => {
     setOnCreateSubfolderAction(null);
     setFolderParent(null);
@@ -246,6 +260,12 @@ export default function Page() {
   const closeCreateFolder = () => {
     setOnCreateFolderAction(null);
     setCreateFolderVisible(false);
+  };
+
+  const closeEditFolder = () => {
+    setOnEditFolderAction(null);
+    setFolderParent(null);
+    setEditFolderVisible(false);
   };
 
   const closeHelpCenter = () => {
@@ -314,6 +334,7 @@ export default function Page() {
             activeWorkspace={activeWorkspace}
             setActiveWorkspace={updateActiveWorkspace}
             onCreateFolder={openCreateFolder}
+            onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
           />
         )}
@@ -380,6 +401,15 @@ export default function Page() {
           parent={folderParent}
         ></CreateSubfolderModal>
       )}
+
+      {editFolderVisible && onEditFolderAction && folderParent && (
+        <EditFolderModal
+          onClose={closeEditFolder}
+          onEdit={onEditFolderAction}
+          folder={folderParent}
+        ></EditFolderModal>
+      )}
+
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
