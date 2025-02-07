@@ -12,7 +12,9 @@ interface UserSettingsProps {
   passwordChanged: boolean;
   openImageUpload: () => void;
   onUserUpdate?: (updatedUser: User) => void;
-  selectedFile?: File;
+  selectedFile: File | null;
+  isDeleteAvatar: boolean;
+  onDeleteAvatar: () => void;
 }
 
 export default function UserSettings({
@@ -23,6 +25,8 @@ export default function UserSettings({
   openImageUpload,
   onUserUpdate,
   selectedFile,
+  isDeleteAvatar,
+  onDeleteAvatar,
 }: UserSettingsProps) {
   const supabase = createClient();
 
@@ -59,6 +63,13 @@ export default function UserSettings({
     setNewEmail(user.email);
   }, [user]);
 
+  useEffect(() => {
+    if (selectedFile) {
+      const objectURL = URL.createObjectURL(selectedFile);
+      setPreviewUrl(objectURL);
+    }
+  }, [selectedFile]);
+
   // Trigger the file selector.
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -94,7 +105,7 @@ export default function UserSettings({
     let newAvatarUrl = user.avatar_url; // Default to current avatar.
 
     // If a new file was selected, perform the upload.
-    if (selectedFile) {
+    if (selectedFile && !isDeleteAvatar) {
       try {
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -129,6 +140,7 @@ export default function UserSettings({
           first_name: firstName,
           last_name: lastName,
           full_name: fullName,
+          delete_avatar: isDeleteAvatar,
         }),
       });
 
@@ -247,7 +259,7 @@ export default function UserSettings({
 
             {/* Main settings form */}
             <div className="self-stretch h-[664px] flex-col justify-start items-start gap-6 flex">
-              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex overflow-auto">
+              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
                 {/* Photo & Name section */}
                 <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
@@ -266,7 +278,13 @@ export default function UserSettings({
                     <div className="w-16 h-16 rounded-full justify-center items-center flex">
                       <div className="w-16 h-16 relative rounded-full border border-black/10">
                         <img
-                          src={previewUrl ? previewUrl : avatarSrc}
+                          src={
+                            isDeleteAvatar
+                              ? defaultAvatar
+                              : previewUrl
+                              ? previewUrl
+                              : avatarSrc
+                          }
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
                         />
@@ -296,7 +314,10 @@ export default function UserSettings({
                       className="hidden"
                       onChange={handleFileChange}
                     /> */}
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden">
+                    <div
+                      onClick={() => onDeleteAvatar()}
+                      className="px-3 py-2 cursor-pointer bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon.svg`}
@@ -433,7 +454,7 @@ export default function UserSettings({
                   </div>
                 ) : (
                   // When the form is displayed, show the full password change section.
-                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
+                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg">
                     <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                       Password
                     </div>

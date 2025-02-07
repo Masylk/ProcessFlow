@@ -36,6 +36,8 @@ export default function Page() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
+  const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
@@ -206,6 +208,7 @@ export default function Page() {
   };
 
   const closeUserSettings = () => {
+    setFileToUpload(null);
     setUserSettingsVisible(false);
     setPasswordChanged(false);
   };
@@ -326,6 +329,14 @@ export default function Page() {
     setNewPassword('');
   };
 
+  const setDeleteAvatar = () => {
+    setIsDeleteAvatar(true);
+  };
+
+  const unsetDeleteAvatar = () => {
+    setIsDeleteAvatar(false);
+  };
+
   return (
     <>
       <div className="flex h-screen w-screen">
@@ -389,6 +400,9 @@ export default function Page() {
             openImageUpload={openUploadImage}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
+            selectedFile={fileToUpload}
+            isDeleteAvatar={isDeleteAvatar}
+            onDeleteAvatar={setDeleteAvatar}
           />
         </div>
       )}
@@ -432,7 +446,15 @@ export default function Page() {
         </div>
       )}
 
-      {uploadImageVisible && <UploadImageModal />}
+      {uploadImageVisible && (
+        <UploadImageModal
+          onClose={closeUploadImage}
+          onSave={(file: File) => {
+            unsetDeleteAvatar();
+            setFileToUpload(file);
+          }}
+        />
+      )}
     </>
   );
 }
