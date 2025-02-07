@@ -17,6 +17,7 @@ import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
 import Canvas from './components/Canvas';
+import UploadImageModal from './components/UploadImageModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -31,6 +32,7 @@ export default function Page() {
   const [createSubfolderVisible, setCreateSubfolderVisible] =
     useState<boolean>(false);
   const [editFolderVisible, setEditFolderVisible] = useState<boolean>(false);
+  const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -244,6 +246,14 @@ export default function Page() {
     setFolderParent(parentFolder);
   };
 
+  const openUploadImage = () => {
+    setUploadImageVisible(true);
+  };
+
+  const closeUploadImage = () => {
+    setUploadImageVisible(false);
+  };
+
   const closeCreateSubfolder = () => {
     setOnCreateSubfolderAction(null);
     setFolderParent(null);
@@ -371,11 +381,12 @@ export default function Page() {
 
       {/* Modal for user settings */}
       {user && userSettingsVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
+            openImageUpload={openUploadImage}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
           />
@@ -420,6 +431,8 @@ export default function Page() {
           <HelpCenterModal onClose={closeHelpCenter} user={user} />
         </div>
       )}
+
+      {uploadImageVisible && <UploadImageModal />}
     </>
   );
 }

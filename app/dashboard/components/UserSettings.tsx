@@ -10,7 +10,9 @@ interface UserSettingsProps {
   onClose: () => void;
   updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
   passwordChanged: boolean;
+  openImageUpload: () => void;
   onUserUpdate?: (updatedUser: User) => void;
+  selectedFile?: File;
 }
 
 export default function UserSettings({
@@ -18,7 +20,9 @@ export default function UserSettings({
   onClose,
   updateNewPassword,
   passwordChanged,
+  openImageUpload,
   onUserUpdate,
+  selectedFile,
 }: UserSettingsProps) {
   const supabase = createClient();
 
@@ -30,7 +34,6 @@ export default function UserSettings({
 
   // Local state for file upload and preview.
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Local state for editable fields.
@@ -59,16 +62,6 @@ export default function UserSettings({
   // Trigger the file selector.
   const handleUploadClick = () => {
     fileInputRef.current?.click();
-  };
-
-  // When a file is selected, store it and generate a preview URL.
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
-    }
   };
 
   // Simple email validation.
@@ -280,7 +273,7 @@ export default function UserSettings({
                       </div>
                     </div>
                     <div
-                      onClick={handleUploadClick}
+                      onClick={() => openImageUpload()}
                       className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#889ce4] flex items-center gap-1 cursor-pointer overflow-hidden"
                     >
                       <div className="w-5 h-5 relative overflow-hidden">
@@ -296,13 +289,13 @@ export default function UserSettings({
                         </div>
                       </div>
                     </div>
-                    <input
+                    {/* <input
                       type="file"
                       ref={fileInputRef}
                       accept="image/*"
                       className="hidden"
                       onChange={handleFileChange}
-                    />
+                    /> */}
                     <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden">
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
