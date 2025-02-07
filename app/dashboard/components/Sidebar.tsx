@@ -30,6 +30,7 @@ interface SidebarProps {
     parentFolder: Folder
   ) => void;
   user: User | null;
+  onSelectFolder: (folder: Folder) => void;
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
 }
@@ -43,6 +44,7 @@ export default function Sidebar({
   onEditFolder,
   onCreateSubfolder,
   user,
+  onSelectFolder,
   onOpenUserSettings,
   onOpenHelpCenter,
 }: SidebarProps) {
@@ -135,6 +137,7 @@ export default function Sidebar({
           onCreateFolder={onCreateFolder}
           onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
+          onSelectFolder={onSelectFolder}
         />
       </div>
       <SidebarFooter

@@ -16,6 +16,7 @@ import { createClient } from '@/utils/supabase/client';
 import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
+import Canvas from './components/Canvas';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -49,7 +50,9 @@ export default function Page() {
       ) => Promise<void>)
     | null
   >(null);
-
+  const [selectedFolder, setSelectedFolder] = useState<Folder | undefined>(
+    undefined
+  );
   const [folderParent, setFolderParent] = useState<Folder | null>(null);
   const [folderParentId, setFolderParentId] = useState<number | null>(null);
   const supabase = createClient();
@@ -76,20 +79,6 @@ export default function Page() {
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
-        // try {
-        //   const response = await fetch(
-        //     `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
-        //   );
-        //   if (!response.ok) {
-        //     throw new Error('Failed to fetch signed URL');
-        //   }
-        //   const data = await response.json();
-        //   setUser((prevUser) =>
-        //     prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
-        //   );
-        // } catch (error) {
-        //   console.error(error);
-        // }
         console.log('getting avatar url : ' + user.avatar_url);
         user.avatar_signed_url = user.avatar_url;
       }
@@ -198,6 +187,10 @@ export default function Page() {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+  };
+
+  const onSelectFolder = (folder: Folder) => {
+    setSelectedFolder(folder);
   };
 
   // Toggle the dropdown
@@ -336,6 +329,7 @@ export default function Page() {
             onCreateFolder={openCreateFolder}
             onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
+            onSelectFolder={onSelectFolder}
             onOpenUserSettings={openUserSettings}
             user={user}
             onOpenHelpCenter={openHelpCenter}
@@ -364,7 +358,14 @@ export default function Page() {
           </header>
 
           {/* Main content */}
-          <main className="flex-1 bg-gray-100"></main>
+          <main className="flex-1 w-full h-h-full bg-gray-100">
+            {activeWorkspace && (
+              <Canvas
+                workspace={activeWorkspace}
+                selectedFolder={selectedFolder}
+              />
+            )}
+          </main>
         </div>
       </div>
 
