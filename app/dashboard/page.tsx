@@ -17,6 +17,7 @@ import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
 import Canvas from './components/Canvas';
+import UploadImageModal from './components/UploadImageModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -31,9 +32,12 @@ export default function Page() {
   const [createSubfolderVisible, setCreateSubfolderVisible] =
     useState<boolean>(false);
   const [editFolderVisible, setEditFolderVisible] = useState<boolean>(false);
+  const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
+  const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
@@ -204,6 +208,7 @@ export default function Page() {
   };
 
   const closeUserSettings = () => {
+    setFileToUpload(null);
     setUserSettingsVisible(false);
     setPasswordChanged(false);
   };
@@ -242,6 +247,14 @@ export default function Page() {
     setEditFolderVisible(true);
     setOnEditFolderAction(() => fn);
     setFolderParent(parentFolder);
+  };
+
+  const openUploadImage = () => {
+    setUploadImageVisible(true);
+  };
+
+  const closeUploadImage = () => {
+    setUploadImageVisible(false);
   };
 
   const closeCreateSubfolder = () => {
@@ -316,6 +329,14 @@ export default function Page() {
     setNewPassword('');
   };
 
+  const setDeleteAvatar = () => {
+    setIsDeleteAvatar(true);
+  };
+
+  const unsetDeleteAvatar = () => {
+    setIsDeleteAvatar(false);
+  };
+
   return (
     <>
       <div className="flex h-screen w-screen">
@@ -371,13 +392,17 @@ export default function Page() {
 
       {/* Modal for user settings */}
       {user && userSettingsVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
+            openImageUpload={openUploadImage}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
+            selectedFile={fileToUpload}
+            isDeleteAvatar={isDeleteAvatar}
+            onDeleteAvatar={setDeleteAvatar}
           />
         </div>
       )}
@@ -419,6 +444,16 @@ export default function Page() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <HelpCenterModal onClose={closeHelpCenter} user={user} />
         </div>
+      )}
+
+      {uploadImageVisible && (
+        <UploadImageModal
+          onClose={closeUploadImage}
+          onSave={(file: File) => {
+            unsetDeleteAvatar();
+            setFileToUpload(file);
+          }}
+        />
       )}
     </>
   );
