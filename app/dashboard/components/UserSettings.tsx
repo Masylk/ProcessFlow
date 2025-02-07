@@ -11,6 +11,7 @@ interface UserSettingsProps {
   updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
   passwordChanged: boolean;
   openImageUpload: () => void;
+  openDeleteAccount: () => void;
   onUserUpdate?: (updatedUser: User) => void;
   selectedFile: File | null;
   isDeleteAvatar: boolean;
@@ -23,12 +24,23 @@ export default function UserSettings({
   updateNewPassword,
   passwordChanged,
   openImageUpload,
+  openDeleteAccount,
   onUserUpdate,
   selectedFile,
   isDeleteAvatar,
   onDeleteAvatar,
 }: UserSettingsProps) {
   const supabase = createClient();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error.message);
+    } else {
+      console.log('Successfully logged out');
+      window.location.href = '/login';
+    }
+  };
 
   // Default avatar if none provided.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
@@ -552,7 +564,10 @@ export default function UserSettings({
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden">
+                    <div
+                      onClick={() => handleLogout()}
+                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
@@ -566,7 +581,10 @@ export default function UserSettings({
                         </div>
                       </div>
                     </div>
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden">
+                    <div
+                      onClick={() => openDeleteAccount()}
+                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}

@@ -18,6 +18,7 @@ import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
 import Canvas from './components/Canvas';
 import UploadImageModal from './components/UploadImageModal';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -33,6 +34,8 @@ export default function Page() {
     useState<boolean>(false);
   const [editFolderVisible, setEditFolderVisible] = useState<boolean>(false);
   const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] =
+    useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -253,6 +256,14 @@ export default function Page() {
     setUploadImageVisible(true);
   };
 
+  const openDeleteAccount = () => {
+    setDeleteAccountVisible(true);
+  };
+
+  const closeDeleteAccount = () => {
+    setDeleteAccountVisible(false);
+  };
+
   const closeUploadImage = () => {
     setUploadImageVisible(false);
   };
@@ -398,6 +409,7 @@ export default function Page() {
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
             openImageUpload={openUploadImage}
+            openDeleteAccount={openDeleteAccount}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
             selectedFile={fileToUpload}
@@ -454,6 +466,10 @@ export default function Page() {
             setFileToUpload(file);
           }}
         />
+      )}
+
+      {deleteAccountVisible && user && (
+        <ConfirmDeleteModal user={user} onClose={closeDeleteAccount} />
       )}
     </>
   );
