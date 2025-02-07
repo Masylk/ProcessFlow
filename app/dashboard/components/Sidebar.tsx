@@ -82,7 +82,7 @@ export default function Sidebar({
             </div>
             {/* Display activeWorkspace name */}
             <div className="relative flex flex-col px-0.5">
-              <div className="w-[84px] h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                 {activeWorkspace.name}
               </div>
             </div>

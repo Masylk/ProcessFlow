@@ -288,7 +288,10 @@ export default function FolderSection({
       <div
         key={folder.id}
         className="w-full relative hover:bg-[#F9FAFB]"
-        onClick={() => onSelectFolder(folder)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectFolder(folder);
+        }}
       >
         <div
           className="flex items-center gap-1 cursor-pointer group relative"
@@ -339,7 +342,7 @@ export default function FolderSection({
           {/* Dropdown Button */}
           <button
             onClick={(e) => handleDropdownClick(e, folder.id, folder)}
-            className="w-5 h-5 relative overflow-hidden"
+            className="w-5 h-5 relative overflow-hidden hidden group-hover:block"
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-black.svg`}
