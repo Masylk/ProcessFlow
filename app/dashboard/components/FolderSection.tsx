@@ -349,7 +349,7 @@ export default function FolderSection({
   return (
     <div
       ref={scrollableContainerRef}
-      className="p-4 h-[70vh] flex-col justify-start items-start gap-2 inline-flex overflow-auto"
+      className="p-4 h-[65vh] flex-col justify-start items-start gap-2 inline-flex overflow-auto"
     >
       <div className="self-stretch flex flex-col justify-start items-start gap-2">
         <div className="w-52 px-3 justify-between items-center inline-flex">

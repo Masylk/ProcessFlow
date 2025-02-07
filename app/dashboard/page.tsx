@@ -336,6 +336,9 @@ export default function Page() {
             onCreateFolder={openCreateFolder}
             onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
+            onOpenUserSettings={openUserSettings}
+            user={user}
+            onOpenHelpCenter={openHelpCenter}
           />
         )}
 
