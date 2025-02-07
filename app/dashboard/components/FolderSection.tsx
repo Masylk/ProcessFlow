@@ -18,6 +18,7 @@ interface FolderSectionProps {
     fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
     parentFolder: Folder
   ) => void;
+  onSelectFolder: (folder: Folder) => void;
 }
 
 export default function FolderSection({
@@ -25,6 +26,7 @@ export default function FolderSection({
   onCreateFolder,
   onEditFolder,
   onCreateSubfolder,
+  onSelectFolder,
 }: FolderSectionProps) {
   const [folders, setFolders] = useState<Folder[]>(
     activeWorkspace.folders || []
@@ -262,6 +264,11 @@ export default function FolderSection({
     }
   };
 
+  const handleToggleClick = (e: React.MouseEvent, folder: Folder) => {
+    e.stopPropagation();
+    toggleFolder(folder.id);
+  };
+
   const handleCreateSubfolder = (parent: Folder) => {
     onCreateSubfolder(handleAddSubfolder, parent);
     setDropdownPosition(null);
@@ -278,14 +285,20 @@ export default function FolderSection({
     const isDropdownOpen = selectedFolderId === folder.id;
 
     return (
-      <div key={folder.id} className="w-full relative hover:bg-[#F9FAFB]">
+      <div
+        key={folder.id}
+        className="w-full relative hover:bg-[#F9FAFB]"
+        onClick={() => onSelectFolder(folder)}
+      >
         <div
           className="flex items-center gap-1 cursor-pointer group relative"
           style={{ paddingLeft: `${level * 1.5}rem` }}
-          onClick={() => toggleFolder(folder.id)}
         >
           {/* Chevron Icon */}
-          <div className="w-4 h-4 hidden group-hover:block items-center justify-center">
+          <div
+            onClick={(e) => handleToggleClick(e, folder)}
+            className="w-4 h-4 hidden group-hover:block items-center justify-center"
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
                 process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH

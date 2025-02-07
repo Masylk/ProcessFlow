@@ -12,13 +12,13 @@ export default function SidebarFooter({
   onOpenHelpCenter,
 }: SidebarFooterProps) {
   return (
-    <div className="w-[240px] h-[188px] p-4 border-t border-[#e4e7ec] flex-col justify-start items-center gap-3 inline-flex bg-white">
-      <div className="w-full self-stretch h-[76px] flex-col justify-start items-start gap-1 flex">
+    <div className="w-[240px] p-4 border-t border-[#e4e7ec] flex-col justify-start items-center gap-3 inline-flex bg-white">
+      <div className="w-full self-stretch flex-col justify-start items-start gap-1 flex">
         <div
           onClick={() => onOpenHelpCenter()}
           className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
         >
-          <div className="w-full grow shrink basis-0 h-5 justify-start items-center gap-3 flex">
+          <div className="w-full grow shrink basis-0 justify-start items-center gap-3 flex">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`}
               alt="Support Icon"
@@ -33,7 +33,7 @@ export default function SidebarFooter({
           onClick={() => onOpenUserSettings()}
           className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
         >
-          <div className="w-full grow shrink basis-0 h-5 justify-start items-center gap-3 flex">
+          <div className="w-full grow shrink basis-0  justify-start items-center gap-3 flex">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
               alt="Settings Icon"
