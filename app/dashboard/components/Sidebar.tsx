@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import WorkspaceDropdownMenu from './WorkspaceDropdownMenu';
 import FolderSection from './FolderSection';
 import { Folder, Workspace } from '@/types/workspace';
+import { User } from '@/types/user';
+import SidebarFooter from './SidebarFooter';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -27,6 +29,10 @@ interface SidebarProps {
     ) => Promise<void>,
     parentFolder: Folder
   ) => void;
+  user: User | null;
+  onSelectFolder: (folder: Folder) => void;
+  onOpenUserSettings: () => void;
+  onOpenHelpCenter: () => void;
 }
 
 export default function Sidebar({
@@ -37,6 +43,10 @@ export default function Sidebar({
   onCreateFolder,
   onEditFolder,
   onCreateSubfolder,
+  user,
+  onSelectFolder,
+  onOpenUserSettings,
+  onOpenHelpCenter,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -72,7 +82,7 @@ export default function Sidebar({
             </div>
             {/* Display activeWorkspace name */}
             <div className="relative flex flex-col px-0.5">
-              <div className="w-[84px] h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                 {activeWorkspace.name}
               </div>
             </div>
@@ -127,8 +137,14 @@ export default function Sidebar({
           onCreateFolder={onCreateFolder}
           onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
+          onSelectFolder={onSelectFolder}
         />
       </div>
+      <SidebarFooter
+        user={user}
+        onOpenHelpCenter={onOpenHelpCenter}
+        onOpenUserSettings={onOpenUserSettings}
+      />
     </aside>
   );
 }
