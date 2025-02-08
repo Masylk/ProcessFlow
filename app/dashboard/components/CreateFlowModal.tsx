@@ -1,15 +1,19 @@
 'use client';
 import { useState } from 'react';
 
-export default function CreateFlowModal() {
+interface CreateFlowModalProps {
+  onClose: () => void;
+}
+
+export default function CreateFlowModal({ onClose }: CreateFlowModalProps) {
   const [flowName, setFlowName] = useState('');
   const [flowDescription, setFlowDescription] = useState('');
 
   return (
-    <div className="w-[1440px] h-[960px] p-8 flex-col justify-center items-center inline-flex overflow-hidden">
-      <div className="bg-white w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-start flex overflow-hidden">
+    <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40">
+      <div className="bg-white w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)]  flex-col justify-start items-start flex overflow-hidden">
         <div className="flex items-start gap-4 px-6 pt-6 flex-col">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
+          <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
             <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-three-01.svg`}
@@ -122,8 +126,9 @@ export default function CreateFlowModal() {
           <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
             {/* Cancel Button */}
             <div
+              onClick={() => onClose()}
               className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
-                  shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] 
+                  
                   border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden 
                   transition-all duration-300 hover:bg-[#F9FAFB] cursor-pointer"
             >
@@ -136,7 +141,7 @@ export default function CreateFlowModal() {
             {/* Create Flow Button */}
             <div
               className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05) cursor-hand] 
-                  shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] 
+                  shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                   border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden 
                   transition-all duration-300 hover:bg-[#374C99] cursor-pointer"
             >

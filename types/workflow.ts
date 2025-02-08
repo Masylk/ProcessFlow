@@ -9,4 +9,6 @@ export interface Workflow {
   workspace: Workspace;
   blocks: Block[];
   history: Action[];
+  folder_id?: number;
+  team_tags: string[];
 }

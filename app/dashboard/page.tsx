@@ -19,11 +19,14 @@ import EditFolderModal from './components/EditFolderModal';
 import Canvas from './components/Canvas';
 import UploadImageModal from './components/UploadImageModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import CreateFlowModal from './components/CreateFlowModal';
+import { Workflow } from '@/types/workflow';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [workflowToAdd, setWorkflowToAdd] = useState<Workflow | null>(null);
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
@@ -36,6 +39,7 @@ export default function Page() {
   const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
   const [deleteAccountVisible, setDeleteAccountVisible] =
     useState<boolean>(false);
+  const [creatFlowVisible, setCreateFlowVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -196,7 +200,7 @@ export default function Page() {
     setSearchTerm(event.target.value);
   };
 
-  const onSelectFolder = (folder: Folder) => {
+  const onSelectFolder = (folder?: Folder) => {
     setSelectedFolder(folder);
   };
 
@@ -262,6 +266,14 @@ export default function Page() {
 
   const closeDeleteAccount = () => {
     setDeleteAccountVisible(false);
+  };
+
+  const openCreateFlow = () => {
+    setCreateFlowVisible(true);
+  };
+
+  const closeCreateFlow = () => {
+    setCreateFlowVisible(false);
   };
 
   const closeUploadImage = () => {
@@ -395,6 +407,7 @@ export default function Page() {
               <Canvas
                 workspace={activeWorkspace}
                 selectedFolder={selectedFolder}
+                openCreateFlow={openCreateFlow}
               />
             )}
           </main>
@@ -471,6 +484,8 @@ export default function Page() {
       {deleteAccountVisible && user && (
         <ConfirmDeleteModal user={user} onClose={closeDeleteAccount} />
       )}
+
+      {creatFlowVisible && <CreateFlowModal onClose={closeCreateFlow} />}
     </>
   );
 }

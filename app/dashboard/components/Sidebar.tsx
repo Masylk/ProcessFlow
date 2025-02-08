@@ -30,7 +30,7 @@ interface SidebarProps {
     parentFolder: Folder
   ) => void;
   user: User | null;
-  onSelectFolder: (folder: Folder) => void;
+  onSelectFolder: (folder?: Folder) => void;
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
 }
@@ -109,10 +109,7 @@ export default function Sidebar({
       <div className="px-4 p-2">
         <button
           className="w-full h-9 px-3 py-2 bg-gray-50 rounded-md flex justify-start items-center gap-2 cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => {
-            // Insert your onClick logic here, if needed
-            console.log('My Workflows button clicked');
-          }}
+          onClick={() => onSelectFolder(undefined)}
         >
           <div className="w-5 h-5 relative overflow-hidden">
             <img
