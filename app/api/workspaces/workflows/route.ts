@@ -32,6 +32,49 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const {
+      id, // ID of the workflow to update
+      name,
+      description, // Optional field for description
+      folder_id = null, // Optional field for folder association
+      team_tags = [], // Optional field for team tags
+    } = await req.json();
+
+    // Ensure the `id` is provided
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Workflow ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Update the workflow
+    const updatedWorkflow = await prisma.workflow.update({
+      where: {
+        id: Number(id), // Ensure the ID is a number
+      },
+      data: {
+        ...(name && { name }), // Update name if provided
+        ...(description && { description }), // Update description if provided
+        ...(folder_id !== null && {
+          folder_id: folder_id ? Number(folder_id) : null,
+        }), // Update folder_id if provided
+        ...(team_tags && { team_tags }), // Update team_tags if provided
+      },
+    });
+
+    return NextResponse.json(updatedWorkflow, { status: 200 });
+  } catch (error: any) {
+    console.error('Error updating workflow:', error);
+    return NextResponse.json(
+      { error: 'Failed to update workflow' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { workflowId } = await req.json(); // Expecting the workflow ID in the request body
