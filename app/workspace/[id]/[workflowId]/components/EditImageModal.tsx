@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-export default function Home() {
+export default function EditImageModal() {
   // Gérer l'état (ouvert/fermé) de la box "ALT"
   const [showAltBox, setShowAltBox] = useState(false);
-  const [altText, setAltText] = useState("");
+  const [altText, setAltText] = useState('');
   const [showZoomIcons, setShowZoomIcons] = useState(false); // État pour gérer la visibilité des icônes de zoom
   const [showTrashIcons, setShowTrashIcons] = useState(false); // État pour gérer la visibilité des icônes de la corbeille
 
   const handleAltClick = () => {
-    setShowAltBox(!showAltBox); };
+    setShowAltBox(!showAltBox);
+  };
 
   const handleSaveAlt = () => {
-    console.log("ALT Text:", altText);
+    console.log('ALT Text:', altText);
     setShowAltBox(false);
   };
 
@@ -51,15 +52,16 @@ export default function Home() {
         </div>
 
         {/* Bloc pour l'image */}
-        <div className="relative w-[512px] h-[312px] bg-gray-100 mt-5 flex justify-center items-center border-8 p-1 rounded-[8px] overflow-hidden"
-             onMouseEnter={() => {
-               setShowZoomIcons(true); // Afficher les icônes de zoom
-               setShowTrashIcons(true); // Afficher les icônes de la corbeille
-             }} 
-             onMouseLeave={() => {
-               setShowZoomIcons(false); // Masquer les icônes de zoom
-               setShowTrashIcons(false); // Masquer les icônes de la corbeille
-             }} 
+        <div
+          className="relative w-[512px] h-[312px] bg-gray-100 mt-5 flex justify-center items-center border-8 p-1 rounded-[8px] overflow-hidden"
+          onMouseEnter={() => {
+            setShowZoomIcons(true); // Afficher les icônes de zoom
+            setShowTrashIcons(true); // Afficher les icônes de la corbeille
+          }}
+          onMouseLeave={() => {
+            setShowZoomIcons(false); // Masquer les icônes de zoom
+            setShowTrashIcons(false); // Masquer les icônes de la corbeille
+          }}
         >
           <div className="p-6">
             <p className="text-gray-500">Image Placeholder</p>
@@ -92,7 +94,10 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Bouton ALT */}
-                <div className="relative group px-4 py-2 bg-white border-[#d0d5dd] flex justify-center items-center gap-2 hover:cursor-pointer hover:bg-[#f9fafb] transition duration-300 rounded-br-[8px] rounded-tr-[8px]" onClick={handleAltClick}>
+                <div
+                  className="relative group px-4 py-2 bg-white border-[#d0d5dd] flex justify-center items-center gap-2 hover:cursor-pointer hover:bg-[#f9fafb] transition duration-300 rounded-br-[8px] rounded-tr-[8px]"
+                  onClick={handleAltClick}
+                >
                   <div className="text-[#344054] text-sm font-semibold font-['Inter']">
                     ALT
                   </div>
@@ -114,44 +119,44 @@ export default function Home() {
               </div>
             </div>
           )}
-            {/* Box ALT (apparait si showAltBox) */}
-            {showAltBox && (
-              <div
-                className="absolute left-2 self-stretch bg-white border border-gray-200 rounded-lg shadow p-4 flex flex-col gap-2 items-align-center bottom-0 mb-14"
-                style={{ zIndex: 999 }}
-              >
-                <label className="font-['Inter'] text-sm text-[#101828] font-semibold">
-                  Alternative Text
-                </label>
-                <input
-                  className="w-full p-2 border rounded text-black focus:ring-2 focus:border-[#4e6bd7] focus:border-2 font-['Inter'] focus:outline-none"
-                  type="text"
-                  value={altText}
-                  onChange={(e) => setAltText(e.target.value)}
-                  placeholder="Describe the image"
-                />
-                <div className="font-['Inter'] flex justify-end gap-2 font-semibold">
-                  <button
-                    className="px-2 py-1 bg-white text-gray-600 rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
+          {/* Box ALT (apparait si showAltBox) */}
+          {showAltBox && (
+            <div
+              className="absolute left-2 self-stretch bg-white border border-gray-200 rounded-lg shadow p-4 flex flex-col gap-2 items-align-center bottom-0 mb-14"
+              style={{ zIndex: 999 }}
+            >
+              <label className="font-['Inter'] text-sm text-[#101828] font-semibold">
+                Alternative Text
+              </label>
+              <input
+                className="w-full p-2 border rounded text-black focus:ring-2 focus:border-[#4e6bd7] focus:border-2 font-['Inter'] focus:outline-none"
+                type="text"
+                value={altText}
+                onChange={(e) => setAltText(e.target.value)}
+                placeholder="Describe the image"
+              />
+              <div className="font-['Inter'] flex justify-end gap-2 font-semibold">
+                <button
+                  className="px-2 py-1 bg-white text-gray-600 rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
                                 shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                                 shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] 
                                 hover:bg-[#f9fafb] transition duration-300 text-sm"
-                    onClick={() => setShowAltBox(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="px-2 py-1 bg-[#4e6bd7] text-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
+                  onClick={() => setShowAltBox(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-2 py-1 bg-[#4e6bd7] text-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
                                 shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                                 shadow-[inset_0px_0px_0px_1px rgba(16,24,40,0.18)] 
                                 hover:bg-[#374c99] transition duration-300 text-sm"
-                    onClick={handleSaveAlt}
-                  >
-                    Save
-                  </button>
-                </div>
+                  onClick={handleSaveAlt}
+                >
+                  Save
+                </button>
               </div>
-            )}
+            </div>
+          )}
 
           {/* --- BLOC 2 : Zoom (coin bas-droit) --- */}
           {showZoomIcons && ( // Afficher les icônes de zoom uniquement si showZoomIcons est vrai
@@ -350,20 +355,22 @@ export default function Home() {
           </div>
         </div>
         <div className="w-full h-[25px] flex flex-col justify-end">
-  <div className="h-[1px] bg-[#e4e7ec]" />
-</div>
+          <div className="h-[1px] bg-[#e4e7ec]" />
+        </div>
         {/* Boutons d'action (bas) */}
         <div className="py-8 flex flex-col w-full">
           {/* Espace "25px" + pb-6 */}
-          
+
           {/* Conteneur des boutons */}
           <div className="w-full px-6 flex justify-end items-center gap-3">
             <div className="grow shrink basis-0 h-11 flex justify-end items-center gap-3">
               {/* Bouton CANCEL */}
-              <div className="px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
+              <div
+                className="px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
                               shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                               shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] 
-                              border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden hover:cursor-pointer hover:bg-[#f9fafb] transition duration-300">
+                              border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden hover:cursor-pointer hover:bg-[#f9fafb] transition duration-300"
+              >
                 <div className="px-0.5 justify-center items-center flex">
                   <div className="text-[#344054] text-base font-semibold font-['Inter'] leading-normal">
                     Cancel
@@ -372,10 +379,12 @@ export default function Home() {
               </div>
 
               {/* Bouton SAVE IMAGE */}
-              <div className="px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
+              <div
+                className="px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
                               shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                               shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] 
-                              border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden hover:cursor-pointer hover:bg-[#374c99] transition duration-300">
+                              border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden hover:cursor-pointer hover:bg-[#374c99] transition duration-300"
+              >
                 <div className="px-0.5 justify-center items-center flex">
                   <div className="text-white text-base font-semibold font-['Inter'] leading-normal">
                     Save image
