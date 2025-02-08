@@ -1,8 +1,10 @@
-"use client";
-import React, { useState } from "react";
+'use client';
+import React, { useState } from 'react';
 
-export default function AccessTheLinear() {
-  const [selectedOption, setSelectedOption] = useState("linked");
+// Block to select the path on the canva
+
+export default function ConditionalBlock() {
+  const [selectedOption, setSelectedOption] = useState('linked');
 
   const handleClick = (option: string) => {
     setSelectedOption(option);
@@ -24,7 +26,7 @@ export default function AccessTheLinear() {
             4. Access the Linear
           </h2>
         </div>
-        
+
         <p className="text-black text-sm font-normal font-['Inter'] leading-tight mb-3">
           Select an option
         </p>
@@ -32,15 +34,15 @@ export default function AccessTheLinear() {
         {/* -- Option 1 -- */}
         <div
           className={`cursor-pointer rounded-xl px-4 py-3 mb-3 ${
-            selectedOption === "linked"
-              ? "border-2 border-[#4e6bd7]"
-              : "border border-[#e4e7ec]"
+            selectedOption === 'linked'
+              ? 'border-2 border-[#4e6bd7]'
+              : 'border border-[#e4e7ec]'
           }`}
-          onClick={() => handleClick("linked")}
+          onClick={() => handleClick('linked')}
         >
           <div className="flex gap-2 items-start">
             {/* Radio */}
-            {selectedOption === "linked" ? (
+            {selectedOption === 'linked' ? (
               <div className="w-4 h-4 p-[5px] bg-[#4761c4] rounded-full flex items-center justify-center">
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
               </div>
@@ -58,15 +60,15 @@ export default function AccessTheLinear() {
         {/* -- Option 2 -- */}
         <div
           className={`cursor-pointer rounded-xl px-4 py-3 mb-3 ${
-            selectedOption === "notLinked"
-              ? "border-2 border-[#4e6bd7]"
-              : "border border-[#e4e7ec]"
+            selectedOption === 'notLinked'
+              ? 'border-2 border-[#4e6bd7]'
+              : 'border border-[#e4e7ec]'
           }`}
-          onClick={() => handleClick("notLinked")}
+          onClick={() => handleClick('notLinked')}
         >
           <div className="flex gap-2 items-start">
             {/* Radio */}
-            {selectedOption === "notLinked" ? (
+            {selectedOption === 'notLinked' ? (
               <div className="w-4 h-4 p-[5px] bg-[#4761c4] rounded-full flex items-center justify-center">
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
               </div>
@@ -85,15 +87,15 @@ export default function AccessTheLinear() {
         {/* -- Option 3 -- */}
         <div
           className={`cursor-pointer rounded-xl px-4 py-3 ${
-            selectedOption === "noAccount"
-              ? "border-2 border-[#4e6bd7]"
-              : "border border-[#e4e7ec]"
+            selectedOption === 'noAccount'
+              ? 'border-2 border-[#4e6bd7]'
+              : 'border border-[#e4e7ec]'
           }`}
-          onClick={() => handleClick("noAccount")}
+          onClick={() => handleClick('noAccount')}
         >
           <div className="flex gap-2 items-start">
             {/* Radio */}
-            {selectedOption === "noAccount" ? (
+            {selectedOption === 'noAccount' ? (
               <div className="w-4 h-4 p-[5px] bg-[#4761c4] rounded-full flex items-center justify-center">
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
               </div>
