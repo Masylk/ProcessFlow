@@ -22,6 +22,7 @@ export async function GET(
       select: {
         id: true,
         name: true,
+        workflow_id: true,
         // Add other fields as necessary
       },
     });

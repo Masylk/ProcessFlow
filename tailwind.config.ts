@@ -29,16 +29,21 @@ const config: Config = {
       },
     },
   },
+  variants: {
+    extend: {
+      borderColor: ['focus'],
+    },
+  },
   plugins: [
     function (api: PluginAPI) {
       const { addUtilities } = api;
       addUtilities({
         '.hide-scrollbar': {
-          'scrollbar-width': 'none' /* For Firefox */,
-          '-ms-overflow-style': 'none' /* For Internet Explorer and Edge */,
+          'scrollbar-width': 'none', /* For Firefox */
+          '-ms-overflow-style': 'none', /* For Internet Explorer and Edge */
         },
         '.hide-scrollbar::-webkit-scrollbar': {
-          display: 'none' /* For Chrome, Safari, and Edge */,
+          display: 'none', /* For Chrome, Safari, and Edge */
         },
         '.resize-x': {
           resize: 'horizontal',
