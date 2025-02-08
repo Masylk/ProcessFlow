@@ -22,6 +22,8 @@ interface WorkflowCardProps {
   workspace: Workspace;
   onSelectWorkflow: (w: Workflow) => void;
   onDeleteWorkflow: () => void;
+  onEditWorkflow: () => void;
+  onMoveWorkflow: () => void;
 }
 
 export default function WorkflowCard({
@@ -29,6 +31,8 @@ export default function WorkflowCard({
   workspace,
   onSelectWorkflow,
   onDeleteWorkflow,
+  onEditWorkflow,
+  onMoveWorkflow,
 }: WorkflowCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -126,6 +130,10 @@ export default function WorkflowCard({
                   e.stopPropagation(); // Prevent click propagation
                   if (item.label === 'Delete Flow') {
                     onDeleteWorkflow(); // Call the delete function
+                  } else if (item.label === 'Move') {
+                    onMoveWorkflow();
+                  } else if (item.label === 'Edit Flow info') {
+                    onEditWorkflow();
                   }
                   // Add handlers for other menu items as needed
                 }}

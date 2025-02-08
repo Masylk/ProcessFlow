@@ -12,6 +12,8 @@ interface CanvasProps {
   openCreateFlow: () => void;
   onSelectWorkflow: (w: Workflow) => void;
   onDeleteWorkflow: () => void;
+  onEditWorkflow: () => void;
+  onMoveWorkflow: () => void;
   selectedFolder?: Folder;
   searchTerm?: string;
 }
@@ -22,6 +24,8 @@ const Canvas: React.FC<CanvasProps> = ({
   openCreateFlow,
   onSelectWorkflow,
   onDeleteWorkflow,
+  onEditWorkflow,
+  onMoveWorkflow,
   searchTerm = '',
 }) => {
   const router = useRouter(); // Initialize the router
@@ -57,6 +61,8 @@ const Canvas: React.FC<CanvasProps> = ({
             workspace={workspace}
             onSelectWorkflow={onSelectWorkflow}
             onDeleteWorkflow={onDeleteWorkflow}
+            onEditWorkflow={onEditWorkflow}
+            onMoveWorkflow={onMoveWorkflow}
           />
         ))}
       </div>
