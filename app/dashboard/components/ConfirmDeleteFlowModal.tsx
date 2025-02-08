@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Workflow } from '@/types/workflow';
 
 interface ConfirmDeleteModalProps {
   onClose: () => void;
-  onDelete: () => Promise<void>;
+  onDelete: (workflowId: number) => Promise<void>;
+  selectedWorkflow: Workflow;
 }
 
 export default function ConfirmDeleteFlowModal({
   onClose,
   onDelete,
+  selectedWorkflow,
 }: ConfirmDeleteModalProps) {
   return (
     <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
@@ -29,8 +32,8 @@ export default function ConfirmDeleteFlowModal({
               Confirm delete
             </div>
             <div className="text-[#475467] text-sm font-normal leading-tight">
-              Are you sure you want to delete this folder? This action cannot be
-              undone. The flows inside will not be deleted.
+              Are you sure you want to delete this Flow? This action cannot be
+              undone.
             </div>
           </div>
 
@@ -47,14 +50,15 @@ export default function ConfirmDeleteFlowModal({
 
               <button
                 onClick={async () => {
-                  await onDelete();
+                  console.log('deleting: ' + selectedWorkflow.name);
+                  await onDelete(selectedWorkflow.id);
                   onClose();
                 }}
                 className={`w-full h-11 px-4 py-2.5 bg-[#d92c20] hover:bg-[#B42318]
                  rounded-lg shadow border border-[#901f17] flex justify-center items-center gap-1.5 transition-all duration-300`}
               >
                 <span className="text-white text-base font-semibold">
-                  Delete account
+                  Delete
                 </span>
               </button>
             </div>

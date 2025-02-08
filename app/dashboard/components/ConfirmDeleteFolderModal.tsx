@@ -54,7 +54,7 @@ export default function ConfirmDeleteFolderModal({
                  rounded-lg shadow border border-[#901f17] flex justify-center items-center gap-1.5 transition-all duration-300`}
               >
                 <span className="text-white text-base font-semibold">
-                  Delete account
+                  Delete
                 </span>
               </button>
             </div>

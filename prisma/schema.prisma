@@ -90,63 +90,63 @@ model workflow {
   @@unique([name, workspace_id])
 }
 
-model path {
-  id            Int         @id @default(autoincrement())
-  name          String // Optional name for easier management of paths
-  blocks        block[]     @relation("path_blocks")
-  path_block_id Int? // Optional field
-  path_block    path_block? @relation("path_block_path", fields: [path_block_id], references: [id])
-  workflow_id   Int // Foreign key to workflow
-  workflow      workflow    @relation("workflow_paths", fields: [workflow_id], references: [id])
-}
-
 enum task_type {
   MANUAL
   AUTOMATIC
+}
+
+model path {
+  id            Int         @id @default(autoincrement())
+  name          String
+  blocks        block[]     @relation("path_blocks")
+  path_block_id Int?
+  path_block    path_block? @relation("path_block_path", fields: [path_block_id], references: [id], onDelete: Cascade)
+  workflow_id   Int
+  workflow      workflow    @relation("workflow_paths", fields: [workflow_id], references: [id])
 }
 
 model block {
   id                Int          @id @default(autoincrement())
   type              block_type
   position          Int
-  title             String? // Optional field
-  icon              String? // Optional field
-  description       String? // Optional field
-  image             String? // Optional field
+  title             String?
+  icon              String?
+  description       String?
+  image             String?
   image_description String?
   last_modified     DateTime?
   average_time      String?
-  task_type         task_type? // Optional enum field
+  task_type         task_type?
   workflow_id       Int
-  workflow          workflow     @relation("workflow_blocks", fields: [workflow_id], references: [id])
+  workflow          workflow     @relation("workflow_blocks", fields: [workflow_id], references: [id], onDelete: Cascade)
   actions           action[]
-  step_block        step_block?
-  path_block        path_block?
-  delay_block       delay_block?
+  step_block        step_block?  @relation
+  path_block        path_block?  @relation
+  delay_block       delay_block? @relation
   path_id           Int
-  path              path         @relation("path_blocks", fields: [path_id], references: [id])
-  click_position    Json? // Optional JSON field
-}
-
-model path_block {
-  id       Int    @id @default(autoincrement())
-  block_id Int    @unique
-  block    block  @relation(fields: [block_id], references: [id])
-  paths    path[] @relation("path_block_path")
-}
-
-model delay_block {
-  id       Int   @id @default(autoincrement())
-  block_id Int   @unique
-  block    block @relation(fields: [block_id], references: [id])
-  seconds  Int // Specific field for delay block
+  path              path         @relation("path_blocks", fields: [path_id], references: [id], onDelete: Cascade)
+  click_position    Json?
 }
 
 model step_block {
   id           Int    @id @default(autoincrement())
   block_id     Int    @unique
-  step_details String // Specific field for step block
-  block        block  @relation(fields: [block_id], references: [id])
+  step_details String
+  block        block  @relation(fields: [block_id], references: [id], onDelete: Cascade)
+}
+
+model path_block {
+  id       Int    @id @default(autoincrement())
+  block_id Int    @unique
+  block    block  @relation(fields: [block_id], references: [id], onDelete: Cascade)
+  paths    path[] @relation("path_block_path") // Do not define `onDelete` here
+}
+
+model delay_block {
+  id       Int   @id @default(autoincrement())
+  block_id Int   @unique
+  block    block @relation(fields: [block_id], references: [id], onDelete: Cascade)
+  seconds  Int
 }
 
 model action {
