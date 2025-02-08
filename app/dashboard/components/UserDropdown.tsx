@@ -8,7 +8,7 @@ import HelpCenterModal from './HelpCenterModal'; // Si besoin, ce composant n'es
 interface UserDropdownProps {
   user: User | null;
   onOpenUserSettings: () => void;
-  onOpenHelpCenter: () => void; // Nouvelle prop pour ouvrir le Help Center
+  onOpenHelpCenter: () => void;
 }
 
 export default function UserDropdown({
