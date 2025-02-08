@@ -36,7 +36,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const { workflowId } = await req.json(); // Expecting the workflow ID in the request body
 
-    console.log('trying to delete');
     // Ensure workflowId is provided
     if (!workflowId) {
       return NextResponse.json(
