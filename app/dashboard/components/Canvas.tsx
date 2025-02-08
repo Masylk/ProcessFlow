@@ -4,17 +4,20 @@ import { Folder, Workspace } from '@/types/workspace';
 import React from 'react';
 import CanvaHeader from './CanvaHeader';
 import { useRouter } from 'next/navigation'; // Import the useRouter hook
+import WorkflowCard from './WorkflowCard';
 
 interface CanvasProps {
   workspace: Workspace;
-  selectedFolder?: Folder;
   openCreateFlow: () => void;
+  selectedFolder?: Folder;
+  searchTerm?: string;
 }
 
 const Canvas: React.FC<CanvasProps> = ({
   workspace,
   selectedFolder,
   openCreateFlow,
+  searchTerm = '',
 }) => {
   const router = useRouter(); // Initialize the router
 
@@ -23,28 +26,31 @@ const Canvas: React.FC<CanvasProps> = ({
     router.push(`/workspace/${workspace.id}/${workflowId}/edit`);
   };
 
+  // Filter workflows based on the selectedFolder and searchTerm
+  const workflowsToDisplay = workspace.workflows.filter((workflow) => {
+    const matchesFolder = selectedFolder
+      ? workflow.folder_id === selectedFolder.id
+      : true;
+    const matchesSearch = workflow.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return matchesFolder && matchesSearch;
+  });
+
   return (
-    <div className="flex flex-col flex-1 w-full h-full bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md">
+    <div className="flex flex-col flex-1 w-full h-full bg-gray-100 ">
       <CanvaHeader
         openCreateFlow={openCreateFlow}
         selectedFolder={selectedFolder}
       />
-      <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-        {selectedFolder ? selectedFolder.name : workspace.name}
-      </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {workspace.workflows.map((workflow) => (
-          <div
+      <div className="w-full py-4 pb-40 px-8 grid grid-cols-4 gap-4 overflow-auto">
+        {workflowsToDisplay.map((workflow) => (
+          <WorkflowCard
             key={workflow.id}
-            className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer"
-            onClick={() => handleWorkflowClick(workflow.id)} // Handle click event
-          >
-            <h2 className="text-lg font-semibold text-gray-800">
-              {workflow.name}
-            </h2>
-            <p className="text-sm text-gray-600">{workflow.description}</p>
-          </div>
+            workflow={workflow}
+            workspace={workspace}
+          />
         ))}
       </div>
     </div>

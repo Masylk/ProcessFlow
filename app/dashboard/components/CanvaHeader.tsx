@@ -35,7 +35,7 @@ export default function CanvaHeader({
   };
 
   return (
-    <div className="w-full h-[68px] px-8 py-4 justify-between items-center inline-flex">
+    <div className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b">
       <div className="justify-start items-center gap-4 flex">
         {/* Dynamically display folder icon */}
         {selectedFolder && getFolderIcon()}
@@ -49,7 +49,7 @@ export default function CanvaHeader({
       </div>
       <div className="justify-end items-center gap-2 flex">
         {/* Import Process Button */}
-        <div className="px-3 py-2 hidden bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden hover:bg-[#F9FAFB] transition-colors duration-300 cursor-pointer">
+        <div className="px-3  py-2 hidden bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden hover:bg-[#F9FAFB] transition-colors duration-300 cursor-pointer">
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
             alt="Import Icon"

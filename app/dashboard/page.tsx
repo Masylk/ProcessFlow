@@ -22,6 +22,7 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import CreateFlowModal from './components/CreateFlowModal';
 import { Workflow } from '@/types/workflow';
 import { createWorkflow } from './utils/createWorkflow';
+import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -39,7 +40,9 @@ export default function Page() {
   const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
   const [deleteAccountVisible, setDeleteAccountVisible] =
     useState<boolean>(false);
-  const [creatFlowVisible, setCreateFlowVisible] = useState<boolean>(false);
+  const [deleteFolderVisible, setDeleteFolderVisible] =
+    useState<boolean>(false);
+  const [createFlowVisible, setCreateFlowVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
@@ -51,6 +54,9 @@ export default function Page() {
   >(null);
   const [onEditFolderAction, setOnEditFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
+  >(null);
+  const [onDeleteFolderAction, setOnDeleteFolderAction] = useState<
+    (() => Promise<void>) | null
   >(null);
   const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
     | ((
@@ -313,6 +319,15 @@ export default function Page() {
     setCreateFlowVisible(true);
   };
 
+  const openDeleteFolder = (fn: () => Promise<void>) => {
+    setOnDeleteFolderAction(() => fn);
+    setDeleteFolderVisible(true);
+  };
+
+  const closeDeleteFolder = () => {
+    setDeleteFolderVisible(false);
+  };
+
   const closeCreateFlow = () => {
     setCreateFlowVisible(false);
   };
@@ -403,7 +418,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="flex h-screen w-screen">
+      <div className="flex h-screen w-screen overflow-hidden">
         {/* Sidebar with header and list of workspaces */}
         {user && user.email && activeWorkspace && (
           <Sidebar
@@ -414,6 +429,7 @@ export default function Page() {
             onCreateFolder={openCreateFolder}
             onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
+            onDeleteFolder={openDeleteFolder}
             onSelectFolder={onSelectFolder}
             onOpenUserSettings={openUserSettings}
             user={user}
@@ -443,11 +459,12 @@ export default function Page() {
           </header>
 
           {/* Main content */}
-          <main className="flex-1 w-full h-h-full bg-gray-100">
+          <main className="flex-1 w-full h-[100%] bg-gray-100">
             {activeWorkspace && (
               <Canvas
                 workspace={activeWorkspace}
                 selectedFolder={selectedFolder}
+                searchTerm={searchTerm}
                 openCreateFlow={openCreateFlow}
               />
             )}
@@ -526,10 +543,17 @@ export default function Page() {
         <ConfirmDeleteModal user={user} onClose={closeDeleteAccount} />
       )}
 
-      {creatFlowVisible && (
+      {createFlowVisible && (
         <CreateFlowModal
           onClose={closeCreateFlow}
           onCreateFlow={handleCreateWorkflow}
+        />
+      )}
+
+      {deleteFolderVisible && onDeleteFolderAction && (
+        <ConfirmDeleteFolderModal
+          onClose={closeDeleteFolder}
+          onDelete={onDeleteFolderAction}
         />
       )}
     </>
