@@ -21,12 +21,12 @@ import UploadImageModal from './components/UploadImageModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import CreateFlowModal from './components/CreateFlowModal';
 import { Workflow } from '@/types/workflow';
+import { createWorkflow } from './utils/createWorkflow';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [workflowToAdd, setWorkflowToAdd] = useState<Workflow | null>(null);
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
@@ -194,6 +194,47 @@ export default function Page() {
       }),
     });
     // Refresh workspaces if needed.
+  };
+
+  const handleCreateWorkflow = async (name: string, description: string) => {
+    if (!activeWorkspace) {
+      console.error('No active workspace selected');
+      return;
+    }
+
+    const newWorkflow = await createWorkflow(
+      name,
+      description,
+      activeWorkspace.id,
+      selectedFolder?.id || null,
+      [] // team tags
+    );
+
+    if (newWorkflow) {
+      // Update the list of workspaces
+      setWorkspaces((prevWorkspaces) =>
+        prevWorkspaces.map((workspace) =>
+          workspace.id === newWorkflow.workspaceId
+            ? {
+                ...workspace,
+                workflows: [...workspace.workflows, newWorkflow],
+              }
+            : workspace
+        )
+      );
+
+      // Update the active workspace
+      setActiveWorkspace((prev) =>
+        prev
+          ? {
+              ...prev,
+              workflows: [...prev.workflows, newWorkflow],
+            }
+          : prev
+      );
+
+      console.log('Workflow created successfully:', newWorkflow);
+    }
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -485,7 +526,12 @@ export default function Page() {
         <ConfirmDeleteModal user={user} onClose={closeDeleteAccount} />
       )}
 
-      {creatFlowVisible && <CreateFlowModal onClose={closeCreateFlow} />}
+      {creatFlowVisible && (
+        <CreateFlowModal
+          onClose={closeCreateFlow}
+          onCreateFlow={handleCreateWorkflow}
+        />
+      )}
     </>
   );
 }

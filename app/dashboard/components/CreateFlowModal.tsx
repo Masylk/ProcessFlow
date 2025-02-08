@@ -3,9 +3,13 @@ import { useState } from 'react';
 
 interface CreateFlowModalProps {
   onClose: () => void;
+  onCreateFlow: (name: string, description: string) => Promise<void>;
 }
 
-export default function CreateFlowModal({ onClose }: CreateFlowModalProps) {
+export default function CreateFlowModal({
+  onClose,
+  onCreateFlow,
+}: CreateFlowModalProps) {
   const [flowName, setFlowName] = useState('');
   const [flowDescription, setFlowDescription] = useState('');
 
@@ -140,6 +144,10 @@ export default function CreateFlowModal({ onClose }: CreateFlowModalProps) {
             </div>
             {/* Create Flow Button */}
             <div
+              onClick={() => {
+                onCreateFlow(flowName, flowDescription);
+                onClose();
+              }}
               className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05) cursor-hand] 
                   shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
                   border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden 
