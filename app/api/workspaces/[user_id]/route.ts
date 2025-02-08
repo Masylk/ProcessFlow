@@ -1,4 +1,3 @@
-// workspaces/[user_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
@@ -9,7 +8,7 @@ export async function GET(
   const userId = parseInt(params.user_id); // Use the user_id from the URL
 
   try {
-    // Fetch the user and their workspaces (with folders included) based on user_id
+    // Fetch the user and their workspaces (with folders and workflows included) based on user_id
     const user = await prisma.user.findUnique({
       where: {
         id: userId, // Query by user_id
@@ -22,6 +21,11 @@ export async function GET(
                 folders: {
                   orderBy: {
                     id: 'asc', // Ensure consistent order (change to name or id if needed)
+                  },
+                },
+                workflows: {
+                  orderBy: {
+                    id: 'asc',
                   },
                 },
               },
@@ -47,6 +51,11 @@ export async function GET(
         },
         include: {
           folders: {
+            orderBy: {
+              id: 'asc',
+            },
+          },
+          workflows: {
             orderBy: {
               id: 'asc',
             },
