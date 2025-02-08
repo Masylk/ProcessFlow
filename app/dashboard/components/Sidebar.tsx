@@ -29,6 +29,7 @@ interface SidebarProps {
     ) => Promise<void>,
     parentFolder: Folder
   ) => void;
+  onDeleteFolder: (fn: () => Promise<void>) => void;
   user: User | null;
   onSelectFolder: (folder?: Folder) => void;
   onOpenUserSettings: () => void;
@@ -43,6 +44,7 @@ export default function Sidebar({
   onCreateFolder,
   onEditFolder,
   onCreateSubfolder,
+  onDeleteFolder,
   user,
   onSelectFolder,
   onOpenUserSettings,
@@ -134,6 +136,7 @@ export default function Sidebar({
           onCreateFolder={onCreateFolder}
           onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
+          onDeleteFolder={onDeleteFolder}
           onSelectFolder={onSelectFolder}
         />
       </div>

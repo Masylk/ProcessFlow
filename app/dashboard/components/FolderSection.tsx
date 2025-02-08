@@ -18,7 +18,8 @@ interface FolderSectionProps {
     fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
     parentFolder: Folder
   ) => void;
-  onSelectFolder: (folder: Folder) => void;
+  onDeleteFolder: (fn: () => Promise<void>) => void;
+  onSelectFolder: (folder?: Folder) => void;
 }
 
 export default function FolderSection({
@@ -26,6 +27,7 @@ export default function FolderSection({
   onCreateFolder,
   onEditFolder,
   onCreateSubfolder,
+  onDeleteFolder,
   onSelectFolder,
 }: FolderSectionProps) {
   const [folders, setFolders] = useState<Folder[]>(
@@ -225,6 +227,7 @@ export default function FolderSection({
         );
 
         closeDropdown();
+        onSelectFolder(undefined);
         // Optionally, refresh the UI or update state
       } catch (error) {
         console.error('Error deleting folder:', error);
@@ -410,7 +413,7 @@ export default function FolderSection({
         >
           <FolderDropdown
             onCreateSubfolder={handleCreateSubfolder}
-            onDeleteFolder={handleDeleteFolder}
+            onDeleteFolder={async () => onDeleteFolder(handleDeleteFolder)}
             onEditFolder={handleOnEditFolder}
             parent={selectedFolder}
           />
