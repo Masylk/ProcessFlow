@@ -28,7 +28,7 @@
     "uuid": "^11.0.2"
   },
   "scripts": {
-    "sync-tokens-to-figma": "tsx sync_tokens_to_figma.ts",
+    "sync-figma-to-tokens": "tsx sync_figma_to_tokens.ts",
   },
   "devDependencies": {
     "@types/lodash": "^4.17.9",
