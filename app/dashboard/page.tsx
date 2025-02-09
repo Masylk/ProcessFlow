@@ -15,6 +15,14 @@ import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal'
 import { createClient } from '@/utils/supabase/client';
 import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
+import EditFolderModal from './components/EditFolderModal';
+import Canvas from './components/Canvas';
+import UploadImageModal from './components/UploadImageModal';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import CreateFlowModal from './components/CreateFlowModal';
+import { Workflow } from '@/types/workflow';
+import { createWorkflow } from './utils/createWorkflow';
+import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -28,12 +36,27 @@ export default function Page() {
     useState<boolean>(false);
   const [createSubfolderVisible, setCreateSubfolderVisible] =
     useState<boolean>(false);
+  const [editFolderVisible, setEditFolderVisible] = useState<boolean>(false);
+  const [uploadImageVisible, setUploadImageVisible] = useState<boolean>(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] =
+    useState<boolean>(false);
+  const [deleteFolderVisible, setDeleteFolderVisible] =
+    useState<boolean>(false);
+  const [createFlowVisible, setCreateFlowVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
+  const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
+  >(null);
+  const [onEditFolderAction, setOnEditFolderAction] = useState<
+    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
+  >(null);
+  const [onDeleteFolderAction, setOnDeleteFolderAction] = useState<
+    (() => Promise<void>) | null
   >(null);
   const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
     | ((
@@ -44,7 +67,9 @@ export default function Page() {
       ) => Promise<void>)
     | null
   >(null);
-
+  const [selectedFolder, setSelectedFolder] = useState<Folder | undefined>(
+    undefined
+  );
   const [folderParent, setFolderParent] = useState<Folder | null>(null);
   const [folderParentId, setFolderParentId] = useState<number | null>(null);
   const supabase = createClient();
@@ -71,20 +96,6 @@ export default function Page() {
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
-        // try {
-        //   const response = await fetch(
-        //     `/api/get-signed-url?path=${encodeURIComponent(user.avatar_url)}`
-        //   );
-        //   if (!response.ok) {
-        //     throw new Error('Failed to fetch signed URL');
-        //   }
-        //   const data = await response.json();
-        //   setUser((prevUser) =>
-        //     prevUser ? { ...prevUser, avatar_signed_url: data.signedUrl } : null
-        //   );
-        // } catch (error) {
-        //   console.error(error);
-        // }
         console.log('getting avatar url : ' + user.avatar_url);
         user.avatar_signed_url = user.avatar_url;
       }
@@ -191,8 +202,53 @@ export default function Page() {
     // Refresh workspaces if needed.
   };
 
+  const handleCreateWorkflow = async (name: string, description: string) => {
+    if (!activeWorkspace) {
+      console.error('No active workspace selected');
+      return;
+    }
+
+    const newWorkflow = await createWorkflow(
+      name,
+      description,
+      activeWorkspace.id,
+      selectedFolder?.id || null,
+      [] // team tags
+    );
+
+    if (newWorkflow) {
+      // Update the list of workspaces
+      setWorkspaces((prevWorkspaces) =>
+        prevWorkspaces.map((workspace) =>
+          workspace.id === newWorkflow.workspaceId
+            ? {
+                ...workspace,
+                workflows: [...workspace.workflows, newWorkflow],
+              }
+            : workspace
+        )
+      );
+
+      // Update the active workspace
+      setActiveWorkspace((prev) =>
+        prev
+          ? {
+              ...prev,
+              workflows: [...prev.workflows, newWorkflow],
+            }
+          : prev
+      );
+
+      console.log('Workflow created successfully:', newWorkflow);
+    }
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
+  };
+
+  const onSelectFolder = (folder?: Folder) => {
+    setSelectedFolder(folder);
   };
 
   // Toggle the dropdown
@@ -206,6 +262,7 @@ export default function Page() {
   };
 
   const closeUserSettings = () => {
+    setFileToUpload(null);
     setUserSettingsVisible(false);
     setPasswordChanged(false);
   };
@@ -237,6 +294,48 @@ export default function Page() {
     setFolderParent(parentFolder);
   };
 
+  const openEditFolder = (
+    fn: (name: string) => Promise<void>,
+    parentFolder: Folder
+  ) => {
+    setEditFolderVisible(true);
+    setOnEditFolderAction(() => fn);
+    setFolderParent(parentFolder);
+  };
+
+  const openUploadImage = () => {
+    setUploadImageVisible(true);
+  };
+
+  const openDeleteAccount = () => {
+    setDeleteAccountVisible(true);
+  };
+
+  const closeDeleteAccount = () => {
+    setDeleteAccountVisible(false);
+  };
+
+  const openCreateFlow = () => {
+    setCreateFlowVisible(true);
+  };
+
+  const openDeleteFolder = (fn: () => Promise<void>) => {
+    setOnDeleteFolderAction(() => fn);
+    setDeleteFolderVisible(true);
+  };
+
+  const closeDeleteFolder = () => {
+    setDeleteFolderVisible(false);
+  };
+
+  const closeCreateFlow = () => {
+    setCreateFlowVisible(false);
+  };
+
+  const closeUploadImage = () => {
+    setUploadImageVisible(false);
+  };
+
   const closeCreateSubfolder = () => {
     setOnCreateSubfolderAction(null);
     setFolderParent(null);
@@ -246,6 +345,12 @@ export default function Page() {
   const closeCreateFolder = () => {
     setOnCreateFolderAction(null);
     setCreateFolderVisible(false);
+  };
+
+  const closeEditFolder = () => {
+    setOnEditFolderAction(null);
+    setFolderParent(null);
+    setEditFolderVisible(false);
   };
 
   const closeHelpCenter = () => {
@@ -303,9 +408,17 @@ export default function Page() {
     setNewPassword('');
   };
 
+  const setDeleteAvatar = () => {
+    setIsDeleteAvatar(true);
+  };
+
+  const unsetDeleteAvatar = () => {
+    setIsDeleteAvatar(false);
+  };
+
   return (
     <>
-      <div className="flex h-screen w-screen">
+      <div className="flex h-screen w-screen overflow-hidden">
         {/* Sidebar with header and list of workspaces */}
         {user && user.email && activeWorkspace && (
           <Sidebar
@@ -314,7 +427,13 @@ export default function Page() {
             activeWorkspace={activeWorkspace}
             setActiveWorkspace={updateActiveWorkspace}
             onCreateFolder={openCreateFolder}
+            onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
+            onDeleteFolder={openDeleteFolder}
+            onSelectFolder={onSelectFolder}
+            onOpenUserSettings={openUserSettings}
+            user={user}
+            onOpenHelpCenter={openHelpCenter}
           />
         )}
 
@@ -340,19 +459,33 @@ export default function Page() {
           </header>
 
           {/* Main content */}
-          <main className="flex-1 bg-gray-100"></main>
+          <main className="flex-1 w-full h-[100%] bg-gray-100">
+            {activeWorkspace && (
+              <Canvas
+                workspace={activeWorkspace}
+                selectedFolder={selectedFolder}
+                searchTerm={searchTerm}
+                openCreateFlow={openCreateFlow}
+              />
+            )}
+          </main>
         </div>
       </div>
 
       {/* Modal for user settings */}
       {user && userSettingsVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
           <UserSettings
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
+            openImageUpload={openUploadImage}
+            openDeleteAccount={openDeleteAccount}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
+            selectedFile={fileToUpload}
+            isDeleteAvatar={isDeleteAvatar}
+            onDeleteAvatar={setDeleteAvatar}
           />
         </div>
       )}
@@ -380,11 +513,48 @@ export default function Page() {
           parent={folderParent}
         ></CreateSubfolderModal>
       )}
+
+      {editFolderVisible && onEditFolderAction && folderParent && (
+        <EditFolderModal
+          onClose={closeEditFolder}
+          onEdit={onEditFolderAction}
+          folder={folderParent}
+        ></EditFolderModal>
+      )}
+
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <HelpCenterModal onClose={closeHelpCenter} user={user} />
         </div>
+      )}
+
+      {uploadImageVisible && (
+        <UploadImageModal
+          onClose={closeUploadImage}
+          onSave={(file: File) => {
+            unsetDeleteAvatar();
+            setFileToUpload(file);
+          }}
+        />
+      )}
+
+      {deleteAccountVisible && user && (
+        <ConfirmDeleteModal user={user} onClose={closeDeleteAccount} />
+      )}
+
+      {createFlowVisible && (
+        <CreateFlowModal
+          onClose={closeCreateFlow}
+          onCreateFlow={handleCreateWorkflow}
+        />
+      )}
+
+      {deleteFolderVisible && onDeleteFolderAction && (
+        <ConfirmDeleteFolderModal
+          onClose={closeDeleteFolder}
+          onDelete={onDeleteFolderAction}
+        />
       )}
     </>
   );

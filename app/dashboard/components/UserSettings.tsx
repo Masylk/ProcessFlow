@@ -10,7 +10,12 @@ interface UserSettingsProps {
   onClose: () => void;
   updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
   passwordChanged: boolean;
+  openImageUpload: () => void;
+  openDeleteAccount: () => void;
   onUserUpdate?: (updatedUser: User) => void;
+  selectedFile: File | null;
+  isDeleteAvatar: boolean;
+  onDeleteAvatar: () => void;
 }
 
 export default function UserSettings({
@@ -18,9 +23,24 @@ export default function UserSettings({
   onClose,
   updateNewPassword,
   passwordChanged,
+  openImageUpload,
+  openDeleteAccount,
   onUserUpdate,
+  selectedFile,
+  isDeleteAvatar,
+  onDeleteAvatar,
 }: UserSettingsProps) {
   const supabase = createClient();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error.message);
+    } else {
+      console.log('Successfully logged out');
+      window.location.href = '/login';
+    }
+  };
 
   // Default avatar if none provided.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
@@ -30,7 +50,6 @@ export default function UserSettings({
 
   // Local state for file upload and preview.
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Local state for editable fields.
@@ -56,19 +75,16 @@ export default function UserSettings({
     setNewEmail(user.email);
   }, [user]);
 
+  useEffect(() => {
+    if (selectedFile) {
+      const objectURL = URL.createObjectURL(selectedFile);
+      setPreviewUrl(objectURL);
+    }
+  }, [selectedFile]);
+
   // Trigger the file selector.
   const handleUploadClick = () => {
     fileInputRef.current?.click();
-  };
-
-  // When a file is selected, store it and generate a preview URL.
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const objectUrl = URL.createObjectURL(file);
-      setPreviewUrl(objectUrl);
-    }
   };
 
   // Simple email validation.
@@ -101,7 +117,7 @@ export default function UserSettings({
     let newAvatarUrl = user.avatar_url; // Default to current avatar.
 
     // If a new file was selected, perform the upload.
-    if (selectedFile) {
+    if (selectedFile && !isDeleteAvatar) {
       try {
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -136,6 +152,7 @@ export default function UserSettings({
           first_name: firstName,
           last_name: lastName,
           full_name: fullName,
+          delete_avatar: isDeleteAvatar,
         }),
       });
 
@@ -254,7 +271,7 @@ export default function UserSettings({
 
             {/* Main settings form */}
             <div className="self-stretch h-[664px] flex-col justify-start items-start gap-6 flex">
-              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex overflow-auto">
+              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
                 {/* Photo & Name section */}
                 <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
@@ -273,14 +290,20 @@ export default function UserSettings({
                     <div className="w-16 h-16 rounded-full justify-center items-center flex">
                       <div className="w-16 h-16 relative rounded-full border border-black/10">
                         <img
-                          src={previewUrl ? previewUrl : avatarSrc}
+                          src={
+                            isDeleteAvatar
+                              ? defaultAvatar
+                              : previewUrl
+                              ? previewUrl
+                              : avatarSrc
+                          }
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
                         />
                       </div>
                     </div>
                     <div
-                      onClick={handleUploadClick}
+                      onClick={() => openImageUpload()}
                       className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#889ce4] flex items-center gap-1 cursor-pointer overflow-hidden"
                     >
                       <div className="w-5 h-5 relative overflow-hidden">
@@ -296,14 +319,17 @@ export default function UserSettings({
                         </div>
                       </div>
                     </div>
-                    <input
+                    {/* <input
                       type="file"
                       ref={fileInputRef}
                       accept="image/*"
                       className="hidden"
                       onChange={handleFileChange}
-                    />
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden">
+                    /> */}
+                    <div
+                      onClick={() => onDeleteAvatar()}
+                      className="px-3 py-2 cursor-pointer bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon.svg`}
@@ -440,7 +466,7 @@ export default function UserSettings({
                   </div>
                 ) : (
                   // When the form is displayed, show the full password change section.
-                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
+                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg">
                     <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                       Password
                     </div>
@@ -538,7 +564,10 @@ export default function UserSettings({
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden">
+                    <div
+                      onClick={() => handleLogout()}
+                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
@@ -552,7 +581,10 @@ export default function UserSettings({
                         </div>
                       </div>
                     </div>
-                    <div className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden">
+                    <div
+                      onClick={() => openDeleteAccount()}
+                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
+                    >
                       <div className="w-5 h-5 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}

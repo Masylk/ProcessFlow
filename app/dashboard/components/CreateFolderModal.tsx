@@ -71,13 +71,13 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         {/* Buttons */}
         <div className="mt-6 flex justify-end gap-3">
           <button
-            className="h-11 px-4 py-2.5 bg-white border border-[#d0d5dd] rounded-lg text-[#344054] font-semibold"
+            className="h-11 w-full px-4 py-2.5 bg-white border border-[#d0d5dd] rounded-lg text-[#344054] font-semibold"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="h-11 px-4 py-2.5 bg-[#4e6bd7] text-white rounded-lg font-semibold"
+            className="h-11 w-full px-4 py-2.5 bg-[#4e6bd7] text-white rounded-lg font-semibold"
             onClick={() => createFolder(folderName)}
             disabled={!folderName.trim()}
           >

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import WorkspaceDropdownMenu from './WorkspaceDropdownMenu';
 import FolderSection from './FolderSection';
 import { Folder, Workspace } from '@/types/workspace';
+import { User } from '@/types/user';
+import SidebarFooter from './SidebarFooter';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -14,6 +16,10 @@ interface SidebarProps {
     fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
     parentId?: number
   ) => void;
+  onEditFolder: (
+    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
+    parentFolder: Folder
+  ) => void;
   onCreateSubfolder: (
     fn: (
       name: string,
@@ -23,6 +29,11 @@ interface SidebarProps {
     ) => Promise<void>,
     parentFolder: Folder
   ) => void;
+  onDeleteFolder: (fn: () => Promise<void>) => void;
+  user: User | null;
+  onSelectFolder: (folder?: Folder) => void;
+  onOpenUserSettings: () => void;
+  onOpenHelpCenter: () => void;
 }
 
 export default function Sidebar({
@@ -31,7 +42,13 @@ export default function Sidebar({
   activeWorkspace,
   setActiveWorkspace,
   onCreateFolder,
+  onEditFolder,
   onCreateSubfolder,
+  onDeleteFolder,
+  user,
+  onSelectFolder,
+  onOpenUserSettings,
+  onOpenHelpCenter,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -67,7 +84,7 @@ export default function Sidebar({
             </div>
             {/* Display activeWorkspace name */}
             <div className="relative flex flex-col px-0.5">
-              <div className="w-[84px] h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                 {activeWorkspace.name}
               </div>
             </div>
@@ -94,10 +111,7 @@ export default function Sidebar({
       <div className="px-4 p-2">
         <button
           className="w-full h-9 px-3 py-2 bg-gray-50 rounded-md flex justify-start items-center gap-2 cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => {
-            // Insert your onClick logic here, if needed
-            console.log('My Workflows button clicked');
-          }}
+          onClick={() => onSelectFolder(undefined)}
         >
           <div className="w-5 h-5 relative overflow-hidden">
             <img
@@ -120,9 +134,17 @@ export default function Sidebar({
         <FolderSection
           activeWorkspace={activeWorkspace}
           onCreateFolder={onCreateFolder}
+          onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
+          onDeleteFolder={onDeleteFolder}
+          onSelectFolder={onSelectFolder}
         />
       </div>
+      <SidebarFooter
+        user={user}
+        onOpenHelpCenter={onOpenHelpCenter}
+        onOpenUserSettings={onOpenUserSettings}
+      />
     </aside>
   );
 }
