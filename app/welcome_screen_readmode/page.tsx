@@ -1,21 +1,33 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
+
+// Types pour les props des composants
+interface DescriptionWithReadMoreProps {
+  text: string;
+  maxChars?: number;
+}
+
+interface IntegrationBadgeProps {
+  label: string;
+}
 
 /**
  * Composant qui tronque le texte au-delà d'un certain nombre de caractères,
  * et affiche un bouton "Voir plus / Voir moins" pour dérouler ou replier.
  */
-function DescriptionWithReadMore({ text, maxChars = 80 }) {
+function DescriptionWithReadMore({
+  text,
+  maxChars = 80,
+}: DescriptionWithReadMoreProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Vérifie si le texte dépasse la limite
   const isOverflowing = text.length > maxChars;
 
   // Affiche tout le texte si "Voir plus" a été cliqué ou si le texte ne dépasse pas maxChars
-  const displayText = isExpanded || !isOverflowing
-    ? text
-    : text.slice(0, maxChars) + "...";
+  const displayText =
+    isExpanded || !isOverflowing ? text : text.slice(0, maxChars) + '...';
 
   return (
     <div className="whitespace-normal break-words">
@@ -26,9 +38,9 @@ function DescriptionWithReadMore({ text, maxChars = 80 }) {
       {isOverflowing && (
         <button
           onClick={() => setIsExpanded((prev) => !prev)}
-          className= "text-[#4e6bd7] text-sm font-medium mt-1 underline"
+          className="text-[#4e6bd7] text-sm font-medium mt-1 underline"
         >
-          {isExpanded ? "Read less" : "Read more"}
+          {isExpanded ? 'Read less' : 'Read more'}
         </button>
       )}
     </div>
@@ -38,10 +50,12 @@ function DescriptionWithReadMore({ text, maxChars = 80 }) {
 /**
  * Petit composant badge d'intégration (affiche un label, ex: "Gmail", "Confluence", etc.)
  */
-function IntegrationBadge({ label }) {
+function IntegrationBadge({ label }: IntegrationBadgeProps) {
   return (
-    <div className="pl-1.5 pr-2 py-0.5 bg-gray-50 rounded-md border border-[#e4e7ec]
-                    flex justify-start items-center gap-0.5">
+    <div
+      className="pl-1.5 pr-2 py-0.5 bg-gray-50 rounded-md border border-[#e4e7ec]
+                    flex justify-start items-center gap-0.5"
+    >
       {/* Icône ou espace icône */}
       <div className="w-3 h-3 relative overflow-hidden" />
       {/* Label du badge */}
@@ -59,17 +73,17 @@ export default function EmployeeOnboardingCard() {
   // Exemple de liste de badges :
   // (Tu peux remplacer ces valeurs par celles que tu récupères depuis ton API ou un autre state)
   const badgesData = [
-    "Linear",
-    "Gmail",
-    "Confluence",
-    "Asana",
-    "Slack",
-    "GitHub",
-    "GitLab",
-    "Notion",
-    "Jira",
-    "Pean",
-    "Pillame"
+    'Linear',
+    'Gmail',
+    'Confluence',
+    'Asana',
+    'Slack',
+    'GitHub',
+    'GitLab',
+    'Notion',
+    'Jira',
+    'Pean',
+    'Pillame',
   ];
 
   const MAX_BADGES = 7;
@@ -88,12 +102,12 @@ export default function EmployeeOnboardingCard() {
           - w-[636px] (ou px-[29px], etc.) selon le design
       */}
       <div className="px-[29px] py-[27px] bg-white flex-col justify-start items-start inline-flex rounded shadow">
-        
         <div className="self-stretch justify-start items-start gap-7 inline-flex">
-          
           {/* Logo Google, centré dans son conteneur */}
-          <div className="w-16 h-16 p-[5.33px] bg-white rounded-[18px] border-2 border-[#e4e7ec]
-                          flex justify-center items-center overflow-hidden">
+          <div
+            className="w-16 h-16 p-[5.33px] bg-white rounded-[18px] border-2 border-[#e4e7ec]
+                          flex justify-center items-center overflow-hidden"
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/google.svg`}
               alt="google"
@@ -103,7 +117,6 @@ export default function EmployeeOnboardingCard() {
 
           {/* Conteneur principal */}
           <div className="w-[636px] h-auto flex-col justify-start items-start inline-flex">
-
             {/* Titre */}
             <div className="text-[#101828] text-xl font-semibold font-['Inter'] leading-[30px]">
               Employee Onboarding
@@ -146,8 +159,10 @@ Cela peut être très pratique pour limiter l'encombrement de l'UI.`}
             {/* Informations sur l'utilisateur, date, étapes, etc. */}
             <div className="flex justify-start items-center gap-2">
               {/* Nom de l'utilisateur */}
-              <div className="pl-1 pr-1.5 py-0.5 bg-[#edf0fb] rounded-md border-[#aebbed]
-                              flex justify-start items-center gap-1">
+              <div
+                className="pl-1 pr-1.5 py-0.5 bg-[#edf0fb] rounded-md border-[#aebbed]
+                              flex justify-start items-center gap-1"
+              >
                 <div className="w-4 h-4 rounded-full flex justify-center items-center overflow-hidden">
                   <div className="w-4 h-4 relative rounded-full border border-black/10" />
                 </div>
@@ -156,7 +171,7 @@ Cela peut être très pratique pour limiter l'encombrement de l'UI.`}
                 </div>
               </div>
 
-              {/* Séparation verticale, ajustement pour en faire une ligne verticale */}
+              {/* Séparation verticale */}
               <div className="w-[1px] h-[15px] bg-[#d0d5dd] mx-2" />
 
               <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
