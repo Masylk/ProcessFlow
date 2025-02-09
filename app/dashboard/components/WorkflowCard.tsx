@@ -20,10 +20,19 @@ const menuItems: MenuItem[] = [
 interface WorkflowCardProps {
   workflow: Workflow;
   workspace: Workspace;
+  onSelectWorkflow: (w: Workflow) => void;
+  onDeleteWorkflow: () => void;
+  onEditWorkflow: () => void;
+  onMoveWorkflow: () => void;
 }
+
 export default function WorkflowCard({
   workflow,
   workspace,
+  onSelectWorkflow,
+  onDeleteWorkflow,
+  onEditWorkflow,
+  onMoveWorkflow,
 }: WorkflowCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -87,6 +96,7 @@ export default function WorkflowCard({
             <div
               className="px-2 py-1 justify-center items-center gap-2 flex transition duration-300 group hover:bg-[#F9FAFB] cursor-pointer"
               onClick={(e) => {
+                onSelectWorkflow(workflow);
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
@@ -116,6 +126,17 @@ export default function WorkflowCard({
               <div
                 key={index}
                 className="px-4 py-3 flex items-center gap-2 transition duration-300 hover:bg-[#F9FAFB] cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent click propagation
+                  if (item.label === 'Delete Flow') {
+                    onDeleteWorkflow(); // Call the delete function
+                  } else if (item.label === 'Move') {
+                    onMoveWorkflow();
+                  } else if (item.label === 'Edit Flow info') {
+                    onEditWorkflow();
+                  }
+                  // Add handlers for other menu items as needed
+                }}
               >
                 <img
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}

@@ -1,12 +1,29 @@
 'use client';
+import { Workflow } from '@/types/workflow';
 import { useState } from 'react';
 
-export default function EditFlowModal() {
-  const [processName, setProcessName] = useState('');
-  const [flowDescription, setFlowDescription] = useState('');
+interface EditFlowModalProps {
+  onClose: () => void;
+  onConfirm: (
+    id: number,
+    name: string,
+    description: string
+  ) => Promise<Workflow | null>;
+  selectedWorkflow: Workflow;
+}
+
+export default function EditFlowModal({
+  onClose,
+  onConfirm,
+  selectedWorkflow,
+}: EditFlowModalProps) {
+  const [processName, setProcessName] = useState(selectedWorkflow.name);
+  const [flowDescription, setFlowDescription] = useState(
+    selectedWorkflow.description
+  );
 
   return (
-    <div className="w-full h-screen p-8 flex-col justify-center items-center inline-flex overflow-hidden relative">
+    <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
       <div className="w-full h-full absolute opacity-40 bg-[#0c111d]" />
       <div className="h-[446px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center flex overflow-hidden relative z-10">
         <div className="w-[550px] h-[336px] relative" />
@@ -67,15 +84,28 @@ export default function EditFlowModal() {
         </div>
         <div className="self-stretch h-[100px] pt-8 flex-col justify-start items-start flex">
           <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
-            <button className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-[#344054] text-base font-semibold transition duration-300 hover:bg-[#F9FAFB]">
+            <button
+              onClick={() => onClose()}
+              className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-[#344054] text-base font-semibold transition duration-300 hover:bg-[#F9FAFB]"
+            >
               Discard changes
             </button>
-            <button className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg border-2 border-white text-white text-base font-semibold transition duration-300 hover:bg-[#374C99]">
+            <button
+              onClick={async () => {
+                await onConfirm(
+                  selectedWorkflow.id,
+                  processName,
+                  flowDescription
+                );
+                onClose();
+              }}
+              className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg border-2 border-white text-white text-base font-semibold transition duration-300 hover:bg-[#374C99]"
+            >
               Save changes
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

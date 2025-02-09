@@ -23,10 +23,107 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(newWorkflow, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding workflow:', error);
     return NextResponse.json(
       { error: 'Failed to add workflow' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const {
+      id, // ID of the workflow to update
+      name,
+      description, // Optional field for description
+      folder_id = null, // Optional field for folder association
+      team_tags = [], // Optional field for team tags
+    } = await req.json();
+
+    // Ensure the `id` is provided
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Workflow ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Update the workflow
+    const updatedWorkflow = await prisma.workflow.update({
+      where: {
+        id: Number(id), // Ensure the ID is a number
+      },
+      data: {
+        ...(name && { name }), // Update name if provided
+        ...(description && { description }), // Update description if provided
+        ...(folder_id !== null && {
+          folder_id: folder_id ? Number(folder_id) : null,
+        }), // Update folder_id if provided
+        ...(team_tags && { team_tags }), // Update team_tags if provided
+      },
+    });
+
+    return NextResponse.json(updatedWorkflow, { status: 200 });
+  } catch (error: any) {
+    console.error('Error updating workflow:', error);
+    return NextResponse.json(
+      { error: 'Failed to update workflow' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { workflowId } = await req.json(); // Expecting the workflow ID in the request body
+
+    // Ensure workflowId is provided
+    if (!workflowId) {
+      return NextResponse.json(
+        { error: 'Workflow ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Start a transaction to ensure all related deletions occur together
+    await prisma.$transaction(async (prisma) => {
+      // Delete all blocks related to the workflow
+      await prisma.block.deleteMany({
+        where: { workflow_id: Number(workflowId) },
+      });
+
+      // Delete all paths related to the workflow
+      await prisma.path.deleteMany({
+        where: { workflow_id: Number(workflowId) },
+      });
+
+      // Finally, delete the workflow itself
+      await prisma.workflow.delete({
+        where: {
+          id: Number(workflowId),
+        },
+      });
+    });
+
+    return NextResponse.json(
+      { message: 'Workflow and related data deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error('Error deleting workflow:', error);
+
+    // Handle specific Prisma errors (e.g., if the workflow doesn't exist)
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Workflow not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to delete workflow and related data' },
       { status: 500 }
     );
   }

@@ -5,10 +5,15 @@ import React from 'react';
 import CanvaHeader from './CanvaHeader';
 import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import WorkflowCard from './WorkflowCard';
+import { Workflow } from '@/types/workflow';
 
 interface CanvasProps {
   workspace: Workspace;
   openCreateFlow: () => void;
+  onSelectWorkflow: (w: Workflow) => void;
+  onDeleteWorkflow: () => void;
+  onEditWorkflow: () => void;
+  onMoveWorkflow: () => void;
   selectedFolder?: Folder;
   searchTerm?: string;
 }
@@ -17,6 +22,10 @@ const Canvas: React.FC<CanvasProps> = ({
   workspace,
   selectedFolder,
   openCreateFlow,
+  onSelectWorkflow,
+  onDeleteWorkflow,
+  onEditWorkflow,
+  onMoveWorkflow,
   searchTerm = '',
 }) => {
   const router = useRouter(); // Initialize the router
@@ -50,6 +59,10 @@ const Canvas: React.FC<CanvasProps> = ({
             key={workflow.id}
             workflow={workflow}
             workspace={workspace}
+            onSelectWorkflow={onSelectWorkflow}
+            onDeleteWorkflow={onDeleteWorkflow}
+            onEditWorkflow={onEditWorkflow}
+            onMoveWorkflow={onMoveWorkflow}
           />
         ))}
       </div>
