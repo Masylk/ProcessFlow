@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "sync-figma-to-tokens": "tsx scripts/figma/sync_figma_to_tokens.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@contentsquare/tag-sdk": "^1.1.0",
@@ -18,10 +17,12 @@
     "@supabase/supabase-js": "^2.48.0",
     "clsx": "^2.1.1",
     "dompurify": "^3.2.3",
+    "framer-motion": "^12.4.1",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "next": "14.2.5",
     "posthog-js": "^1.215.1",
+    "posthog-node": "^4.5.0",
     "react": "^18",
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "^18",
