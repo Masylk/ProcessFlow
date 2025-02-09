@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync-figma-to-tokens": "tsx sync_figma_to_tokens.ts"
   },
   "dependencies": {
     "@contentsquare/tag-sdk": "^1.1.0",
@@ -26,9 +27,6 @@
     "react-zoom-pan-pinch": "^3.6.1",
     "reactflow": "^11.11.4",
     "uuid": "^11.0.2"
-  },
-  "scripts": {
-    "sync-figma-to-tokens": "tsx sync_figma_to_tokens.ts",
   },
   "devDependencies": {
     "@types/lodash": "^4.17.9",
