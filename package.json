@@ -27,6 +27,9 @@
     "reactflow": "^11.11.4",
     "uuid": "^11.0.2"
   },
+  "scripts": {
+    "sync-figma-to-tokens": "tsx sync_figma_to_tokens.ts",
+  },
   "devDependencies": {
     "@types/lodash": "^4.17.9",
     "@types/node": "^20",
