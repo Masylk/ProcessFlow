@@ -27,6 +27,7 @@ import { deleteWorkflow } from './utils/deleteWorkflow';
 import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from './utils/updateWorkflow';
+import MoveWorkflowModal from './components/MoveWorkflowModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -662,9 +663,13 @@ export default function Page() {
         />
       )}
 
-      {/* {moveFlowVisible && selectedWorkflow && <MoveWor
-
-      } */}
+      {moveFlowVisible && selectedWorkflow && activeWorkspace && (
+        <MoveWorkflowModal
+          onClose={closeMoveFlow}
+          selectedWorkflow={selectedWorkflow}
+          activeWorkspace={activeWorkspace}
+        />
+      )}
 
       {deleteFlowVisible && selectedWorkflow && (
         <ConfirmDeleteFlowModal

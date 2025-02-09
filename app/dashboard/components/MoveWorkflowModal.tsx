@@ -1,16 +1,33 @@
 'use client';
 
+import { Workflow } from '@/types/workflow';
+import { Workspace, Folder } from '@/types/workspace';
 import React, { useState } from 'react';
 
-export default function MoveWorkflowModal() {
+interface MoveWorkflowModalProps {
+  onClose: () => void;
+  activeWorkspace: Workspace;
+  selectedWorkflow: Workflow;
+}
+
+export default function MoveWorkflowModal({
+  onClose,
+  activeWorkspace,
+  selectedWorkflow,
+}: MoveWorkflowModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearchChange = (event) => {
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
+  // Filter folders based on the search term
+  const filteredFolders = activeWorkspace.folders.filter((folder) =>
+    folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="relative w-full h-screen flex justify-center items-center p-8">
+    <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
       <div className="absolute inset-0 backdrop-blur-lg flex justify-center items-center">
         <div className="absolute inset-0 opacity-70 bg-[#0c111d]/70" />
       </div>
@@ -26,7 +43,7 @@ export default function MoveWorkflowModal() {
           </div>
           <div className="self-stretch h-7 flex flex-col justify-start items-start gap-1 mb-4 mt-4">
             <div className="text-[#101828] text-lg font-semibold">
-              Move Flow "Flow's Name"
+              Move Flow "{selectedWorkflow.name}"
             </div>
           </div>
         </div>
@@ -51,16 +68,30 @@ export default function MoveWorkflowModal() {
         </div>
         {/* Divider */}
         <div className="self-stretch h-px bg-[#e4e7ec] mb-4"></div>
-        {/* Departments */}
-        <div className="self-stretch h-[194px] px-3 flex flex-col gap-1">
-          <Department name="Marketing" fileCount={10} />
-          <Department name="Human Resources" fileCount={8} />
-          <Department name="Design" fileCount={12} />
+        {/* Render folders */}
+        <div className="self-stretch h-[194px] px-3 flex flex-col gap-1 overflow-y-auto">
+          {filteredFolders.map((folder) => {
+            // Calculate file count for each folder
+            const fileCount = activeWorkspace.workflows.filter(
+              (workflow) => workflow.folder_id === folder.id
+            ).length;
+
+            return (
+              <Department
+                key={folder.id}
+                name={folder.name}
+                fileCount={fileCount}
+              />
+            );
+          })}
         </div>
         {/* Buttons */}
         <div className="self-stretch h-[100px] pt-8 flex flex-col justify-start items-center">
           <div className="self-stretch px-6 pb-6 flex gap-3">
-            <button className="grow h-11 px-4 py-2.5 bg-white rounded-lg shadow-md border border-[#d0d5dd] flex justify-center items-center transition duration-300 hover:bg-[#F9FAFB]">
+            <button
+              onClick={() => onClose()}
+              className="grow h-11 px-4 py-2.5 bg-white rounded-lg shadow-md border border-[#d0d5dd] flex justify-center items-center transition duration-300 hover:bg-[#F9FAFB]"
+            >
               <span className="text-[#344054] text-base font-semibold">
                 Cancel
               </span>
@@ -71,11 +102,11 @@ export default function MoveWorkflowModal() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
-function Department({ name, fileCount }) {
+function Department({ name, fileCount }: { name: string; fileCount: number }) {
   return (
     <div className="self-stretch px-1.5 py-px bg-white inline-flex items-center hover:bg-[#F9FAFB] transition duration-300 rounded-[6px]">
       <div className="grow h-[60px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
