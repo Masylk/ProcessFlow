@@ -1,0 +1,47 @@
+name: Sync Figma Tokens
+
+on:
+  push:
+    branches:
+      - staging # Trigger only on the staging branch
+  schedule:
+    - cron: '0 12 * * *' # Runs daily at 12 PM UTC
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  sync-figma-tokens:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      # Step 3: Install figma-tokens-cli
+      - name: Install Figma Tokens CLI
+        run: npm install -g figma-tokens-cli
+
+      # Step 4: Fetch tokens from Figma
+      - name: Fetch Tokens from Figma
+        env:
+          FIGMA_API_KEY: ${{ secrets.FIGMA_API_KEY }} # Figma API key from secrets
+          FIGMA_FILE_ID: ${{ secrets.FIGMA_FILE_ID }} # Figma file ID from secrets
+        run: |
+          figma-tokens-cli fetch --file-id=$FIGMA_FILE_ID --token=$FIGMA_API_KEY --output=./tokens.json
+
+      # Step 5: Commit and push changes
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add tokens.json
+          git commit -m "Sync Figma tokens"
+          git push origin staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
