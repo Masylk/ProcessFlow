@@ -23,6 +23,10 @@ import CreateFlowModal from './components/CreateFlowModal';
 import { Workflow } from '@/types/workflow';
 import { createWorkflow } from './utils/createWorkflow';
 import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
+import { deleteWorkflow } from './utils/deleteWorkflow';
+import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
+import EditFlowModal from './components/EditFlowModal';
+import { updateWorkflow } from './utils/updateWorkflow';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -43,12 +47,18 @@ export default function Page() {
   const [deleteFolderVisible, setDeleteFolderVisible] =
     useState<boolean>(false);
   const [createFlowVisible, setCreateFlowVisible] = useState<boolean>(false);
+  const [deleteFlowVisible, setDeleteFlowVisible] = useState<boolean>(false);
+  const [editFlowVisible, setEditFlowVisible] = useState<boolean>(false);
+  const [moveFlowVisible, setMoveFlowVisible] = useState<boolean>(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
   const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
+    null
+  );
   const [onCreateFolderAction, setOnCreateFolderAction] = useState<
     ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
   >(null);
@@ -243,6 +253,59 @@ export default function Page() {
     }
   };
 
+  async function handleEditWorkflow(
+    workflowId: number,
+    name: string,
+    description: string
+  ): Promise<Workflow | null> {
+    // Prepare the partial update data
+    const updateData = {
+      name, // Update the name
+      description, // Update the description
+    };
+
+    // Call the updateWorkflow function
+    const updatedWorkflow = await updateWorkflow(workflowId, updateData);
+
+    if (updatedWorkflow) {
+      console.log('Workflow updated successfully:', updatedWorkflow);
+
+      // Update the activeWorkspace state
+      if (activeWorkspace) {
+        const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
+          workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+        );
+
+        setActiveWorkspace({
+          ...activeWorkspace,
+          workflows: updatedWorkflows,
+        });
+      }
+    } else {
+      console.error('Failed to update workflow.');
+    }
+
+    return updatedWorkflow;
+  }
+
+  const handleDeleteWorkflow = async (workflowId: number) => {
+    const wasDeleted = await deleteWorkflow(workflowId);
+
+    if (wasDeleted && activeWorkspace) {
+      // Update the state to remove the deleted workflow
+      setActiveWorkspace({
+        ...activeWorkspace,
+        workflows: activeWorkspace.workflows.filter(
+          (workflow) => workflow.id !== workflowId
+        ),
+      });
+
+      console.log('Workflow deleted and state updated');
+    } else {
+      console.log('Failed to delete workflow');
+    }
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
@@ -324,6 +387,31 @@ export default function Page() {
     setDeleteFolderVisible(true);
   };
 
+  const openDeleteFlow = () => {
+    setDeleteFlowVisible(true);
+  };
+
+  const openEditFlow = () => {
+    setEditFlowVisible(true);
+  };
+
+  const openMoveFlow = () => {
+    setMoveFlowVisible(true);
+  };
+
+  const closeMoveFlow = () => {
+    setMoveFlowVisible(false);
+  };
+
+  const closeEditFlow = () => {
+    setEditFlowVisible(false);
+  };
+
+  const closeDeleteFlow = () => {
+    setSelectedWorkflow(null);
+    setDeleteFlowVisible(false);
+  };
+
   const closeDeleteFolder = () => {
     setDeleteFolderVisible(false);
   };
@@ -355,6 +443,11 @@ export default function Page() {
 
   const closeHelpCenter = () => {
     setHelpCenterVisible(false);
+  };
+
+  const handleSelectWorkflow = (workflow: Workflow | null) => {
+    if (workflow) console.log('select workflow: ' + workflow?.name);
+    setSelectedWorkflow(workflow);
   };
 
   // Function to update the user in state
@@ -465,7 +558,11 @@ export default function Page() {
                 workspace={activeWorkspace}
                 selectedFolder={selectedFolder}
                 searchTerm={searchTerm}
+                onSelectWorkflow={handleSelectWorkflow}
                 openCreateFlow={openCreateFlow}
+                onDeleteWorkflow={openDeleteFlow}
+                onEditWorkflow={openEditFlow}
+                onMoveWorkflow={openMoveFlow}
               />
             )}
           </main>
@@ -554,6 +651,22 @@ export default function Page() {
         <ConfirmDeleteFolderModal
           onClose={closeDeleteFolder}
           onDelete={onDeleteFolderAction}
+        />
+      )}
+
+      {editFlowVisible && selectedWorkflow && (
+        <EditFlowModal
+          onClose={closeEditFlow}
+          onConfirm={handleEditWorkflow}
+          selectedWorkflow={selectedWorkflow}
+        />
+      )}
+
+      {deleteFlowVisible && selectedWorkflow && (
+        <ConfirmDeleteFlowModal
+          onClose={closeDeleteFlow}
+          onDelete={handleDeleteWorkflow}
+          selectedWorkflow={selectedWorkflow}
         />
       )}
     </>
