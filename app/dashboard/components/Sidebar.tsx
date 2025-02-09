@@ -12,28 +12,15 @@ interface SidebarProps {
   userEmail: string;
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => Promise<void>;
-  onCreateFolder: (
-    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
-    parentId?: number
-  ) => void;
-  onEditFolder: (
-    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
-    parentFolder: Folder
-  ) => void;
-  onCreateSubfolder: (
-    fn: (
-      name: string,
-      parentId: number,
-      icon_url?: string,
-      emote?: string
-    ) => Promise<void>,
-    parentFolder: Folder
-  ) => void;
-  onDeleteFolder: (fn: () => Promise<void>) => void;
+  onCreateFolder: (parentId?: number) => void;
+  onEditFolder: (parentFolder: Folder) => void;
+  onCreateSubfolder: (parentFolder: Folder) => void;
+  onDeleteFolder: () => void;
   user: User | null;
   onSelectFolder: (folder?: Folder) => void;
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
+  selectedFolder?: Folder;
 }
 
 export default function Sidebar({
@@ -49,6 +36,7 @@ export default function Sidebar({
   onSelectFolder,
   onOpenUserSettings,
   onOpenHelpCenter,
+  selectedFolder,
 }: SidebarProps) {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -138,6 +126,7 @@ export default function Sidebar({
           onCreateSubfolder={onCreateSubfolder}
           onDeleteFolder={onDeleteFolder}
           onSelectFolder={onSelectFolder}
+          selectedFolder={selectedFolder}
         />
       </div>
       <SidebarFooter
