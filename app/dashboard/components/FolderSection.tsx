@@ -22,6 +22,7 @@ export default function FolderSection({
   onCreateSubfolder,
   onDeleteFolder,
   onSelectFolder,
+  onSelectFolderView,
   selectedFolder,
 }: FolderSectionProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
@@ -116,7 +117,9 @@ export default function FolderSection({
   };
 
   const handleCreateSubfolder = (parent: Folder) => {
-    if (selectedFolder) toggleFolder(selectedFolder.id);
+    // Fix the logic
+    if (selectedFolder && !expandedFolders.has(selectedFolder.id))
+      toggleFolder(selectedFolder.id);
     onCreateSubfolder(parent);
     setDropdownPosition(null);
   };

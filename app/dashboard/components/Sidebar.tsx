@@ -18,6 +18,7 @@ interface SidebarProps {
   onDeleteFolder: () => void;
   user: User | null;
   onSelectFolder: (folder?: Folder) => void;
+  onSelectFolderView: (folder?: Folder) => void;
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
   selectedFolder?: Folder;
@@ -34,6 +35,7 @@ export default function Sidebar({
   onDeleteFolder,
   user,
   onSelectFolder,
+  onSelectFolderView,
   onOpenUserSettings,
   onOpenHelpCenter,
   selectedFolder,
@@ -99,7 +101,7 @@ export default function Sidebar({
       <div className="px-4 p-2">
         <button
           className="w-full h-9 px-3 py-2 bg-gray-50 rounded-md flex justify-start items-center gap-2 cursor-pointer hover:bg-gray-100 transition-colors"
-          onClick={() => onSelectFolder(undefined)}
+          onClick={() => onSelectFolderView(undefined)}
         >
           <div className="w-5 h-5 relative overflow-hidden">
             <img
@@ -125,6 +127,7 @@ export default function Sidebar({
           onEditFolder={onEditFolder}
           onCreateSubfolder={onCreateSubfolder}
           onDeleteFolder={onDeleteFolder}
+          onSelectFolderView={onSelectFolderView}
           onSelectFolder={onSelectFolder}
           selectedFolder={selectedFolder}
         />
