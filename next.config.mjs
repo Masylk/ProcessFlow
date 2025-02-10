@@ -1,7 +1,13 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  compiler: {
+    styledComponents: true,
+  },
+};
+
+
 
 export default withSentryConfig(nextConfig, {
   // Sentry organization and project
