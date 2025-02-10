@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "sync-figma-to-tokens": "tsx scripts/figma/sync_figma_to_tokens.ts"
+    "lint": "next lint"
   },
   "dependencies": {
     "@contentsquare/tag-sdk": "^1.1.0",
