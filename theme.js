@@ -556,7 +556,93 @@ const theme = { colors:
      'rounded-153': '5.9471755027771rem',
      'rounded-154': '6rem',
      'rounded-155': '6.082630634307861rem',
-     'rounded-156': '62.4375rem' } };
+     'rounded-156': '62.4375rem' },
+     
+     spacing: {
+      "container-padding-mobile": "16px",
+      "container-padding-desktop": "32px",
+      "container-max-width-desktop": "1280px",
+      "spacing-none": "0px",
+      "spacing-xxs": "2px",
+      "spacing-xs": "4px",
+      "spacing-sm": "6px",
+      "spacing-md": "8px",
+      "spacing-lg": "12px",
+      "spacing-xl": "16px",
+      "spacing-2xl": "20px",
+      "spacing-3xl": "24px",
+      "spacing-4xl": "32px",
+      "spacing-5xl": "40px",
+      "spacing-6xl": "48px",
+      "spacing-7xl": "64px",
+      "spacing-8xl": "80px",
+      "spacing-9xl": "96px",
+      "spacing-10xl": "128px",
+      "spacing-11xl": "160px",
+    },
+    sizes: {
+      "width-xxs": "320px",
+      "width-xs": "384px",
+      "width-sm": "480px",
+      "width-md": "560px",
+      "width-lg": "640px",
+      "width-xl": "768px",
+      "width-2xl": "1024px",
+      "width-3xl": "1280px",
+      "width-4xl": "1440px",
+      "width-5xl": "1600px",
+      "width-6xl": "1920px",
+      "paragraph-max-width": "720px",
+    },
+    radius: {
+      "radius-none": "0px",
+      "radius-xxs": "2px",
+      "radius-xs": "4px",
+      "radius-sm": "6px",
+      "radius-md": "8px",
+      "radius-lg": "10px",
+      "radius-xl": "12px",
+      "radius-2xl": "16px",
+      "radius-3xl": "20px",
+      "radius-4xl": "24px",
+      "radius-full": "9999px",
+    },
+    typography: {
+      "font-family-display": "Inter",
+      "font-family-body": "Inter",
+      "font-weight-regular": "Regular",
+      "font-weight-regular-italic": "Regular italic",
+      "font-weight-medium": "Medium",
+      "font-weight-medium-italic": "Medium italic",
+      "font-weight-semibold": "Semibold",
+      "font-weight-semibold-italic": "Semibold italic",
+      "font-weight-bold": "Bold",
+      "font-weight-bold-italic": "Bold italic",
+      "text-xs": "12px",
+      "text-sm": "14px",
+      "text-md": "16px",
+      "text-lg": "18px",
+      "text-xl": "20px",
+      "display-xs": "24px",
+      "display-sm": "30px",
+      "display-md": "36px",
+      "display-lg": "48px",
+      "display-xl": "60px",
+      "display-2xl": "72px",
+      "line-height-text-xs": "18px",
+      "line-height-text-sm": "20px",
+      "line-height-text-md": "24px",
+      "line-height-text-lg": "28px",
+      "line-height-text-xl": "30px",
+      "line-height-display-xs": "32px",
+      "line-height-display-sm": "38px",
+      "line-height-display-md": "44px",
+      "line-height-display-lg": "60px",
+      "line-height-display-xl": "72px",
+      "line-height-display-2xl": "90px",
+    },
+    
+    };
      
         // LightMode Assignment
     theme.colors.lightMode = {
@@ -617,33 +703,856 @@ const theme = { colors:
       "fg-success-primary": theme.colors["Success/600"],
       "fg-success-secondary": theme.colors["Success/500"],
 
+      // Background assignments
+      "bg-primary": theme.colors["Base/White"],
+      "bg-primary_alt": theme.colors["Base/White"],
+      "bg-primary_hover": theme.colors["Gray (light mode)/50"],
+      "bg-primary-solid": theme.colors["Gray (light mode)/950"],
+      "bg-secondary": theme.colors["Gray (light mode)/50"],
+      "bg-secondary_alt": theme.colors["Gray (light mode)/50"],
+      "bg-secondary_hover": theme.colors["Gray (light mode)/100"],
+      "bg-secondary_subtle": theme.colors["Gray (light mode)/25"],
+      "bg-secondary-solid": theme.colors["Gray (light mode)/600"],
+      "bg-tertiary": theme.colors["Gray (light mode)/100"],
+      "bg-quaternary": theme.colors["Gray (light mode)/200"],
+      "bg-active": theme.colors["Gray (light mode)/50"],
+      "bg-disabled": theme.colors["Gray (light mode)/100"],
+      "bg-disabled_subtle": theme.colors["Gray (light mode)/50"],
+      "bg-overlay": theme.colors["Gray (light mode)/950"],
+      "bg-brand-primary": theme.colors["Brand/50"],
+      "bg-brand-primary_alt": theme.colors["Brand/50"],
+      "bg-brand-secondary": theme.colors["Brand/100"],
+      "bg-brand-solid": theme.colors["Brand/600"],
+      "bg-brand-solid_hover": theme.colors["Brand/700"],
+      "bg-brand-section": theme.colors["Brand/800"],
+      "bg-brand-section_subtle": theme.colors["Brand/700"],
+      "bg-error-primary": theme.colors["Error/50"],
+      "bg-error-secondary": theme.colors["Error/100"],
+      "bg-error-solid": theme.colors["Error/600"],
+      "bg-warning-primary": theme.colors["Warning/50"],
+      "bg-warning-secondary": theme.colors["Warning/100"],
+      "bg-warning-solid": theme.colors["Warning/600"],
+      "bg-success-primary": theme.colors["Success/50"],
+      "bg-success-secondary": theme.colors["Success/100"],
+      "bg-success-solid": theme.colors["Success/600"],
+
+          // Focus-ring assignments
+      "focus-ring": theme.colors["Brand/500"],
+      "focus-ring-error": theme.colors["Error/500"],
+
+          // Shadow assignments
+      "shadow-xs": "rgba(16, 24, 40, 0.05)",
+      "shadow-sm_01": "rgba(16, 24, 40, 0.10)",
+      "shadow-sm_02": "rgba(16, 24, 40, 0.06)",
+      "shadow-md_01": "rgba(16, 24, 40, 0.10)",
+      "shadow-md_02": "rgba(16, 24, 40, 0.06)",
+      "shadow-lg_01": "rgba(16, 24, 40, 0.08)",
+      "shadow-lg_02": "rgba(16, 24, 40, 0.03)",
+      "shadow-xl_01": "rgba(16, 24, 40, 0.08)",
+      "shadow-xl_02": "rgba(16, 24, 40, 0.03)",
+      "shadow-2xl": "rgba(16, 24, 40, 0.18)",
+      "shadow-3xl": "rgba(16, 24, 40, 0.14)",
+      "shadow-skeumorphic-inner": "rgba(16, 24, 40, 0.05)",
+      "shadow-skeumorphic-inner-border": "rgba(16, 24, 40, 0.18)",
+
+      // Additional shadow assignments
+      "shadow-main-centre-md": "rgba(16, 24, 40, 0.14)",
+      "shadow-main-centre-lg": "rgba(16, 24, 40, 0.18)",
+      "shadow-overlay-lg": "rgba(16, 24, 40, 0.12)",
+      "shadow-grid-md": "rgba(16, 24, 40, 0.08)",
+
+          // Alpha white and black assignments
+      "alpha-white-10": "rgba(255, 255, 255, 0.10)",
+      "alpha-white-20": "rgba(255, 255, 255, 0.20)",
+      "alpha-white-30": "rgba(255, 255, 255, 0.30)",
+      "alpha-white-40": "rgba(255, 255, 255, 0.40)",
+      "alpha-white-50": "rgba(255, 255, 255, 0.50)",
+      "alpha-white-60": "rgba(255, 255, 255, 0.60)",
+      "alpha-white-70": "rgba(255, 255, 255, 0.70)",
+      "alpha-white-80": "rgba(255, 255, 255, 0.80)",
+      "alpha-white-90": "rgba(255, 255, 255, 0.90)",
+      "alpha-white-100": "#ffffff",
+      "alpha-black-10": "rgba(0, 0, 0, 0.10)",
+      "alpha-black-20": "rgba(0, 0, 0, 0.20)",
+      "alpha-black-30": "rgba(0, 0, 0, 0.30)",
+      "alpha-black-40": "rgba(0, 0, 0, 0.40)",
+      "alpha-black-50": "rgba(0, 0, 0, 0.50)",
+      "alpha-black-60": "rgba(0, 0, 0, 0.60)",
+      "alpha-black-70": "rgba(0, 0, 0, 0.70)",
+      "alpha-black-80": "rgba(0, 0, 0, 0.80)",
+      "alpha-black-90": "rgba(0, 0, 0, 0.90)",
+      "alpha-black-100": "#000000",
+
+          // Utility gray assignments
+      "utility-gray-50": theme.colors["Gray (light mode)/50"],
+      "utility-gray-100": theme.colors["Gray (light mode)/100"],
+      "utility-gray-200": theme.colors["Gray (light mode)/200"],
+      "utility-gray-300": theme.colors["Gray (light mode)/300"],
+      "utility-gray-400": theme.colors["Gray (light mode)/400"],
+      "utility-gray-500": theme.colors["Gray (light mode)/500"],
+      "utility-gray-600": theme.colors["Gray (light mode)/600"],
+      "utility-gray-700": theme.colors["Gray (light mode)/700"],
+      "utility-gray-800": theme.colors["Gray (light mode)/800"],
+      "utility-gray-900": theme.colors["Gray (light mode)/900"],
+  
+          // Utility brand assignments
+      "utility-brand-50": theme.colors["Brand/50"],
+      "utility-brand-50_alt": theme.colors["Brand/50"],
+      "utility-brand-100": theme.colors["Brand/100"],
+      "utility-brand-100_alt": theme.colors["Brand/100"],
+      "utility-brand-200": theme.colors["Brand/200"],
+      "utility-brand-200_alt": theme.colors["Brand/200"],
+      "utility-brand-300": theme.colors["Brand/300"],
+      "utility-brand-300_alt": theme.colors["Brand/300"],
+      "utility-brand-400": theme.colors["Brand/400"],
+      "utility-brand-400_alt": theme.colors["Brand/400"],
+      "utility-brand-500": theme.colors["Brand/500"],
+      "utility-brand-500_alt": theme.colors["Brand/500"],
+      "utility-brand-600": theme.colors["Brand/600"],
+      "utility-brand-600_alt": theme.colors["Brand/600"],
+      "utility-brand-700": theme.colors["Brand/700"],
+      "utility-brand-700_alt": theme.colors["Brand/700"],
+      "utility-brand-800": theme.colors["Brand/800"],
+      "utility-brand-800_alt": theme.colors["Brand/800"],
+      "utility-brand-900": theme.colors["Brand/900"],
+      "utility-brand-900_alt": theme.colors["Brand/900"],
+
+         // Utility error assignments
+      "utility-error-50": theme.colors["Error/50"],
+      "utility-error-100": theme.colors["Error/100"],
+      "utility-error-200": theme.colors["Error/200"],
+      "utility-error-300": theme.colors["Error/300"],
+      "utility-error-400": theme.colors["Error/400"],
+      "utility-error-500": theme.colors["Error/500"],
+      "utility-error-600": theme.colors["Error/600"],
+      "utility-error-700": theme.colors["Error/700"],
+
+          // Utility warning assignments
+      "utility-warning-50": theme.colors["Warning/50"],
+      "utility-warning-100": theme.colors["Warning/100"],
+      "utility-warning-200": theme.colors["Warning/200"],
+      "utility-warning-300": theme.colors["Warning/300"],
+      "utility-warning-400": theme.colors["Warning/400"],
+      "utility-warning-500": theme.colors["Warning/500"],
+      "utility-warning-600": theme.colors["Warning/600"],
+      "utility-warning-700": theme.colors["Warning/700"],
+
+         // Utility success assignments
+      "utility-success-50": theme.colors["Success/50"],
+      "utility-success-100": theme.colors["Success/100"],
+      "utility-success-200": theme.colors["Success/200"],
+      "utility-success-300": theme.colors["Success/300"],
+      "utility-success-400": theme.colors["Success/400"],
+      "utility-success-500": theme.colors["Success/500"],
+      "utility-success-600": theme.colors["Success/600"],
+      "utility-success-700": theme.colors["Success/700"],
+
+          // Utility gray-blue assignments
+      "utility-gray-blue-50": theme.colors["Gray blue/50"],
+      "utility-gray-blue-100": theme.colors["Gray blue/100"],
+      "utility-gray-blue-200": theme.colors["Gray blue/200"],
+      "utility-gray-blue-300": theme.colors["Gray blue/300"],
+      "utility-gray-blue-400": theme.colors["Gray blue/400"],
+      "utility-gray-blue-500": theme.colors["Gray blue/500"],
+      "utility-gray-blue-600": theme.colors["Gray blue/600"],
+      "utility-gray-blue-700": theme.colors["Gray blue/700"],
+
+          // Utility blue-light assignments
+      "utility-blue-light-50": theme.colors["Blue light/50"],
+      "utility-blue-light-100": theme.colors["Blue light/100"],
+      "utility-blue-light-200": theme.colors["Blue light/200"],
+      "utility-blue-light-300": theme.colors["Blue light/300"],
+      "utility-blue-light-400": theme.colors["Blue light/400"],
+      "utility-blue-light-500": theme.colors["Blue light/500"],
+      "utility-blue-light-600": theme.colors["Blue light/600"],
+      "utility-blue-light-700": theme.colors["Blue light/700"],
+    
+          // Utility blue assignments
+      "utility-blue-50": theme.colors["Blue/50"],
+      "utility-blue-100": theme.colors["Blue/100"],
+      "utility-blue-200": theme.colors["Blue/200"],
+      "utility-blue-300": theme.colors["Blue/300"],
+      "utility-blue-400": theme.colors["Blue/400"],
+      "utility-blue-500": theme.colors["Blue/500"],
+      "utility-blue-600": theme.colors["Blue/600"],
+      "utility-blue-700": theme.colors["Blue/700"],
+
+          // Utility blue-dark assignments
+      "utility-blue-dark-50": theme.colors["Blue dark/50"],
+      "utility-blue-dark-100": theme.colors["Blue dark/100"],
+      "utility-blue-dark-200": theme.colors["Blue dark/200"],
+      "utility-blue-dark-300": theme.colors["Blue dark/300"],
+      "utility-blue-dark-400": theme.colors["Blue dark/400"],
+      "utility-blue-dark-500": theme.colors["Blue dark/500"],
+      "utility-blue-dark-600": theme.colors["Blue dark/600"],
+      "utility-blue-dark-700": theme.colors["Blue dark/700"],
+
+          // Utility indigo assignments
+      "utility-indigo-50": theme.colors["Indigo/50"],
+      "utility-indigo-100": theme.colors["Indigo/100"],
+      "utility-indigo-200": theme.colors["Indigo/200"],
+      "utility-indigo-300": theme.colors["Indigo/300"],
+      "utility-indigo-400": theme.colors["Indigo/400"],
+      "utility-indigo-500": theme.colors["Indigo/500"],
+      "utility-indigo-600": theme.colors["Indigo/600"],
+      "utility-indigo-700": theme.colors["Indigo/700"],
+    
+          // Utility purple assignments
+      "utility-purple-50": theme.colors["Purple/50"],
+      "utility-purple-100": theme.colors["Purple/100"],
+      "utility-purple-200": theme.colors["Purple/200"],
+      "utility-purple-300": theme.colors["Purple/300"],
+      "utility-purple-400": theme.colors["Purple/400"],
+      "utility-purple-500": theme.colors["Purple/500"],
+      "utility-purple-600": theme.colors["Purple/600"],
+      "utility-purple-700": theme.colors["Purple/700"],
+      
+          // Utility fuchsia assignments
+      "utility-fuchsia-50": theme.colors["Fuchsia/50"],
+      "utility-fuchsia-100": theme.colors["Fuchsia/100"],
+      "utility-fuchsia-200": theme.colors["Fuchsia/200"],
+      "utility-fuchsia-300": theme.colors["Fuchsia/300"],
+      "utility-fuchsia-400": theme.colors["Fuchsia/400"],
+      "utility-fuchsia-500": theme.colors["Fuchsia/500"],
+      "utility-fuchsia-600": theme.colors["Fuchsia/600"],
+      "utility-fuchsia-700": theme.colors["Fuchsia/700"],
+
+
+           // Utility pink assignments
+      "utility-pink-50": theme.colors["Pink/50"],
+      "utility-pink-100": theme.colors["Pink/100"],
+      "utility-pink-200": theme.colors["Pink/200"],
+      "utility-pink-300": theme.colors["Pink/300"],
+      "utility-pink-400": theme.colors["Pink/400"],
+      "utility-pink-500": theme.colors["Pink/500"],
+      "utility-pink-600": theme.colors["Pink/600"],
+      "utility-pink-700": theme.colors["Pink/700"],
+    
+          // Utility orange-dark assignments
+      "utility-orange-dark-50": theme.colors["Orange dark/50"],
+      "utility-orange-dark-100": theme.colors["Orange dark/100"],
+      "utility-orange-dark-200": theme.colors["Orange dark/200"],
+      "utility-orange-dark-300": theme.colors["Orange dark/300"],
+      "utility-orange-dark-400": theme.colors["Orange dark/400"],
+      "utility-orange-dark-500": theme.colors["Orange dark/500"],
+      "utility-orange-dark-600": theme.colors["Orange dark/600"],
+      "utility-orange-dark-700": theme.colors["Orange dark/700"],
+
+
+          // Utility orange assignments
+      "utility-orange-50": theme.colors["Orange/50"],
+      "utility-orange-100": theme.colors["Orange/100"],
+      "utility-orange-200": theme.colors["Orange/200"],
+      "utility-orange-300": theme.colors["Orange/300"],
+      "utility-orange-400": theme.colors["Orange/400"],
+      "utility-orange-500": theme.colors["Orange/500"],
+      "utility-orange-600": theme.colors["Orange/600"],
+      "utility-orange-700": theme.colors["Orange/700"],
+  
+          // App store badges
+      "app-store-badge-border": "#a6a6a6",
+
+
+          // Application navigation
+      "nav-item-button-icon-fg": theme.colors["Gray (light mode)/500"],
+      "nav-item-button-icon-fg_active": theme.colors["Gray (light mode)/700"],
+      "nav-item-icon-fg": theme.colors["Gray (light mode)/500"],
+      "nav-item-icon-fg_active": theme.colors["Gray (light mode)/500"],
+
+
+          // Avatars
+      "avatar-bg": theme.colors["Gray (light mode)/100"],
+      "avatar-profile-photo-border": theme.colors["Base/white"],
+      "avatar-contrast-border": "rgba(0, 0, 0, 0.08)",
+      "avatar-styles-bg-neutral": "#e0e0e0",
+
+
+          // Breadcrumbs
+      "breadcrumb-fg": theme.colors["Gray (light mode)/600"],
+      "breadcrumb-fg_hover": theme.colors["Gray (light mode)/700"],
+      "breadcrumb-bg_hover": theme.colors["Gray (light mode)/50"],
+      "breadcrumb-brand-fg_hover": theme.colors["Brand/700"],
+      "breadcrumb-brand-bg_hover": theme.colors["Brand/50"],
+      "breadcrumb-icon-fg": theme.colors["Gray (light mode)/500"],
+      "breadcrumb-icon-fg_hover": theme.colors["Gray (light mode)/700"],
+      "breadcrumb-brand-icon-fg_hover": theme.colors["Brand/700"],
+
+    // Primary button assignments
+      "button-primary-fg": theme.colors["Base/white"],
+      "button-primary-fg_hover": theme.colors["Base/white"],
+      "button-primary-bg": theme.colors["Brand/500"],
+      "button-primary-bg_hover": theme.colors["Brand/700"],
+  
+
+    // Secondary button assignments
+      "button-secondary-fg": theme.colors["Gray (light mode)/700"],
+      "button-secondary-fg_hover": theme.colors["Gray (light mode)/800"],
+      "button-secondary-bg": theme.colors["Base/white"],
+      "button-secondary-bg_hover": theme.colors["Gray (light mode)/50"],
+      "button-secondary-border": theme.colors["Gray (light mode)/300"],
+      "button-secondary-border_hover": theme.colors["Gray (light mode)/300"],
+
+
+    // Secondary color button assignments
+      "button-secondary-color-fg": theme.colors["Brand/700"],
+      "button-secondary-color-fg_hover": theme.colors["Brand/800"],
+      "button-secondary-color-bg": theme.colors["Base/white"],
+      "button-secondary-color-bg_hover": theme.colors["Brand/50"],
+      "button-secondary-color-border": theme.colors["Brand/300"],
+      "button-secondary-color-border_hover": theme.colors["Brand/300"],
+  
+    // Tertiary button assignments
+      "button-tertiary-fg": theme.colors["Gray (light mode)/600"],
+      "button-tertiary-fg_hover": theme.colors["Gray (light mode)/700"],
+      "button-tertiary-bg_hover": theme.colors["Gray (light mode)/50"],
+
+    // Tertiary color button assignments
+      "button-tertiary-color-fg": theme.colors["Brand/700"],
+      "button-tertiary-color-fg_hover": theme.colors["Brand/800"],
+      "button-tertiary-color-bg_hover": theme.colors["Brand/50"],
+
+
+    // Primary error button assignments
+      "button-primary-error-fg": theme.colors["Base/white"],
+      "button-primary-error-fg_hover": theme.colors["Base/white"],
+      "button-primary-error-bg": theme.colors["Error/600"],
+      "button-primary-error-bg_hover": theme.colors["Error/700"],
+
+
+    // Secondary error button assignments
+      "button-secondary-error-fg": theme.colors["Error/700"],
+      "button-secondary-error-fg_hover": theme.colors["Error/800"],
+      "button-secondary-error-bg": theme.colors["Base/white"],
+      "button-secondary-error-bg_hover": theme.colors["Error/50"],
+      "button-secondary-error-border": theme.colors["Error/300"],
+      "button-secondary-error-border_hover": theme.colors["Error/300"],
+
+
+    // Tertiary error button assignments
+      "button-tertiary-error-fg": theme.colors["Error/700"],
+      "button-tertiary-error-fg_hover": theme.colors["Error/800"],
+      "button-tertiary-error-bg_hover": theme.colors["Error/50"],
+  
+    // Footer assignments
+      "footer-button-fg": theme.colors["Brand/200"],
+      "footer-button-fg_hover": theme.colors["Base/white"],
+      "footer-badge-fg": theme.colors["Success/700"],
+      "footer-badge-bg": theme.colors["Success/50"],
+      "footer-badge-border": theme.colors["Success/200"],
+
+
+    // Header sections assignments
+      "header-abstract-50-bg": theme.colors["Brand/50"],
+      "header-abstract-100-bg": theme.colors["Brand/100"],
+      "header-abstract-200-bg": theme.colors["Brand/200"],
+      "header-abstract-300-bg": theme.colors["Brand/300"],
+
+    // Icon assignments
+      "icon-fg-brand": theme.colors["Brand/600"],
+      "icon-fg-brand_on-brand": theme.colors["Brand/200"],
+
+      // Featured icons assignments
+
+      // Light
+      "featured-icon-light-fg-brand": theme.colors["Brand/600"],
+      "featured-icon-light-fg-gray": theme.colors["Gray (light mode)/500"],
+      "featured-icon-light-fg-error": theme.colors["Error/600"],
+      "featured-icon-light-fg-warning": theme.colors["Warning/600"],
+      "featured-icon-light-fg-success": theme.colors["Success/600"],
+      
+      // Dark
+      "featured-icon-dark-fg-brand": theme.colors["Base/white"],
+      "featured-icon-dark-fg-gray": theme.colors["Base/white"],
+      "featured-icon-dark-fg-error": theme.colors["Base/white"],
+      "featured-icon-dark-fg-warning": theme.colors["Base/white"],
+      "featured-icon-dark-fg-success": theme.colors["Base/white"],
+
+      // Modern
+      "featured-icon-modern-border": theme.colors["Gray (light mode)/200"],
+
+
+    // Social icons assignments
+      "social-icon-fg-x": "#242e36",
+      "social-icon-fg-instagram": "#000100",
+      "social-icon-fg-apple": theme.colors["Base/black"],
+      "social-icon-fg-github": theme.colors["Base/black"],
+      "social-icon-fg-angellist": theme.colors["Base/black"],
+      "social-icon-fg-tumblr": "#001935",
+
+          // Mockups assignments
+      "screen-mockup-border": theme.colors["Gray (light mode)/900"],
+
+    // Sliders assignments
+      "slider-handle-bg": theme.colors["Base/white"],
+      "slider-handle-border": theme.colors["Brand/600"],
+
+    // Thumbnail assignments
+      "thumbnail-badge-brand-fg": theme.colors["Brand/700"],
+      "thumbnail-badge-success-fg": theme.colors["Success/700"],
+
+    // Toggles assignments
+      "toggle-button-fg_disabled": theme.colors["Gray (light mode)/50"],
+ 
+    // Tooltips assignments
+      "tooltip-supporting-text": theme.colors["Gray (light mode)/300"],
+
+    // WYSIWYG editor assignments
+      "wysiwyg-editor-icon-fg": theme.colors["Gray (light mode)/400"],
+      "wysiwyg-editor-icon-fg_active": theme.colors["Gray (light mode)/500"],
+
 
     };
-     
-       // LightMode Assignment
-       theme.colors.darkMode = {
-        "text-primary": theme.colors["Gray (dark mode)/900"],
-        "text-primary_on-brand": theme.colors["Base/White"],
-        "text-secondary": theme.colors["Gray (light mode)/700"],
-        "text-secondary_hover": theme.colors["Gray (light mode)/800"],
-        "text-secondary_on-brand": theme.colors["Brand/200"],
-        "text-tertiary": theme.colors["Gray (light mode)/600"],
-        "text-tertiary_hover": theme.colors["Gray (light mode)/700"],
-        "text-tertiary_on-brand": theme.colors["Brand/200"],
-        "text-quaternary": theme.colors["Gray (light mode)/500"],
-        "text-quaternary_on-brand": theme.colors["Brand/300"],
-        "text-white": theme.colors["Base/White"],
-        "text-disabled": theme.colors["Gray (light mode)/500"],
-        "text-placeholder": theme.colors["Gray (light mode)/500"],
-        "text-placeholder_subtle": theme.colors["Gray (light mode)/300"],
-        "text-brand-primary": theme.colors["Brand/900"],
-        "text-brand-secondary": theme.colors["Brand/700"],
-        "text-brand-tertiary": theme.colors["Brand/600"],
-        "text-brand-tertiary_alt": theme.colors["Brand/600"],
-        "text-error-primary": theme.colors["Error/600"],
-        "text-warning-primary": theme.colors["Warning/600"],
-        "text-success-primary": theme.colors["Success/600"],
-      };
 
+     
+       // darkMode Assignment
+       theme.colors.darkMode = {
+      // Text color assignments for Dark mode
+
+    "text-primary (900)": theme.colors["Gray (dark mode)/50"],
+    "text-primary_on-brand": theme.colors["Gray (dark mode)/50"],
+    "text-secondary (700)": theme.colors["Gray (dark mode)/300"],
+    "text-secondary_hover": theme.colors["Gray (dark mode)/200"],
+    "text-secondary_on-brand": theme.colors["Gray (dark mode)/300"],
+    "text-tertiary (600)": theme.colors["Gray (dark mode)/400"],
+    "text-tertiary_hover": theme.colors["Gray (dark mode)/300"],
+    "text-tertiary_on-brand": theme.colors["Gray (dark mode)/400"],
+    "text-quaternary (500)": theme.colors["Gray (dark mode)/400"],
+    "text-quaternary_on-brand": theme.colors["Gray (dark mode)/400"],
+    "text-white": theme.colors["Base/white"],
+    "text-disabled": theme.colors["Gray (dark mode)/500"],
+    "text-placeholder": theme.colors["Gray (dark mode)/500"],
+    "text-placeholder_subtle": theme.colors["Gray (dark mode)/700"],
+    "text-brand-primary (900)": theme.colors["Gray (dark mode)/50"],
+    "text-brand-secondary (700)": theme.colors["Gray (dark mode)/300"],
+    "text-brand-tertiary (600)": theme.colors["Gray (dark mode)/400"],
+    "text-brand-tertiary_alt": theme.colors["Gray (dark mode)/50"],
+    "text-error-primary (600)": theme.colors["Error/400"],
+    "text-warning-primary (600)": theme.colors["Warning/400"],
+    "text-success-primary (600)": theme.colors["Success/400"],
+
+  // Border color assignments for Dark mode
+    "border-primary": theme.colors["Gray (dark mode)/700"],
+    "border-secondary": theme.colors["Gray (dark mode)/800"],
+    "border-tertiary": theme.colors["Gray (dark mode)/800"],
+    "border-disabled": theme.colors["Gray (dark mode)/700"],
+    "border-disabled_subtle": theme.colors["Gray (dark mode)/800"],
+    "border-brand": theme.colors["Brand/400"],
+    "border-brand_alt": theme.colors["Gray (dark mode)/700"],
+    "border-error": theme.colors["Error/400"],
+    "border-error_subtle": theme.colors["Error/400"],
+
+// Foreground color assignments for Dark mode
+    "fg-primary (900)": theme.colors["Base/white"],
+    "fg-secondary (700)": theme.colors["Gray (dark mode)/300"],
+    "fg-secondary_hover": theme.colors["Gray (dark mode)/200"],
+    "fg-tertiary (600)": theme.colors["Gray (dark mode)/400"],
+    "fg-tertiary_hover": theme.colors["Gray (dark mode)/300"],
+    "fg-quaternary (500)": theme.colors["Gray (dark mode)/400"],
+    "fg-quaternary_hover": theme.colors["Gray (dark mode)/300"],
+    "fg-quinary (400)": theme.colors["Gray (dark mode)/500"],
+    "fg-quinary_hover": theme.colors["Gray (dark mode)/400"],
+    "fg-senary (300)": theme.colors["Gray (dark mode)/600"],
+    "fg-white": theme.colors["Base/white"],
+    "fg-disabled": theme.colors["Gray (dark mode)/500"],
+    "fg-disabled_subtle": theme.colors["Gray (dark mode)/600"],
+    "fg-brand-primary (600)": theme.colors["Brand/500"],
+    "fg-brand-primary_alt": theme.colors["Gray (dark mode)/300"],
+    "fg-brand-secondary (500)": theme.colors["Brand/500"],
+    "fg-error-primary": theme.colors["Error/500"],
+    "fg-error-secondary": theme.colors["Error/400"],
+    "fg-warning-primary": theme.colors["Warning/500"],
+    "fg-warning-secondary": theme.colors["Warning/400"],
+    "fg-success-primary": theme.colors["Success/500"],
+    "fg-success-secondary": theme.colors["Success/400"],
+  
+    // Background color assignments for Dark mode
+
+    "bg-primary": theme.colors["Gray (dark mode)/950"],
+    "bg-primary_alt": theme.colors["Background/bg-secondary"],
+    "bg-primary_hover": theme.colors["Gray (dark mode)/800"],
+    "bg-primary-solid": theme.colors["Background/bg-secondary"],
+    "bg-secondary": theme.colors["Gray (dark mode)/900"],
+    "bg-secondary_alt": theme.colors["Background/bg-primary"],
+    "bg-secondary_hover": theme.colors["Gray (dark mode)/800"],
+    "bg-secondary_subtle": theme.colors["Gray (dark mode)/900"],
+    "bg-secondary-solid": theme.colors["Gray (dark mode)/600"],
+    "bg-tertiary": theme.colors["Gray (dark mode)/800"],
+    "bg-quaternary": theme.colors["Gray (dark mode)/700"],
+    "bg-active": theme.colors["Gray (dark mode)/800"],
+    "bg-disabled": theme.colors["Gray (dark mode)/800"],
+    "bg-disabled_subtle": theme.colors["Gray (dark mode)/900"],
+    "bg-overlay": theme.colors["Gray (dark mode)/800"],
+    "bg-brand-primary": theme.colors["Brand/500"],
+    "bg-brand-primary_alt": theme.colors["Background/bg-secondary"],
+    "bg-brand-secondary": theme.colors["Brand/600"],
+    "bg-brand-solid": theme.colors["Brand/600"],
+    "bg-brand-solid_hover": theme.colors["Brand/500"],
+    "bg-brand-section": theme.colors["Background/bg-secondary"],
+    "bg-brand-section_subtle": theme.colors["Background/bg-primary"],
+    "bg-error-primary": theme.colors["Error/500"],
+    "bg-error-secondary": theme.colors["Error/600"],
+    "bg-error-solid": theme.colors["Error/600"],
+    "bg-warning-primary": theme.colors["Warning/500"],
+    "bg-warning-secondary": theme.colors["Warning/600"],
+    "bg-warning-solid": theme.colors["Warning/600"],
+    "bg-success-primary": theme.colors["Success/500"],
+    "bg-success-secondary": theme.colors["Success/600"],
+    "bg-success-solid": theme.colors["Success/600"],
+  
+    // Focus Rings
+    "focus-ring": theme.colors["Brand/500"],
+    "focus-ring-error": theme.colors["Error/500"],
+  
+    // Shadows
+    "shadow-xs": theme.colors["Base/transparent"],
+    "shadow-sm_01": theme.colors["Base/transparent"],
+    "shadow-sm_02": theme.colors["Base/transparent"],
+    "shadow-md_01": theme.colors["Base/transparent"],
+    "shadow-md_02": theme.colors["Base/transparent"],
+    "shadow-lg_01": theme.colors["Base/transparent"],
+    "shadow-lg_02": theme.colors["Base/transparent"],
+    "shadow-xl_01": theme.colors["Base/transparent"],
+    "shadow-xl_02": theme.colors["Base/transparent"],
+    "shadow-2xl": theme.colors["Base/transparent"],
+    "shadow-3xl": theme.colors["Base/transparent"],
+    "shadow-skeumorphic-inner": "rgba(12, 17, 29, 5)",
+    "shadow-skeumorphic-inner-border": "rgba(12, 17, 29, 18)",
+  
+    // Portfolio mockups
+    "shadow-main-centre-md": theme.colors["Base/transparent"],
+    "shadow-main-centre-lg": theme.colors["Base/transparent"],
+    "shadow-overlay-lg": theme.colors["Base/transparent"],
+    "shadow-grid-md": theme.colors["Base/transparent"],
+  
+    // Alpha Colors
+    "alpha-white-10": "rgba(12, 17, 29, 10)",
+    "alpha-white-20": "rgba(12, 17, 29, 20)",
+    "alpha-white-30": "rgba(12, 17, 29, 30)",
+    "alpha-white-40": "rgba(12, 17, 29, 40)",
+    "alpha-white-50": "rgba(12, 17, 29, 50)",
+    "alpha-white-60": "rgba(12, 17, 29, 60)",
+    "alpha-white-70": "rgba(12, 17, 29, 70)",
+    "alpha-white-80": "rgba(12, 17, 29, 80)",
+    "alpha-white-90": "rgba(12, 17, 29, 90)",
+    "alpha-white-100": theme.colors["Gray (dark mode)/950"],
+    "alpha-black-10": "rgba(255, 255, 255, 10)",
+    "alpha-black-20": "rgba(255, 255, 255, 20)",
+    "alpha-black-30": "rgba(255, 255, 255, 30)",
+    "alpha-black-40": "rgba(255, 255, 255, 40)",
+    "alpha-black-50": "rgba(255, 255, 255, 50)",
+    "alpha-black-60": "rgba(255, 255, 255, 60)",
+    "alpha-black-70": "rgba(255, 255, 255, 70)",
+    "alpha-black-80": "rgba(255, 255, 255, 80)",
+    "alpha-black-90": "rgba(255, 255, 255, 90)",
+    "alpha-black-100": "#ffffff",
+  
+    // Utility - Gray Colors
+    "utility-gray-50": theme.colors["Gray (dark mode)/900"],
+    "utility-gray-100": theme.colors["Gray (dark mode)/800"],
+    "utility-gray-200": theme.colors["Gray (dark mode)/700"],
+    "utility-gray-300": theme.colors["Gray (dark mode)/700"],
+    "utility-gray-400": theme.colors["Gray (dark mode)/600"],
+    "utility-gray-500": theme.colors["Gray (dark mode)/500"],
+    "utility-gray-600": theme.colors["Gray (dark mode)/400"],
+    "utility-gray-700": theme.colors["Gray (dark mode)/300"],
+    "utility-gray-800": theme.colors["Gray (dark mode)/200"],
+    "utility-gray-900": theme.colors["Gray (dark mode)/100"],
+  
+    // Utility - Brand Colors
+    "utility-brand-50": theme.colors["Brand/950"],
+    "utility-brand-50_alt": theme.colors["Utility.Gray.utility-gray-50"],
+    "utility-brand-100": theme.colors["Brand/900"],
+    "utility-brand-100_alt": theme.colors["Utility.Gray.utility-gray-100"],
+    "utility-brand-200": theme.colors["Brand/800"],
+    "utility-brand-200_alt": theme.colors["Utility.Gray.utility-gray-200"],
+    "utility-brand-300": theme.colors["Brand/700"],
+    "utility-brand-300_alt": theme.colors["Utility.Gray.utility-gray-300"],
+    "utility-brand-400": theme.colors["Brand/600"],
+    "utility-brand-400_alt": theme.colors["Utility.Gray.utility-gray-400"],
+    "utility-brand-500": theme.colors["Brand/500"],
+    "utility-brand-500_alt": theme.colors["Utility.Gray.utility-gray-500"],
+    "utility-brand-600": theme.colors["Brand/400"],
+    "utility-brand-600_alt": theme.colors["Utility.Gray.utility-gray-600"],
+    "utility-brand-700": theme.colors["Brand/300"],
+    "utility-brand-700_alt": theme.colors["Utility.Gray.utility-gray-700"],
+    "utility-brand-800": theme.colors["Brand/200"],
+    "utility-brand-800_alt": theme.colors["Utility.Gray.utility-gray-800"],
+    "utility-brand-900": theme.colors["Brand/100"],
+    "utility-brand-900_alt": theme.colors["Utility.Gray.utility-gray-900"],
+ 
+    // Error Colors
+    "utility-error-50": theme.colors["Error/950"],
+    "utility-error-100": theme.colors["Error/900"],
+    "utility-error-200": theme.colors["Error/800"],
+    "utility-error-300": theme.colors["Error/700"],
+    "utility-error-400": theme.colors["Error/600"],
+    "utility-error-500": theme.colors["Error/500"],
+    "utility-error-600": theme.colors["Error/400"],
+    "utility-error-700": theme.colors["Error/300"],
+  
+    // Warning Colors
+    "utility-warning-50": theme.colors["Warning/950"],
+    "utility-warning-100": theme.colors["Warning/900"],
+    "utility-warning-200": theme.colors["Warning/800"],
+    "utility-warning-300": theme.colors["Warning/700"],
+    "utility-warning-400": theme.colors["Warning/600"],
+    "utility-warning-500": theme.colors["Warning/500"],
+    "utility-warning-600": theme.colors["Warning/400"],
+    "utility-warning-700": theme.colors["Warning/300"],
+  
+    // Success Colors
+    "utility-success-50": theme.colors["Success/950"],
+    "utility-success-100": theme.colors["Success/900"],
+    "utility-success-200": theme.colors["Success/800"],
+    "utility-success-300": theme.colors["Success/700"],
+    "utility-success-400": theme.colors["Success/600"],
+    "utility-success-500": theme.colors["Success/500"],
+    "utility-success-600": theme.colors["Success/400"],
+    "utility-success-700": theme.colors["Success/300"],
+  
+    // Gray Blue Colors
+    "utility-gray-blue-50": theme.colors["Gray blue/900"],
+    "utility-gray-blue-100": theme.colors["Gray blue/900"],
+    "utility-gray-blue-200": theme.colors["Gray blue/800"],
+    "utility-gray-blue-300": theme.colors["Gray blue/700"],
+    "utility-gray-blue-400": theme.colors["Gray blue/600"],
+    "utility-gray-blue-500": theme.colors["Gray blue/500"],
+    "utility-gray-blue-600": theme.colors["Gray blue/400"],
+    "utility-gray-blue-700": theme.colors["Gray blue/300"],
+  
+    // Blue Light Colors
+    "utility-blue-light-50": theme.colors["Blue light/950"],
+    "utility-blue-light-100": theme.colors["Blue light/900"],
+    "utility-blue-light-200": theme.colors["Blue light/800"],
+    "utility-blue-light-300": theme.colors["Blue light/700"],
+    "utility-blue-light-400": theme.colors["Blue light/600"],
+    "utility-blue-light-500": theme.colors["Blue light/500"],
+    "utility-blue-light-600": theme.colors["Blue light/400"],
+    "utility-blue-light-700": theme.colors["Blue light/300"],
+  
+    // Blue Colors
+    "utility-blue-50": theme.colors["Blue/950"],
+    "utility-blue-100": theme.colors["Blue/900"],
+    "utility-blue-200": theme.colors["Blue/800"],
+    "utility-blue-300": theme.colors["Blue/700"],
+    "utility-blue-400": theme.colors["Blue/600"],
+    "utility-blue-500": theme.colors["Blue/500"],
+    "utility-blue-600": theme.colors["Blue/400"],
+    "utility-blue-700": theme.colors["Blue/300"],
+  
+    // Blue Dark Colors
+    "utility-blue-dark-50": theme.colors["Blue dark/950"],
+    "utility-blue-dark-100": theme.colors["Blue dark/900"],
+    "utility-blue-dark-200": theme.colors["Blue dark/800"],
+    "utility-blue-dark-300": theme.colors["Blue dark/700"],
+    "utility-blue-dark-400": theme.colors["Blue dark/600"],
+    "utility-blue-dark-500": theme.colors["Blue dark/500"],
+    "utility-blue-dark-600": theme.colors["Blue dark/400"],
+    "utility-blue-dark-700": theme.colors["Blue dark/300"],
+  
+    // Indigo Colors
+    "utility-indigo-50": theme.colors["Indigo/950"],
+    "utility-indigo-100": theme.colors["Indigo/900"],
+    "utility-indigo-200": theme.colors["Indigo/800"],
+    "utility-indigo-300": theme.colors["Indigo/700"],
+    "utility-indigo-400": theme.colors["Indigo/600"],
+    "utility-indigo-500": theme.colors["Indigo/500"],
+    "utility-indigo-600": theme.colors["Indigo/400"],
+    "utility-indigo-700": theme.colors["Indigo/300"],
+  
+    // Purple Colors
+    "utility-purple-50": theme.colors["Purple/950"],
+    "utility-purple-100": theme.colors["Purple/900"],
+    "utility-purple-200": theme.colors["Purple/800"],
+    "utility-purple-300": theme.colors["Purple/700"],
+    "utility-purple-400": theme.colors["Purple/600"],
+    "utility-purple-500": theme.colors["Purple/500"],
+    "utility-purple-600": theme.colors["Purple/400"],
+    "utility-purple-700": theme.colors["Purple/300"],
+  
+    // Fuchsia Colors
+    "utility-fuchsia-50": theme.colors["Fuchsia/950"],
+    "utility-fuchsia-100": theme.colors["Fuchsia/900"],
+    "utility-fuchsia-200": theme.colors["Fuchsia/800"],
+    "utility-fuchsia-300": theme.colors["Fuchsia/700"],
+    "utility-fuchsia-400": theme.colors["Fuchsia/600"],
+    "utility-fuchsia-500": theme.colors["Fuchsia/500"],
+    "utility-fuchsia-600": theme.colors["Fuchsia/400"],
+    "utility-fuchsia-700": theme.colors["Fuchsia/300"],
+  
+    // Pink Colors
+    "utility-pink-50": theme.colors["Pink/950"],
+    "utility-pink-100": theme.colors["Pink/900"],
+    "utility-pink-200": theme.colors["Pink/800"],
+    "utility-pink-300": theme.colors["Pink/700"],
+    "utility-pink-400": theme.colors["Pink/600"],
+    "utility-pink-500": theme.colors["Pink/500"],
+    "utility-pink-600": theme.colors["Pink/400"],
+    "utility-pink-700": theme.colors["Pink/300"],
+  
+    // Orange Dark Colors
+    "utility-orange-dark-50": theme.colors["Orange dark/950"],
+    "utility-orange-dark-100": theme.colors["Orange dark/900"],
+    "utility-orange-dark-200": theme.colors["Orange dark/800"],
+    "utility-orange-dark-300": theme.colors["Orange dark/700"],
+    "utility-orange-dark-400": theme.colors["Orange dark/600"],
+    "utility-orange-dark-500": theme.colors["Orange dark/500"],
+    "utility-orange-dark-600": theme.colors["Orange dark/400"],
+    "utility-orange-dark-700": theme.colors["Orange dark/300"],
+  
+    // Orange Colors
+    "utility-orange-50": theme.colors["Orange/950"],
+    "utility-orange-100": theme.colors["Orange/900"],
+    "utility-orange-200": theme.colors["Orange/800"],
+    "utility-orange-300": theme.colors["Orange/700"],
+    "utility-orange-400": theme.colors["Orange/600"],
+    "utility-orange-500": theme.colors["Orange/500"],
+    "utility-orange-600": theme.colors["Orange/400"],
+    "utility-orange-700": theme.colors["Orange/300"],
+  
+    // App Store Badges
+    "app-store-badge-border": theme.colors["Base/white"],
+  
+    // Application Navigation
+    "nav-item-button-icon-fg": theme.colors["Gray (dark mode)/400"],
+    "nav-item-button-icon-fg_active": theme.colors["Gray (dark mode)/200"],
+    "nav-item-icon-fg": theme.colors["Gray (dark mode)/400"],
+    "nav-item-icon-fg_active": theme.colors["Gray (dark mode)/200"],
+  
+    // Avatars
+    "avatar-bg": theme.colors["Gray (dark mode)/800"],
+    "avatar-profile-photo-border": theme.colors["Gray (dark mode)/950"],
+    "avatar-contrast-border": "rgba(255, 255, 255, 12)",
+    "avatar-styles-bg-neutral": "#e0e0e0",
+  
+    // Breadcrumbs
+    "breadcrumb-fg": theme.colors["Gray (dark mode)/300"],
+    "breadcrumb-fg_hover": theme.colors["Base/white"],
+    "breadcrumb-bg_hover": theme.colors["Gray (dark mode)/800"],
+    "breadcrumb-brand-fg_hover": theme.colors["Base/white"],
+    "breadcrumb-brand-bg_hover": theme.colors["Gray (dark mode)/800"],
+    "breadcrumb-icon-fg": theme.colors["Gray (dark mode)/400"],
+    "breadcrumb-icon-fg_hover": theme.colors["Base/white"],
+    "breadcrumb-brand-icon-fg_hover": theme.colors["Base/white"],
+  
+    // Primary Buttons
+    "button-primary-fg": theme.colors["Base/white"],
+    "button-primary-fg_hover": theme.colors["Base/white"],
+    "button-primary-bg": theme.colors["Brand/500"],
+    "button-primary-bg_hover": theme.colors["Brand/700"],
+  
+    // Secondary Buttons
+    "button-secondary-fg": theme.colors["Gray (dark mode)/300"],
+    "button-secondary-fg_hover": theme.colors["Gray (dark mode)/100"],
+    "button-secondary-bg": theme.colors["Gray (dark mode)/900"],
+    "button-secondary-bg_hover": theme.colors["Gray (dark mode)/800"],
+    "button-secondary-border": theme.colors["Gray (dark mode)/700"],
+    "button-secondary-border_hover": theme.colors["Gray (dark mode)/700"],
+  
+    // Secondary Color Buttons
+    "button-secondary-color-fg": theme.colors["Gray (dark mode)/300"],
+    "button-secondary-color-fg_hover": theme.colors["Gray (dark mode)/100"],
+    "button-secondary-color-bg": theme.colors["Gray (dark mode)/900"],
+    "button-secondary-color-bg_hover": theme.colors["Gray (dark mode)/800"],
+    "button-secondary-color-border": theme.colors["Gray (dark mode)/700"],
+    "button-secondary-color-border_hover": theme.colors["Gray (dark mode)/700"],
+  
+    // Tertiary Buttons
+    "button-tertiary-fg": theme.colors["Gray (dark mode)/400"],
+    "button-tertiary-fg_hover": theme.colors["Gray (dark mode)/200"],
+    "button-tertiary-bg_hover": theme.colors["Gray (dark mode)/800"],
+  
+    // Tertiary Color Buttons
+    "button-tertiary-color-fg": theme.colors["Gray (dark mode)/300"],
+    "button-tertiary-color-fg_hover": theme.colors["Gray (dark mode)/100"],
+    "button-tertiary-color-bg_hover": theme.colors["Gray (dark mode)/800"],
+  
+    // Primary Error Buttons
+    "button-primary-error-fg": theme.colors["Base/white"],
+    "button-primary-error-fg_hover": theme.colors["Base/white"],
+    "button-primary-error-bg": theme.colors["Error/600"],
+    "button-primary-error-bg_hover": theme.colors["Error/700"],
+  
+    // Secondary Error Buttons
+    "button-secondary-error-fg": theme.colors["Error/200"],
+    "button-secondary-error-fg_hover": theme.colors["Error/100"],
+    "button-secondary-error-bg": theme.colors["Error/950"],
+    "button-secondary-error-bg_hover": theme.colors["Error/900"],
+    "button-secondary-error-border": theme.colors["Error/800"],
+    "button-secondary-error-border_hover": theme.colors["Error/700"],
+  
+    // Tertiary Error Buttons
+    "button-tertiary-error-fg": theme.colors["Error/300"],
+    "button-tertiary-error-fg_hover": theme.colors["Error/200"],
+    "button-tertiary-error-bg_hover": theme.colors["Error/900"],
+  
+    // Footers
+    "footer-button-fg": theme.colors["Gray (dark mode)/300"],
+    "footer-button-fg_hover": theme.colors["Gray (dark mode)/100"],
+    "footer-badge-fg": theme.colors["Base/white"],
+    "footer-badge-bg": "rgba(255, 255, 255, 10)",
+    "footer-badge-border": "rgba(255, 255, 255, 30)",
+  
+    // Header Sections
+    "header-abstract-50-bg": theme.colors["Gray (dark mode)/900"],
+    "header-abstract-100-bg": theme.colors["Gray (dark mode)/800"],
+    "header-abstract-200-bg": theme.colors["Gray (dark mode)/700"],
+    "header-abstract-300-bg": theme.colors["Gray (dark mode)/600"],
+  
+    // Icons
+    "icon-fg-brand": theme.colors["Gray (dark mode)/400"],
+    "icon-fg-brand_on-brand": theme.colors["Gray (dark mode)/400"],
+  
+    // Featured Icons - Light
+    "featured-icon-light-fg-brand": theme.colors["Brand/200"],
+    "featured-icon-light-fg-gray": theme.colors["Gray (dark mode)/200"],
+    "featured-icon-light-fg-error": theme.colors["Error/200"],
+    "featured-icon-light-fg-warning": theme.colors["Warning/200"],
+    "featured-icon-light-fg-success": theme.colors["Success/200"],
+  
+    // Featured Icons - Dark
+    "featured-icon-dark-fg-brand": theme.colors["Brand/200"],
+    "featured-icon-dark-fg-gray": theme.colors["Gray (dark mode)/200"],
+    "featured-icon-dark-fg-error": theme.colors["Error/200"],
+    "featured-icon-dark-fg-warning": theme.colors["Warning/200"],
+    "featured-icon-dark-fg-success": theme.colors["Success/200"],
+  
+    // Featured Icons - Modern
+    "featured-icon-modern-border": theme.colors["Gray (dark mode)/700"],
+  
+    // Social Icons
+    "social-icon-fg-x": theme.colors["Base/white"],
+    "social-icon-fg-instagram": theme.colors["Base/white"],
+    "social-icon-fg-apple": theme.colors["Base/white"],
+    "social-icon-fg-github": theme.colors["Base/white"],
+    "social-icon-fg-angellist": theme.colors["Base/white"],
+    "social-icon-fg-tumblr": theme.colors["Base/white"],
+  
+    // Mockups
+    "screen-mockup-border": theme.colors["Gray (dark mode)/700"],
+  
+    // Sliders
+    "slider-handle-bg": theme.colors["Foreground/fg-brand-primary (600)"],
+    "slider-handle-border": theme.colors["Background/bg-primary"],
+  
+    // Thumbnail
+    "thumbnail-badge-brand-fg": theme.colors["Gray (dark mode)/300"],
+    "thumbnail-badge-success-fg": theme.colors["Gray (dark mode)/300"],
+  
+    // Toggles
+    "toggle-button-fg_disabled": theme.colors["Gray (dark mode)/600"],
+  
+    // Tooltips
+    "tooltip-supporting-text": theme.colors["Gray (dark mode)/300"],
+  
+    // WYSIWYG Editor
+    "wysiwyg-editor-icon-fg": theme.colors["Gray (dark mode)/400"],
+    "wysiwyg-editor-icon-fg_active": theme.colors["Base/white"],
+        
+    };
+      
+
+        
+      
 
      export default theme;
