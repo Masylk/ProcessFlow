@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
-import GlobalStyle from '../styles/GlobalStyles'; // Import global styles
+import './globals.css';
 import { PostHogProvider } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -32,7 +32,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
       <body>
-        <GlobalStyle /> {/* Apply global styles */}
+
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-M8W79RZW"

@@ -556,4 +556,94 @@ const theme = { colors:
      'rounded-153': '5.9471755027771rem',
      'rounded-154': '6rem',
      'rounded-155': '6.082630634307861rem',
-     'rounded-156': '62.4375rem' } }; export default theme;
+     'rounded-156': '62.4375rem' } };
+     
+        // LightMode Assignment
+    theme.colors.lightMode = {
+      "text-primary": theme.colors["Gray (light mode)/900"],
+      "text-primary_on-brand": theme.colors["Base/White"],
+      "text-secondary": theme.colors["Gray (light mode)/700"],
+      "text-secondary_hover": theme.colors["Gray (light mode)/800"],
+      "text-secondary_on-brand": theme.colors["Brand/200"],
+      "text-tertiary": theme.colors["Gray (light mode)/600"],
+      "text-tertiary_hover": theme.colors["Gray (light mode)/700"],
+      "text-tertiary_on-brand": theme.colors["Brand/200"],
+      "text-quaternary": theme.colors["Gray (light mode)/500"],
+      "text-quaternary_on-brand": theme.colors["Brand/300"],
+      "text-white": theme.colors["Base/White"],
+      "text-disabled": theme.colors["Gray (light mode)/500"],
+      "text-placeholder": theme.colors["Gray (light mode)/500"],
+      "text-placeholder_subtle": theme.colors["Gray (light mode)/300"],
+      "text-brand-primary": theme.colors["Brand/900"],
+      "text-brand-secondary": theme.colors["Brand/700"],
+      "text-brand-tertiary": theme.colors["Brand/600"],
+      "text-brand-tertiary_alt": theme.colors["Brand/600"],
+      "text-error-primary": theme.colors["Error/600"],
+      "text-warning-primary": theme.colors["Warning/600"],
+      "text-success-primary": theme.colors["Success/600"],
+      
+      // Borders
+      "border-primary": theme.colors["Gray (light mode)/300"],
+      "border-secondary": theme.colors["Gray (light mode)/200"],
+      "border-tertiary": theme.colors["Gray (light mode)/100"],
+      "border-disabled": theme.colors["Gray (light mode)/300"],
+      "border-disabled_subtle": theme.colors["Gray (light mode)/200"],
+      "border-brand": theme.colors["Brand/500"],
+      "border-brand_alt": theme.colors["Brand/600"],
+      "border-error": theme.colors["Error/500"],
+      "border-error_subtle": theme.colors["Error/300"],
+
+      // Foreground assignments
+      "fg-primary": theme.colors["Gray (light mode)/900"],
+      "fg-secondary": theme.colors["Gray (light mode)/700"],
+      "fg-secondary_hover": theme.colors["Gray (light mode)/800"],
+      "fg-tertiary": theme.colors["Gray (light mode)/600"],
+      "fg-tertiary_hover": theme.colors["Gray (light mode)/700"],
+      "fg-quaternary": theme.colors["Gray (light mode)/500"],
+      "fg-quaternary_hover": theme.colors["Gray (light mode)/600"],
+      "fg-quinary": theme.colors["Gray (light mode)/400"],
+      "fg-quinary_hover": theme.colors["Gray (light mode)/500"],
+      "fg-senary": theme.colors["Gray (light mode)/300"],
+      "fg-white": theme.colors["Base/White"],
+      "fg-disabled": theme.colors["Gray (light mode)/400"],
+      "fg-disabled_subtle": theme.colors["Gray (light mode)/300"],
+      "fg-brand-primary": theme.colors["Brand/600"],
+      "fg-brand-primary_alt": theme.colors["Brand/600"],
+      "fg-brand-secondary": theme.colors["Brand/500"],
+      "fg-error-primary": theme.colors["Error/600"],
+      "fg-error-secondary": theme.colors["Error/500"],
+      "fg-warning-primary": theme.colors["Warning/600"],
+      "fg-warning-secondary": theme.colors["Warning/500"],
+      "fg-success-primary": theme.colors["Success/600"],
+      "fg-success-secondary": theme.colors["Success/500"],
+
+
+    };
+     
+       // LightMode Assignment
+       theme.colors.darkMode = {
+        "text-primary": theme.colors["Gray (dark mode)/900"],
+        "text-primary_on-brand": theme.colors["Base/White"],
+        "text-secondary": theme.colors["Gray (light mode)/700"],
+        "text-secondary_hover": theme.colors["Gray (light mode)/800"],
+        "text-secondary_on-brand": theme.colors["Brand/200"],
+        "text-tertiary": theme.colors["Gray (light mode)/600"],
+        "text-tertiary_hover": theme.colors["Gray (light mode)/700"],
+        "text-tertiary_on-brand": theme.colors["Brand/200"],
+        "text-quaternary": theme.colors["Gray (light mode)/500"],
+        "text-quaternary_on-brand": theme.colors["Brand/300"],
+        "text-white": theme.colors["Base/White"],
+        "text-disabled": theme.colors["Gray (light mode)/500"],
+        "text-placeholder": theme.colors["Gray (light mode)/500"],
+        "text-placeholder_subtle": theme.colors["Gray (light mode)/300"],
+        "text-brand-primary": theme.colors["Brand/900"],
+        "text-brand-secondary": theme.colors["Brand/700"],
+        "text-brand-tertiary": theme.colors["Brand/600"],
+        "text-brand-tertiary_alt": theme.colors["Brand/600"],
+        "text-error-primary": theme.colors["Error/600"],
+        "text-warning-primary": theme.colors["Warning/600"],
+        "text-success-primary": theme.colors["Success/600"],
+      };
+
+
+     export default theme;
