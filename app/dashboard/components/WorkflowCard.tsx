@@ -22,6 +22,7 @@ interface WorkflowCardProps {
   workspace: Workspace;
   onSelectWorkflow: (w: Workflow) => void;
   onDeleteWorkflow: () => void;
+  onDuplicateWorkflow: () => void;
   onEditWorkflow: () => void;
   onMoveWorkflow: () => void;
 }
@@ -32,6 +33,7 @@ export default function WorkflowCard({
   onSelectWorkflow,
   onDeleteWorkflow,
   onEditWorkflow,
+  onDuplicateWorkflow,
   onMoveWorkflow,
 }: WorkflowCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -134,6 +136,10 @@ export default function WorkflowCard({
                     onMoveWorkflow();
                   } else if (item.label === 'Edit Flow info') {
                     onEditWorkflow();
+                  } else if (item.label === 'Open') {
+                    handleWorkflowClick(workflow.id);
+                  } else if (item.label === 'Duplicate') {
+                    onDuplicateWorkflow();
                   }
                   // Add handlers for other menu items as needed
                 }}
