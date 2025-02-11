@@ -13,9 +13,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: myTheme.colors,
-      fontSize: myTheme.fontSize,
-      boxShadow: myTheme.boxShadow,
-      borderRadius: myTheme.borderRadius,
+      fontSize: myTheme.colors.fontSize,
+      boxShadow: myTheme.colors.boxShadow,
+      borderRadius: myTheme.colors.borderRadius,
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
@@ -24,9 +24,7 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'sans-serif'], // Default 'sans' is now Inter
       },
-      spacing: {
-        half: '50%',
-      },
+      spacing: myTheme.spacing,
     },
   },
   variants: {
