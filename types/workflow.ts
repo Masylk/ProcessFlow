@@ -11,5 +11,6 @@ export interface Workflow {
   blocks: Block[];
   history: Action[];
   folder_id?: number;
+  last_opened?: Date;
   team_tags: string[];
 }

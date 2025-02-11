@@ -17,6 +17,7 @@ import WorkflowHeader from '../components/WorkflowHeader';
 import { title } from 'process';
 import { CanvasEvent, CanvasEventType } from '@/types/canvasevent';
 import { SidebarEvent, SidebarEventType } from '@/types/sidebarevent';
+import { updateLastOpened } from '@/app/utils/updateLastOpened';
 
 export default function WorkflowPage() {
   const pathname = usePathname();
@@ -55,11 +56,15 @@ export default function WorkflowPage() {
       const response = await fetch(
         `/api/workspace/${id}/paths?workflow_id=${workflow_id}`
       );
+
       if (!response.ok) throw new Error('Failed to fetch paths');
 
       const data = await response.json();
       setPath(data.paths && data.paths[0] ? data.paths[0] : null);
       setLastRequestStatus(true);
+
+      // Call updateLastOpened after successfully fetching paths
+      await updateLastOpened(parseInt(workflow_id));
     } catch (error) {
       console.error('Error fetching paths:', error);
       setLastRequestStatus(false);
