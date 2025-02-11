@@ -21,12 +21,12 @@ import UploadImageModal from './components/UploadImageModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import CreateFlowModal from './components/CreateFlowModal';
 import { Workflow } from '@/types/workflow';
-import { createWorkflow } from './utils/createWorkflow';
+import { createWorkflow } from '../utils/createWorkflow';
 import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
-import { deleteWorkflow } from './utils/deleteWorkflow';
+import { deleteWorkflow } from '../utils/deleteWorkflow';
 import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
-import { updateWorkflow } from './utils/updateWorkflow';
+import { updateWorkflow } from '../utils/updateWorkflow';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
