@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import IconModifier from './IconModifier';
 import { Folder } from '@/types/workspace';
 
-interface CreateFolderModalProps {
+interface EditFolderModalProps {
   onClose: () => void;
   onEdit: (
     folderName: string,
@@ -13,13 +13,15 @@ interface CreateFolderModalProps {
   folder: Folder;
 }
 
-const EditFolderModal: React.FC<CreateFolderModalProps> = ({
+const EditFolderModal: React.FC<EditFolderModalProps> = ({
   onClose,
   onEdit,
   folder,
 }) => {
   const [folderName, setFolderName] = useState('');
-  const [iconUrl, setIconUrl] = useState<string | undefined>(folder.icon_url || undefined);
+  const [iconUrl, setIconUrl] = useState<string | undefined>(
+    folder.icon_url || undefined
+  );
   const [emote, setEmote] = useState<string | undefined>(folder.emote);
 
   const createFolder = (name: string) => {

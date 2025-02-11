@@ -1,5 +1,6 @@
 'use client';
 import { Workflow } from '@/types/workflow';
+import { Folder } from '@/types/workspace';
 import { useState } from 'react';
 
 interface EditFlowModalProps {
@@ -7,7 +8,8 @@ interface EditFlowModalProps {
   onConfirm: (
     id: number,
     name: string,
-    description: string
+    description: string,
+    folder: Folder | null | undefined
   ) => Promise<Workflow | null>;
   selectedWorkflow: Workflow;
 }
@@ -95,7 +97,8 @@ export default function EditFlowModal({
                 await onConfirm(
                   selectedWorkflow.id,
                   processName,
-                  flowDescription
+                  flowDescription,
+                  undefined
                 );
                 onClose();
               }}

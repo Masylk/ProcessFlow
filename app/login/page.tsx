@@ -1,10 +1,74 @@
 'use client';
-import Link from 'next/link';
-import { login, signup } from './actions';
+
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import posthog from 'posthog-js';
+import { login, signup } from './actions';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    if (!isSignUp) {
+      // Appel à la server action "login"
+      const user = await login(formData);
+
+      if (user?.error) {
+        console.error('Login error:', user.error);
+        return;
+      }
+
+      if (user?.id && user?.email) {
+        posthog.identify(user.id);
+
+        // On peut aussi récupérer le nom côté DB si besoin
+        // posthog.people.set({ email: user.email, firstName: user.firstName, lastName: user.lastName });
+
+        // Pour le login, on a souvent juste l'email
+        posthog.people.set({ email: user.email });
+
+        posthog.capture('login', {
+          email: user.email,
+        });
+
+        router.push('/');
+      }
+    } else {
+      // Appel à la server action "signup"
+      const newUser = await signup(formData);
+
+      if (newUser?.error) {
+        console.error('Signup error:', newUser.error);
+        return;
+      }
+
+      // newUser contiendra { id, email, firstName, lastName } si ton server action renvoie tout
+      if (newUser?.id && newUser?.email) {
+        posthog.identify(newUser.id);
+
+        // On met l'email, le prénom et le nom dans les propriétés utilisateur
+        posthog.people.set({
+          email: newUser.email,
+          firstName: newUser.firstName, // renvoyé par le backend
+          lastName: newUser.lastName,   // renvoyé par le backend
+        });
+
+        // On peut logguer l'événement signup en incluant ces infos
+        posthog.capture('signup', {
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+        });
+
+        router.push('/');
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
@@ -12,7 +76,8 @@ export default function LoginPage() {
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           {isSignUp ? 'Create an Account' : 'Welcome Back'}
         </h2>
-        <form className="space-y-6">
+
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {isSignUp && (
             <>
               <div>
@@ -27,12 +92,12 @@ export default function LoginPage() {
                   name="first_name"
                   type="text"
                   required
-                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                 />
               </div>
               <div>
                 <label
-                  htmlFor="last_name"
+                  htmlFor="last_name" 
                   className="block text-sm font-medium text-gray-700"
                 >
                   Last Name
@@ -42,7 +107,7 @@ export default function LoginPage() {
                   name="last_name"
                   type="text"
                   required
-                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                 />
               </div>
             </>
@@ -59,7 +124,7 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
             />
           </div>
           <div>
@@ -74,13 +139,13 @@ export default function LoginPage() {
               name="password"
               type="password"
               required
-              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
             />
           </div>
           <div className="flex space-x-4">
             {!isSignUp && (
               <button
-                formAction={login}
+                type="submit"
                 className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
               >
                 Log in
@@ -88,7 +153,7 @@ export default function LoginPage() {
             )}
             {isSignUp && (
               <button
-                formAction={signup}
+                type="submit"
                 className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
               >
                 Sign up

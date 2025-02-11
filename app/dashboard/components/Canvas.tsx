@@ -12,6 +12,7 @@ interface CanvasProps {
   onSelectWorkflow: (w: Workflow) => void;
   onDeleteWorkflow: () => void;
   onEditWorkflow: () => void;
+  onDuplicateWorkflow: () => void;
   onMoveWorkflow: () => void;
   selectedFolder?: Folder;
   searchTerm?: string;
@@ -24,6 +25,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onSelectWorkflow,
   onDeleteWorkflow,
   onEditWorkflow,
+  onDuplicateWorkflow,
   onMoveWorkflow,
   searchTerm = '',
 }) => {
@@ -67,6 +69,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   workflow={workflow}
                   workspace={workspace}
                   onSelectWorkflow={onSelectWorkflow}
+                  onDuplicateWorkflow={onDuplicateWorkflow}
                   onDeleteWorkflow={onDeleteWorkflow}
                   onEditWorkflow={onEditWorkflow}
                   onMoveWorkflow={onMoveWorkflow}
@@ -87,6 +90,7 @@ const Canvas: React.FC<CanvasProps> = ({
                 workspace={workspace}
                 onSelectWorkflow={onSelectWorkflow}
                 onDeleteWorkflow={onDeleteWorkflow}
+                onDuplicateWorkflow={onDuplicateWorkflow}
                 onEditWorkflow={onEditWorkflow}
                 onMoveWorkflow={onMoveWorkflow}
               />

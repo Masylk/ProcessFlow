@@ -26,7 +26,8 @@ import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
 import { deleteWorkflow } from '../utils/deleteWorkflow';
 import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
-import { updateWorkflow } from '../utils/updateWorkflow';
+import { updateWorkflow } from '@/app/utils/updateWorkflow';
+import MoveWorkflowModal from './components/MoveWorkflowModal';
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -59,27 +60,12 @@ export default function Page() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null
   );
-  const [onCreateFolderAction, setOnCreateFolderAction] = useState<
-    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
-  >(null);
-  const [onEditFolderAction, setOnEditFolderAction] = useState<
-    ((name: string, icon_url?: string, emote?: string) => Promise<void>) | null
-  >(null);
-  const [onDeleteFolderAction, setOnDeleteFolderAction] = useState<
-    (() => Promise<void>) | null
-  >(null);
-  const [onCreateSubfolderAction, setOnCreateSubfolderAction] = useState<
-    | ((
-        name: string,
-        parentId: number,
-        icon_url?: string,
-        emote?: string
-      ) => Promise<void>)
-    | null
-  >(null);
   const [selectedFolder, setSelectedFolder] = useState<Folder | undefined>(
     undefined
   );
+  const [sidebarSelectedFolder, setSidebarSelectedFolder] = useState<
+    Folder | undefined
+  >(undefined);
   const [folderParent, setFolderParent] = useState<Folder | null>(null);
   const [folderParentId, setFolderParentId] = useState<number | null>(null);
   const supabase = createClient();
@@ -212,7 +198,25 @@ export default function Page() {
     // Refresh workspaces if needed.
   };
 
-  
+  const handleDuplicateWorkflow = async () => {
+    if (!selectedWorkflow || !activeWorkspace) return;
+
+    const baseName = selectedWorkflow.name;
+    let duplicateName = baseName;
+    let counter = 1;
+
+    // Get all workflow names in the current workspace
+    const existingNames = new Set(activeWorkspace.workflows.map((w) => w.name));
+
+    // Ensure the name is unique by appending a counter if needed
+    while (existingNames.has(duplicateName)) {
+      duplicateName = `${baseName} (${counter})`;
+      counter++;
+    }
+
+    await handleCreateWorkflow(duplicateName, selectedWorkflow.description);
+  };
+
   const handleCreateWorkflow = async (name: string, description: string) => {
     if (!activeWorkspace) {
       console.error('No active workspace selected');
@@ -257,12 +261,16 @@ export default function Page() {
   async function handleEditWorkflow(
     workflowId: number,
     name: string,
-    description: string
+    description: string,
+    folder: Folder | null | undefined
   ): Promise<Workflow | null> {
     // Prepare the partial update data
+    if (folder === null) console.log('putting folder to root');
     const updateData = {
       name, // Update the name
       description, // Update the description
+      folder_id:
+        folder === null ? 0 : folder !== undefined ? folder.id : undefined,
     };
 
     // Call the updateWorkflow function
@@ -311,7 +319,12 @@ export default function Page() {
     setSearchTerm(event.target.value);
   };
 
-  const onSelectFolder = (folder?: Folder) => {
+  const onSelectFolderSidebar = (folder?: Folder) => {
+    console.log('select folder : ' + folder?.name);
+    setSidebarSelectedFolder(folder);
+  };
+
+  const onSelectFolderView = (folder?: Folder) => {
     setSelectedFolder(folder);
   };
 
@@ -337,34 +350,24 @@ export default function Page() {
     setDropdownVisible(false);
   };
 
-  const openCreateFolder = (
-    fn: (name: string) => Promise<void>,
-    parentId?: number
-  ) => {
+  const openCreateFolder = (parentId?: number) => {
     if (parentId) {
       setFolderParentId(parentId);
     } else {
       setCreateFolderVisible(true);
-      setOnCreateFolderAction(() => fn);
+      // setOnCreateFolderAction(() => fn);
     }
   };
 
-  const openCreateSubFolder = (
-    fn: (name: string, parentId: number) => Promise<void>,
-    parentFolder: Folder
-  ) => {
+  const openCreateSubFolder = (parentFolder: Folder) => {
     setCreateSubfolderVisible(true);
-    setOnCreateSubfolderAction(() => fn);
+    // setOnCreateSubfolderAction(() => fn);
     setFolderParent(parentFolder);
   };
 
-  const openEditFolder = (
-    fn: (name: string) => Promise<void>,
-    parentFolder: Folder
-  ) => {
+  const openEditFolder = (parentFolder: Folder) => {
     setEditFolderVisible(true);
-    setOnEditFolderAction(() => fn);
-    setFolderParent(parentFolder);
+    // setOnEditFolderAction(() => fn);
   };
 
   const openUploadImage = () => {
@@ -383,8 +386,8 @@ export default function Page() {
     setCreateFlowVisible(true);
   };
 
-  const openDeleteFolder = (fn: () => Promise<void>) => {
-    setOnDeleteFolderAction(() => fn);
+  const openDeleteFolder = () => {
+    // setOnDeleteFolderAction(() => fn);
     setDeleteFolderVisible(true);
   };
 
@@ -426,18 +429,15 @@ export default function Page() {
   };
 
   const closeCreateSubfolder = () => {
-    setOnCreateSubfolderAction(null);
     setFolderParent(null);
     setCreateSubfolderVisible(false);
   };
 
   const closeCreateFolder = () => {
-    setOnCreateFolderAction(null);
     setCreateFolderVisible(false);
   };
 
   const closeEditFolder = () => {
-    setOnEditFolderAction(null);
     setFolderParent(null);
     setEditFolderVisible(false);
   };
@@ -510,6 +510,178 @@ export default function Page() {
     setIsDeleteAvatar(false);
   };
 
+  // FOLDER MANAGEMENT
+  // Handler to add a top-level folder (parent_id will be null)
+  const handleAddFolder = async (
+    name: string,
+    icon_url?: string,
+    emote?: string
+  ) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const res = await fetch('/api/workspaces/folders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          workspace_id: activeWorkspace.id,
+          team_tags: [],
+          icon_url,
+          emote,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to add folder');
+      }
+
+      const newFolder: Folder = await res.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: [...prevWorkspace.folders, newFolder],
+            }
+          : null
+      );
+    } catch (error) {
+      console.error('Error adding folder:', error);
+    }
+  };
+
+  // Handler to add a subfolder with a given parent folder id
+  const handleAddSubfolder = async (
+    name: string,
+    parentId: number,
+    icon_url?: string,
+    emote?: string
+  ) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const res = await fetch('/api/workspaces/subfolders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          workspace_id: activeWorkspace.id,
+          parent_id: parentId,
+          team_tags: [],
+          icon_url,
+          emote,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to add subfolder');
+      }
+
+      const newSubfolder: Folder = await res.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: [...prevWorkspace.folders, newSubfolder],
+            }
+          : null
+      );
+
+      setSidebarSelectedFolder(undefined);
+    } catch (error) {
+      console.error('Error adding subfolder:', error);
+    }
+  };
+
+  //Handler to edit a specific folder
+  const handleEditFolder = async (
+    name: string,
+    icon_url?: string | null,
+    emote?: string | null
+  ) => {
+    if (!sidebarSelectedFolder || !activeWorkspace) return;
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/folders/${sidebarSelectedFolder.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, icon_url, emote }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update folder');
+      }
+
+      const updatedFolder: Folder = await response.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: prevWorkspace.folders.map((folder) =>
+                folder.id === sidebarSelectedFolder.id
+                  ? { ...folder, ...updatedFolder }
+                  : folder
+              ),
+            }
+          : null
+      );
+      if (selectedFolder && selectedFolder.id === updatedFolder.id)
+        setSelectedFolder(updatedFolder);
+      setSidebarSelectedFolder(undefined);
+    } catch (error) {
+      console.error('Error updating folder:', error);
+    }
+  };
+
+  //Handler to delete a specific folder
+  const handleDeleteFolder = async () => {
+    if (!selectedFolder || !activeWorkspace) return;
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/folders/${selectedFolder.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete folder');
+      }
+
+      const data = await response.json();
+      console.log('Folder deleted successfully:', data);
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: prevWorkspace.folders.filter(
+                (folder) => folder.id !== selectedFolder.id
+              ),
+            }
+          : null
+      );
+      setSelectedFolder(undefined);
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+    }
+  };
+
+  // FOLDER MANAGEMENT
+
   return (
     <>
       <div className="flex h-screen w-screen overflow-hidden">
@@ -524,10 +696,12 @@ export default function Page() {
             onEditFolder={openEditFolder}
             onCreateSubfolder={openCreateSubFolder}
             onDeleteFolder={openDeleteFolder}
-            onSelectFolder={onSelectFolder}
+            onSelectFolder={onSelectFolderSidebar}
+            onSelectFolderView={onSelectFolderView}
             onOpenUserSettings={openUserSettings}
             user={user}
             onOpenHelpCenter={openHelpCenter}
+            selectedFolder={sidebarSelectedFolder}
           />
         )}
 
@@ -541,11 +715,12 @@ export default function Page() {
             <div className="relative cursor-pointer" onClick={toggleDropdown}>
               <UserInfo user={user} />
               {dropdownVisible && (
-                <div className="absolute top-full right-0 mt-2">
+                <div className="absolute top-full right-0 mt-2 z-10">
                   <UserDropdown
                     user={user}
                     onOpenUserSettings={openUserSettings}
                     onOpenHelpCenter={openHelpCenter}
+                    onClose={() => setDropdownVisible(false)}
                   />
                 </div>
               )}
@@ -563,6 +738,7 @@ export default function Page() {
                 openCreateFlow={openCreateFlow}
                 onDeleteWorkflow={openDeleteFlow}
                 onEditWorkflow={openEditFlow}
+                onDuplicateWorkflow={handleDuplicateWorkflow}
                 onMoveWorkflow={openMoveFlow}
               />
             )}
@@ -596,27 +772,27 @@ export default function Page() {
         />
       )}
 
-      {createFolderVisible && onCreateFolderAction && (
+      {createFolderVisible && (
         <CreateFolderModal
           onClose={closeCreateFolder}
-          onCreate={onCreateFolderAction}
+          onCreate={handleAddFolder}
         ></CreateFolderModal>
       )}
 
-      {createSubfolderVisible && onCreateSubfolderAction && folderParent && (
+      {createSubfolderVisible && folderParent && (
         <CreateSubfolderModal
           onClose={closeCreateSubfolder}
-          onCreate={onCreateSubfolderAction}
+          onCreate={handleAddSubfolder}
           parentId={folderParent?.id}
           parent={folderParent}
         ></CreateSubfolderModal>
       )}
 
-      {editFolderVisible && onEditFolderAction && folderParent && (
+      {editFolderVisible && sidebarSelectedFolder && (
         <EditFolderModal
           onClose={closeEditFolder}
-          onEdit={onEditFolderAction}
-          folder={folderParent}
+          onEdit={handleEditFolder}
+          folder={sidebarSelectedFolder}
         ></EditFolderModal>
       )}
 
@@ -648,10 +824,10 @@ export default function Page() {
         />
       )}
 
-      {deleteFolderVisible && onDeleteFolderAction && (
+      {deleteFolderVisible && (
         <ConfirmDeleteFolderModal
           onClose={closeDeleteFolder}
-          onDelete={onDeleteFolderAction}
+          onDelete={handleDeleteFolder}
         />
       )}
 
@@ -660,6 +836,22 @@ export default function Page() {
           onClose={closeEditFlow}
           onConfirm={handleEditWorkflow}
           selectedWorkflow={selectedWorkflow}
+        />
+      )}
+
+      {moveFlowVisible && selectedWorkflow && activeWorkspace && (
+        <MoveWorkflowModal
+          onClose={closeMoveFlow}
+          onConfirm={async (folder) =>
+            handleEditWorkflow(
+              selectedWorkflow.id,
+              selectedWorkflow.name,
+              selectedWorkflow.description,
+              folder
+            )
+          }
+          selectedWorkflow={selectedWorkflow}
+          activeWorkspace={activeWorkspace}
         />
       )}
 
