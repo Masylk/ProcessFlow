@@ -1,5 +1,6 @@
+
 const theme = { colors: 
-   { 'Base/White': '#ffffff',
+  { 'Base/White': '#ffffff',
      'Base/Black': '#000000',
      'Gray (light mode)/25': '#fcfcfd',
      'Gray (light mode)/50': '#f9fafb',
@@ -715,7 +716,7 @@ const theme = { colors:
       "bg-secondary-solid": theme.colors["Gray (light mode)/600"],
       "bg-tertiary": theme.colors["Gray (light mode)/100"],
       "bg-quaternary": theme.colors["Gray (light mode)/200"],
-      "bg-active": theme.colors["Gray (light mode)/50"],
+      "bg-active": theme.colors["Gray (light mode)/100"],
       "bg-disabled": theme.colors["Gray (light mode)/100"],
       "bg-disabled_subtle": theme.colors["Gray (light mode)/50"],
       "bg-overlay": theme.colors["Gray (light mode)/950"],
@@ -1437,9 +1438,9 @@ const theme = { colors:
   
     // Primary Buttons
     "button-primary-fg": theme.colors["Base/white"],
-    "button-primary-fg_hover": theme.colors["Base/white"],
+    "button-primary-fg-hover": theme.colors["Base/white"],
     "button-primary-bg": theme.colors["Brand/500"],
-    "button-primary-bg_hover": theme.colors["Brand/700"],
+    "button-primary-bg-hover": theme.colors["Brand/700"],
   
     // Secondary Buttons
     "button-secondary-fg": theme.colors["Gray (dark mode)/300"],
