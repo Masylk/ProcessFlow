@@ -42,23 +42,22 @@ export default function LoginPage() {
       // Appel à la server action "signup"
       const newUser = await signup(formData);
 
-      if (newUser?.error) {
+      if ('error' in newUser) {
+        // Handle error here
         console.error('Signup error:', newUser.error);
         return;
       }
 
-      // newUser contiendra { id, email, firstName, lastName } si ton server action renvoie tout
+      // Now `newUser` is guaranteed to be a `User` type
       if (newUser?.id && newUser?.email) {
         posthog.identify(newUser.id);
 
-        // On met l'email, le prénom et le nom dans les propriétés utilisateur
         posthog.people.set({
           email: newUser.email,
-          firstName: newUser.firstName, // renvoyé par le backend
-          lastName: newUser.lastName,   // renvoyé par le backend
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
         });
 
-        // On peut logguer l'événement signup en incluant ces infos
         posthog.capture('signup', {
           email: newUser.email,
           firstName: newUser.firstName,
@@ -97,7 +96,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <label
-                  htmlFor="last_name" 
+                  htmlFor="last_name"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Last Name

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma'; // Import your Prisma client si nécessaire
+import sendEmail from '@/src/mailer';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -39,7 +40,7 @@ export async function login(formData: FormData) {
     });
     if (userInDb) {
       firstName = userInDb.first_name ?? '';
-      lastName  = userInDb.last_name ?? '';
+      lastName = userInDb.last_name ?? '';
     }
   } catch (dbError) {
     console.error('Error retrieving user from DB:', dbError);
@@ -54,6 +55,7 @@ export async function login(formData: FormData) {
   };
 }
 
+
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
@@ -65,7 +67,7 @@ export async function signup(formData: FormData) {
     },
   };
 
-  // On tente l'inscription via Supabase
+  // Attempt user sign-up with Supabase
   const { data, error: authError } = await supabase.auth.signUp(credentials);
 
   if (authError) {
@@ -78,16 +80,15 @@ export async function signup(formData: FormData) {
     return { error: 'No user returned from signUp' };
   }
 
-  // On récupère aussi les champs first_name / last_name pour compléter en base
   const firstName = (formData.get('first_name') as string) || '';
   const lastName = (formData.get('last_name') as string) || '';
   const email = user.email || '';
 
-  // On crée (ou met à jour) l'utilisateur dans ta propre base
+  // Store user in your database
   try {
     await prisma.user.create({
       data: {
-        auth_id: user.id, // Lien vers l'UID Supabase
+        auth_id: user.id,
         email,
         first_name: firstName,
         last_name: lastName,
@@ -95,19 +96,29 @@ export async function signup(formData: FormData) {
       },
     });
 
-    // Tu peux éventuellement revalider le cache si nécessaire.
-    // revalidatePath('/', 'layout'); // Optionnel
+    // Send the welcome email directly from the server function
+    try {
+      const mailOptionsData = {
+        to: email,
+        subject: 'Bienvenue sur ProcessFlow!',
+      };
+
+      await sendEmail('welcome', mailOptionsData); // Pass both arguments separately
+      console.log('Welcome email sent successfully!');
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      return { error: 'Failed to send welcome email' };
+    }
+
+    // Return the user object after successful signup
+    return {
+      id: user.id,
+      email: user.email,
+      firstName,
+      lastName,
+    };
   } catch (dbError) {
     console.error('Error creating user in Prisma:', dbError);
     return { error: 'Error creating user in DB' };
   }
-
-  // On renvoie l'ID, l'email, et le prénom/nom pour un call PostHog côté client
-  return {
-    id: user.id,
-    email: user.email,
-    firstName,
-    lastName,
-  };
 }
-
