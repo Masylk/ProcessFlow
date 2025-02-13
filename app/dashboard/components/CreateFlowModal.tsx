@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import ButtonNormal from '../../components/ButtonNormal';
 
 interface CreateFlowModalProps {
   onClose: () => void;
@@ -129,36 +130,29 @@ export default function CreateFlowModal({
         <div className="self-stretch h-[92px] pt-6 border-t border-[#e4e7ec] flex-col justify-start items-start flex">
           <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
             {/* Cancel Button */}
-            <div
+            <ButtonNormal
               onClick={() => onClose()}
-              className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] 
-                  
-                  border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden 
-                  transition-all duration-300 hover:bg-[#F9FAFB] cursor-pointer"
+              variant="secondaryGray"
+              mode="light"
+              size="medium"
+              className='grow shrink basis-0'
             >
-              <div className="px-0.5 justify-center items-center flex">
-                <div className="text-[#344054] text-base font-semibold font-['Inter'] leading-normal">
-                  Cancel
-                </div>
-              </div>
-            </div>
+              Cancel
+            </ButtonNormal>
             {/* Create Flow Button */}
-            <div
-              onClick={() => {
+            
+            <ButtonNormal onClick={() => {
                 onCreateFlow(flowName, flowDescription);
                 onClose();
               }}
-              className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05) cursor-hand] 
-                  shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] 
-                  border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden 
-                  transition-all duration-300 hover:bg-[#374C99] cursor-pointer"
+              variant="primary"
+              mode="light"
+              size="medium"
+              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/white-plus.svg"
+              className='grow shrink basis-0'
             >
-              <div className="px-0.5 justify-center items-center flex">
-                <div className="text-white text-base font-semibold font-['Inter'] leading-normal">
-                  Create Flow
-                </div>
-              </div>
-            </div>
+              Create a Flow
+            </ButtonNormal>
           </div>
         </div>
       </div>

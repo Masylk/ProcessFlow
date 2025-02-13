@@ -27,6 +27,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "global.d.ts"
-  ],
+, "theme.js"  ],
   "exclude": ["node_modules"]
 }
