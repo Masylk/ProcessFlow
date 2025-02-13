@@ -3,7 +3,6 @@
 import { Folder, Workspace } from '@/types/workspace';
 import React from 'react';
 import CanvaHeader from './CanvaHeader';
-import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import WorkflowCard from './WorkflowCard';
 import { Workflow } from '@/types/workflow';
 
@@ -30,14 +29,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onMoveWorkflow,
   searchTerm = '',
 }) => {
-  const router = useRouter(); // Initialize the router
-
-  const handleWorkflowClick = (workflowId: number) => {
-    // Redirect to the workflow edit page
-    router.push(`/workspace/${workspace.id}/${workflowId}/edit`);
-  };
-
-  // Filter workflows based on the selectedFolder and searchTerm
+  // Filter workflows based on selectedFolder and searchTerm
   const workflowsToDisplay = workspace.workflows.filter((workflow) => {
     const matchesFolder = selectedFolder
       ? workflow.folder_id === selectedFolder.id
@@ -48,26 +40,63 @@ const Canvas: React.FC<CanvasProps> = ({
     return matchesFolder && matchesSearch;
   });
 
+  // Sort workflows by last_opened (recently used first)
+  const recentlyUsedWorkflows = [...workflowsToDisplay]
+    .filter((workflow) => workflow.last_opened) // Ensure last_opened exists
+    .sort(
+      (a, b) =>
+        new Date(b.last_opened!).getTime() - new Date(a.last_opened!).getTime()
+    )
+    .slice(0, 4); // Get the top 4 most recent workflows
+
   return (
-    <div className="flex flex-col flex-1 w-full h-full bg-gray-100 ">
+    <div className="flex flex-col flex-1 w-full h-full bg-gray-100">
       <CanvaHeader
         openCreateFlow={openCreateFlow}
         selectedFolder={selectedFolder}
       />
 
-      <div className="w-full py-4 pb-40 px-8 grid grid-cols-4 gap-4 overflow-auto">
-        {workflowsToDisplay.map((workflow) => (
-          <WorkflowCard
-            key={workflow.id}
-            workflow={workflow}
-            workspace={workspace}
-            onSelectWorkflow={onSelectWorkflow}
-            onDeleteWorkflow={onDeleteWorkflow}
-            onDuplicateWorkflow={onDuplicateWorkflow}
-            onEditWorkflow={onEditWorkflow}
-            onMoveWorkflow={onMoveWorkflow}
-          />
-        ))}
+      {/* Scrollable Section */}
+      <div className="flex-1 overflow-auto px-8 py-4">
+        {/* Recently Used Section */}
+        {recentlyUsedWorkflows.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4">Recently Used</h2>
+            <div className="grid grid-cols-4 gap-4">
+              {recentlyUsedWorkflows.map((workflow) => (
+                <WorkflowCard
+                  key={workflow.id}
+                  workflow={workflow}
+                  workspace={workspace}
+                  onSelectWorkflow={onSelectWorkflow}
+                  onDuplicateWorkflow={onDuplicateWorkflow}
+                  onDeleteWorkflow={onDeleteWorkflow}
+                  onEditWorkflow={onEditWorkflow}
+                  onMoveWorkflow={onMoveWorkflow}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* All Workflows Section */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">All Workflows</h2>
+          <div className="grid grid-cols-4 gap-4 pb-40">
+            {workflowsToDisplay.map((workflow) => (
+              <WorkflowCard
+                key={workflow.id}
+                workflow={workflow}
+                workspace={workspace}
+                onSelectWorkflow={onSelectWorkflow}
+                onDeleteWorkflow={onDeleteWorkflow}
+                onDuplicateWorkflow={onDuplicateWorkflow}
+                onEditWorkflow={onEditWorkflow}
+                onMoveWorkflow={onMoveWorkflow}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
