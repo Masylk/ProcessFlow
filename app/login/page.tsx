@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import { login, signup } from './actions';
+import * as Sentry from "@sentry/nextjs";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -24,6 +25,11 @@ export default function LoginPage() {
       }
 
       if (user?.id && user?.email) {
+        Sentry.setUser({
+          id: user.id,
+          email: user.email,
+        });
+
         posthog.identify(user.id);
 
         // On peut aussi récupérer le nom côté DB si besoin
@@ -49,6 +55,11 @@ export default function LoginPage() {
 
       // newUser contiendra { id, email, firstName, lastName } si ton server action renvoie tout
       if (newUser?.id && newUser?.email) {
+        Sentry.setUser({
+          id: newUser.id,
+          email: newUser.email,
+        });
+
         posthog.identify(newUser.id);
 
         // On met l'email, le prénom et le nom dans les propriétés utilisateur
