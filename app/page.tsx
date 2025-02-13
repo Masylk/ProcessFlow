@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import WorkspaceList from './components/WorskpaceList';
-
-import { env } from 'process';
 
 interface Workspace {
   id: number;
@@ -24,7 +23,27 @@ function HomePage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // 🔹 Detect email change confirmation
+  useEffect(() => {
+    const type = searchParams.get('type');
+
+    if (type === 'email_change') {
+      setAlertMessage('Your email has been successfully changed!');
+
+      // Remove query params from URL after showing the message
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('type');
+      params.delete('token');
+      params.delete('redirect_to');
+
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // 🔹 Fetch user on mount
   useEffect(() => {
@@ -60,24 +79,6 @@ function HomePage() {
     }
   }, [user]);
 
-  // 🔹 Add a new workspace
-  const addWorkspace = async () => {
-    if (!user) return;
-
-    const response = await fetch('/api/workspaces', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: newWorkspaceName,
-        user_id: parseInt(user.id),
-      }),
-    });
-
-    const newWorkspace: Workspace = await response.json();
-    setWorkspaces([...workspaces, newWorkspace]);
-    setNewWorkspaceName('');
-  };
-
   // 🔹 Handle user logout
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -101,6 +102,12 @@ function HomePage() {
       </header>
 
       <main className="p-4">
+        {alertMessage && (
+          <div className="mb-4 p-4 text-white bg-green-500 rounded-lg shadow-md">
+            {alertMessage}
+          </div>
+        )}
+
         {user ? (
           <p className="text-lg font-bold">Hello, {user.email}</p>
         ) : (
@@ -108,29 +115,9 @@ function HomePage() {
         )}
 
         <WorkspaceList workspaces={workspaces} />
-
-        <div className="mt-6">
-          <h2 className="text-lg font-bold mb-2">Add a new workspace</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Workspace Name"
-              value={newWorkspaceName}
-              onChange={(e) => setNewWorkspaceName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              onClick={addWorkspace}
-              className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-            >
-              Add Workspace
-            </button>
-          </div>
-        </div>
       </main>
     </div>
   );
 }
 
 export default HomePage;
-

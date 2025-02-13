@@ -56,6 +56,8 @@ export default function UserSettings({
   const [firstName, setFirstName] = useState<string>(user.first_name);
   const [lastName, setLastName] = useState<string>(user.last_name);
   const [newEmail, setNewEmail] = useState<string>(user.email);
+  const [emailChangeConfirmed, setEmailChangeConfirmed] =
+    useState<boolean>(false);
 
   // New states for password change section.
   const [showPasswordForm, setShowPasswordForm] = useState<boolean>(false);
@@ -105,7 +107,7 @@ export default function UserSettings({
       alert("Erreur lors de la mise à jour de l'email : " + error.message);
       return;
     }
-    alert('Adresse email mise à jour avec succès via Supabase.');
+    setEmailChangeConfirmed(true);
     // Optionally update the parent component.
     if (onUserUpdate) {
       onUserUpdate({ ...user, email: newEmail });
@@ -415,6 +417,23 @@ export default function UserSettings({
                       </div>
                     </button>
                   </div>
+                  {/* Confirmation Message - displayed when passwordChanged is true */}
+                  {emailChangeConfirmed && (
+                    <div className="h-[52px] px-3 py-0 bg-white rounded-xl flex items-center gap-4 mt-0">
+                      <div className="w-5 h-5 bg-[#ffffff] rounded-full overflow-hidden">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/alert-circle.svg`}
+                          alt="Mail Icon"
+                          className="w-5 h-5 object-contain"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          Please confirm the change on your new email
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="self-stretch h-px bg-[#e4e7ec]" />
 
