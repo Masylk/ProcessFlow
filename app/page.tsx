@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import WorkspaceList from './components/WorskpaceList';
@@ -19,16 +19,10 @@ interface User {
   created?: string;
 }
 
-function HomePage() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [newWorkspaceName, setNewWorkspaceName] = useState<string>('');
-  const [user, setUser] = useState<User | null>(null);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const supabase = createClient();
+function SearchParamsHandler({ setAlertMessage }: { setAlertMessage: (msg: string | null) => void }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // 🔹 Detect email change confirmation
   useEffect(() => {
     const type = searchParams.get('type');
 
@@ -45,7 +39,16 @@ function HomePage() {
     }
   }, [searchParams, router]);
 
-  // 🔹 Fetch user on mount
+  return null;
+}
+
+function HomePage() {
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const supabase = createClient();
+
+  // Fetch user on mount
   useEffect(() => {
     const fetchUser = async () => {
       const res = await fetch('/api/user');
@@ -61,7 +64,7 @@ function HomePage() {
     fetchUser();
   }, []);
 
-  // 🔹 Fetch workspaces when user is set
+  // Fetch workspaces when user is set
   useEffect(() => {
     if (user) {
       const fetchWorkspaces = async () => {
@@ -79,7 +82,7 @@ function HomePage() {
     }
   }, [user]);
 
-  // 🔹 Handle user logout
+  // Handle user logout
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -102,6 +105,10 @@ function HomePage() {
       </header>
 
       <main className="p-4">
+        <Suspense fallback={null}>
+          <SearchParamsHandler setAlertMessage={setAlertMessage} />
+        </Suspense>
+
         {alertMessage && (
           <div className="mb-4 p-4 text-white bg-green-500 rounded-lg shadow-md">
             {alertMessage}
