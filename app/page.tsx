@@ -19,22 +19,35 @@ interface User {
   created?: string;
 }
 
-function SearchParamsHandler({ setAlertMessage }: { setAlertMessage: (msg: string | null) => void }) {
+function SearchParamsHandler({
+  setAlertMessage,
+}: {
+  setAlertMessage: (msg: string | null) => void;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const type = searchParams.get('type');
+    const message = searchParams.get('message'); // Get the message from the URL
 
-    if (type === 'email_change') {
-      setAlertMessage('Your email has been successfully changed!');
+    if (message) {
+      setAlertMessage(message); // Set the message to be displayed
 
       // Remove query params from URL after showing the message
       const params = new URLSearchParams(searchParams.toString());
       params.delete('type');
       params.delete('token');
       params.delete('redirect_to');
+      params.delete('message'); // Remove the message parameter
 
+      router.replace(`?${params.toString()}`, { scroll: false });
+    } else if (type === 'email_change') {
+      setAlertMessage('Your email has been successfully changed!');
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('type');
+      params.delete('token');
+      params.delete('redirect_to');
       router.replace(`?${params.toString()}`, { scroll: false });
     }
   }, [searchParams, router]);
