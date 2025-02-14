@@ -60,7 +60,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: 'togbemaxime@gmail.com', // Corrected email address format
+          email: 'jean.willame@outlook.fr', // Corrected email address format
           firstName: 'Maxime', // Provide a first name as required by your API
         }),
       });

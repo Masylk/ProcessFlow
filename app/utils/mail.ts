@@ -13,7 +13,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     });
 
     const mailOptions = {
-      from: `"ProcessFlow" <${process.env.SMTP_USERNAME}>`,
+      from: `Customer Service | ProcessFlow <contact@process-flow.io>`,
       to,
       subject,
       html,
