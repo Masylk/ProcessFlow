@@ -1,27 +1,26 @@
 import fs from 'fs';
 import path from 'path';
-import mjml from 'mjml';
 
-/**
- * Renders an email from an MJML template.
- * @param templateName - The name of the template file without the extension (e.g., "welcome").
- * @returns The generated HTML string.
- */
 export async function renderEmail(templateName: string): Promise<string> {
   try {
+    // Dynamically import mjml
+    const mjml = (await import('mjml')).default;
+
     // Define file paths
-    const templatePath = path.join(
-      process.cwd(),
+    const templatePath = path.resolve(
       'mails',
       'templates',
       `${templateName}.mjml`
     );
-    const signaturePath = path.join(
-      process.cwd(),
-      'mails',
-      'partials',
-      'signature.mjml'
-    );
+    const signaturePath = path.resolve('mails', 'partials', 'signature.mjml');
+
+    // Check if files exist
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Template file not found: ${templatePath}`);
+    }
+    if (!fs.existsSync(signaturePath)) {
+      throw new Error(`Signature file not found: ${signaturePath}`);
+    }
 
     // Read template and signature files
     const templateContent = await fs.promises.readFile(templatePath, 'utf8');
@@ -44,6 +43,11 @@ export async function renderEmail(templateName: string): Promise<string> {
     return html;
   } catch (error) {
     console.error('Error rendering email:', error);
-    throw new Error('Failed to render email.');
+    // Include the original error to preserve stack trace and more details
+    throw new Error(
+      `Failed to render email: ${
+        error instanceof Error ? error.message : error
+      }`
+    );
   }
 }
