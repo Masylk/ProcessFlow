@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma'; // Import your Prisma client si nécessaire
-import sendEmail from '@/src/mailer';
+import { sendEmail } from '../utils/mail';
+import { render } from '@react-email/render';
+import WelcomeEmail from '../emails/WelcomeEmail';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -18,8 +20,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     console.error('Login error:', error);
-    // On renvoie une structure d'erreur que tu pourras gérer côté client
-    return { error: error.message };
+    return { error: error.message }; // Returning a clear error message
   }
 
   const user = data?.user;
@@ -28,8 +29,6 @@ export async function login(formData: FormData) {
   }
 
   // --- [Optionnel] Récupérer first/last name dans ta BDD via Prisma ---
-  // Cela te permet d'envoyer ces infos si tu veux
-  // qu'elles soient disponibles côté client pour PostHog.
   let firstName = '';
   let lastName = '';
 
@@ -44,9 +43,9 @@ export async function login(formData: FormData) {
     }
   } catch (dbError) {
     console.error('Error retrieving user from DB:', dbError);
+    return { error: 'Error retrieving user details from database' };
   }
 
-  // On retourne l'ID, l'email, et éventuellement le prénom/nom
   return {
     id: user.id,
     email: user.email,
@@ -66,24 +65,19 @@ export async function signup(formData: FormData) {
     },
   };
 
-  // Attempt user sign-up with Supabase
   const { data, error: authError } = await supabase.auth.signUp(credentials);
-
   if (authError) {
     console.error('Sign up error:', authError);
     return { error: authError.message };
   }
 
   const user = data?.user;
-  if (!user) {
-    return { error: 'No user returned from signUp' };
-  }
+  if (!user) return { error: 'No user returned from signUp' };
 
   const firstName = (formData.get('first_name') as string) || '';
   const lastName = (formData.get('last_name') as string) || '';
   const email = user.email || '';
 
-  // Store user in your database
   try {
     await prisma.user.create({
       data: {
@@ -95,29 +89,27 @@ export async function signup(formData: FormData) {
       },
     });
 
-    // Send the welcome email directly from the server function
-    try {
-      const mailOptionsData = {
-        to: email,
-        subject: 'Bienvenue sur ProcessFlow!',
-      };
+    const emailHtml = await render(WelcomeEmail({ firstName: firstName }));
 
-      await sendEmail('welcome', mailOptionsData); // Pass both arguments separately
-      console.log('Welcome email sent successfully!');
-    } catch (emailError) {
-      console.error('Error sending welcome email:', emailError);
-      return { error: 'Failed to send welcome email' };
+    // Send the welcome email using the sendEmail utility
+    const emailResponse = await sendEmail(
+      email,
+      'Bienvenue sur ProcessFlow!',
+      emailHtml // Pass the rendered HTML from WelcomeEmail
+    );
+
+    if (emailResponse.error) {
+      console.error('Email sending failed:', emailResponse.error);
     }
-
-    // Return the user object after successful signup
-    return {
-      id: user.id,
-      email: user.email,
-      firstName,
-      lastName,
-    };
   } catch (dbError) {
     console.error('Error creating user in Prisma:', dbError);
-    return { error: 'Error creating user in DB' };
+    return { error: 'Error creating user in database' };
   }
+
+  return {
+    id: user.id,
+    email,
+    firstName,
+    lastName,
+  };
 }
