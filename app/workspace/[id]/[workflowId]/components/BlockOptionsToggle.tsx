@@ -80,7 +80,7 @@ const BlockOptionsToggle: React.FC<BlockOptionsToggleProps> = ({
       // Create a new block with the updated image URL
 
       console.log('position duplicate block at : ' + block.position);
-      // Add the new block with the duplicated image
+      // Add the new  with the duplicated image
       const clone_block = await handleAddBlockFn(
         block,
         block.path_id,

@@ -3,17 +3,19 @@
 import { cn } from "@/lib/utils/cn";
 import DynamicIcon from "../../utils/DynamicIcon";
 import { useState, useMemo } from "react";
+import theme from "@/theme";
 
 // =======================================================
 // Constant Styles
 // =======================================================
-const BASE_INPUT_STYLE = {
+const BASE_STYLES = {
   width: "100%",
   flex: 1,
   fontSize: 16,
   lineHeight: "24px",
   outline: "none",
   border: "none",
+  background: 'transparent',
 };
 
 const SELECT_STYLE = {
@@ -97,6 +99,8 @@ const LEADING_TEXT_PREFIX_CONTAINER = {
   justifyContent: "flex-start",
   alignItems: "center",
   display: "flex",
+  background: theme.colors["Base/White"],
+  border: `1px solid ${theme.colors["Gray (light mode)/300"]}`,
 };
 
 const LEADING_TEXT_PREFIX_TEXT = {
@@ -115,11 +119,11 @@ const LEADING_TEXT_MAIN_INPUT_CONTAINER = {
   paddingRight: 12,
   paddingTop: 8,
   paddingBottom: 8,
-  background: "white",
+  background: theme.colors["Base/White"],
   borderTopLeftRadius: 8,
   borderTopRightRadius: 8,
   overflow: "hidden",
-  border: "1px #D0D5DD solid",
+  border: `1px solid ${theme.colors["Gray (light mode)/300"]}`,
   justifyContent: "flex-start",
   alignItems: "center",
   gap: 8,
@@ -175,26 +179,30 @@ interface InputFieldProps {
   iconColor?: string; // Tailwind color class for the icon
   dropdownOptions?: string[];
   tooltipText?: string;
+  mode?: 'light' | 'dark';
 }
 
 // Add this near the top with other component definitions
-const Tooltip: React.FC<{ text: string }> = ({ text }) => {
+const Tooltip: React.FC<{ text: string; mode?: 'light' | 'dark' }> = ({ text, mode = 'light' }) => {
   return (
     <div style={{
       position: 'absolute',
       bottom: 'calc(100% + 8px)',
       left: '50%',
       transform: 'translateX(-50%)',
-      background: '#101828',
+      background: mode === 'dark' ? theme.colors["Gray (dark mode)/900"] : '#101828',
       padding: '12px 16px',
       borderRadius: 8,
       width: '25ch',
-      boxShadow: '0px 4px 6px -2px rgba(16, 24, 40, 0.05)',
-      color: 'white',
+      boxShadow: mode === 'dark' 
+        ? '0px 4px 6px -2px rgba(0, 0, 0, 0.2)' 
+        : '0px 4px 6px -2px rgba(16, 24, 40, 0.05)',
+      color: mode === 'dark' ? theme.colors["Gray (dark mode)/100"] : 'white',
       fontSize: 14,
       fontFamily: 'Inter',
       lineHeight: '20px',
       zIndex: 50,
+      border: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
     }}>
       <div style={{
         position: 'absolute',
@@ -203,7 +211,9 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => {
         transform: 'translateX(-50%) rotate(45deg)',
         width: 8,
         height: 8,
-        background: '#101828',
+        background: mode === 'dark' ? theme.colors["Gray (dark mode)/900"] : '#101828',
+        borderRight: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
+        borderBottom: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
       }} />
       <div style={{ position: 'relative' }}>{text}</div>
     </div>
@@ -211,7 +221,8 @@ const Tooltip: React.FC<{ text: string }> = ({ text }) => {
 };
 
 // Modify the HelpIcon component
-const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string }> = ({ destructive, tooltipText }) => {
+const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string; mode?: 'light' | 'dark' }> = 
+  ({ destructive, tooltipText, mode = 'light' }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
@@ -228,7 +239,7 @@ const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string }> = ({ d
         <g clipPath="url(#clip0_helpIcon)">
           <path
             d="M6.05992 5.99998C6.21665 5.55442 6.52602 5.17872 6.93322 4.9394C7.34042 4.70009 7.81918 4.61261 8.2847 4.69245C8.75022 4.7723 9.17246 5.01433 9.47664 5.37567C9.78081 5.737 9.94729 6.19433 9.94659 6.66665C9.94659 7.99998 7.94659 8.66665 7.94659 8.66665M7.99992 11.3333H8.00659M14.6666 7.99998C14.6666 11.6819 11.6818 14.6666 7.99992 14.6666C4.31802 14.6666 1.33325 11.6819 1.33325 7.99998C1.33325 4.31808 4.31802 1.33331 7.99992 1.33331C11.6818 1.33331 14.6666 4.31808 14.6666 7.99998Z"
-            stroke={destructive ? "#FF0000" : "#98A2B3"}
+            stroke={destructive ? "#FF0000" : mode === 'dark' ? "#98A2B3" : "#98A2B3"}
             strokeWidth="1.33333"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -241,11 +252,149 @@ const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string }> = ({ d
         </defs>
       </svg>
       {showTooltip && (
-        <Tooltip text={tooltipText || "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text."} />
+        <Tooltip 
+          text={tooltipText || "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text."} 
+          mode={mode}
+        />
       )}
     </div>
   );
 };
+
+// Add this after the HelpIcon component
+const ErrorIcon: React.FC<{ tooltipText?: string; mode?: 'light' | 'dark' }> = 
+  ({ tooltipText, mode = 'light' }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div 
+      style={{ 
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+      }}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 5.33333V8M8 10.6667H8.00667M14.6667 8C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.31811 14.6667 1.33334 11.6819 1.33334 8C1.33334 4.31811 4.31811 1.33334 8 1.33334C11.6819 1.33334 14.6667 4.31811 14.6667 8Z" 
+          stroke="#F04438" 
+          strokeWidth="1.33333" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        />
+      </svg>
+      {showTooltip && (
+        <Tooltip 
+          text={tooltipText || "This field contains an error"} 
+          mode={mode}
+        />
+      )}
+    </div>
+  );
+};
+
+// Define variant styles with light and dark mode
+const getVariantStyles = (isFocused: boolean, destructive: boolean, mode: 'light' | 'dark') => ({
+  default: {
+    light: {
+      background: theme.colors["Base/White"],
+      border: `1px solid ${
+        destructive 
+          ? theme.colors['Error/300']
+          : isFocused 
+            ? theme.colors['Brand/600']
+            : theme.colors['Gray (light mode)/300']
+      }`,
+      boxShadow: isFocused
+        ? destructive
+          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
+          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
+        : '0px 1px 2px rgba(16, 24, 40, 0.05)',
+      color: theme.colors['Gray (light mode)/600'],
+    },
+    dark: {
+      background: theme.colors["Gray (dark mode)/950"],
+      border: `1px solid ${
+        destructive 
+          ? theme.colors['Error/300']
+          : isFocused 
+            ? theme.colors['Brand/600']
+            : theme.colors['Gray (dark mode)/700']
+      }`,
+      boxShadow: isFocused
+        ? destructive
+          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
+          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
+        : 'none',
+      color: theme.colors["Gray (dark mode)/50"],
+    }
+  },
+  label: {
+    light: {
+      color: theme.colors["Gray (light mode)/700"],
+    },
+    dark: {
+      color: theme.colors["Gray (dark mode)/300"],
+    }
+  },
+  hint: {
+    light: {
+      color: theme.colors["Gray (light mode)/600"],
+    },
+    dark: {
+      color: theme.colors["Gray (dark mode)/400"],
+    }
+  },
+  error: {
+    light: {
+      color: theme.colors["Error/600"],
+    },
+    dark: {
+      color: '#F97066',
+    }
+  },
+  prefix: {
+    light: {
+      background: theme.colors["Base/White"],
+      color: theme.colors["Gray (light mode)/900"],
+      borderColor: theme.colors["Gray (light mode)/300"],
+    },
+    dark: {
+      background: theme.colors["Gray (dark mode)/950"],
+      color: theme.colors["Gray (dark mode)/50"],
+      borderColor: theme.colors["Gray (dark mode)/700"],
+    }
+  },
+  placeholder: {
+    light: {
+      color: theme.colors["Gray (light mode)/500"],
+    },
+    dark: {
+      color: theme.colors["Gray (dark mode)/400"],
+    }
+  },
+  asterisk: {
+    light: {
+      color: theme.colors["Brand/600"],
+    },
+    dark: {
+      color: theme.colors["Brand/400"],
+    }
+  },
+  dropdown: {
+    light: {
+      chevronColor: theme.colors["Gray (light mode)/500"],
+      textColor: theme.colors["Gray (light mode)/900"],
+      background: theme.colors["Base/White"],
+    },
+    dark: {
+      chevronColor: theme.colors["Gray (dark mode)/400"],
+      textColor: theme.colors["Gray (dark mode)/50"],
+      background: theme.colors["Gray (dark mode)/950"],
+    }
+  }
+});
 
 // =======================================================
 // Main Component
@@ -267,6 +416,7 @@ const InputField: React.FC<InputFieldProps> = ({
   iconColor = "currentColor",
   dropdownOptions,
   tooltipText = "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text.",
+  mode = 'light',
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -275,29 +425,68 @@ const InputField: React.FC<InputFieldProps> = ({
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
 
-  // Memoize focus styles to avoid re-creation on every render
+  const styles = getVariantStyles(isFocused, destructive, mode);
+
+  const inputStyle = useMemo(() => ({
+    ...BASE_STYLES,
+    '::placeholder': {
+      color: mode === 'light' 
+        ? 'text-lightMode-text-quaternary'
+        : 'text-darkMode-text-quaternary',
+    },
+    color: mode === 'light'
+      ? theme.colors["Gray (light mode)/900"]
+      : theme.colors["Gray (dark mode)/50"],
+  }), [mode]);
+
+  // Update the input container styles to remove duplicates
+  const inputContainerStyle = useMemo(
+    () => ({
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      padding: '8px 12px',
+      background: mode === 'light' 
+        ? theme.colors["Base/White"]
+        : theme.colors["Gray (dark mode)/950"],
+      borderLeft: '1px solid #D0D5DD',
+      borderTopLeftRadius: 0,
+      borderBottomLeftRadius: 0,
+      zIndex: 1,
+    }),
+    [mode]
+  );
+
+  // Consolidate focus styles to avoid duplicates
   const focusStyles = useMemo(
     () => ({
-      paddingLeft: 12,
-      paddingRight: 12,
-      paddingTop: 8,
-      paddingBottom: 8,
-      background: "white",
-      borderRadius: 8,
-      border: `1px solid ${
-        destructive ? "#FF0000" : isFocused ? "#4e6bd7" : "#D0D5DD"
-      }`,
-      boxShadow: destructive
-        ? "0px 1px 2px rgba(255, 0, 0, 0.2)"
-        : isFocused
-        ? "0 0 0 2px #c8d1f3"
-        : "0px 1px 2px rgba(16, 24, 40, 0.05)",
       display: "inline-flex",
       alignItems: "center",
       gap: 8,
+      padding: '8px 12px',
+      background: mode === 'light' 
+        ? theme.colors["Base/White"] 
+        : theme.colors["Gray (dark mode)/950"],
+      borderRadius: 8,
+      border: `1px solid ${
+        destructive 
+          ? theme.colors['Error/300']
+          : isFocused 
+            ? theme.colors['Brand/600']
+            : mode === 'light' 
+              ? theme.colors['Gray (light mode)/300']
+              : theme.colors['Gray (dark mode)/700']
+      }`,
+      boxShadow: isFocused
+        ? destructive
+          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
+          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
+        : mode === 'light' 
+          ? "0px 1px 2px rgba(16, 24, 40, 0.05)"
+          : "none",
       transition: "border-color 0.2s, box-shadow 0.2s",
     }),
-    [isFocused, destructive]
+    [isFocused, destructive, mode]
   );
 
   const handleCopy = () => {
@@ -308,6 +497,36 @@ const InputField: React.FC<InputFieldProps> = ({
     }
   };
 
+  // Update label styles
+  const labelStyle = {
+    ...LEADING_TEXT_LABEL,
+    ...styles.label[mode],
+  };
+
+  // Update hint text styles
+  const hintStyle = {
+    ...LEADING_TEXT_HINT,
+    ...styles.hint[mode],
+  };
+
+  // Update error message styles
+  const errorStyle = {
+    color: mode === 'light' 
+      ? theme.colors["Error/600"]
+      : '#F97066',  // Using the same error color as the border in dark mode
+    fontSize: 14,
+    fontFamily: 'Inter',
+    fontWeight: 400,
+    lineHeight: '20px',
+    marginTop: 6,
+  };
+
+  // Update prefix container styles for dropdown/leading-text variants
+  const prefixContainerStyle = {
+    ...LEADING_TEXT_PREFIX_CONTAINER,
+    ...styles.prefix[mode],
+  };
+
   const renderInputContent = () => {
     switch (type) {
       case "icon-leading":
@@ -315,13 +534,11 @@ const InputField: React.FC<InputFieldProps> = ({
         return (
           <div style={focusStyles}>
             {iconUrl && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
                 <DynamicIcon url={iconUrl} color={iconColor} size={20} />
               </div>
             )}
@@ -333,9 +550,10 @@ const InputField: React.FC<InputFieldProps> = ({
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={BASE_INPUT_STYLE}
+              style={inputStyle}
             />
-            {helpIcon && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
           </div>
         );
 
@@ -354,11 +572,11 @@ const InputField: React.FC<InputFieldProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 12px',
-                background: '#F9FAFB',
-                borderTop: '1px solid #D0D5DD',
-                borderBottom: '1px solid #D0D5DD',
-                borderLeft: '1px solid #D0D5DD',
-                borderRight: '0px solid #D0D5DD',
+                background: mode === 'dark' ? '#0C111D' : '#F9FAFB',
+                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderLeft: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderRight: '0px solid transparent',
                 borderTopLeftRadius: 8,
                 borderBottomLeftRadius: 8,
                 position: 'relative',
@@ -373,7 +591,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         border: 'none',
                         outline: 'none',
                         fontSize: 16,
-                        color: '#475467',
+                        color: mode === 'dark' ? '#CECFD2' : '#344054',
                         cursor: 'pointer',
                         appearance: 'none',
                         fontFamily: 'Inter',
@@ -400,7 +618,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   </>
                 ) : (
                   <div style={{
-                    color: '#475467',
+                    color: mode === 'dark' ? '#94969C' : '#475467',
                     fontSize: 16,
                     fontFamily: 'Inter',
                     lineHeight: '24px',
@@ -410,16 +628,12 @@ const InputField: React.FC<InputFieldProps> = ({
                 )}
               </div>
               <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: 'white',
                 ...focusStyles,
                 borderLeft: '1px solid #D0D5DD',
                 borderTopLeftRadius: 0,
                 borderBottomLeftRadius: 0,
                 zIndex: 1,
+                flex: 1,
               }}>
                 <input
                   type="text"
@@ -429,12 +643,10 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={{
-                    ...BASE_INPUT_STYLE,
-                    color: '#667085',
-                  }}
+                  style={inputStyle}
                 />
-                {helpIcon && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
               </div>
             </div>
           </div>
@@ -451,14 +663,10 @@ const InputField: React.FC<InputFieldProps> = ({
               overflow: 'visible',
             }}>
               <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: 'white',
                 ...focusStyles,
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0,
+                flex: 1,
                 zIndex: 1,
               }}>
                 <input
@@ -469,22 +677,20 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={{
-                    ...BASE_INPUT_STYLE,
-                    color: '#667085',
-                  }}
+                  style={inputStyle}
                 />
-                {helpIcon && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
               </div>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 12px',
-                background: '#F9FAFB',
-                borderTop: '1px solid #D0D5DD',
-                borderBottom: '1px solid #D0D5DD',
-                borderRight: '1px solid #D0D5DD',
-                borderLeft: '0px solid #D0D5DD',
+                background: mode === 'dark' ? '#0C111D' : '#F9FAFB',
+                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderLeft: '0px solid transparent',
                 borderTopRightRadius: 8,
                 borderBottomRightRadius: 8,
                 position: 'relative',
@@ -497,7 +703,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     border: 'none',
                     outline: 'none',
                     fontSize: 16,
-                    color: '#475467',
+                    color: mode === 'dark' ? '#CECFD2' : '#344054',
                     cursor: 'pointer',
                     appearance: 'none',
                     fontFamily: 'Inter',
@@ -518,7 +724,13 @@ const InputField: React.FC<InputFieldProps> = ({
                   pointerEvents: 'none'
                 }}>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M5 7.5L10 12.5L15 7.5" stroke="#667085" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path 
+                      d="M5 7.5L10 12.5L15 7.5" 
+                      stroke={mode === 'dark' ? '#94969C' : '#667085'} 
+                      strokeWidth="1.66667" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
               </div>
@@ -530,9 +742,6 @@ const InputField: React.FC<InputFieldProps> = ({
         return (
           <div style={{ 
             ...focusStyles, 
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
             minHeight: size === "small" ? 32 : 40,
             padding: "4px 8px",
             overflow: "hidden",
@@ -557,7 +766,9 @@ const InputField: React.FC<InputFieldProps> = ({
                   <div
                     key={index}
                     style={{
-                      background: "#F2F4F7",
+                      background: mode === 'dark' 
+                        ? theme.colors["Gray (dark mode)/800"]
+                        : theme.colors["Gray (light mode)/100"],
                       borderRadius: 6,
                       padding: "2px 6px",
                       display: "flex",
@@ -565,6 +776,11 @@ const InputField: React.FC<InputFieldProps> = ({
                       gap: 4,
                       flexShrink: 0,
                       height: 24,
+                      border: `1px solid ${
+                        mode === 'dark'
+                          ? theme.colors["Gray (dark mode)/700"]
+                          : theme.colors["Gray (light mode)/200"]
+                      }`,
                     }}
                   >
                     <div style={{
@@ -582,7 +798,9 @@ const InputField: React.FC<InputFieldProps> = ({
                         alt=""
                       />
                       <span style={{
-                        color: "#344054",
+                        color: mode === 'dark'
+                          ? theme.colors["Gray (dark mode)/50"]
+                          : theme.colors["Gray (light mode)/700"],
                         fontSize: 14,
                         fontFamily: "Inter",
                         fontWeight: "500",
@@ -606,7 +824,16 @@ const InputField: React.FC<InputFieldProps> = ({
                       }}
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M9 3L3 9M3 3L9 9" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path 
+                          d="M9 3L3 9M3 3L9 9" 
+                          stroke={mode === 'dark' 
+                            ? theme.colors["Gray (dark mode)/400"]
+                            : theme.colors["Gray (light mode)/400"]
+                          } 
+                          strokeWidth="1.5" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -618,12 +845,10 @@ const InputField: React.FC<InputFieldProps> = ({
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 style={{
-                  ...BASE_INPUT_STYLE,
-                  width: "auto",
-                  minWidth: value ? "60px" : "100%",
-                  flexGrow: 1,
-                  fontSize: size === "small" ? 14 : 16,
-                  padding: "4px 0",
+                  ...inputStyle,
+                  color: mode === 'dark'
+                    ? theme.colors["Gray (dark mode)/50"]
+                    : theme.colors["Gray (light mode)/900"],
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === ",") {
@@ -634,6 +859,14 @@ const InputField: React.FC<InputFieldProps> = ({
                       onChange?.(newValue);
                     }
                     e.currentTarget.value = "";
+                  } else if (e.key === "Backspace" && e.currentTarget.value === "") {
+                    // Delete the last tag when pressing Backspace on empty input
+                    e.preventDefault();
+                    const tags = value.split(",").filter((t) => t.trim() !== "");
+                    if (tags.length > 0) {
+                      tags.pop();
+                      onChange?.(tags.join(","));
+                    }
                   }
                 }}
               />
@@ -650,18 +883,16 @@ const InputField: React.FC<InputFieldProps> = ({
               height: 40,
               borderRadius: 8,
               overflow: 'visible',
+              position: 'relative',
             }}>
               <div style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: 'white',
                 ...focusStyles,
                 borderRight: 'none',
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0,
-                zIndex: 1,
+                flex: 1,
+                position: 'relative',
+                zIndex: 2,
               }}>
                 <input
                   type="text"
@@ -671,48 +902,30 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={{
-                    ...BASE_INPUT_STYLE,
-                    color: '#667085',
-                  }}
+                  style={inputStyle}
                 />
-                <div 
-                  style={{ 
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6.06 6C6.21673 5.55444 6.5261 5.17875 6.93329 4.93943C7.34048 4.70011 7.81924 4.61263 8.28476 4.69247C8.75028 4.77231 9.17252 5.01434 9.4767 5.37568C9.78087 5.73702 9.94735 6.19435 9.94665 6.66667C9.94665 8 7.94665 8.66667 7.94665 8.66667M8 11.3333H8.00667M14.6667 8C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.31811 14.6667 1.33334 11.6819 1.33334 8C1.33334 4.31811 4.31811 1.33334 8 1.33334C11.6819 1.33334 14.6667 4.31811 14.6667 8Z" stroke="#98A2B3" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {showTooltip && (
-                    <Tooltip text={tooltipText || "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text."} />
-                  )}
-                </div>
+                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
               </div>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 14px',
-                background: 'white',
-                borderTop: '1px solid #D0D5DD',
-                borderBottom: '1px solid #D0D5DD',
-                borderRight: '1px solid #D0D5DD',
-                borderLeft: '0px solid #D0D5DD',
+                background: mode === 'dark' ? '#0C111D' : 'white',
+                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderTopRightRadius: 8,
                 borderBottomRightRadius: 8,
                 position: 'relative',
                 minWidth: 'fit-content',
                 cursor: value ? 'pointer' : 'not-allowed',
                 userSelect: 'none',
-                color: '#344054',
+                color: mode === 'dark' ? '#E4E4E7' : '#344054',
                 fontSize: 14,
                 fontFamily: 'Inter',
                 fontWeight: 500,
-                zIndex: 0,
+                zIndex: 1,
                 opacity: value ? 1 : 0.5,
               }}
               onClick={handleCopy}
@@ -724,12 +937,12 @@ const InputField: React.FC<InputFieldProps> = ({
                 }}>
                   {hasCopied ? (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#344054" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   ) : (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke="#344054" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M3.33333 10H2.66667C2.31305 10 1.97391 9.85953 1.72386 9.60948C1.47381 9.35943 1.33334 9.02029 1.33334 8.66667V2.66667C1.33334 2.31305 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31305 1.33334 2.66667 1.33334H8.66667C9.02029 1.33334 9.35943 1.47381 9.60948 1.72386C9.85953 1.97391 10 2.31305 10 2.66667V3.33334" stroke="#344054" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3.33333 10H2.66667C2.31305 10 1.97391 9.85953 1.72386 9.60948C1.47381 9.35943 1.33334 9.02029 1.33334 8.66667V2.66667C1.33334 2.31305 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31305 1.33334 2.66667 1.33334H8.66667C9.02029 1.33334 9.35943 1.47381 9.60948 1.72386C9.85953 1.97391 10 2.31305 10 2.66667V3.33334" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
                   {hasCopied ? 'Copied!' : 'Copy'}
@@ -743,13 +956,11 @@ const InputField: React.FC<InputFieldProps> = ({
         return (
           <div style={focusStyles}>
             {iconUrl && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
                 <DynamicIcon url={iconUrl} color={iconColor} size={20} />
               </div>
             )}
@@ -761,9 +972,10 @@ const InputField: React.FC<InputFieldProps> = ({
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={BASE_INPUT_STYLE}
+              style={inputStyle}
             />
-            {helpIcon && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
           </div>
         );
     }
@@ -773,9 +985,19 @@ const InputField: React.FC<InputFieldProps> = ({
     <div style={DEFAULT_CONTAINER_STYLE}>
       {label && (
         <div style={{ display: "inline-flex", flexDirection: "row", gap: 2 }}>
-          <div className={cn("font-medium text-sm")}>{label}</div>
+          <div 
+            className={cn("font-medium text-sm")}
+            style={styles.label[mode]}
+          >
+            {label}
+          </div>
           {required && (
-            <div className={cn("text-sm font-medium", "text-blue-600")}>*</div>
+            <div 
+              className={cn("text-sm font-medium")}
+              style={styles.asterisk[mode]}
+            >
+              *
+            </div>
           )}
         </div>
       )}
@@ -790,8 +1012,10 @@ const InputField: React.FC<InputFieldProps> = ({
           {hintText}
         </div>
       )}
-      {destructive && errorMessage && (
-        <div className="text-sm text-red-500 mt-1">{errorMessage}</div>
+      {errorMessage && (
+        <div style={errorStyle}>
+          {errorMessage}
+        </div>
       )}
     </div>
   );

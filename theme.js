@@ -900,10 +900,6 @@ const theme = { colors:
     
           // Utility purple assignments
       "utility-purple-50": theme.colors["Purple/50"],
-      "utility-purple-100": theme.colors["Purple/100"],
-      "utility-purple-200": theme.colors["Purple/200"],
-      "utility-purple-300": theme.colors["Purple/300"],
-      "utility-purple-400": theme.colors["Purple/400"],
       "utility-purple-500": theme.colors["Purple/500"],
       "utility-purple-600": theme.colors["Purple/600"],
       "utility-purple-700": theme.colors["Purple/700"],
