@@ -103,6 +103,7 @@ const Page = () => {
             <ButtonNormal
               variant="linkColor"
               mode="light"
+              iconColor='red'
               leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/arrow-left.svg"
               trailingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/arrow-left.svg"
             >
