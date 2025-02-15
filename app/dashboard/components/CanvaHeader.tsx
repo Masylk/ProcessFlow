@@ -1,4 +1,5 @@
 import { Folder } from '@/types/workspace';
+import ButtonNormal from '../../components/ButtonNormal';
 
 interface CanvaHeaderProps {
   openCreateFlow: () => void;
@@ -49,34 +50,31 @@ export default function CanvaHeader({
       </div>
       <div className="justify-end items-center gap-2 flex">
         {/* Import Process Button */}
-        <div className="px-3  py-2 hidden bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden hover:bg-[#F9FAFB] transition-colors duration-300 cursor-pointer">
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
-            alt="Import Icon"
-            className="w-5 h-5"
-          />
-          <div className="px-0.5 justify-center items-center flex">
-            <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-              Import a Process
-            </div>
-          </div>
-        </div>
+            <ButtonNormal
+              variant="secondaryGray"
+              mode="light"
+              size="small"
+              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/upload-01.svg"
+              className='hidden'
+            >
+              Import a process
+            </ButtonNormal>
+
         {/* New Process Button */}
-        <div
-          onClick={() => openCreateFlow()}
-          className="px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] justify-center items-center gap-1 flex overflow-hidden hover:bg-[#374C99] transition-colors duration-300 cursor-pointer"
-        >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
-            alt="Plus Icon"
-            className="w-5 h-5"
-          />
-          <div className="px-0.5 justify-center items-center flex">
-            <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-              New Process
-            </div>
-          </div>
-        </div>
+        
+           
+            <ButtonNormal
+              variant="primary"
+              mode="light"
+              size="small"
+              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/white-plus.svg"
+              onClick={openCreateFlow}
+            >
+              Create a Flow
+            </ButtonNormal>
+          
+          
+       
       </div>
     </div>
   );

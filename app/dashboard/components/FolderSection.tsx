@@ -6,20 +6,13 @@ import FolderDropdown from './FolderDropdown';
 
 interface FolderSectionProps {
   activeWorkspace: Workspace;
-  onCreateFolder: (
-    fn: (name: string, icon_url?: string) => Promise<void>,
-    parentId?: number
-  ) => void;
-  onEditFolder: (
-    fn: (name: string, icon_url?: string, emote?: string) => Promise<void>,
-    parentFolder: Folder
-  ) => void;
-  onCreateSubfolder: (
-    fn: (name: string, parentId: number, icon_url?: string) => Promise<void>,
-    parentFolder: Folder
-  ) => void;
-  onDeleteFolder: (fn: () => Promise<void>) => void;
+  onCreateFolder: (parentId?: number) => void;
+  onEditFolder: (parentFolder: Folder) => void;
+  onCreateSubfolder: (parentFolder: Folder) => void;
+  onDeleteFolder: () => void;
   onSelectFolder: (folder?: Folder) => void;
+  onSelectFolderView: (folder?: Folder) => void;
+  selectedFolder?: Folder;
 }
 
 export default function FolderSection({
@@ -29,15 +22,12 @@ export default function FolderSection({
   onCreateSubfolder,
   onDeleteFolder,
   onSelectFolder,
+  onSelectFolderView,
+  selectedFolder,
 }: FolderSectionProps) {
-  const [folders, setFolders] = useState<Folder[]>(
-    activeWorkspace.folders || []
-  );
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
     new Set()
   );
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{
     top: number;
     left: number;
@@ -52,21 +42,19 @@ export default function FolderSection({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setSelectedFolderId(null);
-        setSelectedFolder(null);
+        onSelectFolder(undefined);
         setDropdownPosition(null);
       }
     };
 
     const handleScroll = () => {
-      setSelectedFolderId(null);
-      setSelectedFolder(null);
+      onSelectFolder(undefined);
       setDropdownPosition(null);
     };
 
     const scrollableContainer = scrollableContainerRef.current;
 
-    if (selectedFolderId !== null) {
+    if (selectedFolder) {
       document.addEventListener('mousedown', handleClickOutside);
 
       // Attach the scroll listener to the correct container
@@ -80,6 +68,8 @@ export default function FolderSection({
     }
 
     return () => {
+      console.log('selectedfolder is : ' + selectedFolder);
+
       document.removeEventListener('mousedown', handleClickOutside);
 
       if (scrollableContainer) {
@@ -88,152 +78,7 @@ export default function FolderSection({
         window.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [selectedFolderId]);
-
-  // Handler to add a top-level folder (parent_id will be null)
-  const handleAddFolder = async (
-    name: string,
-    icon_url?: string,
-    emote?: string
-  ) => {
-    console.log('adding root folder');
-    try {
-      const res = await fetch('/api/workspaces/folders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name,
-          workspace_id: activeWorkspace.id,
-          team_tags: [],
-          icon_url,
-          emote,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to add folder');
-      }
-
-      const newFolder: Folder = await res.json();
-      setFolders([...folders, newFolder]);
-    } catch (error) {
-      console.error('Error adding folder:', error);
-    }
-  };
-
-  // Handler to add a subfolder with a given parent folder id
-  const handleAddSubfolder = async (
-    name: string,
-    parentId: number,
-    icon_url?: string,
-    emote?: string
-  ) => {
-    if (selectedFolderId) toggleFolder(selectedFolderId);
-    console.log('adding subfolder for: ' + parentId);
-    try {
-      const res = await fetch('/api/workspaces/subfolders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name,
-          workspace_id: activeWorkspace.id,
-          parent_id: parentId,
-          team_tags: [],
-          icon_url,
-          emote,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to add subfolder');
-      }
-
-      const newSubfolder: Folder = await res.json();
-      setFolders([...folders, newSubfolder]);
-    } catch (error) {
-      console.error('Error adding subfolder:', error);
-    }
-  };
-
-  const closeDropdown = () => {
-    setSelectedFolder(null);
-    setSelectedFolderId(null);
-    setDropdownPosition(null);
-  };
-
-  const handleEditFolder = async (
-    name: string,
-    icon_url?: string | null,
-    emote?: string | null
-  ) => {
-    if (selectedFolderId === null) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/folders/${selectedFolderId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name, icon_url, emote }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to update folder');
-      }
-
-      const updatedFolder: Folder = await response.json();
-      console.log('Folder updated successfully:', updatedFolder);
-
-      // Update state with the modified folder
-      setFolders((prevFolders) =>
-        prevFolders.map((folder) =>
-          folder.id === selectedFolderId
-            ? { ...folder, ...updatedFolder }
-            : folder
-        )
-      );
-    } catch (error) {
-      console.error('Error updating folder:', error);
-    }
-  };
-
-  const handleDeleteFolder = async () => {
-    console.log('calling handledeletefolder');
-    if (selectedFolderId) {
-      try {
-        const response = await fetch(
-          `/api/workspaces/folders/${selectedFolderId}`,
-          {
-            method: 'DELETE',
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to delete folder');
-        }
-
-        const data = await response.json();
-        console.log('Folder deleted successfully:', data);
-
-        setFolders((prevFolders) =>
-          prevFolders.filter((folder) => folder.id !== selectedFolderId)
-        );
-
-        closeDropdown();
-        onSelectFolder(undefined);
-        // Optionally, refresh the UI or update state
-      } catch (error) {
-        console.error('Error deleting folder:', error);
-      }
-    }
-  };
+  }, [selectedFolder]);
 
   const toggleFolder = (folderId: number) => {
     setExpandedFolders((prev) => {
@@ -252,14 +97,13 @@ export default function FolderSection({
   ) => {
     e.stopPropagation(); // Prevent toggling folder when clicking dropdown button
 
-    if (selectedFolderId === folderId) {
-      setSelectedFolderId(null);
-      setSelectedFolder(null);
+    if (selectedFolder && selectedFolder.id === folderId) {
+      onSelectFolder(undefined);
       setDropdownPosition(null);
     } else {
+      console.log('selecting a dropdown');
+      onSelectFolder(folder);
       const rect = (e.target as HTMLElement).getBoundingClientRect();
-      setSelectedFolderId(folderId);
-      setSelectedFolder(folder);
       setDropdownPosition({
         top: rect.top + window.scrollY + 30,
         left: rect.left + window.scrollX + 10,
@@ -273,19 +117,24 @@ export default function FolderSection({
   };
 
   const handleCreateSubfolder = (parent: Folder) => {
-    onCreateSubfolder(handleAddSubfolder, parent);
+    // Fix the logic
+    if (selectedFolder && !expandedFolders.has(selectedFolder.id))
+      toggleFolder(selectedFolder.id);
+    onCreateSubfolder(parent);
     setDropdownPosition(null);
   };
 
   const handleOnEditFolder = (folder: Folder) => {
-    onEditFolder(handleEditFolder, folder);
+    onEditFolder(folder);
     setDropdownPosition(null);
   };
 
   const renderFolder = (folder: Folder, level: number = 0) => {
-    const subfolders = folders.filter((f) => f.parent_id === folder.id);
+    const subfolders = activeWorkspace.folders.filter(
+      (f) => f.parent_id === folder.id
+    );
     const isExpanded = expandedFolders.has(folder.id);
-    const isDropdownOpen = selectedFolderId === folder.id;
+    const isDropdownOpen = selectedFolder && selectedFolder?.id === folder.id;
 
     return (
       <div
@@ -293,7 +142,7 @@ export default function FolderSection({
         className="w-full relative hover:bg-[#F9FAFB]"
         onClick={(e) => {
           e.stopPropagation();
-          onSelectFolder(folder);
+          onSelectFolderView(folder);
         }}
       >
         <div
@@ -376,7 +225,7 @@ export default function FolderSection({
             My folders
           </div>
           <button
-            onClick={() => onCreateFolder(handleAddFolder)}
+            onClick={() => onCreateFolder()}
             className="w-5 h-5 relative overflow-hidden"
           >
             <img
@@ -389,8 +238,8 @@ export default function FolderSection({
 
         {/* Render Folders */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-          {folders.length > 0 ? (
-            folders
+          {activeWorkspace.folders.length > 0 ? (
+            activeWorkspace.folders
               .filter((folder) => folder.parent_id === null) // Only display root folders initially
               .map((folder) => renderFolder(folder))
           ) : (
@@ -402,7 +251,7 @@ export default function FolderSection({
       </div>
 
       {/* Folder Dropdown - Positioned Absolutely */}
-      {selectedFolderId !== null && selectedFolder && dropdownPosition && (
+      {selectedFolder && dropdownPosition && (
         <div
           ref={dropdownRef}
           className="fixed z-50 w-auto min-w-[200px] bg-white shadow-lg rounded-md border border-gray-300"
@@ -413,7 +262,7 @@ export default function FolderSection({
         >
           <FolderDropdown
             onCreateSubfolder={handleCreateSubfolder}
-            onDeleteFolder={async () => onDeleteFolder(handleDeleteFolder)}
+            onDeleteFolder={async () => onDeleteFolder()}
             onEditFolder={handleOnEditFolder}
             parent={selectedFolder}
           />

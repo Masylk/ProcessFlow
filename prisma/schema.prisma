@@ -86,6 +86,7 @@ model workflow {
   paths        path[]    @relation("workflow_paths")
   folder       folder?   @relation(fields: [folder_id], references: [id])
   folder_id    Int?
+  last_opened  DateTime?
 
   @@unique([name, workspace_id])
 }

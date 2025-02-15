@@ -1,0 +1,75 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
+    <mj-attributes>
+      <!-- On définit la police par défaut sur Inter -->
+      <mj-all font-family="Inter, sans-serif" color="#3b3f44" />
+      <mj-text font-size="16px" line-height="1.5" />
+      <mj-button background-color="#4e6bd7" border-radius="4px" font-size="16px" font-weight="bold" color="#ffffff" inner-padding="12px 5px" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      .small-text { font-size: 10px; color: #858588; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#ffffff">
+    
+    <!-- En-tête avec le nouveau logo -->
+    <mj-section padding="20px 0">
+      <mj-column>
+        <mj-image 
+          src="https://cdn.prod.website-files.com/66eecc38724388f0266c159b/67a1e053b010e0ebe97dba77_Company%20logo.png" 
+          width="150px" 
+          alt="Logo ProcessFlow" 
+          align="center" />
+      </mj-column>
+    </mj-section>
+    
+    <!-- Corps du mail -->
+    <mj-section padding="20px">
+      <mj-column>
+        <mj-text padding-bottom="15px">
+          Hello {{ contact.PRENOM }},
+        </mj-text>
+        <mj-text padding-bottom="15px">
+          We hope everything is going well and you are getting a lot of value since you started using ProcessFlow! We'd love to hear your feedback on your experience so far.
+        </mj-text>
+        <mj-text padding-bottom="15px">
+          Your input helps us improve our product and better meet your needs.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    
+    <!-- Bouton d'appel à l'action -->
+    <mj-section padding="0 20px 20px">
+      <mj-column>
+        <mj-button href="https://tally.so/r/wkRej6">
+          Make Your Voice Count
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    
+    <!-- Message de remerciement -->
+    <mj-section padding="0 20px 20px">
+      <mj-column>
+        <mj-text padding-bottom="15px">
+          Thank you in advance for your time and valuable contribution. We’re always available if you have any further questions or suggestions!
+        </mj-text>
+        <mj-text padding-bottom="15px">
+          Talk to you soon,
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    
+    <!-- Pied de page -->
+    <mj-section padding="16px 32px" background-color="#ffffff">
+      <mj-column>
+        <mj-text align="center" padding-bottom="8px">
+          <a href="{{ mirror }}" style="color: #4e6bd7; text-decoration: underline;">
+            <span class="small-text">Show this email in my browser</span>
+          </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <!-- signature contact@process-flow.io -->
+  </mj-body>
+</mjml>

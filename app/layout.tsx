@@ -32,7 +32,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
       <body>
-        {/* --- Insertion du code noscript Google Tag Manager juste après <body> --- */}
+
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-M8W79RZW"
@@ -41,10 +41,8 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           ></iframe>
         </noscript>
-        {/* --- Fin du code noscript --- */}
         <PostHogProvider>{children}</PostHogProvider>
 
-        {/* Exemple d’intégration d’un script tiers (HubSpot) */}
         <Script
           src="https://js-na1.hs-scripts.com/47874121.js"
           strategy="afterInteractive"
