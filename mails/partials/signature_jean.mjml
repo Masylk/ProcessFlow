@@ -1,0 +1,59 @@
+<mjml>
+  <mj-head>
+    <!-- Chargement de la police "Inter" -->
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
+    <!-- Définition de la police par défaut pour tous les éléments -->
+    <mj-attributes>
+      <mj-all font-family="Inter, sans-serif" />
+    </mj-attributes>
+    <mj-style inline="inline">
+      .signature-text {
+        font-size: 16px;
+        color: #4e6bd7;
+      }
+      .social-icons img {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+      .social-icons a {
+        text-decoration: none !important;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body>
+    <!-- Section signature texte et logos -->
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="18px">
+          Jean Willame
+        </mj-text>
+        <mj-text>
+          Co-founder & CEO
+        </mj-text>
+        <mj-text css-class="signature-text">
+          <a href="mailto:jean@process-flow.io" style="color: #000; text-decoration: none;">
+            jean@process-flow.io
+          </a>
+        </mj-text>
+        <!-- Logos intégrés sous l'email -->
+        <mj-text css-class="social-icons" align="left">
+          <a href="https://www.producthunt.com">
+            <img src="https://cdn.prod.website-files.com/66eecc38724388f0266c159b/67ac55be9496ffbaf33c15c1_producthunt-icon.svg" alt="ProductHunt" />
+          </a>
+          <a href="https://www.linkedin.com/company/processflow1/">
+            <img src="https://cdn.prod.website-files.com/66eecc38724388f0266c159b/67ac55beaeb247a9afdf231b_linkedin-icon.svg" alt="LinkedIn" />
+          </a>
+          <a href="https://x.com">
+            <img src="https://cdn.prod.website-files.com/66eecc38724388f0266c159b/67ac55bf707f48051d39f605_x-icon.svg" alt="X" />
+          </a>
+          <a href="https://www.g2.com">
+            <img src="https://cdn.prod.website-files.com/66eecc38724388f0266c159b/67ac55be483e250f020f72a5_g2-icon.svg" alt="G2" />
+          </a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

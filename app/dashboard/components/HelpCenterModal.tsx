@@ -1,49 +1,21 @@
+// components/HelpCenterModal.tsx
 import Head from 'next/head';
-import { useState } from 'react';
 import { User } from '@/types/user';
+import { redirectToRoadmap } from '@/app/utils/roadmap';
 
 interface HelpCenterModalProps {
   onClose: () => void;
-  user: User; // Contient les données utilisateur
+  user: User;
 }
 
 export default function HelpCenterModal({
   onClose,
   user,
 }: HelpCenterModalProps) {
-  const [loading, setLoading] = useState(false);
-
-  // Fonction pour générer le token JWT
-  const handleRoadmapClick = async () => {
-    setLoading(true);
-
-    try {
-      const response = await fetch('/api/generate-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: user.email, // Passe les données utilisateur dynamiquement
-          id: user.id,
-          name: user.name,
-          avatarUrl: user.avatarUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch JWT');
-      }
-
-      const { token } = await response.json();
-
-      // Redirection vers la roadmap avec le token
-      window.location.href = `https://processflow.features.vote/roadmap?token=${token}`;
-    } catch (error) {
-      console.error('Error generating token:', error);
-      alert('Failed to access the roadmap. Please try again later.');
-    } finally {
-      setLoading(false);
+  const handleRoadmapClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      await redirectToRoadmap(user);
     }
   };
 
@@ -119,10 +91,10 @@ export default function HelpCenterModal({
           </a>
 
           {/* Take a look at our roadmap */}
-          <button
+          <a
+            href="#"
             onClick={handleRoadmapClick}
-            disabled={loading}
-            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg disabled:opacity-50"
+            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
           >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
@@ -139,10 +111,10 @@ export default function HelpCenterModal({
                 </div>
               </div>
               <div className="text-[#667085] text-xs font-normal leading-[18px]">
-                {loading ? 'Loading...' : '⌘D'}
+                ⌘D
               </div>
             </div>
-          </button>
+          </a>
 
           {/* Join our Slack community */}
           <a

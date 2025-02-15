@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
+import { redirectToRoadmap } from '@/app/utils/roadmap';
 
 interface UserDropdownProps {
   user: User | null;
@@ -30,8 +31,32 @@ export default function UserDropdown({
     }
   };
 
-  const handleRoadmapClick = () => {
-    window.location.href = 'https://processflow.features.vote/roadmap';
+  const handleRoadmapClick = async () => {
+    try {
+      // Log la session
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session:', session);
+      console.log('User prop:', user);
+
+      if (session?.user && user) {
+        console.log('User data being sent to roadmap:', {
+          email: user.email,
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          avatar_url: user.avatar_url
+        });
+        await redirectToRoadmap(user);
+      } else {
+        console.error('Authentication check failed:', {
+          hasSession: !!session,
+          hasSessionUser: !!session?.user,
+          hasUserProp: !!user
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleRoadmapClick:', error);
+    }
   };
 
   useEffect(() => {
