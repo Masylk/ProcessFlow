@@ -1,0 +1,11 @@
+---
+description: Help to understand the structure of the project
+globs: 
+---
+
+# Your rule content
+
+- The project use this stack : React, Typescript, tailwind CSS, Next.js
+- You must use the most well practices on theses technologies and optimize as much as possible.
+- If you miss some context, you must ask the user for deeper questions and use the response to improve your reasoning and answers.
+- If you ask the user to create a new file, you must precize where it should be on his structure. If you miss the codebase context, ask the user to give it to you.
