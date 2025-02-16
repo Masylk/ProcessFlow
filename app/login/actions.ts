@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'; // Import your Prisma client si nécessaire
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
 import WelcomeEmail from '../emails/WelcomeEmail';
+import { Prisma } from '@prisma/client';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -74,27 +75,32 @@ export async function signup(formData: FormData) {
   const user = data?.user;
   if (!user) return { error: 'No user returned from signUp' };
 
-  const firstName = (formData.get('first_name') as string) || '';
-  const lastName = (formData.get('last_name') as string) || '';
-  const email = user.email || '';
-
   try {
-    // Création de l'utilisateur
+    // Ajoutons des logs pour débugger
+    console.log('Attempting to create user in database:', {
+      auth_id: user.id,
+      email: user.email,
+      firstName: formData.get('first_name'),
+      lastName: formData.get('last_name'),
+    });
+
     const newUser = await prisma.user.create({
       data: {
         auth_id: user.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        full_name: `${firstName} ${lastName}`,
+        email: user.email || '',
+        first_name: (formData.get('first_name') as string) || '',
+        last_name: (formData.get('last_name') as string) || '',
+        full_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
       },
     });
+
+    console.log('User created successfully:', newUser);
 
     // Création du workspace par défaut
     const defaultWorkspace = await prisma.workspace.create({
       data: {
         name: 'My Workspace',
-        background_colour: '#4299E1', // Couleur par défaut
+        background_colour: '#4299E1',
         team_tags: [],
         user_workspaces: {
           create: {
@@ -113,11 +119,11 @@ export async function signup(formData: FormData) {
       },
     });
 
-    const emailHtml = await render(WelcomeEmail({ firstName: firstName }));
+    const emailHtml = await render(WelcomeEmail({ firstName: (formData.get('first_name') as string) || '' }));
 
     // Send the welcome email using the sendEmail utility
     const emailResponse = await sendEmail(
-      email,
+      user.email || '',
       'Bienvenue sur ProcessFlow!',
       emailHtml // Pass the rendered HTML from WelcomeEmail
     );
@@ -126,16 +132,24 @@ export async function signup(formData: FormData) {
       console.error('Email sending failed:', emailResponse.error);
     }
   } catch (dbError) {
-    console.error('Error creating user in Prisma:', dbError);
-    return { 
-        error: `Error creating user in database: ${(dbError as Error).message}` 
-    };
+    // Améliorons le logging des erreurs
+    console.error('Database error details:', {
+      name: dbError.name,
+      message: dbError.message,
+      stack: dbError.stack,
+    });
+    
+    // Si c'est une erreur Prisma, on peut avoir plus de détails
+    if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error('Prisma error code:', dbError.code);
+      console.error('Prisma error meta:', dbError.meta);
+    }
+
+    return { error: `Error creating user in database: ${dbError.message}` };
   }
 
   return {
     id: user.id,
-    email,
-    firstName,
-    lastName,
+    email: user.email,
   };
 }
