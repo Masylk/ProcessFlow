@@ -798,9 +798,7 @@ export default function Page() {
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <HelpCenterModal onClose={closeHelpCenter} user={user} />
-        </div>
+        <HelpCenterModal onClose={closeHelpCenter} user={user} />
       )}
 
       {uploadImageVisible && (

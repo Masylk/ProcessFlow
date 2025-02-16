@@ -59,14 +59,23 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
+  background: theme('colors.lightMode.bg-quaternary');
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: theme('colors.lightMode.bg-secondary-solid');
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Dark mode class-based styling */
+.dark ::-webkit-scrollbar-thumb {
+  background: theme('colors.darkMode.bg-quaternary');
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.darkMode.bg-secondary-solid');
 }
