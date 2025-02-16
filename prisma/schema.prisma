@@ -20,42 +20,135 @@ enum block_type {
   PATH
 }
 
-model user {
-  id              Int              @id @default(autoincrement()) // Keep id as Int
-  auth_id         String           @unique // New field to store Supabase Auth UID
-  first_name      String
-  last_name       String
-  full_name       String
-  email           String           @unique
-  avatar_url      String?
-  active_workspace Int?
-  actions         action[]         @relation("user_actions")
-  user_workspaces user_workspace[]
+enum subscription_status {
+  ACTIVE
+  TRIALING
+  CANCELED
 }
 
+enum plan_type {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model user {
+  id                 Int              @id @default(autoincrement())
+  auth_id            String           @unique
+  first_name         String
+  last_name          String
+  full_name          String
+  email              String           @unique
+  avatar_url         String?
+  active_workspace_id Int?            // ID du workspace actif
+  hubspot_contact_id String?
+  sentry_id          String?
+  post_hog_id        String?
+  phone              String?
+  archived_at        DateTime?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime         @default(now()) @updatedAt
+  last_login_at      DateTime?
+  
+  // Relations
+  active_workspace    workspace?      @relation("active_workspace", fields: [active_workspace_id], references: [id])
+  user_workspaces    user_workspace[] // Permet d'avoir plusieurs workspaces
+  actions            action[]         @relation("user_actions")
+
+  @@index([active_workspace_id])
+  @@index([email])
+  @@index([auth_id])
+}
 
 model workspace {
-  id        Int      @id @default(autoincrement())
-  name      String
-  team_tags String[]
-  icon_url  String?
-  background_colour String?
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  team_tags           String[]
+  icon_url            String?
+  background_colour   String?
+  linear_customer_id   String?
+  stripe_customer_id   String?
+  hubspot_company_id   String?
+  archived_at          DateTime?
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @default(now()) @updatedAt
+  subscription_id      Int?                  @unique
+  
+  // Relations
+  subscription         subscription?         @relation(fields: [subscription_id], references: [id])
+  billing_infos        workspace_billing_infos[]
+  user_workspaces      user_workspace[]     // Relation many-to-many avec users
+  active_users         user[]               @relation("active_workspace") // Users qui ont ce workspace comme actif
+  folders              folder[]
+  workflows            workflow[]
 
-  user_workspaces user_workspace[]
-  folders         folder[]
-  workflows       workflow[]
+  @@index([stripe_customer_id])
+  @@index([subscription_id])
+}
+
+model workspace_billing_infos {
+  id              Int       @id @default(autoincrement())
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  billing_email   String
+  billing_address String
+  tax_rate        Decimal   @db.Decimal(5,2)
+  vat_number      String?
+  workspace_id    Int
+  workspace       workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+}
+
+model subscription {
+  id                    Int                 @id @default(autoincrement())
+  workspace_id          Int                 @unique
+  workspace             workspace?
+  stripe_subscription_id String
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @default(now()) @updatedAt
+  trial_end_date        DateTime?
+  plan_type             plan_type
+  quantity_seats        Int
+  current_period_start  DateTime
+  current_period_end    DateTime
+  status                subscription_status
+  canceled_at           DateTime?
+  billings              billing[]
+}
+
+model billing {
+  id                 Int          @id @default(autoincrement())
+  subscription_id    Int
+  subscription       subscription @relation(fields: [subscription_id], references: [id])
+  stripe_invoice_id  String       @unique
+  amount_net         Int          // Montant en centimes
+  tax_amount         Int          // Montant en centimes
+  amount_gross       Int          // Montant en centimes
+  currency           String       @db.VarChar(3)
+  invoice_date       DateTime
+  due_date           DateTime
+  paid_at            DateTime?
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @default(now()) @updatedAt
+
+  @@index([subscription_id])
+  @@index([stripe_invoice_id])
 }
 
 model user_workspace {
-  id           Int  @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   user_id      Int
   workspace_id Int
-  role         role
+  role         role      @default(ADMIN)
 
   user      user      @relation(fields: [user_id], references: [id])
   workspace workspace @relation(fields: [workspace_id], references: [id])
 
   @@unique([user_id, workspace_id])
+  @@index([user_id])
+  @@index([workspace_id])
 }
 
 model folder {
