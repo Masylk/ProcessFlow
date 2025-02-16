@@ -2,6 +2,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 
+/**
+ * @swagger
+ * /api/step-icons:
+ *   get:
+ *     summary: Retrieve step icons from Supabase storage
+ *     description: Fetches lists of application icons and default step icons stored in a Supabase bucket.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved lists of step icons.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 applist:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: List of application icons.
+ *                   example: ["app1.png", "app2.svg"]
+ *                 iconlist:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: List of default step icons.
+ *                   example: ["icon1.png", "icon2.svg"]
+ *       500:
+ *         description: Internal server error, possibly due to missing configuration or failed file retrieval from Supabase.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to retrieve files"
+ */
 export async function GET(req: NextRequest) {
   try {
     // Retrieve the bucket name from the environment variable
