@@ -37,3 +37,4 @@ export async function generateRoadmapToken(user: User) {
     return null;
   }
 }
+
