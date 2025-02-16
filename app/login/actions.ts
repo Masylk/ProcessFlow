@@ -3,6 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma'; // Import your Prisma client si nécessaire
+import { sendEmail } from '../utils/mail';
+import { render } from '@react-email/render';
+import WelcomeEmail from '../emails/WelcomeEmail';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -17,8 +20,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     console.error('Login error:', error);
-    // On renvoie une structure d'erreur que tu pourras gérer côté client
-    return { error: error.message };
+    return { error: error.message }; // Returning a clear error message
   }
 
   const user = data?.user;
@@ -27,8 +29,6 @@ export async function login(formData: FormData) {
   }
 
   // --- [Optionnel] Récupérer first/last name dans ta BDD via Prisma ---
-  // Cela te permet d'envoyer ces infos si tu veux
-  // qu'elles soient disponibles côté client pour PostHog.
   let firstName = '';
   let lastName = '';
 
@@ -39,13 +39,13 @@ export async function login(formData: FormData) {
     });
     if (userInDb) {
       firstName = userInDb.first_name ?? '';
-      lastName  = userInDb.last_name ?? '';
+      lastName = userInDb.last_name ?? '';
     }
   } catch (dbError) {
     console.error('Error retrieving user from DB:', dbError);
+    return { error: 'Error retrieving user details from database' };
   }
 
-  // On retourne l'ID, l'email, et éventuellement le prénom/nom
   return {
     id: user.id,
     email: user.email,
@@ -65,29 +65,24 @@ export async function signup(formData: FormData) {
     },
   };
 
-  // On tente l'inscription via Supabase
   const { data, error: authError } = await supabase.auth.signUp(credentials);
-
   if (authError) {
     console.error('Sign up error:', authError);
     return { error: authError.message };
   }
 
   const user = data?.user;
-  if (!user) {
-    return { error: 'No user returned from signUp' };
-  }
+  if (!user) return { error: 'No user returned from signUp' };
 
-  // On récupère aussi les champs first_name / last_name pour compléter en base
   const firstName = (formData.get('first_name') as string) || '';
   const lastName = (formData.get('last_name') as string) || '';
   const email = user.email || '';
 
-  // On crée (ou met à jour) l'utilisateur dans ta propre base
   try {
-    await prisma.user.create({
+    // Création de l'utilisateur
+    const newUser = await prisma.user.create({
       data: {
-        auth_id: user.id, // Lien vers l'UID Supabase
+        auth_id: user.id,
         email,
         first_name: firstName,
         last_name: lastName,
@@ -95,19 +90,52 @@ export async function signup(formData: FormData) {
       },
     });
 
-    // Tu peux éventuellement revalider le cache si nécessaire.
-    // revalidatePath('/', 'layout'); // Optionnel
+    // Création du workspace par défaut
+    const defaultWorkspace = await prisma.workspace.create({
+      data: {
+        name: 'My Workspace',
+        background_colour: '#4299E1', // Couleur par défaut
+        team_tags: [],
+        user_workspaces: {
+          create: {
+            user_id: newUser.id,
+            role: 'ADMIN',
+          },
+        },
+      },
+    });
+
+    // Mise à jour de l'utilisateur avec le workspace actif
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        active_workspace_id: defaultWorkspace.id,
+      },
+    });
+
+    const emailHtml = await render(WelcomeEmail({ firstName: firstName }));
+
+    // Send the welcome email using the sendEmail utility
+    const emailResponse = await sendEmail(
+      email,
+      'Bienvenue sur ProcessFlow!',
+      emailHtml // Pass the rendered HTML from WelcomeEmail
+    );
+
+    if (emailResponse.error) {
+      console.error('Email sending failed:', emailResponse.error);
+    }
   } catch (dbError) {
     console.error('Error creating user in Prisma:', dbError);
-    return { error: 'Error creating user in DB' };
+    return { 
+        error: `Error creating user in database: ${(dbError as Error).message}` 
+    };
   }
 
-  // On renvoie l'ID, l'email, et le prénom/nom pour un call PostHog côté client
   return {
     id: user.id,
-    email: user.email,
+    email,
     firstName,
     lastName,
   };
 }
-

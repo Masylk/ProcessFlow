@@ -1,6 +1,7 @@
 // components/HelpCenterModal.tsx
 import Head from 'next/head';
 import { User } from '@/types/user';
+import { redirectToRoadmap } from '@/app/utils/roadmap';
 
 interface HelpCenterModalProps {
   onClose: () => void;
@@ -11,6 +12,13 @@ export default function HelpCenterModal({
   onClose,
   user,
 }: HelpCenterModalProps) {
+  const handleRoadmapClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      await redirectToRoadmap(user);
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
       <Head>
@@ -83,7 +91,8 @@ export default function HelpCenterModal({
 
           {/* Take a look at our roadmap */}
           <a
-            href="https://processflow.features.vote/roadmap"
+            href="#"
+            onClick={handleRoadmapClick}
             className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
           >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">

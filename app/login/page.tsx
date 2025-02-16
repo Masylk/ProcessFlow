@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import { login, signup } from './actions';
+import * as Sentry from "@sentry/nextjs";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -15,58 +16,75 @@ export default function LoginPage() {
     const formData = new FormData(e.currentTarget);
 
     if (!isSignUp) {
-      // Appel à la server action "login"
       const user = await login(formData);
-
       if (user?.error) {
         console.error('Login error:', user.error);
         return;
       }
 
       if (user?.id && user?.email) {
-        posthog.identify(user.id);
-
-        // On peut aussi récupérer le nom côté DB si besoin
-        // posthog.people.set({ email: user.email, firstName: user.firstName, lastName: user.lastName });
-
-        // Pour le login, on a souvent juste l'email
-        posthog.people.set({ email: user.email });
-
-        posthog.capture('login', {
+        Sentry.setUser({
+          id: user.id,
           email: user.email,
         });
 
+        posthog.identify(user.id);
+        posthog.people.set({ email: user.email });
+        posthog.capture('login', { email: user.email });
         router.push('/');
       }
     } else {
-      // Appel à la server action "signup"
       const newUser = await signup(formData);
-
-      if (newUser?.error) {
+      if ('error' in newUser) {
         console.error('Signup error:', newUser.error);
         return;
       }
 
-      // newUser contiendra { id, email, firstName, lastName } si ton server action renvoie tout
       if (newUser?.id && newUser?.email) {
-        posthog.identify(newUser.id);
-
-        // On met l'email, le prénom et le nom dans les propriétés utilisateur
-        posthog.people.set({
+        Sentry.setUser({
+          id: newUser.id,
           email: newUser.email,
-          firstName: newUser.firstName, // renvoyé par le backend
-          lastName: newUser.lastName,   // renvoyé par le backend
         });
 
-        // On peut logguer l'événement signup en incluant ces infos
+        posthog.identify(newUser.id);
+        posthog.people.set({
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+        });
         posthog.capture('signup', {
           email: newUser.email,
           firstName: newUser.firstName,
           lastName: newUser.lastName,
         });
-
         router.push('/');
       }
+    }
+  }
+
+  // Send test email to the API route
+  async function sendTestEmail() {
+    try {
+      const response = await fetch('/api/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: 'jean.willame@outlook.fr', // Corrected email address format
+          firstName: 'Maxime', // Provide a first name as required by your API
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Test email sent successfully:', data.message);
+      } else {
+        const errorData = await response.json();
+        console.error('Error sending email:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error in sending test email:', error);
     }
   }
 
@@ -97,7 +115,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <label
-                  htmlFor="last_name" 
+                  htmlFor="last_name"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Last Name
@@ -176,6 +194,16 @@ export default function LoginPage() {
             </Link>
           </div>
         </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={sendTestEmail}
+            className="py-2 px-4 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+          >
+            Send Test Email
+          </button>
+        </div>
       </div>
     </div>
   );
