@@ -79,13 +79,37 @@ export async function signup(formData: FormData) {
   const email = user.email || '';
 
   try {
-    await prisma.user.create({
+    // Création de l'utilisateur
+    const newUser = await prisma.user.create({
       data: {
         auth_id: user.id,
         email,
         first_name: firstName,
         last_name: lastName,
         full_name: `${firstName} ${lastName}`,
+      },
+    });
+
+    // Création du workspace par défaut
+    const defaultWorkspace = await prisma.workspace.create({
+      data: {
+        name: 'My Workspace',
+        background_colour: '#4299E1', // Couleur par défaut
+        team_tags: [],
+        user_workspaces: {
+          create: {
+            user_id: newUser.id,
+            role: 'ADMIN',
+          },
+        },
+      },
+    });
+
+    // Mise à jour de l'utilisateur avec le workspace actif
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        active_workspace_id: defaultWorkspace.id,
       },
     });
 
@@ -103,7 +127,9 @@ export async function signup(formData: FormData) {
     }
   } catch (dbError) {
     console.error('Error creating user in Prisma:', dbError);
-    return { error: 'Error creating user in database' };
+    return { 
+        error: `Error creating user in database: ${(dbError as Error).message}` 
+    };
   }
 
   return {

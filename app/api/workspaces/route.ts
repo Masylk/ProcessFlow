@@ -46,17 +46,18 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         background_colour: randomColour,
+        team_tags: [],
         user_workspaces: {
           create: {
             user_id: Number(user_id),
-            role: 'ADMIN', // Assigner le créateur en tant qu'ADMIN
+            role: 'ADMIN',
           },
         },
       },
       include: {
         user_workspaces: {
           include: {
-            user: true, // Retourner les détails de l'utilisateur avec le workspace
+            user: true,
           },
         },
       },

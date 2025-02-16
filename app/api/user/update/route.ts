@@ -16,7 +16,7 @@ export async function PUT(req: NextRequest) {
       full_name,
       email,
       avatar_url,
-      active_workspace,
+      active_workspace_id,
       delete_avatar,
     } = body;
 
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
         full_name,
         email,
         avatar_url: newAvatarUrl,
-        active_workspace,
+        active_workspace_id: active_workspace_id ? Number(active_workspace_id) : null,
       },
     });
 
