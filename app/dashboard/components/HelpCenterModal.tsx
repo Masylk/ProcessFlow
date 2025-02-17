@@ -20,13 +20,12 @@ export default function HelpCenterModal({
   };
 
   return (
-    <div className="w-screen h-screen flex justify-center items-center bg-[#0c111d]/70 p-8 overflow-hidden relative">
+    <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
       <Head>
         <title>Help Center</title>
         <meta name="description" content="Help center modal" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <div className="absolute inset-0 bg-[#0c111d]/70 opacity-70" />
       <div className="relative z-10 w-[480px] h-[304px] bg-white rounded-xl shadow-lg flex flex-col items-center overflow-hidden">
         {/* Close Button */}
         <button
