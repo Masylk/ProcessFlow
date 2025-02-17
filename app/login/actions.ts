@@ -57,6 +57,8 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+  const firstName = (formData.get('first_name') as string) || '';
+  const lastName = (formData.get('last_name') as string) || '';
 
   const credentials = {
     email: formData.get('email') as string,
@@ -119,7 +121,9 @@ export async function signup(formData: FormData) {
       },
     });
 
-    const emailHtml = await render(WelcomeEmail({ firstName: (formData.get('first_name') as string) || '' }));
+    const emailHtml = await render(
+      WelcomeEmail({ firstName: (formData.get('first_name') as string) || '' })
+    );
 
     // Send the welcome email using the sendEmail utility
     const emailResponse = await sendEmail(
@@ -132,24 +136,31 @@ export async function signup(formData: FormData) {
       console.error('Email sending failed:', emailResponse.error);
     }
   } catch (dbError) {
-    // Améliorons le logging des erreurs
-    console.error('Database error details:', {
-      name: dbError.name,
-      message: dbError.message,
-      stack: dbError.stack,
-    });
-    
-    // Si c'est une erreur Prisma, on peut avoir plus de détails
+    if (dbError instanceof Error) {
+      console.error('Database error details:', {
+        name: dbError.name,
+        message: dbError.message,
+        stack: dbError.stack,
+      });
+    } else {
+      console.error('Unknown error:', dbError);
+    }
+
+    // Vérification spécifique pour Prisma
     if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
       console.error('Prisma error code:', dbError.code);
       console.error('Prisma error meta:', dbError.meta);
     }
 
-    return { error: `Error creating user in database: ${dbError.message}` };
+    return {
+      error: `Error creating user in database: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`,
+    };
   }
 
   return {
     id: user.id,
+    firstName,
+    lastName,
     email: user.email,
   };
 }
