@@ -1,8 +1,81 @@
-// File: /app/api/workspaces/folders/route.ts
-
+// app/api/workspaces/folders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+/**
+ * @swagger
+ * /api/workspaces/folders:
+ *   post:
+ *     summary: Create a new folder
+ *     description: Creates a new folder within a workspace. The folder will be created at the top-level (no parent).
+ *     tags:
+ *       - Workspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "New Folder"
+ *               workspace_id:
+ *                 type: integer
+ *                 example: 1
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["tag1", "tag2"]
+ *               icon_url:
+ *                 type: string
+ *                 example: "/path/to/icon.svg"
+ *               emote:
+ *                 type: string
+ *                 example: ":smile:"
+ *     responses:
+ *       201:
+ *         description: Folder created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "New Folder"
+ *                 workspace_id:
+ *                   type: integer
+ *                   example: 1
+ *                 team_tags:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["tag1", "tag2"]
+ *                 icon_url:
+ *                   type: string
+ *                   example: "/path/to/icon.svg"
+ *                 emote:
+ *                   type: string
+ *                   example: ":smile:"
+ *                 parent_id:
+ *                   type: integer
+ *                   example: null
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to add folder"
+ */
 export async function POST(req: NextRequest) {
   try {
     const { name, workspace_id, team_tags, icon_url, emote } = await req.json();

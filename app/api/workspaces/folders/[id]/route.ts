@@ -1,11 +1,141 @@
-// File: /app/api/workspaces/folders/[id]/route.ts
-
+// app/api/workspaces/folders/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
  * DELETE /api/workspaces/folders/:id
  * Deletes a folder by ID
+ */
+/**
+ * @swagger
+ * /api/workspaces/folders/{id}:
+ *   delete:
+ *     summary: Delete a folder by ID
+ *     description: Deletes a folder with the specified ID.
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the folder to delete
+ *     responses:
+ *       200:
+ *         description: Folder deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Folder deleted successfully"
+ *       404:
+ *         description: Folder not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Folder not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
+ *   patch:
+ *     summary: Update a folder by ID
+ *     description: Updates a folder's properties (e.g., name, icon_url, emote, etc.) with the specified ID.
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the folder to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Updated Folder"
+ *               icon_url:
+ *                 type: string
+ *                 example: "/path/to/icon.svg"
+ *               emote:
+ *                 type: string
+ *                 example: ":smile:"
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   example: "tag1"
+ *               parent_id:
+ *                 type: integer
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: Folder updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Updated Folder"
+ *                 icon_url:
+ *                   type: string
+ *                   example: "/path/to/icon.svg"
+ *                 emote:
+ *                   type: string
+ *                   example: ":smile:"
+ *                 team_tags:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["tag1", "tag2"]
+ *                 parent_id:
+ *                   type: integer
+ *                   example: 2
+ *       404:
+ *         description: Folder not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Folder not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 export async function DELETE(
   req: NextRequest,
