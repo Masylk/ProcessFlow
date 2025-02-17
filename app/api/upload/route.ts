@@ -3,6 +3,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * @swagger
+ * /api/upload:
+ *   post:
+ *     summary: Upload a file to Supabase storage
+ *     description: Allows users to upload images or videos to a designated Supabase storage bucket.
+ *     tags:
+ *       - Upload 
+*     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The file to be uploaded.
+ *     responses:
+ *       200:
+ *         description: File uploaded successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "File uploaded successfully: uploads/unique-file-name.png"
+ *                 filePath:
+ *                   type: string
+ *                   example: "uploads/unique-file-name.png"
+ *       400:
+ *         description: Invalid file type or no file provided.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "No file uploaded"
+ *       500:
+ *         description: Internal server error, possibly due to Supabase upload failure.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "File upload failed"
+ */
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get('file') as File | null;

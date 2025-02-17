@@ -9,7 +9,9 @@ import { supabaseAdmin } from '@/utils/supabase/admin'; // Use the new admin cli
  *   post:
  *     summary: Delete a user from the database and Supabase Auth
  *     description: Removes a user from the PostgreSQL database and Supabase authentication system.
- *     requestBody:
+ *     tags:
+ *       - User 
+*     requestBody:
  *       required: true
  *       content:
  *         application/json:

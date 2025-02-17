@@ -9,6 +9,8 @@ import { createClient } from '@/utils/supabase/server';
  *   post:
  *     summary: Request a password reset
  *     description: This endpoint sends a password reset email to the provided email address.
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:

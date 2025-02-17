@@ -1,6 +1,117 @@
+// app/api/workspace/[id]/paths/[path_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import path according to your setup
 
+/**
+ * @swagger
+ * /api/workspace/{id}/paths/{path_id}:
+ *   get:
+ *     summary: Retrieve a specific path and its blocks within a workspace
+ *     description: Fetches details of a specific path, including its blocks, path_block, step_block, and delay_block, filtered by workflow_id.
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace
+ *       - in: path
+ *         name: path_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the path
+ *       - in: query
+ *         name: workflow_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workflow to filter the blocks
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved path data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Sample Path"
+ *                 blocks:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 10
+ *                       position:
+ *                         type: integer
+ *                         example: 1
+ *                       path_block:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 5
+ *                       step_block:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 15
+ *                           step_data:
+ *                             type: string
+ *                             example: "Step details"
+ *                       delay_block:
+ *                         type: object
+ *                         nullable: true
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 20
+ *                           delay_time:
+ *                             type: integer
+ *                             example: 300
+ *       400:
+ *         description: Missing or invalid workspaceId, path_id, or workflow_id
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Valid workspaceId, path_id, and workflow_id are required"
+ *       404:
+ *         description: Path not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Path not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string; path_id: string } }
