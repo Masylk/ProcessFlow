@@ -114,8 +114,9 @@ import prisma from '@/lib/prisma'; // Adjust the import path according to your s
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string; path_id: string } }
+  props: { params: Promise<{ id: string; path_id: string }> }
 ) {
+  const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);

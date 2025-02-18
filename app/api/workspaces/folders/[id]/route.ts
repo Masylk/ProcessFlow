@@ -137,10 +137,8 @@ import prisma from '@/lib/prisma';
  *                   type: string
  *                   example: "Internal server error"
  */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const folderId = Number(params.id);
 
   try {
@@ -179,10 +177,8 @@ export async function DELETE(
  * PATCH /api/workspaces/folders/:id
  * Updates a folder by ID
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const folderId = Number(params.id);
 
   try {

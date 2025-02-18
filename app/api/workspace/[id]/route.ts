@@ -109,10 +109,8 @@ import prisma from '@/lib/prisma'; // Adjust the path to your Prisma client
  *                   type: string
  *                   example: "Internal server error"
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { id } = params;
 
   if (!id) {

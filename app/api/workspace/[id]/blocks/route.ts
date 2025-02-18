@@ -106,10 +106,8 @@ import { Prisma } from '@prisma/client';
  *                   type: string
  *                   example: "Failed to fetch or create paths and blocks"
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
