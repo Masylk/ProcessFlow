@@ -1,8 +1,71 @@
+// app/api/blocks/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+/**
+ * @swagger
+ * /api/blocks/{id}:
+ *   patch:
+ *     summary: Update a block by ID
+ *     description: Updates the properties of a block including its type, position, title, icon, and image.
+ *     tags:
+ *       - Blocks
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the block to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *               position:
+ *                 type: integer
+ *               title:
+ *                 type: string
+ *               icon:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               path_id:
+ *                 type: integer
+ *               workflow_id:
+ *                 type: integer
+ *               image:
+ *                 type: string
+ *               image_description:
+ *                 type: string
+ *               click_position:
+ *                 type: integer
+ *               average_time:
+ *                 type: integer
+ *               task_type:
+ *                 type: string
+ *               delay:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully updated block.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       400:
+ *         description: Invalid block ID.
+ *       404:
+ *         description: Block not found.
+ *       500:
+ *         description: Failed to update block.
+ */
 export async function PATCH(req: NextRequest) {
   const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
 
@@ -99,8 +162,6 @@ export async function PATCH(req: NextRequest) {
 
     // Handle block type-specific updates
     if (type === 'DELAY') {
-      console.log('UPDATE DELAY: ' + delay);
-
       await prisma.delay_block.update({
         where: { block_id },
         data: {
@@ -119,24 +180,39 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json(updatedBlockWithRelations);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Failed to update block:', error.message);
-      return NextResponse.json(
-        { error: `Failed to update block: ${error.message}` },
-        { status: 500 }
-      );
-    } else {
-      console.error('Failed to update block:', error);
-      return NextResponse.json(
-        { error: 'Failed to update block: unknown error' },
-        { status: 500 }
-      );
-    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to update block' },
+      { status: 500 }
+    );
   }
 }
 
-// Handler for DELETE requests to delete a block
+/**
+ * @swagger
+ * /api/blocks/{id}:
+ *   delete:
+ *     summary: Delete a block by ID
+ *     description: Deletes a block and its related records from the database.
+ *     tags:
+ *       - Blocks
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the block to delete.
+ *     responses:
+ *       204:
+ *         description: Block successfully deleted.
+ *       400:
+ *         description: Invalid block ID.
+ *       404:
+ *         description: Block not found.
+ *       500:
+ *         description: Failed to delete block.
+ */
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
 

@@ -57,6 +57,8 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+  const firstName = (formData.get('first_name') as string) || '';
+  const lastName = (formData.get('last_name') as string) || '';
 
   const credentials = {
     email: formData.get('email') as string,
@@ -144,6 +146,7 @@ export async function signup(formData: FormData) {
       console.error('Unknown error:', dbError);
     }
 
+    // Vérification spécifique pour Prisma
     if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
       console.error('Prisma error code:', dbError.code);
       console.error('Prisma error meta:', dbError.meta);
@@ -156,8 +159,8 @@ export async function signup(formData: FormData) {
 
   return {
     id: user.id,
+    firstName,
+    lastName,
     email: user.email,
-    firstName: (formData.get('first_name') as string) || '',
-    lastName: (formData.get('last_name') as string) || '',
   };
 }
