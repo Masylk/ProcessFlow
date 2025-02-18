@@ -54,10 +54,8 @@ import prisma from '@/lib/prisma'; // Adjust the path as necessary
  *                   type: string
  *                   example: Failed to fetch paths
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const blockId = parseInt(params.id);
   console.log(blockId);
   // Validate blockId

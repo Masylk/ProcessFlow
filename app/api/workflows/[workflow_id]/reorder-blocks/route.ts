@@ -80,10 +80,8 @@ type BlockUpdate = {
  *                   type: string
  *                   example: "Internal server error"
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: { workflow_id: string } }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ workflow_id: string }> }) {
+  const params = await props.params;
   try {
     const workflow_id = parseInt(params.workflow_id, 10);
 

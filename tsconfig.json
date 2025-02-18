@@ -34,7 +34,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "global.d.ts",
-    "theme.js"
+    "theme.js",
+    "app/docs/page.jsx",
+    "app/swagger-ui/page.jsx"
   ],
   "exclude": [
     "node_modules"

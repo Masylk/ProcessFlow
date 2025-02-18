@@ -60,10 +60,8 @@ import prisma from '@/lib/prisma';
  *                   type: string
  *                   example: "Failed to retrieve workflows"
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const workspace_id = parseInt(params.id);
   const workflows = await prisma.workflow.findMany({
     where: {

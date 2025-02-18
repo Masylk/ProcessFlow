@@ -113,10 +113,8 @@ import prisma from '@/lib/prisma'; // Adjust the path to where you initialize Pr
  *                   type: string
  *                   example: "Internal Server Error"
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { workflow_id: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ workflow_id: string }> }) {
+  const params = await props.params;
   const workflow_id = parseInt(params.workflow_id);
 
   if (isNaN(workflow_id)) {
@@ -150,10 +148,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { workflow_id: string } }
-) {
+export async function PUT(req: Request, props: { params: Promise<{ workflow_id: string }> }) {
+  const params = await props.params;
   const workflow_id = parseInt(params.workflow_id);
 
   if (isNaN(workflow_id)) {

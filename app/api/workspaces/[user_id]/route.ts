@@ -76,10 +76,8 @@ import prisma from '@/lib/prisma';
  *                   type: string
  *                   example: "Internal Server Error"
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { user_id: string } }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ user_id: string }> }) {
+  const params = await props.params;
   const userId = parseInt(params.user_id); // Use the user_id from the URL
 
   try {
