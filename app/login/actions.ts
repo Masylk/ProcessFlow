@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma'; // Import your Prisma client si nécessaire
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
 import WelcomeEmail from '../emails/WelcomeEmail';
+import { Prisma } from '@prisma/client';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -56,6 +57,8 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
+  const firstName = (formData.get('first_name') as string) || '';
+  const lastName = (formData.get('last_name') as string) || '';
 
   const credentials = {
     email: formData.get('email') as string,
@@ -74,26 +77,57 @@ export async function signup(formData: FormData) {
   const user = data?.user;
   if (!user) return { error: 'No user returned from signUp' };
 
-  const firstName = (formData.get('first_name') as string) || '';
-  const lastName = (formData.get('last_name') as string) || '';
-  const email = user.email || '';
-
   try {
-    await prisma.user.create({
+    // Ajoutons des logs pour débugger
+    console.log('Attempting to create user in database:', {
+      auth_id: user.id,
+      email: user.email,
+      firstName: formData.get('first_name'),
+      lastName: formData.get('last_name'),
+    });
+
+    const newUser = await prisma.user.create({
       data: {
         auth_id: user.id,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        full_name: `${firstName} ${lastName}`,
+        email: user.email || '',
+        first_name: (formData.get('first_name') as string) || '',
+        last_name: (formData.get('last_name') as string) || '',
+        full_name: `${formData.get('first_name')} ${formData.get('last_name')}`,
       },
     });
 
-    const emailHtml = await render(WelcomeEmail({ firstName: firstName }));
+    console.log('User created successfully:', newUser);
+
+    // Création du workspace par défaut
+    const defaultWorkspace = await prisma.workspace.create({
+      data: {
+        name: 'My Workspace',
+        background_colour: '#4299E1',
+        team_tags: [],
+        user_workspaces: {
+          create: {
+            user_id: newUser.id,
+            role: 'ADMIN',
+          },
+        },
+      },
+    });
+
+    // Mise à jour de l'utilisateur avec le workspace actif
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        active_workspace_id: defaultWorkspace.id,
+      },
+    });
+
+    const emailHtml = await render(
+      WelcomeEmail({ firstName: (formData.get('first_name') as string) || '' })
+    );
 
     // Send the welcome email using the sendEmail utility
     const emailResponse = await sendEmail(
-      email,
+      user.email || '',
       'Bienvenue sur ProcessFlow!',
       emailHtml // Pass the rendered HTML from WelcomeEmail
     );
@@ -102,14 +136,31 @@ export async function signup(formData: FormData) {
       console.error('Email sending failed:', emailResponse.error);
     }
   } catch (dbError) {
-    console.error('Error creating user in Prisma:', dbError);
-    return { error: 'Error creating user in database' };
+    if (dbError instanceof Error) {
+      console.error('Database error details:', {
+        name: dbError.name,
+        message: dbError.message,
+        stack: dbError.stack,
+      });
+    } else {
+      console.error('Unknown error:', dbError);
+    }
+
+    // Vérification spécifique pour Prisma
+    if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error('Prisma error code:', dbError.code);
+      console.error('Prisma error meta:', dbError.meta);
+    }
+
+    return {
+      error: `Error creating user in database: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`,
+    };
   }
 
   return {
     id: user.id,
-    email,
     firstName,
     lastName,
+    email: user.email,
   };
 }

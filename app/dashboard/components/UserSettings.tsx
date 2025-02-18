@@ -232,7 +232,7 @@ export default function UserSettings({
   }, [previewUrl]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
       <div className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden">
         {/* Header */}
         <div className="self-stretch h-[92px] flex-col justify-start items-center flex">

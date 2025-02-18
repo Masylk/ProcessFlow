@@ -8,7 +8,15 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/**/*.{js,jsx,ts,tsx}', // Added this line
+    './src/**/*.{js,jsx,ts,tsx}',
+    // Add the regex to scan dynamic class strings
+    {
+      raw: `
+        cn('font-medium', 'text-sm'); // Example usage
+        cn('text-gray-600', 'bg-red-500');
+      `,
+      extension: 'js',
+    },
   ],
   theme: {
     extend: {

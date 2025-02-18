@@ -100,27 +100,38 @@ export default function Page() {
     fetchSignedUrl();
   }, [user]);
 
-  // Fetch workspaces specific to the user
+  // Fetch workspaces
+  const fetchWorkspaces = async () => {
+    try {
+      const response = await fetch(`/api/workspaces/${user?.id}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error fetching workspaces:', data.error);
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setWorkspaces(data);
+      } else {
+        console.error('Unexpected data format:', data);
+      }
+    } catch (error) {
+      console.error('Error fetching workspaces:', error);
+    }
+  };
+
+  // Dans le useEffect
   useEffect(() => {
     if (user) {
-      const fetchWorkspaces = async (userId: string) => {
-        const res = await fetch(`/api/workspaces/${userId}`);
-        const data = await res.json();
-        if (data.error) {
-          console.error('Error fetching workspaces:', data.error);
-        } else {
-          setWorkspaces(data);
-        }
-      };
-
-      fetchWorkspaces(user.id.toString());
+      fetchWorkspaces();
     }
   }, [user]);
 
   // Effect to set activeWorkspace.
   useEffect(() => {
     if (user && workspaces.length > 0) {
-      if (!user.active_workspace) {
+      if (!user.active_workspace_id) {
         if (!activeWorkspaceUpdatedRef.current) {
           if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
             setActiveWorkspace(workspaces[0]);
@@ -132,23 +143,23 @@ export default function Page() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 id: user.id,
-                active_workspace: workspaces[0].id,
+                active_workspace_id: workspaces[0].id,
               }),
             });
             if (updateRes.ok) {
               const updatedUser = await updateRes.json();
-              if (updatedUser.active_workspace !== user.active_workspace) {
+              if (updatedUser.active_workspace_id !== user.active_workspace_id) {
                 setUser(updatedUser);
               }
             } else {
-              console.error('Error updating user active_workspace');
+              console.error('Error updating user active_workspace_id');
             }
           };
           updateActiveWorkspace();
         }
       } else {
         const foundWorkspace = workspaces.find(
-          (ws) => ws.id === user.active_workspace
+          (ws) => ws.id === user.active_workspace_id
         );
         if (foundWorkspace) {
           if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
@@ -166,16 +177,16 @@ export default function Page() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   id: user.id,
-                  active_workspace: workspaces[0].id,
+                  active_workspace_id: workspaces[0].id,
                 }),
               });
               if (updateRes.ok) {
                 const updatedUser = await updateRes.json();
-                if (updatedUser.active_workspace !== user.active_workspace) {
+                if (updatedUser.active_workspace_id !== user.active_workspace_id) {
                   setUser(updatedUser);
                 }
               } else {
-                console.error('Error updating user active_workspace');
+                console.error('Error updating user active_workspace_id');
               }
             };
             updateActiveWorkspace();
@@ -463,17 +474,17 @@ export default function Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: user.id,
-          active_workspace: workspace.id,
+          active_workspace_id: workspace.id,
         }),
       });
       if (updateRes.ok) {
         const updatedUser = await updateRes.json();
-        if (updatedUser.active_workspace !== user.active_workspace) {
+        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
           setUser(updatedUser);
           setActiveWorkspace(workspace);
         }
       } else {
-        console.error('Error updating user active_workspace');
+        console.error('Error updating user active_workspace_id');
       }
     } else {
       console.log('no user to update');
@@ -798,9 +809,7 @@ export default function Page() {
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <HelpCenterModal onClose={closeHelpCenter} user={user} />
-        </div>
+        <HelpCenterModal onClose={closeHelpCenter} user={user} />
       )}
 
       {uploadImageVisible && (

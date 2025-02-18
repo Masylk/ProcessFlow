@@ -25,9 +25,9 @@ export default function EditFlowModal({
   );
 
   return (
-    <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
+    <div className="fixed inset-0 flex items-center justify-center z-50 w-full">
       <div className="w-full h-full absolute opacity-40 bg-[#0c111d]" />
-      <div className="h-[446px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center flex overflow-hidden relative z-10">
+      <div className="h-[446px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03),0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center flex overflow-hidden relative z-10">
         <div className="w-[550px] h-[336px] relative" />
         <div className="self-stretch h-40 flex-col justify-start items-center flex">
           <div className="self-stretch h-[140px] px-6 pt-6 flex-col justify-start items-start gap-4 flex">
@@ -45,7 +45,7 @@ export default function EditFlowModal({
                 Edit a Flow
               </div>
               <div className="self-stretch text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
-                Edit your Flow’s name
+                Edit your Flow's name
               </div>
             </div>
           </div>
@@ -109,6 +109,6 @@ export default function EditFlowModal({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,24 +1,34 @@
 'use client';
 import { useState } from 'react';
 import ButtonNormal from '../../components/ButtonNormal';
+import InputField from '../../components/InputFields';
+import TextAreaInput from '../../components/TextAreaInput';
 
 interface CreateFlowModalProps {
   onClose: () => void;
   onCreateFlow: (name: string, description: string) => Promise<void>;
+  mode?: 'light' | 'dark';
 }
 
 export default function CreateFlowModal({
   onClose,
   onCreateFlow,
+  mode = 'light'
 }: CreateFlowModalProps) {
   const [flowName, setFlowName] = useState('');
   const [flowDescription, setFlowDescription] = useState('');
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40">
-      <div className="bg-white w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)]  flex-col justify-start items-start flex overflow-hidden">
+    <div className={`fixed inset-0 flex items-center justify-center p-8 ${
+      mode === 'dark' ? 'bg-[#0c111d] bg-opacity-40' : 'bg-black bg-opacity-40'
+    }`}>
+      <div className={`w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex overflow-hidden ${
+        mode === 'dark' ? 'bg-darkMode-bg-primary' : 'bg-white'
+      }`}>
         <div className="flex items-start gap-4 px-6 pt-6 flex-col">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
+          <div className={`w-12 h-12 p-3 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-center items-center inline-flex overflow-hidden ${
+            mode === 'dark' ? 'bg-darkMode-bg-secondary border-darkMode-border-primary' : 'bg-white border-[#e4e7ec]'
+          }`}>
             <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-three-01.svg`}
@@ -28,50 +38,48 @@ export default function CreateFlowModal({
             </div>
           </div>
           <div className="flex-col justify-start items-start gap-1 flex">
-            <div className="text-[#101828] text-lg font-semibold font-['Inter'] leading-7">
+            <div className={`text-lg font-semibold font-['Inter'] leading-7 ${
+              mode === 'dark' ? 'text-darkMode-text-primary' : 'text-[#101828]'
+            }`}>
               Create a new Flow
             </div>
-            <div className="text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
+            <div className={`text-sm font-normal font-['Inter'] leading-tight ${
+              mode === 'dark' ? 'text-darkMode-text-secondary' : 'text-[#475467]'
+            }`}>
               Start from scratch or start with one of our templates.
             </div>
           </div>
         </div>
-        <div className="self-stretch  px-6 pt-4 pb-4 border-b border-[#e4e7ec] flex-col justify-start items-start gap-3 flex">
-          <div className="self-stretch h-[178px] flex-col justify-start items-start gap-3 flex">
-            <div className="self-stretch h-[70px] flex-col justify-start items-start gap-1.5 flex">
-              <label className="text-[#344054] text-sm font-semibold">
-                Flow name *
-              </label>
-              <input
-                type="text"
-                className="self-stretch px-3.5 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-base text-[#667085]"
-                placeholder="e.g Create a new task"
-                value={flowName}
-                onChange={(e) => setFlowName(e.target.value)}
-              />
-            </div>
-            <div className="self-stretch h-24 flex-col justify-start items-start gap-1.5 flex">
-              <label className="text-[#344054] text-sm font-semibold">
-                Flow description
-              </label>
-              <textarea
-                className="self-stretch px-3.5 py-3 bg-white rounded-lg border border-[#d0d5dd] text-base text-[#667085] overflow-y-auto resize-none"
-                placeholder="This Flow indicates the user how to create a task"
-                value={flowDescription}
-                onChange={(e) => setFlowDescription(e.target.value)}
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#d0d5dd transparent',
-                }}
-              />
-            </div>
+        <div className={`self-stretch px-6 pt-4 pb-4 border-b flex-col justify-start items-start gap-3 flex ${
+          mode === 'dark' ? 'border-darkMode-border-primary' : 'border-[#e4e7ec]'
+        }`}>
+          <div className="self-stretch flex-col justify-start items-start gap-3 flex">
+            <InputField
+              label="Flow name"
+              required
+              value={flowName}
+              onChange={(value) => setFlowName(value)}
+              placeholder="e.g Create a new task"
+              mode={mode}
+            />
+            <TextAreaInput
+              label="Flow description"
+              value={flowDescription}
+              onChange={(value) => setFlowDescription(value)}
+              placeholder="This Flow indicates the user how to create a task"
+              mode={mode}
+            />
           </div>
         </div>
         <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 flex overflow-hidden">
-          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+          <div className={`text-sm font-semibold font-['Inter'] leading-tight ${
+            mode === 'dark' ? 'text-darkMode-text-primary' : 'text-[#344054]'
+          }`}>
             New
           </div>
-          <div className="self-stretch p-4 bg-white rounded-xl border-2 border-[#4e6bd7] justify-start items-start gap-1 inline-flex">
+          <div className={`self-stretch p-4 rounded-xl border-2 justify-start items-start gap-1 inline-flex ${
+            mode === 'dark' ? 'bg-darkMode-bg-primary border-[#4e6bd7]' : 'bg-white border-[#4e6bd7]'
+          }`}>
             <div className="grow shrink basis-0 h-10 justify-start items-start gap-3 flex">
               <div className="w-8 h-8 p-2 bg-[#c8d1f3] rounded-full justify-center items-center flex overflow-hidden">
                 <div className="w-4 h-4 relative flex-col justify-start items-start flex overflow-hidden">
@@ -127,28 +135,27 @@ export default function CreateFlowModal({
             </div>
           </div>
         </div>
-        <div className="self-stretch h-[92px] pt-6 border-t border-[#e4e7ec] flex-col justify-start items-start flex">
+        <div className={`self-stretch h-[92px] pt-6 border-t flex-col justify-start items-start flex ${
+          mode === 'dark' ? 'border-darkMode-border-primary' : 'border-[#e4e7ec]'
+        }`}>
           <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
-            {/* Cancel Button */}
             <ButtonNormal
-              onClick={() => onClose()}
+              onClick={onClose}
               variant="secondaryGray"
-              mode="light"
+              mode={mode}
               size="medium"
               className='grow shrink basis-0'
             >
               Cancel
             </ButtonNormal>
-            {/* Create Flow Button */}
-            
-            <ButtonNormal onClick={() => {
+            <ButtonNormal 
+              onClick={() => {
                 onCreateFlow(flowName, flowDescription);
                 onClose();
               }}
               variant="primary"
-              mode="light"
+              mode={mode}
               size="medium"
-              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/white-plus.svg"
               className='grow shrink basis-0'
             >
               Create a Flow

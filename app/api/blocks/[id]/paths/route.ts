@@ -2,10 +2,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the path as necessary
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+/**
+ * @swagger
+ * /api/blocks/{blockId}/paths:
+ *   get:
+ *     summary: Get paths linked to a specific block
+ *     description: Retrieves paths associated with a given block ID.
+ *     tags:
+ *       - Blocks
+ *     parameters:
+ *       - in: path
+ *         name: blockId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the block to fetch paths for.
+ *     responses:
+ *       200:
+ *         description: A list of paths associated with the block.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   workflow_id:
+ *                     type: integer
+ *       400:
+ *         description: Invalid blockId provided.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid blockId
+ *       500:
+ *         description: Error fetching paths for the block.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to fetch paths
+ */
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const blockId = parseInt(params.id);
   console.log(blockId);
   // Validate blockId
@@ -36,3 +86,4 @@ export async function GET(
     );
   }
 }
+
