@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import WorkspaceList from './components/WorskpaceList';
+import WorkspaceList from './components/WorkspaceList';
 
 import { env } from 'process';
 
