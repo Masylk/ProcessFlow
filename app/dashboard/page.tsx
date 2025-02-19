@@ -10,6 +10,8 @@ import HelpCenterModal from './components/HelpCenterModal';
 import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
+import dynamic from 'next/dynamic';
+import { cache } from 'react';
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
@@ -28,6 +30,21 @@ import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
+
+const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
+  loading: () => <p>Loading...</p>,
+  ssr: false
+});
+
+const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
+  ssr: false
+});
+
+export const getIcons = cache(async () => {
+  const response = await fetch('/api/step-icons');
+  if (!response.ok) throw new Error('Failed to fetch icons');
+  return response.json();
+});
 
 export default function Page() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -75,6 +92,12 @@ export default function Page() {
 
   // Ref used as a flag so that the active_workspace update is performed only once
   const activeWorkspaceUpdatedRef = useRef(false);
+
+  // Add this near the top of the component with other state declarations
+  const [deleteHandler, setDeleteHandler] = useState<() => Promise<void>>(() => async () => {});
+
+  // Add or modify these state declarations
+  const [editingFolder, setEditingFolder] = useState<Folder | undefined>();
 
   // Fetch user data from your API
   useEffect(() => {
@@ -331,7 +354,6 @@ export default function Page() {
   };
 
   const onSelectFolderSidebar = (folder?: Folder) => {
-    console.log('select folder : ' + folder?.name);
     setSidebarSelectedFolder(folder);
   };
 
@@ -376,9 +398,9 @@ export default function Page() {
     setFolderParent(parentFolder);
   };
 
-  const openEditFolder = (parentFolder: Folder) => {
+  const openEditFolder = (folder: Folder) => {
+    setEditingFolder(folder);
     setEditFolderVisible(true);
-    // setOnEditFolderAction(() => fn);
   };
 
   const openUploadImage = () => {
@@ -397,8 +419,47 @@ export default function Page() {
     setCreateFlowVisible(true);
   };
 
-  const openDeleteFolder = () => {
-    // setOnDeleteFolderAction(() => fn);
+  // Simple close handler
+  const closeDeleteFolder = () => {
+    setDeleteFolderVisible(false);
+    setSelectedFolder(undefined);
+  };
+
+  // Simple delete handler
+  const handleDeleteFolder = async () => {
+    if (!selectedFolder || !activeWorkspace) return;
+    
+    try {
+      const response = await fetch(
+        `/api/workspaces/folders/${selectedFolder.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete folder');
+      }
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: prevWorkspace.folders.filter(
+                (f) => f.id !== selectedFolder.id
+              ),
+            }
+          : null
+      );
+      closeDeleteFolder();
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+    }
+  };
+
+  // Simple open handler
+  const openDeleteFolder = async (folder: Folder): Promise<void> => {
+    setSelectedFolder(folder);
     setDeleteFolderVisible(true);
   };
 
@@ -425,10 +486,6 @@ export default function Page() {
   const closeDeleteFlow = () => {
     setSelectedWorkflow(null);
     setDeleteFlowVisible(false);
-  };
-
-  const closeDeleteFolder = () => {
-    setDeleteFolderVisible(false);
   };
 
   const closeCreateFlow = () => {
@@ -611,22 +668,18 @@ export default function Page() {
   };
 
   //Handler to edit a specific folder
-  const handleEditFolder = async (
-    name: string,
-    icon_url?: string | null,
-    emote?: string | null
-  ) => {
-    if (!sidebarSelectedFolder || !activeWorkspace) return;
-
+  const handleEditFolder = async (folderName: string, icon_url?: string | null, emote?: string | null) => {
+    if (!activeWorkspace || !editingFolder) return;
+    
     try {
       const response = await fetch(
-        `/api/workspaces/folders/${sidebarSelectedFolder.id}`,
+        `/api/workspaces/folders/${editingFolder.id}`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ name, icon_url, emote }),
+          body: JSON.stringify({ name: folderName, icon_url, emote }),
         }
       );
 
@@ -640,58 +693,25 @@ export default function Page() {
         prevWorkspace
           ? {
               ...prevWorkspace,
-              folders: prevWorkspace.folders.map((folder) =>
-                folder.id === sidebarSelectedFolder.id
-                  ? { ...folder, ...updatedFolder }
-                  : folder
+              folders: prevWorkspace.folders.map((f) =>
+                f.id === editingFolder.id
+                  ? { ...f, ...updatedFolder }
+                  : f
               ),
             }
           : null
       );
-      if (selectedFolder && selectedFolder.id === updatedFolder.id)
-        setSelectedFolder(updatedFolder);
-      setSidebarSelectedFolder(undefined);
+      
+      // Update selected states if needed
+      if (sidebarSelectedFolder?.id === updatedFolder.id) {
+        setSidebarSelectedFolder(updatedFolder);
+      }
+      
+      setEditingFolder(undefined);
     } catch (error) {
       console.error('Error updating folder:', error);
     }
   };
-
-  //Handler to delete a specific folder
-  const handleDeleteFolder = async () => {
-    if (!selectedFolder || !activeWorkspace) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/folders/${selectedFolder.id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to delete folder');
-      }
-
-      const data = await response.json();
-      console.log('Folder deleted successfully:', data);
-
-      setActiveWorkspace((prevWorkspace) =>
-        prevWorkspace
-          ? {
-              ...prevWorkspace,
-              folders: prevWorkspace.folders.filter(
-                (folder) => folder.id !== selectedFolder.id
-              ),
-            }
-          : null
-      );
-      setSelectedFolder(undefined);
-    } catch (error) {
-      console.error('Error deleting folder:', error);
-    }
-  };
-
-  // FOLDER MANAGEMENT
 
   return (
     <>
@@ -759,8 +779,8 @@ export default function Page() {
 
       {/* Modal for user settings */}
       {user && userSettingsVisible && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50">
-          <UserSettings
+        <div className="fixed inset-0 z-20 flex items-center justify-center">
+          <UserSettingsDynamic
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
@@ -799,17 +819,17 @@ export default function Page() {
         ></CreateSubfolderModal>
       )}
 
-      {editFolderVisible && sidebarSelectedFolder && (
+      {editFolderVisible && editingFolder && (
         <EditFolderModal
           onClose={closeEditFolder}
           onEdit={handleEditFolder}
-          folder={sidebarSelectedFolder}
+          folder={editingFolder}
         ></EditFolderModal>
       )}
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <HelpCenterModal onClose={closeHelpCenter} user={user} />
+        <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
       )}
 
       {uploadImageVisible && (

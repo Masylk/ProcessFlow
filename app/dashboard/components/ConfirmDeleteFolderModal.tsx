@@ -13,7 +13,9 @@ export default function ConfirmDeleteFolderModal({
   onDelete,
 }: ConfirmDeleteModalProps) {
   return (
-    <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
+    <main className="fixed inset-0 flex items-center justify-center z-50 w-full"
+      onClick={onClose}
+    >
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         {/* Modal section */}
         <div className="w-[400px] bg-white rounded-xl shadow-lg flex-col justify-start items-center inline-flex overflow-hidden">

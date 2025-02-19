@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import ButtonNormal from '@/app/components/ButtonNormal';
 
 export default function Home() {
   const [workspaceName, setWorkspaceName] = useState('');
@@ -210,33 +211,23 @@ export default function Home() {
           </div>
 
           <div className="h-10 flex justify-between items-start w-full">
-            {/* Back Button */}
-            <div className="px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] justify-center items-center gap-1 flex overflow-hidden transition-all duration-300 hover:bg-[#F9FAFB] cursor-pointer">
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                alt="Arrow left icon"
-                className="w-5 h-5"
-              />
-              <div className="px-0.5 justify-center items-center flex">
-                <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                  Back
-                </div>
-              </div>
-            </div>
+            <ButtonNormal
+              variant="secondaryGray"
+              size="small"
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+              onClick={() => {}}
+            >
+              Back
+            </ButtonNormal>
 
-            {/* Continue Button */}
-            <div className="px-3.5 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1 flex overflow-hidden transition-all duration-300 hover:bg-[#374C99] cursor-pointer">
-              <div className="px-0.5 justify-center items-center flex">
-                <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-                  Continue
-                </div>
-              </div>
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
-                alt="White arrow right icon"
-                className="w-5 h-5"
-              />
-            </div>
+            <ButtonNormal
+              variant="primary"
+              size="small"
+              trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
+              onClick={() => {}}
+            >
+              Continue
+            </ButtonNormal>
           </div>
         </div>
       </div>

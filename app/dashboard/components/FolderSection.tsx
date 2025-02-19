@@ -9,7 +9,7 @@ interface FolderSectionProps {
   onCreateFolder: (parentId?: number) => void;
   onEditFolder: (parentFolder: Folder) => void;
   onCreateSubfolder: (parentFolder: Folder) => void;
-  onDeleteFolder: () => void;
+  onDeleteFolder: (folder: Folder) => void;
   onSelectFolder: (folder?: Folder) => void;
   onSelectFolderView: (folder?: Folder) => void;
   selectedFolder?: Folder;
@@ -125,7 +125,7 @@ export default function FolderSection({
   };
 
   const handleOnEditFolder = (folder: Folder) => {
-    onEditFolder(folder);
+    onEditFolder(folder);    // This opens the edit modal with the correct folder
     setDropdownPosition(null);
   };
 
@@ -149,24 +149,26 @@ export default function FolderSection({
           className="flex items-center gap-1 cursor-pointer group relative"
           style={{ paddingLeft: `${level * 1.5}rem` }}
         >
-          {/* Chevron Icon */}
-          <div
-            onClick={(e) => handleToggleClick(e, folder)}
-            className="w-4 h-4 hidden group-hover:block items-center justify-center"
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
-                process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
-              }/assets/shared_components/${
-                isExpanded ? 'chevron-down.svg' : 'chevron-right-black.svg'
-              }`}
-              alt="Toggle Subfolders"
-              className="w-4 h-4"
-            />
-          </div>
+          {/* Chevron Icon - Show on hover if has subfolders */}
+          {subfolders.length > 0 && (
+            <div
+              onClick={(e) => handleToggleClick(e, folder)}
+              className="w-4 h-4 hidden group-hover:block items-center justify-center"
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
+                  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
+                }/assets/shared_components/${
+                  isExpanded ? 'chevron-down.svg' : 'chevron-right-black.svg'
+                }`}
+                alt="Toggle Subfolders"
+                className="w-4 h-4"
+              />
+            </div>
+          )}
 
-          {/* Folder Icon */}
-          <div className="w-4 h-4 group-hover:hidden flex items-center justify-center">
+          {/* Folder Icon/Emote - Hide on hover if has subfolders */}
+          <div className={`w-4 h-4 ${subfolders.length > 0 ? 'group-hover:hidden' : ''} flex items-center justify-center`}>
             {folder.icon_url ? (
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
@@ -221,7 +223,7 @@ export default function FolderSection({
     >
       <div className="self-stretch flex flex-col justify-start items-start gap-2">
         <div className="w-52 px-3 justify-between items-center inline-flex">
-          <div className="text-[#667085] text-sm font-semibold font-['Inter'] leading-tight">
+          <div className="text-[#4980f7] text-sm font-semibold font-['Inter'] leading-tight">
             My folders
           </div>
           <button
@@ -262,7 +264,7 @@ export default function FolderSection({
         >
           <FolderDropdown
             onCreateSubfolder={handleCreateSubfolder}
-            onDeleteFolder={async () => onDeleteFolder()}
+            onDeleteFolder={async () => await onDeleteFolder(selectedFolder)}
             onEditFolder={handleOnEditFolder}
             parent={selectedFolder}
           />
