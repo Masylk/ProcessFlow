@@ -1,6 +1,210 @@
+// app/api/workspaces/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+/**
+ * @swagger
+ * /api/workspaces/workflows:
+ *   post:
+ *     summary: Create a new workflow
+ *     description: Creates a new workflow within a workspace, optionally inside a folder.
+ *     tags:
+ *       - Workspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "New Workflow"
+ *               description:
+ *                 type: string
+ *                 example: "This is a new workflow"
+ *               workspace_id:
+ *                 type: integer
+ *                 example: 1
+ *               folder_id:
+ *                 type: integer
+ *                 example: 2
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["teamA", "teamB"]
+ *     responses:
+ *       201:
+ *         description: Workflow created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "New Workflow"
+ *                 description:
+ *                   type: string
+ *                   example: "This is a new workflow"
+ *                 workspace_id:
+ *                   type: integer
+ *                   example: 1
+ *                 folder_id:
+ *                   type: integer
+ *                   example: 2
+ *                 team_tags:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["teamA", "teamB"]
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to add workflow"
+ *
+ *   put:
+ *     summary: Update an existing workflow
+ *     description: Updates an existing workflow with new values.
+ *     tags:
+ *       - Workspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *                 example: 1
+ *               name:
+ *                 type: string
+ *                 example: "Updated Workflow"
+ *               description:
+ *                 type: string
+ *                 example: "Updated description"
+ *               folder_id:
+ *                 type: integer
+ *                 example: 2
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["teamA"]
+ *     responses:
+ *       200:
+ *         description: Workflow updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Updated Workflow"
+ *                 description:
+ *                   type: string
+ *                   example: "Updated description"
+ *                 folder_id:
+ *                   type: integer
+ *                   example: 2
+ *                 team_tags:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["teamA"]
+ *       400:
+ *         description: Workflow ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Workflow ID is required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to update workflow"
+ *
+ *   delete:
+ *     summary: Delete a workflow and its related data
+ *     description: Deletes a workflow and all related blocks and paths.
+ *     tags:
+ *       - Workspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               workflowId:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       200:
+ *         description: Workflow and related data deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Workflow and related data deleted successfully"
+ *       400:
+ *         description: Workflow ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Workflow ID is required"
+ *       404:
+ *         description: Workflow not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Workflow not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to delete workflow and related data"
+ */
 export async function POST(req: NextRequest) {
   try {
     const {
