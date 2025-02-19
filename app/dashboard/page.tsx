@@ -30,6 +30,7 @@ import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
+import ThemeSwitch from '@/app/components/ThemeSwitch';
 
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
   loading: () => <p>Loading...</p>,
@@ -362,8 +363,9 @@ export default function Page() {
   };
 
   // Toggle the dropdown
-  const toggleDropdown = () => {
-    setDropdownVisible((prev) => !prev);
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDropdownVisible(!dropdownVisible);
   };
 
   const openUserSettings = () => {
@@ -713,6 +715,11 @@ export default function Page() {
     }
   };
 
+  const handleUserInfoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDropdownVisible(!dropdownVisible);
+  };
+
   return (
     <>
       <div className="flex h-screen w-screen overflow-hidden">
@@ -743,18 +750,34 @@ export default function Page() {
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
             />
-            <div className="relative cursor-pointer" onClick={toggleDropdown}>
-              <UserInfo user={user} />
-              {dropdownVisible && (
-                <div className="absolute top-full right-0 mt-2 z-10">
-                  <UserDropdown
-                    user={user}
-                    onOpenUserSettings={openUserSettings}
-                    onOpenHelpCenter={openHelpCenter}
-                    onClose={() => setDropdownVisible(false)}
-                  />
+            <div className="flex items-center gap-4">
+              <ThemeSwitch />
+              <div className="relative">
+                <div 
+                  className="relative cursor-pointer" 
+                  onClick={handleUserInfoClick}
+                >
+                  <UserInfo user={user} isActive={dropdownVisible} />
+                  {dropdownVisible && (
+                    <div 
+                      className="fixed inset-0 z-10"
+                      onClick={() => setDropdownVisible(false)}
+                    >
+                      <div 
+                        className="absolute top-[68px] right-3.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <UserDropdown
+                          user={user}
+                          onOpenUserSettings={openUserSettings}
+                          onOpenHelpCenter={openHelpCenter}
+                          onClose={() => setDropdownVisible(false)}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </header>
 

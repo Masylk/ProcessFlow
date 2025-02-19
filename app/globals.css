@@ -79,3 +79,16 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: theme('colors.darkMode.bg-secondary-solid');
 }
+
+* {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only in input fields and textareas */
+input, textarea {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}

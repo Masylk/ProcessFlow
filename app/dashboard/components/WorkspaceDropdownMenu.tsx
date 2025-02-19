@@ -1,7 +1,7 @@
 'use client';
 
 import { Workspace } from '@/types/workspace';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -32,8 +32,26 @@ export default function WorkspaceDropdownMenu({
   setActiveWorkspace,
   onClose,
 }: WorkspaceDropdownMenuProps) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
   return (
-    <div className="w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-hidden">
+    <div 
+      ref={dropdownRef}
+      className="w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-hidden"
+    >
       <div className="self-stretch flex flex-col justify-start items-start">
         {/* User Email Header */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
