@@ -7,6 +7,7 @@ import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
 import WelcomeEmail from '../emails/WelcomeEmail';
 import { Prisma } from '@prisma/client';
+import { redirect } from 'next/navigation';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -47,12 +48,8 @@ export async function login(formData: FormData) {
     return { error: 'Error retrieving user details from database' };
   }
 
-  return {
-    id: user.id,
-    email: user.email,
-    firstName,
-    lastName,
-  };
+  // Redirection après connexion réussie
+  return redirect('/dashboard');
 }
 
 export async function signup(formData: FormData) {
@@ -135,6 +132,8 @@ export async function signup(formData: FormData) {
     if (emailResponse.error) {
       console.error('Email sending failed:', emailResponse.error);
     }
+
+    return redirect('/dashboard');
   } catch (dbError) {
     if (dbError instanceof Error) {
       console.error('Database error details:', {
@@ -156,11 +155,4 @@ export async function signup(formData: FormData) {
       error: `Error creating user in database: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`,
     };
   }
-
-  return {
-    id: user.id,
-    firstName,
-    lastName,
-    email: user.email,
-  };
 }
