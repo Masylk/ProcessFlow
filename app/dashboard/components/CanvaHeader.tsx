@@ -70,7 +70,7 @@ export default function CanvaHeader({
               leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/white-plus.svg"
               onClick={openCreateFlow}
             >
-              Create a Flow
+              New Flow
             </ButtonNormal>
           
           

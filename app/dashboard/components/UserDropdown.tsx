@@ -60,18 +60,13 @@ export default function UserDropdown({
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
-    };
+    }
 
     document.addEventListener('mousedown', handleClickOutside);
-
-    // Cleanup event listener on component unmount
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -82,13 +77,13 @@ export default function UserDropdown({
       ref={dropdownRef}
       className="h-full bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex-col justify-start items-start inline-flex overflow-hidden"
     >
-      <div className="h-full py-1 flex-col justify-start items-start flex overflow-hidden">
+      <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}
         <div
-          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer hover:bg-lightMode-bg-primary_hover transition-all duration-300"
           onClick={onOpenUserSettings}
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+          <div className="grow shrink basis-0  px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -105,13 +100,13 @@ export default function UserDropdown({
         </div>
 
         {/* Horizontal line spacer */}
-        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+        <div className="self-stretch h-px border-t bg-[#e4e7ec]" />
 
         {/* Changelog & Roadmap Item */}
-        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
+        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex hover:bg-lightMode-bg-primary_hover transition-all duration-300">
           <div
             onClick={handleRoadmapClick}
-            className="cursor-pointer grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden"
+            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -133,13 +128,13 @@ export default function UserDropdown({
           href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
           target="_blank"
           rel="noopener noreferrer"
-          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer hover:bg-lightMode-bg-primary_hover transition-all duration-300"
         >
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-smile-circle.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`}
                   alt="Slack Icon"
                   className="w-full h-full object-contain"
                 />
@@ -153,7 +148,7 @@ export default function UserDropdown({
 
         {/* Support Item */}
         <div
-          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer hover:bg-lightMode-bg-primary_hover transition-all duration-300"
           onClick={onOpenHelpCenter}
         >
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
@@ -173,10 +168,10 @@ export default function UserDropdown({
         </div>
 
         {/* Horizontal line spacer */}
-        <div className="self-stretch h-px bg-[#e4e7ec] border-t my-1" />
+        <div className="self-stretch h-px bg-[#e4e7ec] border-t" />
 
         {/* Log out Item */}
-        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
+        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex hover:bg-lightMode-bg-primary_hover">
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">

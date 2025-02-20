@@ -20,7 +20,10 @@ export default function HelpCenterModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
+    <div 
+      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      onClick={onClose}
+    >
       <Head>
         <title>Help Center</title>
         <meta name="description" content="Help center modal" />

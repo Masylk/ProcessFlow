@@ -1,7 +1,7 @@
 'use client';
 
 import { Workspace } from '@/types/workspace';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -32,9 +32,27 @@ export default function WorkspaceDropdownMenu({
   setActiveWorkspace,
   onClose,
 }: WorkspaceDropdownMenuProps) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
   return (
-    <div className="w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start">
-      <div className="self-stretch py-1 flex flex-col justify-start items-start">
+    <div 
+      ref={dropdownRef}
+      className="w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-hidden"
+    >
+      <div className="self-stretch flex flex-col justify-start items-start">
         {/* User Email Header */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex">
@@ -47,7 +65,7 @@ export default function WorkspaceDropdownMenu({
         </div>
 
         {/* Séparateur horizontal entre le header email et la liste des workspaces */}
-        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+        <div className="self-stretch h-px border-t bg-[#e4e7ec]" />
 
         {/* Workspaces List */}
         {workspaces.map((workspace, index) => (
@@ -57,9 +75,9 @@ export default function WorkspaceDropdownMenu({
               await setActiveWorkspace(workspace);
               onClose();
             }}
-            className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer hover:bg-gray-100"
+            className="self-stretch px-1.5 justify-start items-center inline-flex cursor-pointer hover:bg-gray-100"
           >
-            <div className="grow shrink basis-0 h-[42px] px-2.5 py-[9px] rounded-md justify-between items-center flex">
+            <div className="grow shrink basis-0 h-[full] px-2.5 py-[9px] rounded-md justify-between items-center flex">
               <div className="flex items-center gap-2">
                 {/* Remplacement du div w-6 h-6 par un avatar coloré */}
                 <div
