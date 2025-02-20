@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import { login, signup } from './actions';
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -31,7 +31,7 @@ export default function LoginPage() {
         posthog.identify(user.id);
         posthog.people.set({ email: user.email });
         posthog.capture('login', { email: user.email });
-        router.push('/');
+        router.push('/dashboard');
       }
     } else {
       const newUser = await signup(formData);
@@ -57,7 +57,7 @@ export default function LoginPage() {
           firstName: newUser.firstName,
           lastName: newUser.lastName,
         });
-        router.push('/');
+        router.push('/dashboard');
       }
     }
   }
