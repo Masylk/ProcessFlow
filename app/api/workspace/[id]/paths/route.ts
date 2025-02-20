@@ -92,7 +92,10 @@ import { Prisma } from '@prisma/client';
  *                   type: string
  *                   example: "Failed to fetch or create paths"
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
@@ -113,7 +116,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         // Fetch paths for the given workflow_id
         const existingPaths = await prisma.path.findMany({
           where: {
-            workflow_id: parsedworkflow_id, // Use `workflow_id` instead of `workflow_id`
+            workflow_id: parsedworkflow_id,
           },
           include: {
             blocks: {
@@ -126,8 +129,40 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
                     paths: {
                       include: {
                         blocks: {
+                          orderBy: {
+                            position: 'asc',
+                          },
                           include: {
-                            path_block: true,
+                            path_block: {
+                              include: {
+                                paths: {
+                                  include: {
+                                    blocks: {
+                                      orderBy: {
+                                        position: 'asc',
+                                      },
+                                      include: {
+                                        path_block: {
+                                          include: {
+                                            paths: {
+                                              include: {
+                                                blocks: {
+                                                  include: {
+                                                    path_block: true,
+                                                    step_block: true,
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                        step_block: true,
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
                             step_block: true,
                           },
                         },
