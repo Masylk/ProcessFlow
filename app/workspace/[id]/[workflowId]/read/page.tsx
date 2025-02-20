@@ -17,7 +17,9 @@ const WorkspacePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [path, setPath] = useState<Path | null>(null);
-  const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(null);
+  const [lastRequestStatus, setLastRequestStatus] = useState<boolean | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -93,7 +95,7 @@ const WorkspacePage = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {path && (
+      {path && id && (
         <Sidebar
           stepCount={path.blocks.length}
           path={path}

@@ -3,10 +3,111 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+/**
+ * @swagger
+ * /api/workspace/{id}/blocks:
+ *   get:
+ *     summary: Retrieve paths and blocks for a given workflow in a workspace
+ *     description: Fetches all paths and their associated blocks for a given workflow in a workspace. If no paths exist, it creates a default path.
+ *     tags:
+ *       - Workspace 
+*     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace
+ *       - in: query
+ *         name: workflow_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workflow
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved paths and blocks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 paths:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 1
+ *                       name:
+ *                         type: string
+ *                         example: "First Path"
+ *                       workflow_id:
+ *                         type: integer
+ *                         example: 123
+ *                       blocks:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 10
+ *                             position:
+ *                               type: integer
+ *                               example: 1
+ *                             path_block:
+ *                               type: object
+ *                               nullable: true
+ *                               properties:
+ *                                 id:
+ *                                   type: integer
+ *                                   example: 5
+ *                                 paths:
+ *                                   type: array
+ *                                   items:
+ *                                     type: object
+ *                                     properties:
+ *                                       id:
+ *                                         type: integer
+ *                                         example: 20
+ *                                       name:
+ *                                         type: string
+ *                                         example: "Nested Path"
+ *                             step_block:
+ *                               type: object
+ *                               nullable: true
+ *                               properties:
+ *                                 id:
+ *                                   type: integer
+ *                                   example: 15
+ *                                 step_data:
+ *                                   type: string
+ *                                   example: "Step details"
+ *       400:
+ *         description: Missing or invalid workflow_id or workspaceId
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "workflow_id and valid workspaceId are required"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to fetch or create paths and blocks"
+ */
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
