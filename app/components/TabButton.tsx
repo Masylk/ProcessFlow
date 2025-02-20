@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Folder } from '@/types/workspace';
 import FolderDropdown from '@/app/dashboard/components/FolderDropdown';
+import { getAssetUrl, SHARED_ASSETS } from '@/app/utils/assetUrls';
 
 interface TabButtonProps {
   icon: string;
@@ -80,27 +81,33 @@ export const TabButton: React.FC<TabButtonProps> = ({
     };
   }, [dropdownPosition, onSelectFolder]);
 
+  const chevronIcon = isExpanded ? SHARED_ASSETS.chevronDown : SHARED_ASSETS.chevronRight;
+
   return (
     <div className="relative group">
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         className={`w-full h-9 px-3 py-2 rounded-md flex items-center gap-2 cursor-pointer transition-colors
           ${isActive ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}
         onClick={onClick}
+        onKeyDown={(e) => e.key === 'Enter' && onClick()}
       >
         <div className="flex-1 flex items-center gap-2">
           {/* Chevron (shows on hover) */}
           {isFolder && hasSubfolders && (
             <div
+              role="button"
+              tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand?.();
               }}
+              onKeyDown={(e) => e.key === 'Enter' && onToggleExpand?.()}
               className="w-4 h-4 hidden group-hover:block flex-shrink-0"
             >
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                  isExpanded ? 'chevron-down.svg' : 'chevron-right-black.svg'
-                }`}
+                src={getAssetUrl(chevronIcon)}
                 alt="Toggle Subfolders"
                 className="w-4 h-4"
               />
@@ -124,8 +131,11 @@ export const TabButton: React.FC<TabButtonProps> = ({
 
         {/* Three dots button */}
         {isFolder && (
-          <button
+          <div
+            role="button"
+            tabIndex={0}
             onClick={handleDropdownClick}
+            onKeyDown={(e) => e.key === 'Enter' && handleDropdownClick(e as any)}
             className="w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto"
           >
             <img
@@ -133,9 +143,9 @@ export const TabButton: React.FC<TabButtonProps> = ({
               alt="Show Folder Dropdown"
               className="w-5 h-5"
             />
-          </button>
+          </div>
         )}
-      </button>
+      </div>
 
       {/* Dropdown Menu */}
       {dropdownPosition && folder && (

@@ -9,7 +9,7 @@ export default function ThemeSwitch() {
   return (
     <ButtonNormal
       onClick={toggleMode}
-      variant="secondaryGray"
+      variant="tertiaryGray"
       size="medium"
       mode={mode}
       iconOnly

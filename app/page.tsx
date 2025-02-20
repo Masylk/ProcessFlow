@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import WorkspaceList from './components/WorskpaceList';
+
 
 import { env } from 'process';
 
@@ -107,7 +107,7 @@ function HomePage() {
           <p>Loading user info...</p>
         )}
 
-        <WorkspaceList workspaces={workspaces} />
+        
 
         <div className="mt-6">
           <h2 className="text-lg font-bold mb-2">Add a new workspace</h2>
