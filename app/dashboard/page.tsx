@@ -12,6 +12,7 @@ import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal';
 import dynamic from 'next/dynamic';
 import { cache } from 'react';
+import { getIcons } from '@/app/utils/getIcons';
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
@@ -32,19 +33,16 @@ import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
 import ThemeSwitch from '@/app/components/ThemeSwitch';
 
-const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
-  loading: () => <p>Loading...</p>,
-  ssr: false
-});
+const HelpCenterModalDynamic = dynamic(
+  () => import('./components/HelpCenterModal'),
+  {
+    loading: () => <p>Loading...</p>,
+    ssr: false,
+  }
+);
 
 const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
-  ssr: false
-});
-
-export const getIcons = cache(async () => {
-  const response = await fetch('/api/step-icons');
-  if (!response.ok) throw new Error('Failed to fetch icons');
-  return response.json();
+  ssr: false,
 });
 
 export default function Page() {
@@ -95,7 +93,9 @@ export default function Page() {
   const activeWorkspaceUpdatedRef = useRef(false);
 
   // Add this near the top of the component with other state declarations
-  const [deleteHandler, setDeleteHandler] = useState<() => Promise<void>>(() => async () => {});
+  const [deleteHandler, setDeleteHandler] = useState<() => Promise<void>>(
+    () => async () => {}
+  );
 
   // Add or modify these state declarations
   const [editingFolder, setEditingFolder] = useState<Folder | undefined>();
@@ -129,7 +129,7 @@ export default function Page() {
     try {
       const response = await fetch(`/api/workspaces/${user?.id}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.error('Error fetching workspaces:', data.error);
         return;
@@ -172,7 +172,9 @@ export default function Page() {
             });
             if (updateRes.ok) {
               const updatedUser = await updateRes.json();
-              if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+              if (
+                updatedUser.active_workspace_id !== user.active_workspace_id
+              ) {
                 setUser(updatedUser);
               }
             } else {
@@ -206,7 +208,9 @@ export default function Page() {
               });
               if (updateRes.ok) {
                 const updatedUser = await updateRes.json();
-                if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+                if (
+                  updatedUser.active_workspace_id !== user.active_workspace_id
+                ) {
                   setUser(updatedUser);
                 }
               } else {
@@ -430,7 +434,7 @@ export default function Page() {
   // Simple delete handler
   const handleDeleteFolder = async () => {
     if (!selectedFolder || !activeWorkspace) return;
-    
+
     try {
       const response = await fetch(
         `/api/workspaces/folders/${selectedFolder.id}`,
@@ -670,9 +674,13 @@ export default function Page() {
   };
 
   //Handler to edit a specific folder
-  const handleEditFolder = async (folderName: string, icon_url?: string | null, emote?: string | null) => {
+  const handleEditFolder = async (
+    folderName: string,
+    icon_url?: string | null,
+    emote?: string | null
+  ) => {
     if (!activeWorkspace || !editingFolder) return;
-    
+
     try {
       const response = await fetch(
         `/api/workspaces/folders/${editingFolder.id}`,
@@ -696,19 +704,17 @@ export default function Page() {
           ? {
               ...prevWorkspace,
               folders: prevWorkspace.folders.map((f) =>
-                f.id === editingFolder.id
-                  ? { ...f, ...updatedFolder }
-                  : f
+                f.id === editingFolder.id ? { ...f, ...updatedFolder } : f
               ),
             }
           : null
       );
-      
+
       // Update selected states if needed
       if (sidebarSelectedFolder?.id === updatedFolder.id) {
         setSidebarSelectedFolder(updatedFolder);
       }
-      
+
       setEditingFolder(undefined);
     } catch (error) {
       console.error('Error updating folder:', error);
@@ -753,17 +759,17 @@ export default function Page() {
             <div className="flex items-center gap-4">
               <ThemeSwitch />
               <div className="relative">
-                <div 
-                  className="relative cursor-pointer" 
+                <div
+                  className="relative cursor-pointer"
                   onClick={handleUserInfoClick}
                 >
                   <UserInfo user={user} isActive={dropdownVisible} />
                   {dropdownVisible && (
-                    <div 
+                    <div
                       className="fixed inset-0 z-10"
                       onClick={() => setDropdownVisible(false)}
                     >
-                      <div 
+                      <div
                         className="absolute top-[68px] right-3.5"
                         onClick={(e) => e.stopPropagation()}
                       >
