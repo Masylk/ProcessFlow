@@ -117,7 +117,93 @@ function Flow({
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
 
-    sortedBlocks.forEach((block) => {
+    // Helper function to process path blocks recursively
+    const processPathBlock = (pathBlock: Block, parentId: string) => {
+      if (!pathBlock.path_block?.paths) return;
+
+      pathBlock.path_block.paths.forEach((path) => {
+        if (path.blocks.length > 0) {
+          // Sort blocks within the path
+          const sortedPathBlocks = [...path.blocks].sort(
+            (a, b) => a.position - b.position
+          );
+
+          // Find the first path block in this path (if any)
+          const firstPathBlockIndex = sortedPathBlocks.findIndex(
+            (block) => block.path_block?.paths
+          );
+
+          // If there's a path block, only process blocks up to that point
+          const blocksToProcess =
+            firstPathBlockIndex !== -1
+              ? sortedPathBlocks.slice(0, firstPathBlockIndex + 1)
+              : sortedPathBlocks;
+
+          // Add edge from parent block to first block in path
+          newEdges.push({
+            id: `e-path-${parentId}-${blocksToProcess[0].id}`,
+            source: parentId,
+            target: `block-${blocksToProcess[0].id}`,
+            type: 'smoothstep',
+            label: path.name,
+            style: {
+              stroke: '#666',
+              strokeWidth: 2,
+              strokeDasharray: '5,5',
+            },
+          });
+
+          // Process blocks up to (and including) the first path block
+          blocksToProcess.forEach((block, index) => {
+            // Add node for current block
+            newNodes.push({
+              id: `block-${block.id}`,
+              data: {
+                label: block.step_block
+                  ? block.step_block.step_data
+                  : block.path_block
+                    ? 'Path Block'
+                    : 'Block',
+              },
+              position: { x: 0, y: 0 },
+            });
+
+            // Create edge to previous block in path
+            if (index > 0) {
+              newEdges.push({
+                id: `e-path-${sortedPathBlocks[index - 1].id}-${block.id}`,
+                source: `block-${sortedPathBlocks[index - 1].id}`,
+                target: `block-${block.id}`,
+                type: 'smoothstep',
+                style: {
+                  stroke: '#666',
+                  strokeWidth: 2,
+                  strokeDasharray: '5,5',
+                },
+              });
+            }
+
+            // If this block is a path block, start a new layout by processing it recursively
+            if (block.path_block?.paths) {
+              processPathBlock(block, `block-${block.id}`);
+            }
+          });
+        }
+      });
+    };
+
+    // Process main flow blocks
+    const firstPathBlockIndex = sortedBlocks.findIndex(
+      (block) => block.path_block?.paths
+    );
+
+    // Only process blocks up to and including the first path block in the main flow
+    const mainBlocksToProcess =
+      firstPathBlockIndex !== -1
+        ? sortedBlocks.slice(0, firstPathBlockIndex + 1)
+        : sortedBlocks;
+
+    mainBlocksToProcess.forEach((block, index) => {
       // Create node for the current block
       newNodes.push({
         id: `block-${block.id}`,
@@ -128,171 +214,23 @@ function Flow({
               ? 'Path Block'
               : 'Block',
         },
-        position: { x: 0, y: 0 }, // Initial position, will be set by ELK
+        position: { x: 0, y: 0 },
       });
 
-      // Create edge to previous block (if not the first block)
-      if (block.position > 0) {
-        const previousBlock = sortedBlocks[block.position - 1];
-        // Only create edge if neither the current block's previous block is a path block
-        if (previousBlock && !previousBlock.path_block) {
-          newEdges.push({
-            id: `e-${previousBlock.id}-${block.id}`,
-            source: `block-${previousBlock.id}`,
-            target: `block-${block.id}`,
-          });
-        }
+      // Create edge to previous block in main flow
+      if (index > 0) {
+        const previousBlock = mainBlocksToProcess[index - 1];
+        newEdges.push({
+          id: `e-${previousBlock.id}-${block.id}`,
+          source: `block-${previousBlock.id}`,
+          target: `block-${block.id}`,
+          type: 'smoothstep',
+        });
       }
 
-      // If it's a path block, add nodes and edges for its paths
+      // If it's a path block, start a new layout
       if (block.path_block?.paths) {
-        block.path_block.paths.forEach((path) => {
-          if (path.blocks.length > 0) {
-            // Update edge type to smoothstep
-            newEdges.push({
-              id: `e-path-${block.id}-${path.blocks[0].id}`,
-              source: `block-${block.id}`,
-              target: `block-${path.blocks[0].id}`,
-              type: 'smoothstep',
-              label: path.name,
-              style: {
-                stroke: '#666',
-                strokeWidth: 2,
-                strokeDasharray: '5,5',
-              },
-            });
-
-            // Connect blocks within the path and handle nested paths
-            path.blocks.forEach((pathBlock, index) => {
-              // Create node for the path block
-              newNodes.push({
-                id: `block-${pathBlock.id}`,
-                data: {
-                  label: pathBlock.step_block
-                    ? pathBlock.step_block.step_data
-                    : pathBlock.path_block
-                      ? 'Path Block'
-                      : 'Block',
-                },
-                position: { x: 0, y: 0 },
-              });
-
-              // Create edge to previous block in path
-              if (index > 0) {
-                const previousPathBlock = path.blocks[index - 1];
-                // Only create edge if previous block is not a path block
-                if (!previousPathBlock.path_block) {
-                  newEdges.push({
-                    id: `e-path-${previousPathBlock.id}-${pathBlock.id}`,
-                    source: `block-${previousPathBlock.id}`,
-                    target: `block-${pathBlock.id}`,
-                    type: 'smoothstep',
-                    style: {
-                      stroke: '#666',
-                      strokeWidth: 2,
-                      strokeDasharray: '5,5',
-                    },
-                  });
-                }
-              }
-
-              // If this block is a path block, recursively handle its paths
-              if (pathBlock.path_block?.paths) {
-                pathBlock.path_block.paths.forEach((nestedPath) => {
-                  if (nestedPath.blocks.length > 0) {
-                    const sortedNestedBlocks = [...nestedPath.blocks].sort(
-                      (a, b) => a.position - b.position
-                    );
-
-                    // Connect path block to first block in nested path
-                    newEdges.push({
-                      id: `e-nested-path-${pathBlock.id}-${sortedNestedBlocks[0].id}`,
-                      source: `block-${pathBlock.id}`,
-                      target: `block-${sortedNestedBlocks[0].id}`,
-                      label: nestedPath.name,
-                      type: 'smoothstep',
-                      style: {
-                        stroke: '#666',
-                        strokeWidth: 2,
-                        strokeDasharray: '5,5',
-                      },
-                    });
-
-                    // Add nodes and edges for nested path blocks
-                    sortedNestedBlocks.forEach((nestedBlock, nestedIndex) => {
-                      newNodes.push({
-                        id: `block-${nestedBlock.id}`,
-                        data: {
-                          label: nestedBlock.step_block
-                            ? nestedBlock.step_block.step_data
-                            : nestedBlock.path_block
-                              ? 'Path Block'
-                              : 'Block',
-                        },
-                        position: { x: 0, y: 0 },
-                      });
-
-                      if (nestedIndex > 0) {
-                        newEdges.push({
-                          id: `e-nested-${sortedNestedBlocks[nestedIndex - 1].id}-${nestedBlock.id}`,
-                          source: `block-${sortedNestedBlocks[nestedIndex - 1].id}`,
-                          target: `block-${nestedBlock.id}`,
-                          type: 'smoothstep',
-                          style: {
-                            stroke: '#666',
-                            strokeWidth: 2,
-                            strokeDasharray: '5,5',
-                          },
-                        });
-                      }
-                    });
-
-                    // Connect last block in nested path back to the next block in parent path
-                    if (index < path.blocks.length - 1) {
-                      const nextParentBlock = path.blocks[index + 1];
-                      const lastNestedBlock =
-                        sortedNestedBlocks[sortedNestedBlocks.length - 1];
-                      newEdges.push({
-                        id: `e-nested-return-${lastNestedBlock.id}-${nextParentBlock.id}`,
-                        source: `block-${lastNestedBlock.id}`,
-                        target: `block-${nextParentBlock.id}`,
-                        type: 'smoothstep',
-                        style: {
-                          stroke: '#666',
-                          strokeWidth: 2,
-                          strokeDasharray: '5,5',
-                        },
-                      });
-                    }
-                  }
-                });
-              }
-            });
-
-            // Connect last block in path back to the next main block if it exists
-            if (block.position < sortedBlocks.length - 1) {
-              const nextMainBlock = sortedBlocks[block.position + 1];
-
-              if (block.path_block?.paths) {
-                const lastBlocks = getLastBlocksFromPaths(block);
-
-                lastBlocks.forEach(({ block: lastBlock, pathHierarchy }) => {
-                  newEdges.push({
-                    id: `e-path-return-${lastBlock.id}-${nextMainBlock.id}-${pathHierarchy}`,
-                    source: `block-${lastBlock.id}`,
-                    target: `block-${nextMainBlock.id}`,
-                    type: 'smoothstep',
-                    style: {
-                      stroke: '#666',
-                      strokeWidth: 2,
-                      strokeDasharray: '5,5',
-                    },
-                  });
-                });
-              }
-            }
-          }
-        });
+        processPathBlock(block, `block-${block.id}`);
       }
     });
 
@@ -301,13 +239,22 @@ function Flow({
   }, [blocks]);
 
   const createElkLayout = useCallback(async () => {
+    // First, create a Set of all node IDs for quick lookup
+    const nodeIds = new Set(nodes.map((node) => node.id));
+
+    // Filter edges to only include those where both source and target nodes exist
+    const validEdges = edges.filter(
+      (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)
+    );
+
     const elkNodes = nodes.map((node) => ({
       id: node.id,
-      width: 150,
-      height: 50,
+      width: 200,
+      height: 60,
+      padding: [20, 20, 20, 20],
     }));
 
-    const elkEdges = edges.map((edge) => ({
+    const elkEdges = validEdges.map((edge) => ({
       id: edge.id,
       sources: [edge.source],
       targets: [edge.target],
@@ -320,34 +267,34 @@ function Flow({
     };
 
     const layoutOptions = {
-      'elk.algorithm': 'layered',
+      'elk.algorithm': 'mrtree',
       'elk.direction': 'DOWN',
-      'elk.spacing.nodeNode': '150',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '150',
-      'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
-      'elk.layered.nodePlacement.strategy': 'LINEAR_SEGMENTS',
-      'elk.layered.nodePlacement.favorStraightEdges': 'true',
-      'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
-      'elk.layered.layering.nodePromotion': 'true',
-      'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
-      'elk.layered.cycleBreaking.strategy': 'DEPTH_FIRST',
-      'elk.spacing.componentComponent': '150',
+      'elk.spacing.nodeNode': '200',
+      'elk.spacing.componentComponent': '200',
+      'elk.nodeSize.constraints': 'MINIMUM_SIZE',
+      'elk.nodeSize.minimum': '150',
+      'elk.spacing.nodeNodeBetweenLayers': '150',
       'elk.layered.mergeEdges': 'false',
-      'elk.layered.spacing.edgeNodeBetweenLayers': '150',
-      'elk.layered.priority.direction': '1',
+      'elk.edgeRouting': 'ORTHOGONAL',
+      'elk.aspectRatio': '2.0',
+      'elk.padding': '[top=100,left=100,bottom=100,right=100]',
+      'elk.interactive': 'true',
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-      'elk.layered.layering.minWidth': '2',
-      'elk.layered.crossingMinimization.semiInteractive': 'true',
-      'elk.layered.layering.layerConstraint': 'SAME_LAYER',
-      'elk.layered.layering.layerChoiceConstraint': 'FIRST',
-      'elk.layered.nodePlacement.bk.fixedAlignment': 'true',
-      'elk.layered.nodePlacement.bk.alignmentMode': 'BALANCED',
+      'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
+      'elk.spacing.individual': '50',
+      'elk.spacing.base': '100',
     };
 
+    // Add error handling around the layout calculation
     try {
       const layout = await elk.layout(elkGraph, {
         layoutOptions,
       });
+
+      if (!layout || !layout.children) {
+        console.error('Invalid layout result:', layout);
+        return;
+      }
 
       const newNodes = nodes.map((node) => {
         const elkNode = layout.children?.find((n) => n.id === node.id);
