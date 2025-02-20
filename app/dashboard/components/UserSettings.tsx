@@ -232,8 +232,14 @@ export default function UserSettings({
   }, [previewUrl]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
-      <div className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden">
+    <div 
+      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      onClick={onClose}
+    >
+      <div 
+        className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="self-stretch h-[92px] flex-col justify-start items-center flex">
           <div className="self-stretch px-6 pt-6 justify-start items-center gap-4 inline-flex">

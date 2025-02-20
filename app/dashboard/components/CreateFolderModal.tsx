@@ -31,8 +31,14 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-lg w-[400px] p-6 flex flex-col">
+    <div 
+      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-lg w-[400px] p-6 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex flex-col items-start gap-4">
           <div className="w-12 h-12 p-3 bg-white rounded-[10px] border border-[#e4e7ec] shadow-sm flex items-center justify-center">

@@ -2,7 +2,7 @@ import { Folder } from '@/types/workspace';
 
 interface FolderDropdownProps {
   onCreateSubfolder: (folder: Folder) => void;
-  onDeleteFolder: () => Promise<void>;
+  onDeleteFolder: (folder: Folder) => Promise<void>;
   onEditFolder: (folder: Folder) => void;
   parent: Folder;
 }
@@ -14,7 +14,7 @@ export default function FolderDropdown({
   parent,
 }: FolderDropdownProps) {
   return (
-    <div className="bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col overflow-hidden cursor-pointer">
+    <div className="bg-white rounded-md shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] flex flex-col overflow-hidden cursor-pointer">
       <div
         onClick={() => onEditFolder(parent)}
         className="self-stretch px-4 py-3 flex items-center gap-3 transition duration-300 hover:bg-[#F9FAFB]"
@@ -43,7 +43,7 @@ export default function FolderDropdown({
       </div>
 
       <div
-        onClick={() => onDeleteFolder()}
+        onClick={() => onDeleteFolder(parent)}
         className="self-stretch px-4 py-3 flex items-center gap-3 transition duration-300 hover:bg-[#F9FAFB]"
       >
         <img
