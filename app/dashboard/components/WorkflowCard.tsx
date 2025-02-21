@@ -12,9 +12,9 @@ const menuItems: MenuItem[] = [
   'separator',
   { label: 'Edit Flow info', icon: 'edit-05.svg' },
   { label: 'Duplicate', icon: 'duplicate-icon.svg' },
-  'separator',
   { label: 'Move', icon: 'folder-download.svg' },
-  { label: 'Delete Flow', icon: 'trash-01.svg' },
+  'separator',
+  { label: 'Delete Flow', icon: 'trash-delete.svg',  },
 ];
 
 interface WorkflowCardProps {

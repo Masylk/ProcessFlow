@@ -36,7 +36,7 @@ export default function IconModifier({
     <div className="relative">
       {/* Icon Display */}
       <div
-        className="p-2 bg-white rounded-lg shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 h-10 cursor-pointer"
+        className="p-2 bg-white rounded-md shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 cursor-pointer"
         onClick={() => setShowSelector(!showSelector)}
       >
         {initialIcon ? (

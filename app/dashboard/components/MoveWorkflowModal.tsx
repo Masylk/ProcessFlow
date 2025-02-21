@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Workspace, Folder } from '@/types/workspace';
 import { Workflow } from '@/types/workflow';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import InputField from '@/app/components/InputFields';
 
 interface MoveWorkflowModalProps {
   onClose: () => void;
@@ -23,8 +25,7 @@ export default function MoveWorkflowModal({
     undefined
   );
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+  const handleSearchChange = (value: string) => {
     setSearchTerm(value);
 
     if (value) {
@@ -113,22 +114,15 @@ export default function MoveWorkflowModal({
           </div>
         </div>
         <div className="self-stretch h-11 px-6 flex flex-col justify-start items-start gap-5 mb-4">
-          <div className="self-stretch h-11 px-3.5 py-2.5 bg-white rounded-lg border border-[#d0d5dd] flex items-center gap-2">
-            <div className="w-4 h-4">
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
-                alt="Search icon"
-                className="w-4 h-4"
-              />
-            </div>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search"
-              className="flex-grow text-[#667085] text-base font-normal bg-transparent focus:outline-none"
-            />
-          </div>
+          <InputField
+            type="icon-leading"
+            mode="light"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search"
+            iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
+ 
+          />
         </div>
         <div className="self-stretch h-px bg-[#e4e7ec] mb-4"></div>
         <div className="self-stretch h-[194px] px-3 flex flex-col gap-1 overflow-y-auto">
@@ -163,25 +157,29 @@ export default function MoveWorkflowModal({
         </div>
         <div className="self-stretch h-[100px] pt-8 flex flex-col justify-start items-center">
           <div className="self-stretch px-6 pb-6 flex gap-3">
-            <button
-              onClick={() => onClose()}
-              className="grow h-11 px-4 py-2.5 bg-white rounded-lg shadow-md border border-[#d0d5dd] flex justify-center items-center transition duration-300 hover:bg-[#F9FAFB]"
+            <ButtonNormal
+              variant="secondaryGray"
+              mode="light"
+              size="small"
+              onClick={onClose}
+              className="flex-1"
             >
-              <span className="text-[#344054] text-base font-semibold">
-                Cancel
-              </span>
-            </button>
-            <button
+              Cancel
+            </ButtonNormal>
+            <ButtonNormal
+              variant="primary"
+              mode="light"
+              size="small"
               onClick={async () => {
                 if (targetFolder !== undefined) {
                   await onConfirm(targetFolder);
                   onClose();
                 }
               }}
-              className="grow h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-md flex justify-center items-center transition duration-300 hover:bg-[#374C99]"
+              className="flex-1"
             >
-              <span className="text-white text-base font-semibold">Move</span>
-            </button>
+              Move
+            </ButtonNormal>
           </div>
         </div>
       </div>

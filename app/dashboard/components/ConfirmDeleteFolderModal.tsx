@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import ButtonDestructive from '@/app/components/ButtonDestructive';
 
 interface ConfirmDeleteModalProps {
   onClose: () => void;
@@ -38,27 +40,28 @@ export default function ConfirmDeleteFolderModal({
 
           <div className="self-stretch pt-8 flex-col justify-start items-start flex">
             <div className="self-stretch px-6 pb-6 flex items-center gap-3">
-              <button
+              <ButtonNormal
+                variant="secondaryGray"
+                mode="light"
+                size="small"
                 onClick={onClose}
-                className="w-full h-11 px-4 py-2.5 bg-white rounded-lg shadow border border-[#d0d5dd] flex justify-center items-center gap-1.5 transition-all duration-300 hover:bg-[#F9FAFB]"
+                className="flex-1"
               >
-                <span className="text-[#344054] text-base font-semibold">
-                  Cancel
-                </span>
-              </button>
+                Cancel
+              </ButtonNormal>
 
-              <button
+              <ButtonDestructive
+                variant="primary"
+                mode="light"
+                size="small"
                 onClick={async () => {
                   await onDelete();
                   onClose();
                 }}
-                className={`w-full h-11 px-4 py-2.5 bg-[#d92c20] hover:bg-[#B42318]
-                 rounded-lg shadow border border-[#901f17] flex justify-center items-center gap-1.5 transition-all duration-300`}
+                className="flex-1"
               >
-                <span className="text-white text-base font-semibold">
-                  Delete
-                </span>
-              </button>
+                Delete
+              </ButtonDestructive>
             </div>
           </div>
         </div>
