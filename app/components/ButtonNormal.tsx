@@ -30,45 +30,48 @@ const ButtonNormal: React.FC<ButtonProps> = ({
 }) => {
   const baseStyles = 'font-semibold transition-all rounded-lg flex items-center justify-center gap-2';
 
+  // Add disabled styles
+  const disabledStyles = 'opacity-50 saturate-50 cursor-not-allowed';
+
    // Override styles for links (no padding, no background, and underline)
    const linkStyles = 'font-normal transition-all self-stretch';
 
   // Define size styles
   const sizeStyles = {
-    small: iconOnly ? 'p-2' : 'px-3 py-2 text-sm gap-1 font-normal rounded-lg',
-    medium: iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-base gap-1 font-semibold rounded-lg',
-    large: iconOnly ? 'p-3' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-lg',
+    small: iconOnly ? 'p-2' : 'px-3 py-2 text-sm gap-1 font-normal rounded-md',
+    medium: iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-base gap-1 font-medium rounded-md',
+    large: iconOnly ? 'p-3' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-md',
   };
 
   // Define variant styles with light and dark mode
   const variants = {
     primary: {
-      light: 'text-white bg-lightMode-button-primary-bg hover:bg-[#4761C4] border border-lightMode-button-primary-bg shadow-[0px 1px 2px rgba(0, 0, 0, 0.09)] focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-white bg-lightMode-button-primary-bg hover:bg-[#5D7AE2] border border-lightMode-button-primary-bg shadow-[0px 1px 2px rgba(0, 0, 0, 0.09)] focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-white bg-lightMode-button-primary-bg border border-lightMode-button-primary-bg shadow-[0px 1px 2px rgba(0, 0, 0, 0.09)] focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:bg-[#4761C4]'}`,
+      dark: `text-white bg-lightMode-button-primary-bg border border-lightMode-button-primary-bg shadow-[0px 1px 2px rgba(0, 0, 0, 0.09)] focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:bg-[#5D7AE2]'}`,
     },
     secondaryGray: {
-      light: 'text-lightMode-button-secondary-fg hover:text-lightMode-text-secondary_hover bg-white rounded-lg  border border-[#d0d5dd] hover:bg-gray-100 focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-secondary-fg hover:text-darkMode-text-secondary_hover bg-darkMode-button-secondary-bg hover:bg-darkMode-button-secondary-bg_hover border border-darkMode-button-secondary-border focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-secondary-fg bg-white border border-[#d0d5dd] focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-text-secondary_hover hover:bg-gray-100'}`,
+      dark: `text-darkMode-button-secondary-fg bg-darkMode-button-secondary-bg border border-darkMode-button-secondary-border focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-text-secondary_hover hover:bg-darkMode-button-secondary-bg_hover'}`,
     },
     secondaryColor: {
-      light: 'text-lightMode-button-secondary-color-fg hover:text-lightMode-button-secondary-color-fg_hover bg-white hover:bg-lightMode-button-secondary-color-bg_hover border border-lightMode-button-secondary-color-border hover:border-lightMode-button-secondary-color-border_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-secondary-color-fg hover:text-darkMode-button-secondary-color-fg_hover bg-darkMode-button-secondary-color-bg hover:bg-darkMode-button-secondary-color-bg_hover border border-darkMode-button-secondary-color-border hover:border-darkMode-button-secondary-color-border_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-secondary-color-fg bg-white border border-lightMode-button-secondary-color-border focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-button-secondary-color-fg_hover hover:bg-lightMode-button-secondary-color-bg_hover hover:border-lightMode-button-secondary-color-border_hover'}`,
+      dark: `text-darkMode-button-secondary-color-fg bg-darkMode-button-secondary-color-bg border border-darkMode-button-secondary-color-border focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-button-secondary-color-fg_hover hover:bg-darkMode-button-secondary-color-bg_hover hover:border-darkMode-button-secondary-color-border_hover'}`,
     },
     tertiaryGray: {
-      light: 'text-lightMode-button-tertiary-fg hover:text-lightMode-button-tertiary-fg_hover hover:bg-lightMode-button-tertiary-bg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-tertiary-fg hover:text-darkMode-button-tertiary-fg_hover hover:bg-darkMode-button-tertiary-bg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-tertiary-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-button-tertiary-fg_hover hover:bg-lightMode-button-tertiary-bg_hover'}`,
+      dark: `text-darkMode-button-tertiary-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-button-tertiary-fg_hover hover:bg-darkMode-button-tertiary-bg_hover'}`,
     },
     tertiaryColor: {
-      light: 'text-lightMode-button-tertiary-color-fg hover:text-lightMode-button-tertiary-color-fg_hover hover:bg-lightMode-button-tertiary-color-bg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-tertiary-color-fg hover:text-darkMode-button-tertiary-color-fg_hover hover:bg-darkMode-button-tertiary-color-bg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-tertiary-color-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-button-tertiary-color-fg_hover hover:bg-lightMode-button-tertiary-color-bg_hover'}`,
+      dark: `text-darkMode-button-tertiary-color-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-button-tertiary-color-fg_hover hover:bg-darkMode-button-tertiary-color-bg_hover'}`,
     },
     linkGray: {
-      light: 'text-lightMode-button-tertiary-fg hover:text-lightMode-button-tertiary-fg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-tertiary-fg hover:text-darkMode-button-tertiary-fg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-tertiary-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-button-tertiary-fg_hover'}`,
+      dark: `text-darkMode-button-tertiary-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-button-tertiary-fg_hover'}`,
     },
     linkColor: {
-      light: 'text-lightMode-button-tertiary-color-fg hover:text-lightMode-button-tertiary-color-fg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg',
-      dark: 'text-darkMode-button-tertiary-color-fg hover:text-darkMode-button-tertiary-color-fg_hover focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg',
+      light: `text-lightMode-button-tertiary-color-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-lightMode-bg-primary focus-visible:ring-lightMode-button-primary-bg ${!props.disabled && 'hover:text-lightMode-button-tertiary-color-fg_hover'}`,
+      dark: `text-darkMode-button-tertiary-color-fg focus:outline-none focus-visible:ring focus-visible:ring-offset-2 focus-visible:ring-offset-darkMode-bg-primary focus-visible:ring-darkMode-button-primary-bg ${!props.disabled && 'hover:text-darkMode-button-tertiary-color-fg_hover'}`,
     },
   };
 
@@ -83,7 +86,7 @@ const ButtonNormal: React.FC<ButtonProps> = ({
         variant === 'linkGray' || variant === 'linkColor' ? linkStyles : sizeStyles[size],
         variantStyles,
         className,
-        isLoading && 'opacity-50 cursor-not-allowed'
+        (isLoading || props.disabled) && disabledStyles // Apply disabled styles for both loading and disabled states
       )}
       disabled={isLoading || props.disabled}
       {...props}

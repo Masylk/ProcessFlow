@@ -81,7 +81,7 @@ export default function CreateFlowModal({
             />
           </div>
         </div>
-        <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 flex overflow-hidden">
+        <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 hidden overflow-hidden">
           <div className={`text-sm font-semibold font-['Inter'] leading-tight ${
             mode === 'dark' ? 'text-darkMode-text-primary' : 'text-[#344054]'
           }`}>

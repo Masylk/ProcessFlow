@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import IconModifier from './IconModifier';
 import { Folder } from '@/types/workspace';
+import InputField from '@/app/components/InputFields';
+import ButtonNormal from '@/app/components/ButtonNormal';
 
 interface CreateSubfolderModalProps {
   onClose: () => void;
@@ -91,31 +93,37 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
               onUpdate={updateIcon}
               emote={emote}
             />
-            <input
-              type="text"
-              className="flex-1 h-11 px-3.5 py-2.5 bg-white rounded-lg border border-[#d0d5dd] text-base text-[#101828]"
+            <InputField
+              type="default"
+              mode="light"
               value={folderName}
-              onChange={(e) => setFolderName(e.target.value)}
+              onChange={setFolderName}
               placeholder="Enter folder name"
             />
           </div>
         </div>
 
         {/* Buttons */}
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            className="h-11 w-full px-4 py-2.5 bg-white border border-[#d0d5dd] rounded-lg text-[#344054] font-semibold"
+        <div className="mt-6 flex gap-3">
+          <ButtonNormal
+            variant="secondaryGray"
+            mode="light"
+            size="small"
             onClick={onClose}
+            className="flex-1"
           >
             Cancel
-          </button>
-          <button
-            className="h-11 w-full px-4 py-2.5 bg-[#4e6bd7] text-white rounded-lg font-semibold"
+          </ButtonNormal>
+          <ButtonNormal
+            variant="primary"
+            mode="light"
+            size="small"
             onClick={() => createFolder(folderName)}
             disabled={!folderName.trim()}
+            className="flex-1"
           >
             Create
-          </button>
+          </ButtonNormal>
         </div>
       </div>
     </div>

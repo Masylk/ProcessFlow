@@ -35,9 +35,9 @@ const ButtonDestructive: React.FC<ButtonDestructiveProps> = ({
 
   // Define size styles
   const sizeStyles = {
-    small: iconOnly ? 'p-2' : 'px-3 py-2 text-sm gap-1 font-semibold rounded-lg',
-    medium: iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-base gap-1 font-semibold rounded-lg',
-    large: iconOnly ? 'p-3' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-lg',
+    small: iconOnly ? 'p-2' : 'px-3 py-2 text-sm gap-1 font-normal rounded-md',
+    medium: iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-base gap-1 font-semibold rounded-md',
+    large: iconOnly ? 'p-3' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-md',
   };
 
   // Define variant styles with light and dark mode for destructive button
