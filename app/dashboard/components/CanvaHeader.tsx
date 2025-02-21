@@ -48,7 +48,7 @@ export default function CanvaHeader({
 
         {/* Display selected folder name or nothing */}
         {selectedFolder && (
-          <div className="text-[#101828] text-2xl font-semibold font-['Inter'] leading-loose">
+          <div className="text-lightMode-text-primary text-2xl font-medium font-['Inter'] leading-loose">
             {selectedFolder.name}
           </div>
         )}

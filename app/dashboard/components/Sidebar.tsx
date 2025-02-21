@@ -162,7 +162,7 @@ export default function Sidebar({
             <div className="flex items-start gap-2.5">
               <div className="flex justify-start items-start ">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
                   style={{
                     backgroundColor:
                       activeWorkspace.background_colour || '#4299E1',
@@ -174,7 +174,7 @@ export default function Sidebar({
             </div>
             {/* Display activeWorkspace name */}
             <div className="relative flex flex-col px-0.5">
-              <div className="h-4 text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="h-4 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 {activeWorkspace.name}
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function Sidebar({
                 height={20}
                 className="w-5 h-5"
               />
-              <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 Support
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function Sidebar({
                 height={20}
                 className="w-5 h-5"
               />
-              <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 Settings
               </div>
             </div>

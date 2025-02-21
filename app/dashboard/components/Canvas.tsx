@@ -68,7 +68,7 @@ const Canvas: React.FC<CanvasProps> = ({
         {/* Recently Used Section */}
         {recentlyUsedWorkflows.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Recently Used</h2>
+            <h2 className="text-lightMode-text-primary text-xl font-medium mb-4">Recently Used</h2>
             {currentView === 'grid' ? (
               <div className="grid grid-cols-4 gap-4">
                 {recentlyUsedWorkflows.map((workflow) => (
@@ -149,7 +149,7 @@ const Canvas: React.FC<CanvasProps> = ({
 
         {/* All Workflows Section */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">All Workflows</h2>
+          <h2 className="text-lightMode-text-primary text-xl font-medium mb-4">All Workflows</h2>
           {currentView === 'grid' ? (
             <div className="grid grid-cols-4 gap-4 ">
               {workflowsToDisplay.map((workflow) => (
