@@ -126,7 +126,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
           </div>
 
           {/* Label */}
-          <span className="text-sm  font-medium truncate">{label}</span>
+          <span className="text-lightMode-text-secondary text-sm  font-medium truncate">{label}</span>
         </div>
 
         {/* Three dots button */}

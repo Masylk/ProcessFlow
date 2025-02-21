@@ -266,7 +266,7 @@ export default function Sidebar({
                 height={20}
                 className="w-5 h-5"
               />
-              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
                 Support
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function Sidebar({
                 height={20}
                 className="w-5 h-5"
               />
-              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
                 Settings
               </div>
             </div>
