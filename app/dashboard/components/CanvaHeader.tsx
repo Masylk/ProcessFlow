@@ -1,14 +1,19 @@
 import { Folder } from '@/types/workspace';
 import ButtonNormal from '../../components/ButtonNormal';
+import ViewSwitch from '../../components/ViewSwitch';
 
 interface CanvaHeaderProps {
   openCreateFlow: () => void;
   selectedFolder?: Folder;
+  currentView: 'grid' | 'table';
+  onViewChange: (view: 'grid' | 'table') => void;
 }
 
 export default function CanvaHeader({
   openCreateFlow,
   selectedFolder,
+  currentView,
+  onViewChange,
 }: CanvaHeaderProps) {
   const getFolderIcon = () => {
     if (selectedFolder?.icon_url) {
@@ -36,7 +41,7 @@ export default function CanvaHeader({
   };
 
   return (
-    <div className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b">
+    <div className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b border-lightMode-border-secondary">
       <div className="justify-start items-center gap-4 flex">
         {/* Dynamically display folder icon */}
         {selectedFolder && getFolderIcon()}
@@ -49,32 +54,31 @@ export default function CanvaHeader({
         )}
       </div>
       <div className="justify-end items-center gap-2 flex">
+        <ViewSwitch 
+          currentView={currentView} 
+          onViewChange={onViewChange} 
+        />
         {/* Import Process Button */}
-            <ButtonNormal
-              variant="secondaryGray"
-              mode="light"
-              size="small"
-              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/upload-01.svg"
-              className='hidden'
-            >
-              Import a process
-            </ButtonNormal>
-
+        <ButtonNormal
+          variant="secondaryGray"
+          mode="light"
+          size="small"
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
+          className='hidden'
+        >
+          Import a process
+        </ButtonNormal>
         {/* New Process Button */}
-        
-           
-            <ButtonNormal
-              variant="primary"
-              mode="light"
-              size="small"
-              leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/white-plus.svg"
-              onClick={openCreateFlow}
-            >
-              New Flow
-            </ButtonNormal>
-          
-          
-       
+        <ButtonNormal
+          variant="primary"
+          mode="light"
+          size="small"
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
+          onClick={openCreateFlow}
+          className='hidden'
+        >
+          New Flow
+        </ButtonNormal>
       </div>
     </div>
   );

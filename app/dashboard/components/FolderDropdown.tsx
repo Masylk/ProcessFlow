@@ -14,7 +14,7 @@ export default function FolderDropdown({
   parent,
 }: FolderDropdownProps) {
   return (
-    <div className="bg-white rounded-md shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] flex flex-col overflow-hidden cursor-pointer">
+    <div className=" shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] flex flex-col overflow-hidden cursor-pointer">
       <div
         onClick={() => onEditFolder(parent)}
         className="self-stretch px-4 py-3 flex items-center gap-3 transition duration-300 hover:bg-[#F9FAFB]"
@@ -44,14 +44,14 @@ export default function FolderDropdown({
 
       <div
         onClick={() => onDeleteFolder(parent)}
-        className="self-stretch px-4 py-3 flex items-center gap-3 transition duration-300 hover:bg-[#F9FAFB]"
+        className="self-stretch px-4 py-3 flex items-center gap-3 transition duration-300 hover:bg-lightMode-bg-error-primary"
       >
         <img
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-delete.svg`}
           alt="Trash Icon"
           className="w-4 h-4"
         />
-        <span className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+        <span className="text-lightMode-fg-error-primary text-sm font-medium font-['Inter'] leading-tight">
           Delete folder
         </span>
       </div>

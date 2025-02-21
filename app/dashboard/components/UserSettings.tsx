@@ -4,6 +4,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import ButtonDestructive from '@/app/components/ButtonDestructive';
+import InputField from '@/app/components/InputFields';
 
 interface UserSettingsProps {
   user: User;
@@ -276,8 +279,8 @@ export default function UserSettings({
             </div>
 
             {/* Main settings form */}
-            <div className="self-stretch h-[664px] flex-col justify-start items-start gap-6 flex">
-              <div className="self-stretch h-[579px] flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
+            <div className="self-stretch h-min flex-col justify-start items-start gap-6 flex">
+              <div className="self-stretch h-[579px] p-1 flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
                 {/* Photo & Name section */}
                 <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
@@ -308,47 +311,24 @@ export default function UserSettings({
                         />
                       </div>
                     </div>
-                    <div
+                    <ButtonNormal
+                      variant="secondaryColor"
+                      mode="light"
+                      size="small"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-icon.svg`}
                       onClick={() => openImageUpload()}
-                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#889ce4] flex items-center gap-1 cursor-pointer overflow-hidden"
                     >
-                      <div className="w-5 h-5 relative overflow-hidden">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-icon.svg`}
-                          alt="Upload Icon"
-                          className="w-5 h-5 object-contain"
-                        />
-                      </div>
-                      <div className="px-0.5 flex items-center">
-                        <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
-                          Upload new picture
-                        </div>
-                      </div>
-                    </div>
-                    {/* <input
-                      type="file"
-                      ref={fileInputRef}
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    /> */}
-                    <div
+                      Upload new picture
+                    </ButtonNormal>
+                    <ButtonDestructive
+                      variant="tertiary"
+                      mode="light"
+                      size="small"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
                       onClick={() => onDeleteAvatar()}
-                      className="px-3 py-2 cursor-pointer bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-1 overflow-hidden"
                     >
-                      <div className="w-5 h-5 relative overflow-hidden">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon.svg`}
-                          alt="Delete Icon"
-                          className="w-5 h-5 object-contain"
-                        />
-                      </div>
-                      <div className="px-0.5 flex items-center">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                          Delete
-                        </div>
-                      </div>
-                    </div>
+                      Delete
+                    </ButtonDestructive>
                   </div>
                   {/* Name section */}
                   <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
@@ -361,25 +341,28 @@ export default function UserSettings({
                     </div>
                     <div className="self-stretch justify-start items-center gap-4 inline-flex">
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-                        <input
-                          type="text"
+                        <InputField
+                          type="default"
+                          mode="light"
                           value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          className="self-stretch h-11 px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-base font-normal font-['Inter'] leading-normal"
+                          onChange={setLastName}
+                          placeholder="Last name"
                         />
                       </div>
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-                        <input
-                          type="text"
+                        <InputField
+                          type="default"
+                          mode="light"
                           value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          className="self-stretch h-11 px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-base font-normal font-['Inter'] leading-normal"
+                          onChange={setFirstName}
+                          placeholder="First name"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="self-stretch h-px bg-[#e4e7ec]" />
+                 {/* Divider */}
+                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
                 {/* Email section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
@@ -393,39 +376,31 @@ export default function UserSettings({
                     <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                       <div className="self-stretch h-10 flex-col justify-start items-start gap-1.5 flex">
                         <div className="relative self-stretch">
-                          <input
-                            type="email"
+                          <InputField
+                            type="default"
+                            mode="light"
                             value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            className="h-10 w-full px-3.5 py-2.5 pl-10 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#101828] text-base font-normal font-['Inter'] leading-normal"
+                            onChange={setNewEmail}
+                            placeholder="Enter email"
+                            iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
                           />
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <img
-                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-icon.svg`}
-                              alt="Mail Icon"
-                              className="w-5 h-5 object-contain"
-                            />
-                          </div>
                         </div>
                       </div>
                     </div>
-                    <button
+                    <ButtonNormal
+                      variant="secondaryGray"
+                      mode="light"
+                      size="small"
                       onClick={handleChangeEmail}
                       disabled={newEmail === user.email}
-                      className="px-3 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 disabled:opacity-50"
+                      className="h-full"
                     >
-                      <div className="inline-flex items-center px-0.5">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                          Change email
-                        </div>
-                      </div>
-                    </button>
+                      Change email
+                    </ButtonNormal>
                   </div>
                 </div>
-                <div className="self-stretch h-px bg-[#e4e7ec]" />
-
-                {/* Divider */}
-                <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex" />
+                 {/* Divider */}
+                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
                 {/* Password section */}
 
                 {!showPasswordForm ? (
@@ -440,16 +415,15 @@ export default function UserSettings({
                           </div>
                         </div>
                       </div>
-                      <div
+                      <ButtonNormal
+                        variant="secondaryGray"
+                        mode="light"
+                        size="small"
                         onClick={() => setShowPasswordForm(true)}
-                        className="w-fit px-4 py-3 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 cursor-pointer"
+                        className="w-fit"
                       >
-                        <div className="inline-flex items-center px-0.5">
-                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                            Change password
-                          </div>
-                        </div>
-                      </div>
+                        Change password
+                      </ButtonNormal>
                     </div>
 
                     {/* Confirmation Message - displayed when passwordChanged is true */}
@@ -472,7 +446,7 @@ export default function UserSettings({
                   </div>
                 ) : (
                   // When the form is displayed, show the full password change section.
-                  <div className="flex flex-col w-96 gap-4 p-4 rounded-lg">
+                  <div className="flex flex-col w-96 gap-4 rounded-lg">
                     <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
                       Password
                     </div>
@@ -536,30 +510,29 @@ export default function UserSettings({
                     </div>
                     {/* Action buttons */}
                     <div className="flex gap-4">
-                      <button
+                      <ButtonNormal
+                        variant="secondaryGray"
+                        mode="light"
+                        size="small"
                         onClick={handleCancelPasswordChange}
-                        className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex justify-center items-center"
                       >
-                        <span className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                          Cancel change
-                        </span>
-                      </button>
-                      <button
+                        Cancel change
+                      </ButtonNormal>
+                      <ButtonNormal
+                        variant="primary"
+                        mode="light"
+                        size="small"
                         onClick={handleUpdatePassword}
-                        className="px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border-2 border-white flex justify-center items-center"
                       >
-                        <span className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-                          Update password
-                        </span>
-                      </button>
+                        Update password
+                      </ButtonNormal>
                     </div>
                   </div>
                 )}
 
-                {/* Divider */}
-                <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex" />
+                 {/* Divider */}
+                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
 
-                <div className="self-stretch h-px bg-[#e4e7ec]" />
                 {/* Account Security section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
@@ -570,67 +543,50 @@ export default function UserSettings({
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div
+                    <ButtonNormal
+                      variant="secondaryGray"
+                      mode="light"
+                      size="small"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
                       onClick={() => handleLogout()}
-                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
                     >
-                      <div className="w-5 h-5 relative overflow-hidden">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
-                          alt="Log Out Icon"
-                          className="w-5 h-5 object-contain"
-                        />
-                      </div>
-                      <div className="inline-flex items-center px-0.5">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                          Log out
-                        </div>
-                      </div>
-                    </div>
-                    <div
+                      Log out
+                    </ButtonNormal>
+                    <ButtonDestructive
+                      variant="secondary"
+                      mode="light"
+                      size="small"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}
                       onClick={() => openDeleteAccount()}
-                      className="px-3 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center justify-center gap-1 overflow-hidden cursor-pointer"
                     >
-                      <div className="w-5 h-5 relative overflow-hidden">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}
-                          alt="Delete Icon"
-                          className="w-5 h-5 object-contain"
-                        />
-                      </div>
-                      <div className="inline-flex items-center px-0.5">
-                        <div className="text-[#d92c20] text-sm font-semibold font-['Inter'] leading-tight">
-                          Delete my account
-                        </div>
-                      </div>
-                    </div>
+                      Delete my account
+                    </ButtonDestructive>
                   </div>
                 </div>
+                 
               </div>
+              {/* Divider */}
+              <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
               {/* Footer buttons */}
               <div className="self-stretch h-[61px] flex-col justify-start items-center gap-5 flex">
                 <div className="self-stretch flex justify-end items-center gap-5">
                   <div className="grow shrink basis-0 h-10 flex justify-end items-center gap-3">
-                    <div
-                      className="px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex justify-center items-center gap-1 cursor-pointer overflow-hidden"
+                    <ButtonNormal
+                      variant="secondaryGray"
+                      mode="light"
+                      size="small"
                       onClick={onClose}
                     >
-                      <div className="px-0.5 flex justify-center items-center">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                          Cancel
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className="px-3.5 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border-2 border-white flex justify-center items-center gap-1 cursor-pointer overflow-hidden"
+                      Cancel
+                    </ButtonNormal>
+                    <ButtonNormal
+                      variant="primary"
+                      mode="light"
+                      size="small"
                       onClick={handleSave}
                     >
-                      <div className="px-0.5 flex justify-center items-center">
-                        <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-                          Save
-                        </div>
-                      </div>
-                    </div>
+                      Save
+                    </ButtonNormal>
                   </div>
                 </div>
               </div>

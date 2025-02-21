@@ -88,12 +88,12 @@ export const TabButton: React.FC<TabButtonProps> = ({
       <div
         role="button"
         tabIndex={0}
-        className={`w-full h-9 px-3 py-2 rounded-md flex items-center gap-2 cursor-pointer transition-colors
-          ${isActive ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}
+        className={`w-full px-3 py-1.5 rounded-md flex items-center cursor-pointer transition-colors
+          ${isActive ? 'bg-gray-100 border border-gray-200' : 'bg-white hover:bg-gray-50 border border-transparent'}`}
         onClick={onClick}
         onKeyDown={(e) => e.key === 'Enter' && onClick()}
       >
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {/* Chevron (shows on hover) */}
           {isFolder && hasSubfolders && (
             <div
@@ -104,7 +104,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 onToggleExpand?.();
               }}
               onKeyDown={(e) => e.key === 'Enter' && onToggleExpand?.()}
-              className="w-4 h-4 hidden group-hover:block flex-shrink-0"
+              className="w-4 h-4 hidden group-hover:block flex-shrink-0  hover:bg-gray-200 rounded-md opacity-70 hover:opacity-100"
             >
               <img
                 src={getAssetUrl(chevronIcon)}
@@ -126,7 +126,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
           </div>
 
           {/* Label */}
-          <span className="text-sm font-semibold truncate">{label}</span>
+          <span className="text-sm font-medium truncate">{label}</span>
         </div>
 
         {/* Three dots button */}
@@ -136,7 +136,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
             tabIndex={0}
             onClick={handleDropdownClick}
             onKeyDown={(e) => e.key === 'Enter' && handleDropdownClick(e as any)}
-            className="w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto"
+            className="w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto hover:bg-gray-200 rounded-md opacity-70 hover:opacity-100"
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-black.svg`}
@@ -151,7 +151,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
       {dropdownPosition && folder && (
         <div
           ref={dropdownRef}
-          className="fixed z-50 w-auto min-w-[200px] bg-white shadow-lg rounded-md border border-gray-300"
+          className="fixed z-50 w-auto min-w-[200px] bg-white shadow-lg rounded-lg border border-lightMode-border-secondary overflow-hidden"
           style={{
             top: dropdownPosition.top,
             left: dropdownPosition.left,

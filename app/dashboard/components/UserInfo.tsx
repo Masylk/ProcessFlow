@@ -22,7 +22,7 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
 
   return (
     <div
-      className={`flex items-center gap-4 px-3 py-1 rounded-lg border transition-all duration-300 hover:bg-lightMode-bg-primary_hover ${
+      className={`flex items-center  rounded-full border transition-all duration-300 hover:bg-lightMode-bg-primary_hover ${
         isActive 
           ? 'border-[#4E6BD7] shadow-[0px_0px_0px_4px_rgba(78,107,215,0.12)]' 
           : 'border-transparent'
@@ -33,15 +33,15 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
       <img
         src={avatarSrc}
         alt="User Avatar"
-        className="w-8 h-8 rounded-full object-cover"
+        className="w-10 h-10 rounded-full object-cover"
       />
       
       {/* User Info */}
       <div className="flex flex-col">
-        <div className="text-[#101828] text-sm font-semibold">
+        <div className="text-[#101828] text-sm font-semibold hidden">
           {user?.first_name ? `${user.first_name} ${user.last_name}` : 'User'}
         </div>
-        <div className="text-[#475467] text-sm">
+        <div className="text-[#475467] text-sm hidden">
           {user?.email || 'user@example.com'}
         </div>
       </div>

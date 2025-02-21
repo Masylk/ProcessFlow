@@ -31,7 +31,7 @@ import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
 import ThemeSwitch from '@/app/components/ThemeSwitch';
-
+import ButtonNormal from '@/app/components/ButtonNormal';
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
   loading: () => <p>Loading...</p>,
   ssr: false
@@ -99,6 +99,9 @@ export default function Page() {
 
   // Add or modify these state declarations
   const [editingFolder, setEditingFolder] = useState<Folder | undefined>();
+
+  // Add this to the Canvas props
+  const [currentView, setCurrentView] = useState<'grid' | 'table'>('grid');
 
   // Fetch user data from your API
   useEffect(() => {
@@ -745,18 +748,32 @@ export default function Page() {
 
         <div className="flex flex-col flex-1">
           {/* Page header */}
-          <header className="h-[73px] bg-white border-b border-gray-200 flex justify-between items-center px-4 relative">
+          <header className="min-h-[73px] bg-lightMode-bg-primary border-b border-gray-200 flex justify-between items-center px-4 relative">
             <SearchBar
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
             />
             <div className="flex items-center gap-4">
-              <ThemeSwitch />
+              {/* Temporarily disabled theme switcher - uncomment when ready */}
+              {/* <ThemeSwitch /> */}
+
+                <ButtonNormal
+                      variant="primary"
+                      size="small"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
+                      onClick={openCreateFlow}
+                    >
+                      New Flow
+                </ButtonNormal>
+                {/* Divider */}
+                <div className=" h-[25px] border-r border-gray-300 justify-center items-center" />
               <div className="relative">
+                
                 <div 
                   className="relative cursor-pointer" 
                   onClick={handleUserInfoClick}
                 >
+                  
                   <UserInfo user={user} isActive={dropdownVisible} />
                   {dropdownVisible && (
                     <div 
@@ -794,6 +811,8 @@ export default function Page() {
                 onEditWorkflow={openEditFlow}
                 onDuplicateWorkflow={handleDuplicateWorkflow}
                 onMoveWorkflow={openMoveFlow}
+                currentView={currentView}
+                onViewChange={setCurrentView}
               />
             )}
           </main>
