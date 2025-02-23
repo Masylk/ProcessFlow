@@ -15,6 +15,7 @@ import {
   EdgeProps,
   getBezierPath,
   SmoothStepEdge,
+  getSmoothStepPath,
 } from '@xyflow/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
 
@@ -73,58 +74,88 @@ interface NodeData {
   label: string;
   position: number;
   onDelete: (id: string) => void;
+  isLastInPath?: boolean;
+  pathId?: number | null;
+  handleAddBlockOnEdge?: (position: number, path_id: number | null) => void;
 }
 
 // Update the CustomNode component
 function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
-    <div
-      style={{
-        width: '481px',
-        padding: '20px 24px',
-        borderRadius: '16px',
-        border: '1px solid #d0d5dd',
-        background: 'white',
-        minHeight: '120px',
-        position: 'relative',
-      }}
-    >
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+    <>
+      <div
+        style={{
+          width: '481px',
+          padding: '20px 24px',
+          borderRadius: '16px',
+          border: '1px solid #d0d5dd',
+          background: 'white',
+          minHeight: '120px',
+          position: 'relative',
+        }}
+      >
+        <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
 
-      <div className="flex justify-start items-center gap-2 mb-3">
-        <div className="h-12 flex justify-start items-center gap-4">
-          <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] flex justify-center items-center">
-            <img
-              src="/step-icons/default-icons/container.svg"
-              alt="icon"
-              className="w-8 h-8"
-            />
+        <div className="flex justify-start items-center gap-2 mb-3">
+          <div className="h-12 flex justify-start items-center gap-4">
+            <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] flex justify-center items-center">
+              <img
+                src="/step-icons/default-icons/container.svg"
+                alt="icon"
+                className="w-8 h-8"
+              />
+            </div>
+
+            <div className="flex-col justify-start items-start gap-1">
+              <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
+                Step {data.position}
+              </h3>
+            </div>
           </div>
 
-          <div className="flex-col justify-start items-start gap-1">
-            <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
-              Step {data.position}
-            </h3>
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onDelete(id);
+            }}
+            className="ml-auto w-8 h-8 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
+          >
+            ×
+          </button>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onDelete(id);
+        <div className="text-[#667085] text-base font-normal font-['Inter'] leading-normal">
+          {data.label}
+        </div>
+
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          style={{ opacity: 0 }}
+        />
+      </div>
+      {data.isLastInPath && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '2px',
+            height: '40px',
+            background: '#d0d5dd',
+            cursor: 'pointer',
           }}
-          className="ml-auto w-8 h-8 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
+          onClick={() => {
+            const lastPosition = data.position + 1;
+            data.handleAddBlockOnEdge?.(lastPosition, data.pathId ?? null);
+          }}
         >
-          ×
-        </button>
-      </div>
-
-      <div className="text-[#667085] text-base font-normal font-['Inter'] leading-normal">
-        {data.label}
-      </div>
-
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
-    </div>
+          <div className="w-8 h-8 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors flex items-center justify-center text-xl absolute top-full left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            +
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -148,6 +179,17 @@ function CustomSmoothStepEdge({
   style = {},
   data,
 }: EdgeProps & { data: EdgeData }) {
+  const [edgePath] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    borderRadius: 16,
+    offset: 16,
+  });
+
   const handleEdgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const sourceBlockId = source.replace('block-', '');
@@ -156,15 +198,18 @@ function CustomSmoothStepEdge({
     const sourceBlock = data.blocks.find((b) => b.id === Number(sourceBlockId));
     const targetBlock = data.blocks.find((b) => b.id === Number(targetBlockId));
 
+    // If source block is undefined but target block exists, we're at the start of a path
+    if (!sourceBlock && targetBlock) {
+      data.handleAddBlockOnEdge(0, targetBlock.path_id);
+      return;
+    }
+
     if (sourceBlock && targetBlock) {
       // Get all blocks in the same path
       const pathBlocks = data.blocks.filter(
         (b) => b.path_id === sourceBlock.path_id
       );
-      console.log(
-        'All blocks in path:',
-        pathBlocks.map((b) => ({ id: b.id, position: b.position }))
-      );
+      console.log('Filtered path blocks:', pathBlocks);
 
       // Sort blocks by position
       const sortedBlocks = [...pathBlocks].sort(
@@ -222,17 +267,12 @@ function CustomSmoothStepEdge({
       <path
         id={id}
         className="react-flow__edge-path"
-        d={
-          getBezierPath({
-            sourceX,
-            sourceY,
-            sourcePosition,
-            targetX,
-            targetY,
-            targetPosition,
-          })[0]
-        }
-        style={style}
+        d={edgePath}
+        style={{
+          strokeWidth: 2,
+          stroke: '#d0d5dd',
+          ...style,
+        }}
       />
       <foreignObject
         width={40}
@@ -359,19 +399,19 @@ function Flow({
             type: 'smoothstepCustom',
             label: path.name,
             style: {
-              stroke: '#666',
-              strokeWidth: 5,
-              strokeDasharray: '5,5',
+              stroke: '#d0d5dd',
+              strokeWidth: 2,
             },
             data: {
-              blocks,
+              blocks: path.blocks,
               handleAddBlockOnEdge,
             },
           });
 
           // Process blocks up to (and including) the first path block
           blocksToProcess.forEach((block, index) => {
-            // Add node for current block
+            const isLastBlock =
+              index === blocksToProcess.length - 1 && !block.path_block;
             const node = {
               id: `block-${block.id}`,
               type: 'custom',
@@ -384,6 +424,9 @@ function Flow({
                     : 'Block',
                 position: block.position,
                 onDelete: handleDeleteBlock,
+                isLastInPath: isLastBlock,
+                pathId: block.path_id,
+                handleAddBlockOnEdge,
               },
             };
             newNodes.push(node);
@@ -395,14 +438,13 @@ function Flow({
                 source: `block-${sortedPathBlocks[index - 1].id}`,
                 target: `block-${block.id}`,
                 type: 'smoothstepCustom',
-                data: {
-                  blocks,
-                  handleAddBlockOnEdge,
-                },
                 style: {
-                  stroke: '#666',
-                  strokeWidth: 5,
-                  strokeDasharray: '5,5',
+                  stroke: '#d0d5dd',
+                  strokeWidth: 2,
+                },
+                data: {
+                  blocks: path.blocks,
+                  handleAddBlockOnEdge,
                 },
               });
             }
@@ -428,7 +470,8 @@ function Flow({
         : sortedBlocks;
 
     mainBlocksToProcess.forEach((block, index) => {
-      // Create node for the current block
+      const isLastBlock =
+        index === mainBlocksToProcess.length - 1 && !block.path_block;
       const node = {
         id: `block-${block.id}`,
         type: 'custom',
@@ -441,6 +484,9 @@ function Flow({
               : 'Block',
           position: block.position,
           onDelete: handleDeleteBlock,
+          isLastInPath: isLastBlock,
+          pathId: block.path_id,
+          handleAddBlockOnEdge,
         },
       };
       newNodes.push(node);
@@ -454,7 +500,7 @@ function Flow({
           target: `block-${block.id}`,
           type: 'smoothstepCustom',
           data: {
-            blocks,
+            blocks: blocks,
             handleAddBlockOnEdge,
           },
           style: { strokeWidth: 5 },
@@ -482,9 +528,9 @@ function Flow({
 
     const elkNodes = nodes.map((node) => ({
       id: node.id,
-      width: 200,
-      height: 60,
-      padding: [20, 20, 20, 20],
+      width: 481,
+      height: 120,
+      padding: [40, 40, 40, 40],
     }));
 
     const elkEdges = validEdges.map((edge) => ({
@@ -502,20 +548,20 @@ function Flow({
     const layoutOptions = {
       'elk.algorithm': 'mrtree',
       'elk.direction': 'DOWN',
-      'elk.spacing.nodeNode': '400',
-      'elk.spacing.componentComponent': '400',
+      'elk.spacing.nodeNode': '600',
+      'elk.spacing.componentComponent': '600',
       'elk.nodeSize.constraints': 'MINIMUM_SIZE',
       'elk.nodeSize.minimum': '481',
-      'elk.spacing.nodeNodeBetweenLayers': '150',
+      'elk.spacing.nodeNodeBetweenLayers': '100',
       'elk.layered.mergeEdges': 'false',
       'elk.edgeRouting': 'ORTHOGONAL',
       'elk.aspectRatio': '2.0',
-      'elk.padding': '[top=100,left=100,bottom=100,right=100]',
+      'elk.padding': '[top=50,left=200,bottom=50,right=200]',
       'elk.interactive': 'true',
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
       'elk.spacing.individual': '100',
-      'elk.spacing.base': '200',
+      'elk.spacing.base': '150',
     };
 
     // Add error handling around the layout calculation
@@ -560,7 +606,7 @@ function Flow({
   }, [nodes.length]);
 
   const handleAddBlockOnEdge = useCallback(
-    async (position: number, path_id: number | null = null) => {
+    async (position: number, path_id: number | null) => {
       const defaultBlock = {
         type: 'STEP',
         position: position,
@@ -573,7 +619,7 @@ function Flow({
         },
       };
 
-      await onBlockAdd(defaultBlock, defaultBlock.path_id!, position);
+      await onBlockAdd(defaultBlock, path_id ?? 0, position);
     },
     [workflowId, onBlockAdd]
   );
