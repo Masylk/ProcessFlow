@@ -10,6 +10,7 @@ import { createBrowserClient } from '@supabase/ssr';
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showEmailNotification, setShowEmailNotification] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -41,7 +42,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (newUser?.id && newUser?.email) {
+      if (newUser?.email) {
         Sentry.setUser({
           id: newUser.id,
           email: newUser.email,
@@ -50,15 +51,12 @@ export default function LoginPage() {
         posthog.identify(newUser.id);
         posthog.people.set({
           email: newUser.email,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
         });
         posthog.capture('signup', {
           email: newUser.email,
-          firstName: newUser.firstName,
-          lastName: newUser.lastName,
         });
-        router.push('/dashboard');
+        
+        setShowEmailNotification(true);
       }
     }
   }
@@ -142,6 +140,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
+      {showEmailNotification && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          <p>Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.</p>
+        </div>
+      )}
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           {isSignUp ? 'Create an Account' : 'Welcome Back'}
@@ -169,41 +172,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {isSignUp && (
-            <>
-              <div>
-                <label
-                  htmlFor="first_name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  First Name
-                </label>
-                <input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  required
-                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="last_name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Last Name
-                </label>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  required
-                  className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                />
-              </div>
-            </>
-          )}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
               htmlFor="email"
