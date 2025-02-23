@@ -40,7 +40,6 @@ export async function GET(request: NextRequest) {
               first_name: '',
               last_name: '',
               full_name: '',
-              onboarding_step: 'PERSONAL_INFO'
             }
           });
         }
