@@ -19,6 +19,8 @@ Table user {
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
   last_login_at DateTime
+  onboarding_step OnboardingStep [default: 'PERSONAL_INFO']
+  onboarding_completed_at DateTime
   active_workspace workspace
   user_workspaces user_workspace [not null]
   actions action [not null]
@@ -196,6 +198,13 @@ Table action {
   workflow_id Int [not null]
   workflow workflow [not null]
   value Int [not null]
+}
+
+Enum OnboardingStep {
+  PERSONAL_INFO
+  PROFESSIONAL_INFO
+  WORKSPACE_SETUP
+  COMPLETED
 }
 
 Enum role {

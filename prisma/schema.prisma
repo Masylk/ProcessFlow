@@ -12,6 +12,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum OnboardingStep {
+  PERSONAL_INFO
+  PROFESSIONAL_INFO
+  WORKSPACE_SETUP
+  COMPLETED
+}
+
 enum role {
   ADMIN
   EDITOR
@@ -54,6 +61,8 @@ model user {
   created_at         DateTime         @default(now())
   updated_at         DateTime         @default(now()) @updatedAt
   last_login_at      DateTime?
+  onboarding_step      OnboardingStep?  @default(PERSONAL_INFO)
+  onboarding_completed_at DateTime?
   
   // Relations
   active_workspace    workspace?      @relation("active_workspace", fields: [active_workspace_id], references: [id])
