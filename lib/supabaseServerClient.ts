@@ -19,20 +19,20 @@ export function createClient() {
     supabaseAnonKey,
     {
       cookies: {
-        get(name: string) {
-          const cookie = cookieStore.get(name);
+        async get(name: string) {
+          const cookie = (await cookieStore).get(name);
           return cookie?.value ?? '';
         },
         async set(name: string, value: string, options: CookieOptions) {
           try {
-            await cookieStore.set({ name, value, ...options });
+            (await cookieStore).set({ name, value, ...options });
           } catch (error) {
             console.error('Error setting cookie:', error);
           }
         },
         async remove(name: string, options: CookieOptions) {
           try {
-            await cookieStore.delete({ name, ...options });
+            (await cookieStore).delete({ name, ...options });
           } catch (error) {
             console.error('Error removing cookie:', error);
           }
