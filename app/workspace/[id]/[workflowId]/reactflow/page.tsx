@@ -80,37 +80,50 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
     <div
       style={{
-        padding: '20px',
-        borderRadius: '8px',
-        border: '1px solid #777',
-        background: selected ? '#4e6bd7' : 'white',
-        color: selected ? 'white' : 'black',
-        minWidth: '200px',
-        minHeight: '80px',
-        fontSize: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: '481px',
+        padding: '20px 24px',
+        borderRadius: '16px',
+        border: '1px solid #d0d5dd',
+        background: 'white',
+        minHeight: '120px',
         position: 'relative',
       }}
     >
-      <Handle type="target" position={Position.Top} />
-      <div className="text-base font-semibold mb-2" style={{ color: '#666' }}>
-        Position: {data.position}
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+
+      <div className="flex justify-start items-center gap-2 mb-3">
+        <div className="h-12 flex justify-start items-center gap-4">
+          <div className="w-12 h-12 p-1 bg-white rounded-[13.50px] border border-[#e4e7ec] flex justify-center items-center">
+            <img
+              src="/step-icons/default-icons/container.svg"
+              alt="icon"
+              className="w-8 h-8"
+            />
+          </div>
+
+          <div className="flex-col justify-start items-start gap-1">
+            <h3 className="text-[#101828] text-base font-semibold font-['Inter'] leading-normal">
+              Step {data.position}
+            </h3>
+          </div>
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onDelete(id);
+          }}
+          className="ml-auto w-8 h-8 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors flex items-center justify-center"
+        >
+          ×
+        </button>
       </div>
-      {data.label}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          data.onDelete(id);
-        }}
-        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-        style={{ width: '24px', height: '24px', lineHeight: '0' }}
-      >
-        ×
-      </button>
-      <Handle type="source" position={Position.Bottom} />
+
+      <div className="text-[#667085] text-base font-normal font-['Inter'] leading-normal">
+        {data.label}
+      </div>
+
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>
   );
 }
@@ -135,15 +148,6 @@ function CustomSmoothStepEdge({
   style = {},
   data,
 }: EdgeProps & { data: EdgeData }) {
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-  });
-
   const handleEdgeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const sourceBlockId = source.replace('block-', '');
@@ -215,16 +219,19 @@ function CustomSmoothStepEdge({
 
   return (
     <>
-      <SmoothStepEdge
+      <path
         id={id}
-        source={source}
-        target={target}
-        sourceX={sourceX}
-        sourceY={sourceY}
-        targetX={targetX}
-        targetY={targetY}
-        sourcePosition={sourcePosition}
-        targetPosition={targetPosition}
+        className="react-flow__edge-path"
+        d={
+          getBezierPath({
+            sourceX,
+            sourceY,
+            sourcePosition,
+            targetX,
+            targetY,
+            targetPosition,
+          })[0]
+        }
         style={style}
       />
       <foreignObject
@@ -495,10 +502,10 @@ function Flow({
     const layoutOptions = {
       'elk.algorithm': 'mrtree',
       'elk.direction': 'DOWN',
-      'elk.spacing.nodeNode': '200',
-      'elk.spacing.componentComponent': '200',
+      'elk.spacing.nodeNode': '400',
+      'elk.spacing.componentComponent': '400',
       'elk.nodeSize.constraints': 'MINIMUM_SIZE',
-      'elk.nodeSize.minimum': '150',
+      'elk.nodeSize.minimum': '481',
       'elk.spacing.nodeNodeBetweenLayers': '150',
       'elk.layered.mergeEdges': 'false',
       'elk.edgeRouting': 'ORTHOGONAL',
@@ -507,8 +514,8 @@ function Flow({
       'elk.interactive': 'true',
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
-      'elk.spacing.individual': '50',
-      'elk.spacing.base': '100',
+      'elk.spacing.individual': '100',
+      'elk.spacing.base': '200',
     };
 
     // Add error handling around the layout calculation
