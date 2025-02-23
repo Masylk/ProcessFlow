@@ -15,117 +15,101 @@ const posthog = new PostHog(
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type');
   
   console.log('Callback URL:', request.url);
   console.log('Code reçu:', code);
 
   if (code) {
     const supabase = createClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
     
-    if (sessionError) {
-      console.error('Erreur lors de l\'échange du code:', sessionError);
-      return NextResponse.redirect(`${requestUrl.origin}/login?error=auth`);
+    if (error) {
+      console.error('Erreur lors de l\'échange du code:', error);
+      return NextResponse.redirect(new URL('/login?error=auth', request.url));
     }
 
     if (session?.user) {
       try {
-        // Vérifier si l'utilisateur existe déjà
         const existingUser = await prisma.user.findUnique({
           where: { auth_id: session.user.id }
         });
 
-        if (!existingUser) {
-          console.log('Création d\'un nouvel utilisateur:', {
-            id: session.user.id,
-            email: session.user.email,
-            metadata: session.user.user_metadata
-          });
+        if (existingUser) {
+          // Si l'utilisateur existe déjà et n'a pas terminé l'onboarding
+          if (!existingUser.onboarding_completed_at) {
+            const onboardingStep = (existingUser.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-');
+            return NextResponse.redirect(
+              new URL(`/onboarding/${onboardingStep}`, requestUrl.origin)
+            );
+          }
+          
+          // Si l'onboarding est terminé, rediriger vers le dashboard
+          return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
+        }
 
-          // Créer l'utilisateur et son workspace par défaut
-          const [newUser, defaultWorkspace] = await prisma.$transaction([
-            prisma.user.create({
-              data: {
-                auth_id: session.user.id,
-                email: session.user.email || '',
-                first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                full_name: session.user.user_metadata?.full_name || '',
-                avatar_url: session.user.user_metadata?.avatar_url,
-              },
-            }),
-            prisma.workspace.create({
-              data: {
-                name: 'My Workspace',
-                background_colour: '#4299E1',
-                team_tags: [],
-              },
-            }),
-          ]);
+        console.log('Création d\'un nouvel utilisateur:', {
+          id: session.user.id,
+          email: session.user.email,
+          metadata: session.user.user_metadata
+        });
 
-          await prisma.$transaction([
-            prisma.user.update({
-              where: { id: newUser.id },
-              data: {
-                active_workspace_id: defaultWorkspace.id,
-              },
-            }),
-            prisma.user_workspace.create({
-              data: {
-                user_id: newUser.id,
-                workspace_id: defaultWorkspace.id,
-                role: 'ADMIN',
-              },
-            }),
-          ]);
+        // Créer l'utilisateur et son workspace par défaut
+        const newUser = await prisma.user.create({
+          data: {
+            auth_id: session.user.id,
+            email: session.user.email || '',
+            first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+            last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            full_name: session.user.user_metadata?.full_name || '',
+            onboarding_step: 'PROFESSIONAL_INFO',
+            avatar_url: session.user.user_metadata?.avatar_url,
+          },
+        });
 
-          // Tracking PostHog
-          await posthog.capture({
-            distinctId: String(newUser.id),
-            event: 'signup_google',
-            properties: {
+        // Tracking PostHog
+        await posthog.capture({
+          distinctId: String(newUser.id),
+          event: 'signup_google',
+          properties: {
+            email: newUser.email,
+            firstName: newUser.first_name,
+            lastName: newUser.last_name,
+            provider: 'google',
+            $set: {
               email: newUser.email,
               firstName: newUser.first_name,
               lastName: newUser.last_name,
-              provider: 'google',
-              $set: {
-                email: newUser.email,
-                firstName: newUser.first_name,
-                lastName: newUser.last_name,
-              }
             }
-          });
+          }
+        });
 
-          Sentry.setUser({
-            id: String(newUser.id),
-            email: newUser.email,
-          });
-        } else {
-          // Si l'utilisateur existe déjà, on track la connexion
-          await posthog.capture({
-            distinctId: String(existingUser.id),
-            event: 'login_google',
-            properties: {
-              email: existingUser.email,
-              provider: 'google'
-            }
-          });
+        Sentry.setUser({
+          id: String(newUser.id),
+          email: newUser.email,
+        });
 
-          Sentry.setUser({
-            id: String(existingUser.id),
-            email: existingUser.email,
-          });
-        }
+        // Créer un cookie de session
+        const response = NextResponse.redirect(new URL('/onboarding/personal-info', request.url));
+        
+        response.cookies.set('sb-access-token', session.access_token, {
+          path: '/',
+          sameSite: 'lax',
+        });
+        
+        response.cookies.set('sb-refresh-token', session.refresh_token!, {
+          path: '/',
+          sameSite: 'lax',
+        });
 
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard`);
+        return response;
       } catch (error) {
-        console.error('Erreur base de données:', error);
-        Sentry.captureException(error);
+        console.error('Database error:', error);
         return NextResponse.redirect(`${requestUrl.origin}/login?error=database`);
       }
     }
   }
 
   console.error('Pas de code reçu dans le callback');
-  return NextResponse.redirect(`${requestUrl.origin}/login?error=no_code`);
+  return NextResponse.redirect(new URL('/login?error=no_code', request.url));
 } 

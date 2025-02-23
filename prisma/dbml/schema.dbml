@@ -4,6 +4,9 @@
 
 Table user {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  archived_at DateTime
   auth_id String [unique, not null]
   first_name String [not null]
   last_name String [not null]
@@ -15,9 +18,6 @@ Table user {
   sentry_id String
   post_hog_id String
   phone String
-  archived_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
   last_login_at DateTime
   onboarding_step OnboardingStep [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
@@ -28,16 +28,17 @@ Table user {
 
 Table workspace {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  archived_at DateTime
   name String [not null]
+  slug String [unique]
   team_tags String[] [not null]
   icon_url String
   background_colour String
   linear_customer_id String
   stripe_customer_id String
   hubspot_company_id String
-  archived_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
   subscription_id Int [unique]
   subscription subscription
   billing_infos workspace_billing_infos [not null]
@@ -61,25 +62,27 @@ Table workspace_billing_infos {
 
 Table subscription {
   id Int [pk, increment]
-  workspace_id Int [unique, not null]
-  workspace workspace
-  stripe_subscription_id String [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
+  canceled_at DateTime
+  workspace_id Int [unique, not null]
+  stripe_subscription_id String [not null]
   trial_end_date DateTime
   plan_type plan_type [not null]
   quantity_seats Int [not null]
   current_period_start DateTime [not null]
   current_period_end DateTime [not null]
   status subscription_status [not null]
-  canceled_at DateTime
+  workspace workspace
   billings billing [not null]
 }
 
 Table billing {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  paid_at DateTime
   subscription_id Int [not null]
-  subscription subscription [not null]
   stripe_invoice_id String [unique, not null]
   amount_net Int [not null]
   tax_amount Int [not null]
@@ -87,9 +90,7 @@ Table billing {
   currency String [not null]
   invoice_date DateTime [not null]
   due_date DateTime [not null]
-  paid_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
+  subscription subscription [not null]
 }
 
 Table user_workspace {
@@ -117,17 +118,19 @@ Table folder {
 
 Table workflow {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  last_opened DateTime
   name String [not null]
   description String [not null]
   workspace_id Int [not null]
   team_tags String[] [not null]
+  folder_id Int
   workspace workspace [not null]
   blocks block [not null]
   history action [not null]
   paths path [not null]
   folder folder
-  folder_id Int
-  last_opened DateTime
 
   indexes {
     (name, workspace_id) [unique]
@@ -146,6 +149,9 @@ Table path {
 
 Table block {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  last_modified DateTime
   type block_type [not null]
   position Int [not null]
   title String
@@ -153,18 +159,17 @@ Table block {
   description String
   image String
   image_description String
-  last_modified DateTime
   average_time String
   task_type task_type
   workflow_id Int [not null]
+  path_id Int [not null]
+  click_position Json
   workflow workflow [not null]
   actions action [not null]
   step_block step_block
   path_block path_block
   delay_block delay_block
-  path_id Int [not null]
   path path [not null]
-  click_position Json
 }
 
 Table step_block {

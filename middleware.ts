@@ -1,8 +1,10 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const prisma = new PrismaClient();
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -40,7 +42,7 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
 
   // Routes publiques qui ne nécessitent pas d'authentification
-  const publicRoutes = ['/login', '/auth/callback', '/register'];
+  const publicRoutes = ['/login', '/auth/callback', '/register', '/auth/confirm', '/check-email', '/api/auth/confirm'];
   const isPublicRoute = publicRoutes.some(route => 
     request.nextUrl.pathname.startsWith(route)
   );
@@ -53,8 +55,47 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rediriger vers dashboard si session et sur une route publique
-  if (session && isPublicRoute) {
+  if (session && isPublicRoute && !request.nextUrl.pathname.includes('/auth/confirm')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Ajouter la protection des routes d'onboarding
+  if (request.nextUrl.pathname.startsWith('/onboarding')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { auth_id: session.user.id },
+      });
+
+      if (!user) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+
+      // Si l'onboarding est terminé, rediriger vers le dashboard
+      if (user.onboarding_completed_at) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+
+      // Vérifier que l'utilisateur suit bien l'ordre des étapes
+      const currentStep = request.nextUrl.pathname.split('/').pop() || 'personal-info';
+      const stepOrder = ['personal-info', 'professional-info', 'workspace-setup'];
+      const currentStepIndex = stepOrder.indexOf(currentStep);
+      const userStepIndex = stepOrder.indexOf(
+        (user.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-')
+      );
+
+      if (currentStepIndex > userStepIndex) {
+        return NextResponse.redirect(
+          new URL(`/onboarding/${stepOrder[userStepIndex]}`, request.url)
+        );
+      }
+    } catch (error) {
+      console.error('Error in middleware:', error);
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return response;
