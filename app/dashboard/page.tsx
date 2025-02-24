@@ -33,6 +33,7 @@ import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
 import ThemeSwitch from '@/app/components/ThemeSwitch';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import SettingsPage from '@/app/dashboard/components/SettingsPage';
 const HelpCenterModalDynamic = dynamic(
   () => import('./components/HelpCenterModal'),
   {
@@ -87,7 +88,7 @@ export default function Page() {
   const supabase = createClient();
 
   // States for password change
-  const [newPassword, setNewPassword] = useState<string>(''); // if empty string, treat as not active
+  const [newPassword, setNewPassword] = useState<string>('');
 
   // Ref used as a flag so that the active_workspace update is performed only once
   const activeWorkspaceUpdatedRef = useRef(false);
@@ -102,6 +103,9 @@ export default function Page() {
 
   // Add this to the Canvas props
   const [currentView, setCurrentView] = useState<'grid' | 'table'>('grid');
+
+  // Add new state near other states
+  const [isSettingsView, setIsSettingsView] = useState(false);
 
   // Fetch user data from your API
   useEffect(() => {
@@ -529,8 +533,8 @@ export default function Page() {
   };
 
   // Function to update the user in state
-  const updateUser = (user: User) => {
-    setUser(user);
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
   };
 
   const updateActiveWorkspace = async (workspace: Workspace) => {
@@ -729,82 +733,102 @@ export default function Page() {
     setDropdownVisible(!dropdownVisible);
   };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error.message);
+    } else {
+      console.log('Successfully logged out');
+      window.location.href = '/login';
+    }
+  };
+
   return (
-    <>
-      <div className="flex h-screen w-screen overflow-hidden">
-        {/* Sidebar with header and list of workspaces */}
-        {user && user.email && activeWorkspace && (
-          <Sidebar
-            workspaces={workspaces}
-            userEmail={user.email}
-            activeWorkspace={activeWorkspace}
-            setActiveWorkspace={updateActiveWorkspace}
-            onCreateFolder={openCreateFolder}
-            onEditFolder={openEditFolder}
-            onCreateSubfolder={openCreateSubFolder}
-            onDeleteFolder={openDeleteFolder}
-            onSelectFolder={onSelectFolderSidebar}
-            onSelectFolderView={onSelectFolderView}
-            onOpenUserSettings={openUserSettings}
-            user={user}
-            onOpenHelpCenter={openHelpCenter}
-            selectedFolder={sidebarSelectedFolder}
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar with header and list of workspaces */}
+      {user && user.email && activeWorkspace && (
+        <Sidebar
+          workspaces={workspaces}
+          userEmail={user.email}
+          activeWorkspace={activeWorkspace}
+          setActiveWorkspace={updateActiveWorkspace}
+          onCreateFolder={openCreateFolder}
+          onEditFolder={openEditFolder}
+          onCreateSubfolder={openCreateSubFolder}
+          onDeleteFolder={openDeleteFolder}
+          onSelectFolder={onSelectFolderSidebar}
+          onSelectFolderView={onSelectFolderView}
+          onOpenUserSettings={openUserSettings}
+          user={user}
+          onOpenHelpCenter={openHelpCenter}
+          selectedFolder={selectedFolder}
+          onLogout={handleLogout}
+          isSettingsView={isSettingsView}
+          setIsSettingsView={setIsSettingsView}
+        />
+      )}
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Page header */}
+        <header className="min-h-[73px] bg-lightMode-bg-primary border-b border-gray-200 flex justify-between items-center px-4 relative">
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
           />
-        )}
+          <div className="flex items-center gap-4">
+            {/* Temporarily disabled theme switcher - uncomment when ready */}
+            {/* <ThemeSwitch /> */}
 
-        <div className="flex flex-col flex-1">
-          {/* Page header */}
-          <header className="min-h-[73px] bg-lightMode-bg-primary border-b border-gray-200 flex justify-between items-center px-4 relative">
-            <SearchBar
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
-            />
-            <div className="flex items-center gap-4">
-              {/* Temporarily disabled theme switcher - uncomment when ready */}
-              {/* <ThemeSwitch /> */}
-
-              <ButtonNormal
-                variant="primary"
-                size="small"
-                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
-                onClick={openCreateFlow}
+            <ButtonNormal
+              variant="primary"
+              size="small"
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
+              onClick={openCreateFlow}
+            >
+              New Flow
+            </ButtonNormal>
+            {/* Divider */}
+            <div className=" h-[25px] border-r border-gray-300 justify-center items-center" />
+            <div className="relative">
+              <div
+                className="relative cursor-pointer"
+                onClick={handleUserInfoClick}
               >
-                New Flow
-              </ButtonNormal>
-              {/* Divider */}
-              <div className=" h-[25px] border-r border-gray-300 justify-center items-center" />
-              <div className="relative">
-                <div
-                  className="relative cursor-pointer"
-                  onClick={handleUserInfoClick}
-                >
-                  <UserInfo user={user} isActive={dropdownVisible} />
-                  {dropdownVisible && (
+                <UserInfo user={user} isActive={dropdownVisible} />
+                {dropdownVisible && (
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setDropdownVisible(false)}
+                  >
                     <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setDropdownVisible(false)}
+                      className="absolute top-[68px] right-3.5"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <div
-                        className="absolute top-[68px] right-3.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <UserDropdown
-                          user={user}
-                          onOpenUserSettings={openUserSettings}
-                          onOpenHelpCenter={openHelpCenter}
-                          onClose={() => setDropdownVisible(false)}
-                        />
-                      </div>
+                      <UserDropdown
+                        user={user}
+                        onOpenUserSettings={openUserSettings}
+                        onOpenHelpCenter={openHelpCenter}
+                        onClose={() => setDropdownVisible(false)}
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Main content */}
-          <main className="flex-1 w-full h-[100%] bg-gray-100">
-            {activeWorkspace && (
+        {/* Main content */}
+        <main className="flex-1 w-full h-[100%] bg-gray-100">
+          {isSettingsView ? (
+            <div className="h-full">
+              <SettingsPage
+                user={user}
+                onClose={() => setIsSettingsView(false)}
+              />
+            </div>
+          ) : (
+            activeWorkspace && (
               <Canvas
                 workspace={activeWorkspace}
                 selectedFolder={selectedFolder}
@@ -818,13 +842,13 @@ export default function Page() {
                 currentView={currentView}
                 onViewChange={setCurrentView}
               />
-            )}
-          </main>
-        </div>
+            )
+          )}
+        </main>
       </div>
 
-      {/* Modal for user settings */}
-      {user && userSettingsVisible && (
+     {/* Modal for user settings */}
+     {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
           <UserSettingsDynamic
             user={user}
@@ -937,7 +961,6 @@ export default function Page() {
           selectedWorkflow={selectedWorkflow}
         />
       )}
-    </>
+    </div>
   );
 }
-

@@ -27,6 +27,9 @@ interface SidebarProps {
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
   selectedFolder?: Folder;
+  onLogout: () => void;
+  isSettingsView: boolean;
+  setIsSettingsView: (isSettingsView: boolean) => void;
 }
 
 export default function Sidebar({
@@ -44,6 +47,9 @@ export default function Sidebar({
   onOpenUserSettings,
   onOpenHelpCenter,
   selectedFolder,
+  onLogout,
+  isSettingsView,
+  setIsSettingsView,
 }: SidebarProps) {
   const { mode } = useTheme();
   const [activeTabId, setActiveTabId] = useState<string | null>('flows');
@@ -75,6 +81,9 @@ export default function Sidebar({
   }, [sidebarWidth]);
 
   const handleTabClick = (tabId: string | null, folder?: Folder) => {
+    if (isSettingsView && (tabId === 'flows' || tabId?.startsWith('folder-'))) {
+      setIsSettingsView(false);
+    }
     setActiveTabId(tabId);
     if (folder) {
       onSelectFolder(folder);
@@ -156,13 +165,13 @@ export default function Sidebar({
       <div className="h-[72px] w-full px-4 py-3 flex-col justify-start items-start inline-flex">
         <div
           onClick={toggleDropdown}
-          className="self-stretch px-3 py-2.5 cursor-pointer bg-white rounded-md hover:bg-gray-50 flex justify-between items-center overflow-hidden"
+          className="self-stretch px-3 py-2.5 cursor-pointer bg-white rounded-md hover:bg-lightMode-bg-primary_hover flex justify-between items-center overflow-hidden transition-all duration-300"
         >
           <div className="flex items-center gap-2">
             <div className="flex items-start gap-2.5">
               <div className="flex justify-start items-start ">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-normal"
                   style={{
                     backgroundColor:
                       activeWorkspace.background_colour || '#4299E1',
@@ -193,12 +202,20 @@ export default function Sidebar({
                     activeWorkspace={activeWorkspace}
                     setActiveWorkspace={setActiveWorkspace}
                     onClose={closeDropDown}
+                    onOpenSettings={() => setIsSettingsView(true)}
+                    onLogout={onLogout}
                   />
                 </div>
               </div>
             )}
           </div>
-          <div className="relative w-5 h-5 overflow-hidden" />
+          <div className="relative w-5 h-5 overflow-hidden">
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-selector-vertical.svg`}
+              alt="Workspace selector"
+              className="w-5 h-5"
+            />
+          </div>
         </div>
       </div>
 
@@ -210,8 +227,9 @@ export default function Sidebar({
         <TabButton
           icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-icon.svg`}
           label="My Flows"
-          isActive={activeTabId === 'flows'}
+          isActive={!isSettingsView && activeTabId === 'flows'}
           onClick={() => handleTabClick('flows')}
+          disabled={isSettingsView}
         />
       </div>
 
@@ -253,42 +271,7 @@ export default function Sidebar({
 
       {/* Integrated Footer */}
       <div className="w-full p-4 border-t border-[#e4e7ec] flex-col justify-start items-center gap-3 inline-flex bg-white">
-        <div className="w-full self-stretch flex-col justify-start items-start gap-1 flex">
-          <div
-            onClick={onOpenHelpCenter}
-            className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
-          >
-            <div className="w-full grow shrink basis-0 justify-start items-center gap-3 flex">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`}
-                alt="Support Icon"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
-                Support
-              </div>
-            </div>
-          </div>
-          <div
-            onClick={onOpenUserSettings}
-            className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
-          >
-            <div className="w-full grow shrink basis-0 justify-start items-center gap-3 flex">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
-                alt="Settings Icon"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
-                Settings
-              </div>
-            </div>
-          </div>
-        </div>
+        
         <ButtonNormal
           variant="secondaryGray"
           mode="light"

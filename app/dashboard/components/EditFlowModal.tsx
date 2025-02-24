@@ -26,6 +26,24 @@ export default function EditFlowModal({
   const [flowDescription, setFlowDescription] = useState(
     selectedWorkflow.description
   );
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onConfirm(
+        selectedWorkflow.id,
+        processName,
+        flowDescription,
+        undefined
+      );
+      onClose();
+    } catch (error) {
+      console.error('Error saving flow:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 w-full">
@@ -100,15 +118,9 @@ export default function EditFlowModal({
               variant="primary"
               mode="light"
               size="small"
-              onClick={async () => {
-                await onConfirm(
-                  selectedWorkflow.id,
-                  processName,
-                  flowDescription,
-                  undefined
-                );
-                onClose();
-              }}
+              isLoading={isSaving}
+              loadingText="Saving changes..."
+              onClick={handleSave}
               className="flex-1"
             >
               Save changes

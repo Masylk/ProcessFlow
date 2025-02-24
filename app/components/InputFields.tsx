@@ -157,6 +157,7 @@ interface InputFieldProps {
   size?: "small" | "medium";
   type?:
     | "default"
+    | "password"
     | "icon-leading"
     | "leading-dropdown"
     | "trailing-dropdown"
@@ -421,6 +422,7 @@ const InputField: React.FC<InputFieldProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
@@ -949,6 +951,53 @@ const InputField: React.FC<InputFieldProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        );
+
+      case "password":
+        return (
+          <div style={focusStyles}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`} 
+                color={iconColor} 
+                size={16} 
+              />
+            </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={placeholder}
+              value={value}
+              onChange={(e) => onChange?.(e.target.value)}
+              disabled={disabled}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}
+                color={iconColor}
+                size={16}
+              />
+            </button>
+            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
           </div>
         );
 

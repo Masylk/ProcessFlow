@@ -183,16 +183,9 @@ const Canvas: React.FC<CanvasProps> = ({
                     className="grid grid-cols-12 px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <div className="col-span-3 flex items-center gap-3">
-                      <div className="w-8 h-8 flex items-center justify-center bg-[#12B76A] rounded-lg">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/command.svg`}
-                          alt="Workflow icon"
-                          className="w-4 h-4"
-                        />
-                      </div>
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-900">{workflow.name}</span>
-                        <span className="text-sm text-gray-500">{workflow.description}</span>
+                 
                       </div>
                     </div>
                     <div className="col-span-3 flex items-center gap-2">

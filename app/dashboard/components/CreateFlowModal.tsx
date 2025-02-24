@@ -17,7 +17,7 @@ export default function CreateFlowModal({
 }: CreateFlowModalProps) {
   const [flowName, setFlowName] = useState('');
   const [flowDescription, setFlowDescription] = useState('');
-
+  const [isSaving, setIsSaving] = useState(false);
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -160,13 +160,23 @@ export default function CreateFlowModal({
             </ButtonNormal>
             <ButtonNormal 
               onClick={() => {
-                onCreateFlow(flowName, flowDescription);
-                onClose();
+                setIsSaving(true);
+                onCreateFlow(flowName, flowDescription)
+                  .then(() => {
+                    setIsSaving(false);
+                    onClose();
+                  })
+                  .catch((error) => {
+                    console.error('Error creating flow:', error);
+                    setIsSaving(false);
+                  });
               }}
               variant="primary"
               mode={mode}
               size="small"
               className='grow shrink basis-0'
+              isLoading={isSaving}
+              loadingText="Creating..."
             >
               Create Flow
             </ButtonNormal>
