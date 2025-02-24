@@ -11,7 +11,7 @@ import InputField from '@/app/components/InputFields';
 interface UserSettingsProps {
   user: User;
   onClose: () => void;
-  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
+  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;  
   passwordChanged: boolean;
   openImageUpload: () => void;
   openDeleteAccount: () => void;
@@ -71,6 +71,10 @@ export default function UserSettings({
   const [newPasswordError, setNewPasswordError] = useState<string>('');
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
 
+  // Add this to your existing state declarations
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   // Update local state when user changes.
   useEffect(() => {
     setFirstName(user.first_name);
@@ -117,35 +121,36 @@ export default function UserSettings({
 
   // Save changes: upload new avatar (if selected) and update the user record (excluding email).
   const handleSave = async () => {
-    let newAvatarUrl = user.avatar_url; // Default to current avatar.
-
-    // If a new file was selected, perform the upload.
-    if (selectedFile && !isDeleteAvatar) {
-      try {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadRes.json();
-
-        if (uploadRes.ok && uploadData.filePath) {
-          newAvatarUrl = uploadData.filePath;
-        } else {
-          console.error('File upload failed', uploadData.error);
-        }
-      } catch (error) {
-        console.error('Error during file upload:', error);
-      }
-    }
-
-    // Compute full_name based on updated firstName and lastName.
-    const fullName = `${firstName} ${lastName}`;
-
-    // Update the user record in your database (excluding the email update).
+    setIsSaving(true);
     try {
+      let newAvatarUrl = user.avatar_url; // Default to current avatar.
+
+      // If a new file was selected, perform the upload.
+      if (selectedFile && !isDeleteAvatar) {
+        try {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          const uploadData = await uploadRes.json();
+
+          if (uploadRes.ok && uploadData.filePath) {
+            newAvatarUrl = uploadData.filePath;
+          } else {
+            console.error('File upload failed', uploadData.error);
+          }
+        } catch (error) {
+          console.error('Error during file upload:', error);
+        }
+      }
+
+      // Compute full_name based on updated firstName and lastName.
+      const fullName = `${firstName} ${lastName}`;
+
+      // Update the user record in your database (excluding the email update).
       const updateRes = await fetch('/api/user/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -168,12 +173,14 @@ export default function UserSettings({
       } else {
         console.error('Failed to update user information');
       }
-    } catch (error) {
-      console.error('Error during user update:', error);
-    }
 
-    // Close the modal after saving.
-    onClose();
+      // Close the modal after saving.
+      onClose();
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle canceling the password change.
@@ -189,40 +196,44 @@ export default function UserSettings({
 
   // Handle updating the password.
   const handleUpdatePassword = async () => {
-    // Reset previous error messages.
+    // Reset previous error messages
     setOldPasswordError('');
     setNewPasswordError('');
     setConfirmPasswordError('');
-
-    // Check that new password is at least 6 characters.
+    
+    // Check that new password is at least 6 characters
     if (newPassword.length < 6) {
-      setNewPasswordError(
-        'Le nouveau mot de passe doit comporter au moins 6 caractères.'
-      );
+      setNewPasswordError('The new password must be at least 6 characters.');
       return;
     }
 
-    // Check that new password and confirm password match.
+    // Check that new password and confirm password match
     if (newPassword !== confirmNewPassword) {
-      setConfirmPasswordError('Les mots de passe ne correspondent pas.');
+      setConfirmPasswordError('The passwords do not match.');
       return;
     }
 
-    // Verify that the old password is correct.
-    // Here we attempt to sign in with the current email and the provided old password.
-    const data = {
-      email: user.email as string,
-      password: oldPassword as string,
-    };
+    setIsUpdatingPassword(true);
+    try {
+      // Verify that the old password is correct
+      const data = {
+        email: user.email as string,
+        password: oldPassword as string,
+      };
 
-    const { error } = await supabase.auth.signInWithPassword(data);
-    if (error) {
-      setOldPasswordError("L'ancien mot de passe est incorrect.");
-      return;
+      const { error } = await supabase.auth.signInWithPassword(data);
+      if (error) {
+        setOldPasswordError("The old password is incorrect.");
+        return;
+      }
+
+      updateNewPassword(newPassword);
+      handleCancelPasswordChange();
+    } catch (error) {
+      console.error('Error updating password:', error);
+    } finally {
+      setIsUpdatingPassword(false);
     }
-
-    updateNewPassword(newPassword);
-    handleCancelPasswordChange();
   };
 
   // Clean up the preview URL when the component unmounts.
@@ -240,7 +251,7 @@ export default function UserSettings({
       onClick={onClose}
     >
       <div 
-        className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
+        className="w-[628px] h-fit bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -257,7 +268,7 @@ export default function UserSettings({
             </div>
             <div className="w-[432px] flex-col justify-start items-start gap-1 inline-flex">
               <div className="self-stretch text-[#101828] text-lg font-semibold font-['Inter'] leading-7">
-                Settings
+                Account settings
               </div>
             </div>
           </div>
@@ -267,17 +278,7 @@ export default function UserSettings({
         {/* Body */}
         <div className="self-stretch justify-start items-center inline-flex">
           <div className="grow shrink basis-0 p-6 flex-col justify-start items-start gap-5 inline-flex">
-            {/* Tabs */}
-            <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex">
-              <div className="justify-start items-start gap-3 inline-flex">
-                <div className="px-1 pb-3 border-b-2 border-[#4761c4] justify-center items-center gap-2 flex">
-                  <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
-                    Account
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            
             {/* Main settings form */}
             <div className="self-stretch h-min flex-col justify-start items-start gap-6 flex">
               <div className="self-stretch h-[579px] p-1 flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
@@ -380,6 +381,7 @@ export default function UserSettings({
                             type="default"
                             mode="light"
                             value={newEmail}
+                            iconColor='#344054'
                             onChange={setNewEmail}
                             placeholder="Enter email"
                             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
@@ -456,56 +458,47 @@ export default function UserSettings({
                         <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                           Old password
                         </label>
-                        <input
+                        <InputField
                           type="password"
+                          mode="light"
                           value={oldPassword}
-                          onChange={(e) => setOldPassword(e.target.value)}
+                          onChange={setOldPassword}
                           placeholder="Old password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          iconColor='#344054'
+                          errorMessage={oldPasswordError}
                         />
-                        {oldPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {oldPasswordError}
-                          </p>
-                        )}
                       </div>
+
                       {/* New password field */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                           New password
                         </label>
-                        <input
+                        <InputField
                           type="password"
+                          mode="light"
                           value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
+                          iconColor='#344054'
+                          onChange={setNewPassword}
                           placeholder="New password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          errorMessage={newPasswordError}
                         />
-                        {newPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {newPasswordError}
-                          </p>
-                        )}
                       </div>
+
                       {/* Confirm new password field */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                           Confirm new password
                         </label>
-                        <input
+                        <InputField
                           type="password"
+                          mode="light"
                           value={confirmNewPassword}
-                          onChange={(e) =>
-                            setConfirmNewPassword(e.target.value)
-                          }
+                          iconColor='#344054'
+                          onChange={setConfirmNewPassword}
                           placeholder="Confirm new password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          errorMessage={confirmPasswordError}
                         />
-                        {confirmPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {confirmPasswordError}
-                          </p>
-                        )}
                       </div>
                     </div>
                     {/* Action buttons */}
@@ -523,6 +516,8 @@ export default function UserSettings({
                         mode="light"
                         size="small"
                         onClick={handleUpdatePassword}
+                        isLoading={isUpdatingPassword}
+                        loadingText="Updating password..."
                       >
                         Update password
                       </ButtonNormal>
@@ -568,7 +563,7 @@ export default function UserSettings({
               {/* Divider */}
               <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
               {/* Footer buttons */}
-              <div className="self-stretch h-[61px] flex-col justify-start items-center gap-5 flex">
+              <div className="self-stretch h-fit flex-col justify-start items-center gap-5 flex">
                 <div className="self-stretch flex justify-end items-center gap-5">
                   <div className="grow shrink basis-0 h-10 flex justify-end items-center gap-3">
                     <ButtonNormal
@@ -584,6 +579,9 @@ export default function UserSettings({
                       mode="light"
                       size="small"
                       onClick={handleSave}
+                      isLoading={isSaving}
+                      loadingText="Saving..."
+                      
                     >
                       Save
                     </ButtonNormal>
