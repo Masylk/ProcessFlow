@@ -5,7 +5,7 @@ import WorkspaceDropdownMenu from './WorkspaceDropdownMenu';
 import FolderSection from './FolderSection';
 import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
-import TabButton from '@/app/components/TabButton';
+import { TabButton } from './TabButton';
 import { cache } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
