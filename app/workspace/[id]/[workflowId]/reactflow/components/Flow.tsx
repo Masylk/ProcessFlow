@@ -100,24 +100,20 @@ export function Flow({
     if (!Array.isArray(blocks)) return;
 
     const createNodesAndLayout = async () => {
-      // Sort blocks by path_id first, then by position
-      const sortedBlocks = [...blocks].sort((a, b) => {
-        if (a.path_id !== b.path_id) {
-          return a.path_id - b.path_id;
-        }
-        return a.position - b.position;
-      });
+      // Sort blocks only by position, since they're all in the same path
+      const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
+
+      console.log(
+        'Sorted Blocks:',
+        sortedBlocks.map((b) => ({ id: b.id, position: b.position }))
+      );
 
       const newNodes: Node[] = [];
       const newEdges: Edge[] = [];
 
-      console.log('Sorted Blocks:', sortedBlocks);
-
-      // First create all nodes
+      // Create nodes in sorted order
       sortedBlocks.forEach((block) => {
         const nodeId = `block-${block.id}`;
-        console.log('Creating node:', nodeId);
-
         newNodes.push({
           id: nodeId,
           type: 'custom',
@@ -125,6 +121,7 @@ export function Flow({
           data: {
             label: block.step_block?.stepDetails || 'Block',
             position: block.position,
+            type: block.type,
             onDelete: handleDeleteBlock,
             pathId: block.path_id,
             handleAddBlockOnEdge,
@@ -133,43 +130,33 @@ export function Flow({
         });
       });
 
-      // Then create edges in a separate loop
-      sortedBlocks.forEach((block) => {
-        // Find the previous block in the same path
-        const prevBlock = sortedBlocks.find(
-          (b) =>
-            b.path_id === block.path_id && b.position === block.position - 1
-        );
+      // Create edges between consecutive blocks
+      for (let i = 0; i < sortedBlocks.length - 1; i++) {
+        const sourceId = `block-${sortedBlocks[i].id}`;
+        const targetId = `block-${sortedBlocks[i + 1].id}`;
+        const edgeId = `edge-${sortedBlocks[i].id}-${sortedBlocks[i + 1].id}`;
 
-        if (prevBlock) {
-          const sourceId = `block-${prevBlock.id}`;
-          const targetId = `block-${block.id}`;
-          const edgeId = `edge-${prevBlock.id}-${block.id}`;
+        newEdges.push({
+          id: edgeId,
+          source: sourceId,
+          target: targetId,
+          type: 'smoothstepCustom',
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          style: { stroke: '#b1b1b7' },
+          animated: true,
+          data: {
+            blocks: sortedBlocks,
+            handleAddBlockOnEdge,
+          },
+        });
 
-          console.log('Creating edge:', { sourceId, targetId, edgeId });
-
-          newEdges.push({
-            id: edgeId,
-            source: sourceId,
-            target: targetId,
-            type: 'smoothstepCustom',
-            sourceHandle: 'bottom',
-            targetHandle: 'top',
-            style: { stroke: '#b1b1b7' },
-            animated: true,
-            data: {
-              blocks: sortedBlocks,
-              handleAddBlockOnEdge,
-            },
-          });
-
-          // Update isLastInPath flag
-          const prevNodeIndex = newNodes.findIndex((n) => n.id === sourceId);
-          if (prevNodeIndex !== -1) {
-            newNodes[prevNodeIndex].data.isLastInPath = false;
-          }
+        // Update isLastInPath
+        const sourceNodeIndex = newNodes.findIndex((n) => n.id === sourceId);
+        if (sourceNodeIndex !== -1) {
+          newNodes[sourceNodeIndex].data.isLastInPath = false;
         }
-      });
+      }
 
       console.log('Before layout - Nodes:', newNodes);
       console.log('Before layout - Edges:', newEdges);

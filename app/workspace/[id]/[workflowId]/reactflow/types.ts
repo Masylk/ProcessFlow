@@ -3,14 +3,11 @@ import { Block } from './interfaces';
 export interface NodeData {
   label: string;
   position: number;
-  onDelete: (id: string) => void;
+  type?: string;
+  onDelete?: (id: string) => void;
+  pathId: number | null;
+  handleAddBlockOnEdge?: (position: number, pathId: number | null, event: React.MouseEvent) => void;
   isLastInPath?: boolean;
-  pathId?: number | null;
-  handleAddBlockOnEdge?: (
-    position: number,
-    path_id: number | null,
-    event?: { clientX: number; clientY: number }
-  ) => void;
 }
 
 export interface EdgeData {
