@@ -1,3 +1,5 @@
+import '@xyflow/react/dist/style.css';
+
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,

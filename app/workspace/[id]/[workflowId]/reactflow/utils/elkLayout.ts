@@ -39,7 +39,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const layoutOptions = {
     'elk.algorithm': 'mrtree',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '100',
+    'elk.spacing.nodeNode': '200',
     'elk.spacing.componentComponent': '600',
     'elk.nodeSize.constraints': 'MINIMUM_SIZE',
     'elk.nodeSize.minimum': '481',
