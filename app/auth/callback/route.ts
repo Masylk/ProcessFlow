@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabaseServerClient';
 import { NextResponse, type NextRequest } from 'next/server';
-import prisma from '@/lib/prisma-edge';
+import prisma from '@/lib/prisma';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/nextjs';
 

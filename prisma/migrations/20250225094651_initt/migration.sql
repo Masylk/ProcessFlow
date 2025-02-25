@@ -36,6 +36,7 @@ CREATE TABLE "user" (
     "last_login_at" TIMESTAMP(3),
     "onboarding_step" "OnboardingStep" DEFAULT 'PERSONAL_INFO',
     "onboarding_completed_at" TIMESTAMP(3),
+    "test_mode" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );

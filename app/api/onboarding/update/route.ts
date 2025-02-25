@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-edge';
+import prisma from '@/lib/prisma';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
