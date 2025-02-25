@@ -65,7 +65,7 @@ export default function ConfirmDeleteModal({
 
   return (
     <main className="fixed inset-0 flex items-center justify-center z-50 w-full">
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
         <div className="h-[342.67px] bg-white rounded-xl shadow-lg flex-col justify-start items-center inline-flex overflow-hidden">
           <div className="self-stretch h-[242.67px] px-6 pt-6 flex-col justify-start items-start gap-4 flex">
             <div className="w-12 h-12 p-3 bg-[#fee3e1] rounded-full justify-center items-center inline-flex overflow-hidden">

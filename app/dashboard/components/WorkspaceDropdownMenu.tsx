@@ -2,6 +2,7 @@
 
 import { Workspace } from '@/types/workspace';
 import React, { useState, useEffect, useRef } from 'react';
+import CreateWorkspaceModal from './CreateWorkspaceModal';
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -11,6 +12,7 @@ interface WorkspaceDropdownMenuProps {
   onClose: () => void;
   onOpenSettings: () => void;
   onLogout: () => void;
+  onOpenCreateWorkspaceModal: () => void;
 }
 
 // Fonction utilitaire pour générer une couleur à partir d'une chaîne
@@ -35,6 +37,7 @@ export default function WorkspaceDropdownMenu({
   onClose,
   onOpenSettings,
   onLogout,
+  onOpenCreateWorkspaceModal,
 }: WorkspaceDropdownMenuProps) {
   const [isWorkspaceListVisible, setIsWorkspaceListVisible] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -69,160 +72,189 @@ export default function WorkspaceDropdownMenu({
     onClose();
   };
 
+  const handleCreateWorkspace = (workspaceData: {
+    name: string;
+    logo?: File;
+    url: string;
+  }) => {
+    // TODO: Implement workspace creation logic, likely calling an API
+    // For now, just close the modal
+    onClose();
+  };
+
+  const handleOpenCreateWorkspaceModal = () => {
+    // Call the parent's handler to open the modal
+    onOpenCreateWorkspaceModal();
+    // Close the dropdown
+    onClose();
+  };
+
   return (
-    <div 
-      ref={dropdownRef}
-      className="w-fit py-1 bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-visible"
-    >
-      {/* Settings Option */}
-      <button
-        onClick={handleSettingsClick}
-        onMouseEnter={() => setIsWorkspaceListVisible(false)}
-        className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+    <>
+      <div 
+        ref={dropdownRef}
+        className="w-fit py-1 bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-visible"
       >
-        <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
-              className="w-4 h-4"
-            />
-            <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-              Settings
-            </div>
-          </div>
-        </div>
-      </button>
-
-      {/* Separator */}
-      <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
-
-      {/* Switch Workspace Option */}
-      <div className="group relative w-full">
-        <button 
+        {/* Settings Option */}
+        <button
+          onClick={handleSettingsClick}
+          onMouseEnter={() => setIsWorkspaceListVisible(false)}
           className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
-          onMouseEnter={() => setIsWorkspaceListVisible(true)}
         >
-          <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden gap-9">
+          <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
             <div className="flex items-center gap-2">
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/switch-horizontal-01.svg`}
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
                 className="w-4 h-4"
               />
               <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-                Switch workspace
+                Settings
               </div>
             </div>
-            <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/right-filled-chevron.svg`}
-                className="w-2 h-2"
-              />
           </div>
         </button>
 
-        {/* Workspace List Submenu */}
-        {isWorkspaceListVisible && (
-          <div 
-            ref={submenuRef}
-            className="absolute left-full top-[-7px] w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border border-[#e4e7ec]"
-          >
-            {/* Email Header */}
-            <div className="px-1.5 py-px">
-              <div className="px-2.5 py-[9px] text-[#667085] text-sm font-normal cursor-default">
-                {userEmail}
-              </div>
-            </div>
+        {/* Separator */}
+        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
 
-            <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
-            {/* Workspace List */}
-            <div>
-              {workspaces.map((workspace) => (
-                <button
-                  key={workspace.id}
-                  onClick={async () => {
-                    await setActiveWorkspace(workspace);
-                    onClose();
-                  }}
+        {/* Switch Workspace Option */}
+        <div className="group relative w-full">
+          <button 
+            className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+            onMouseEnter={() => setIsWorkspaceListVisible(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsWorkspaceListVisible(!isWorkspaceListVisible);
+            }}
+          >
+            <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden gap-9">
+              <div className="flex items-center gap-2">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/switch-horizontal-01.svg`}
+                  className="w-4 h-4"
+                />
+                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                  Switch workspace
+                </div>
+              </div>
+              <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/right-filled-chevron.svg`}
+                  className="w-2 h-2"
+                />
+            </div>
+          </button>
+
+          {/* Workspace List Submenu */}
+          {isWorkspaceListVisible && (
+            <div 
+              ref={submenuRef}
+              className="absolute left-full top-[-7px] w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border border-[#e4e7ec]"
+            >
+              {/* Email Header */}
+              <div className="px-1.5 py-px">
+                <div className="px-2.5 py-[9px] text-[#667085] text-sm font-normal cursor-default">
+                  {userEmail}
+                </div>
+              </div>
+
+              <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+              {/* Workspace List */}
+              <div>
+                {workspaces.map((workspace) => (
+                  <button
+                    key={workspace.id}
+                    onClick={async () => {
+                      await setActiveWorkspace(workspace);
+                      onClose();
+                    }}
+                    className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                  >
+                    <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-normal"
+                          style={{ backgroundColor: workspace.background_colour || '#4299E1' }}
+                        >
+                          {workspace.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="text-[#344054] text-sm font-normal">
+                          {workspace.name}
+                        </div>
+                      </div>
+                      {activeWorkspace?.id === workspace.id && (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon3.svg`}
+                          alt="Active"
+                          className="w-4 h-4"
+                        />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+              {/* Create/Join Options */}
+
+                <button 
+                  onClick={handleOpenCreateWorkspaceModal}
                   className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
                 >
-                  <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+                  <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-normal"
-                        style={{ backgroundColor: workspace.background_colour || '#4299E1' }}
-                      >
-                        {workspace.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="text-[#344054] text-sm font-normal">
-                        {workspace.name}
-                      </div>
-                    </div>
-                    {activeWorkspace?.id === workspace.id && (
                       <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon3.svg`}
-                        alt="Active"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
                         className="w-4 h-4"
                       />
-                    )}
+                      <div className="text-[#344054] text-sm font-normal">
+                        Create a new workspace
+                      </div>
+                    </div>
                   </div>
                 </button>
-              ))}
-            </div>
-
-            <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
-            {/* Create/Join Options */}
-
-              <button className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer">
-                <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
-                      className="w-4 h-4"
-                    />
-                    <div className="text-[#344054] text-sm font-normal">
-                      Create or join a workspace
+                <button 
+                  onClick={onClose}
+                  className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                >
+                  <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
+                        className="w-4 h-4"
+                      />
+                      <div className="text-[#344054] text-sm font-normal">
+                        Add an account
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-              <button className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer">
-                <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
-                      className="w-4 h-4"
-                    />
-                    <div className="text-[#344054] text-sm font-normal">
-                      Add an account
-                    </div>
-                  </div>
-                </div>
-              </button>
-        
-          </div>
-        )}
-      </div>
-
-      {/* Separator */}
-      <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
-
-      {/* Log out Option */}
-      <button
-        onClick={onLogout}
-        onMouseEnter={() => setIsWorkspaceListVisible(false)}
-        className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
-      >
-        <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-          <div className="flex items-center gap-2">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
-              className="w-4 h-4"
-            />
-            <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
-              Log out
+                </button>
+          
             </div>
-          </div>
+          )}
         </div>
-      </button>
-    </div>
+
+        {/* Separator */}
+        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+
+        {/* Log out Option */}
+        <button
+          onClick={onLogout}
+          onMouseEnter={() => setIsWorkspaceListVisible(false)}
+          className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+        >
+          <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+            <div className="flex items-center gap-2">
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
+                className="w-4 h-4"
+              />
+              <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                Log out
+              </div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </>
   );
 }
