@@ -233,7 +233,7 @@ const Path: React.FC<PathProps> = ({
         const newBlock = await response.json();
 
         console.log('newblock image url: ' + newBlock.image);
-        // Update blockList with the newly created block
+        // Update blockList with the newly created 
         setBlockList((prevBlockList) => {
           const updatedBlockList = [...prevBlockList];
           updatedBlockList.splice(position, 0, newBlock);
@@ -247,7 +247,7 @@ const Path: React.FC<PathProps> = ({
           return updatedBlockList;
         });
 
-        return newBlock; // Return the newly created block
+        return newBlock; // Return the newly created 
       } else {
         const errorData = await response.json();
         console.error('Failed to create new block:', errorData);

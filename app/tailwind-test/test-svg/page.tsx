@@ -30,7 +30,7 @@ const Page = () => {
             <ButtonDestructive
               variant="primary"
               mode="light"
-              size="medium"
+              size="small"
               leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/arrow-left.svg"
               trailingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/arrow-left.svg"
             > Primary Destructive</ButtonDestructive>

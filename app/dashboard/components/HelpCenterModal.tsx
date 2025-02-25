@@ -20,7 +20,10 @@ export default function HelpCenterModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-8 bg-black bg-opacity-40">
+    <div 
+      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      onClick={onClose}
+    >
       <Head>
         <title>Help Center</title>
         <meta name="description" content="Help center modal" />
@@ -42,11 +45,11 @@ export default function HelpCenterModal({
         <div className="self-stretch h-24 flex flex-col items-center">
           <div className="self-stretch px-6 pt-6 flex items-start gap-4">
             {/* Support Icon */}
-            <div className="w-12 h-12 p-3 bg-[#f2f4f7] rounded-full flex justify-center items-center overflow-hidden">
+            <div className=" p-3 bg-[#f2f4f7] rounded-full flex justify-center items-center overflow-hidden">
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`}
                 alt="Support Icon"
-                className="w-6 h-6"
+                className="w-6"
               />
             </div>
 

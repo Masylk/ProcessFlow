@@ -60,18 +60,13 @@ export default function UserDropdown({
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
-    };
+    }
 
     document.addEventListener('mousedown', handleClickOutside);
-
-    // Cleanup event listener on component unmount
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -80,25 +75,28 @@ export default function UserDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="h-full bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex-col justify-start items-start inline-flex overflow-hidden"
+      className="h-full bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border border-[#e4e7ec] flex-col justify-start items-start inline-flex overflow-hidden"
     >
-      <div className="h-full py-1 flex-col justify-start items-start flex overflow-hidden">
+      <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}
         <div
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
-          onClick={onOpenUserSettings}
+          onClick={() => {
+            onOpenUserSettings();
+            onClose();
+          }}
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+          <div className="grow shrink basis-0  px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-profile.svg`}
                   alt="Settings Icon"
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
-                Settings
+              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                Account settings
               </div>
             </div>
           </div>
@@ -111,7 +109,7 @@ export default function UserDropdown({
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div
             onClick={handleRoadmapClick}
-            className="cursor-pointer grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden"
+            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -121,7 +119,7 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
                 Changelog &amp; Roadmap
               </div>
             </div>
@@ -133,18 +131,18 @@ export default function UserDropdown({
           href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
           target="_blank"
           rel="noopener noreferrer"
-          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer "
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-smile-circle.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`}
                   alt="Slack Icon"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
                 Slack Community
               </div>
             </div>
@@ -154,9 +152,12 @@ export default function UserDropdown({
         {/* Support Item */}
         <div
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
-          onClick={onOpenHelpCenter}
+          onClick={() => {
+            onOpenHelpCenter();
+            onClose();
+          }}
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -165,7 +166,7 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
                 Support
               </div>
             </div>
@@ -176,8 +177,11 @@ export default function UserDropdown({
         <div className="self-stretch h-px bg-[#e4e7ec] border-t my-1" />
 
         {/* Log out Item */}
-        <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex overflow-hidden">
+        <div 
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          onClick={handleLogout}
+        >
+          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -186,10 +190,7 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div
-                onClick={handleLogout}
-                className="grow shrink basis-0 text-[#344054] text-sm font-medium font-['Inter'] leading-tight cursor-pointer"
-              >
+              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
                 Log out
               </div>
             </div>

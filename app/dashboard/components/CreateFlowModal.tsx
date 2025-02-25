@@ -17,14 +17,24 @@ export default function CreateFlowModal({
 }: CreateFlowModalProps) {
   const [flowName, setFlowName] = useState('');
   const [flowDescription, setFlowDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const handleModalClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
 
   return (
-    <div className={`fixed inset-0 flex items-center justify-center p-8 ${
-      mode === 'dark' ? 'bg-[#0c111d] bg-opacity-40' : 'bg-black bg-opacity-40'
-    }`}>
-      <div className={`w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex overflow-hidden ${
-        mode === 'dark' ? 'bg-darkMode-bg-primary' : 'bg-white'
-      }`}>
+    <div 
+      className={`fixed inset-0 flex items-center justify-center p-8 ${
+        mode === 'dark' ? 'bg-[#0c111d] bg-opacity-40' : 'bg-black bg-opacity-40'
+      }`}
+      onClick={onClose}
+    >
+      <div 
+        onClick={handleModalClick}
+        className={`w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex overflow-hidden ${
+          mode === 'dark' ? 'bg-darkMode-bg-primary' : 'bg-white'
+        }`}
+      >
         <div className="flex items-start gap-4 px-6 pt-6 flex-col">
           <div className={`w-12 h-12 p-3 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-center items-center inline-flex overflow-hidden ${
             mode === 'dark' ? 'bg-darkMode-bg-secondary border-darkMode-border-primary' : 'bg-white border-[#e4e7ec]'
@@ -71,7 +81,7 @@ export default function CreateFlowModal({
             />
           </div>
         </div>
-        <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 flex overflow-hidden">
+        <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 hidden overflow-hidden">
           <div className={`text-sm font-semibold font-['Inter'] leading-tight ${
             mode === 'dark' ? 'text-darkMode-text-primary' : 'text-[#344054]'
           }`}>
@@ -135,30 +145,40 @@ export default function CreateFlowModal({
             </div>
           </div>
         </div>
-        <div className={`self-stretch h-[92px] pt-6 border-t flex-col justify-start items-start flex ${
+        <div className={`self-stretch  py-6 border-t flex-col justify-start items-start flex ${
           mode === 'dark' ? 'border-darkMode-border-primary' : 'border-[#e4e7ec]'
         }`}>
-          <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
+          <div className="self-stretch px-6 justify-start items-start gap-3 inline-flex">
             <ButtonNormal
               onClick={onClose}
               variant="secondaryGray"
               mode={mode}
-              size="medium"
+              size="small"
               className='grow shrink basis-0'
             >
               Cancel
             </ButtonNormal>
             <ButtonNormal 
               onClick={() => {
-                onCreateFlow(flowName, flowDescription);
-                onClose();
+                setIsSaving(true);
+                onCreateFlow(flowName, flowDescription)
+                  .then(() => {
+                    setIsSaving(false);
+                    onClose();
+                  })
+                  .catch((error) => {
+                    console.error('Error creating flow:', error);
+                    setIsSaving(false);
+                  });
               }}
               variant="primary"
               mode={mode}
-              size="medium"
+              size="small"
               className='grow shrink basis-0'
+              isLoading={isSaving}
+              loadingText="Creating..."
             >
-              Create a Flow
+              Create Flow
             </ButtonNormal>
           </div>
         </div>

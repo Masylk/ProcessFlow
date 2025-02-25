@@ -12,6 +12,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum OnboardingStep {
+  PERSONAL_INFO
+  PROFESSIONAL_INFO
+  WORKSPACE_SETUP
+  COMPLETED
+}
+
 enum role {
   ADMIN
   EDITOR
@@ -38,22 +45,24 @@ enum plan_type {
 }
 
 model user {
-  id                 Int              @id @default(autoincrement())
-  auth_id            String           @unique
-  first_name         String
-  last_name          String
-  full_name          String
-  email              String           @unique
-  avatar_url         String?
-  active_workspace_id Int?            // ID du workspace actif
-  hubspot_contact_id String?
-  sentry_id          String?
-  post_hog_id        String?
-  phone              String?
-  archived_at        DateTime?
-  created_at         DateTime         @default(now())
-  updated_at         DateTime         @default(now()) @updatedAt
-  last_login_at      DateTime?
+  id                      Int              @id @default(autoincrement())
+  created_at              DateTime         @default(now())
+  updated_at              DateTime         @default(now()) @updatedAt
+  archived_at             DateTime?
+  auth_id                 String           @unique
+  first_name              String
+  last_name               String
+  full_name               String
+  email                   String           @unique
+  avatar_url              String?
+  active_workspace_id     Int?
+  hubspot_contact_id      String?
+  sentry_id               String?
+  post_hog_id             String?
+  phone                   String?
+  last_login_at           DateTime?
+  onboarding_step         OnboardingStep?  @default(PERSONAL_INFO)
+  onboarding_completed_at DateTime?
   
   // Relations
   active_workspace    workspace?      @relation("active_workspace", fields: [active_workspace_id], references: [id])
@@ -68,16 +77,17 @@ model user {
 
 model workspace {
   id                   Int                   @id @default(autoincrement())
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @default(now()) @updatedAt
+  archived_at          DateTime?
   name                 String
+  slug                 String?                @unique
   team_tags           String[]
   icon_url            String?
   background_colour   String?
   linear_customer_id   String?
   stripe_customer_id   String?
   hubspot_company_id   String?
-  archived_at          DateTime?
-  created_at           DateTime              @default(now())
-  updated_at           DateTime              @default(now()) @updatedAt
   subscription_id      Int?                  @unique
   
   // Relations
@@ -108,25 +118,27 @@ model workspace_billing_infos {
 
 model subscription {
   id                    Int                 @id @default(autoincrement())
-  workspace_id          Int                 @unique
-  workspace             workspace?
-  stripe_subscription_id String
   created_at            DateTime            @default(now())
   updated_at            DateTime            @default(now()) @updatedAt
+  canceled_at           DateTime?
+  workspace_id          Int                 @unique
+  stripe_subscription_id String
   trial_end_date        DateTime?
   plan_type             plan_type
   quantity_seats        Int
   current_period_start  DateTime
   current_period_end    DateTime
   status                subscription_status
-  canceled_at           DateTime?
+  workspace             workspace?
   billings              billing[]
 }
 
 model billing {
   id                 Int          @id @default(autoincrement())
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @default(now()) @updatedAt
+  paid_at            DateTime?
   subscription_id    Int
-  subscription       subscription @relation(fields: [subscription_id], references: [id])
   stripe_invoice_id  String       @unique
   amount_net         Int          // Montant en centimes
   tax_amount         Int          // Montant en centimes
@@ -134,9 +146,7 @@ model billing {
   currency           String       @db.VarChar(3)
   invoice_date       DateTime
   due_date           DateTime
-  paid_at            DateTime?
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @default(now()) @updatedAt
+  subscription       subscription @relation(fields: [subscription_id], references: [id])
 
   @@index([subscription_id])
   @@index([stripe_invoice_id])
@@ -174,17 +184,19 @@ model folder {
 
 model workflow {
   id           Int       @id @default(autoincrement())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now()) @updatedAt
+  last_opened  DateTime?
   name         String
   description  String
   workspace_id Int
   team_tags    String[]
+  folder_id    Int?
   workspace    workspace @relation(fields: [workspace_id], references: [id])
   blocks       block[]   @relation("workflow_blocks")
   history      action[]  @relation("workflow_actions")
   paths        path[]    @relation("workflow_paths")
   folder       folder?   @relation(fields: [folder_id], references: [id])
-  folder_id    Int?
-  last_opened  DateTime?
 
   @@unique([name, workspace_id])
 }
@@ -206,6 +218,9 @@ model path {
 
 model block {
   id                Int          @id @default(autoincrement())
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @default(now()) @updatedAt
+  last_modified     DateTime?
   type              block_type
   position          Int
   title             String?
@@ -213,18 +228,17 @@ model block {
   description       String?
   image             String?
   image_description String?
-  last_modified     DateTime?
   average_time      String?
   task_type         task_type?
   workflow_id       Int
+  path_id           Int
+  click_position    Json?
   workflow          workflow     @relation("workflow_blocks", fields: [workflow_id], references: [id], onDelete: Cascade)
   actions           action[]
   step_block        step_block?  @relation
   path_block        path_block?  @relation
   delay_block       delay_block? @relation
-  path_id           Int
   path              path         @relation("path_blocks", fields: [path_id], references: [id], onDelete: Cascade)
-  click_position    Json?
 }
 
 model step_block {

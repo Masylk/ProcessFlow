@@ -82,7 +82,7 @@ const LEADING_TEXT_INPUT_CONTAINER = {
   alignSelf: "stretch",
   background: "white",
   boxShadow: "0px 1px 2px rgba(16, 24, 40, 0.05)",
-  borderRadius: 8,
+  borderRadius: 6,
   border: "1px #D0D5DD solid",
   justifyContent: "flex-start",
   alignItems: "flex-start",
@@ -94,8 +94,8 @@ const LEADING_TEXT_PREFIX_CONTAINER = {
   paddingRight: 12,
   paddingTop: 8,
   paddingBottom: 8,
-  borderTopLeftRadius: 8,
-  borderTopRightRadius: 8,
+  borderTopLeftRadius: 6,
+  borderTopRightRadius: 6,
   justifyContent: "flex-start",
   alignItems: "center",
   display: "flex",
@@ -120,8 +120,8 @@ const LEADING_TEXT_MAIN_INPUT_CONTAINER = {
   paddingTop: 8,
   paddingBottom: 8,
   background: theme.colors["Base/White"],
-  borderTopLeftRadius: 8,
-  borderTopRightRadius: 8,
+  borderTopLeftRadius: 6,
+  borderTopRightRadius: 6,
   overflow: "hidden",
   border: `1px solid ${theme.colors["Gray (light mode)/300"]}`,
   justifyContent: "flex-start",
@@ -157,6 +157,7 @@ interface InputFieldProps {
   size?: "small" | "medium";
   type?:
     | "default"
+    | "password"
     | "icon-leading"
     | "leading-dropdown"
     | "trailing-dropdown"
@@ -192,7 +193,7 @@ const Tooltip: React.FC<{ text: string; mode?: 'light' | 'dark' }> = ({ text, mo
       transform: 'translateX(-50%)',
       background: mode === 'dark' ? theme.colors["Gray (dark mode)/900"] : '#101828',
       padding: '12px 16px',
-      borderRadius: 8,
+      borderRadius: 6,
       width: '25ch',
       boxShadow: mode === 'dark' 
         ? '0px 4px 6px -2px rgba(0, 0, 0, 0.2)' 
@@ -421,6 +422,7 @@ const InputField: React.FC<InputFieldProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasCopied, setHasCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
@@ -467,7 +469,7 @@ const InputField: React.FC<InputFieldProps> = ({
       background: mode === 'light' 
         ? theme.colors["Base/White"] 
         : theme.colors["Gray (dark mode)/950"],
-      borderRadius: 8,
+      borderRadius: 6,
       border: `1px solid ${
         destructive 
           ? theme.colors['Error/300']
@@ -480,10 +482,10 @@ const InputField: React.FC<InputFieldProps> = ({
       boxShadow: isFocused
         ? destructive
           ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
-          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
+          : "0px 0px 0px 4px rgba(78,107,215,0.12)"
         : mode === 'light' 
-          ? "0px 1px 2px rgba(16, 24, 40, 0.05)"
-          : "none",
+          ? '0px 1px 2px rgba(16, 24, 40, 0.05)'
+          : 'none',
       transition: "border-color 0.2s, box-shadow 0.2s",
     }),
     [isFocused, destructive, mode]
@@ -539,7 +541,7 @@ const InputField: React.FC<InputFieldProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
               }}>
-                <DynamicIcon url={iconUrl} color={iconColor} size={20} />
+                <DynamicIcon url={iconUrl} color={iconColor} size={16} />
               </div>
             )}
             <input
@@ -565,7 +567,7 @@ const InputField: React.FC<InputFieldProps> = ({
               display: 'flex',
               width: '100%',
               height: 40,
-              borderRadius: 8,
+              borderRadius: 6,
               overflow: 'visible',
             }}>
               <div style={{
@@ -577,8 +579,8 @@ const InputField: React.FC<InputFieldProps> = ({
                 borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderLeft: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderRight: '0px solid transparent',
-                borderTopLeftRadius: 8,
-                borderBottomLeftRadius: 8,
+                borderTopLeftRadius: 6,
+                borderBottomLeftRadius: 6,
                 position: 'relative',
                 minWidth: 80,
                 zIndex: 0,
@@ -659,7 +661,7 @@ const InputField: React.FC<InputFieldProps> = ({
               display: 'flex',
               width: '100%',
               height: 40,
-              borderRadius: 8,
+              borderRadius: 6,
               overflow: 'visible',
             }}>
               <div style={{
@@ -691,8 +693,8 @@ const InputField: React.FC<InputFieldProps> = ({
                 borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderLeft: '0px solid transparent',
-                borderTopRightRadius: 8,
-                borderBottomRightRadius: 8,
+                borderTopRightRadius: 6,
+                borderBottomRightRadius: 6,
                 position: 'relative',
                 minWidth: 80,
                 zIndex: 0,
@@ -881,7 +883,7 @@ const InputField: React.FC<InputFieldProps> = ({
               display: 'flex',
               width: '100%',
               height: 40,
-              borderRadius: 8,
+              borderRadius: 6,
               overflow: 'visible',
               position: 'relative',
             }}>
@@ -915,8 +917,8 @@ const InputField: React.FC<InputFieldProps> = ({
                 borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
                 borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderTopRightRadius: 8,
-                borderBottomRightRadius: 8,
+                borderTopRightRadius: 6,
+                borderBottomRightRadius: 6,
                 position: 'relative',
                 minWidth: 'fit-content',
                 cursor: value ? 'pointer' : 'not-allowed',
@@ -949,6 +951,53 @@ const InputField: React.FC<InputFieldProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        );
+
+      case "password":
+        return (
+          <div style={focusStyles}>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`} 
+                color={iconColor} 
+                size={16} 
+              />
+            </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={placeholder}
+              value={value}
+              onChange={(e) => onChange?.(e.target.value)}
+              disabled={disabled}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}
+                color={iconColor}
+                size={16}
+              />
+            </button>
+            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
           </div>
         );
 

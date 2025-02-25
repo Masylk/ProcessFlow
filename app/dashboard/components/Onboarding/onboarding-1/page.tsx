@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import ButtonNormal from '@/app/components/ButtonNormal';
 
 export default function Home() {
   const [lastName, setLastName] = useState("");
@@ -67,25 +68,16 @@ export default function Home() {
                 className="self-stretch px-3 py-2 bg-white rounded-lg border border-[#d0d5dd] text-[#101828] text-base focus:ring-2 focus:ring-[#4E6BD7] focus:outline-none"
               />
             </div>
-            <div className="h-10 flex justify-between items-start w-full">
-  
-
-  {/* Continue Button */}
-  <div
-    className="w-full px-3.5 py-2.5 bg-[#4e6bd7] rounded-lg  border-2 border-white justify-center items-center gap-1 flex overflow-hidden transition-all duration-300 hover:bg-[#374C99] cursor-pointer"
-  >
-    <div className="px-0.5 justify-center items-center flex">
-      <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-        Continue
-      </div>
-    </div>
-    <img
-      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
-      alt="White arrow right icon"
-      className="w-5 h-5"
-    />
-  </div>
-</div>
+            <div className="h-10 flex justify-center items-start w-full">
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
+                className="w-full"
+              >
+                Continue
+              </ButtonNormal>
+            </div>
           </div>
         </div>
       </div>

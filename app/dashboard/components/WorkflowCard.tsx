@@ -4,27 +4,30 @@ import { Workflow } from '@/types/workflow';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import { Workspace } from '@/types/workspace';
+import DynamicIcon from '../../../utils/DynamicIcon';
 
 type MenuItem = { label: string; icon: string } | 'separator';
 
 const menuItems: MenuItem[] = [
-  { label: 'Open', icon: 'link-external-02.svg' },
+  { label: 'Open in read mode', icon: 'play.svg' },
   'separator',
   { label: 'Edit Flow info', icon: 'edit-05.svg' },
   { label: 'Duplicate', icon: 'duplicate-icon.svg' },
-  'separator',
   { label: 'Move', icon: 'folder-download.svg' },
-  { label: 'Delete Flow', icon: 'trash-01.svg' },
+  'separator',
+  { label: 'Delete Flow', icon: 'trash-delete.svg',  },
 ];
 
 interface WorkflowCardProps {
   workflow: Workflow;
   workspace: Workspace;
-  onSelectWorkflow: (w: Workflow) => void;
-  onDeleteWorkflow: () => void;
-  onDuplicateWorkflow: () => void;
-  onEditWorkflow: () => void;
-  onMoveWorkflow: () => void;
+  onSelectWorkflow: (workflow: Workflow) => void;
+  onDeleteWorkflow: (workflow: Workflow) => void;
+  onEditWorkflow: (workflow: Workflow) => void;
+  onDuplicateWorkflow: (workflow: Workflow) => void;
+  onMoveWorkflow: (workflow: Workflow) => void;
+  tags?: string[];
+  assignee?: string;
 }
 
 export default function WorkflowCard({
@@ -35,6 +38,8 @@ export default function WorkflowCard({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
+  tags = ['Human Resources'],
+  assignee = 'Maxime Togbe',
 }: WorkflowCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,7 +71,7 @@ export default function WorkflowCard({
   return (
     <div
       onClick={() => handleWorkflowClick(workflow.id)}
-      className="relative h-[164.75px] px-6 py-5 bg-white rounded-[10px] border border-[#e4e7ec] flex-col justify-start items-start gap-4 inline-flex overflow-visible cursor-pointer"
+      className="bg-white rounded-lg border border-lightMode-border-secondary p-4 hover:border-lightMode-border-primary transition-all ease-in-out hover:cursor-pointer relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -76,7 +81,10 @@ export default function WorkflowCard({
             {/* Star Button - Toggle Fill on Click */}
             <div
               className="px-2 py-1 border-r border-[#d0d5dd] justify-center items-center gap-2 flex transition duration-300 group hover:bg-[#F9FAFB] cursor-pointer"
-              onClick={() => setIsStarFilled(!isStarFilled)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsStarFilled(!isStarFilled);
+              }}
             >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
@@ -115,90 +123,94 @@ export default function WorkflowCard({
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute w-48 bg-white border border-[#e4e7ec] rounded-lg shadow-md z-30 mt-2 overflow-hidden"
+          className="absolute w-48 bg-white border border-[#e4e7ec] py-1 rounded-lg shadow-md z-30 mt-2 overflow-hidden"
           style={{ top: 'calc(10% + 8px)', right: '4px' }}
         >
           {menuItems.map((item, index) =>
             item === 'separator' ? (
               <div
                 key={`sep-${index}`}
-                className="w-full border-t border-[#e4e7ec]"
+                className="w-full border-t my-1 border-[#e4e7ec]"
               />
             ) : (
               <div
                 key={index}
-                className="px-4 py-3 flex items-center gap-2 transition duration-300 hover:bg-[#F9FAFB] cursor-pointer"
+                className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent click propagation
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
                   if (item.label === 'Delete Flow') {
-                    onDeleteWorkflow(); // Call the delete function
+                    onDeleteWorkflow(workflow);
                   } else if (item.label === 'Move') {
-                    onMoveWorkflow();
+                    onMoveWorkflow(workflow);
                   } else if (item.label === 'Edit Flow info') {
-                    onEditWorkflow();
-                  } else if (item.label === 'Open') {
+                    onEditWorkflow(workflow);
+                  } else if (item.label === 'Open in read mode') {
                     handleWorkflowClick(workflow.id);
                   } else if (item.label === 'Duplicate') {
-                    onDuplicateWorkflow();
+                    onDuplicateWorkflow(workflow);
                   }
-                  // Add handlers for other menu items as needed
                 }}
               >
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
-                  alt={`${item.label} Icon`}
-                  className="w-4 h-4"
-                />
-                <span className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
-                  {item.label}
-                </span>
+                <div 
+                  className={`grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex transition-all duration-300 overflow-hidden ${
+                    item.label === 'Delete Flow' ? 'hover:bg-lightMode-bg-error-primary' : 'hover:bg-lightMode-bg-primary_hover'
+                  }`}
+                >
+                  <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                    <div className="w-4 h-4 relative overflow-hidden">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
+                        alt={`${item.label} Icon`}
+                        className={`w-4 h-4 ${item.label === 'Delete Flow' ? 'text-lightMode-fg-error-primary' : ''}`}
+                      />
+                    </div>
+                    <div 
+                      className={`grow shrink basis-0  text-sm font-normal font-['Inter'] leading-tight ${
+                        item.label === 'Delete Flow' ? 'text-lightMode-fg-error-primary' : 'text-[#344054]'
+                      }`}
+                    >
+                      {item.label}
+                    </div>
+                  </div>
+                </div>
               </div>
             )
           )}
         </div>
       )}
-      {/* Workflow Name */}
-      <div className="flex-col justify-start items-start gap-2 flex">
-        <div className="justify-start items-center gap-2 inline-flex">
-          <div className="justify-start items-start gap-[7.19px] flex">
-            <div className="w-[94.05px] h-[28.75px] relative" />
-          </div>
-        </div>
-        <div className="text-[#101828] text-sm font-semibold font-['Inter'] leading-tight">
-          {workflow.name}
+      {/* Commented out for now - New icon implementation
+      <div className="flex mb-4">
+        <div className="bg-gray-100 rounded-[6px] flex items-center justify-center w-10 h-10">
+          <DynamicIcon url={workflow.icon || '/placeholder.svg'} size={20} color="currentColor" />
         </div>
       </div>
-      {/* Default values for now */}
-      <div className="flex-col justify-start items-start gap-2 flex">
-        <div className="self-stretch justify-start items-start gap-2 inline-flex">
-          <div className="pl-1 pr-1.5 py-0.5 bg-[#eef3ff] rounded-md border-[#c6d7fe] justify-start items-center gap-1 flex">
-            <div className="text-center text-[#3537cc] text-xs font-medium font-['Inter'] leading-[18px]">
-              Human Resources
-            </div>
-          </div>
-          <div className="pl-1 pr-1.5 py-0.5 bg-[#eff8ff] rounded-md border-[#b2ddff] justify-start items-center gap-1 flex">
-            <div className="text-center text-[#175cd3] text-xs font-medium font-['Inter'] leading-[18px]">
-              Engineering
-            </div>
-          </div>
-        </div>
-        <div className="justify-start items-start gap-2 inline-flex">
-          <div className="px-1.5 py-0.5 bg-gray-50 rounded-md justify-start items-center flex">
-            <div className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">
-              6 Steps
-            </div>
-          </div>
-          <div className="pl-1 pr-1.5 py-0.5 bg-gray-50 rounded-md justify-start items-center gap-1 flex">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle.svg`}
-              alt="User Icon"
-              className="w-3 h-3"
-            />
-            <div className="text-center text-[#344054] text-xs font-medium font-['Inter'] leading-[18px]">
-              Maxime Togbe
-            </div>
-          </div>
-        </div>
+      */}
+      {/* Title */}
+      <h3 className="font-medium text-[#101828] text-lg mb-2">{workflow.name}</h3>
+      {/* Description */}
+      <p className="text-sm text-[#475467] mb-3">{workflow.description}</p>
+      {/* Tags */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className={`px-spacing-sm py-0.5 text-xs rounded-md
+              ${tag === 'Human Resources' ? 'bg-[#eef4ff] text-[#3538cd]' : ''}
+              ${tag === 'Engineering' ? 'bg-[#f2f4f7] text-[#344054]' : ''}
+              ${tag === 'Marketing' ? 'bg-[#fdf2fa] text-[#c11574]' : ''}
+              ${tag === 'Design' ? 'bg-[#fef6ee] text-[#b93815]' : ''}
+            `}
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+      {/* Steps and Assignee */}
+      <div className="flex items-center text-sm text-[#667085]">
+        <span>6 Steps</span>
+        <div className="w-1 h-1 rounded-full bg-[#d0d5dd] mx-2" />
+        <span className="truncate">{assignee}</span>
       </div>
     </div>
   );

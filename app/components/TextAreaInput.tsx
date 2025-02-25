@@ -191,7 +191,7 @@ const TextAreaInput: React.FC<TextAreaInputProps> = ({
     boxShadow: isFocused
       ? destructive
         ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
-        : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
+        : "0px 0px 0px 4px rgba(78,107,215,0.12)"
       : mode === 'light'
         ? '0px 1px 2px rgba(16, 24, 40, 0.05)'
         : 'none',
