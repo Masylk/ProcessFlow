@@ -21,6 +21,7 @@ Table user {
   last_login_at DateTime
   onboarding_step OnboardingStep [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
+  test_mode Boolean [not null, default: false]
   active_workspace workspace
   user_workspaces user_workspace [not null]
   actions action [not null]

@@ -135,7 +135,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(user);
   } catch (dbError) {
-    console.error('Error fetching or updating user from Prisma:', dbError);
+    console.error('Error fetching or updating user from Prisma:', {
+      message: dbError instanceof Error ? dbError.message : 'Unknown error',
+      error: dbError
+    });
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

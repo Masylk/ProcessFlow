@@ -47,7 +47,7 @@ CREATE TABLE "workspace" (
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "archived_at" TIMESTAMP(3),
     "name" TEXT NOT NULL,
-    "slug" TEXT NOT NULL,
+    "slug" TEXT,
     "team_tags" TEXT[],
     "icon_url" TEXT,
     "background_colour" TEXT,

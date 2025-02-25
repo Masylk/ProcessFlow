@@ -1,8 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma-edge';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -60,7 +58,10 @@ export async function GET(request: NextRequest) {
 
         return response;
       } catch (error) {
-        console.error('Database error:', error);
+        console.error('Database error:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          error
+        });
         return NextResponse.redirect(new URL('/login?error=database', request.url));
       }
     }

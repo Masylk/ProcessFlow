@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma-edge';
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
 import WelcomeEmail from '../emails/WelcomeEmail';
@@ -25,11 +25,29 @@ export async function login(formData: FormData) {
   }
 
   const user = data?.user;
-  if (!user) {
-    return { error: 'No user returned from signInWithPassword' };
+  if (!user) return { error: 'No user returned from signInWithPassword' };
+
+  // Vérifier l'état de l'onboarding
+  const dbUser = await prisma.user.findUnique({
+    where: { auth_id: user.id },
+  });
+
+  if (!dbUser) return { error: 'User not found in database' };
+
+  if (!dbUser.onboarding_completed_at) {
+    const currentStep = (dbUser.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-');
+    return {
+      id: dbUser.id.toString(),
+      email: dbUser.email,
+      redirectTo: `/onboarding/${currentStep}`
+    };
   }
 
-  return { id: user.id, email: user.email };
+  return {
+    id: dbUser.id.toString(),
+    email: dbUser.email,  
+    redirectTo: '/dashboard'
+  };
 }
 
 export async function signup(formData: FormData) {

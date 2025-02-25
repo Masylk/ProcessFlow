@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma-edge';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -28,7 +28,8 @@ export async function POST(req: Request) {
       const workspace = await prisma.workspace.create({
         data: {
           name: data.workspace_name,
-          slug: data.workspace_url.toLowerCase(),
+          slug: data.workspace_url.toLowerCase().replace(/\s+/g, '-'),
+          background_colour: '#4299E1',
           team_tags: [],
           user_workspaces: {
             create: {

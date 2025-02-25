@@ -1,10 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from './lib/prisma-edge';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-const prisma = new PrismaClient();
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -38,7 +37,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Récupérer la session
   const { data: { session } } = await supabase.auth.getSession();
 
   // Routes publiques qui ne nécessitent pas d'authentification
@@ -56,7 +54,26 @@ export async function middleware(request: NextRequest) {
 
   // Rediriger vers dashboard si session et sur une route publique
   if (session && isPublicRoute && !request.nextUrl.pathname.includes('/auth/confirm')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    try {
+      // Utiliser Supabase au lieu de Prisma
+      const { data: userData, error } = await supabase
+        .from('user')
+        .select('onboarding_completed_at, onboarding_step')
+        .eq('auth_id', session.user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (userData && !userData.onboarding_completed_at) {
+        const currentStep = (userData.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-');
+        return NextResponse.redirect(new URL(`/onboarding/${currentStep}`, request.url));
+      }
+
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    } catch (error) {
+      console.error('Error in middleware:', error);
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
   // Ajouter la protection des routes d'onboarding
