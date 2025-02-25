@@ -30,7 +30,14 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
         <div className="flex justify-between items-start mb-2">
-          <div className="text-sm text-gray-500">Position: {data.position}</div>
+          <div className="flex flex-col gap-1">
+            <div className="text-sm text-gray-500">
+              Position: {data.position}
+            </div>
+            <div className="text-xs text-blue-500">
+              Type: {data.type || 'STEP'}
+            </div>
+          </div>
           <button
             onClick={() => data.onDelete?.(id)}
             className="text-gray-400 hover:text-red-500"
