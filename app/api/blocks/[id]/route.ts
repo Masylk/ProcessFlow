@@ -50,8 +50,10 @@ import { Prisma } from '@prisma/client';
  *                 type: integer
  *               task_type:
  *                 type: string
- *               delay:
+ *               delay_seconds:
  *                 type: integer
+ *               step_details:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Successfully updated block.
@@ -67,7 +69,7 @@ import { Prisma } from '@prisma/client';
  *         description: Failed to update block.
  */
 export async function PATCH(req: NextRequest) {
-  const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
+  const id = req.nextUrl.pathname.split('/').pop();
 
   if (!id) {
     return NextResponse.json(
@@ -92,7 +94,8 @@ export async function PATCH(req: NextRequest) {
       click_position,
       average_time,
       task_type,
-      delay,
+      delay_seconds,
+      step_details,
     } = await req.json();
 
     // Fetch the existing block to get the current image URL
@@ -140,7 +143,7 @@ export async function PATCH(req: NextRequest) {
       await deleteFile(existingImageUrl);
     }
 
-    // Update the block in the database
+    // Update the block in the database with the new schema
     const updatedBlock = await prisma.block.update({
       where: { id: block_id },
       data: {
@@ -152,34 +155,24 @@ export async function PATCH(req: NextRequest) {
         path_id,
         workflow_id,
         image,
-        image_description: image_description || null,
-        click_position: click_position || null,
+        image_description,
+        click_position,
         last_modified: new Date(),
-        average_time: average_time || null,
-        task_type: task_type || null,
+        average_time,
+        task_type,
+        delay_seconds: type === 'DELAY' ? delay_seconds : null,
+        step_details: type === 'STEP' ? step_details : null,
       },
-    });
-
-    // Handle block type-specific updates
-    if (type === 'DELAY') {
-      await prisma.delay_block.update({
-        where: { block_id },
-        data: {
-          seconds: delay,
-        },
-      });
-    }
-
-    const updatedBlockWithRelations = await prisma.block.findUnique({
-      where: { id: block_id },
       include: {
-        step_block: true,
-        path_block: true,
-        delay_block: true,
-      },
+        child_paths: {
+          include: {
+            path: true
+          }
+        }
+      }
     });
 
-    return NextResponse.json(updatedBlockWithRelations);
+    return NextResponse.json(updatedBlock);
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to update block' },
@@ -214,7 +207,7 @@ export async function PATCH(req: NextRequest) {
  *         description: Failed to delete block.
  */
 export async function DELETE(req: NextRequest) {
-  const id = req.nextUrl.pathname.split('/').pop(); // Extract ID from URL
+  const id = req.nextUrl.pathname.split('/').pop();
 
   if (!id) {
     return NextResponse.json(
@@ -226,21 +219,19 @@ export async function DELETE(req: NextRequest) {
   const block_id = Number(id);
 
   try {
-    // Fetch the block to determine its type, relations, and associated files
+    // Fetch the block to check if it exists and get its image
     const block = await prisma.block.findUnique({
       where: { id: block_id },
       include: {
-        step_block: true,
-        path_block: true,
-        delay_block: true, // Include delay_block if present
-      },
+        child_paths: true
+      }
     });
 
     if (!block) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
-    const imageUrl = block.image; // Only delete the image file now
+    const imageUrl = block.image;
 
     // Prepare for file deletion from Supabase storage
     const deleteFile = async (fileUrl: string | null) => {
@@ -276,37 +267,13 @@ export async function DELETE(req: NextRequest) {
     // Delete only the image file from Supabase storage
     await deleteFile(imageUrl);
 
-    // Perform the database transaction to delete the block and related records
-    await prisma.$transaction(
-      async (transactionPrisma: Prisma.TransactionClient) => {
-        // Delete related records based on block type
-        if (block.type === 'PATH' && block.path_block) {
-          // Delete the path block itself
-          await transactionPrisma.path_block.delete({
-            where: { block_id: block_id },
-          });
-        } else if (block.type === 'STEP' && block.step_block) {
-          // Delete the step block
-          await transactionPrisma.step_block.delete({
-            where: { block_id: block_id },
-          });
-        } else if (block.type === 'DELAY' && block.delay_block) {
-          // Delete the delay block
-          await transactionPrisma.delay_block.delete({
-            where: { block_id: block_id },
-          });
-        }
+    // Delete the block (cascade will handle related records)
+    await prisma.block.delete({
+      where: { id: block_id },
+    });
 
-        // Finally, delete the block itself
-        await transactionPrisma.block.delete({
-          where: { id: block_id },
-        });
-      }
-    );
-
-    // Return a response with no content
     return new NextResponse(null, { status: 204 });
-  } catch (error: unknown) {
+  } catch (error) {
     if (error instanceof Error) {
       console.error('Failed to delete block:', error.message);
       return NextResponse.json(

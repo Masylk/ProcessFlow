@@ -151,53 +151,49 @@ export async function GET(
                 position: 'asc',
               },
               include: {
-                path_block: {
+                child_paths: {
                   include: {
-                    paths: {
+                    path: {
                       include: {
                         blocks: {
                           orderBy: {
                             position: 'asc',
                           },
                           include: {
-                            path_block: {
+                            child_paths: {
                               include: {
-                                paths: {
+                                path: {
                                   include: {
                                     blocks: {
                                       orderBy: {
                                         position: 'asc',
                                       },
                                       include: {
-                                        path_block: {
+                                        child_paths: {
                                           include: {
-                                            paths: {
+                                            path: {
                                               include: {
                                                 blocks: {
                                                   include: {
-                                                    path_block: true,
-                                                    step_block: true,
+                                                    child_paths: true
                                                   },
                                                 },
                                               },
                                             },
                                           },
                                         },
-                                        step_block: true,
                                       },
                                     },
                                   },
                                 },
                               },
                             },
-                            step_block: true,
                           },
                         },
                       },
                     },
                   },
                 },
-                step_block: true,
               },
             },
           },
@@ -209,26 +205,15 @@ export async function GET(
             data: {
               name: 'First Path',
               workflow_id: parsedworkflow_id,
-              path_block_id: null,
             },
             include: {
               blocks: {
                 include: {
-                  path_block: {
+                  child_paths: {
                     include: {
-                      paths: {
-                        include: {
-                          blocks: {
-                            include: {
-                              path_block: true,
-                              step_block: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  step_block: true,
+                      path: true
+                    }
+                  }
                 },
               },
             },
