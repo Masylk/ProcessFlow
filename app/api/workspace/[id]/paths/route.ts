@@ -80,7 +80,7 @@ import { Prisma } from '@prisma/client';
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "workflow_id is required"
+ *                   example: "workflow_id and valid workspaceId are required"
  *       500:
  *         description: Internal server error
  *         content:
@@ -92,15 +92,18 @@ import { Prisma } from '@prisma/client';
  *                   type: string
  *                   example: "Failed to fetch or create paths"
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
 
-  if (!workflow_id) {
+  if (!workflow_id || isNaN(workspaceId)) {
     return NextResponse.json(
-      { error: 'workflow_id is required' },
+      { error: 'workflow_id and valid workspaceId are required' },
       { status: 400 }
     );
   }
@@ -113,7 +116,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         // Fetch paths for the given workflow_id
         const existingPaths = await prisma.path.findMany({
           where: {
-            workflow_id: parsedworkflow_id, // Use `workflow_id` instead of `workflow_id`
+            workflow_id: parsedworkflow_id,
           },
           include: {
             blocks: {
@@ -121,24 +124,52 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
                 position: 'asc',
               },
               include: {
-                path_block: {
+                child_paths: {
                   include: {
-                    paths: {
+                    path: {
                       include: {
                         blocks: {
-                          include: {
-                            path_block: true,
-                            step_block: true,
+                          orderBy: {
+                            position: 'asc',
                           },
-                        },
-                      },
-                    },
-                  },
-                },
-                step_block: true,
-              },
-            },
-          },
+                          include: {
+                            child_paths: {
+                              include: {
+                                path: {
+                                  include: {
+                                    blocks: {
+                                      orderBy: {
+                                        position: 'asc',
+                                      },
+                                      include: {
+                                        child_paths: {
+                                          include: {
+                                            path: {
+                                              include: {
+                                                blocks: {
+                                                  include: {
+                                                    child_paths: true
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         });
 
         if (existingPaths.length === 0) {
@@ -146,36 +177,36 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             data: {
               name: 'First Path',
               workflow_id: parsedworkflow_id,
-              path_block_id: null,
             },
-          });
-
-          // Create the default step block inside the new path
-          const defaultBlockData: any = {
-            type: 'STEP',
-            position: 0,
-            icon: '/step-icons/default-icons/container.svg',
-            description: 'This is the default step block',
-            workflow: { connect: { id: parsedworkflow_id } },
-            path: { connect: { id: newPath.id } },
-            step_block: {
-              create: {
-                step_details: 'Default step details',
-              },
-            },
-          };
-
-          const defaultBlock = await prisma.block.create({
-            data: defaultBlockData,
             include: {
-              step_block: true,
-            },
+              blocks: {
+                include: {
+                  child_paths: {
+                    include: {
+                      path: true
+                    }
+                  }
+                }
+              }
+            }
           });
 
-          return { paths: [{ ...newPath, blocks: [defaultBlock] }] };
+          // Create default block in the new path
+          await prisma.block.create({
+            data: {
+              type: 'STEP',
+              position: 0,
+              icon: '/step-icons/default-icons/container.svg',
+              description: 'This is a default block',
+              workflow: { connect: { id: parsedworkflow_id } },
+              path: { connect: { id: newPath.id } },
+              step_details: 'Default step details'
+            }
+          });
+
+          return { paths: [newPath] };
         }
 
-        // Return existing paths with their associated blocks
         return { paths: existingPaths };
       }
     );

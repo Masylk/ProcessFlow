@@ -19,10 +19,10 @@ Table user {
   post_hog_id String
   phone String
   last_login_at DateTime
-  onboarding_step OnboardingStep [default: 'PERSONAL_INFO']
+  onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
   active_workspace workspace
-  user_workspaces user_workspace [not null]
+  workspaces user_workspace [not null]
   actions action [not null]
 }
 
@@ -46,6 +46,7 @@ Table workspace {
   active_users user [not null]
   folders folder [not null]
   workflows workflow [not null]
+  billings billing [not null]
 }
 
 Table workspace_billing_infos {
@@ -90,14 +91,16 @@ Table billing {
   currency String [not null]
   invoice_date DateTime [not null]
   due_date DateTime [not null]
+  workspace_id Int [not null]
   subscription subscription [not null]
+  workspace workspace [not null]
 }
 
 Table user_workspace {
   id Int [pk, increment]
   user_id Int [not null]
   workspace_id Int [not null]
-  role role [not null, default: 'ADMIN']
+  role user_role [not null, default: 'ADMIN']
   user user [not null]
   workspace workspace [not null]
 }
@@ -110,6 +113,7 @@ Table folder {
   icon_url String
   emote String
   team_tags String[] [not null]
+  path String
   workspace workspace [not null]
   parent folder
   subfolders folder [not null]
@@ -127,10 +131,10 @@ Table workflow {
   team_tags String[] [not null]
   folder_id Int
   workspace workspace [not null]
-  blocks block [not null]
-  history action [not null]
-  paths path [not null]
   folder folder
+  blocks block [not null]
+  paths path [not null]
+  actions action [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -140,11 +144,26 @@ Table workflow {
 Table path {
   id Int [pk, increment]
   name String [not null]
-  blocks block [not null]
-  path_block_id Int
-  path_block path_block
   workflow_id Int [not null]
   workflow workflow [not null]
+  blocks block [not null]
+  parent_blocks path_parent_block [not null]
+
+  Note: 'Collection of connected blocks forming a workflow path'
+}
+
+Table path_parent_block {
+  path_id Int [not null]
+  block_id Int [not null]
+  created_at DateTime [default: `now()`, not null]
+  path path [not null]
+  block block [not null]
+
+  indexes {
+    (path_id, block_id) [pk]
+  }
+
+  Note: 'Junction table that allows paths to be triggered from multiple parent blocks'
 }
 
 Table block {
@@ -153,6 +172,8 @@ Table block {
   updated_at DateTime [default: `now()`, not null]
   last_modified DateTime
   type block_type [not null]
+  step_details String
+  delay_seconds Int
   position Int [not null]
   title String
   icon String
@@ -165,54 +186,32 @@ Table block {
   path_id Int [not null]
   click_position Json
   workflow workflow [not null]
-  actions action [not null]
-  step_block step_block
-  path_block path_block
-  delay_block delay_block
   path path [not null]
-}
-
-Table step_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  step_details String [not null]
-  block block [not null]
-}
-
-Table path_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  block block [not null]
-  paths path [not null]
-}
-
-Table delay_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  block block [not null]
-  seconds Int [not null]
+  actions action [not null]
+  child_paths path_parent_block [not null]
 }
 
 Table action {
   id Int [pk, increment]
   user_id Int [not null]
-  user user [not null]
   type String [not null]
   target_id Int [not null]
-  target block [not null]
   workflow_id Int [not null]
-  workflow workflow [not null]
   value Int [not null]
+  created_at DateTime [default: `now()`, not null]
+  user user [not null]
+  target block [not null]
+  workflow workflow [not null]
 }
 
-Enum OnboardingStep {
+Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
   WORKSPACE_SETUP
   COMPLETED
 }
 
-Enum role {
+Enum user_role {
   ADMIN
   EDITOR
   READER
@@ -250,6 +249,8 @@ Ref: workspace_billing_infos.workspace_id > workspace.id
 
 Ref: billing.subscription_id > subscription.id
 
+Ref: billing.workspace_id > workspace.id
+
 Ref: user_workspace.user_id > user.id
 
 Ref: user_workspace.workspace_id > workspace.id
@@ -262,19 +263,15 @@ Ref: workflow.workspace_id > workspace.id
 
 Ref: workflow.folder_id > folder.id
 
-Ref: path.path_block_id > path_block.id [delete: Cascade]
-
 Ref: path.workflow_id > workflow.id
+
+Ref: path_parent_block.path_id > path.id [delete: Cascade]
+
+Ref: path_parent_block.block_id > block.id [delete: Cascade]
 
 Ref: block.workflow_id > workflow.id [delete: Cascade]
 
 Ref: block.path_id > path.id [delete: Cascade]
-
-Ref: step_block.block_id - block.id [delete: Cascade]
-
-Ref: path_block.block_id - block.id [delete: Cascade]
-
-Ref: delay_block.block_id - block.id [delete: Cascade]
 
 Ref: action.user_id > user.id
 

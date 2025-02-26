@@ -64,18 +64,22 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   }
 
   try {
-    // Fetch paths linked to the block
+    // Fetch paths linked to the block through path_parent_block
     const paths = await prisma.path.findMany({
       where: {
-        path_block_id: blockId, // Adjust based on your schema
+        parent_blocks: {
+          some: {
+            block_id: blockId
+          }
+        }
       },
       select: {
         id: true,
         name: true,
         workflow_id: true,
-        // Add other fields as necessary
       },
     });
+    
     console.log(paths);
     return NextResponse.json(paths);
   } catch (error) {

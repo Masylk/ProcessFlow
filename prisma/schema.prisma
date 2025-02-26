@@ -12,14 +12,14 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum OnboardingStep {
+enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
   WORKSPACE_SETUP
   COMPLETED
 }
 
-enum role {
+enum user_role {
   ADMIN
   EDITOR
   READER
@@ -44,35 +44,40 @@ enum plan_type {
   ENTERPRISE
 }
 
+enum task_type {
+  MANUAL
+  AUTOMATIC
+}
+
 model user {
-  id                      Int              @id @default(autoincrement())
-  created_at              DateTime         @default(now())
-  updated_at              DateTime         @default(now()) @updatedAt
-  archived_at             DateTime?
-  auth_id                 String           @unique
-  first_name              String
-  last_name               String
-  full_name               String
-  email                   String           @unique
-  avatar_url              String?
-  active_workspace_id     Int?
-  hubspot_contact_id      String?
-  sentry_id               String?
-  post_hog_id             String?
-  phone                   String?
-  last_login_at           DateTime?
-  onboarding_step         OnboardingStep?  @default(PERSONAL_INFO)
-  onboarding_completed_at DateTime?
+  id                        Int                @id @default(autoincrement())
+  created_at               DateTime           @default(now())
+  updated_at               DateTime           @default(now()) @updatedAt
+  archived_at              DateTime?
+  auth_id                  String             @unique
+  first_name               String
+  last_name                String
+  full_name                String
+  email                    String             @unique
+  avatar_url               String?
+  active_workspace_id      Int?
+  hubspot_contact_id       String?
+  sentry_id                String?
+  post_hog_id              String?
+  phone                    String?
+  last_login_at            DateTime?
+  onboarding_step          onboarding_step?   @default(PERSONAL_INFO)
+  onboarding_completed_at  DateTime?
   
   // Relations
-  active_workspace    workspace?      @relation("active_workspace", fields: [active_workspace_id], references: [id])
-  user_workspaces    user_workspace[] // Permet d'avoir plusieurs workspaces
-  actions            action[]         @relation("user_actions")
+  active_workspace         workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
+  workspaces              user_workspace[]
+  actions                 action[]
 
   @@index([active_workspace_id])
   @@index([email])
   @@index([auth_id])
-  @@index([auth_id], name: "auth_id_cover_idx")
+  @@map("user")
 }
 
 model workspace {
@@ -93,13 +98,15 @@ model workspace {
   // Relations
   subscription         subscription?         @relation(fields: [subscription_id], references: [id])
   billing_infos        workspace_billing_infos[]
-  user_workspaces      user_workspace[]     // Relation many-to-many avec users
-  active_users         user[]               @relation("active_workspace") // Users qui ont ce workspace comme actif
+  user_workspaces      user_workspace[]
+  active_users         user[]               @relation("active_workspace")
   folders              folder[]
   workflows            workflow[]
+  billings             billing[]
 
   @@index([stripe_customer_id])
   @@index([subscription_id])
+  @@map("workspace")
 }
 
 model workspace_billing_infos {
@@ -114,6 +121,7 @@ model workspace_billing_infos {
   workspace       workspace @relation(fields: [workspace_id], references: [id])
 
   @@index([workspace_id])
+  @@map("workspace_billing_infos")
 }
 
 model subscription {
@@ -131,6 +139,8 @@ model subscription {
   status                subscription_status
   workspace             workspace?
   billings              billing[]
+
+  @@map("subscription")
 }
 
 model billing {
@@ -140,23 +150,27 @@ model billing {
   paid_at            DateTime?
   subscription_id    Int
   stripe_invoice_id  String       @unique
-  amount_net         Int          // Montant en centimes
-  tax_amount         Int          // Montant en centimes
-  amount_gross       Int          // Montant en centimes
+  amount_net         Int          // Amount in cents
+  tax_amount         Int          // Amount in cents
+  amount_gross       Int          // Amount in cents
   currency           String       @db.VarChar(3)
   invoice_date       DateTime
   due_date           DateTime
+  workspace_id       Int
   subscription       subscription @relation(fields: [subscription_id], references: [id])
+  workspace          workspace    @relation(fields: [workspace_id], references: [id])
 
   @@index([subscription_id])
+  @@index([workspace_id])
   @@index([stripe_invoice_id])
+  @@map("billing")
 }
 
 model user_workspace {
   id           Int       @id @default(autoincrement())
   user_id      Int
   workspace_id Int
-  role         role      @default(ADMIN)
+  role         user_role @default(ADMIN)
 
   user      user      @relation(fields: [user_id], references: [id])
   workspace workspace @relation(fields: [workspace_id], references: [id])
@@ -164,64 +178,93 @@ model user_workspace {
   @@index([user_id, workspace_id], name: "user_workspace_composite_idx")
   @@index([user_id])
   @@index([workspace_id])
+  @@map("user_workspace")
 }
 
 model folder {
-  id           Int    @id @default(autoincrement())
-  name         String
-  workspace_id Int
-  parent_id    Int? // Nullable field for nesting folders
-  icon_url     String?
-  emote        String?
-  team_tags   String[]
+  id            Int         @id @default(autoincrement())
+  name          String
+  workspace_id  Int
+  parent_id     Int?
+  icon_url      String?
+  emote         String?
+  team_tags     String[]
+  path          String?     // Materialized path for efficient tree queries
+  
+  workspace     workspace   @relation(fields: [workspace_id], references: [id])
+  parent        folder?     @relation("folder_hierarchy", fields: [parent_id], references: [id])
+  subfolders    folder[]    @relation("folder_hierarchy")
+  workflows     workflow[]
 
-  workspace  workspace @relation(fields: [workspace_id], references: [id])
-  parent     folder?   @relation("folder_hierarchy", fields: [parent_id], references: [id])
-  subfolders folder[]  @relation("folder_hierarchy")
-
-  workflows workflow[]
+  @@index([workspace_id])
+  @@index([parent_id])
+  @@index([path])
+  @@map("folder")
 }
 
 model workflow {
-  id           Int       @id @default(autoincrement())
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @default(now()) @updatedAt
-  last_opened  DateTime?
-  name         String
-  description  String
-  workspace_id Int
-  team_tags    String[]
-  folder_id    Int?
-  workspace    workspace @relation(fields: [workspace_id], references: [id])
-  blocks       block[]   @relation("workflow_blocks")
-  history      action[]  @relation("workflow_actions")
-  paths        path[]    @relation("workflow_paths")
-  folder       folder?   @relation(fields: [folder_id], references: [id])
+  id            Int         @id @default(autoincrement())
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @default(now()) @updatedAt
+  last_opened   DateTime?
+  name          String
+  description   String
+  workspace_id  Int
+  team_tags     String[]
+  folder_id     Int?
+  
+  workspace     workspace   @relation(fields: [workspace_id], references: [id])
+  folder        folder?     @relation(fields: [folder_id], references: [id])
+  blocks        block[]
+  paths         path[]
+  actions       action[]
 
   @@unique([name, workspace_id])
+  @@index([workspace_id])
+  @@index([folder_id])
+  @@map("workflow")
 }
 
-enum task_type {
-  MANUAL
-  AUTOMATIC
-}
-
+/// Collection of connected blocks forming a workflow path
 model path {
-  id            Int         @id @default(autoincrement())
-  name          String
-  blocks        block[]     @relation("path_blocks")
-  path_block_id Int?
-  path_block    path_block? @relation("path_block_path", fields: [path_block_id], references: [id], onDelete: Cascade)
-  workflow_id   Int
-  workflow      workflow    @relation("workflow_paths", fields: [workflow_id], references: [id])
+  id             Int       @id @default(autoincrement())
+  name           String
+  workflow_id    Int
+  
+  workflow       workflow  @relation(fields: [workflow_id], references: [id])
+  blocks         block[]
+  parent_blocks  path_parent_block[]
+
+  @@index([workflow_id])
+  @@map("path")
+}
+
+/// Junction table that allows paths to be triggered from multiple parent blocks
+model path_parent_block {
+  path_id        Int
+  block_id       Int
+  created_at     DateTime  @default(now())
+
+  path           path      @relation(fields: [path_id], references: [id], onDelete: Cascade)
+  block          block     @relation("path_parent", fields: [block_id], references: [id], onDelete: Cascade)
+
+  @@id([path_id, block_id])
+  @@index([path_id])
+  @@index([block_id])
+  @@map("path_parent_block")
 }
 
 model block {
-  id                Int          @id @default(autoincrement())
-  created_at        DateTime     @default(now())
-  updated_at        DateTime     @default(now()) @updatedAt
+  id                Int       @id @default(autoincrement())
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @default(now()) @updatedAt
   last_modified     DateTime?
   type              block_type
+  
+  // Type-specific fields
+  step_details      String?   // Used when type is STEP
+  delay_seconds     Int?      // Used when type is DELAY
+  
   position          Int
   title             String?
   icon              String?
@@ -233,43 +276,34 @@ model block {
   workflow_id       Int
   path_id           Int
   click_position    Json?
-  workflow          workflow     @relation("workflow_blocks", fields: [workflow_id], references: [id], onDelete: Cascade)
+  
+  workflow          workflow            @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  path              path                @relation(fields: [path_id], references: [id], onDelete: Cascade)
   actions           action[]
-  step_block        step_block?  @relation
-  path_block        path_block?  @relation
-  delay_block       delay_block? @relation
-  path              path         @relation("path_blocks", fields: [path_id], references: [id], onDelete: Cascade)
-}
+  child_paths       path_parent_block[] @relation("path_parent")
 
-model step_block {
-  id           Int    @id @default(autoincrement())
-  block_id     Int    @unique
-  step_details String
-  block        block  @relation(fields: [block_id], references: [id], onDelete: Cascade)
-}
-
-model path_block {
-  id       Int    @id @default(autoincrement())
-  block_id Int    @unique
-  block    block  @relation(fields: [block_id], references: [id], onDelete: Cascade)
-  paths    path[] @relation("path_block_path") // Do not define `onDelete` here
-}
-
-model delay_block {
-  id       Int   @id @default(autoincrement())
-  block_id Int   @unique
-  block    block @relation(fields: [block_id], references: [id], onDelete: Cascade)
-  seconds  Int
+  @@index([workflow_id])
+  @@index([path_id])
+  @@index([type])
+  @@map("block")
 }
 
 model action {
-  id          Int      @id @default(autoincrement())
-  user_id     Int
-  user        user     @relation("user_actions", fields: [user_id], references: [id])
-  type        String
-  target_id   Int
-  target      block    @relation(fields: [target_id], references: [id])
-  workflow_id Int
-  workflow    workflow @relation("workflow_actions", fields: [workflow_id], references: [id])
-  value       Int
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  type         String
+  target_id    Int
+  workflow_id  Int
+  value        Int
+  created_at   DateTime  @default(now())
+  
+  user         user      @relation(fields: [user_id], references: [id])
+  target       block     @relation(fields: [target_id], references: [id])
+  workflow     workflow  @relation(fields: [workflow_id], references: [id])
+
+  @@index([user_id])
+  @@index([target_id])
+  @@index([workflow_id])
+  @@index([created_at])
+  @@map("action")
 }
