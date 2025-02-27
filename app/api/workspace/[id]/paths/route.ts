@@ -109,62 +109,43 @@ export async function GET(
   }
 
   try {
-    const result = await prisma.$transaction(
-      async (prisma: Prisma.TransactionClient) => {
-        const parsedworkflow_id = parseInt(workflow_id, 10);
+    const result = await prisma.$transaction(async (prisma: Prisma.TransactionClient) => {
+      const parsedworkflow_id = parseInt(workflow_id, 10);
 
-        // Fetch paths for the given workflow_id
-        const existingPaths = await prisma.path.findMany({
-          where: {
+      // Fetch paths for the given workflow_id with a simpler include structure
+      const existingPaths = await prisma.path.findMany({
+        where: {
+          workflow_id: parsedworkflow_id,
+        },
+        include: {
+          blocks: {
+            orderBy: {
+              position: 'asc',
+            },
+            include: {
+              child_paths: {
+                include: {
+                  path: true
+                }
+              }
+            }
+          },
+          parent_blocks: true,
+        }
+      });
+
+      if (existingPaths.length === 0) {
+        const newPath = await prisma.path.create({
+          data: {
+            name: 'First Path',
             workflow_id: parsedworkflow_id,
           },
           include: {
             blocks: {
-              orderBy: {
-                position: 'asc',
-              },
               include: {
                 child_paths: {
                   include: {
-                    path: {
-                      include: {
-                        blocks: {
-                          orderBy: {
-                            position: 'asc',
-                          },
-                          include: {
-                            child_paths: {
-                              include: {
-                                path: {
-                                  include: {
-                                    blocks: {
-                                      orderBy: {
-                                        position: 'asc',
-                                      },
-                                      include: {
-                                        child_paths: {
-                                          include: {
-                                            path: {
-                                              include: {
-                                                blocks: {
-                                                  include: {
-                                                    child_paths: true
-                                                  }
-                                                }
-                                              }
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
+                    path: true
                   }
                 }
               }
@@ -172,50 +153,30 @@ export async function GET(
           }
         });
 
-        if (existingPaths.length === 0) {
-          const newPath = await prisma.path.create({
-            data: {
-              name: 'First Path',
-              workflow_id: parsedworkflow_id,
-            },
-            include: {
-              blocks: {
-                include: {
-                  child_paths: {
-                    include: {
-                      path: true
-                    }
-                  }
-                }
-              }
-            }
-          });
+        // Create default block in the new path
+        await prisma.block.create({
+          data: {
+            type: 'STEP',
+            position: 0,
+            icon: '/step-icons/default-icons/container.svg',
+            description: 'This is a default block',
+            workflow: { connect: { id: parsedworkflow_id } },
+            path: { connect: { id: newPath.id } },
+            step_details: 'Default step details',
+          }
+        });
 
-          // Create default block in the new path
-          await prisma.block.create({
-            data: {
-              type: 'STEP',
-              position: 0,
-              icon: '/step-icons/default-icons/container.svg',
-              description: 'This is a default block',
-              workflow: { connect: { id: parsedworkflow_id } },
-              path: { connect: { id: newPath.id } },
-              step_details: 'Default step details'
-            }
-          });
-
-          return { paths: [newPath] };
-        }
-
-        return { paths: existingPaths };
+        return { paths: [newPath] };
       }
-    );
+
+      return { paths: existingPaths };
+    });
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching or creating paths:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch or create paths' },
+      { error: 'Failed to fetch or creating paths' },
       { status: 500 }
     );
   }

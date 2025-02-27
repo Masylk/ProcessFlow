@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Flow } from './Flow';
 import { Block } from '@/types/block';
+import { Path } from '../types';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -14,7 +15,7 @@ export function ReactFlowPageClient({
   workflowId,
 }: ReactFlowPageClientProps) {
   const [workflowName, setWorkflowName] = useState<string>('');
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [paths, setPaths] = useState<Path[]>([]);
 
   const handleBlockAdd = async (
     blockData: any,
@@ -33,7 +34,8 @@ export function ReactFlowPageClient({
       );
       if (pathsResponse.ok) {
         const pathsData = await pathsResponse.json();
-        if (pathsData.paths?.[0]?.blocks) setBlocks(pathsData.paths[0].blocks);
+        setPaths(pathsData.paths);
+        // if (pathsData.paths?.[0]?.blocks) setBlocks(pathsData.paths[0].blocks);
       }
     }
   };
@@ -52,8 +54,7 @@ export function ReactFlowPageClient({
       const pathsData = await pathsRes.json();
       console.log('Paths Data:', pathsData);
       console.log('Blocks:', pathsData.paths?.[0]?.blocks);
-
-      setBlocks(pathsData.paths?.[0]?.blocks || []);
+      setPaths(pathsData.paths);
     };
     fetchData();
   }, [workspaceId, workflowId]);
@@ -62,11 +63,11 @@ export function ReactFlowPageClient({
     <ReactFlowProvider>
       <Flow
         workflowName={workflowName}
-        blocks={blocks}
+        paths={paths}
         workspaceId={workspaceId}
         workflowId={workflowId}
         onBlockAdd={handleBlockAdd}
-        setBlocks={setBlocks}
+        setPaths={setPaths}
       />
     </ReactFlowProvider>
   );

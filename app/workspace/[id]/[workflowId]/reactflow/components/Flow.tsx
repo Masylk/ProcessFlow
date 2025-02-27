@@ -14,7 +14,9 @@ import CustomNode from './CustomNode';
 import CustomSmoothStepEdge from './CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
-import { NodeData, EdgeData, DropdownPosition } from '../types';
+import { NodeData, EdgeData, DropdownPosition, Path } from '../types';
+import path from 'path';
+import { processPath } from '../utils/processPath';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -26,7 +28,7 @@ const edgeTypes = {
 
 interface FlowProps {
   workflowName: string;
-  blocks: Block[];
+  paths: Path[];
   workspaceId: string;
   workflowId: string;
   onBlockAdd: (
@@ -34,16 +36,16 @@ interface FlowProps {
     path_id: number,
     position: number
   ) => Promise<void>;
-  setBlocks: (blocks: Block[]) => void;
+  setPaths: (paths: Path[]) => void;
 }
 
 export function Flow({
   workflowName,
-  blocks,
+  paths,
   workspaceId,
   workflowId,
   onBlockAdd,
-  setBlocks,
+  setPaths,
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -67,14 +69,14 @@ export function Flow({
           );
           if (pathsResponse.ok) {
             const pathsData = await pathsResponse.json();
-            setBlocks(pathsData.paths?.[0]?.blocks || []);
+            setPaths(pathsData.paths);
           }
         }
       } catch (error) {
         console.error('Error deleting block:', error);
       }
     },
-    [workspaceId, workflowId, setBlocks]
+    [workspaceId, workflowId, setPaths]
   );
 
   const handleAddBlockOnEdge = useCallback(
@@ -97,107 +99,16 @@ export function Flow({
   );
 
   useEffect(() => {
-    if (!Array.isArray(blocks)) return;
-
-    const createNodesAndLayout = async () => {
-      // Sort blocks only by position, since they're all in the same path
-      const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
-
-      console.log(
-        'Sorted Blocks:',
-        sortedBlocks.map((b) => ({ id: b.id, position: b.position }))
-      );
-
-      const newNodes: Node[] = [];
-      const newEdges: Edge[] = [];
-
-      // Create nodes in sorted order
-      sortedBlocks.forEach((block) => {
-        const nodeId = `block-${block.id}`;
-        newNodes.push({
-          id: nodeId,
-          type: 'custom',
-          position: { x: 0, y: 0 },
-          data: {
-            label: block.step_block?.stepDetails || 'Block',
-            position: block.position,
-            type: block.type,
-            onDelete: handleDeleteBlock,
-            pathId: block.path_id,
-            handleAddBlockOnEdge,
-            isLastInPath: true,
-          },
-        });
-      });
-
-      // Create edges between consecutive blocks
-      for (let i = 0; i < sortedBlocks.length - 1; i++) {
-        const sourceId = `block-${sortedBlocks[i].id}`;
-        const targetId = `block-${sortedBlocks[i + 1].id}`;
-        const edgeId = `edge-${sortedBlocks[i].id}-${sortedBlocks[i + 1].id}`;
-
-        newEdges.push({
-          id: edgeId,
-          source: sourceId,
-          target: targetId,
-          type: 'smoothstepCustom',
-          sourceHandle: 'bottom',
-          targetHandle: 'top',
-          style: { stroke: '#b1b1b7' },
-          animated: true,
-          data: {
-            blocks: sortedBlocks,
-            handleAddBlockOnEdge,
-          },
-        });
-
-        // Update isLastInPath
-        const sourceNodeIndex = newNodes.findIndex((n) => n.id === sourceId);
-        if (sourceNodeIndex !== -1) {
-          newNodes[sourceNodeIndex].data.isLastInPath = false;
-        }
-      }
-
-      console.log('Before layout - Nodes:', newNodes);
-      console.log('Before layout - Edges:', newEdges);
-
-      const layoutedNodes = await createElkLayout(newNodes, newEdges);
-      console.log('After layout - Nodes:', layoutedNodes);
-
-      // Ensure nodes have positions
-      const nodesWithPositions = layoutedNodes.map((node) => {
-        if (
-          !node.position ||
-          (node.position.x === 0 && node.position.y === 0)
-        ) {
-          console.error('Node missing position:', node);
-        }
-        return node;
-      });
-
-      // Force a rerender with the new positions
-      setNodes([]);
-      setTimeout(() => {
-        setNodes(nodesWithPositions);
-        setEdges(newEdges);
-
-        // Fit view after a short delay to ensure nodes are rendered
-        if (isFirstRender.current) {
-          setTimeout(() => {
-            fitView({
-              padding: 0.5,
-              duration: 200,
-              minZoom: 0.5,
-              maxZoom: 1,
-            });
-            isFirstRender.current = false;
-          }, 200);
-        }
-      }, 50);
-    };
-
-    createNodesAndLayout();
-  }, [blocks, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
+    if (!Array.isArray(paths)) return;
+    const firstPath = paths.find((path) => path.parent_blocks.length === 0);
+    if (firstPath) {
+      const nodes: Node[] = [];
+      const edges: Edge[] = [];
+      processPath(firstPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge);
+      setNodes(nodes);
+      setEdges(edges);
+    }
+  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
