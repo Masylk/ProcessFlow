@@ -3,6 +3,7 @@ import IconModifier from './IconModifier';
 import { Folder } from '@/types/workspace';
 import InputField from '@/app/components/InputFields';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import { useColors } from '@/app/theme/hooks';
 
 interface CreateSubfolderModalProps {
   onClose: () => void;
@@ -25,6 +26,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
+  const colors = useColors();
 
   const createFolder = (name: string) => {
     if (iconUrl) onCreate(name, parentId, iconUrl);
@@ -48,26 +50,47 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
+      </div>
+
       <div 
-        className="bg-white rounded-xl shadow-lg w-[400px] p-6 flex flex-col"
+        className="rounded-xl shadow-lg w-[400px] p-6 flex flex-col relative z-10"
+        style={{ backgroundColor: colors['bg-primary'] }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex flex-col items-start gap-1">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] border border-[#e4e7ec] shadow-sm flex items-center justify-center">
+          <div 
+            className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
+            style={{ 
+              backgroundColor: colors['bg-primary'],
+              borderColor: colors['border-secondary']
+            }}
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
               alt="Folder icon"
               className="w-12 h-12"
             />
           </div>
-          <h2 className="text-[#101828] text-lg font-semibold">
+          <h2 
+            className="text-lg font-semibold"
+            style={{ color: colors['text-primary'] }}
+          >
             Create a Subfolder
           </h2>
-          <div className="text-[#475467] text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0">
+          <div 
+            className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0"
+            style={{ color: colors['text-secondary'] }}
+          >
             Add a subfolder to
             {parent.icon_url ? (
               <img
@@ -84,8 +107,8 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 
         {/* Input Field */}
         <div className="mt-4">
-          <label className="block text-[#344054] text-sm font-semibold">
-            Folder name<span className="text-[#4761c4]">*</span>
+          <label className="block text-sm font-semibold" style={{ color: colors['text-primary'] }}>
+            Folder name<span style={{ color: colors['text-accent'] }}>*</span>
           </label>
           <div className="mt-2 flex items-center gap-2">
             <IconModifier
@@ -95,7 +118,6 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
             />
             <InputField
               type="default"
-              mode="light"
               value={folderName}
               onChange={setFolderName}
               placeholder="Enter folder name"
@@ -106,8 +128,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
         {/* Buttons */}
         <div className="mt-6 flex gap-3">
           <ButtonNormal
-            variant="secondaryGray"
-            mode="light"
+            variant="secondary"
             size="small"
             onClick={onClose}
             className="flex-1"
@@ -116,7 +137,6 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
           </ButtonNormal>
           <ButtonNormal
             variant="primary"
-            mode="light"
             size="small"
             onClick={() => createFolder(folderName)}
             disabled={!folderName.trim()}

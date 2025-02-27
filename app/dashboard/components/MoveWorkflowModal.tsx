@@ -3,6 +3,7 @@ import { Workspace, Folder } from '@/types/workspace';
 import { Workflow } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
+import { useColors } from '@/app/theme/hooks';
 
 interface MoveWorkflowModalProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ export default function MoveWorkflowModal({
   activeWorkspace,
   selectedWorkflow,
 }: MoveWorkflowModalProps) {
+  const colors = useColors();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
     new Set()
@@ -93,14 +95,35 @@ export default function MoveWorkflowModal({
   };
 
   return (
-    <main className="fixed bg-bran inset-0 flex items-center justify-center z-50 w-full">
-      <div className="absolute inset-0 flex justify-center items-center">
-        <div className="absolute inset-0 opacity-70 bg-[#0c111d]/70" />
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 w-full"
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
       </div>
-      <div className="relative z-10 w-[400px] h-[515px] bg-white rounded-xl shadow-md flex flex-col justify-center items-center overflow-hidden">
+
+      {/* Modal content */}
+      <div 
+        className="relative z-10 w-[400px] h-[515px] rounded-xl shadow-md flex flex-col justify-center items-center overflow-hidden"
+        style={{ backgroundColor: colors['bg-primary'] }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="w-[400px] h-[24px] relative" />
         <div className="self-stretch h-[136px] flex flex-col justify-center items-start px-6">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-md border border-[#e4e7ec] flex justify-center items-center overflow-hidden">
+          <div 
+            className="w-12 h-12 p-3 rounded-[10px] shadow-sm flex justify-center items-center overflow-hidden"
+            style={{ 
+              backgroundColor: colors['bg-secondary'],
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: colors['border-secondary']
+            }}
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-download.svg`}
               alt="Folder move icon"
@@ -108,7 +131,10 @@ export default function MoveWorkflowModal({
             />
           </div>
           <div className="self-stretch h-7 flex flex-col justify-start items-start gap-1 mb-4 mt-4">
-            <div className="text-[#101828] text-lg font-semibold">
+            <div 
+              className="text-lg font-semibold"
+              style={{ color: colors['text-primary'] }}
+            >
               Move Flow "{selectedWorkflow.name}"
             </div>
           </div>
@@ -116,22 +142,23 @@ export default function MoveWorkflowModal({
         <div className="self-stretch h-11 px-6 flex flex-col justify-start items-start gap-5 mb-4">
           <InputField
             type="icon-leading"
-            mode="light"
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search"
             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
- 
           />
         </div>
-        <div className="self-stretch h-px bg-[#e4e7ec] mb-4"></div>
+        <div 
+          className="self-stretch h-px mb-4"
+          style={{ backgroundColor: colors['border-secondary'] }}
+        />
         <div className="self-stretch h-[194px] px-3 flex flex-col gap-1 overflow-y-auto">
           <div
-            className={`self-stretch px-1.5 py-px inline-flex items-center transition duration-300 rounded-[6px] cursor-pointer ${
-              targetFolder === null
-                ? 'bg-[#E6E8EA]'
-                : 'bg-white hover:bg-[#F9FAFB]'
-            }`}
+            className="self-stretch px-1.5 py-px inline-flex items-center transition-colors duration-200 rounded-[6px] cursor-pointer"
+            style={{ 
+              backgroundColor: targetFolder === null ? colors['bg-quaternary'] : 'transparent',
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
             onClick={() => handleFolderClick(null)}
           >
             <div className="grow h-[60px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
@@ -141,7 +168,12 @@ export default function MoveWorkflowModal({
                 className="w-4 h-4 relative"
                 style={{ top: '-10px', left: '0px' }}
               />
-              <div className="text-[#344054] text-sm font-medium">My Flows</div>
+              <div 
+                className="text-sm font-medium"
+                style={{ color: colors['text-primary'] }}
+              >
+                My Flows
+              </div>
             </div>
           </div>
           <FolderList
@@ -153,13 +185,13 @@ export default function MoveWorkflowModal({
             toggleFolder={toggleFolder}
             handleFolderClick={handleFolderClick}
             targetFolder={targetFolder}
+            colors={colors}
           />
         </div>
         <div className="self-stretch h-[100px] pt-8 flex flex-col justify-start items-center">
           <div className="self-stretch px-6 pb-6 flex gap-3">
             <ButtonNormal
-              variant="secondaryGray"
-              mode="light"
+              variant="secondary"
               size="small"
               onClick={onClose}
               className="flex-1"
@@ -168,7 +200,6 @@ export default function MoveWorkflowModal({
             </ButtonNormal>
             <ButtonNormal
               variant="primary"
-              mode="light"
               size="small"
               onClick={async () => {
                 if (targetFolder !== undefined) {
@@ -183,7 +214,7 @@ export default function MoveWorkflowModal({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -196,6 +227,7 @@ function FolderList({
   toggleFolder,
   handleFolderClick,
   targetFolder,
+  colors,
 }: {
   folders: Folder[];
   parentId: number | null;
@@ -205,6 +237,7 @@ function FolderList({
   toggleFolder: (folderId: number) => void;
   handleFolderClick: (folder: Folder | null) => void;
   targetFolder: Folder | null | undefined;
+  colors: { [key: string]: string };
 }) {
   return (
     <div>
@@ -215,9 +248,11 @@ function FolderList({
         return (
           <div key={folder.id} className="flex flex-col ml-4">
             <div
-              className={`self-stretch px-1.5 py-px inline-flex items-center transition duration-300 rounded-[6px] cursor-pointer ${
-                isSelected ? 'bg-[#E6E8EA]' : 'bg-white hover:bg-[#F9FAFB]'
-              }`}
+              className="self-stretch px-1.5 py-px inline-flex items-center transition-colors duration-200 rounded-[6px] cursor-pointer"
+              style={{ 
+                backgroundColor: isSelected ? colors['bg-quaternary'] : 'transparent',
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
               onClick={() => {
                 toggleFolder(folder.id);
                 handleFolderClick(folder);
@@ -238,10 +273,16 @@ function FolderList({
                 />
                 <div className="grow h-[42px] flex items-start gap-2">
                   <div className="grow flex flex-col justify-center items-start gap-1">
-                    <div className="text-[#344054] text-sm font-medium">
+                    <div 
+                      className="text-sm font-medium"
+                      style={{ color: colors['text-primary'] }}
+                    >
                       {folder.name}
                     </div>
-                    <div className="text-[#667085] text-xs font-normal">
+                    <div 
+                      className="text-xs font-normal"
+                      style={{ color: colors['text-secondary'] }}
+                    >
                       {activeWorkspace.name}
                     </div>
                   </div>
@@ -259,6 +300,7 @@ function FolderList({
                   toggleFolder={toggleFolder}
                   handleFolderClick={handleFolderClick}
                   targetFolder={targetFolder}
+                  colors={colors}
                 />
               </div>
             )}

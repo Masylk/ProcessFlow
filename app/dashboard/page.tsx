@@ -13,6 +13,7 @@ import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal'
 import dynamic from 'next/dynamic';
 import { cache } from 'react';
 import { getIcons } from '@/app/utils/icons';
+import { useTheme, useColors } from '@/app/theme/hooks';
 
 // Make sure that supabase is correctly imported and configured.
 import { createClient } from '@/utils/supabase/client';
@@ -31,7 +32,6 @@ import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
-import ThemeSwitch from '@/app/components/ThemeSwitch';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import SettingsPage from '@/app/dashboard/components/SettingsPage';
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
@@ -43,6 +43,8 @@ const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
 });
 
 export default function Page() {
+  const { currentTheme } = useTheme();
+  const colors = useColors();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -761,6 +763,37 @@ export default function Page() {
     });
   }, []);
 
+  const onWorkspaceUpdate = async (updates: Partial<Workspace>) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const response = await fetch(`/api/workspace/${activeWorkspace.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update workspace');
+      }
+
+      const updatedWorkspace = await response.json();
+      
+      // Update both activeWorkspace and the workspace in the workspaces array
+      setActiveWorkspace(updatedWorkspace);
+      setWorkspaces(prevWorkspaces => 
+        prevWorkspaces.map(w => 
+          w.id === updatedWorkspace.id ? updatedWorkspace : w
+        )
+      );
+    } catch (error) {
+      console.error('Error updating workspace:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar with header and list of workspaces */}
@@ -788,15 +821,18 @@ export default function Page() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Page header */}
-        <header className="min-h-[73px] bg-lightMode-bg-primary border-b border-gray-200 flex justify-between items-center px-4 relative">
+        <header 
+          style={{ 
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary']
+          }}
+          className="min-h-[73px] flex justify-between items-center px-4 relative border-b"
+        >
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
           />
           <div className="flex items-center gap-4">
-            {/* Temporarily disabled theme switcher - uncomment when ready */}
-            {/* <ThemeSwitch /> */}
-
             <ButtonNormal
               variant="primary"
               size="small"
@@ -806,7 +842,10 @@ export default function Page() {
               New Flow
             </ButtonNormal>
             {/* Divider */}
-            <div className=" h-[25px] border-r border-gray-300 justify-center items-center" />
+            <div 
+              style={{ borderColor: colors['border-secondary'] }}
+              className="h-[25px] border-r justify-center items-center" 
+            />
             <div className="relative">
               <div
                 className="relative cursor-pointer"
@@ -837,33 +876,17 @@ export default function Page() {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 w-full h-[100%] bg-gray-100">
+        <main 
+          style={{ backgroundColor: colors['bg-secondary'] }}
+          className="flex-1 w-full h-[100%]"
+        >
           {isSettingsView ? (
             <div className="h-full">
               <SettingsPage
                 user={user}
                 onClose={() => setIsSettingsView(false)}
                 workspace={activeWorkspace || undefined}
-                onWorkspaceUpdate={activeWorkspace ? async (updates) => {
-                  try {
-                    const response = await fetch(`/api/workspaces/${activeWorkspace.id}`, {
-                      method: 'PATCH',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify(updates),
-                    });
-
-                    if (!response.ok) {
-                      throw new Error('Failed to update workspace');
-                    }
-
-                    const updatedWorkspace = await response.json();
-                    setActiveWorkspace(updatedWorkspace);
-                  } catch (error) {
-                    console.error('Error updating workspace:', error);
-                  }
-                } : undefined}
+                onWorkspaceUpdate={onWorkspaceUpdate}
               />
             </div>
           ) : (

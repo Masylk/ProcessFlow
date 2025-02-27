@@ -3,6 +3,7 @@ import IconModifier from './IconModifier';
 import { Folder } from '@/types/workspace';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
+import { useColors } from '@/app/theme/hooks';
 
 interface EditFolderModalProps {
   onClose: () => void;
@@ -20,6 +21,7 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
   onEdit,
   folder,
 }) => {
+  const colors = useColors();
   const [folderName, setFolderName] = useState(folder.name);
   const [iconUrl, setIconUrl] = useState<string | undefined>(
     folder.icon_url || undefined
@@ -53,31 +55,53 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
+      </div>
+
+      {/* Modal content */}
       <div 
-        className="bg-white rounded-xl shadow-lg w-[400px] p-6 flex flex-col"
+        className="rounded-xl shadow-lg w-[400px] p-6 flex flex-col relative z-10"
+        style={{ backgroundColor: colors['bg-primary'] }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex flex-col items-start gap-4">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] border border-[#e4e7ec] shadow-sm flex items-center justify-center">
+          <div 
+            className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
+            style={{ 
+              backgroundColor: colors['bg-secondary'],
+              borderColor: colors['border-secondary']
+            }}
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
               alt="Folder icon"
               className="w-12 h-12"
             />
           </div>
-          <h2 className="text-[#101828] text-lg font-semibold">
+          <h2 
+            className="text-lg font-semibold"
+            style={{ color: colors['text-primary'] }}
+          >
             Edit a folder
           </h2>
         </div>
 
         {/* Input Field */}
         <div className="mt-4">
-          <label className="block text-[#344054] text-sm font-semibold">
-            Folder name <span className="text-[#4761c4]">*</span>
+          <label 
+            className="block text-sm font-semibold"
+            style={{ color: colors['text-primary'] }}
+          >
+            Folder name <span style={{ color: colors['text-accent'] }}>*</span>
           </label>
           <div className="mt-2 flex items-center gap-2">
             <IconModifier
@@ -87,7 +111,6 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
             />
             <InputField
               type="default"
-              mode="light"
               value={folderName}
               onChange={setFolderName}
               placeholder="Enter folder name"
@@ -96,10 +119,11 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
         </div>
 
         {/* Buttons */}
-        <div className="mt-6 flex gap-3">
+        <div 
+          className="mt-6 flex gap-3"
+        >
           <ButtonNormal
-            variant="secondaryGray"
-            mode="light"
+            variant="secondary"
             size="small"
             onClick={onClose}
             className="flex-1"
@@ -108,7 +132,6 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
           </ButtonNormal>
           <ButtonNormal
             variant="primary"
-            mode="light"
             size="small"
             onClick={() => createFolder(folderName)}
             disabled={!folderName.trim()}

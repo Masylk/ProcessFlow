@@ -1,21 +1,22 @@
 'use client';
 
-import { useTheme } from '@/app/context/ThemeContext';
+import { useTheme } from '@/app/theme/hooks';
 import ButtonNormal from './ButtonNormal';
 
 export default function ThemeSwitch() {
-  const { mode, toggleMode } = useTheme();
+  const { currentTheme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
+  };
 
   return (
     <ButtonNormal
-      onClick={toggleMode}
-      variant="tertiaryGray"
+      onClick={toggleTheme}
+      variant="tertiary"
       size="medium"
-      mode={mode}
       iconOnly
-      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-        mode === 'light' ? 'sun.svg' : 'moon.svg'
-      }`}
+      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'sun' : 'moon'}.svg`}
     />
   );
 } 
