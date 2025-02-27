@@ -126,7 +126,9 @@ export const TabButton: React.FC<TabButtonProps> = ({
           </div>
 
           {/* Label */}
-          <span className="text-lightMode-text-secondary text-sm  font-medium truncate">{label}</span>
+          <div className="min-w-0 flex-1">
+            <span className="text-lightMode-text-secondary text-sm font-medium truncate block max-w-[140px]">{label}</span>
+          </div>
         </div>
 
         {/* Three dots button */}
