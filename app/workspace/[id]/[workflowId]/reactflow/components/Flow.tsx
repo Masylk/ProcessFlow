@@ -8,6 +8,8 @@ import {
   useReactFlow,
   Background,
   Controls,
+  MiniMap,
+  Panel,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './CustomNode';
@@ -15,6 +17,7 @@ import CustomSmoothStepEdge from './CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
 import { NodeData, EdgeData, DropdownPosition } from '../types';
+import { Sidebar } from './Sidebar';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -47,7 +50,7 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] =
@@ -221,8 +224,51 @@ export function Flow({
     [dropdownPosition, workflowId, onBlockAdd]
   );
 
+  // Fix the handleNodeFocus function to avoid infinite loops
+  const handleNodeFocus = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    
+    // Find the node in our nodes array - use functional update pattern
+    setNodes(currentNodes => {
+      const node = currentNodes.find(n => n.id === nodeId);
+      if (node) {
+        // Center the view on the node
+        setCenter(node.position.x, node.position.y, { zoom: 1.5, duration: 800 });
+        
+        // Highlight the node with functional update pattern
+        return currentNodes.map(n => ({
+          ...n,
+          data: {
+            ...n.data,
+            highlighted: n.id === nodeId
+          }
+        }));
+      }
+      return currentNodes;
+    });
+    
+    // Reset highlight after a delay - use functional update to avoid closure issues
+    setTimeout(() => {
+      setNodes(currentNodes => currentNodes.map(n => ({
+        ...n,
+        data: {
+          ...n.data,
+          highlighted: false
+        }
+      })));
+    }, 2000);
+  }, [setCenter]); // Only depend on stable function, not nodes state
+
   return (
-    <div className="h-screen w-screen border-4 border-red-500">
+    <div className="h-screen w-screen relative">
+      {/* Include the Sidebar component */}
+      <Sidebar 
+        blocks={blocks}
+        workspaceId={workspaceId} 
+        workflowId={workflowId}
+        onNodeFocus={handleNodeFocus}
+      />
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -253,12 +299,13 @@ export function Flow({
           minZoom: 0.5,
           maxZoom: 1,
         }}
-        className="bg-gray-50 border-2 border-red-300"
-        style={{ zIndex: 0 }}
+        className="bg-gray-50"
       >
-        <Background gap={12} size={1} style={{ zIndex: -1 }} />
-        <Controls style={{ zIndex: 2 }} />
+        <Background gap={12} size={1} />
+        <Controls />
+        <MiniMap /> {/* Added MiniMap as requested */}
       </ReactFlow>
+      
       {showDropdown && dropdownPosition && (
         <AddBlockDropdownMenu
           position={{ x: dropdownPosition.x, y: dropdownPosition.y }}
