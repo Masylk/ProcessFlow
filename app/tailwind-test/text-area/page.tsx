@@ -6,7 +6,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 
 export default function TextAreaPage() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
-  
+
   // Test states for different TextArea configurations
   const [defaultValue, setDefaultValue] = useState('');
   const [requiredValue, setRequiredValue] = useState('');
@@ -18,7 +18,7 @@ export default function TextAreaPage() {
   const [allFeaturesValue, setAllFeaturesValue] = useState('');
 
   return (
-    <div 
+    <div
       className={`min-h-screen p-8 transition-colors ${
         mode === 'dark' ? 'dark bg-darkMode-bg-primary' : 'bg-white'
       }`}
@@ -28,8 +28,7 @@ export default function TextAreaPage() {
         <div className="flex justify-end">
           <ButtonNormal
             onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-            mode={mode}
-            variant="secondaryGray"
+            variant="secondary"
             size="small"
             leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/sun.svg"
           >
@@ -43,7 +42,6 @@ export default function TextAreaPage() {
           placeholder="Type something..."
           value={defaultValue}
           onChange={setDefaultValue}
-          mode={mode}
         />
 
         {/* Required TextArea */}
@@ -53,7 +51,6 @@ export default function TextAreaPage() {
           value={requiredValue}
           onChange={setRequiredValue}
           required
-          mode={mode}
         />
 
         {/* TextArea with Hint */}
@@ -63,7 +60,6 @@ export default function TextAreaPage() {
           value={withHintValue}
           onChange={setWithHintValue}
           hintText="This is a helpful hint text below the textarea"
-          mode={mode}
         />
 
         {/* TextArea with Help Icon */}
@@ -74,7 +70,6 @@ export default function TextAreaPage() {
           onChange={setWithHelpIconValue}
           helpIcon
           tooltipText="This is a custom tooltip text that appears when hovering over the help icon"
-          mode={mode}
         />
 
         {/* Disabled TextArea */}
@@ -84,7 +79,6 @@ export default function TextAreaPage() {
           value={disabledValue}
           onChange={setDisabledValue}
           disabled
-          mode={mode}
         />
 
         {/* Error State TextArea */}
@@ -95,7 +89,6 @@ export default function TextAreaPage() {
           onChange={setErrorValue}
           destructive
           errorMessage="This is an error message"
-          mode={mode}
         />
 
         {/* Custom Rows TextArea */}
@@ -105,7 +98,6 @@ export default function TextAreaPage() {
           value={customRowsValue}
           onChange={setCustomRowsValue}
           rows={8}
-          mode={mode}
         />
 
         {/* TextArea with All Features */}
@@ -118,7 +110,6 @@ export default function TextAreaPage() {
           helpIcon
           tooltipText="Custom tooltip for help icon"
           hintText="Hint text below the textarea"
-          mode={mode}
           rows={6}
         />
       </div>

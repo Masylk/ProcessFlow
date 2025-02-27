@@ -13,14 +13,14 @@ export default function ViewSwitch({ onViewChange, currentView }: ViewSwitchProp
     <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
       <ButtonNormal
         onClick={() => onViewChange('grid')}
-        variant={currentView === 'grid' ? 'secondaryGray' : 'tertiaryGray'}
+        variant={currentView === 'grid' ? 'secondary' : 'tertiary'}
         size="small"
         iconOnly
         leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/grid.svg`}
       />
       <ButtonNormal
         onClick={() => onViewChange('table')}
-        variant={currentView === 'table' ? 'secondaryGray' : 'tertiaryGray'}
+        variant={currentView === 'table' ? 'secondary' : 'tertiary'}
         size="small"
         iconOnly
         leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/list.svg`}
