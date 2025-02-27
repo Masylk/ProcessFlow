@@ -27,6 +27,7 @@ export interface Block {
   path_id: number; // Required field for the path relationship
   path?: Path; // Optional, the path this block belongs to
   coordinates?: { x: number; y: number } | null; // Optional, block coordinates
+  children?: Block[]; // Add this line
 }
 
 // Enum for Block types
