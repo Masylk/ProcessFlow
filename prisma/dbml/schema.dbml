@@ -221,6 +221,8 @@ Enum block_type {
   DELAY
   STEP
   PATH
+  BEGIN
+  END
 }
 
 Enum subscription_status {

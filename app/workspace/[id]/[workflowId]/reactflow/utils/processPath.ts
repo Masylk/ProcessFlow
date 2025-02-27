@@ -10,7 +10,7 @@ export function processPath(
   edges: Edge[],
   handleDeleteBlock: (blockId: string) => void,
   handleAddBlockOnEdge: (position: number,
-    path_id: number | null,
+    path: Path,
     event?: { clientX: number; clientY: number }) => void,
   visitedPaths = new Set<string>()
 ): void {
@@ -21,7 +21,11 @@ export function processPath(
     const nodeId = `block-${block.id}`;
     nodes.push({
       id: nodeId,
-      type: 'custom',
+      type: block.type === 'BEGIN' 
+        ? 'begin' 
+        : block.type === 'END' 
+          ? 'end' 
+          : 'custom',
       position: { x: 0, y: 0 },
       data: {
         label: block.step_details || 'Block',
@@ -31,6 +35,7 @@ export function processPath(
         pathId: block.path_id,
         handleAddBlockOnEdge,
         isLastInPath: true,
+        pathName: block.type === 'BEGIN' ? path.name : undefined,
       },
     });
     
@@ -48,6 +53,7 @@ export function processPath(
         data: {
           blocks: path.blocks,
           handleAddBlockOnEdge,
+          path: path,
         },
       });
     }

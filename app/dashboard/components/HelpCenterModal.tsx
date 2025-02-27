@@ -1,5 +1,4 @@
 // components/HelpCenterModal.tsx
-import Head from 'next/head';
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
 
@@ -24,11 +23,6 @@ export default function HelpCenterModal({
       className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
       onClick={onClose}
     >
-      <Head>
-        <title>Help Center</title>
-        <meta name="description" content="Help center modal" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
       <div className="relative z-10 w-[480px] h-[304px] bg-white rounded-xl shadow-lg flex flex-col items-center overflow-hidden">
         {/* Close Button */}
         <button

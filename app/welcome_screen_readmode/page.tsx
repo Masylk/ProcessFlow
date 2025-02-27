@@ -184,3 +184,4 @@ Cela peut être très pratique pour limiter l'encombrement de l'UI.`}
     </div>
   );
 }
+

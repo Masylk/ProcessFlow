@@ -112,7 +112,7 @@ export async function GET(
     const result = await prisma.$transaction(async (prisma: Prisma.TransactionClient) => {
       const parsedworkflow_id = parseInt(workflow_id, 10);
 
-      // Fetch paths for the given workflow_id with a simpler include structure
+      // Fetch paths for the given workflow_id
       const existingPaths = await prisma.path.findMany({
         where: {
           workflow_id: parsedworkflow_id,
@@ -135,6 +135,7 @@ export async function GET(
       });
 
       if (existingPaths.length === 0) {
+        // Create new path if none exists
         const newPath = await prisma.path.create({
           data: {
             name: 'First Path',
@@ -153,11 +154,24 @@ export async function GET(
           }
         });
 
-        // Create default block in the new path
+        // Create BEGIN block
+        await prisma.block.create({
+          data: {
+            type: 'BEGIN',
+            position: 0,
+            icon: '/step-icons/default-icons/begin.svg',
+            description: 'Start of the workflow',
+            workflow: { connect: { id: parsedworkflow_id } },
+            path: { connect: { id: newPath.id } },
+            step_details: 'Begin',
+          }
+        });
+
+        // Create default block
         await prisma.block.create({
           data: {
             type: 'STEP',
-            position: 0,
+            position: 1,
             icon: '/step-icons/default-icons/container.svg',
             description: 'This is a default block',
             workflow: { connect: { id: parsedworkflow_id } },
@@ -166,10 +180,95 @@ export async function GET(
           }
         });
 
-        return { paths: [newPath] };
-      }
+        // Create END block
+        await prisma.block.create({
+          data: {
+            type: 'END',
+            position: 2,
+            icon: '/step-icons/default-icons/end.svg',
+            description: 'End of the workflow',
+            workflow: { connect: { id: parsedworkflow_id } },
+            path: { connect: { id: newPath.id } },
+            step_details: 'End',
+          }
+        });
 
-      return { paths: existingPaths };
+        return { paths: [newPath] };
+      } else {
+        // For existing paths, check and fix BEGIN and END blocks
+        for (const path of existingPaths) {
+          const blocks = path.blocks;
+          const maxPosition = Math.max(...blocks.map(b => b.position));
+
+          // Check BEGIN block
+          const beginBlock = blocks.find(b => b.type === 'BEGIN');
+          if (!beginBlock) {
+            // Shift all blocks' positions up by 1
+            await prisma.block.updateMany({
+              where: { path_id: path.id },
+              data: {
+                position: {
+                  increment: 1
+                }
+              }
+            });
+
+            // Create BEGIN block at position 0
+            await prisma.block.create({
+              data: {
+                type: 'BEGIN',
+                position: 0,
+                icon: '/step-icons/default-icons/begin.svg',
+                description: 'Start of the workflow',
+                workflow: { connect: { id: parsedworkflow_id } },
+                path: { connect: { id: path.id } },
+                step_details: 'Begin',
+              }
+            });
+          }
+
+          // Check END block
+          const endBlock = blocks.find(b => b.type === 'END');
+          if (!endBlock) {
+            // Create END block at the last position
+            await prisma.block.create({
+              data: {
+                type: 'END',
+                position: maxPosition + 1,
+                icon: '/step-icons/default-icons/end.svg',
+                description: 'End of the workflow',
+                workflow: { connect: { id: parsedworkflow_id } },
+                path: { connect: { id: path.id } },
+                step_details: 'End',
+              }
+            });
+          }
+        }
+
+        // Fetch updated paths
+        const updatedPaths = await prisma.path.findMany({
+          where: {
+            workflow_id: parsedworkflow_id,
+          },
+          include: {
+            blocks: {
+              orderBy: {
+                position: 'asc',
+              },
+              include: {
+                child_paths: {
+                  include: {
+                    path: true
+                  }
+                }
+              }
+            },
+            parent_blocks: true,
+          }
+        });
+
+        return { paths: updatedPaths };
+      }
     });
 
     return NextResponse.json(result);

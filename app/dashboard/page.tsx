@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
@@ -34,13 +34,9 @@ import MoveWorkflowModal from './components/MoveWorkflowModal';
 import ThemeSwitch from '@/app/components/ThemeSwitch';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import SettingsPage from '@/app/dashboard/components/SettingsPage';
-const HelpCenterModalDynamic = dynamic(
-  () => import('./components/HelpCenterModal'),
-  {
-    loading: () => <p>Loading...</p>,
-    ssr: false,
-  }
-);
+const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
+  ssr: false,
+});
 
 const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
   ssr: false,
@@ -743,6 +739,28 @@ export default function Page() {
     }
   };
 
+  // Add this useEffect to preload the component
+  useEffect(() => {
+    // Preload the HelpCenterModal component
+    import('./components/HelpCenterModal');
+  }, []);
+
+  useEffect(() => {
+    // Preload images
+    const imageUrls = [
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/certificate.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/compass-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`
+    ];
+    
+    imageUrls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, []);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar with header and list of workspaces */}
@@ -825,6 +843,27 @@ export default function Page() {
               <SettingsPage
                 user={user}
                 onClose={() => setIsSettingsView(false)}
+                workspace={activeWorkspace || undefined}
+                onWorkspaceUpdate={activeWorkspace ? async (updates) => {
+                  try {
+                    const response = await fetch(`/api/workspaces/${activeWorkspace.id}`, {
+                      method: 'PATCH',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(updates),
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Failed to update workspace');
+                    }
+
+                    const updatedWorkspace = await response.json();
+                    setActiveWorkspace(updatedWorkspace);
+                  } catch (error) {
+                    console.error('Error updating workspace:', error);
+                  }
+                } : undefined}
               />
             </div>
           ) : (
@@ -899,7 +938,15 @@ export default function Page() {
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+        <Suspense fallback={
+          <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40 z-50">
+            <div className="bg-white rounded-xl p-4 shadow-lg">
+              <p>Loading...</p>
+            </div>
+          </div>
+        }>
+          <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+        </Suspense>
       )}
 
       {uploadImageVisible && (

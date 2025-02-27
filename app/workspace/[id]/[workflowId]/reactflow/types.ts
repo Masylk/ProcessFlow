@@ -3,11 +3,16 @@ import { Workflow } from '@/types/workflow';
 export interface NodeData {
   label: string;
   position: number;
-  type?: string;
-  onDelete?: (id: string) => void;
-  pathId: number | null;
-  handleAddBlockOnEdge?: (position: number, pathId: number | null, event: React.MouseEvent) => void;
+  onDelete: (id: string) => void;
   isLastInPath?: boolean;
+  pathId?: number | null;
+  highlighted?: boolean;
+  pathName?: string;
+  handleAddBlockOnEdge?: (
+    position: number,
+    path_id: number | null,
+    event?: { clientX: number; clientY: number }
+  ) => void;
 }
 
 export interface EdgeData {
@@ -19,11 +24,11 @@ export interface EdgeData {
   ) => void;
 }
 
-export interface DropdownPosition {
+export interface DropdownDatas {
   x: number;
   y: number;
   position: number;
-  pathId: number | null;
+  path: Path;
 } 
 
 // Interface for Path model
@@ -63,7 +68,7 @@ export interface Block {
 }
 
 // Assuming enums and other interfaces
-export type BlockType = 'STEP' | 'DELAY' | 'PATH';  // Example enum
+export type BlockType = 'STEP' | 'DELAY' | 'PATH' | 'BEGIN' | 'END';  // Example enum
 export type TaskType = 'TASK_TYPE_1' | 'TASK_TYPE_2';  // Example enum
 
 export interface PathParentBlock {
@@ -72,4 +77,10 @@ export interface PathParentBlock {
   created_at: string;  // DateTime
   path: Path;
   block: Block;
+}
+
+// Add this interface if you're using custom node types
+export interface CustomNode extends Node {
+  parentId?: string;
+  expandParent?: boolean;
 }

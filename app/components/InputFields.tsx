@@ -16,6 +16,11 @@ const BASE_STYLES = {
   outline: "none",
   border: "none",
   background: 'transparent',
+  padding: 0,
+  margin: 0,
+  boxSizing: 'border-box' as 'border-box',
+  fontFamily: 'Inter, sans-serif',
+  minWidth: 0, // Prevent input from overflowing its container
 };
 
 const SELECT_STYLE = {
@@ -552,7 +557,16 @@ const InputField: React.FC<InputFieldProps> = ({
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent'
+              }}
             />
             {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
             {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
@@ -575,10 +589,8 @@ const InputField: React.FC<InputFieldProps> = ({
                 alignItems: 'center',
                 padding: '8px 12px',
                 background: mode === 'dark' ? '#0C111D' : '#F9FAFB',
-                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderLeft: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderRight: '0px solid transparent',
+                border: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                borderRight: 'none',
                 borderTopLeftRadius: 6,
                 borderBottomLeftRadius: 6,
                 position: 'relative',
@@ -625,13 +637,21 @@ const InputField: React.FC<InputFieldProps> = ({
                     fontFamily: 'Inter',
                     lineHeight: '24px',
                   }}>
-                    http://
+                    app.process-flow.io/
                   </div>
                 )}
               </div>
               <div style={{
                 ...focusStyles,
-                borderLeft: '1px solid #D0D5DD',
+                border: `1px solid ${
+                  destructive 
+                    ? theme.colors['Error/300']
+                    : isFocused 
+                      ? theme.colors['Brand/600']
+                      : mode === 'dark' 
+                        ? theme.colors['Gray (dark mode)/700']
+                        : theme.colors['Gray (light mode)/300']
+                }`,
                 borderTopLeftRadius: 0,
                 borderBottomLeftRadius: 0,
                 zIndex: 1,
@@ -645,7 +665,16 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
                 {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
                 {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
@@ -679,7 +708,16 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
                 {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
                 {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
@@ -811,7 +849,9 @@ const InputField: React.FC<InputFieldProps> = ({
                       </span>
                     </div>
                     <button
-                      onClick={() => {
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent event from bubbling up
                         const tags = value.split(",").filter((t) => t.trim() !== "");
                         tags.splice(index, 1);
                         onChange?.(tags.join(","));
@@ -848,9 +888,17 @@ const InputField: React.FC<InputFieldProps> = ({
                 onBlur={handleBlur}
                 style={{
                   ...inputStyle,
+                  width: '100%',
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: "24px",
+                  outline: "none",
+                  border: "none",
+                  background: 'transparent',
                   color: mode === 'dark'
                     ? theme.colors["Gray (dark mode)/50"]
                     : theme.colors["Gray (light mode)/900"],
+                  minWidth: '20px', // Ensure there's always space to type
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === ",") {
@@ -904,7 +952,16 @@ const InputField: React.FC<InputFieldProps> = ({
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
                 {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
                 {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
@@ -976,7 +1033,16 @@ const InputField: React.FC<InputFieldProps> = ({
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent'
+              }}
             />
             <button
               type="button"
@@ -1021,7 +1087,16 @@ const InputField: React.FC<InputFieldProps> = ({
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent'
+              }}
             />
             {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
             {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}

@@ -1,18 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../types';
 
 function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
+  // Handle highlight effect
+  useEffect(() => {
+    if (data.highlighted) {
+      setIsHighlighted(true);
+      const timer = setTimeout(() => {
+        setIsHighlighted(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [data.highlighted]);
+
   return (
     <>
-      {/* This is the main node container div */}
       <div
+        className={`transition-all duration-300 ${isHighlighted ? 'scale-105' : ''}`}
         style={{
           width: '481px',
           padding: '20px 24px',
           borderRadius: '16px',
-          border: '2px solid red', // Currently red for debugging
-          background: 'white',
+          border: isHighlighted
+            ? '2px solid #3b82f6'
+            : selected
+              ? '2px solid #6366f1'
+              : '2px solid #e5e7eb',
+          background: isHighlighted ? '#f0f9ff' : 'white',
+          boxShadow: isHighlighted
+            ? '0 0 15px rgba(59, 130, 246, 0.5)'
+            : selected
+              ? '0 0 10px rgba(99, 102, 241, 0.3)'
+              : 'none',
           minHeight: '120px',
           position: 'relative',
         }}
@@ -30,14 +53,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
         <div className="flex justify-between items-start mb-2">
-          <div className="flex flex-col gap-1">
-            <div className="text-sm text-gray-500">
-              Position: {data.position}
-            </div>
-            <div className="text-xs text-blue-500">
-              Type: {data.type || 'STEP'}
-            </div>
-          </div>
+          <div className="text-sm text-gray-500">Position: {data.position}</div>
           <button
             onClick={() => data.onDelete?.(id)}
             className="text-gray-400 hover:text-red-500"
@@ -59,29 +75,6 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
       </div>
-      {data.isLastInPath && (
-        <div
-          style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '2px',
-            height: '40px',
-            background: '#d0d5dd',
-            cursor: 'pointer',
-          }}
-        >
-          <div
-            className="w-8 h-8 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors flex items-center justify-center text-xl absolute top-full left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-            onClick={(e) => {
-              const lastPosition = data.position + 1;
-              data.handleAddBlockOnEdge?.(lastPosition, data.pathId ?? null, e);
-            }}
-          >
-            +
-          </div>
-        </div>
-      )}
     </>
   );
 }

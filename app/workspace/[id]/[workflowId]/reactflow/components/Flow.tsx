@@ -8,18 +8,24 @@ import {
   useReactFlow,
   Background,
   Controls,
+  MiniMap,
+  Panel,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './CustomNode';
 import CustomSmoothStepEdge from './CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
-import { NodeData, EdgeData, DropdownPosition, Path } from '../types';
+import { NodeData, EdgeData, DropdownDatas, Path } from '../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
+import BeginNode from './BeginNode';
+import EndNode from './EndNode';
 
 const nodeTypes = {
   custom: CustomNode,
+  begin: BeginNode,
+  end: EndNode,
 } as const;
 
 const edgeTypes = {
@@ -49,11 +55,12 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownPosition, setDropdownPosition] =
-    useState<DropdownPosition | null>(null);
+  const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
+    null
+  );
   const isFirstRender = useRef(true);
 
   const handleDeleteBlock = useCallback(
@@ -82,15 +89,15 @@ export function Flow({
   const handleAddBlockOnEdge = useCallback(
     (
       position: number,
-      path_id: number | null,
+      path: Path,
       event?: { clientX: number; clientY: number }
     ) => {
       if (event) {
-        setDropdownPosition({
+        setDropdownDatas({
           x: event.clientX,
           y: event.clientY,
           position,
-          pathId: path_id,
+          path: path,
         });
         setShowDropdown(true);
       }
@@ -100,40 +107,103 @@ export function Flow({
 
   useEffect(() => {
     if (!Array.isArray(paths)) return;
-    const firstPath = paths.find((path) => path.parent_blocks.length === 0);
-    if (firstPath) {
-      const nodes: Node[] = [];
-      const edges: Edge[] = [];
-      processPath(firstPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge);
-      setNodes(nodes);
-      setEdges(edges);
-    }
+
+    const createLayoutedNodes = async () => {
+      console.log('allo');
+      const firstPath = paths.find((path) => path.parent_blocks.length === 0);
+      if (firstPath) {
+        const nodes: Node[] = [];
+        const edges: Edge[] = [];
+        processPath(
+          firstPath,
+          nodes,
+          edges,
+          handleDeleteBlock,
+          handleAddBlockOnEdge
+        );
+        setNodes(nodes);
+        setEdges(edges);
+        const layoutedNodes = await createElkLayout(nodes, edges);
+        setNodes(layoutedNodes);
+      }
+    };
+    createLayoutedNodes();
   }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
-      if (!dropdownPosition) return;
+      if (!dropdownDatas) return;
 
       const defaultBlock = {
         type: blockType,
         workflow_id: parseInt(workflowId),
-        position: dropdownPosition.position,
-        path_id: dropdownPosition.pathId,
-        step_data: 'New Block',
+        position: dropdownDatas.position,
+        path_id: dropdownDatas.path.id,
       };
 
       setShowDropdown(false);
       await onBlockAdd(
         defaultBlock,
-        defaultBlock.path_id!,
+        dropdownDatas.path.id,
         defaultBlock.position
       );
     },
-    [dropdownPosition, workflowId, onBlockAdd]
+    [dropdownDatas, workflowId, onBlockAdd]
   );
 
+  // Fix the handleNodeFocus function to avoid infinite loops
+  const handleNodeFocus = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+
+      // Find the node in our nodes array - use functional update pattern
+      setNodes((currentNodes) => {
+        const node = currentNodes.find((n) => n.id === nodeId);
+        if (node) {
+          // Center the view on the node
+          setCenter(node.position.x, node.position.y, {
+            zoom: 1.5,
+            duration: 800,
+          });
+
+          // Highlight the node with functional update pattern
+          return currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              highlighted: n.id === nodeId,
+            },
+          }));
+        }
+        return currentNodes;
+      });
+
+      // Reset highlight after a delay - use functional update to avoid closure issues
+      setTimeout(() => {
+        setNodes((currentNodes) =>
+          currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              highlighted: false,
+            },
+          }))
+        );
+      }, 2000);
+    },
+    [setCenter]
+  ); // Only depend on stable function, not nodes state
+
   return (
-    <div className="h-screen w-screen border-4 border-red-500">
+    <div className="h-screen w-screen relative">
+      {/* Include the Sidebar component */}
+      {/* <Sidebar 
+        blocks={blocks}
+        workspaceId={workspaceId} 
+        workflowId={workflowId}
+        onNodeFocus={handleNodeFocus}
+      /> */}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -148,7 +218,7 @@ export function Flow({
         ]}
         onNodeClick={(_, node) => setSelectedNodeId(node.id)}
         onPaneClick={() => setSelectedNodeId(null)}
-        fitView={false}
+        fitView={true}
         panOnScroll
         panOnDrag
         zoomOnScroll
@@ -158,21 +228,25 @@ export function Flow({
         elementsSelectable={true}
         preventScrolling={false}
         proOptions={{ hideAttribution: true }}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
         fitViewOptions={{
           padding: 0.5,
           duration: 200,
           minZoom: 0.5,
           maxZoom: 1,
+          includeHiddenNodes: true,
         }}
-        className="bg-gray-50 border-2 border-red-300"
-        style={{ zIndex: 0 }}
+        className="bg-gray-50"
       >
-        <Background gap={12} size={1} style={{ zIndex: -1 }} />
-        <Controls style={{ zIndex: 2 }} />
+        <Background gap={12} size={1} />
+        <Controls />
+        <MiniMap /> {/* Added MiniMap as requested */}
       </ReactFlow>
-      {showDropdown && dropdownPosition && (
+
+      {showDropdown && dropdownDatas && (
         <AddBlockDropdownMenu
-          position={{ x: dropdownPosition.x, y: dropdownPosition.y }}
+          dropdownDatas={dropdownDatas}
           onSelect={handleBlockTypeSelect}
           onClose={() => setShowDropdown(false)}
         />
