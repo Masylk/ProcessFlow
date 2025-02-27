@@ -89,9 +89,65 @@ export default function UserSettings({
     }
   }, [selectedFile]);
 
-  // Trigger the file selector.
-  const handleUploadClick = () => {
+  const handleImageClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        // Create a preview URL for immediate visual feedback
+        const objectURL = URL.createObjectURL(file);
+        setPreviewUrl(objectURL);
+
+        // Create FormData and upload the file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const uploadData = await uploadRes.json();
+        
+        if (uploadData.filePath) {
+          // Update the user record with the new avatar URL
+          const updateRes = await fetch('/api/user/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: user.id,
+              avatar_url: uploadData.filePath,
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`,
+              delete_avatar: false,
+            }),
+          });
+
+          if (updateRes.ok) {
+            const updatedUser = await updateRes.json();
+            if (onUserUpdate) {
+              onUserUpdate(updatedUser);
+            }
+          } else {
+            throw new Error('Failed to update user profile');
+          }
+        }
+      } catch (error) {
+        console.error('Error updating profile picture:', error);
+        // Reset preview on error
+        setPreviewUrl(null);
+      }
+      // Reset the input value to allow selecting the same file again
+      event.target.value = '';
+    }
   };
 
   // Simple email validation.
@@ -297,7 +353,17 @@ export default function UserSettings({
                   </div>
                   {/* Photo controls */}
                   <div className="self-stretch justify-start items-center gap-4 inline-flex">
-                    <div className="w-16 h-16 rounded-full justify-center items-center flex">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <div 
+                      className="w-16 h-16 rounded-full justify-center items-center flex relative group cursor-pointer"
+                      onClick={handleImageClick}
+                    >
                       <div className="w-16 h-16 relative rounded-full border border-black/10">
                         <img
                           src={
@@ -310,17 +376,18 @@ export default function UserSettings({
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
                         />
+                        {/* Edit overlay on hover */}
+                        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                              alt="Edit"
+                              className="w-5 h-5 brightness-[10]"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <ButtonNormal
-                      variant="secondaryColor"
-                      mode="light"
-                      size="small"
-                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-icon.svg`}
-                      onClick={() => openImageUpload()}
-                    >
-                      Upload new picture
-                    </ButtonNormal>
                     <ButtonDestructive
                       variant="tertiary"
                       mode="light"
