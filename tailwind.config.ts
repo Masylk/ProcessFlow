@@ -18,6 +18,7 @@ const config: Config = {
       extension: 'js',
     },
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: myTheme.colors,
@@ -33,6 +34,24 @@ const config: Config = {
         sans: ['Inter', 'sans-serif'], // Default 'sans' is now Inter
       },
       spacing: myTheme.spacing,
+      backgroundColor: {
+        'primary-button': 'var(--button-primary-bg)',
+        'primary-button-hover': 'var(--button-primary-bg-hover)',
+        'secondary-button': 'var(--button-secondary-bg)',
+        'secondary-button-hover': 'var(--button-secondary-bg-hover)',
+        // ... add other button backgrounds
+      },
+      textColor: {
+        'primary-button-text': 'var(--button-primary-fg)',
+        'secondary-button-text': 'var(--button-secondary-fg)',
+        'secondary-button-text-hover': 'var(--button-secondary-fg-hover)',
+        // ... add other text colors
+      },
+      borderColor: {
+        'primary-button': 'var(--button-primary-border)',
+        'secondary-button': 'var(--button-secondary-border)',
+        // ... add other border colors
+      },
     },
   },
   variants: {

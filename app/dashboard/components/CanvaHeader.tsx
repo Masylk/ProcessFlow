@@ -1,6 +1,7 @@
 import { Folder } from '@/types/workspace';
 import ButtonNormal from '../../components/ButtonNormal';
 import ViewSwitch from '../../components/ViewSwitch';
+import { useColors } from '@/app/theme/hooks';
 
 interface CanvaHeaderProps {
   openCreateFlow: () => void;
@@ -15,6 +16,8 @@ export default function CanvaHeader({
   currentView,
   onViewChange,
 }: CanvaHeaderProps) {
+  const colors = useColors();
+
   const getFolderIcon = () => {
     if (selectedFolder?.icon_url) {
       // Display the icon_url if it exists
@@ -41,27 +44,40 @@ export default function CanvaHeader({
   };
 
   return (
-    <div className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b border-lightMode-border-secondary">
+    <div 
+      style={{ 
+        borderColor: colors['border-secondary']
+      }}
+      className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b"
+    >
       <div className="justify-start items-center gap-4 flex">
-        {/* Dynamically display folder icon */}
-        {selectedFolder && getFolderIcon()}
-
-        {/* Display selected folder name or nothing */}
-        {selectedFolder && (
-          <div className="text-lightMode-text-primary text-2xl font-medium font-['Inter'] leading-loose">
-            {selectedFolder.name}
-          </div>
+        {/* Dynamically display folder icon or default flows icon */}
+        {selectedFolder ? (
+          getFolderIcon()
+        ) : (
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-icon.svg`}
+            alt="Flows icon"
+            className="w-6 h-6"
+          />
         )}
+
+        {/* Display selected folder name or "My Flows" */}
+        <div 
+          style={{ color: colors['text-primary'] }}
+          className="text-2xl font-medium font-['Inter'] leading-loose"
+        >
+          {selectedFolder ? selectedFolder.name : 'My Flows'}
+        </div>
       </div>
-      <div className="justify-end items-center gap-2 flex">
+      <div className="hidden justify-end items-center gap-2">
         <ViewSwitch 
           currentView={currentView} 
           onViewChange={onViewChange} 
         />
         {/* Import Process Button */}
         <ButtonNormal
-          variant="secondaryGray"
-          mode="light"
+          variant="secondary"
           size="small"
           leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
           className='hidden'
@@ -71,7 +87,6 @@ export default function CanvaHeader({
         {/* New Process Button */}
         <ButtonNormal
           variant="primary"
-          mode="light"
           size="small"
           leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
           onClick={openCreateFlow}
