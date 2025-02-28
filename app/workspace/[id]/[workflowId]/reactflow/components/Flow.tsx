@@ -1,6 +1,12 @@
 import '@xyflow/react/dist/style.css';
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   ReactFlow,
   Node,
@@ -10,6 +16,7 @@ import {
   Controls,
   MiniMap,
   Panel,
+  useStore,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './CustomNode';
@@ -21,6 +28,7 @@ import path from 'path';
 import { processPath } from '../utils/processPath';
 import BeginNode from './BeginNode';
 import EndNode from './EndNode';
+import SmoothStepCustomParent from './SmoothStepCustomParent';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -30,6 +38,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   smoothstepCustom: CustomSmoothStepEdge,
+  smoothstepCustomParent: SmoothStepCustomParent,
 } as const;
 
 interface FlowProps {
@@ -63,6 +72,34 @@ export function Flow({
   );
   const isFirstRender = useRef(true);
 
+  // Get viewport dimensions from ReactFlow store
+  const viewportWidth = useStore((store) => store.width);
+  const viewportHeight = useStore((store) => store.height);
+
+  // Calculate bounds based on viewport size
+  const translateExtent = useMemo((): [[number, number], [number, number]] => {
+    const padding = 2000;
+
+    if (nodes.length === 0)
+      return [
+        [-1000, -1000],
+        [1000, 1000],
+      ];
+
+    const xPositions = nodes.map((node) => node.position.x);
+    const yPositions = nodes.map((node) => node.position.y);
+
+    const minX = Math.min(...xPositions) - padding;
+    const maxX = Math.max(...xPositions) + padding;
+    const minY = Math.min(...yPositions) - padding;
+    const maxY = Math.max(...yPositions) + padding;
+
+    return [
+      [minX, minY],
+      [maxX, maxY],
+    ];
+  }, [nodes]);
+
   const handleDeleteBlock = useCallback(
     async (nodeId: string) => {
       const blockId = nodeId.replace('block-', '');
@@ -93,6 +130,7 @@ export function Flow({
       event?: { clientX: number; clientY: number }
     ) => {
       if (event) {
+        console.log('path', path);
         setDropdownDatas({
           x: event.clientX,
           y: event.clientY,
@@ -109,7 +147,6 @@ export function Flow({
     if (!Array.isArray(paths)) return;
 
     const createLayoutedNodes = async () => {
-      console.log('allo');
       const firstPath = paths.find((path) => path.parent_blocks.length === 0);
       if (firstPath) {
         const nodes: Node[] = [];
@@ -119,7 +156,8 @@ export function Flow({
           nodes,
           edges,
           handleDeleteBlock,
-          handleAddBlockOnEdge
+          handleAddBlockOnEdge,
+          paths
         );
         setNodes(nodes);
         setEdges(edges);
@@ -212,10 +250,7 @@ export function Flow({
         minZoom={0.1}
         maxZoom={4}
         defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
-        translateExtent={[
-          [-5000, -5000],
-          [5000, 5000],
-        ]}
+        translateExtent={translateExtent}
         onNodeClick={(_, node) => setSelectedNodeId(node.id)}
         onPaneClick={() => setSelectedNodeId(null)}
         fitView={true}

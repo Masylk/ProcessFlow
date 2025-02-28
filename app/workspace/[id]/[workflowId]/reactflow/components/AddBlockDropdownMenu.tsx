@@ -33,7 +33,11 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
 
   const handleSelect = async (type: string) => {
     if (type === 'PATH') {
-      console.log('creating parallel paths');
+      console.log(
+        'creating parallel paths: ',
+        dropdownDatas.path,
+        dropdownDatas.position
+      );
       try {
         await createParallelPaths(dropdownDatas.path, dropdownDatas.position);
         onClose();

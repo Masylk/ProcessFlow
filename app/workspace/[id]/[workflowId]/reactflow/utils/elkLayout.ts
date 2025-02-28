@@ -18,8 +18,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
 
   const elkNodes = nodes.map((node) => ({
     id: node.id,
-    width: node.type === 'begin' ? 200 : node.type === 'end' ? 20 : 481,
-    height: node.type === 'begin' ? 50 : node.type === 'end' ? 20 : 120,
+    width: node.type === 'begin' || node.type === 'end' ? 200 : 481,
+    height: node.type === 'begin' || node.type === 'end' ? 50 : 120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
@@ -37,20 +37,24 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   console.log('ELK Graph:', elkGraph);
 
   const layoutOptions = {
-    'elk.algorithm': 'layered',
+    'elk.algorithm': 'mrtree',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '80',
+    'elk.spacing.nodeNode': '100',
     'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-    'elk.spacing.componentComponent': '80',
+    'elk.spacing.componentComponent': '100',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
-    'elk.layered.nodePlacement.strategy': 'SIMPLE',
+    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
     'elk.layered.spacing.edgeNodeBetweenLayers': '50',
-    'elk.layered.mergeEdges': 'true',
+    'elk.layered.mergeEdges': 'false',
     'elk.layered.priority.direction': '1',
     'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
     'elk.alignment': 'CENTER',
     'elk.padding': '[top=50,left=50,bottom=50,right=50]',
+    'elk.layered.crossingMinimization.semiInteractive': 'true',
+    'elk.layered.spacing.baseValue': '80',
+    'elk.separateConnectedComponents': 'true',
+    'elk.spacing': '80',
   };
 
   try {
@@ -74,11 +78,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
       return {
         ...node,
         position: {
-          x: centerX - (
-            node.type === 'begin' ? 100 :
-            node.type === 'end' ? 10 :
-            240.5
-          ),
+          x: elkNode.x,
           y: elkNode.y,
         },
         style: {

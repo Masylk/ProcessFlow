@@ -198,26 +198,29 @@ export async function GET(
         // For existing paths, check and fix BEGIN and END blocks
         for (const path of existingPaths) {
           const blocks = path.blocks;
-          const maxPosition = Math.max(...blocks.map(b => b.position));
+          // Set default maxPosition to -1 if there are no blocks
+          const maxPosition = blocks.length > 0 ? Math.max(...blocks.map(b => b.position)) : -1;
 
           // Check BEGIN block
           const beginBlock = blocks.find(b => b.type === 'BEGIN');
           if (!beginBlock) {
             // Shift all blocks' positions up by 1
-            await prisma.block.updateMany({
-              where: { path_id: path.id },
-              data: {
-                position: {
-                  increment: 1
+            if (blocks.length > 0) {
+              await prisma.block.updateMany({
+                where: { path_id: path.id },
+                data: {
+                  position: {
+                    increment: 1
+                  }
                 }
-              }
-            });
+              });
+            }
 
             // Create BEGIN block at position 0
             await prisma.block.create({
               data: {
                 type: 'BEGIN',
-                position: 0,
+                position: 0, // Always at position 0
                 icon: '/step-icons/default-icons/begin.svg',
                 description: 'Start of the workflow',
                 workflow: { connect: { id: parsedworkflow_id } },
@@ -234,7 +237,7 @@ export async function GET(
             await prisma.block.create({
               data: {
                 type: 'END',
-                position: maxPosition + 1,
+                position: maxPosition + 1, // This will be 0 if there were no blocks
                 icon: '/step-icons/default-icons/end.svg',
                 description: 'End of the workflow',
                 workflow: { connect: { id: parsedworkflow_id } },
@@ -273,9 +276,10 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching or creating paths:', error);
+    console.error('Error fetching or creating paths:', error instanceof Error ? error.message : 'Unknown error');
+    
     return NextResponse.json(
-      { error: 'Failed to fetch or creating paths' },
+      { error: 'Failed to fetch or create paths' },
       { status: 500 }
     );
   }
