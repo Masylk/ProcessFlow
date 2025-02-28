@@ -17,6 +17,7 @@ export interface NodeData {
 
 export interface EdgeData {
   blocks: Block[];
+  path: Path;
   handleAddBlockOnEdge: (
     position: number,
     path_id: number | null,

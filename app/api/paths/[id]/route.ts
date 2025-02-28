@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
-    const pathId = parseInt(params.id);
+    const { id } = await req.json(); // Extracting path ID from the request body
+    const pathId = parseInt(id, 10);
 
     if (isNaN(pathId)) {
       return NextResponse.json(
@@ -41,4 +39,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}

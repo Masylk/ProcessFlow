@@ -1,32 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const type = searchParams.get('type');
-    const pathId = parseInt(params.id);
+    const { id, type } = await req.json(); // Extracting parameters from the request body
 
-    if (!type || isNaN(pathId)) {
+    const pathId = parseInt(id, 10);
+
+    // Validate input
+    if (!type) {
       return NextResponse.json(
-        { error: 'Missing type parameter or invalid path ID' },
+        { error: 'Missing type parameter' },
         { status: 400 }
       );
     }
 
+    if (isNaN(pathId)) {
+      return NextResponse.json(
+        { error: 'Invalid path ID' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch block from the database
     const block = await prisma.block.findFirst({
       where: {
         path_id: pathId,
-        type: type as any,
+        type,
       },
     });
 
     if (!block) {
       return NextResponse.json(
-        { error: `No block of type ${type} found in path ${pathId}` },
+        { error: `No block of type "${type}" found in path ${pathId}` },
         { status: 404 }
       );
     }
@@ -39,4 +45,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}
