@@ -10,52 +10,61 @@ export default function InputDropdownPage() {
   const [selectedMember, setSelectedMember] = useState('');
   const [requiredMember, setRequiredMember] = useState('');
   const [disabledMember, setDisabledMember] = useState('Olivia Rhye');
-  const [selectedTags, setSelectedTags] = useState<Array<{ 
-    name: string, 
-    handle: string, 
-    avatarUrl: string 
-  }>>([]);
+  const [selectedTags, setSelectedTags] = useState<
+    Array<{
+      name: string;
+      handle: string;
+      avatarUrl: string;
+    }>
+  >([]);
 
   const teamMembers = [
-    { 
-      name: "Phoenix Baker", 
-      handle: "@phoenix", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Phoenix Baker',
+      handle: '@phoenix',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Olivia Rhye", 
-      handle: "@olivia", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Olivia Rhye',
+      handle: '@olivia',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Lana Steiner", 
-      handle: "@lana", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Lana Steiner',
+      handle: '@lana',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Demi Wilkinson", 
-      handle: "@demi", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Demi Wilkinson',
+      handle: '@demi',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Candice Wu", 
-      handle: "@candice", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Candice Wu',
+      handle: '@candice',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Natali Craig", 
-      handle: "@natali", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Natali Craig',
+      handle: '@natali',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
-    { 
-      name: "Drew Cano", 
-      handle: "@drew", 
-      avatarUrl: "https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png" 
+    {
+      name: 'Drew Cano',
+      handle: '@drew',
+      avatarUrl:
+        'https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/avatar-01.png',
     },
   ];
 
   return (
-    <div 
+    <div
       className={`min-h-screen p-8 transition-colors ${
         mode === 'dark' ? 'dark bg-darkMode-bg-primary' : 'bg-white'
       }`}
@@ -65,8 +74,7 @@ export default function InputDropdownPage() {
         <div className="flex justify-end">
           <ButtonNormal
             onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
-            mode={mode}
-            variant="secondaryGray"
+            variant="secondary"
             size="small"
             leadingIcon="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/sun.svg"
           >
@@ -82,9 +90,10 @@ export default function InputDropdownPage() {
           options={teamMembers}
           mode={mode}
           iconUrl="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/mail-icon.svg"
-          iconColor={mode === 'light' 
-            ? theme.colors["Gray (light mode)/500"] 
-            : theme.colors["Gray (dark mode)/400"]
+          iconColor={
+            mode === 'light'
+              ? theme.colors['Gray (light mode)/500']
+              : theme.colors['Gray (dark mode)/400']
           }
         />
 
@@ -127,11 +136,13 @@ export default function InputDropdownPage() {
           mode={mode}
           selectedTags={selectedTags}
           onTagRemove={(tag) => {
-            setSelectedTags(selectedTags.filter(t => t.handle !== tag.handle));
+            setSelectedTags(
+              selectedTags.filter((t) => t.handle !== tag.handle)
+            );
           }}
           onChange={(value) => {
-            const tag = teamMembers.find(t => t.name === value);
-            if (tag && !selectedTags.find(t => t.handle === tag.handle)) {
+            const tag = teamMembers.find((t) => t.name === value);
+            if (tag && !selectedTags.find((t) => t.handle === tag.handle)) {
               setSelectedTags([...selectedTags, tag]);
             }
           }}

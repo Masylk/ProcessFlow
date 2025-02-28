@@ -6,6 +6,7 @@ import CanvaHeader from './CanvaHeader';
 import WorkflowCard from './WorkflowCard';
 import { Workflow } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import { useColors } from '@/app/theme/hooks';
 
 interface CanvasProps {
   workspace: Workspace;
@@ -34,6 +35,8 @@ const Canvas: React.FC<CanvasProps> = ({
   currentView,
   onViewChange,
 }) => {
+  const colors = useColors();
+
   // Filter workflows based on selectedFolder and searchTerm
   const workflowsToDisplay = workspace.workflows.filter((workflow) => {
     const matchesFolder = selectedFolder
@@ -55,7 +58,10 @@ const Canvas: React.FC<CanvasProps> = ({
     .slice(0, 4); // Get the top 4 most recent workflows
 
   return (
-    <div className="flex flex-col flex-1 w-full h-full bg-lightMode-bg-secondary_alt">
+    <div 
+      style={{ backgroundColor: colors['bg-secondary'] }}
+      className="flex flex-col flex-1 w-full h-full"
+    >
       <CanvaHeader
         openCreateFlow={openCreateFlow}
         selectedFolder={selectedFolder}
@@ -63,12 +69,15 @@ const Canvas: React.FC<CanvasProps> = ({
         onViewChange={onViewChange}
       />
 
-      {/* Scrollable Section - Updated height and overflow handling */}
       <div className="flex-1 overflow-y-auto px-8 py-4 pb-40">
-        {/* Recently Used Section */}
         {recentlyUsedWorkflows.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-lightMode-text-primary text-xl font-medium mb-4">Recently Used</h2>
+            <h2 
+              style={{ color: colors['text-primary'] }}
+              className="text-xl font-medium mb-4"
+            >
+              Recently Used
+            </h2>
             {currentView === 'grid' ? (
               <div className="grid grid-cols-4 gap-4">
                 {recentlyUsedWorkflows.map((workflow) => (
@@ -85,8 +94,17 @@ const Canvas: React.FC<CanvasProps> = ({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col h-min bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-gray-600">
+              <div 
+                style={{ 
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-primary']
+                }}
+                className="flex flex-col h-min rounded-lg overflow-hidden border"
+              >
+                <div 
+                  style={{ color: colors['text-secondary'] }}
+                  className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium"
+                >
                   <div className="col-span-3">Name</div>
                   <div className="col-span-3">Tags</div>
                   <div className="col-span-2">Steps</div>
@@ -94,12 +112,12 @@ const Canvas: React.FC<CanvasProps> = ({
                   <div className="col-span-1">Last Used</div>
                   <div className="col-span-1"></div>
                 </div>
-                {/* 1px separator */}
-                <div className="h-[1px] w-full bg-gray-200" />
+                <div style={{ backgroundColor: colors['border-primary'] }} className="h-[1px] w-full" />
                 {recentlyUsedWorkflows.map((workflow, index) => (
                   <React.Fragment key={workflow.id}>
                     <div 
-                      className="grid grid-cols-12 px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
+                      style={{ backgroundColor: colors['bg-primary'] }}
+                      className="grid grid-cols-12 px-4 py-3 hover:bg-opacity-80 transition-colors"
                     >
                       <div className="col-span-3 flex items-center gap-3">
                         <div className="w-8 h-8 flex items-center justify-center bg-[#12B76A] rounded-lg">
@@ -110,35 +128,50 @@ const Canvas: React.FC<CanvasProps> = ({
                           />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">{workflow.name}</span>
-                          <span className="text-sm text-gray-500">{workflow.description}</span>
+                          <span style={{ color: colors['text-primary'] }} className="font-medium">
+                            {workflow.name}
+                          </span>
+                          <span style={{ color: colors['text-secondary'] }} className="text-sm">
+                            {workflow.description}
+                          </span>
                         </div>
                       </div>
                       <div className="col-span-3 flex items-center gap-2">
-                        <span className="px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-700">
+                        <span 
+                          style={{ 
+                            backgroundColor: colors['bg-secondary'],
+                            color: colors['text-secondary']
+                          }}
+                          className="px-2 py-1 rounded-md text-sm"
+                        >
                           Human Resources
                         </span>
-                        <span className="px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-700">
+                        <span 
+                          style={{ 
+                            backgroundColor: colors['bg-secondary'],
+                            color: colors['text-secondary']
+                          }}
+                          className="px-2 py-1 rounded-md text-sm"
+                        >
                           Engineering
                         </span>
                       </div>
-                      <div className="col-span-2 flex items-center text-gray-700">
+                      <div style={{ color: colors['text-secondary'] }} className="col-span-2 flex items-center">
                         6 Steps
                       </div>
                       <div className="col-span-2 flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-gray-200" />
-                        <span className="text-gray-700">Maxime Togbe</span>
+                        <span style={{ color: colors['text-secondary'] }}>Maxime Togbe</span>
                       </div>
-                      <div className="col-span-1 flex items-center text-gray-500">
+                      <div style={{ color: colors['text-tertiary'] }} className="col-span-1 flex items-center">
                         2 hours ago
                       </div>
-                        <div className="col-span-1 flex justify-center pl-16 items-center text-gray-500">
+                      <div className="col-span-1 flex justify-center pl-16 items-center">
                         <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-vertical.svg`} alt="Actions" className="w-5 h-5" />
                       </div>
                     </div>
-                    {/* Add separator if not the last item */}
                     {index < recentlyUsedWorkflows.length - 1 && (
-                      <div className="h-[1px] w-full bg-gray-200" />
+                      <div style={{ backgroundColor: colors['border-primary'] }} className="h-[1px] w-full" />
                     )}
                   </React.Fragment>
                 ))}
@@ -147,11 +180,15 @@ const Canvas: React.FC<CanvasProps> = ({
           </div>
         )}
 
-        {/* All Workflows Section */}
         <div>
-          <h2 className="text-lightMode-text-primary text-xl font-medium mb-4">All Workflows</h2>
+          <h2 
+            style={{ color: colors['text-primary'] }}
+            className="text-xl font-medium mb-4"
+          >
+            All Workflows
+          </h2>
           {currentView === 'grid' ? (
-            <div className="grid grid-cols-4 gap-4 ">
+            <div className="grid grid-cols-4 gap-4">
               {workflowsToDisplay.map((workflow) => (
                 <WorkflowCard
                   key={workflow.id}
@@ -166,8 +203,17 @@ const Canvas: React.FC<CanvasProps> = ({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col h-min bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-gray-600 justify-between">
+            <div 
+              style={{ 
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-primary']
+              }}
+              className="flex flex-col h-min rounded-lg overflow-hidden border"
+            >
+              <div 
+                style={{ color: colors['text-secondary'] }}
+                className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium justify-between"
+              >
                 <div className="col-span-3">Name</div>
                 <div className="col-span-3">Tags</div>
                 <div className="col-span-2">Steps</div>
@@ -175,41 +221,53 @@ const Canvas: React.FC<CanvasProps> = ({
                 <div className="col-span-1">Last Used</div>
                 <div className="col-span-1"></div>
               </div>
-              {/* 1px separator */}
-              <div className="h-[1px] w-full bg-gray-200" />
+              <div style={{ backgroundColor: colors['border-primary'] }} className="h-[1px] w-full" />
               {workflowsToDisplay.map((workflow, index) => (
                 <React.Fragment key={workflow.id}>
                   <div 
-                    className="grid grid-cols-12 px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
+                    style={{ backgroundColor: colors['bg-primary'] }}
+                    className="grid grid-cols-12 px-4 py-3 hover:bg-opacity-80 transition-colors"
                   >
                     <div className="col-span-3 flex items-center gap-3">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{workflow.name}</span>
-                 
+                        <span style={{ color: colors['text-primary'] }} className="font-medium">
+                          {workflow.name}
+                        </span>
                       </div>
                     </div>
                     <div className="col-span-3 flex items-center gap-2">
-                      <span className="px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-700">
+                      <span 
+                        style={{ 
+                          backgroundColor: colors['bg-secondary'],
+                          color: colors['text-secondary']
+                        }}
+                        className="px-2 py-1 rounded-md text-sm"
+                      >
                         Human Resources
                       </span>
-                      <span className="px-2 py-1 bg-gray-100 rounded-md text-sm text-gray-700">
+                      <span 
+                        style={{ 
+                          backgroundColor: colors['bg-secondary'],
+                          color: colors['text-secondary']
+                        }}
+                        className="px-2 py-1 rounded-md text-sm"
+                      >
                         Engineering
                       </span>
                     </div>
-                    <div className="col-span-2 flex items-center text-gray-700">
+                    <div style={{ color: colors['text-secondary'] }} className="col-span-2 flex items-center">
                       6 Steps
                     </div>
                     <div className="col-span-2 flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-gray-200" />
-                      <span className="text-gray-700">{workflow.workspaceId}</span>
+                      <span style={{ color: colors['text-secondary'] }}>{workflow.workspaceId}</span>
                     </div>
-                    <div className="col-span-1 flex items-center text-gray-500">
+                    <div style={{ color: colors['text-tertiary'] }} className="col-span-1 flex items-center">
                       2 hours ago
                     </div>
-                    <div className="col-span-1 pl-16 flex justify-center items-center text-gray-500">
+                    <div className="col-span-1 pl-16 flex justify-center items-center">
                       <ButtonNormal
-                        variant="secondaryGray"
-                        mode="light"
+                        variant="secondary"
                         size="small"
                         iconOnly
                         leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-vertical.svg`}
@@ -218,9 +276,8 @@ const Canvas: React.FC<CanvasProps> = ({
                       </ButtonNormal>
                     </div>
                   </div>
-                  {/* Add separator if not the last item */}
                   {index < workflowsToDisplay.length - 1 && (
-                    <div className="h-[1px] w-full bg-gray-200" />
+                    <div style={{ backgroundColor: colors['border-primary'] }} className="h-[1px] w-full" />
                   )}
                 </React.Fragment>
               ))}

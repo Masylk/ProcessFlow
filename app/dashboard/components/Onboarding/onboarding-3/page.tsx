@@ -212,7 +212,7 @@ export default function Home() {
 
           <div className="h-10 flex justify-between items-start w-full">
             <ButtonNormal
-              variant="secondaryGray"
+              variant="secondary"
               size="small"
               leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
               onClick={() => {}}

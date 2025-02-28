@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import { Workspace } from '@/types/workspace';
 import DynamicIcon from '../../../utils/DynamicIcon';
+import { useColors } from '@/app/theme/hooks';
 
 type MenuItem = { label: string; icon: string } | 'separator';
 
@@ -15,7 +16,7 @@ const menuItems: MenuItem[] = [
   { label: 'Duplicate', icon: 'duplicate-icon.svg' },
   { label: 'Move', icon: 'folder-download.svg' },
   'separator',
-  { label: 'Delete Flow', icon: 'trash-delete.svg',  },
+  { label: 'Delete Flow', icon: 'trash-01.svg',  },
 ];
 
 interface WorkflowCardProps {
@@ -38,9 +39,10 @@ export default function WorkflowCard({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
-  tags = ['Human Resources'],
-  assignee = 'Maxime Togbe',
+  tags = [''],
+  assignee = '',
 }: WorkflowCardProps) {
+  const colors = useColors();
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStarFilled, setIsStarFilled] = useState(false);
@@ -71,16 +73,32 @@ export default function WorkflowCard({
   return (
     <div
       onClick={() => handleWorkflowClick(workflow.id)}
-      className="bg-white rounded-lg border border-lightMode-border-secondary p-4 hover:border-lightMode-border-primary transition-all ease-in-out hover:cursor-pointer relative"
+      style={{
+        backgroundColor: colors['bg-primary'],
+        borderColor: isHovered || isMenuOpen ? colors['border-primary'] : colors['border-secondary'],
+        '--hover-bg': colors['bg-quaternary']
+      } as React.CSSProperties}
+      className="rounded-lg border p-4 hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {(isHovered || isMenuOpen) && (
         <div className="absolute top-1 right-1 transition-opacity duration-150 z-20">
-          <div className="h-6 rounded-md shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] justify-start items-start inline-flex overflow-hidden bg-white">
+          <div 
+            style={{
+              backgroundColor: colors['bg-secondary'],
+              borderColor: colors['border-primary']
+            }}
+            className="h-6 rounded-md shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-start items-start inline-flex overflow-hidden"
+          >
             {/* Star Button - Toggle Fill on Click */}
             <div
-              className="px-2 py-1 border-r border-[#d0d5dd] justify-center items-center gap-2 flex transition duration-300 group hover:bg-[#F9FAFB] cursor-pointer"
+              style={{
+                borderColor: colors['border-primary'],
+                backgroundColor: colors['bg-secondary'],
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsStarFilled(!isStarFilled);
@@ -93,18 +111,29 @@ export default function WorkflowCard({
                   isStarFilled ? 'star-filled.svg' : 'star-01.svg'
                 }`}
                 alt="Star Icon"
-                className="w-4 h-4 transition duration-300 group-hover:brightness-50"
+                className="w-4 h-4 transition duration-300"
               />
             </div>
-            <div className="px-2 py-1 border-r border-[#d0d5dd] justify-center items-center gap-2 flex transition duration-300 group hover:bg-[#F9FAFB]">
+            <div 
+              style={{
+                borderColor: colors['border-primary'],
+                backgroundColor: colors['bg-secondary'],
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
+            >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
                 alt="Link Icon"
-                className="w-4 h-4 transition duration-300 group-hover:brightness-50"
+                className="w-4 h-4 transition duration-300"
               />
             </div>
             <div
-              className="px-2 py-1 justify-center items-center gap-2 flex transition duration-300 group hover:bg-[#F9FAFB] cursor-pointer"
+              style={{
+                backgroundColor: colors['bg-secondary'],
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="px-2 py-1 justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
               onClick={(e) => {
                 onSelectWorkflow(workflow);
                 e.stopPropagation();
@@ -114,7 +143,7 @@ export default function WorkflowCard({
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
                 alt="Dots Icon"
-                className="w-4 h-4 transition duration-300 group-hover:brightness-50"
+                className="w-4 h-4 transition duration-300"
               />
             </div>
           </div>
@@ -123,19 +152,25 @@ export default function WorkflowCard({
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute w-48 bg-white border border-[#e4e7ec] py-1 rounded-lg shadow-md z-30 mt-2 overflow-hidden"
-          style={{ top: 'calc(10% + 8px)', right: '4px' }}
+          style={{
+            backgroundColor: colors['bg-secondary'],
+            borderColor: colors['border-primary'],
+            top: 'calc(10% + 8px)',
+            right: '4px'
+          }}
+          className="absolute w-48 py-1 rounded-lg shadow-md z-30 mt-2 overflow-hidden border"
         >
           {menuItems.map((item, index) =>
             item === 'separator' ? (
               <div
                 key={`sep-${index}`}
-                className="w-full border-t my-1 border-[#e4e7ec]"
+                style={{ borderColor: colors['border-secondary'] }}
+                className="w-full border-b my-1"
               />
             ) : (
               <div
                 key={index}
-                className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
+                className="self-stretch px-1.5 py-px flex items-center gap-3"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsMenuOpen(false);
@@ -153,22 +188,22 @@ export default function WorkflowCard({
                 }}
               >
                 <div 
-                  className={`grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex transition-all duration-300 overflow-hidden ${
-                    item.label === 'Delete Flow' ? 'hover:bg-lightMode-bg-error-primary' : 'hover:bg-lightMode-bg-primary_hover'
-                  }`}
+                  style={{
+                    '--hover-bg': colors['bg-quaternary']
+                  } as React.CSSProperties}
+                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                     <div className="w-4 h-4 relative overflow-hidden">
                       <img
                         src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
                         alt={`${item.label} Icon`}
-                        className={`w-4 h-4 ${item.label === 'Delete Flow' ? 'text-lightMode-fg-error-primary' : ''}`}
+                        className="w-4 h-4"
                       />
                     </div>
                     <div 
-                      className={`grow shrink basis-0  text-sm font-normal font-['Inter'] leading-tight ${
-                        item.label === 'Delete Flow' ? 'text-lightMode-fg-error-primary' : 'text-[#344054]'
-                      }`}
+                      style={{ color: colors['text-primary'] }}
+                      className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                     >
                       {item.label}
                     </div>
@@ -187,29 +222,40 @@ export default function WorkflowCard({
       </div>
       */}
       {/* Title */}
-      <h3 className="font-medium text-[#101828] text-lg mb-2">{workflow.name}</h3>
+      <h3 
+        style={{ color: colors['text-primary'] }}
+        className="font-medium text-lg mb-2"
+      >
+        {workflow.name}
+      </h3>
       {/* Description */}
-      <p className="text-sm text-[#475467] mb-3">{workflow.description}</p>
+      <p 
+        style={{ color: colors['text-secondary'] }}
+        className="text-sm mb-3"
+      >
+        {workflow.description}
+      </p>
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
         {tags.map((tag) => (
           <span
             key={tag}
-            className={`px-spacing-sm py-0.5 text-xs rounded-md
-              ${tag === 'Human Resources' ? 'bg-[#eef4ff] text-[#3538cd]' : ''}
-              ${tag === 'Engineering' ? 'bg-[#f2f4f7] text-[#344054]' : ''}
-              ${tag === 'Marketing' ? 'bg-[#fdf2fa] text-[#c11574]' : ''}
-              ${tag === 'Design' ? 'bg-[#fef6ee] text-[#b93815]' : ''}
-            `}
+            style={{
+              backgroundColor: colors['bg-secondary'],
+              color: colors['text-secondary']
+            }}
+            className="px-spacing-sm py-0.5 text-xs rounded-md"
           >
             {tag}
           </span>
         ))}
       </div>
       {/* Steps and Assignee */}
-      <div className="flex items-center text-sm text-[#667085]">
+      <div 
+        style={{ color: colors['text-tertiary'] }}
+        className="flex items-center text-sm"
+      >
         <span>6 Steps</span>
-        <div className="w-1 h-1 rounded-full bg-[#d0d5dd] mx-2" />
         <span className="truncate">{assignee}</span>
       </div>
     </div>

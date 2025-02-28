@@ -7,6 +7,7 @@ import { User } from '@/types/user';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import ButtonDestructive from '@/app/components/ButtonDestructive';
 import InputField from '@/app/components/InputFields';
+import { useColors } from '@/app/theme/hooks';
 
 interface UserSettingsProps {
   user: User;
@@ -33,6 +34,7 @@ export default function UserSettings({
   isDeleteAvatar,
   onDeleteAvatar,
 }: UserSettingsProps) {
+  const colors = useColors();
   const supabase = createClient();
 
   const handleLogout = async () => {
@@ -303,27 +305,42 @@ export default function UserSettings({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
+      </div>
+
       <div 
-        className="w-[628px] h-fit bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
+        style={{ backgroundColor: colors['bg-primary'] }}
+        className="w-[628px] h-fit rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="self-stretch h-[92px] flex-col justify-start items-center flex">
           <div className="self-stretch px-6 pt-6 justify-start items-center gap-4 inline-flex">
-            <div className="w-12 h-12 p-3 bg-[#f2f4f7] rounded-full justify-center items-center flex overflow-hidden">
+            <div 
+              style={{ backgroundColor: colors['bg-tertiary'] }}
+              className="w-12 h-12 p-3 rounded-full justify-center items-center flex overflow-hidden"
+            >
               <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-profile.svg`}
                   alt="Settings Icon"
                   className="w-6 h-6 object-contain"
                 />
               </div>
             </div>
             <div className="w-[432px] flex-col justify-start items-start gap-1 inline-flex">
-              <div className="self-stretch text-[#101828] text-lg font-semibold font-['Inter'] leading-7">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="self-stretch text-lg font-semibold font-['Inter'] leading-7"
+              >
                 Account settings
               </div>
             </div>
@@ -343,11 +360,17 @@ export default function UserSettings({
                   {/* Photo label */}
                   <div className="self-stretch h-10 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Your photo
                       </div>
                     </div>
-                    <div className="self-stretch text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
+                    <div 
+                      style={{ color: colors['text-secondary'] }}
+                      className="self-stretch text-sm font-normal font-['Inter'] leading-tight"
+                    >
                       This will be displayed as your avatar.
                     </div>
                   </div>
@@ -364,7 +387,10 @@ export default function UserSettings({
                       className="w-16 h-16 rounded-full justify-center items-center flex relative group cursor-pointer"
                       onClick={handleImageClick}
                     >
-                      <div className="w-16 h-16 relative rounded-full border border-black/10">
+                      <div 
+                        style={{ borderColor: colors['border-secondary'] }}
+                        className="w-16 h-16 relative rounded-full border"
+                      >
                         <img
                           src={
                             isDeleteAvatar
@@ -390,7 +416,6 @@ export default function UserSettings({
                     </div>
                     <ButtonDestructive
                       variant="tertiary"
-                      mode="light"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
                       onClick={() => onDeleteAvatar()}
@@ -402,7 +427,10 @@ export default function UserSettings({
                   <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                     <div className="self-stretch h-5 flex-col justify-start items-start flex">
                       <div className="inline-flex gap-0.5">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                        <div 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-semibold font-['Inter'] leading-tight"
+                        >
                           Name
                         </div>
                       </div>
@@ -411,7 +439,6 @@ export default function UserSettings({
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                         <InputField
                           type="default"
-                          mode="light"
                           value={lastName}
                           onChange={setLastName}
                           placeholder="Last name"
@@ -420,7 +447,6 @@ export default function UserSettings({
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                         <InputField
                           type="default"
-                          mode="light"
                           value={firstName}
                           onChange={setFirstName}
                           placeholder="First name"
@@ -430,12 +456,18 @@ export default function UserSettings({
                   </div>
                 </div>
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
                 {/* Email section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Email
                       </div>
                     </div>
@@ -446,9 +478,8 @@ export default function UserSettings({
                         <div className="relative self-stretch">
                           <InputField
                             type="default"
-                            mode="light"
                             value={newEmail}
-                            iconColor='#344054'
+                            iconColor={colors['text-primary']}
                             onChange={setNewEmail}
                             placeholder="Enter email"
                             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
@@ -457,8 +488,7 @@ export default function UserSettings({
                       </div>
                     </div>
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       onClick={handleChangeEmail}
                       disabled={newEmail === user.email}
@@ -469,7 +499,10 @@ export default function UserSettings({
                   </div>
                 </div>
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
                 {/* Password section */}
 
                 {!showPasswordForm ? (
@@ -479,14 +512,16 @@ export default function UserSettings({
                     <div className="self-stretch flex flex-col gap-4">
                       <div className="self-stretch h-5 flex items-center">
                         <div className="inline-flex gap-0.5">
-                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          <div 
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-semibold font-['Inter'] leading-tight"
+                          >
                             Password
                           </div>
                         </div>
                       </div>
                       <ButtonNormal
-                        variant="secondaryGray"
-                        mode="light"
+                        variant="secondary"
                         size="small"
                         onClick={() => setShowPasswordForm(true)}
                         className="w-fit"
@@ -497,8 +532,11 @@ export default function UserSettings({
 
                     {/* Confirmation Message - displayed when passwordChanged is true */}
                     {passwordChanged && (
-                      <div className="h-[52px] py-0 bg-white rounded-xl flex items-center gap-4 mt-0">
-                        <div className="w-5 h-5 bg-[#dbf9e6] rounded-full overflow-hidden">
+                      <div className="h-[52px] py-0 rounded-xl flex items-center gap-4 mt-0">
+                        <div 
+                          style={{ backgroundColor: colors['bg-success'] }}
+                          className="w-5 h-5 rounded-full overflow-hidden"
+                        >
                           <img
                             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-green.svg`}
                             alt="Mail Icon"
@@ -506,7 +544,10 @@ export default function UserSettings({
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          <div 
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-semibold font-['Inter'] leading-tight"
+                          >
                             Your password has been changed successfully
                           </div>
                         </div>
@@ -516,36 +557,43 @@ export default function UserSettings({
                 ) : (
                   // When the form is displayed, show the full password change section.
                   <div className="flex flex-col w-96 gap-4 rounded-lg">
-                    <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                    <div 
+                      style={{ color: colors['text-primary'] }}
+                      className="text-sm font-semibold font-['Inter'] leading-tight"
+                    >
                       Password
                     </div>
                     <div className="flex flex-col gap-4">
                       {/* Old password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           Old password
                         </label>
                         <InputField
                           type="password"
-                          mode="light"
                           value={oldPassword}
                           onChange={setOldPassword}
                           placeholder="Old password"
-                          iconColor='#344054'
+                          iconColor={colors['text-primary']}
                           errorMessage={oldPasswordError}
                         />
                       </div>
 
                       {/* New password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           New password
                         </label>
                         <InputField
                           type="password"
-                          mode="light"
                           value={newPassword}
-                          iconColor='#344054'
+                          iconColor={colors['text-primary']}
                           onChange={setNewPassword}
                           placeholder="New password"
                           errorMessage={newPasswordError}
@@ -554,14 +602,16 @@ export default function UserSettings({
 
                       {/* Confirm new password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           Confirm new password
                         </label>
                         <InputField
                           type="password"
-                          mode="light"
                           value={confirmNewPassword}
-                          iconColor='#344054'
+                          iconColor={colors['text-primary']}
                           onChange={setConfirmNewPassword}
                           placeholder="Confirm new password"
                           errorMessage={confirmPasswordError}
@@ -571,8 +621,7 @@ export default function UserSettings({
                     {/* Action buttons */}
                     <div className="flex gap-4">
                       <ButtonNormal
-                        variant="secondaryGray"
-                        mode="light"
+                        variant="secondary"
                         size="small"
                         onClick={handleCancelPasswordChange}
                       >
@@ -580,7 +629,6 @@ export default function UserSettings({
                       </ButtonNormal>
                       <ButtonNormal
                         variant="primary"
-                        mode="light"
                         size="small"
                         onClick={handleUpdatePassword}
                         isLoading={isUpdatingPassword}
@@ -593,21 +641,26 @@ export default function UserSettings({
                 )}
 
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
 
                 {/* Account Security section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Account Security
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
                       onClick={() => handleLogout()}
@@ -616,7 +669,6 @@ export default function UserSettings({
                     </ButtonNormal>
                     <ButtonDestructive
                       variant="secondary"
-                      mode="light"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}
                       onClick={() => openDeleteAccount()}
@@ -628,14 +680,16 @@ export default function UserSettings({
                  
               </div>
               {/* Divider */}
-              <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+              <div 
+                style={{ borderColor: colors['border-secondary'] }}
+                className="self-stretch border-b flex-col justify-start items-start flex" 
+              />
               {/* Footer buttons */}
               <div className="self-stretch h-fit flex-col justify-start items-center gap-5 flex">
                 <div className="self-stretch flex justify-end items-center gap-5">
                   <div className="grow shrink basis-0 h-10 flex justify-end items-center gap-3">
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       onClick={onClose}
                     >
@@ -643,12 +697,10 @@ export default function UserSettings({
                     </ButtonNormal>
                     <ButtonNormal
                       variant="primary"
-                      mode="light"
                       size="small"
                       onClick={handleSave}
                       isLoading={isSaving}
                       loadingText="Saving..."
-                      
                     >
                       Save
                     </ButtonNormal>

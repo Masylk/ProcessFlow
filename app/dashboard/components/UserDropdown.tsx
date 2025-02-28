@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
+import { useColors } from '@/app/theme/hooks';
 
 interface UserDropdownProps {
   user: User | null;
@@ -18,6 +19,7 @@ export default function UserDropdown({
   onOpenHelpCenter,
   onClose,
 }: UserDropdownProps) {
+  const colors = useColors();
   const supabase = createClient();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +77,11 @@ export default function UserDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="h-full bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border border-[#e4e7ec] flex-col justify-start items-start inline-flex overflow-hidden"
+      style={{
+        backgroundColor: colors['bg-secondary'],
+        borderColor: colors['border-primary']
+      }}
+      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden"
     >
       <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}
@@ -86,7 +92,11 @@ export default function UserDropdown({
             onClose();
           }}
         >
-          <div className="grow shrink basis-0  px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -95,7 +105,9 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight">
                 Account settings
               </div>
             </div>
@@ -103,13 +115,18 @@ export default function UserDropdown({
         </div>
 
         {/* Horizontal line spacer */}
-        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-b my-1" />
 
         {/* Changelog & Roadmap Item */}
         <div className="self-stretch px-1.5 py-px justify-start items-center inline-flex">
           <div
             onClick={handleRoadmapClick}
-            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden"
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -119,7 +136,9 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight">
                 Changelog &amp; Roadmap
               </div>
             </div>
@@ -131,9 +150,13 @@ export default function UserDropdown({
           href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
           target="_blank"
           rel="noopener noreferrer"
-          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer "
+          className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -142,7 +165,9 @@ export default function UserDropdown({
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight">
                 Slack Community
               </div>
             </div>
@@ -157,7 +182,11 @@ export default function UserDropdown({
             onClose();
           }}
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -166,7 +195,9 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight">
                 Support
               </div>
             </div>
@@ -174,14 +205,20 @@ export default function UserDropdown({
         </div>
 
         {/* Horizontal line spacer */}
-        <div className="self-stretch h-px bg-[#e4e7ec] border-t my-1" />
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-b my-1" />
 
         {/* Log out Item */}
         <div 
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
           onClick={handleLogout}
         >
-          <div className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -190,7 +227,9 @@ export default function UserDropdown({
                   className="w-4 h-4 object-contain"
                 />
               </div>
-              <div className="grow shrink basis-0 text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight">
                 Log out
               </div>
             </div>

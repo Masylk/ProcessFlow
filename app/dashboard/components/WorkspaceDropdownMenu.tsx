@@ -3,6 +3,7 @@
 import { Workspace } from '@/types/workspace';
 import React, { useState, useEffect, useRef } from 'react';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
+import { useColors } from '@/app/theme/hooks';
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -39,6 +40,7 @@ export default function WorkspaceDropdownMenu({
   onLogout,
   onOpenCreateWorkspaceModal,
 }: WorkspaceDropdownMenuProps) {
+  const colors = useColors();
   const [isWorkspaceListVisible, setIsWorkspaceListVisible] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
@@ -93,7 +95,11 @@ export default function WorkspaceDropdownMenu({
     <>
       <div 
         ref={dropdownRef}
-        className="w-fit py-1 bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border border-[#e4e7ec] flex flex-col justify-start items-start overflow-visible"
+        style={{
+          backgroundColor: colors['bg-secondary'],
+          borderColor: colors['border-primary']
+        }}
+        className="w-fit py-1 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border flex flex-col justify-start items-start overflow-visible"
       >
         {/* Settings Option */}
         <button
@@ -101,13 +107,21 @@ export default function WorkspaceDropdownMenu({
           onMouseEnter={() => setIsWorkspaceListVisible(false)}
           className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
-          <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
             <div className="flex items-center gap-2">
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
                 className="w-4 h-4"
               />
-              <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="text-sm font-normal font-['Inter'] leading-tight"
+              >
                 Settings
               </div>
             </div>
@@ -115,10 +129,13 @@ export default function WorkspaceDropdownMenu({
         </button>
 
         {/* Separator */}
-        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-b my-1 hidden" 
+        />
 
         {/* Switch Workspace Option */}
-        <div className="group relative w-full">
+        <div className="group relative w-full flex">
           <button 
             className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
             onMouseEnter={() => setIsWorkspaceListVisible(true)}
@@ -127,20 +144,28 @@ export default function WorkspaceDropdownMenu({
               setIsWorkspaceListVisible(!isWorkspaceListVisible);
             }}
           >
-            <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden gap-9">
+            <div 
+              style={{
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden gap-9"
+            >
               <div className="flex items-center gap-2">
                 <img
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/switch-horizontal-01.svg`}
                   className="w-4 h-4"
                 />
-                <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+                <div 
+                  style={{ color: colors['text-primary'] }}
+                  className="text-sm font-normal font-['Inter'] leading-tight"
+                >
                   Switch workspace
                 </div>
               </div>
               <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/right-filled-chevron.svg`}
-                  className="w-2 h-2"
-                />
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/right-filled-chevron.svg`}
+                className="w-2 h-2"
+              />
             </div>
           </button>
 
@@ -148,16 +173,27 @@ export default function WorkspaceDropdownMenu({
           {isWorkspaceListVisible && (
             <div 
               ref={submenuRef}
-              className="absolute left-full top-[-7px] w-[264px] bg-white rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border border-[#e4e7ec]"
+              style={{
+                backgroundColor: colors['bg-secondary'],
+                borderColor: colors['border-primary']
+              }}
+              className="absolute left-full top-[-7px] w-[264px] rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border"
             >
               {/* Email Header */}
               <div className="px-1.5 py-px">
-                <div className="px-2.5 py-[9px] text-[#667085] text-sm font-normal cursor-default">
+                <div 
+                  style={{ color: colors['text-tertiary'] }}
+                  className="px-2.5 py-[9px] text-sm font-normal cursor-default"
+                >
                   {userEmail}
                 </div>
               </div>
 
-              <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+              <div 
+                style={{ borderColor: colors['border-secondary'] }}
+                className="self-stretch h-px border-b my-1" 
+              />
+
               {/* Workspace List */}
               <div>
                 {workspaces.map((workspace) => (
@@ -169,7 +205,12 @@ export default function WorkspaceDropdownMenu({
                     }}
                     className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
                   >
-                    <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+                    <div 
+                      style={{
+                        '--hover-bg': colors['bg-quaternary']
+                      } as React.CSSProperties}
+                      className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    >
                       <div className="flex items-center gap-2">
                         <div
                           className="w-6 h-6 rounded-md flex items-center justify-center text-white text-xs font-normal"
@@ -177,7 +218,10 @@ export default function WorkspaceDropdownMenu({
                         >
                           {workspace.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="text-[#344054] text-sm font-normal">
+                        <div 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-normal"
+                        >
                           {workspace.name}
                         </div>
                       </div>
@@ -193,48 +237,69 @@ export default function WorkspaceDropdownMenu({
                 ))}
               </div>
 
-              <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
-              {/* Create/Join Options */}
+              <div 
+                style={{ borderColor: colors['border-secondary'] }}
+                className="self-stretch h-px border-b my-1" 
+              />
 
-                <button 
-                  onClick={handleOpenCreateWorkspaceModal}
-                  className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+              {/* Create/Join Options */}
+              <button 
+                onClick={handleOpenCreateWorkspaceModal}
+                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+              >
+                <div 
+                  style={{
+                    '--hover-bg': colors['bg-quaternary']
+                  } as React.CSSProperties}
+                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
-                  <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
-                        className="w-4 h-4"
-                      />
-                      <div className="text-[#344054] text-sm font-normal">
-                        Create a new workspace
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
+                      className="w-4 h-4"
+                    />
+                    <div 
+                      style={{ color: colors['text-primary'] }}
+                      className="text-sm font-normal"
+                    >
+                      Create a new workspace
                     </div>
                   </div>
-                </button>
-                <button 
-                  onClick={onClose}
-                  className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                </div>
+              </button>
+              <button 
+                onClick={onClose}
+                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+              >
+                <div 
+                  style={{
+                    '--hover-bg': colors['bg-quaternary']
+                  } as React.CSSProperties}
+                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
-                  <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
-                        className="w-4 h-4"
-                      />
-                      <div className="text-[#344054] text-sm font-normal">
-                        Add an account
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
+                      className="w-4 h-4"
+                    />
+                    <div 
+                      style={{ color: colors['text-primary'] }}
+                      className="text-sm font-normal"
+                    >
+                      Add an account
                     </div>
                   </div>
-                </button>
-          
+                </div>
+              </button>
             </div>
           )}
         </div>
-
+        
         {/* Separator */}
-        <div className="self-stretch h-px border-t bg-[#e4e7ec] my-1" />
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-b my-1" 
+        />
 
         {/* Log out Option */}
         <button
@@ -242,13 +307,21 @@ export default function WorkspaceDropdownMenu({
           onMouseEnter={() => setIsWorkspaceListVisible(false)}
           className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
-          <div className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-lightMode-bg-primary_hover transition-all duration-300 overflow-hidden">
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
             <div className="flex items-center gap-2">
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
                 className="w-4 h-4"
               />
-              <div className="text-[#344054] text-sm font-normal font-['Inter'] leading-tight">
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="text-sm font-normal font-['Inter'] leading-tight"
+              >
                 Log out
               </div>
             </div>

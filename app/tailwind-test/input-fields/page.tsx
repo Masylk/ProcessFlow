@@ -1,61 +1,62 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import InputField from "@/app/components/InputFields";
-import ButtonNormal from "@/app/components/ButtonNormal";
+import { useState } from 'react';
+import InputField from '@/app/components/InputFields';
+import ButtonNormal from '@/app/components/ButtonNormal';
 import myTheme from '../../../theme.js';
 
 const ExampleUsagePage: React.FC = () => {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
-  
+
   // Configuration states
   const [defaultTooltipText, setDefaultTooltipText] = useState(
-    "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text."
+    'Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text.'
   );
 
   // Input states for all variants
-  const [defaultInput, setDefaultInput] = useState("");
-  const [helpIconInput, setHelpIconInput] = useState("");
-  const [requiredInput, setRequiredInput] = useState("");
-  const [destructiveInput, setDestructiveInput] = useState("");
-  const [smallInput, setSmallInput] = useState("");
-  
+  const [defaultInput, setDefaultInput] = useState('');
+  const [helpIconInput, setHelpIconInput] = useState('');
+  const [requiredInput, setRequiredInput] = useState('');
+  const [destructiveInput, setDestructiveInput] = useState('');
+  const [smallInput, setSmallInput] = useState('');
+
   // Icon Leading states
-  const [emailInput, setEmailInput] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [locationInput, setLocationInput] = useState("");
-  const [destructiveIconInput, setDestructiveIconInput] = useState("");
-  
+  const [emailInput, setEmailInput] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [locationInput, setLocationInput] = useState('');
+  const [destructiveIconInput, setDestructiveIconInput] = useState('');
+
   // Dropdown states
-  const [phoneInput, setPhoneInput] = useState("");
-  const [currencyInput, setCurrencyInput] = useState("");
-  const [languageInput, setLanguageInput] = useState("");
-  const [destructiveDropdownInput, setDestructiveDropdownInput] = useState("");
-  
+  const [phoneInput, setPhoneInput] = useState('');
+  const [currencyInput, setCurrencyInput] = useState('');
+  const [languageInput, setLanguageInput] = useState('');
+  const [destructiveDropdownInput, setDestructiveDropdownInput] = useState('');
+
   // Leading Text states
-  const [websiteInput, setWebsiteInput] = useState("");
-  const [gitHubInput, setGitHubInput] = useState("");
-  const [destructiveWebsiteInput, setDestructiveWebsiteInput] = useState("");
-  
+  const [websiteInput, setWebsiteInput] = useState('');
+  const [gitHubInput, setGitHubInput] = useState('');
+  const [destructiveWebsiteInput, setDestructiveWebsiteInput] = useState('');
+
   // Tags Input states
-  const [tagsInput, setTagsInput] = useState("");
-  const [teamMembersInput, setTeamMembersInput] = useState("");
-  const [destructiveTagsInput, setDestructiveTagsInput] = useState("");
-  
+  const [tagsInput, setTagsInput] = useState('');
+  const [teamMembersInput, setTeamMembersInput] = useState('');
+  const [destructiveTagsInput, setDestructiveTagsInput] = useState('');
+
   // Trailing Button states
-  const [searchActionInput, setSearchActionInput] = useState("");
-  const [copyInput, setCopyInput] = useState("This is copyable text");
-  const [destructiveTrailingInput, setDestructiveTrailingInput] = useState("");
+  const [searchActionInput, setSearchActionInput] = useState('');
+  const [copyInput, setCopyInput] = useState('This is copyable text');
+  const [destructiveTrailingInput, setDestructiveTrailingInput] = useState('');
 
   return (
-    <div className={`p-8 space-y-12 min-h-screen ${mode === 'dark' ? 'bg-[#161b26] text-white' : 'bg-white'}`}>
+    <div
+      className={`p-8 space-y-12 min-h-screen ${mode === 'dark' ? 'bg-[#161b26] text-white' : 'bg-white'}`}
+    >
       <div className="max-w-[720px] mx-auto">
         {/* Mode Toggle */}
         <div className="mb-8">
           <ButtonNormal
-            variant="secondaryGray"
+            variant="secondary"
             size="small"
-            mode={mode}
             onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
           >
             Switch to {mode === 'light' ? 'Dark' : 'Light'} Mode
@@ -151,7 +152,11 @@ const ExampleUsagePage: React.FC = () => {
               type="icon-leading"
               label="Email Input"
               iconUrl="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/mail-icon.svg"
-              iconColor={mode === 'light' ? myTheme.colors["Gray (light mode)/500"] : myTheme.colors["Gray (dark mode)/400"]}
+              iconColor={
+                mode === 'light'
+                  ? myTheme.colors['Gray (light mode)/500']
+                  : myTheme.colors['Gray (dark mode)/400']
+              }
               placeholder="Enter email address"
               value={emailInput}
               onChange={setEmailInput}
@@ -205,7 +210,7 @@ const ExampleUsagePage: React.FC = () => {
               placeholder="Phone number..."
               value={phoneInput}
               onChange={setPhoneInput}
-              dropdownOptions={["+1", "+44", "+81", "+86"]}
+              dropdownOptions={['+1', '+44', '+81', '+86']}
               helpIcon={true}
               hintText="Select your country code"
               tooltipText={defaultTooltipText}
@@ -218,7 +223,7 @@ const ExampleUsagePage: React.FC = () => {
               placeholder="Enter amount..."
               value={currencyInput}
               onChange={setCurrencyInput}
-              dropdownOptions={["USD", "EUR", "GBP", "JPY"]}
+              dropdownOptions={['USD', 'EUR', 'GBP', 'JPY']}
               mode={mode}
             />
 
@@ -228,7 +233,7 @@ const ExampleUsagePage: React.FC = () => {
               placeholder="Enter text..."
               value={languageInput}
               onChange={setLanguageInput}
-              dropdownOptions={["English", "Spanish", "French", "German"]}
+              dropdownOptions={['English', 'Spanish', 'French', 'German']}
               size="small"
               mode={mode}
             />
@@ -239,7 +244,7 @@ const ExampleUsagePage: React.FC = () => {
               placeholder="Error state..."
               value={destructiveDropdownInput}
               onChange={setDestructiveDropdownInput}
-              dropdownOptions={["Option 1", "Option 2", "Option 3"]}
+              dropdownOptions={['Option 1', 'Option 2', 'Option 3']}
               destructive
               errorMessage="Please select a valid option"
               mode={mode}

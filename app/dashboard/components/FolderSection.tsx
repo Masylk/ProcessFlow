@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Workspace, Folder } from '@/types/workspace';
 import FolderDropdown from './FolderDropdown';
+import { useColors } from '@/app/theme/hooks';
 
 interface FolderSectionProps {
   activeWorkspace: Workspace;
@@ -25,6 +26,7 @@ export default function FolderSection({
   onSelectFolderView,
   selectedFolder,
 }: FolderSectionProps) {
+  const colors = useColors();
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(
     new Set()
   );
@@ -33,7 +35,6 @@ export default function FolderSection({
     left: number;
   } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -139,14 +140,18 @@ export default function FolderSection({
     return (
       <div
         key={folder.id}
-        className="w-full relative hover:bg-[#F9FAFB]"
+        className="w-full relative"
+        style={{ 
+          '--hover-bg': colors['bg-quaternary'],
+          backgroundColor: isDropdownOpen ? colors['bg-quaternary'] : 'transparent'
+        } as React.CSSProperties}
         onClick={(e) => {
           e.stopPropagation();
           onSelectFolderView(folder);
         }}
       >
         <div
-          className="flex items-center gap-1 cursor-pointer group relative"
+          className="flex items-center gap-1 cursor-pointer group relative hover:bg-[var(--hover-bg)] transition-colors duration-200"
           style={{ paddingLeft: `${level * 1.5}rem` }}
         >
           {/* Chevron Icon - Show on hover if has subfolders */}
@@ -189,7 +194,10 @@ export default function FolderSection({
           </div>
 
           {/* Folder Name */}
-          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight flex-1">
+          <div 
+            className="text-sm font-semibold leading-tight flex-1"
+            style={{ color: colors['text-primary'] }}
+          >
             {folder.name}
           </div>
 
@@ -223,7 +231,10 @@ export default function FolderSection({
     >
       <div className="self-stretch flex flex-col justify-start items-start gap-2">
         <div className="w-52 px-3 justify-between items-center inline-flex">
-          <div className="text-[#4980f7] text-sm font-semibold font-['Inter'] leading-tight">
+          <div 
+            className="text-sm font-semibold leading-tight"
+            style={{ color: colors['text-accent'] }}
+          >
             My folders
           </div>
           <button
@@ -245,21 +256,25 @@ export default function FolderSection({
               .filter((folder) => folder.parent_id === null) // Only display root folders initially
               .map((folder) => renderFolder(folder))
           ) : (
-            <div className="px-3 text-xs text-gray-500">
+            <div 
+              className="px-3 text-xs"
+              style={{ color: colors['text-secondary'] }}
+            >
               No folders available.
             </div>
           )}
         </div>
       </div>
 
-      {/* Folder Dropdown - Positioned Absolutely */}
       {selectedFolder && dropdownPosition && (
         <div
           ref={dropdownRef}
-          className="fixed z-50 w-auto min-w-[200px] bg-white shadow-lg rounded-md border border-gray-300"
+          className="fixed z-50 w-auto min-w-[200px] shadow-lg rounded-md border"
           style={{
             top: dropdownPosition.top * 0.96,
             left: dropdownPosition.left * 0.7,
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary']
           }}
         >
           <FolderDropdown

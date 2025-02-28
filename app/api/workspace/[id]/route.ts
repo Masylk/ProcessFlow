@@ -108,6 +108,46 @@ import prisma from '@/lib/prisma'; // Adjust the path to your Prisma client
  *                 error:
  *                   type: string
  *                   example: "Internal server error"
+ *   patch:
+ *     summary: Update a workspace
+ *     description: Updates a workspace's properties (e.g., name, icon_url, team_tags, etc.).
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Updated Workspace"
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["tag1", "tag2"]
+ *               icon_url:
+ *                 type: string
+ *                 example: "/path/to/icon.svg"
+ *               background_colour:
+ *                 type: string
+ *                 example: "#4299E1"
+ *     responses:
+ *       200:
+ *         description: Workspace updated successfully
+ *       404:
+ *         description: Workspace not found
+ *       500:
+ *         description: Internal server error
  */
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -148,6 +188,52 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     return NextResponse.json(workspace, { status: 200 });
   } catch (error) {
     console.error('Error fetching workspace:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const workspaceId = parseInt(params.id);
+
+  try {
+    const updates = await req.json();
+
+    // Check if workspace exists
+    const existingWorkspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+
+    if (!existingWorkspace) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
+    }
+
+    // Update workspace and include all related data in the response
+    const updatedWorkspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: updates,
+      include: {
+        user_workspaces: {
+          include: {
+            user: true,
+          },
+        },
+        workflows: {
+          include: {
+            blocks: true,
+            paths: true,
+          },
+        },
+        folders: true,
+      },
+    });
+
+    return NextResponse.json(updatedWorkspace, { status: 200 });
+  } catch (error) {
+    console.error('Error updating workspace:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

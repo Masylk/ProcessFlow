@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import IconSelector from './IconSelector';
+import { useColors } from '@/app/theme/hooks';
 
 interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
@@ -12,6 +13,7 @@ export default function IconModifier({
   onUpdate,
   emote,
 }: IconModifierProps) {
+  const colors = useColors();
   const [showSelector, setShowSelector] = useState(false);
 
   const handleIconSelect = (icon?: string, emote?: string) => {
@@ -36,7 +38,13 @@ export default function IconModifier({
     <div className="relative">
       {/* Icon Display */}
       <div
-        className="p-2 bg-white rounded-md shadow-inner border border-[#d0d5dd] flex justify-center items-center w-10 cursor-pointer"
+        className="p-2 rounded-md shadow-inner flex justify-center items-center w-10 cursor-pointer transition-colors duration-200"
+        style={{
+          backgroundColor: colors['bg-primary'],
+          borderWidth: '1px',
+          borderStyle: 'solid',
+          borderColor: colors['border-secondary'],
+        }}
         onClick={() => setShowSelector(!showSelector)}
       >
         {initialIcon ? (
@@ -60,12 +68,15 @@ export default function IconModifier({
         )}
       </div>
 
-      {/* Black transparent overlay */}
+      {/* Backdrop */}
       {showSelector && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-10"
-          onClick={handleOverlayClick}
-        />
+        <div className="fixed inset-0">
+          <div 
+            style={{ backgroundColor: colors['bg-overlay'] }}
+            className="absolute inset-0 opacity-70" 
+            onClick={handleOverlayClick}
+          />
+        </div>
       )}
 
       {/* Icon Selector */}
