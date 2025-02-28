@@ -1,11 +1,16 @@
-// import { prisma } from "@/lib/prisma"; // Adjust path based on your setup
+// import prisma from "@/lib/prisma"; // Adjust path based on your setup
 // import ELK from "elkjs";
+// import {
+//     Node,
+//     Edge,
+//   } from '@xyflow/react';
+// import { Path } from "../types";
 
 // // Recursive function to process paths into nodes and edges
 // function processPath(
-//   path,
-//   nodes,
-//   edges,
+//   path: Path,
+//   nodes: Node[],
+//   edges: Edge[],
 //   visitedPaths = new Set()
 // ) {
 //   if (visitedPaths.has(path.id)) return; // Avoid infinite loops
@@ -13,8 +18,20 @@
 
 //   path.blocks.forEach((block, index) => {
 //     const nodeId = `block-${block.id}`;
-//     nodes.push({ id: nodeId, width: 150, height: 100, label: block.title || "Block" });
-
+//     nodes.push({
+//         id: nodeId,
+//         type: 'custom',
+//         position: { x: 0, y: 0 },
+//         data: {
+//           label: block.step_details || 'Block',
+//           position: block.position,
+//           type: block.type,
+//           onDelete: handleDeleteBlock,
+//           pathId: block.path_id,
+//           handleAddBlockOnEdge,
+//           isLastInPath: true,
+//         },
+//       });
 //     // Link blocks sequentially within a path
 //     if (index > 0) {
 //       edges.push({ id: `edge-${path.blocks[index - 1].id}-${block.id}`, sources: [`block-${path.blocks[index - 1].id}`], targets: [nodeId] });
@@ -70,3 +87,104 @@
 
 //   return await elk.layout(graph); // Return the layout object
 // }
+
+
+
+// const createNodesAndLayout = async () => {
+//     // Sort blocks only by position, since they're all in the same path
+//     const sortedBlocks = [...paths].sort((a, b) => a.position - b.position);
+
+//     console.log(
+//       'Sorted Blocks:',
+//       sortedBlocks.map((b) => ({ id: b.id, position: b.position }))
+//     );
+
+//     const newNodes: Node[] = [];
+//     const newEdges: Edge[] = [];
+
+//     // Create nodes in sorted order
+//     sortedBlocks.forEach((block) => {
+//       const nodeId = `block-${block.id}`;
+//       newNodes.push({
+//         id: nodeId,
+//         type: 'custom',
+//         position: { x: 0, y: 0 },
+//         data: {
+//           label: block.step_block?.stepDetails || 'Block',
+//           position: block.position,
+//           type: block.type,
+//           onDelete: handleDeleteBlock,
+//           pathId: block.path_id,
+//           handleAddBlockOnEdge,
+//           isLastInPath: true,
+//         },
+//       });
+//     });
+
+//     // Create edges between consecutive blocks
+//     for (let i = 0; i < sortedBlocks.length - 1; i++) {
+//       const sourceId = `block-${sortedBlocks[i].id}`;
+//       const targetId = `block-${sortedBlocks[i + 1].id}`;
+//       const edgeId = `edge-${sortedBlocks[i].id}-${sortedBlocks[i + 1].id}`;
+
+//       newEdges.push({
+//         id: edgeId,
+//         source: sourceId,
+//         target: targetId,
+//         type: 'smoothstepCustom',
+//         sourceHandle: 'bottom',
+//         targetHandle: 'top',
+//         style: { stroke: '#b1b1b7' },
+//         animated: true,
+//         data: {
+//           blocks: sortedBlocks,
+//           handleAddBlockOnEdge,
+//         },
+//       });
+
+//       // Update isLastInPath
+//       const sourceNodeIndex = newNodes.findIndex((n) => n.id === sourceId);
+//       if (sourceNodeIndex !== -1) {
+//         newNodes[sourceNodeIndex].data.isLastInPath = false;
+//       }
+//     }
+
+//     console.log('Before layout - Nodes:', newNodes);
+//     console.log('Before layout - Edges:', newEdges);
+
+//     const layoutedNodes = await createElkLayout(newNodes, newEdges);
+//     console.log('After layout - Nodes:', layoutedNodes);
+
+//     // Ensure nodes have positions
+//     const nodesWithPositions = layoutedNodes.map((node) => {
+//       if (
+//         !node.position ||
+//         (node.position.x === 0 && node.position.y === 0)
+//       ) {
+//         console.error('Node missing position:', node);
+//       }
+//       return node;
+//     });
+
+//     // Force a rerender with the new positions
+//     setNodes([]);
+//     setTimeout(() => {
+//       setNodes(nodesWithPositions);
+//       setEdges(newEdges);
+
+//       // Fit view after a short delay to ensure nodes are rendered
+//       if (isFirstRender.current) {
+//         setTimeout(() => {
+//           fitView({
+//             padding: 0.5,
+//             duration: 200,
+//             minZoom: 0.5,
+//             maxZoom: 1,
+//           });
+//           isFirstRender.current = false;
+//         }, 200);
+//       }
+//     }, 50);
+//   };
+
+//   createNodesAndLayout();

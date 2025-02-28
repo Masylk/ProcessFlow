@@ -16,11 +16,16 @@ import CustomNode from './CustomNode';
 import CustomSmoothStepEdge from './CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
-import { NodeData, EdgeData, DropdownPosition } from '../types';
-import { Sidebar } from './Sidebar';
+import { NodeData, EdgeData, DropdownDatas, Path } from '../types';
+import path from 'path';
+import { processPath } from '../utils/processPath';
+import BeginNode from './BeginNode';
+import EndNode from './EndNode';
 
 const nodeTypes = {
   custom: CustomNode,
+  begin: BeginNode,
+  end: EndNode,
 } as const;
 
 const edgeTypes = {
@@ -29,7 +34,7 @@ const edgeTypes = {
 
 interface FlowProps {
   workflowName: string;
-  blocks: Block[];
+  paths: Path[];
   workspaceId: string;
   workflowId: string;
   onBlockAdd: (
@@ -37,24 +42,25 @@ interface FlowProps {
     path_id: number,
     position: number
   ) => Promise<void>;
-  setBlocks: (blocks: Block[]) => void;
+  setPaths: (paths: Path[]) => void;
 }
 
 export function Flow({
   workflowName,
-  blocks,
+  paths,
   workspaceId,
   workflowId,
   onBlockAdd,
-  setBlocks,
+  setPaths,
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownPosition, setDropdownPosition] =
-    useState<DropdownPosition | null>(null);
+  const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
+    null
+  );
   const isFirstRender = useRef(true);
 
   const handleDeleteBlock = useCallback(
@@ -70,28 +76,28 @@ export function Flow({
           );
           if (pathsResponse.ok) {
             const pathsData = await pathsResponse.json();
-            setBlocks(pathsData.paths?.[0]?.blocks || []);
+            setPaths(pathsData.paths);
           }
         }
       } catch (error) {
         console.error('Error deleting block:', error);
       }
     },
-    [workspaceId, workflowId, setBlocks]
+    [workspaceId, workflowId, setPaths]
   );
 
   const handleAddBlockOnEdge = useCallback(
     (
       position: number,
-      path_id: number | null,
+      path: Path,
       event?: { clientX: number; clientY: number }
     ) => {
       if (event) {
-        setDropdownPosition({
+        setDropdownDatas({
           x: event.clientX,
           y: event.clientY,
           position,
-          pathId: path_id,
+          path: path,
         });
         setShowDropdown(true);
       }
@@ -100,175 +106,104 @@ export function Flow({
   );
 
   useEffect(() => {
-    if (!Array.isArray(blocks)) return;
+    if (!Array.isArray(paths)) return;
 
-    const createNodesAndLayout = async () => {
-      // Sort blocks only by position, since they're all in the same path
-      const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
-
-      console.log(
-        'Sorted Blocks:',
-        sortedBlocks.map((b) => ({ id: b.id, position: b.position }))
-      );
-
-      const newNodes: Node[] = [];
-      const newEdges: Edge[] = [];
-
-      // Create nodes in sorted order
-      sortedBlocks.forEach((block) => {
-        const nodeId = `block-${block.id}`;
-        newNodes.push({
-          id: nodeId,
-          type: 'custom',
-          position: { x: 0, y: 0 },
-          data: {
-            label: block.step_block?.stepDetails || 'Block',
-            position: block.position,
-            type: block.type,
-            onDelete: handleDeleteBlock,
-            pathId: block.path_id,
-            handleAddBlockOnEdge,
-            isLastInPath: true,
-          },
-        });
-      });
-
-      // Create edges between consecutive blocks
-      for (let i = 0; i < sortedBlocks.length - 1; i++) {
-        const sourceId = `block-${sortedBlocks[i].id}`;
-        const targetId = `block-${sortedBlocks[i + 1].id}`;
-        const edgeId = `edge-${sortedBlocks[i].id}-${sortedBlocks[i + 1].id}`;
-
-        newEdges.push({
-          id: edgeId,
-          source: sourceId,
-          target: targetId,
-          type: 'smoothstepCustom',
-          sourceHandle: 'bottom',
-          targetHandle: 'top',
-          style: { stroke: '#b1b1b7' },
-          animated: true,
-          data: {
-            blocks: sortedBlocks,
-            handleAddBlockOnEdge,
-          },
-        });
-
-        // Update isLastInPath
-        const sourceNodeIndex = newNodes.findIndex((n) => n.id === sourceId);
-        if (sourceNodeIndex !== -1) {
-          newNodes[sourceNodeIndex].data.isLastInPath = false;
-        }
+    const createLayoutedNodes = async () => {
+      console.log('allo');
+      const firstPath = paths.find((path) => path.parent_blocks.length === 0);
+      if (firstPath) {
+        const nodes: Node[] = [];
+        const edges: Edge[] = [];
+        processPath(
+          firstPath,
+          nodes,
+          edges,
+          handleDeleteBlock,
+          handleAddBlockOnEdge
+        );
+        setNodes(nodes);
+        setEdges(edges);
+        const layoutedNodes = await createElkLayout(nodes, edges);
+        setNodes(layoutedNodes);
       }
-
-      console.log('Before layout - Nodes:', newNodes);
-      console.log('Before layout - Edges:', newEdges);
-
-      const layoutedNodes = await createElkLayout(newNodes, newEdges);
-      console.log('After layout - Nodes:', layoutedNodes);
-
-      // Ensure nodes have positions
-      const nodesWithPositions = layoutedNodes.map((node) => {
-        if (
-          !node.position ||
-          (node.position.x === 0 && node.position.y === 0)
-        ) {
-          console.error('Node missing position:', node);
-        }
-        return node;
-      });
-
-      // Force a rerender with the new positions
-      setNodes([]);
-      setTimeout(() => {
-        setNodes(nodesWithPositions);
-        setEdges(newEdges);
-
-        // Fit view after a short delay to ensure nodes are rendered
-        if (isFirstRender.current) {
-          setTimeout(() => {
-            fitView({
-              padding: 0.5,
-              duration: 200,
-              minZoom: 0.5,
-              maxZoom: 1,
-            });
-            isFirstRender.current = false;
-          }, 200);
-        }
-      }, 50);
     };
-
-    createNodesAndLayout();
-  }, [blocks, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
+    createLayoutedNodes();
+  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
-      if (!dropdownPosition) return;
+      if (!dropdownDatas) return;
 
       const defaultBlock = {
         type: blockType,
         workflow_id: parseInt(workflowId),
-        position: dropdownPosition.position,
-        path_id: dropdownPosition.pathId,
-        step_data: 'New Block',
+        position: dropdownDatas.position,
+        path_id: dropdownDatas.path.id,
       };
 
       setShowDropdown(false);
       await onBlockAdd(
         defaultBlock,
-        defaultBlock.path_id!,
+        dropdownDatas.path.id,
         defaultBlock.position
       );
     },
-    [dropdownPosition, workflowId, onBlockAdd]
+    [dropdownDatas, workflowId, onBlockAdd]
   );
 
   // Fix the handleNodeFocus function to avoid infinite loops
-  const handleNodeFocus = useCallback((nodeId: string) => {
-    setSelectedNodeId(nodeId);
-    
-    // Find the node in our nodes array - use functional update pattern
-    setNodes(currentNodes => {
-      const node = currentNodes.find(n => n.id === nodeId);
-      if (node) {
-        // Center the view on the node
-        setCenter(node.position.x, node.position.y, { zoom: 1.5, duration: 800 });
-        
-        // Highlight the node with functional update pattern
-        return currentNodes.map(n => ({
-          ...n,
-          data: {
-            ...n.data,
-            highlighted: n.id === nodeId
-          }
-        }));
-      }
-      return currentNodes;
-    });
-    
-    // Reset highlight after a delay - use functional update to avoid closure issues
-    setTimeout(() => {
-      setNodes(currentNodes => currentNodes.map(n => ({
-        ...n,
-        data: {
-          ...n.data,
-          highlighted: false
+  const handleNodeFocus = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(nodeId);
+
+      // Find the node in our nodes array - use functional update pattern
+      setNodes((currentNodes) => {
+        const node = currentNodes.find((n) => n.id === nodeId);
+        if (node) {
+          // Center the view on the node
+          setCenter(node.position.x, node.position.y, {
+            zoom: 1.5,
+            duration: 800,
+          });
+
+          // Highlight the node with functional update pattern
+          return currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              highlighted: n.id === nodeId,
+            },
+          }));
         }
-      })));
-    }, 2000);
-  }, [setCenter]); // Only depend on stable function, not nodes state
+        return currentNodes;
+      });
+
+      // Reset highlight after a delay - use functional update to avoid closure issues
+      setTimeout(() => {
+        setNodes((currentNodes) =>
+          currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              highlighted: false,
+            },
+          }))
+        );
+      }, 2000);
+    },
+    [setCenter]
+  ); // Only depend on stable function, not nodes state
 
   return (
     <div className="h-screen w-screen relative">
       {/* Include the Sidebar component */}
-      <Sidebar 
+      {/* <Sidebar 
         blocks={blocks}
         workspaceId={workspaceId} 
         workflowId={workflowId}
         onNodeFocus={handleNodeFocus}
-      />
-      
+      /> */}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -283,7 +218,7 @@ export function Flow({
         ]}
         onNodeClick={(_, node) => setSelectedNodeId(node.id)}
         onPaneClick={() => setSelectedNodeId(null)}
-        fitView={false}
+        fitView={true}
         panOnScroll
         panOnDrag
         zoomOnScroll
@@ -293,11 +228,14 @@ export function Flow({
         elementsSelectable={true}
         preventScrolling={false}
         proOptions={{ hideAttribution: true }}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
         fitViewOptions={{
           padding: 0.5,
           duration: 200,
           minZoom: 0.5,
           maxZoom: 1,
+          includeHiddenNodes: true,
         }}
         className="bg-gray-50"
       >
@@ -305,10 +243,10 @@ export function Flow({
         <Controls />
         <MiniMap /> {/* Added MiniMap as requested */}
       </ReactFlow>
-      
-      {showDropdown && dropdownPosition && (
+
+      {showDropdown && dropdownDatas && (
         <AddBlockDropdownMenu
-          position={{ x: dropdownPosition.x, y: dropdownPosition.y }}
+          dropdownDatas={dropdownDatas}
           onSelect={handleBlockTypeSelect}
           onClose={() => setShowDropdown(false)}
         />

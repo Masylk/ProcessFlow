@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { Flow } from './Flow';
 import { Block } from '@/types/block';
+import { Path } from '../types';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -14,27 +15,59 @@ export function ReactFlowPageClient({
   workflowId,
 }: ReactFlowPageClientProps) {
   const [workflowName, setWorkflowName] = useState<string>('');
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [paths, setPaths] = useState<Path[]>([]);
 
   const handleBlockAdd = async (
     blockData: any,
     path_id: number,
     position: number
   ) => {
-    const response = await fetch('/api/blocks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(blockData),
-    });
+    // Ensure path_id is a number
+    if (!path_id || typeof path_id !== 'number') {
+      console.error('Invalid path_id:', path_id);
+      return;
+    }
 
-    if (response.ok) {
+    // Prepare the block data
+    const data = {
+      type: blockData.type,
+      position: position,
+      workflow_id: parseInt(workflowId),
+      path_id: path_id,
+      step_details: blockData.type === 'STEP' ? 'New Step' : undefined,
+      icon:
+        blockData.type === 'STEP'
+          ? '/step-icons/default-icons/container.svg'
+          : blockData.type === 'DELAY'
+            ? '/step-icons/default-icons/delay.svg'
+            : '/step-icons/default-icons/path.svg',
+      description: `New ${blockData.type.toLowerCase()} block`,
+      delay_seconds: blockData.type === 'DELAY' ? 60 : undefined, // Default 1 minute delay
+    };
+
+    try {
+      const response = await fetch('/api/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to add block:', errorData);
+        return;
+      }
+
+      // Refresh paths data
       const pathsResponse = await fetch(
         `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
       );
       if (pathsResponse.ok) {
         const pathsData = await pathsResponse.json();
-        if (pathsData.paths?.[0]?.blocks) setBlocks(pathsData.paths[0].blocks);
+        setPaths(pathsData.paths);
       }
+    } catch (error) {
+      console.error('Error adding block:', error);
     }
   };
 
@@ -52,8 +85,7 @@ export function ReactFlowPageClient({
       const pathsData = await pathsRes.json();
       console.log('Paths Data:', pathsData);
       console.log('Blocks:', pathsData.paths?.[0]?.blocks);
-
-      setBlocks(pathsData.paths?.[0]?.blocks || []);
+      setPaths(pathsData.paths);
     };
     fetchData();
   }, [workspaceId, workflowId]);
@@ -62,11 +94,11 @@ export function ReactFlowPageClient({
     <ReactFlowProvider>
       <Flow
         workflowName={workflowName}
-        blocks={blocks}
+        paths={paths}
         workspaceId={workspaceId}
         workflowId={workflowId}
         onBlockAdd={handleBlockAdd}
-        setBlocks={setBlocks}
+        setPaths={setPaths}
       />
     </ReactFlowProvider>
   );

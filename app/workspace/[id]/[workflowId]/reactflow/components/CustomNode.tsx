@@ -4,7 +4,7 @@ import { NodeData } from '../types';
 
 function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [isHighlighted, setIsHighlighted] = useState(false);
-  
+
   // Handle highlight effect
   useEffect(() => {
     if (data.highlighted) {
@@ -12,7 +12,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
       const timer = setTimeout(() => {
         setIsHighlighted(false);
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [data.highlighted]);
@@ -25,16 +25,16 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           width: '481px',
           padding: '20px 24px',
           borderRadius: '16px',
-          border: isHighlighted 
-            ? '2px solid #3b82f6' 
-            : selected 
-              ? '2px solid #6366f1' 
+          border: isHighlighted
+            ? '2px solid #3b82f6'
+            : selected
+              ? '2px solid #6366f1'
               : '2px solid #e5e7eb',
           background: isHighlighted ? '#f0f9ff' : 'white',
-          boxShadow: isHighlighted 
-            ? '0 0 15px rgba(59, 130, 246, 0.5)' 
-            : selected 
-              ? '0 0 10px rgba(99, 102, 241, 0.3)' 
+          boxShadow: isHighlighted
+            ? '0 0 15px rgba(59, 130, 246, 0.5)'
+            : selected
+              ? '0 0 10px rgba(99, 102, 241, 0.3)'
               : 'none',
           minHeight: '120px',
           position: 'relative',
