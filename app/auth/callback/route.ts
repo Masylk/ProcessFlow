@@ -89,43 +89,4 @@ export async function GET(request: NextRequest) {
     console.error('Top level error in callback:', error);
     return NextResponse.redirect(new URL('/login?error=callback', request.url));
   }
-}
-
-export async function middleware(request: NextRequest) {
-  const supabase = createClient();
-  
-  // Get session using Supabase
-  const { data: { session }, error } = await supabase.auth.getSession();
-  
-  if (error || !session) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // Pass minimal required info
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-user-id', session.user.id);
-  // If you have role information in your session, you can add it too
-  if (session.user.user_metadata?.role) {
-    requestHeaders.set('x-user-role', session.user.user_metadata.role);
-  }
-
-  return NextResponse.next({
-    request: { headers: requestHeaders }
-  });
-}
-
-// Protected route example
-export async function ProtectedRoute(request: Request) {
-  const userId = request.headers.get('x-user-id');
-  const userRole = request.headers.get('x-user-role');
-
-  if (!userId) {
-    throw new Error('User ID not found in request headers');
-  }
-
-  const user = await prisma.user.findUnique({ 
-    where: { auth_id: userId }
-  });
-
-  return user;
 } 

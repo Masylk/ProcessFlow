@@ -3,32 +3,28 @@ import { createClient } from '@/lib/supabaseServerClient';
 
 export async function middleware(request: NextRequest) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // Public paths that don't require authentication
-  const publicPaths = ['/login', '/signup', '/auth/callback', '/api/auth/onboarding'];
-  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path));
-
-  if (!session && !isPublicPath) {
+  
+  // Get session using Supabase
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (error || !session) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (session && request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Pass minimal required info
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-user-id', session.user.id);
+  // If you have role information in your session, you can add it too
+  if (session.user.user_metadata?.role) {
+    requestHeaders.set('x-user-role', session.user.user_metadata.role);
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: { headers: requestHeaders }
+  });
 }
 
+// Configure which paths the middleware will run on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
-};
+  matcher: ['/dashboard/:path*', '/api/:path*']
+}
