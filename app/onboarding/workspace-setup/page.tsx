@@ -88,8 +88,8 @@ export default function WorkspaceSetup() {
         throw new Error(data.error || "Failed to update workspace");
       }
 
-      // Redirection vers le dashboard si tout s'est bien passé
-        router.push('/dashboard');
+      // Redirect to the completed page instead of dashboard
+      router.push('/onboarding/completed');
     } catch (error) {
       console.error('Error updating workspace setup:', error);
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -99,19 +99,21 @@ export default function WorkspaceSetup() {
   };
 
   return (
-    <div className="w-full h-screen bg-white flex justify-center items-center">
-      <div className="w-full h-screen flex-col justify-center items-center gap-[72px] inline-flex">
-        <div className="w-[159px] justify-start items-start inline-flex">
+    <div className="w-full min-h-screen bg-white flex justify-center items-center px-4 py-6">
+      <div className="w-full max-w-[1280px] flex-col justify-center items-center gap-8 sm:gap-12 md:gap-[72px] inline-flex">
+        {/* Logo Section - Responsive */}
+        <div className="w-[180px] sm:w-[200px] md:w-[240px] justify-start items-start inline-flex">
           <div className="justify-end items-center gap-3 flex">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
               alt="Logo ProcessFlow"
-              className=""
+              className="w-full"
             />
           </div>
         </div>
 
-        <div className="relative flex items-center w-64">
+        {/* Progress indicator - Hide on very small screens */}
+        <div className="hidden sm:flex relative items-center w-64">
           {/* First Step - Validated */}
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
@@ -140,12 +142,13 @@ export default function WorkspaceSetup() {
           </div>
         </div>
 
-        <div className="h-[442px] flex-col justify-start items-start gap-6 inline-flex">
-          <div className="self-stretch h-[72px] flex-col justify-start items-center gap-4 flex">
-            <div className="self-stretch text-center text-[#101828] text-2xl font-semibold font-['Inter'] leading-loose">
+        {/* Form container - Responsive */}
+        <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex-col justify-start items-start gap-4 sm:gap-6 inline-flex">
+          <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
+            <div className="self-stretch text-center text-[#101828] text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose">
               Welcome to ProcessFlow!
             </div>
-            <div className="self-stretch text-center text-[#101828] text-base font-normal font-['Inter'] leading-normal">
+            <div className="self-stretch text-center text-[#101828] text-sm sm:text-base font-normal font-['Inter'] leading-normal">
               You will still be able to modify your workspace later.
             </div>
           </div>
@@ -156,7 +159,7 @@ export default function WorkspaceSetup() {
             </div>
           )}
 
-          <div className="w-full flex-col justify-start items-start gap-6 flex pt-6">
+          <div className="w-full flex-col justify-start items-start gap-4 sm:gap-6 flex pt-4 sm:pt-6">
             {/* Workspace Name Input */}
             <div className="self-stretch flex-col justify-start items-start gap-1.5 flex">
               <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
@@ -173,16 +176,16 @@ export default function WorkspaceSetup() {
               />
             </div>
 
-            {/* Workspace Logo Upload */}
+            {/* Workspace Logo Upload - Made responsive */}
             <div className="self-stretch flex-col justify-start items-start gap-2 flex">
               <div className="w-40 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 Workspace Logo
               </div>
-              <div className="self-stretch flex items-center gap-5">
+              <div className="self-stretch flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
                 {/* Upload Circle */}
                 <label
                   htmlFor="logo-upload"
-                  className="w-16 h-16 flex items-center justify-center bg-[#f2f4f7] rounded-full border border-[#d0d5dd] cursor-pointer"
+                  className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-[#f2f4f7] rounded-full border border-[#d0d5dd] cursor-pointer"
                 >
                   {logo ? (
                     <img
@@ -209,21 +212,21 @@ export default function WorkspaceSetup() {
 
                 {/* Drag & Drop Zone */}
                 <div
-                  className="flex-grow flex-col justify-start items-start gap-4 cursor-pointer"
+                  className="w-full flex-grow flex-col justify-start items-start gap-4 cursor-pointer mt-2 sm:mt-0"
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                   onClick={handleFileInputClick}
                 >
-                  <div className="w-full h-[74px] px-6 py-4 bg-white rounded-xl border border-[#e4e7ec] hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1">
-                    <div className="w-full h-[42px] flex flex-col justify-center items-center gap-3">
-                      <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1">
-                        <div className="w-full flex justify-center items-start gap-1">
-                          <div className="flex justify-center items-center gap-1.5 overflow-hidden">
-                            <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+                  <div className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 bg-white rounded-xl border border-[#e4e7ec] hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1">
+                    <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1 sm:gap-3">
+                      <div className="w-full flex flex-col justify-center items-center">
+                        <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
+                          <div className="flex justify-center items-center gap-1 overflow-hidden">
+                            <div className="text-[#374c99] font-semibold font-['Inter'] leading-tight">
                               Click to upload
                             </div>
                           </div>
-                          <div className="text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
+                          <div className="text-[#475467] font-normal font-['Inter'] leading-tight">
                             or drag and drop
                           </div>
                         </div>
@@ -237,7 +240,7 @@ export default function WorkspaceSetup() {
               </div>
             </div>
 
-            {/* Workspace URL Input */}
+            {/* Workspace URL Input - Preserved sizing as requested */}
             <div className="self-stretch flex-col justify-start items-start gap-1.5 flex">
               <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 Workspace URL
@@ -270,12 +273,14 @@ export default function WorkspaceSetup() {
             </div>
           </div>
 
-          <div className="h-10 flex justify-between items-start w-full">
+          {/* Buttons - Responsive */}
+          <div className="h-10 flex justify-between items-start w-full mt-2 sm:mt-4">
             <ButtonNormal
               variant="secondary"
               size="small"
               leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
               onClick={() => router.push('/onboarding/professional-info')}
+              className="text-sm sm:text-base"
             >
               Back
             </ButtonNormal>
@@ -286,6 +291,7 @@ export default function WorkspaceSetup() {
               trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
               onClick={handleSubmit}
               disabled={isLoading || !workspaceName}
+              className="text-sm sm:text-base"
             >
               {isLoading ? "Loading..." : "Continue"}
             </ButtonNormal>

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         const fileName = `workspace-logo-${user.id}-${Date.now()}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('user-assets')
-          .upload(`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/workspaces-logo/${fileName}`, logoFile, {
+          .upload(`workspaces_logo/${fileName}`, logoFile, {
             cacheControl: '3600',
             upsert: false
           });
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         // Récupérer l'URL publique du logo
         const { data: { publicUrl } } = supabase.storage
           .from('user-assets')
-          .getPublicUrl(`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/workspaces-logo/${fileName}`);
+          .getPublicUrl(`workspaces_logo/${fileName}`);
         
         // Ajouter l'URL du logo aux données du workspace
         formData.workspace_icon_url = publicUrl;

@@ -47,12 +47,12 @@ export default function PersonalInfo() {
   return (
     <div className="w-full h-screen bg-white flex justify-center items-center">
       <div className="w-[1280px] h-[516px] flex-col justify-start items-center gap-[72px] inline-flex">
-        <div className="w-[159px] justify-start items-start inline-flex">
+        <div className="w-[240px] justify-start items-start inline-flex">
           <div className="justify-end items-center gap-3 flex">
             <img 
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`} 
               alt="Logo ProcessFlow" 
-              className="" 
+              className="w-full" 
             />
           </div>
         </div>

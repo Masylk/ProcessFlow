@@ -74,7 +74,7 @@ export default function ProfessionalInfo() {
 
   const handleSubmit = async () => {
     if (!industry || !role || !companySize || !source) {
-      setError("Veuillez remplir tous les champs");
+      setError("Please fill in all fields");
       return;
     }
 
@@ -91,7 +91,7 @@ export default function ProfessionalInfo() {
           step: 'PROFESSIONAL_INFO',
           data: {
             industry,
-            professional_role: role, // Noter l'utilisation de professional_role au lieu de role (conformément au schéma)
+            professional_role: role,
             company_size: companySize,
             source,
             onboarding_step: 'WORKSPACE_SETUP'
@@ -103,14 +103,14 @@ export default function ProfessionalInfo() {
 
       if (!response.ok) {
         console.error('Server error:', data.error);
-        setError(data.error || "Une erreur est survenue lors de la mise à jour de vos informations");
+        setError(data.error || "An error occurred while updating your information");
         return;
       }
 
         router.push('/onboarding/workspace-setup');
     } catch (error) {
       console.error('Client error:', error instanceof Error ? error.message : 'Unknown error');
-      setError("Une erreur de connexion est survenue");
+      setError("A connection error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -119,12 +119,12 @@ export default function ProfessionalInfo() {
   return (
     <div className="w-full h-screen bg-white flex justify-center items-center">
       <div className="w-[1280px] h-[516px] flex-col justify-start items-center gap-[72px] inline-flex">
-        <div className="w-[159px] justify-start items-start inline-flex">
+        <div className="w-[240px] justify-start items-start inline-flex">
           <div className="justify-end items-center gap-3 flex">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
               alt="Logo ProcessFlow"
-              className=""
+              className="w-full"
             />
           </div>
         </div>
