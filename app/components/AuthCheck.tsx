@@ -55,7 +55,8 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
             'PERSONAL_INFO': '/onboarding/personal-info',
             'PROFESSIONAL_INFO': '/onboarding/professional-info',
             'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-            'COMPLETED': '/dashboard'
+            'COMPLETED': '/onboarding/completed',
+            'INVITED_USER': '/onboarding/invited-user'
           };
 
           const currentStep = onboardingSteps[data.onboardingStep];
