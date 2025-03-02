@@ -6,6 +6,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, workflow_id } = body;
 
+    if (!name || !workflow_id) {
+      return NextResponse.json(
+        { error: 'Name and workflow_id are required' },
+        { status: 400 }
+      );
+    }
+
     // Create the path
     const path = await prisma.path.create({
       data: {
@@ -54,12 +61,14 @@ export async function POST(req: NextRequest) {
         blocks: {
           orderBy: { position: 'asc' },
         },
+        parent_blocks: true,
       },
     });
 
     return NextResponse.json(pathWithBlocks);
   } catch (error) {
-    console.error('Error creating path:', error);
+    console.error('Error creating path:', error instanceof Error ? error.message : 'Unknown error');
+    
     return NextResponse.json(
       { error: 'Failed to create path' },
       { status: 500 }

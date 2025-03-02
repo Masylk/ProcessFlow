@@ -12,6 +12,7 @@ export function processPath(
   handleAddBlockOnEdge: (position: number,
     path: Path,
     event?: { clientX: number; clientY: number }) => void,
+  allPaths: Path[],
   visitedPaths = new Set<string>()
 ): void {
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
@@ -24,9 +25,12 @@ export function processPath(
       type: block.type === 'BEGIN' 
         ? 'begin' 
         : block.type === 'END' 
-          ? 'end' 
+          ? 'end'
           : 'custom',
-      position: { x: 0, y: 0 },
+      position: { 
+        x: 0,
+        y: 0
+      },
       data: {
         label: block.step_details || 'Block',
         position: block.position,
@@ -60,22 +64,30 @@ export function processPath(
 
     // Process each child path for the current block
     block.child_paths.forEach((childPathRelation) => {
-      const childPath = childPathRelation.path;
-      if (childPath.blocks.length > 0) {
+      // Find the full path data from allPaths
+      const fullChildPath = allPaths.find(p => p.id === childPathRelation.path.id);
+      if (fullChildPath && fullChildPath.blocks.length > 0) {
         // Link parent blocks to the first block of child paths
         const parentBlocks = path.blocks
-          .filter(b => childPath.parent_blocks.some(pb => pb.block_id === b.id))
+          .filter(b => fullChildPath.parent_blocks.some(pb => pb.block_id === b.id))
           .map(b => `block-${b.id}`);
 
         parentBlocks.forEach((parentBlockId) => {
           edges.push({
-            id: `edge-${parentBlockId}-${childPath.blocks[0].id}`,
+            id: `edge-${parentBlockId}-${fullChildPath.blocks[0].id}`,
             source: parentBlockId,
-            target: `block-${childPath.blocks[0].id}`
+            target: `block-${fullChildPath.blocks[0].id}`,
+            type: 'smoothstepCustomParent',
+            sourceHandle: 'bottom',
+            targetHandle: 'top',
+            style: { stroke: '#b1b1b7' },
+            animated: true,
           });
         });
       }
-      processPath(childPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, visitedPaths); // Recurse to process child path
+      if (fullChildPath) {
+        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths);
+      }
     });
   });
 }

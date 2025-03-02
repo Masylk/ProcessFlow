@@ -20,7 +20,7 @@ export interface EdgeData {
   path: Path;
   handleAddBlockOnEdge: (
     position: number,
-    path_id: number | null,
+    path: Path,
     event?: { clientX: number; clientY: number }
   ) => void;
 }

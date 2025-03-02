@@ -6,13 +6,14 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
     <>
       <div
-        className={`transition-all duration-300`}
+        className={`transition-all duration-300 flex items-center justify-center`}
         style={{
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          background: '#1f2937',
-          border: selected ? '2px solid #60a5fa' : '2px solid #1f2937',
+          width: '200px',
+          height: '50px',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
+          background: '#eff6ff',
           position: 'relative',
         }}
       >
@@ -23,9 +24,22 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           style={{
             width: 8,
             height: 8,
-            background: '#1f2937',
+            background: '#60a5fa',
             border: '2px solid white',
-            top: -6,
+          }}
+        />
+        <div className="text-blue-600 font-medium truncate">
+          {'Process finish here'}
+        </div>
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          style={{
+            width: 8,
+            height: 8,
+            background: '#60a5fa',
+            border: '2px solid white',
           }}
         />
       </div>
@@ -33,4 +47,4 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   );
 }
 
-export default EndNode; 
+export default EndNode;

@@ -38,7 +38,7 @@ function CustomSmoothStepEdge({
       const position = Math.ceil(
         (sourceBlock.position + targetBlock.position) / 2
       );
-      data.handleAddBlockOnEdge?.(position, data.path.id, e);
+      data.handleAddBlockOnEdge?.(position, data.path, e);
     }
   };
 
