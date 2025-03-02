@@ -14,9 +14,9 @@ import dynamic from 'next/dynamic';
 import { cache } from 'react';
 import { getIcons } from '@/app/utils/icons';
 import { useTheme, useColors } from '@/app/theme/hooks';
-
-// Make sure that supabase is correctly imported and configured.
-import { createClient } from '@/utils/supabase/client';
+import Modal from '@/app/components/Modal';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import SettingsPage from '@/app/dashboard/components/SettingsPage';
 import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
@@ -32,8 +32,10 @@ import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
-import ButtonNormal from '@/app/components/ButtonNormal';
-import SettingsPage from '@/app/dashboard/components/SettingsPage';
+import InputField from '@/app/components/InputFields';
+import IconModifier from './components/IconModifier';
+import { createClient } from '@/utils/supabase/client';
+
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
   ssr: false,
 });
@@ -104,6 +106,12 @@ export default function Page() {
 
   // Add new state near other states
   const [isSettingsView, setIsSettingsView] = useState(false);
+
+  // Add new state near other states
+  const [folderName, setFolderName] = useState('');
+  const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+  const [emote, setEmote] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch user data from your API
   useEffect(() => {
@@ -512,10 +520,6 @@ export default function Page() {
     setCreateSubfolderVisible(false);
   };
 
-  const closeCreateFolder = () => {
-    setCreateFolderVisible(false);
-  };
-
   const closeEditFolder = () => {
     setFolderParent(null);
     setEditFolderVisible(false);
@@ -794,6 +798,42 @@ export default function Page() {
     }
   };
 
+  const handleCreateFolder = async () => {
+    if (!folderName.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (iconUrl) await handleAddFolder(folderName, iconUrl);
+      else if (emote) await handleAddFolder(folderName, undefined, emote);
+      else await handleAddFolder(folderName);
+      closeCreateFolder();
+    } catch (error) {
+      console.error("Error creating folder:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const updateIcon = (icon?: string, emote?: string) => {
+    if (icon) {
+      setIconUrl(icon);
+      setEmote(undefined);
+    } else if (emote) {
+      setIconUrl(undefined);
+      setEmote(emote);
+    } else {
+      setIconUrl(undefined);
+      setEmote(undefined);
+    }
+  };
+
+  const closeCreateFolder = () => {
+    setCreateFolderVisible(false);
+    setFolderName('');
+    setIconUrl(undefined);
+    setEmote(undefined);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar with header and list of workspaces */}
@@ -936,10 +976,55 @@ export default function Page() {
       )}
 
       {createFolderVisible && (
-        <CreateFolderModal
+        <Modal
           onClose={closeCreateFolder}
-          onCreate={handleAddFolder}
-        ></CreateFolderModal>
+          title="Create a folder"
+          icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
+          actions={
+            <>
+              <ButtonNormal
+                variant="secondary"
+                size="small"
+                onClick={closeCreateFolder}
+                className="flex-1"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </ButtonNormal>
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                onClick={handleCreateFolder}
+                disabled={!folderName.trim() || isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? 'Creating...' : 'Create'}
+              </ButtonNormal>
+            </>
+          }
+          showActionsSeparator={true}
+        >
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: colors['text-primary'] }}>
+                Folder name <span style={{ color: colors['text-accent'] }}>*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <IconModifier
+                  initialIcon={iconUrl}
+                  onUpdate={updateIcon}
+                  emote={emote}
+                />
+                <InputField
+                  type="default"
+                  value={folderName}
+                  onChange={setFolderName}
+                  placeholder="Enter folder name"
+                />
+              </div>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {createSubfolderVisible && folderParent && (

@@ -4,6 +4,7 @@ import Script from 'next/script';
 import './globals.css';
 import { PostHogProvider } from './providers';
 import { ThemeProvider } from './context/ThemeContext';
+import AuthCheck from './components/AuthCheck';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -43,7 +44,9 @@ export default function RootLayout({
           ></iframe>
         </noscript>
         <ThemeProvider>
-          <PostHogProvider>{children}</PostHogProvider>
+          <PostHogProvider>
+            <AuthCheck>{children}</AuthCheck>
+          </PostHogProvider>
         </ThemeProvider>
 
         <Script

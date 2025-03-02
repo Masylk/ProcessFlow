@@ -8,6 +8,7 @@ import { render } from '@react-email/render';
 import WelcomeEmail from '../emails/WelcomeEmail';
 import { Prisma } from '@prisma/client';
 import { redirect } from 'next/navigation';
+import posthog from 'posthog-js';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -51,6 +52,14 @@ export async function signup(formData: FormData) {
 
   const user = data?.user;
   if (!user) return { error: 'No user returned from signUp' };
+
+  await posthog.capture('signup_google', {
+    distinctId: String(user.id),
+    event: 'signup_google',
+    properties: {
+      email: user.email,
+    }
+  });
 
   return {
     id: user.id,

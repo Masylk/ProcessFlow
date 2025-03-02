@@ -1,8 +1,11 @@
+'use client';
+
 import React, { useState } from 'react';
 import IconModifier from './IconModifier';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
+import Modal from '@/app/components/Modal';
 
 interface CreateFolderModalProps {
   onClose: () => void;
@@ -20,13 +23,24 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const colors = useColors();
 
-  const createFolder = (name: string) => {
-    if (iconUrl) onCreate(name, iconUrl);
-    else if (emote) onCreate(name, undefined, emote);
-    else onCreate(name);
-    onClose();
+  const handleCreateFolder = async () => {
+    if (!folderName.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (iconUrl) await onCreate(folderName, iconUrl);
+      else if (emote) await onCreate(folderName, undefined, emote);
+      else await onCreate(folderName);
+      onClose();
+    } catch (error) {
+      console.error("Error creating folder:", error);
+      // Handle error if needed
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateIcon = (icon?: string, emote?: string) => {
@@ -34,49 +48,48 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     setEmote(emote);
   };
 
-  return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center p-8"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0">
-        <div 
-          style={{ backgroundColor: colors['bg-overlay'] }}
-          className="absolute inset-0 opacity-70" 
-        />
-      </div>
-
-      <div 
-        className="rounded-xl shadow-lg w-[400px] p-6 flex flex-col relative z-10"
-        style={{ backgroundColor: colors['bg-primary'] }}
-        onClick={(e) => e.stopPropagation()}
+  // Define modal actions
+  const modalActions = (
+    <>
+      <ButtonNormal
+        variant="secondary"
+        size="small"
+        onClick={onClose}
+        className="flex-1"
+        disabled={isSubmitting}
       >
-        {/* Header */}
-        <div className="flex flex-col items-start gap-4">
-          <div className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
-            style={{ 
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary']
-            }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
-              alt="Folder icon"
-              className="w-12 h-12"
-            />
-          </div>
-          <h2 className="text-lg font-semibold" style={{ color: colors['text-primary'] }}>
-            Create a folder
-          </h2>
-        </div>
+        Cancel
+      </ButtonNormal>
+      <ButtonNormal
+        variant="primary"
+        size="small"
+        onClick={handleCreateFolder}
+        disabled={!folderName.trim() || isSubmitting}
+        className="flex-1"
+      >
+        {isSubmitting ? 'Creating...' : 'Create'}
+      </ButtonNormal>
+    </>
+  );
 
+  // Folder icon for this modal
+  const folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`;
+
+  return (
+    <Modal
+      onClose={onClose}
+      title="Create a folder"
+      icon={folderIcon}
+      actions={modalActions}
+      showActionsSeparator={true}
+    >
+      <div className="flex flex-col gap-4">
         {/* Input Field */}
-        <div className="mt-4">
-          <label className="block text-sm font-semibold" style={{ color: colors['text-primary'] }}>
+        <div>
+          <label className="block text-sm font-semibold mb-2" style={{ color: colors['text-primary'] }}>
             Folder name <span style={{ color: colors['text-accent'] }}>*</span>
           </label>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <IconModifier
               initialIcon={iconUrl}
               onUpdate={updateIcon}
@@ -90,29 +103,8 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
             />
           </div>
         </div>
-
-        {/* Buttons */}
-        <div className="mt-6 flex gap-3">
-          <ButtonNormal
-            variant="secondary"
-            size="small"
-            onClick={onClose}
-            className="flex-1"
-          >
-            Cancel
-          </ButtonNormal>
-          <ButtonNormal
-            variant="primary"
-            size="small"
-            onClick={() => createFolder(folderName)}
-            disabled={!folderName.trim()}
-            className="flex-1"
-          >
-            Create
-          </ButtonNormal>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
