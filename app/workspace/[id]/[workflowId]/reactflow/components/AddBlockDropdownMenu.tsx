@@ -1,13 +1,15 @@
 import React from 'react';
+import { createParallelPaths } from '../utils/createParallelPaths';
+import { DropdownDatas } from '../types';
 
 interface AddBlockDropdownMenuProps {
-  position: { x: number; y: number };
+  dropdownDatas: DropdownDatas;
   onSelect: (blockType: 'STEP' | 'PATH' | 'DELAY') => void;
   onClose: () => void;
 }
 
 const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
-  position,
+  dropdownDatas,
   onSelect,
   onClose,
 }) => {
@@ -29,17 +31,29 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     },
   ];
 
+  const handleSelect = async (type: string) => {
+    if (type === 'PATH') {
+      console.log('creating parallel paths');
+      try {
+        await createParallelPaths(dropdownDatas.path, dropdownDatas.position);
+        onClose();
+      } catch (error) {
+        console.error('Error creating parallel paths:', error);
+      }
+    } else {
+      console.log('creating block');
+      onSelect(type as 'STEP' | 'PATH' | 'DELAY');
+    }
+  };
+
   return (
     <>
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0" onClick={onClose} />
       <div
         className="absolute bg-white rounded-lg shadow-lg border border-gray-200 w-48 z-50"
         style={{
-          top: position.y,
-          left: position.x,
+          top: dropdownDatas.y,
+          left: dropdownDatas.x,
           transform: 'translate(-50%, -100%)',
         }}
       >
@@ -47,7 +61,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
           <button
             key={item.type}
             className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
-            onClick={() => onSelect(item.type)}
+            onClick={() => handleSelect(item.type)}
           >
             <img src={item.icon} alt={item.label} className="w-5 h-5" />
             <span>{item.label}</span>
@@ -58,4 +72,4 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   );
 };
 
-export default AddBlockDropdownMenu; 
+export default AddBlockDropdownMenu;

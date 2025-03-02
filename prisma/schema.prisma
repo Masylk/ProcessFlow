@@ -29,6 +29,8 @@ enum block_type {
   DELAY
   STEP
   PATH
+  BEGIN
+  END
 }
 
 enum subscription_status {
@@ -68,6 +70,12 @@ model user {
   last_login_at            DateTime?
   onboarding_step          onboarding_step?   @default(PERSONAL_INFO)
   onboarding_completed_at  DateTime?
+  
+  // Professional Info fields
+  industry               String?
+  professional_role     String?   // renamed from 'role' to avoid confusion with user_role enum
+  company_size          String?
+  source                String?
   
   // Relations
   active_workspace         workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])

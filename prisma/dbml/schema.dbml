@@ -21,6 +21,10 @@ Table user {
   last_login_at DateTime
   onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
+  industry String
+  professional_role String
+  company_size String
+  source String
   active_workspace workspace
   workspaces user_workspace [not null]
   actions action [not null]
@@ -221,6 +225,8 @@ Enum block_type {
   DELAY
   STEP
   PATH
+  BEGIN
+  END
 }
 
 Enum subscription_status {

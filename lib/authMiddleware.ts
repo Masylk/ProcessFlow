@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabaseServerClient';
+import { NextResponse, type NextRequest } from 'next/server';
+import prisma from '@/lib/prisma';
 
-export async function middleware(request: NextRequest) {
+export async function authMiddleware(request: NextRequest) {
   const supabase = createClient();
   
   // Get session using Supabase
@@ -24,7 +25,18 @@ export async function middleware(request: NextRequest) {
   });
 }
 
-// Configure which paths the middleware will run on
-export const config = {
-  matcher: ['/dashboard/:path*', '/api/:path*']
-}
+// Protected route helper
+export async function getProtectedUser(request: Request) {
+  const userId = request.headers.get('x-user-id');
+  const userRole = request.headers.get('x-user-role');
+
+  if (!userId) {
+    throw new Error('User ID not found in request headers');
+  }
+
+  const user = await prisma.user.findUnique({ 
+    where: { auth_id: userId }
+  });
+
+  return user;
+} 

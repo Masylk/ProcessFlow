@@ -18,8 +18,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
 
   const elkNodes = nodes.map((node) => ({
     id: node.id,
-    width: 481,
-    height: 120,
+    width: node.type === 'begin' ? 200 : node.type === 'end' ? 20 : 481,
+    height: node.type === 'begin' ? 50 : node.type === 'end' ? 20 : 120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
@@ -37,20 +37,20 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   console.log('ELK Graph:', elkGraph);
 
   const layoutOptions = {
-    'elk.algorithm': 'mrtree',
+    'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '200',
-    'elk.spacing.componentComponent': '600',
-    'elk.nodeSize.constraints': 'MINIMUM_SIZE',
-    'elk.nodeSize.minimum': '481',
-    'elk.spacing.nodeNodeBetweenLayers': '100',
-    'elk.edgeRouting': 'ORTHOGONAL',
-    'elk.padding': '[top=50,left=200,bottom=50,right=200]',
-    'elk.interactive': 'true',
+    'elk.spacing.nodeNode': '80',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+    'elk.spacing.componentComponent': '80',
+    'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
+    'elk.layered.nodePlacement.strategy': 'SIMPLE',
+    'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
+    'elk.layered.spacing.edgeNodeBetweenLayers': '50',
+    'elk.layered.mergeEdges': 'true',
+    'elk.layered.priority.direction': '1',
     'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-    'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
-    'elk.spacing.individual': '100',
-    'elk.spacing.base': '150',
+    'elk.alignment': 'CENTER',
+    'elk.padding': '[top=50,left=50,bottom=50,right=50]',
   };
 
   try {
@@ -62,6 +62,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
       return nodes;
     }
 
+    const centerX = layout.children.reduce((sum, node) => sum + node.x!, 0) / layout.children.length;
+
     return nodes.map((node) => {
       const elkNode = layout.children?.find((n) => n.id === node.id);
       if (!elkNode || elkNode.x === undefined || elkNode.y === undefined) {
@@ -72,7 +74,11 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
       return {
         ...node,
         position: {
-          x: elkNode.x,
+          x: centerX - (
+            node.type === 'begin' ? 100 :
+            node.type === 'end' ? 10 :
+            240.5
+          ),
           y: elkNode.y,
         },
         style: {

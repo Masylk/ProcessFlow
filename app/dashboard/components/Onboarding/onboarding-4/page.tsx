@@ -1,6 +1,15 @@
+'use client';
+
 import ButtonNormal from '@/app/components/ButtonNormal';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+    const router = useRouter();
+
+    const handleLaunch = async () => {
+        router.push('/dashboard');
+    };
+
     return (
         <div className="w-full h-screen bg-white flex justify-center items-center">
             <div className="w-full h-screen flex-col justify-center items-center gap-[72px] inline-flex">
@@ -41,6 +50,7 @@ export default function Home() {
                             variant="primary"
                             size="small"
                             className="w-full"
+                            onClick={handleLaunch}
                         >
                             Launch ProcessFlow
                         </ButtonNormal>
