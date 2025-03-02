@@ -14,3 +14,4 @@ export async function getProtectedRoute(request: Request) {
 
   return user;
 } 
+
