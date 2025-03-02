@@ -16,8 +16,8 @@ export default function ProfessionalInfo() {
   const router = useRouter();
 
   const dropdownOptions = {
-    industry: ['IT', 'Healthcare', 'Finance', 'Education', 'Retail'],
-    role: ['Freelancer', 'Manager', 'Developer', 'Designer', 'Analyst'],
+    industry: ['IT', 'Healthcare', 'Finance', 'Education', 'Retail', 'Other'],
+    role: ['Freelancer', 'Manager', 'Product Manager', 'Analyst', 'Designer', 'Sales', 'Marketing', 'HR', 'Customer Success', 'Other'],
     companySize: ['1', '2-9', '10-49', '50-199', '200-499', '500+'],
     source: ['ProductHunt', 'LinkedIn', 'Google', 'Friend', 'Other'],
   };

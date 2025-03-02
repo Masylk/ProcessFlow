@@ -12,6 +12,7 @@ export default function WorkspaceSetup() {
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [urlError, setUrlError] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
 
@@ -47,9 +48,27 @@ export default function WorkspaceSetup() {
     fileInputRef.current?.click();
   };
 
-  // Mettre à jour l'URL automatiquement basée sur le nom
+  const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    const isValid = /^[a-zA-Z0-9-_]*$/.test(value);
+    
+    if (!isValid && value !== '') {
+      setUrlError("Only letters, numbers, hyphens (-) and underscores (_) are allowed");
+    } else {
+      setUrlError("");
+    }
+    
+    setWorkspaceURL(value.replace(/[^a-zA-Z0-9-_]/g, ''));
+  };
+
   useEffect(() => {
-    setWorkspaceURL(workspaceName.toLowerCase().replace(/\s+/g, '-'));
+    const sanitizedName = workspaceName.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9-_]/g, '');
+    
+    setWorkspaceURL(sanitizedName);
+    setUrlError("");
   }, [workspaceName]);
 
   const handleSubmit = async () => {
@@ -57,21 +76,23 @@ export default function WorkspaceSetup() {
       setError("Workspace name is required");
       return;
     }
+    
+    if (urlError) {
+      setError("Please fix the URL format before continuing");
+      return;
+    }
 
     setIsLoading(true);
     setError("");
 
     try {
-      // Préparer les données à envoyer
       const formData = new FormData();
       formData.append('step', 'WORKSPACE_SETUP');
       
-      // Ajouter le logo si présent
       if (logoFile) {
         formData.append('logo', logoFile);
       }
 
-      // Ajouter les autres données
       formData.append('data', JSON.stringify({
             workspace_name: workspaceName,
             workspace_url: workspaceURL,
@@ -88,7 +109,6 @@ export default function WorkspaceSetup() {
         throw new Error(data.error || "Failed to update workspace");
       }
 
-      // Redirect to the completed page instead of dashboard
       router.push('/onboarding/completed');
     } catch (error) {
       console.error('Error updating workspace setup:', error);
@@ -240,14 +260,14 @@ export default function WorkspaceSetup() {
               </div>
             </div>
 
-            {/* Workspace URL Input - Preserved sizing as requested */}
+            {/* Workspace URL Input - with validation */}
             <div className="self-stretch flex-col justify-start items-start gap-1.5 flex">
               <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                 Workspace URL
               </div>
               <div
                 className={`flex items-center bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${
-                  isFocused ? 'border-[#4E6BD7]' : 'border-[#d0d5dd]'
+                  urlError ? 'border-red-500' : (isFocused ? 'border-[#4E6BD7]' : 'border-[#d0d5dd]')
                 }`}
               >
                 <div className="px-3 py-2 rounded-tl-lg rounded-bl-lg">
@@ -260,9 +280,9 @@ export default function WorkspaceSetup() {
                   value={workspaceURL}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  onChange={(e) => handleInputChange(e, setWorkspaceURL)}
+                  onChange={handleURLChange}
                   placeholder={
-                    workspaceName.toLowerCase().replace(/\s+/g, '-') ||
+                    workspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '') ||
                     'processflow'
                   }
                   className={`flex-grow px-3 py-2 bg-white rounded-tr-lg rounded-br-lg border-l focus:outline-none ${
@@ -270,6 +290,11 @@ export default function WorkspaceSetup() {
                   }`}
                 />
               </div>
+              {urlError && (
+                <div className="text-red-500 text-xs mt-1">
+                  {urlError}
+                </div>
+              )}
             </div>
           </div>
 

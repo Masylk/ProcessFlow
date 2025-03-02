@@ -84,19 +84,41 @@ export async function POST(request: NextRequest) {
         break;
         
       case 'PROFESSIONAL_INFO':
+        // Extract user-specific and workspace-specific data
+        const { industry, company_size, ...userData } = formData;
+        
+        // Update user data
         await prisma.user.update({
           where: { id: dbUser.id },
-          data: formData
+          data: userData
         });
+        
+        // Store industry and company_size temporarily for workspace creation
+        // We'll use them when creating the workspace in the next step
+        await prisma.$executeRaw`UPDATE "user" SET 
+          "temp_industry" = ${industry}, 
+          "temp_company_size" = ${company_size} 
+          WHERE "id" = ${dbUser.id}`;
         break;
         
       case 'WORKSPACE_SETUP':
+        // Get the temporarily stored company data
+        const tempUserData = await prisma.user.findUnique({
+          where: { id: dbUser.id },
+          select: { 
+            temp_industry: true, 
+            temp_company_size: true 
+          }
+        });
+        
         // Créer un workspace
         const workspace = await prisma.workspace.create({
           data: {
             name: formData.workspace_name,
             slug: formData.workspace_url,
             icon_url: formData.workspace_icon_url,
+            industry: tempUserData?.temp_industry || null,
+            company_size: tempUserData?.temp_company_size || null,
             team_tags: [],
             // Créer une relation avec l'utilisateur
             user_workspaces: {
@@ -113,6 +135,21 @@ export async function POST(request: NextRequest) {
           where: { id: dbUser.id },
           data: {
             active_workspace_id: workspace.id,
+            onboarding_step: 'COMPLETED',
+            onboarding_completed_at: new Date(),
+            // Clear temporary fields
+            temp_industry: null,
+            temp_company_size: null
+          }
+        });
+        break;
+        
+      case 'INVITED_USER':
+        // For users who were invited to a workspace
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: {
+            ...formData,
             onboarding_step: 'COMPLETED',
             onboarding_completed_at: new Date()
           }
