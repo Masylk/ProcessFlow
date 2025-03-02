@@ -7,6 +7,7 @@ import WorkspaceSettings from './WorkspaceSettings';
 import { Workspace } from '@/types/workspace';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import type { ThemeMode } from '@/app/theme/types';
+import CheckoutButton from '@/app/components/CheckoutButton';
 
 interface SettingsPageProps {
   user: User | null;
@@ -47,6 +48,7 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
       name: "Early Adopter",
       price: billingPeriod === 'monthly' ? "$15" : "$12",
       period: billingPeriod === 'monthly' ? "per user/month billed monthly" : "per user/month billed annually",
+      priceId: billingPeriod === 'monthly' ? "price_early_adopter_monthly" : "price_early_adopter_annual",
       features: [
         "All Free features +",
         "Unlimited conditional processes",
@@ -317,13 +319,14 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
                   style={{ borderColor: colors['border-secondary'] }}
                   className="self-stretch h-px border-t my-0" 
                 />
-                <ButtonNormal
+                <CheckoutButton
+                  priceId={plans.earlyAdopter.priceId}
                   variant="primary"
-                  size="small"
-                  className="w-full"
+                  size="md"
+                  fullWidth
                 >
-                  Get started
-                </ButtonNormal>
+                  Upgrade to {plans.earlyAdopter.name}
+                </CheckoutButton>
               </div>
             </div>
           </div>
