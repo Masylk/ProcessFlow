@@ -283,7 +283,13 @@ export function Flow({
         <AddBlockDropdownMenu
           dropdownDatas={dropdownDatas}
           onSelect={handleBlockTypeSelect}
-          onClose={() => setShowDropdown(false)}
+          onClose={() => {
+            console.log('closing dropdown');
+            setShowDropdown(false);
+          }}
+          workspaceId={workspaceId}
+          workflowId={workflowId}
+          onPathsUpdate={setPaths}
         />
       )}
     </div>

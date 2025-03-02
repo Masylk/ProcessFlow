@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import { DropdownDatas } from '../types';
+import { DropdownDatas, Path } from '../types';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
   onSelect: (blockType: 'STEP' | 'PATH' | 'DELAY') => void;
   onClose: () => void;
+  workspaceId: string;
+  workflowId: string;
+  onPathsUpdate: (paths: Path[]) => void;
 }
 
 const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   dropdownDatas,
   onSelect,
   onClose,
+  workspaceId,
+  workflowId,
+  onPathsUpdate,
 }) => {
   const menuItems = [
     {
@@ -31,24 +37,38 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     },
   ];
 
-  const handleSelect = async (type: string) => {
-    if (type === 'PATH') {
-      console.log(
-        'creating parallel paths: ',
-        dropdownDatas.path,
-        dropdownDatas.position
-      );
-      try {
-        await createParallelPaths(dropdownDatas.path, dropdownDatas.position);
-        onClose();
-      } catch (error) {
-        console.error('Error creating parallel paths:', error);
+  const handleSelect = useCallback(
+    async (type: string) => {
+      if (type === 'PATH') {
+        console.log(
+          'creating parallel paths: ',
+          dropdownDatas.path,
+          dropdownDatas.position
+        );
+        try {
+          await createParallelPaths(dropdownDatas.path, dropdownDatas.position);
+          console.log('parallel paths created');
+
+          // Fetch updated paths data
+          const pathsResponse = await fetch(
+            `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+          );
+          if (pathsResponse.ok) {
+            const pathsData = await pathsResponse.json();
+            onPathsUpdate(pathsData.paths);
+          }
+
+          onClose();
+        } catch (error) {
+          console.error('Error creating parallel paths:', error);
+        }
+      } else {
+        console.log('creating block');
+        onSelect(type as 'STEP' | 'PATH' | 'DELAY');
       }
-    } else {
-      console.log('creating block');
-      onSelect(type as 'STEP' | 'PATH' | 'DELAY');
-    }
-  };
+    },
+    [dropdownDatas, onClose, onSelect, workspaceId, workflowId, onPathsUpdate]
+  );
 
   return (
     <>

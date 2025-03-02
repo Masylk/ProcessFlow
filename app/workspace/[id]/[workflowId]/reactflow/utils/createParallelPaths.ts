@@ -2,7 +2,6 @@ import { Path, Block } from '../types';
 
 export async function createParallelPaths(parent_path: Path, position: number) {
   try {
-    console.log("parent_path", parent_path);
     // 1. Create first parallel path with BEGIN, STEP, END
     const firstPath = await fetch('/api/paths', {
       method: 'POST',
@@ -14,6 +13,7 @@ export async function createParallelPaths(parent_path: Path, position: number) {
     });
     const firstPathData = await firstPath.json();
 
+    console.log("created first path", firstPathData);
     // 2. Create second parallel path with BEGIN, STEP, END
     const secondPath = await fetch('/api/paths', {
       method: 'POST',
@@ -24,7 +24,7 @@ export async function createParallelPaths(parent_path: Path, position: number) {
       }),
     });
     const secondPathData = await secondPath.json();
-
+    console.log("created second path", secondPathData);
     // Wait for blocks to be created and fetch updated paths
     const [updatedFirstPath, updatedSecondPath] = await Promise.all([
       fetch(`/api/paths/${firstPathData.id}?id=${firstPathData.id}`).then(res => res.json()),
@@ -47,6 +47,7 @@ export async function createParallelPaths(parent_path: Path, position: number) {
       }),
     });
 
+    console.log("linked parent path to parallel paths");
     return { 
       firstPath: updatedFirstPath, 
       secondPath: updatedSecondPath 

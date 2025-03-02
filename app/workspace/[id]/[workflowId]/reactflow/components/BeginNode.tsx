@@ -6,18 +6,15 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
     <>
       <div
-        className={`transition-all duration-300`}
+        className={`transition-all duration-300 flex items-center justify-center`}
         style={{
           width: '200px',
+          height: '50px',
           padding: '12px 16px',
           borderRadius: '8px',
           border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
           background: '#eff6ff',
-          minHeight: '50px',
           position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
       >
         <Handle
@@ -32,7 +29,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
 
-        <div className="text-blue-600 font-medium">
+        <div className="text-blue-600 font-medium truncate">
           {data.pathName || 'Path'}
         </div>
         <Handle
