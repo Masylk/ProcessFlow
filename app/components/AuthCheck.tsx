@@ -14,21 +14,26 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      
+
       try {
         const supabase = createBrowserClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
 
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
         const publicPaths = ['/login', '/signup', '/auth/callback'];
-        const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+        const isPublicPath = publicPaths.some((path) =>
+          pathname.startsWith(path)
+        );
 
         if ((!user || error) && !isPublicPath) {
           router.push('/login');
@@ -41,25 +46,26 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
         }
 
         const response = await fetch('/api/auth/check-onboarding');
-        
+
         if (!response.ok) {
           console.error('Error checking onboarding status');
           setIsLoading(false);
           return;
         }
-        
-        const data = await response.json() as OnboardingResponse;
-        
+
+        const data = (await response.json()) as OnboardingResponse;
+
         if (data.onboardingStep && !data.completed) {
           const onboardingSteps: Record<onboarding_step, string> = {
-            'PERSONAL_INFO': '/onboarding/personal-info',
-            'PROFESSIONAL_INFO': '/onboarding/professional-info',
-            'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-            'COMPLETED': '/dashboard'
+            PERSONAL_INFO: '/onboarding/personal-info',
+            PROFESSIONAL_INFO: '/onboarding/professional-info',
+            WORKSPACE_SETUP: '/onboarding/workspace-setup',
+            COMPLETED: '/dashboard',
+            INVITED_USER: '/onboarding/personal-info',
           };
 
           const currentStep = onboardingSteps[data.onboardingStep];
-          
+
           if (!pathname.startsWith(currentStep)) {
             router.push(currentStep);
           }
@@ -83,4 +89,4 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
-} 
+}
