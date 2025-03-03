@@ -12,6 +12,8 @@ import Image from 'next/image';
 import { useTheme, useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -31,6 +33,7 @@ interface SidebarProps {
   onLogout: () => void;
   isSettingsView: boolean;
   setIsSettingsView: (isSettingsView: boolean) => void;
+  setWorkspaces: (workspaces: Workspace[]) => void;
 }
 
 export default function Sidebar({
@@ -51,6 +54,7 @@ export default function Sidebar({
   onLogout,
   isSettingsView,
   setIsSettingsView,
+  setWorkspaces,
 }: SidebarProps) {
   const { currentTheme } = useTheme();
   const colors = useColors();
@@ -62,6 +66,8 @@ export default function Sidebar({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
     setIsResizing(true);
@@ -118,13 +124,79 @@ export default function Sidebar({
     setShowCreateWorkspaceModal(true);
   };
 
-  const handleCreateWorkspace = (workspaceData: {
+  const handleCreateWorkspace = async (workspaceData: {
     name: string;
     logo?: File;
     url: string;
   }) => {
-    // TODO: Implement workspace creation logic
-    setShowCreateWorkspaceModal(false);
+    try {
+      setIsLoading(true);
+      // Format the URL slug to be URL-friendly
+      const urlSlug = workspaceData.url
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+      let response;
+      
+      // If there's a logo, we need to use FormData
+      if (workspaceData.logo) {
+        const formData = new FormData();
+        formData.append('logo', workspaceData.logo);
+        formData.append('data', JSON.stringify({
+          name: workspaceData.name,
+          slug: urlSlug
+        }));
+        
+        response = await fetch('/api/workspace/create', {
+          method: 'POST',
+          body: formData,
+        });
+      } else {
+        // Otherwise, use JSON
+        response = await fetch('/api/workspace/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: workspaceData.name,
+            slug: urlSlug
+          }),
+        });
+      }
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Error creating workspace:', error);
+        toast.error('Failed to create workspace: ' + (error.error || 'Unknown error'));
+        setIsLoading(false);
+        return;
+      }
+      
+      const result = await response.json();
+      
+      // Add the new workspace to local state
+      if (workspaces && result.workspace) {
+        setWorkspaces([...workspaces, result.workspace]);
+      }
+      
+      // Close the modal
+      setShowCreateWorkspaceModal(false);
+      
+      // Display success message
+      toast.success('Workspace created successfully!');
+      
+      // Navigate to the new workspace
+      if (result.workspace && result.workspace.id) {
+        router.push(`/workspace/${result.workspace.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      toast.error('An error occurred while creating your workspace');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderFolderWithSubfolders = (folder: Folder) => {
@@ -205,17 +277,26 @@ export default function Sidebar({
             className="self-stretch px-3 py-2.5 cursor-pointer rounded-md flex justify-between items-center overflow-hidden transition-colors"
           >
             <div className="flex items-center gap-2">
-              <div className="flex items-start gap-2.5">
-                <div className="flex justify-start items-start ">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
-                    style={{
-                      backgroundColor:
-                        activeWorkspace.background_colour || '#4299E1',
+              <div className="relative w-8 h-8">
+                {activeWorkspace.icon_url && (
+                  <img
+                    src={activeWorkspace.icon_url}
+                    alt={activeWorkspace.name}
+                    className="w-8 h-8 rounded-lg object-cover absolute inset-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
                     }}
-                  >
-                    {activeWorkspace.name.charAt(0).toUpperCase()}
-                  </div>
+                  />
+                )}
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-medium absolute inset-0"
+                  style={{
+                    backgroundColor: activeWorkspace.background_colour || '#4299E1',
+                    display: 'flex',
+                    opacity: activeWorkspace.icon_url ? 0 : 1
+                  }}
+                >
+                  {activeWorkspace.name.charAt(0).toUpperCase()}
                 </div>
               </div>
               {/* Display activeWorkspace name */}

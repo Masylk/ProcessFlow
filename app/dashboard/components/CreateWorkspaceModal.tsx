@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
@@ -18,9 +18,12 @@ export default function CreateWorkspaceModal({
 }: CreateWorkspaceModalProps) {
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceUrl, setWorkspaceUrl] = useState('');
-  const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [urlPlaceholder, setUrlPlaceholder] = useState('acmecorp');
+  const [isLoading, setIsLoading] = useState(false);
   const colors = useColors();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update URL placeholder when workspace name changes
   useEffect(() => {
@@ -37,12 +40,43 @@ export default function CreateWorkspaceModal({
     }
   }, [workspaceName]);
 
+  // Handle file upload when user selects a file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Clean up preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (logoPreview && logoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
+
   const handleSubmit = () => {
+    setIsLoading(true);
+    
     onCreateWorkspace({
       name: workspaceName,
-      logo: selectedLogo || undefined,
+      logo: logoFile || undefined,
       url: workspaceUrl || urlPlaceholder, // Use placeholder as fallback if no URL is entered
     });
+    
+    // Note: we don't set isLoading to false here because the component will be unmounted
+    // when the modal is closed after successful creation
   };
 
   // Prevent background clicks from closing the modal
@@ -53,7 +87,7 @@ export default function CreateWorkspaceModal({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8"
+      className="fixed inset-0 flex items-center justify-center p-8 z-50"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -95,7 +129,7 @@ export default function CreateWorkspaceModal({
               className="text-sm"
               style={{ color: colors['text-secondary'] }}
             >
-              Add your workspace informations here
+              Add your workspace information here
             </p>
           </div>
         </div>
@@ -120,15 +154,55 @@ export default function CreateWorkspaceModal({
               Workspace Logo
             </label>
             <div className="flex items-center gap-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                className="hidden"
+              />
               <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: colors['bg-secondary'] }}
+                className="relative group cursor-pointer"
+                onClick={handleLogoClick}
               >
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
-                  alt="Upload"
-                  className="w-6 h-6"
-                />
+                {logoPreview ? (
+                  <div className="relative">
+                    <div 
+                      style={{ 
+                        backgroundImage: `url(${logoPreview})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '8px',
+                        border: `2px solid ${colors['border-secondary']}`,
+                      }}
+                      className="shadow-sm"
+                    />
+                    {/* Edit overlay on hover */}
+                    <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                          alt="Edit"
+                          className="w-5 h-5 brightness-[10]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="w-16 h-16 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: colors['bg-secondary'] }}
+                  >
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
+                      alt="Upload"
+                      className="w-6 h-6"
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex-1">
                 <div 
@@ -138,12 +212,7 @@ export default function CreateWorkspaceModal({
                     backgroundColor: colors['bg-primary'],
                     '--hover-bg': colors['bg-secondary']
                   } as React.CSSProperties}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-primary'];
-                  }}
+                  onClick={handleLogoClick}
                 >
                   <span style={{ color: colors['text-accent'] }} className="text-sm font-semibold">Click to upload</span>
                   <span style={{ color: colors['text-secondary'] }} className="text-sm"> or drag and drop</span>
@@ -207,6 +276,7 @@ export default function CreateWorkspaceModal({
             size="small"
             className="flex-1"
             onClick={onClose}
+            disabled={isLoading}
           >
             Cancel
           </ButtonNormal>
@@ -215,8 +285,14 @@ export default function CreateWorkspaceModal({
             size="small"
             className="flex-1"
             onClick={handleSubmit}
+            disabled={!workspaceName || isLoading}
           >
-            Create workspace
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-2 border-t-transparent border-r-transparent"></div>
+                <span>Creating...</span>
+              </div>
+            ) : 'Create workspace'}
           </ButtonNormal>
         </div>
       </div>

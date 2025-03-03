@@ -17,17 +17,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const origin = request.headers.get('origin') || "http://localhost:3000"; // Fallback for local development
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
-          price: priceId,
+          price: "price_1QyEvCAiIekpSP7WEzVXOrMT",
           quantity: 1,
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/canceled`,
+      success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`, // ✅ Correct URL format
+      cancel_url: `${origin}/payment/cancel`,
     });
 
     return NextResponse.json({ sessionId: session.id });

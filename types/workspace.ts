@@ -16,5 +16,6 @@ export interface Workspace {
   workflows: Workflow[];
   folders: Folder[];
   team_tags?: string[];
+  icon_url?: string;
   background_colour?: string;
 }

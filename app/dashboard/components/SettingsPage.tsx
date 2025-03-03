@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '@/types/user';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import WorkspaceSettings from './WorkspaceSettings';
@@ -14,13 +14,57 @@ interface SettingsPageProps {
   onClose: () => void;
   workspace?: Workspace;
   onWorkspaceUpdate?: (updates: Partial<Workspace>) => Promise<void>;
+  onWorkspaceDelete?: (workspaceId: number) => Promise<void>;
 }
 
-export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpdate }: SettingsPageProps) {
+export default function SettingsPage({ 
+  user, 
+  onClose, 
+  workspace, 
+  onWorkspaceUpdate,
+  onWorkspaceDelete,
+}: SettingsPageProps) {
   const colors = useColors();
   const { currentTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState(workspace && onWorkspaceUpdate ? 'Workspace' : 'Team');
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [currentPlan, setCurrentPlan] = useState<'free' | 'earlyAdopter'>('free');
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchSubscription = async () => {
+      try {
+        const res = await fetch(`/api/get-subscription?userId=${user.id}`);
+        const data = await res.json();
+        
+        if (data.error) {
+          setCurrentPlan('free');
+          return;
+        }
+
+        // Map the plan_type from database to our UI plan types
+        const planMap: { [key: string]: 'free' | 'earlyAdopter' } = {
+          'free': 'free',
+          'early_adopter': 'earlyAdopter'
+        };
+
+        setCurrentPlan(planMap[data.plan_type] || 'free');
+        setSubscriptionStatus(data.status);
+        setSubscriptionEnd(data.current_period_end ? new Date(data.current_period_end) : null);
+      } catch (error) {
+        console.error('Error fetching subscription:', error);
+        setCurrentPlan('free');
+      } finally {
+        setIsLoadingPlan(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
 
   const tabs = [
     'Workspace',
@@ -63,7 +107,7 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
   return (
     <div 
       style={{ backgroundColor: colors['bg-primary'] }}
-      className="h-full"
+      className="h-screen"
     >
       {/* Header */}
       <div className="px-8 py-6">
@@ -108,6 +152,7 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
             <WorkspaceSettings
               workspace={workspace}
               onUpdate={onWorkspaceUpdate}
+              onDelete={onWorkspaceDelete}
             />
           </div>
         )}
@@ -262,9 +307,9 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
                     variant="secondary"
                     size="small"
                     className="w-full"
-                    disabled={true}
+                    disabled={isLoadingPlan || currentPlan === 'free'}
                   >
-                    Current plan
+                    {isLoadingPlan ? 'Loading...' : currentPlan === 'free' ? 'Current plan' : 'Downgrade to Free'}
                   </ButtonNormal>
                 </div>
               </div>
@@ -322,10 +367,13 @@ export default function SettingsPage({ user, onClose, workspace, onWorkspaceUpda
                 <CheckoutButton
                   priceId={plans.earlyAdopter.priceId}
                   variant="primary"
-                  size="md"
+                  size="medium"
                   fullWidth
+                  disabled={isLoadingPlan}
+                  isCurrentPlan={currentPlan === 'earlyAdopter'}
                 >
-                  Upgrade to {plans.earlyAdopter.name}
+                  {isLoadingPlan ? 'Loading...' : 
+                    currentPlan === 'earlyAdopter' ? 'Current plan' : `Upgrade to ${plans.earlyAdopter.name}`}
                 </CheckoutButton>
               </div>
             </div>
