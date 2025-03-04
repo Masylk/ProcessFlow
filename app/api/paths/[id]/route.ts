@@ -3,10 +3,11 @@ import prisma from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
-    const { id } = await req.json(); // Extracting path ID from the request body
-    const pathId = parseInt(id, 10);
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
+    const pathId = parseInt(id!, 10);
 
-    if (isNaN(pathId)) {
+    if (!id || isNaN(pathId)) {
       return NextResponse.json(
         { error: 'Invalid path ID' },
         { status: 400 }
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
             position: 'asc',
           },
         },
+        parent_blocks: true,
       },
     });
 
