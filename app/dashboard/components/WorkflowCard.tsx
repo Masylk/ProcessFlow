@@ -29,6 +29,8 @@ interface WorkflowCardProps {
   onMoveWorkflow: (workflow: Workflow) => void;
   tags?: string[];
   assignee?: string;
+  status?: 'active' | 'draft' | 'inactive';
+  lastEdited?: string;
 }
 
 export default function WorkflowCard({
@@ -39,8 +41,10 @@ export default function WorkflowCard({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
-  tags = [''],
+  tags = ['customer', 'onboarding'],
   assignee = '',
+  status = 'active',
+  lastEdited = '2 hours ago',
 }: WorkflowCardProps) {
   const colors = useColors();
   const [isHovered, setIsHovered] = useState(false);
@@ -75,80 +79,57 @@ export default function WorkflowCard({
       onClick={() => handleWorkflowClick(workflow.id)}
       style={{
         backgroundColor: colors['bg-primary'],
-        borderColor: isHovered || isMenuOpen ? colors['border-primary'] : colors['border-secondary'],
+        borderColor: colors['border-secondary'],
         '--hover-bg': colors['bg-quaternary']
       } as React.CSSProperties}
       className="rounded-lg border p-4 hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {(isHovered || isMenuOpen) && (
-        <div className="absolute top-1 right-1 transition-opacity duration-150 z-20">
-          <div 
-            style={{
-              backgroundColor: colors['bg-secondary'],
-              borderColor: colors['border-primary']
+      {/* Top section with title and icons */}
+      <div className="flex justify-between items-start mb-2">
+        <h3 
+          style={{ color: colors['text-primary'] }}
+          className="font-medium text-base"
+        >
+          {workflow.name}
+        </h3>
+        
+        <div className="flex items-center gap-2">
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsStarFilled(!isStarFilled);
             }}
-            className="h-6 rounded-md shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-start items-start inline-flex overflow-hidden"
+            className="cursor-pointer"
           >
-            {/* Star Button - Toggle Fill on Click */}
-            <div
-              style={{
-                borderColor: colors['border-primary'],
-                backgroundColor: colors['bg-secondary'],
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
-              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsStarFilled(!isStarFilled);
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
-                  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
-                }/assets/shared_components/${
-                  isStarFilled ? 'star-filled.svg' : 'star-01.svg'
-                }`}
-                alt="Star Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
-            <div 
-              style={{
-                borderColor: colors['border-primary'],
-                backgroundColor: colors['bg-secondary'],
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
-              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
-                alt="Link Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
-            <div
-              style={{
-                backgroundColor: colors['bg-secondary'],
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
-              className="px-2 py-1 justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-              onClick={(e) => {
-                onSelectWorkflow(workflow);
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
-                alt="Dots Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
+                process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
+              }/assets/shared_components/${
+                isStarFilled ? 'star-filled.svg' : 'star-01.svg'
+              }`}
+              alt="Star Icon"
+              className="w-4 h-4"
+            />
+          </div>
+          <div
+            onClick={(e) => {
+              onSelectWorkflow(workflow);
+              e.stopPropagation();
+              setIsMenuOpen(!isMenuOpen);
+            }}
+            className="cursor-pointer"
+          >
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
+              alt="More options"
+              className="w-4 h-4"
+            />
           </div>
         </div>
-      )}
+      </div>
+
       {isMenuOpen && (
         <div
           ref={menuRef}
@@ -214,20 +195,9 @@ export default function WorkflowCard({
           )}
         </div>
       )}
-      {/* Commented out for now - New icon implementation
-      <div className="flex mb-4">
-        <div className="bg-gray-100 rounded-[6px] flex items-center justify-center w-10 h-10">
-          <DynamicIcon url={workflow.icon || '/placeholder.svg'} size={20} color="currentColor" />
-        </div>
-      </div>
-      */}
-      {/* Title */}
-      <h3 
-        style={{ color: colors['text-primary'] }}
-        className="font-medium text-lg mb-2"
-      >
-        {workflow.name}
-      </h3>
+
+      {/* Category/Subtitle */}
+     
       {/* Description */}
       <p 
         style={{ color: colors['text-secondary'] }}
@@ -235,28 +205,35 @@ export default function WorkflowCard({
       >
         {workflow.description}
       </p>
+
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {tags.map((tag) => (
+        {tags.filter(tag => tag.trim() !== '').map((tag) => (
           <span
             key={tag}
             style={{
-              backgroundColor: colors['bg-secondary'],
+              backgroundColor: colors['bg-quaternary'],
               color: colors['text-secondary']
             }}
-            className="px-spacing-sm py-0.5 text-xs rounded-md"
+            className="px-3 py-1 text-xs rounded-full"
           >
             {tag}
           </span>
         ))}
       </div>
-      {/* Steps and Assignee */}
-      <div 
-        style={{ color: colors['text-tertiary'] }}
-        className="flex items-center text-sm"
-      >
-        <span>6 Steps</span>
-        <span className="truncate">{assignee}</span>
+      
+      {/* Footer with status and last edited */}
+      <div className="flex justify-between items-center mt-2">
+        <div className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white">
+          {status}
+        </div>
+        
+        <span 
+          style={{ color: colors['text-tertiary'] }}
+          className="text-xs"
+        >
+          Edited {lastEdited}
+        </span>
       </div>
     </div>
   );

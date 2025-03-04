@@ -274,6 +274,12 @@ const InputField: React.FC<InputFieldProps> = ({
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e.target.value);
+    }
+  };
+
   const baseStyles = {
     backgroundColor: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
     color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
@@ -356,7 +362,7 @@ const InputField: React.FC<InputFieldProps> = ({
               type="text"
               placeholder={placeholder}
               value={value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={handleChange}
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
@@ -464,7 +470,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={type === "leading-text" ? "www.example.com" : placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
@@ -507,7 +513,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
@@ -740,7 +746,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
@@ -820,7 +826,7 @@ const InputField: React.FC<InputFieldProps> = ({
               type={showPassword ? "text" : "password"}
               placeholder={placeholder}
               value={value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={handleChange}
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
@@ -877,7 +883,7 @@ const InputField: React.FC<InputFieldProps> = ({
               type="text"
               placeholder={placeholder}
               value={value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={handleChange}
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}

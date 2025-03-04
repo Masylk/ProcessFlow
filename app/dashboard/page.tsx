@@ -541,25 +541,45 @@ export default function Page() {
 
   const updateActiveWorkspace = async (workspace: Workspace) => {
     if (user) {
-      const updateRes = await fetch('/api/user/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: user.id,
-          active_workspace_id: workspace.id,
-        }),
-      });
-      if (updateRes.ok) {
-        const updatedUser = await updateRes.json();
-        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
-          setUser(updatedUser);
-          setActiveWorkspace(workspace);
+      try {
+        const updateRes = await fetch('/api/user/update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: user.id,
+            active_workspace_id: workspace.id,
+          }),
+        });
+        
+        if (!updateRes.ok) {
+          throw new Error('Failed to update active workspace');
         }
-      } else {
-        console.error('Error updating user active_workspace_id');
+        
+        const updatedUser = await updateRes.json();
+        
+        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+          // Update the user state with the new active workspace
+          setUser(updatedUser);
+          
+          // Update the active workspace state
+          setActiveWorkspace(workspace);
+          
+          // If in settings view, force a re-render by toggling and restoring the state
+          if (isSettingsView) {
+            // Briefly toggle off settings view to force a re-render when it's toggled back on
+            setIsSettingsView(false);
+            
+            // After a very short delay, switch back to settings view with the new workspace
+            setTimeout(() => {
+              setIsSettingsView(true);
+            }, 10);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating user active_workspace_id:', error);
       }
     } else {
-      console.log('no user to update');
+      console.log('No user to update');
     }
   };
 
@@ -798,6 +818,61 @@ export default function Page() {
     }
   };
 
+  const onWorkspaceDelete = async (workspaceId: number) => {
+    try {
+      const response = await fetch(`/api/workspace/${workspaceId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete workspace');
+      }
+
+      // Remove the deleted workspace from the workspaces array
+      setWorkspaces(prevWorkspaces => 
+        prevWorkspaces.filter(w => w.id !== workspaceId)
+      );
+
+      // If the deleted workspace was the active one, set a new active workspace
+      if (activeWorkspace && activeWorkspace.id === workspaceId) {
+        // Find another workspace to set as active, or null if none exist
+        const nextWorkspace = workspaces.find(w => w.id !== workspaceId) || null;
+        
+        if (nextWorkspace) {
+          // Update the user's active workspace in the database
+          await updateActiveWorkspace(nextWorkspace);
+        } else {
+          // If no workspaces left, set active workspace to null
+          setActiveWorkspace(null);
+          
+          // Update the user in the database
+          if (user) {
+            await fetch('/api/user/update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: user.id,
+                active_workspace_id: null,
+              }),
+            });
+          }
+        }
+      }
+
+      // Close the settings view
+      setIsSettingsView(false);
+      
+      // Redirect to the dashboard or onboarding if no workspaces left
+      if (workspaces.length <= 1) {
+        // If this was the last workspace, redirect to onboarding
+        window.location.href = '/onboarding/workspace-setup';
+      }
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      throw error;
+    }
+  };
+
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
     
@@ -856,6 +931,7 @@ export default function Page() {
           onLogout={handleLogout}
           isSettingsView={isSettingsView}
           setIsSettingsView={setIsSettingsView}
+          setWorkspaces={setWorkspaces}
         />
       )}
 
@@ -927,6 +1003,7 @@ export default function Page() {
                 onClose={() => setIsSettingsView(false)}
                 workspace={activeWorkspace || undefined}
                 onWorkspaceUpdate={onWorkspaceUpdate}
+                onWorkspaceDelete={onWorkspaceDelete}
               />
             </div>
           ) : (

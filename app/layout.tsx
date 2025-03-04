@@ -5,6 +5,7 @@ import './globals.css';
 import { PostHogProvider } from './providers';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthCheck from './components/AuthCheck';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -46,6 +47,7 @@ export default function RootLayout({
         <ThemeProvider>
           <PostHogProvider>
             <AuthCheck>{children}</AuthCheck>
+            <Toaster position="top-right" />
           </PostHogProvider>
         </ThemeProvider>
 
