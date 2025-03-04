@@ -151,6 +151,8 @@ Table workflow {
   workspace_id Int [not null]
   team_tags String[] [not null]
   folder_id Int
+  is_public Boolean [not null, default: false]
+  public_access_id String [unique]
   workspace workspace [not null]
   folder folder
   blocks block [not null]
@@ -242,9 +244,10 @@ Enum user_role {
 Enum block_type {
   DELAY
   STEP
-  PATH
   BEGIN
   END
+  PATH
+  LAST
 }
 
 Enum subscription_status {

@@ -29,9 +29,10 @@ enum user_role {
 enum block_type {
   DELAY
   STEP
-  PATH
   BEGIN
   END
+  PATH
+  LAST
 }
 
 enum subscription_status {
@@ -248,6 +249,8 @@ model workflow {
   workspace_id  Int
   team_tags     String[]
   folder_id     Int?
+  is_public         Boolean  @default(false)
+  public_access_id  String?  @unique // This will be our shareable ID
   
   workspace     workspace   @relation(fields: [workspace_id], references: [id])
   folder        folder?     @relation(fields: [folder_id], references: [id])
