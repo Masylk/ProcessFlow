@@ -21,10 +21,10 @@ Table user {
   last_login_at DateTime
   onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
-  industry String
   professional_role String
-  company_size String
   source String
+  temp_industry String
+  temp_company_size String
   active_workspace workspace
   workspaces user_workspace [not null]
   actions action [not null]
@@ -44,6 +44,8 @@ Table workspace {
   stripe_customer_id String
   hubspot_company_id String
   subscription_id Int [unique]
+  industry String
+  company_size String
   subscription subscription
   billing_infos workspace_billing_infos [not null]
   user_workspaces user_workspace [not null]
@@ -51,6 +53,7 @@ Table workspace {
   folders folder [not null]
   workflows workflow [not null]
   billings billing [not null]
+  invitations invitation [not null]
 }
 
 Table workspace_billing_infos {
@@ -109,6 +112,20 @@ Table user_workspace {
   workspace workspace [not null]
 }
 
+Table invitation {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  email String [not null]
+  token String [unique, not null]
+  expires_at DateTime [not null]
+  used Boolean [not null, default: false]
+  used_at DateTime
+  workspace_id Int [not null]
+  role user_role [not null, default: 'READER']
+  workspace workspace [not null]
+}
+
 Table folder {
   id Int [pk, increment]
   name String [not null]
@@ -134,6 +151,8 @@ Table workflow {
   workspace_id Int [not null]
   team_tags String[] [not null]
   folder_id Int
+  is_public Boolean [not null, default: false]
+  public_access_id String [unique]
   workspace workspace [not null]
   folder folder
   blocks block [not null]
@@ -212,6 +231,7 @@ Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
   WORKSPACE_SETUP
+  INVITED_USER
   COMPLETED
 }
 
@@ -224,9 +244,10 @@ Enum user_role {
 Enum block_type {
   DELAY
   STEP
-  PATH
   BEGIN
   END
+  PATH
+  LAST
 }
 
 Enum subscription_status {
@@ -260,6 +281,8 @@ Ref: billing.workspace_id > workspace.id
 Ref: user_workspace.user_id > user.id
 
 Ref: user_workspace.workspace_id > workspace.id
+
+Ref: invitation.workspace_id > workspace.id
 
 Ref: folder.workspace_id > workspace.id
 

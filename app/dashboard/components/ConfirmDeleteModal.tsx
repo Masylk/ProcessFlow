@@ -124,7 +124,10 @@ export default function ConfirmDeleteModal({
 
         {/* Error Message */}
         {error && (
-          <div className="text-sm" style={{ color: colors['text-error'] }}>
+          <div 
+            className="mt-2 text-sm font-medium" 
+            style={{ color: colors['text-error'] || colors['text-destructive'] || '#ef4444' }}
+          >
             {error}
           </div>
         )}
