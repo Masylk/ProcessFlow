@@ -29,6 +29,8 @@ interface WorkflowCardProps {
   onMoveWorkflow: (workflow: Workflow) => void;
   tags?: string[];
   assignee?: string;
+  status?: 'active' | 'draft' | 'inactive';
+  lastEdited?: string;
 }
 
 export default function WorkflowCard({
@@ -39,8 +41,10 @@ export default function WorkflowCard({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
-  tags = [''],
+  tags = ['customer', 'onboarding'],
   assignee = '',
+  status = 'active',
+  lastEdited = '2 hours ago',
 }: WorkflowCardProps) {
   const colors = useColors();
   const [isHovered, setIsHovered] = useState(false);
@@ -245,16 +249,17 @@ export default function WorkflowCard({
       <p style={{ color: colors['text-secondary'] }} className="text-sm mb-3">
         {workflow.description}
       </p>
+
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {tags.map((tag) => (
+        {tags.filter(tag => tag.trim() !== '').map((tag) => (
           <span
             key={tag}
             style={{
               backgroundColor: colors['bg-secondary'],
               color: colors['text-secondary'],
             }}
-            className="px-spacing-sm py-0.5 text-xs rounded-md"
+            className="px-3 py-1 text-xs rounded-full"
           >
             {tag}
           </span>

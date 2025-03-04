@@ -57,11 +57,11 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
         if (data.onboardingStep && !data.completed) {
           const onboardingSteps: Record<onboarding_step, string> = {
-            PERSONAL_INFO: '/onboarding/personal-info',
-            PROFESSIONAL_INFO: '/onboarding/professional-info',
-            WORKSPACE_SETUP: '/onboarding/workspace-setup',
-            COMPLETED: '/dashboard',
-            INVITED_USER: '/onboarding/personal-info',
+            'PERSONAL_INFO': '/onboarding/personal-info',
+            'PROFESSIONAL_INFO': '/onboarding/professional-info',
+            'WORKSPACE_SETUP': '/onboarding/workspace-setup',
+            'COMPLETED': '/onboarding/completed',
+            'INVITED_USER': '/onboarding/invited-user'
           };
 
           const currentStep = onboardingSteps[data.onboardingStep];

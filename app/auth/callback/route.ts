@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const invitationToken = requestUrl.searchParams.get('invitation');
     
     if (!code) {
       console.error('No code received in callback');
@@ -48,27 +49,75 @@ export async function GET(request: NextRequest) {
           'PERSONAL_INFO': '/onboarding/personal-info',
           'PROFESSIONAL_INFO': '/onboarding/professional-info',
           'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-          'COMPLETED': '/dashboard',
-          'INVITED_USER': '/onboarding/personal-info'
+          'INVITED_USER': '/onboarding/invited-user',
+          'COMPLETED': '/dashboard'
         };
         
         redirectUrl = onboardingSteps[existingUser.onboarding_step || 'PERSONAL_INFO'];
       }
     } else {
       // Nouvel utilisateur, créer l'entrée dans la base de données
-      await prisma.user.create({
-        data: {
-          auth_id: session.user.id,
-          email: session.user.email || '',
-          first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-          last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-          full_name: session.user.user_metadata?.full_name || '',
-          onboarding_step: 'PROFESSIONAL_INFO', // Pour les utilisateurs Google, on skip l'étape personal-info
-          avatar_url: session.user.user_metadata?.avatar_url,
-        },
-      });
-      
-      redirectUrl = '/onboarding/professional-info';
+      // Check if user was invited
+      if (invitationToken) {
+        try {
+          // Here you would verify the invitation token and get workspace_id
+          // This is pseudo-code - you'll need to implement the actual invitation verification
+          const invitation = await prisma.invitation.findUnique({
+            where: { token: invitationToken }
+          });
+          
+          if (invitation && !invitation.used) {
+            await prisma.user.create({
+              data: {
+                auth_id: session.user.id,
+                email: session.user.email || '',
+                first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+                full_name: session.user.user_metadata?.full_name || '',
+                onboarding_step: 'INVITED_USER',
+                avatar_url: session.user.user_metadata?.avatar_url,
+                // Add the user to the workspace they were invited to
+                workspaces: {
+                  create: {
+                    workspace_id: invitation.workspace_id,
+                    role: invitation.role || 'READER'
+                  }
+                },
+                active_workspace_id: invitation.workspace_id
+              },
+            });
+            
+            // Mark invitation as used
+            await prisma.invitation.update({
+              where: { id: invitation.id },
+              data: { used: true, used_at: new Date() }
+            });
+            
+            redirectUrl = '/onboarding/invited-user';
+          } else {
+            // Invalid or used invitation
+            redirectUrl = '/onboarding/personal-info';
+          }
+        } catch (error) {
+          console.error('Error processing invitation:', error);
+          redirectUrl = '/onboarding/personal-info';
+        }
+      } else {
+        // Regular new user (not invited)
+        await prisma.user.create({
+          data: {
+            auth_id: session.user.id,
+            email: session.user.email || '',
+            first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+            last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            full_name: session.user.user_metadata?.full_name || '',
+            onboarding_step: 'PROFESSIONAL_INFO', // Pour les utilisateurs Google, on skip l'étape personal-info
+            avatar_url: session.user.user_metadata?.avatar_url,
+          },
+        });
+        
+        redirectUrl = '/onboarding/professional-info';
+      }
     }
 
     // Set session cookies and redirect
