@@ -53,6 +53,17 @@ enum task_type {
   AUTOMATIC
 }
 
+enum delay_type {
+  FIXED_DURATION
+  WAIT_FOR_EVENT
+}
+
+enum workflow_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model user {
   id                        Int                @id @default(autoincrement())
   created_at               DateTime           @default(now())
@@ -85,6 +96,8 @@ model user {
   active_workspace         workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
   workspaces              user_workspace[]
   actions                 action[]
+  created_versions        workflow_version[]  @relation("created_by")
+  saved_searches          saved_search[]
 
   @@index([active_workspace_id])
   @@index([email])
@@ -120,6 +133,7 @@ model workspace {
   workflows            workflow[]
   billings             billing[]
   invitations          invitation[]
+  workflow_templates   workflow_template[]
 
   @@index([stripe_customer_id])
   @@index([subscription_id])
@@ -251,12 +265,19 @@ model workflow {
   folder_id     Int?
   is_public         Boolean  @default(false)
   public_access_id  String?  @unique // This will be our shareable ID
+  status          workflow_status    @default(DRAFT)
+  is_template     Boolean            @default(false)
+  template_id     Int?
+  version_number  Int               @default(1)
   
   workspace     workspace   @relation(fields: [workspace_id], references: [id])
   folder        folder?     @relation(fields: [folder_id], references: [id])
   blocks        block[]
   paths         path[]
   actions       action[]
+  template        workflow_template? @relation(fields: [template_id], references: [id])
+  stroke_lines    stroke_line[]
+  versions        workflow_version[]
 
   @@unique([name, workspace_id])
   @@index([workspace_id])
@@ -315,11 +336,15 @@ model block {
   workflow_id       Int
   path_id           Int
   click_position    Json?
+  delay_type        delay_type?   // Fixed duration or wait for event
+  delay_event       String?       // Description of event to wait for (if delay_type is WAIT_FOR_EVENT)
   
   workflow          workflow            @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
   path              path                @relation(fields: [path_id], references: [id], onDelete: Cascade)
   actions           action[]
   child_paths       path_parent_block[] @relation("path_parent")
+  source_stroke_lines stroke_line[]     @relation("stroke_source")
+  target_stroke_lines stroke_line[]     @relation("stroke_target")
 
   @@index([workflow_id])
   @@index([path_id])
@@ -345,4 +370,79 @@ model action {
   @@index([workflow_id])
   @@index([created_at])
   @@map("action")
+}
+
+model workflow_version {
+  id              Int         @id @default(autoincrement())
+  workflow_id     Int
+  version_number  Int
+  name            String
+  description     String
+  created_at      DateTime    @default(now())
+  created_by_id   Int
+  change_summary  String?     // Description of changes in this version
+  snapshot        Json        // JSON snapshot of workflow structure at this version
+  
+  workflow        workflow    @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  created_by      user        @relation("created_by", fields: [created_by_id], references: [id])
+
+  @@unique([workflow_id, version_number])
+  @@index([workflow_id])
+  @@index([created_by_id])
+  @@map("workflow_version")
+}
+
+model workflow_template {
+  id              Int         @id @default(autoincrement())
+  name            String
+  description     String
+  workspace_id    Int
+  category        String
+  tags            String[]
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @default(now()) @updatedAt
+  structure       Json        // JSON representation of the template
+  rating          Float?      // Average rating
+  rating_count    Int         @default(0)
+  
+  workspace       workspace   @relation(fields: [workspace_id], references: [id])
+  workflows       workflow[]  // Workflows created from this template
+
+  @@index([workspace_id])
+  @@index([category])
+  @@map("workflow_template")
+}
+
+model saved_search {
+  id              Int       @id @default(autoincrement())
+  user_id         Int
+  name            String
+  query           String
+  filters         Json?
+  created_at      DateTime  @default(now())
+  
+  user            user      @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@map("saved_search")
+}
+
+model stroke_line {
+  id              Int       @id @default(autoincrement())
+  source_block_id Int       // The block where the stroke line starts
+  target_block_id Int       // The block where the stroke line ends
+  workflow_id     Int
+  label           String    // Label/description for the stroke line
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  is_loop         Boolean   @default(false) // Flag for self-referencing connections
+  
+  source_block    block     @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
+  target_block    block     @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)
+  workflow        workflow  @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+
+  @@index([source_block_id])
+  @@index([target_block_id])
+  @@index([workflow_id])
+  @@map("stroke_line")
 }

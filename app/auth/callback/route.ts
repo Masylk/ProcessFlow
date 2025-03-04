@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (existingUser) {
       // Si l'onboarding n'est pas terminé, rediriger vers l'étape appropriée
       if (!existingUser.onboarding_completed_at) {
-        const onboardingSteps = {
+        const onboardingSteps: Record<string, string> = {
           'PERSONAL_INFO': '/onboarding/personal-info',
           'PROFESSIONAL_INFO': '/onboarding/professional-info',
           'WORKSPACE_SETUP': '/onboarding/workspace-setup',

@@ -28,6 +28,8 @@ Table user {
   active_workspace workspace
   workspaces user_workspace [not null]
   actions action [not null]
+  created_versions workflow_version [not null]
+  saved_searches saved_search [not null]
 }
 
 Table workspace {
@@ -54,6 +56,7 @@ Table workspace {
   workflows workflow [not null]
   billings billing [not null]
   invitations invitation [not null]
+  workflow_templates workflow_template [not null]
 }
 
 Table workspace_billing_infos {
@@ -153,11 +156,18 @@ Table workflow {
   folder_id Int
   is_public Boolean [not null, default: false]
   public_access_id String [unique]
+  status workflow_status [not null, default: 'DRAFT']
+  is_template Boolean [not null, default: false]
+  template_id Int
+  version_number Int [not null, default: 1]
   workspace workspace [not null]
   folder folder
   blocks block [not null]
   paths path [not null]
   actions action [not null]
+  template workflow_template
+  stroke_lines stroke_line [not null]
+  versions workflow_version [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -208,10 +218,14 @@ Table block {
   workflow_id Int [not null]
   path_id Int [not null]
   click_position Json
+  delay_type delay_type
+  delay_event String
   workflow workflow [not null]
   path path [not null]
   actions action [not null]
   child_paths path_parent_block [not null]
+  source_stroke_lines stroke_line [not null]
+  target_stroke_lines stroke_line [not null]
 }
 
 Table action {
@@ -224,6 +238,64 @@ Table action {
   created_at DateTime [default: `now()`, not null]
   user user [not null]
   target block [not null]
+  workflow workflow [not null]
+}
+
+Table workflow_version {
+  id Int [pk, increment]
+  workflow_id Int [not null]
+  version_number Int [not null]
+  name String [not null]
+  description String [not null]
+  created_at DateTime [default: `now()`, not null]
+  created_by_id Int [not null]
+  change_summary String
+  snapshot Json [not null]
+  workflow workflow [not null]
+  created_by user [not null]
+
+  indexes {
+    (workflow_id, version_number) [unique]
+  }
+}
+
+Table workflow_template {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null]
+  workspace_id Int [not null]
+  category String [not null]
+  tags String[] [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  structure Json [not null]
+  rating Float
+  rating_count Int [not null, default: 0]
+  workspace workspace [not null]
+  workflows workflow [not null]
+}
+
+Table saved_search {
+  id Int [pk, increment]
+  user_id Int [not null]
+  name String [not null]
+  query String [not null]
+  filters Json
+  created_at DateTime [default: `now()`, not null]
+  user user [not null]
+}
+
+Table stroke_line {
+  id Int [pk, increment]
+  source_block_id Int [not null]
+  target_block_id Int [not null]
+  workflow_id Int [not null]
+  label String [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  is_loop Boolean [not null, default: false]
+  source_block block [not null]
+  target_block block [not null]
   workflow workflow [not null]
 }
 
@@ -268,6 +340,17 @@ Enum task_type {
   AUTOMATIC
 }
 
+Enum delay_type {
+  FIXED_DURATION
+  WAIT_FOR_EVENT
+}
+
+Enum workflow_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
@@ -292,6 +375,8 @@ Ref: workflow.workspace_id > workspace.id
 
 Ref: workflow.folder_id > folder.id
 
+Ref: workflow.template_id > workflow_template.id
+
 Ref: path.workflow_id > workflow.id
 
 Ref: path_parent_block.path_id > path.id [delete: Cascade]
@@ -307,3 +392,17 @@ Ref: action.user_id > user.id
 Ref: action.target_id > block.id
 
 Ref: action.workflow_id > workflow.id
+
+Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
+
+Ref: workflow_version.created_by_id > user.id
+
+Ref: workflow_template.workspace_id > workspace.id
+
+Ref: saved_search.user_id > user.id
+
+Ref: stroke_line.source_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.target_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
