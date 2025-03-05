@@ -1,4 +1,5 @@
 import { Workflow } from '@/types/workflow';
+import { BlockEndType } from '@/types/block';
 
 export interface NodeData {
   label: string;
@@ -8,11 +9,13 @@ export interface NodeData {
   pathId?: number | null;
   highlighted?: boolean;
   pathName?: string;
+  path?: Path;
   handleAddBlockOnEdge?: (
     position: number,
-    path_id: number | null,
+    path: Path,
     event?: { clientX: number; clientY: number }
   ) => void;
+  onPathsUpdate?: (paths: Path[]) => void;
 }
 
 export interface EdgeData {
@@ -69,7 +72,7 @@ export interface Block {
 }
 
 // Assuming enums and other interfaces
-export type BlockType = 'STEP' | 'DELAY' | 'PATH' | 'BEGIN' | 'END';  // Example enum
+export type BlockType = 'STEP' | 'DELAY' | 'BEGIN' | BlockEndType;
 export type TaskType = 'TASK_TYPE_1' | 'TASK_TYPE_2';  // Example enum
 
 export interface PathParentBlock {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { BlockEndType } from '@/types/block';
 
 interface CreateMinimalPathRequest {
   name: string;
@@ -43,16 +44,16 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // Create END block
+      // Create LAST block instead of END block
       await tx.block.create({
         data: {
-          type: 'END',
+          type: BlockEndType.LAST,
           position: 1, // Position 1 since there's only BEGIN before it
           icon: '/step-icons/default-icons/end.svg',
-          description: 'End of the workflow',
+          description: 'Last block in the workflow',
           workflow_id,
           path_id: newPath.id,
-          step_details: 'End',
+          step_details: 'Last',
         }
       });
 

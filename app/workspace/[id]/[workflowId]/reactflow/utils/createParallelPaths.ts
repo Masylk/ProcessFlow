@@ -1,6 +1,7 @@
 import { Path, Block } from '../types';
 import { getBlocksAfterPosition } from './getBlocksAfterPosition';
 import { getChildPathsIds } from './getChildPathsIds';
+import { BlockEndType } from '@/types/block';
 
 interface CreateParallelPathsOptions {
   paths_to_create?: string[];
@@ -21,6 +22,12 @@ export async function createParallelPaths(
     if (path_to_move >= paths_to_create.length) {
       throw new Error('path_to_move index is out of bounds');
     }
+
+    // Find any end-type block in parent path
+    const parentEndBlock = parent_path.blocks.find(block => 
+      Object.values(BlockEndType).includes(block.type as BlockEndType)
+    );
+    if (!parentEndBlock) throw new Error('No end-type block found in parent path');
 
     // 1. Create all parallel paths
     const createdPaths = await Promise.all(
@@ -69,9 +76,6 @@ export async function createParallelPaths(
     }
 
     // 5. Link all parallel paths to parent path's END block
-    const parentEndBlock = parent_path.blocks.find(block => block.type === 'END');
-    if (!parentEndBlock) throw new Error('No END block found in parent path');
-
     await fetch('/api/paths/connect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

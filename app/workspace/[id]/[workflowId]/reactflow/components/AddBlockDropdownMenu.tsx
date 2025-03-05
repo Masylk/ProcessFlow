@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
+import { BlockEndType } from '@/types/block';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -70,6 +71,11 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     [dropdownDatas, onClose, onSelect, workspaceId, workflowId, onPathsUpdate]
   );
 
+  const block = dropdownDatas.path.blocks.find(
+    (b) => b.position === dropdownDatas.position
+  );
+  const isLastBlock = block?.type === BlockEndType.LAST;
+
   return (
     <>
       <div className="fixed inset-0" onClick={onClose} />
@@ -91,6 +97,38 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             <span>{item.label}</span>
           </button>
         ))}
+
+        {isLastBlock && (
+          <button
+            onClick={async () => {
+              try {
+                await fetch(`/api/blocks/${block.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: BlockEndType.END,
+                  }),
+                });
+
+                // Fetch updated paths data
+                const pathsResponse = await fetch(
+                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+                );
+                if (pathsResponse.ok) {
+                  const pathsData = await pathsResponse.json();
+                  onPathsUpdate(pathsData.paths);
+                }
+
+                onClose();
+              } catch (error) {
+                console.error('Error converting block to END:', error);
+              }
+            }}
+            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
+          >
+            Convert to End Block
+          </button>
+        )}
       </div>
     </>
   );
