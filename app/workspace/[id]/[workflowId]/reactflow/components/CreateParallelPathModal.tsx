@@ -29,6 +29,9 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
     return path.blocks.some((block) => block.position > position);
   };
 
+  // Check if any path name is empty
+  const hasEmptyPath = pathNames.some((name) => name.trim() === '');
+
   return (
     <Modal
       title="Add Conditions"
@@ -49,7 +52,12 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
                 path_to_move: selectedPath,
               })
             }
-            className="px-6 py-2 text-sm text-white bg-blue-500 hover:bg-blue-600 rounded"
+            disabled={hasEmptyPath}
+            className={`px-6 py-2 text-sm text-white rounded transition-colors duration-200 ${
+              hasEmptyPath
+                ? 'bg-blue-300 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             Create paths
           </button>
