@@ -21,7 +21,6 @@ export function useSupabaseSession() {
   });
 
   useEffect(() => {
-    // Créer le client Supabase côté navigateur
     const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name: string) {
@@ -46,35 +45,42 @@ export function useSupabaseSession() {
       },
     });
 
-    // Récupérer la session initiale
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Erreur lors de la récupération de la session:', error);
-        setState(prev => ({ ...prev, error, loading: false }));
-      } else {
+    // Function to fetch and update authenticated user
+    const fetchUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        
         setState(prev => ({
           ...prev,
-          session,
-          user: session?.user ?? null,
+          user,
+          session: user ? { user } as Session : null,
           loading: false,
+          error: null
+        }));
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setState(prev => ({
+          ...prev,
+          user: null,
+          session: null,
+          loading: false,
+          error: error as Error
         }));
       }
-    });
+    };
 
-    // Écouter les changements de session
+    // Initial fetch
+    fetchUser();
+
+    // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Changement d\'état d\'authentification:', _event);
-      setState(prev => ({
-        ...prev,
-        session,
-        user: session?.user ?? null,
-        loading: false,
-      }));
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // After any auth state change, verify the user server-side
+      await fetchUser();
     });
 
-    // Nettoyer l'abonnement
     return () => {
       subscription.unsubscribe();
     };

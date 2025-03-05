@@ -15,11 +15,38 @@ export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const type = requestUrl.searchParams.get('type');
     const invitationToken = requestUrl.searchParams.get('invitation');
     
     if (!code) {
       console.error('No code received in callback');
       return NextResponse.redirect(new URL('/login?error=no_code', request.url));
+    }
+
+    // Handle email confirmation
+    if (type === 'email_confirmation') {
+      const supabase = createClient();
+      const { data: { session }, error } = await supabase.auth.verifyOtp({
+        token_hash: code,
+        type: 'email',
+      });
+
+      if (error) {
+        console.error('Error verifying email:', error);
+        return NextResponse.redirect(new URL('/login?error=email_verification', request.url));
+      }
+
+      // Update user's email verification status in your database if needed
+      if (session?.user) {
+        await prisma.user.update({
+          where: { auth_id: session.user.id },
+          data: {
+            // Add any additional fields you want to update
+          }
+        });
+      }
+
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     const supabase = createClient();
@@ -111,12 +138,16 @@ export async function GET(request: NextRequest) {
             first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
             last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
             full_name: session.user.user_metadata?.full_name || '',
-            onboarding_step: 'PROFESSIONAL_INFO', // Pour les utilisateurs Google, on skip l'étape personal-info
+            onboarding_step: session.user.app_metadata?.provider === 'google' 
+              ? 'PROFESSIONAL_INFO'  // Skip personal info for Google users since we have their data
+              : 'PERSONAL_INFO',     // Start with personal info for email users
             avatar_url: session.user.user_metadata?.avatar_url,
           },
         });
         
-        redirectUrl = '/onboarding/professional-info';
+        redirectUrl = session.user.app_metadata?.provider === 'google'
+          ? '/onboarding/professional-info'
+          : '/onboarding/personal-info';
       }
     }
 

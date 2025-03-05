@@ -1,23 +1,56 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function Home() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // Handle form submission: check if passwords match and set loading
-  const handlePasswordReset = () => {
-    if (password && confirmPassword && password === confirmPassword) {
-      setIsLoading(true);
-      // Simulate an async call or API request
-      setTimeout(() => {
-        setIsLoading(false);
-        // Handle success logic here
-      }, 2000);
-    } else {
-      alert("Passwords do not match!");
+  // Handle form submission: check if passwords match and update password
+  const handlePasswordReset = async () => {
+    if (!password || !confirmPassword) {
+      setMessage('Please fill in both password fields.');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match!');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Create Supabase client
+      const supabase = createClient();
+
+      // Attempt to update the user's password
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        setMessage('Failed to reset password. ' + error.message);
+      } else {
+        // Call the API to clear the cookie
+        const res = await fetch('/api/clear-password-reset-cookie', {
+          method: 'POST',
+        });
+
+        if (res.ok) {
+          // Redirect to home page
+          router.push('/');
+        } else {
+          setMessage('Password reset succeeded, but failed to clear the cookie.');
+        }
+      }
+    } catch (error) {
+      setMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -141,6 +174,11 @@ export default function Home() {
 
           {/* Password form fields */}
           <div className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
+            {message && (
+              <div className="w-full text-center text-sm text-red-600 font-medium">
+                {message}
+              </div>
+            )}
             <div className="flex flex-col items-start gap-5 w-full">
               {/* New Password field */}
               <div className="flex flex-col items-start gap-1.5 w-full">

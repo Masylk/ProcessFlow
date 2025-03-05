@@ -116,10 +116,23 @@ export default function Page() {
   // Fetch user data from your API
   useEffect(() => {
     const fetchUser = async () => {
-      const res = await fetch('/api/user');
-      const data = await res.json();
-      if (data) {
-        setUser(data);
+      try {
+        // Check authentication status first
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (!authUser || authError) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const res = await fetch('/api/user');
+        const data = await res.json();
+        if (data) {
+          setUser(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        window.location.href = '/login';
       }
     };
     fetchUser();

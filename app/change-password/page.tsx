@@ -18,9 +18,9 @@ const ChangePasswordPage = () => {
     setSuccess('');
 
     // Verify if the user is logged in
-    const { data: session } = await createClient().auth.getSession();
+    const { data: { user }, error: authError } = await createClient().auth.getUser();
 
-    if (!session.session) {
+    if (!user) {
       setError('You need to be logged in to change your password.');
       return;
     }
