@@ -57,6 +57,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     path_to_move: number;
   }) => {
     try {
+      console.log('Create parallel paths data', data);
       await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
         paths_to_create: data.paths_to_create,
         path_to_move: data.path_to_move,

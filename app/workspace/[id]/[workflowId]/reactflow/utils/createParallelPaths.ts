@@ -13,12 +13,14 @@ export async function createParallelPaths(
   position: number,
   options: CreateParallelPathsOptions = {}
 ) {
+  console.log('options', options);
   try {
     const { 
       paths_to_create = ["If", "Else"],
       path_to_move = 0 
     } = options;
 
+    console.log('paths_to_create', paths_to_create);
     if (path_to_move >= paths_to_create.length) {
       throw new Error('path_to_move index is out of bounds');
     }
@@ -36,7 +38,7 @@ export async function createParallelPaths(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: `${parent_path.name} - ${branchName}`,
+            name: `${branchName}`,
             workflow_id: parent_path.workflow_id,
           }),
         });
