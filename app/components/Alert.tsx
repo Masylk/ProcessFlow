@@ -52,6 +52,12 @@ export interface AlertProps {
    * Optional custom styling for the alert container
    */
   className?: string;
+
+  /**
+   * Z-index for stacking alerts. Higher values appear on top.
+   * @default 50
+   */
+  zIndex?: number;
 }
 
 const Alert: React.FC<AlertProps> = ({
@@ -63,6 +69,7 @@ const Alert: React.FC<AlertProps> = ({
   primaryAction,
   secondaryAction,
   className = '',
+  zIndex = 50,
 }) => {
   const colors = useColors();
   
@@ -140,22 +147,23 @@ const Alert: React.FC<AlertProps> = ({
 
   return (
     <div 
-      className={`flex items-start p-4 rounded-lg border ${className}`}
+      className={`flex items-start p-3 sm:p-4 rounded-lg border shadow-md w-[calc(100vw-32px)] sm:w-auto max-w-md ${className}`}
       style={{ 
         backgroundColor: colors['bg-primary'],
-        borderColor: variantStyles.borderColor
+        borderColor: variantStyles.borderColor,
+        zIndex: zIndex
       }}
     >
       {/* Icon */}
-      <div className="flex-shrink-0 mr-3">
+      <div className="flex-shrink-0 mr-2 sm:mr-3">
         {renderIcon()}
       </div>
       
       {/* Content */}
-      <div className="flex-grow">
+      <div className="flex-grow min-w-0">
         {/* Title */}
         <div 
-          className="text-sm font-medium mb-1"
+          className="text-sm font-medium mb-0.5 sm:mb-1 break-words"
           style={{ color: colors['text-primary'] }}
         >
           {title}
@@ -163,7 +171,7 @@ const Alert: React.FC<AlertProps> = ({
         
         {/* Message */}
         <div 
-          className="text-sm mb-3"
+          className="text-sm mb-2 sm:mb-3 break-words"
           style={{ color: colors['text-secondary'] }}
         >
           {message}
@@ -171,7 +179,7 @@ const Alert: React.FC<AlertProps> = ({
         
         {/* Actions */}
         {(primaryAction || secondaryAction) && (
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             {secondaryAction && (
               <button
                 onClick={secondaryAction.onClick}
@@ -198,7 +206,7 @@ const Alert: React.FC<AlertProps> = ({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="flex-shrink-0 ml-3 rounded-md hover:bg-opacity-10 p-1 transition duration-150 hover:bg-gray-200"
+        className="flex-shrink-0 ml-2 sm:ml-3 rounded-md hover:bg-opacity-10 p-0.5 sm:p-1 transition duration-150 hover:bg-gray-200"
         style={{ 
           color: colors['text-secondary']
         }}
@@ -206,7 +214,7 @@ const Alert: React.FC<AlertProps> = ({
         <img 
           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
           alt="Close" 
-          className="w-4 h-4"
+          className="w-3 h-3 sm:w-4 sm:h-4"
         />
       </button>
     </div>

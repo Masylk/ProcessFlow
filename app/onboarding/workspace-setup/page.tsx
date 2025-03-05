@@ -204,8 +204,7 @@ export default function WorkspaceSetup() {
     
     try {
       console.log("Attempting to update onboarding step via API");
-      // Try to update the onboarding step first
-      const response = await fetch('/api/onboarding/update', {
+      await fetch('/api/onboarding/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,36 +212,27 @@ export default function WorkspaceSetup() {
         body: JSON.stringify({
           step: 'WORKSPACE_SETUP',
           data: {
-            workspace_name: workspaceName || 'Unnamed Workspace',
-            workspace_url: workspaceURL || 'unnamed-workspace',
             onboarding_step: 'PROFESSIONAL_INFO',
-            is_navigating_back: true
+            is_navigating_back: true,
+            skip_workspace_creation: true
           }
         })
+      }).catch(err => {
+        console.warn('Error updating onboarding step, but continuing navigation:', err);
       });
       
-      const data = await response.json().catch(e => ({ error: 'Failed to parse JSON' }));
-      console.log("API response:", response.status, data);
-      
-      console.log("Navigating to previous page using window.location.href");
-      // Force navigation with window.location.href instead of router.push
       window.location.href = '/onboarding/professional-info';
     } catch (error) {
       console.warn('Error during back navigation, but continuing to previous step:', error);
-      console.log("Navigation error, still trying to navigate");
-      // Still navigate even if there was an error
       window.location.href = '/onboarding/professional-info';
     } finally {
-      // This may not be needed since we're doing a full page navigation
-      console.log("Resetting isNavigatingBack to false");
       setIsNavigatingBack(false);
     }
-  }, [workspaceName, workspaceURL]);
+  }, []);
 
-  // Browser back button handler also needs similar improvements
+  // Browser back button handler
   useEffect(() => {
     const handlePopState = async (e: PopStateEvent) => {
-      // Prevent the default back navigation
       e.preventDefault();
       window.history.pushState(null, '', window.location.href);
 
@@ -250,7 +240,6 @@ export default function WorkspaceSetup() {
       setIsNavigatingBack(true);
 
       try {
-        // Try to update the onboarding step but don't block navigation if it fails
         await fetch('/api/onboarding/update', {
           method: 'POST',
           headers: {
@@ -259,33 +248,29 @@ export default function WorkspaceSetup() {
           body: JSON.stringify({
             step: 'WORKSPACE_SETUP',
             data: {
-              workspace_name: workspaceName || 'Unnamed Workspace',
-              workspace_url: workspaceURL || 'unnamed-workspace',
               onboarding_step: 'PROFESSIONAL_INFO',
-              is_navigating_back: true
+              is_navigating_back: true,
+              skip_workspace_creation: true
             }
           })
         }).catch(err => {
           console.warn('Error updating onboarding step, but continuing navigation:', err);
         });
         
-        // Navigate to previous page regardless of API response
         window.location.href = '/onboarding/professional-info';
       } catch (error) {
         console.warn('Error during back navigation, but continuing to previous step:', error);
-        // Still navigate even if there was an error
         window.location.href = '/onboarding/professional-info';
       }
     };
 
-    // Push the current state to enable back button
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isNavigatingBack, workspaceName, workspaceURL]);
+  }, [isNavigatingBack]);
 
   return (
     <div 
@@ -314,10 +299,7 @@ export default function WorkspaceSetup() {
           />
 
           {/* Progress Bar */}
-          <div 
-            className="flex-grow h-0.5 mx-2"
-            style={{ backgroundColor: colors['bg-accent'] }}
-          ></div>
+          <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
 
           {/* Second Step - Validated */}
           <img
@@ -327,27 +309,12 @@ export default function WorkspaceSetup() {
           />
 
           {/* Progress Bar */}
-          <div 
-            className="flex-grow h-0.5 mx-2"
-            style={{ backgroundColor: colors['bg-accent'] }}
-          ></div>
+          <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
 
           {/* Third Step - Current Step */}
-          <div 
-            className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2"
-            style={{ 
-              backgroundColor: colors['bg-secondary'],
-              borderColor: colors['border-accent']
-            }}
-          >
-            <div 
-              className="flex items-center justify-center w-6 h-6 rounded-full"
-              style={{ backgroundColor: colors['bg-accent'] }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: colors['bg-primary'] }}
-              />
+          <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-[#edf0fb] rounded-full border-2 border-[#4761c4]">
+            <div className="flex items-center justify-center w-6 h-6 bg-[#4761c4] rounded-full">
+              <div className="w-2 h-2 bg-white rounded-full" />
             </div>
           </div>
         </div>
@@ -504,8 +471,7 @@ export default function WorkspaceSetup() {
                         <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
                           <div className="flex justify-center items-center gap-1 overflow-hidden">
                             <div 
-                              className="font-semibold font-['Inter'] leading-tight"
-                              style={{ color: colors['text-accent'] }}
+                              className="font-semibold font-['Inter'] leading-tight text-[#4761c4]"
                             >
                               Click to upload
                             </div>

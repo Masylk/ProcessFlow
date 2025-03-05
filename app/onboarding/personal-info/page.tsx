@@ -143,44 +143,21 @@ export default function PersonalInfo() {
         </div>
         <div className="flex items-center justify-center w-full">
           <div className="relative flex items-center w-64">
-            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2"
-                 style={{ 
-                   backgroundColor: colors['bg-secondary'],
-                   borderColor: colors['border-accent']
-                 }}>
-              <div className="flex items-center justify-center w-6 h-6 rounded-full"
-                   style={{ backgroundColor: colors['bg-accent'] }}>
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors['bg-primary'] }} />
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-[#edf0fb] rounded-full border-2 border-[#4761c4]">
+              <div className="flex items-center justify-center w-6 h-6 bg-[#4761c4] rounded-full">
+                <div className="w-2 h-2 bg-white rounded-full" />
               </div>
             </div>
-            <div className="flex-grow h-0.5 mx-2" style={{ backgroundColor: colors['border-secondary'] }}></div>
-            <div 
-              className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border"
-              style={{ 
-                backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-secondary'] 
-              }}
-            >
-              <div 
-                className="flex items-center justify-center w-6 h-6 rounded-full border"
-                style={{ borderColor: colors['border-secondary'] }}
-              >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors['text-secondary'] }} />
+            <div className="flex-grow h-0.5 bg-[#e4e7ec] mx-2"></div>
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-gray-50 rounded-full border border-[#e4e7ec]">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full border border-[#e4e7ec]">
+                <div className="w-2 h-2 bg-[#d0d5dd] rounded-full" />
               </div>
             </div>
-            <div className="flex-grow h-0.5 mx-2" style={{ backgroundColor: colors['border-secondary'] }}></div>
-            <div 
-              className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full border"
-              style={{ 
-                backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-secondary'] 
-              }}
-            >
-              <div 
-                className="flex items-center justify-center w-6 h-6 rounded-full border"
-                style={{ borderColor: colors['border-secondary'] }}
-              >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors['text-secondary'] }} />
+            <div className="flex-grow h-0.5 bg-[#e4e7ec] mx-2"></div>
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-gray-50 rounded-full border border-[#e4e7ec]">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full border border-[#e4e7ec]">
+                <div className="w-2 h-2 bg-[#d0d5dd] rounded-full" />
               </div>
             </div>
           </div>

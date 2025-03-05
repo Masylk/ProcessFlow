@@ -35,12 +35,12 @@ export default function UserDropdown({
 
   const handleRoadmapClick = async () => {
     try {
-      // Log la session
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session:', session);
+      // Get authenticated user
+      const { data: { user: authUser }, error } = await supabase.auth.getUser();
+      console.log('Authenticated user:', authUser);
       console.log('User prop:', user);
 
-      if (session?.user && user) {
+      if (authUser && user) {
         console.log('User data being sent to roadmap:', {
           email: user.email,
           id: user.id,
@@ -51,8 +51,7 @@ export default function UserDropdown({
         await redirectToRoadmap(user);
       } else {
         console.error('Authentication check failed:', {
-          hasSession: !!session,
-          hasSessionUser: !!session?.user,
+          hasAuthUser: !!authUser,
           hasUserProp: !!user
         });
       }

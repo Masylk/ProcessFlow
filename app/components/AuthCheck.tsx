@@ -30,7 +30,14 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           error,
         } = await supabase.auth.getUser();
 
-        const publicPaths = ['/login', '/signup', '/auth/callback'];
+        const publicPaths = [
+          '/login',
+          '/signup',
+          '/auth/callback',
+          '/auth/confirm',
+          '/reset-password-request',
+          '/reset-password'
+        ];
         const isPublicPath = publicPaths.some((path) =>
           pathname.startsWith(path)
         );

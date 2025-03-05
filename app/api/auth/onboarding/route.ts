@@ -13,37 +13,66 @@ const posthog = new PostHog(
 
 export async function GET(request: NextRequest) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (!session?.user) {
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   try {
     const existingUser = await prisma.user.findUnique({
-      where: { auth_id: session.user.id }
+      where: { auth_id: user.id }
     });
 
     if (existingUser) {
       if (!existingUser.onboarding_completed_at) {
         const onboardingStep = (existingUser.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-');
+        // Update user metadata in Supabase
+        await supabase.auth.updateUser({
+          data: {
+            onboarding_status: {
+              current_step: onboardingStep,
+              completed_at: null
+            }
+          }
+        });
         return NextResponse.redirect(new URL(`/onboarding/${onboardingStep}`, request.url));
       }
       
+      // Update user metadata to mark onboarding as complete
+      await supabase.auth.updateUser({
+        data: {
+          onboarding_status: {
+            current_step: 'completed',
+            completed_at: new Date().toISOString()
+          }
+        }
+      });
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     // Create new user
     const newUser = await prisma.user.create({
       data: {
-        auth_id: session.user.id,
-        email: session.user.email || '',
-        first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-        last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-        full_name: session.user.user_metadata?.full_name || '',
+        auth_id: user.id,
+        email: user.email || '',
+        first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        full_name: user.user_metadata?.full_name || '',
         onboarding_step: 'PROFESSIONAL_INFO',
-        avatar_url: session.user.user_metadata?.avatar_url,
+        avatar_url: user.user_metadata?.avatar_url,
       },
+    });
+
+    // Update user metadata in Supabase
+    await supabase.auth.updateUser({
+      data: {
+        onboarding_status: {
+          current_step: 'personal-info',
+          completed_at: null
+        }
+      }
     });
 
     // Tracking PostHog
@@ -77,37 +106,65 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (!session?.user) {
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   try {
     const existingUser = await prisma.user.findUnique({
-      where: { auth_id: session.user.id }
+      where: { auth_id: user.id }
     });
 
     if (existingUser) {
       if (!existingUser.onboarding_completed_at) {
         const onboardingStep = (existingUser.onboarding_step || 'PERSONAL_INFO').toLowerCase().replace('_', '-');
+        // Update user metadata in Supabase
+        await supabase.auth.updateUser({
+          data: {
+            onboarding_status: {
+              current_step: onboardingStep,
+              completed_at: null
+            }
+          }
+        });
         return NextResponse.json({ redirect: `/onboarding/${onboardingStep}` });
       }
       
+      // Update user metadata to mark onboarding as complete
+      await supabase.auth.updateUser({
+        data: {
+          onboarding_status: {
+            current_step: 'completed',
+            completed_at: new Date().toISOString()
+          }
+        }
+      });
       return NextResponse.json({ redirect: '/dashboard' });
     }
 
     // Create new user
     const newUser = await prisma.user.create({
       data: {
-        auth_id: session.user.id,
-        email: session.user.email || '',
-        first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-        last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-        full_name: session.user.user_metadata?.full_name || '',
+        auth_id: user.id,
+        email: user.email || '',
+        first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+        last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        full_name: user.user_metadata?.full_name || '',
         onboarding_step: 'PROFESSIONAL_INFO',
-        avatar_url: session.user.user_metadata?.avatar_url,
+        avatar_url: user.user_metadata?.avatar_url,
       },
+    });
+
+    // Update user metadata in Supabase
+    await supabase.auth.updateUser({
+      data: {
+        onboarding_status: {
+          current_step: 'personal-info',
+          completed_at: null
+        }
+      }
     });
 
     // Tracking PostHog

@@ -1,86 +1,204 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
-import { login } from './actions';
+import { signup, checkEmailExists } from '../login/actions';
 import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [emailConfirmationAlert, setEmailConfirmationAlert] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [globalError, setGlobalError] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Get URL parameters for signup confirmation
-  useEffect(() => {
-    const signupEmail = searchParams.get('email');
-    const isSignupSuccess = searchParams.get('signup') === 'success';
-    
-    if (signupEmail && isSignupSuccess) {
-      setEmail(signupEmail); // Pre-fill the email field
-    }
-  }, [searchParams]);
-
-  // Validate email format
-  const validateEmail = (email: string) => {
+  // Email validation
+  const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Password validation
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 8;
+  };
+
+  // Handle email validation and check if it exists
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (emailError) setEmailError("");
+    if (globalError) setGlobalError("");
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (passwordError) setPasswordError("");
+  };
+
+  // Add a function to check email existence
+  const checkEmailAvailability = async (email: string) => {
+    if (!validateEmail(email)) return; // Don't check invalid emails
+    
+    setIsCheckingEmail(true);
+    try {
+      const result = await checkEmailExists(email);
+      
+      if (result.error) {
+        console.error("Error checking email:", result.error);
+        return;
+      }
+      
+      if (result.exists) {
+        setEmailError("This email is already registered. Please use a different email or try logging in.");
+        setGlobalError("This email is already registered. Please use a different email or try logging in.");
+      }
+    } catch (error) {
+      console.error("Failed to check email:", error);
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  // Add a debounce effect for email checks
+  useEffect(() => {
+    if (!email || !validateEmail(email)) return;
+    
+    const timer = setTimeout(() => {
+      checkEmailAvailability(email);
+    }, 600); // 600ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [email]);
+
+  async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(""); // Clear previous errors
-    setEmailConfirmationAlert(""); // Clear previous alerts
-    setEmailError(""); // Clear previous email errors
+    
+    console.log("Starting signup process");
+    
+    // Clear any existing notifications first
+    setShowEmailNotification(false);
+    setGlobalError("");
+    setEmailError("");
+    setPasswordError("");
+    
+    // Validate inputs before submission
+    let hasErrors = false;
     
     if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
-      return;
+      setEmailError("Please enter a valid email address.");
+      hasErrors = true;
     }
     
-    if (email && password) {
-      setIsLoading(true);
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 8 characters long.");
+      hasErrors = true;
+    }
+    
+    if (hasErrors) return;
+    
+    // Validate password
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
+      console.log("Password too short, signup blocked");
+      return;
+    }
+
+    // Final check for email existence before signup
+    console.log("Performing final email check before signup");
+    setIsLoading(true);
+    try {
+      const emailCheck = await checkEmailExists(email);
       
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      
-      const response = await login(formData);
-      
-      if (response?.error) {
-        console.error('Login error:', response.error);
-        setError(response.error);
+      if (emailCheck.error) {
+        console.error("Error checking email before signup:", emailCheck.error);
+        // Continue with signup attempt even if check fails
+      } else if (emailCheck.exists) {
+        setEmailError("This email is already registered. Please use a different email or try logging in.");
+        setGlobalError("This email is already registered. Please use a different email or try logging in.");
         setIsLoading(false);
-        return;
+        return; // Stop here if email exists
       }
-
-      if (response?.needsEmailConfirmation) {
-        console.log('Email needs confirmation:', response.email);
-        setEmailConfirmationAlert(response.message);
+      
+      // Continue with signup process if email doesn't exist
+      if (email && password) {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        
+        console.log("Submitting signup request with email:", email);
+        const newUser = await signup(formData);
+        console.log("Signup response:", newUser);
         setIsLoading(false);
-        return;
-      }
+        
+        // Check if there's an error
+        if ('error' in newUser) {
+          console.error('Signup error detected:', newUser.error);
+          
+          if (typeof newUser.error === 'string') {
+            if (newUser.error.includes("already exists") || 
+                newUser.error.includes("already registered") || 
+                newUser.error.includes("already in use") ||
+                newUser.error.includes("taken") ||
+                newUser.error.toLowerCase().includes("email already")) {
+              setEmailError("This email is already registered. Please use a different email or try logging in.");
+              setGlobalError("This email is already registered. Please use a different email or try logging in.");
+            } else {
+              setEmailError(newUser.error || "An error occurred during signup. Please try again.");
+              setGlobalError(newUser.error || "An error occurred during signup. Please try again.");
+            }
+          } else {
+            setEmailError("An error occurred during signup. Please try again.");
+            setGlobalError("An error occurred during signup. Please try again.");
+          }
+          // Don't show email notification on error
+          return;
+        }
 
-      if (response?.id && response?.email) {
-        Sentry.setUser({
-          id: response.id,
-          email: response.email,
-        });
+        // Explicit check to ensure we don't proceed if there was an error
+        if (globalError || emailError) {
+          console.log("Preventing notification due to errors:", { globalError, emailError });
+          return;
+        }
 
-        posthog.identify(response.id);
-        posthog.people.set({ email: response.email });
-        posthog.capture('login', { email: response.email });
-        router.push('/dashboard');
+        // Store email in sessionStorage for the confirmation page
+        if (newUser?.email) {
+          try {
+            // Track analytics
+            Sentry.setUser({
+              id: newUser.id,
+              email: newUser.email,
+            });
+
+            posthog.identify(newUser.id);
+            posthog.people.set({
+              email: newUser.email,
+            });
+            posthog.capture('signup', {
+              email: newUser.email,
+            });
+            
+            // Redirect to login page with email confirmation
+            router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
+          } catch (error) {
+            console.error('Error during analytics tracking:', error);
+            // Still redirect even if analytics fails
+            router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
+          }
+        }
       }
+    } catch (error) {
+      console.error('Unexpected error during signup:', error);
       setIsLoading(false);
+      setGlobalError("An unexpected error occurred. Please try again later.");
     }
   }
 
@@ -137,24 +255,10 @@ export default function LoginPage() {
 
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex flex-col items-center justify-center py-6 px-4 sm:px-6">
-      {/* Signup success notification */}
-      {searchParams.get('signup') === 'success' && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto bg-blue-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>A confirmation email has been sent. Please check your inbox.</p>
-        </div>
-      )}
-
-      {/* Email confirmation alert */}
-      {emailConfirmationAlert && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto bg-yellow-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>{emailConfirmationAlert}</p>
-        </div>
-      )}
-
       {/* Error notification */}
-      {error && (
+      {globalError && (
         <div className="fixed top-4 right-4 left-4 sm:left-auto bg-red-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>{error}</p>
+          <p>{globalError}</p>
         </div>
       )}
       
@@ -183,16 +287,16 @@ export default function LoginPage() {
           <div className="z-10 flex flex-col items-center gap-3 w-full">
             <div className="flex flex-col items-start gap-1 w-full">
               <div className="w-full text-center text-[#101828] text-lg font-semibold font-['Inter'] leading-7">
-                Log in to Processflow
+                Create your account
               </div>
               <div className="w-full text-center text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
-                Stay on top of your processes
+                Start managing your processes efficiently
               </div>
             </div>
           </div>
 
-          {/* Login form */}
-          <form onSubmit={handleSubmit} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
+          {/* Signup form */}
+          <form onSubmit={handleSignUp} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
             <div className="flex flex-col items-start gap-5 w-full">
               {/* Email field */}
               <div className="flex flex-col items-start gap-1.5 w-full">
@@ -210,15 +314,11 @@ export default function LoginPage() {
                     placeholder="Email address"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={email}
-                    onChange={(e) => {
-                      const newEmail = e.target.value;
-                      setEmail(newEmail);
-                      // Clear error if email becomes valid
-                      if (emailError && validateEmail(newEmail)) {
-                        setEmailError('');
-                      }
-                    }}
+                    onChange={handleEmailChange}
                   />
+                  {isCheckingEmail && (
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-[#4e6bd7] border-t-transparent" />
+                  )}
                 </div>
                 {emailError && (
                   <span className="text-red-500 text-sm mt-1">{emailError}</span>
@@ -230,7 +330,7 @@ export default function LoginPage() {
                 <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Password
                 </label>
-                <div className="px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200">
+                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${passwordError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`}
                     alt="Lock Icon"
@@ -241,7 +341,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                   />
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? "eye-off" : "eye"}.svg`}
@@ -250,16 +350,13 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
+                {passwordError && (
+                  <span className="text-red-500 text-sm mt-1">{passwordError}</span>
+                )}
               </div>
             </div>
 
-            {/* Forgot password link */}
-            <Link href="/reset-password-request" className="flex items-center gap-1 w-full text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
-              <span>Forgot password?</span>
-              <span className="text-[#374c99] font-semibold">Reset</span>
-            </Link>
-
-            {/* Login button */}
+            {/* Sign up button */}
             <div className="flex flex-col items-start gap-4 w-full">
               <button
                 type="submit"
@@ -279,7 +376,7 @@ export default function LoginPage() {
                   />
                 ) : (
                   <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-                    Log in
+                    Sign up
                   </div>
                 )}
               </button>
@@ -295,7 +392,7 @@ export default function LoginPage() {
             <div className="grow h-px border border-[#e4e7ec]" />
           </div>
 
-          {/* Google login */}
+          {/* Google signup */}
           <div className="z-10 flex flex-col items-center w-full mb-2">
             <button
               onClick={handleGoogleAuth}
@@ -307,24 +404,38 @@ export default function LoginPage() {
                 className="w-4 h-4"
               />
               <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                Log in with Google
+                Sign up with Google
               </div>
             </button>
           </div>
+
+          {/* Terms and Privacy */}
+          <div className="z-10 text-center flex flex-wrap justify-center items-center gap-1">
+            <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
+              By continuing you agree to
+            </div>
+            <Link href="/terms" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+              Terms of Service
+            </Link>
+            <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
+              and
+            </div>
+            <Link href="/privacy" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+              Privacy Policy.
+            </Link>
+          </div>
         </div>
 
-        {/* Sign up link */}
+        {/* Login link */}
         <div className="py-3 flex justify-center items-baseline gap-1">
           <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
-            Don't have an account?
+            Already have an account?
           </div>
-          <Link href="/signup" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
-            Sign up
+          <Link href="/login" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+            Log in
           </Link>
         </div>
       </div>
-
-      
     </div>
   );
-}
+} 
