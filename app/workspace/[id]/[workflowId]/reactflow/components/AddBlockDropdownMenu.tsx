@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
 import { BlockEndType } from '@/types/block';
+import CreateParallelPathModal from './CreateParallelPathModal';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -20,6 +21,8 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   workflowId,
   onPathsUpdate,
 }) => {
+  const [showParallelPathModal, setShowParallelPathModal] = useState(false);
+
   const menuItems = [
     {
       type: 'STEP' as const,
@@ -41,35 +44,38 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
-        console.log(
-          'creating parallel paths: ',
-          dropdownDatas.path,
-          dropdownDatas.position
-        );
-        try {
-          await createParallelPaths(dropdownDatas.path, dropdownDatas.position);
-          console.log('parallel paths created');
-
-          // Fetch updated paths data
-          const pathsResponse = await fetch(
-            `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-          );
-          if (pathsResponse.ok) {
-            const pathsData = await pathsResponse.json();
-            onPathsUpdate(pathsData.paths);
-          }
-
-          onClose();
-        } catch (error) {
-          console.error('Error creating parallel paths:', error);
-        }
+        setShowParallelPathModal(true);
       } else {
-        console.log('creating block');
         onSelect(type as 'STEP' | 'PATH' | 'DELAY');
       }
     },
-    [dropdownDatas, onClose, onSelect, workspaceId, workflowId, onPathsUpdate]
+    [onSelect]
   );
+
+  const handleCreateParallelPaths = async (data: {
+    paths_to_create: string[];
+    path_to_move: number;
+  }) => {
+    try {
+      await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
+        paths_to_create: data.paths_to_create,
+        path_to_move: data.path_to_move,
+      });
+
+      // Fetch updated paths data
+      const pathsResponse = await fetch(
+        `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+      );
+      if (pathsResponse.ok) {
+        const pathsData = await pathsResponse.json();
+        onPathsUpdate(pathsData.paths);
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Error creating parallel paths:', error);
+    }
+  };
 
   const block = dropdownDatas.path.blocks.find(
     (b) => b.position === dropdownDatas.position
@@ -130,6 +136,15 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
           </button>
         )}
       </div>
+
+      {showParallelPathModal && (
+        <CreateParallelPathModal
+          onClose={() => setShowParallelPathModal(false)}
+          onConfirm={handleCreateParallelPaths}
+          path={dropdownDatas.path}
+          position={dropdownDatas.position}
+        />
+      )}
     </>
   );
 };
