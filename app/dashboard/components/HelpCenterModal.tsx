@@ -1,7 +1,7 @@
 // components/HelpCenterModal.tsx
-import Head from 'next/head';
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
+import { useColors } from '@/app/theme/hooks';
 
 interface HelpCenterModalProps {
   onClose: () => void;
@@ -12,6 +12,8 @@ export default function HelpCenterModal({
   onClose,
   user,
 }: HelpCenterModalProps) {
+  const colors = useColors();
+
   const handleRoadmapClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (user) {
@@ -21,19 +23,36 @@ export default function HelpCenterModal({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
-      <Head>
-        <title>Help Center</title>
-        <meta name="description" content="Help center modal" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      <div className="relative z-10 w-[480px] h-[304px] bg-white rounded-xl shadow-lg flex flex-col items-center overflow-hidden">
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
+      </div>
+
+      {/* Modal content */}
+      <div 
+        className="relative z-10 w-[480px] rounded-xl shadow-lg flex flex-col items-center overflow-hidden"
+        style={{ backgroundColor: colors['bg-primary'] }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-4 rounded-md transition duration-300 hover:bg-[#F9FAFB]"
+          className="absolute top-4 right-4 p-4 rounded-md transition duration-300"
+          style={{ 
+            '--hover-bg': colors['bg-quaternary'],
+          } as React.CSSProperties}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
@@ -42,10 +61,13 @@ export default function HelpCenterModal({
           />
         </button>
 
-        <div className="self-stretch h-24 flex flex-col items-center">
+        <div className="self-stretch flex flex-col items-center">
           <div className="self-stretch px-6 pt-6 flex items-start gap-4">
             {/* Support Icon */}
-            <div className=" p-3 bg-[#f2f4f7] rounded-full flex justify-center items-center overflow-hidden">
+            <div 
+              className="p-3 rounded-full flex justify-center items-center overflow-hidden"
+              style={{ backgroundColor: colors['bg-secondary'] }}
+            >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`}
                 alt="Support Icon"
@@ -55,10 +77,16 @@ export default function HelpCenterModal({
 
             {/* Title & Subtitle */}
             <div className="w-[432px] flex flex-col justify-center gap-1">
-              <div className="text-[#101828] text-lg font-semibold leading-7">
+              <div 
+                className="text-lg font-semibold leading-7"
+                style={{ color: colors['text-primary'] }}
+              >
                 Help center
               </div>
-              <div className="text-[#475467] text-sm font-normal leading-tight">
+              <div 
+                className="text-sm font-normal leading-tight"
+                style={{ color: colors['text-secondary'] }}
+              >
                 Everything you need
               </div>
             </div>
@@ -66,11 +94,20 @@ export default function HelpCenterModal({
         </div>
 
         {/* Options List */}
-        <div className="self-stretch h-52 p-6 flex flex-col gap-5">
+        <div className="self-stretch p-6 flex flex-col gap-5">
           {/* Reach out to us */}
           <a
             href="mailto:contact@process-flow.io"
-            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
+            className="self-stretch px-1.5 py-px flex items-center rounded-lg transition-colors duration-200"
+            style={{ 
+              '--hover-bg': colors['bg-quaternary'],
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
@@ -82,11 +119,17 @@ export default function HelpCenterModal({
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-[#344054] text-sm font-medium leading-tight">
+                <div 
+                  className="text-sm font-medium leading-tight"
+                  style={{ color: colors['text-secondary'] }}
+                >
                   Reach out to us
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+              <div 
+                className="text-xs font-normal leading-[18px]"
+                style={{ color: colors['text-secondary'] }}
+              >
                 ⌘S
               </div>
             </div>
@@ -96,7 +139,16 @@ export default function HelpCenterModal({
           <a
             href="#"
             onClick={handleRoadmapClick}
-            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
+            className="self-stretch px-1.5 py-px flex items-center rounded-lg transition-colors duration-200"
+            style={{ 
+              '--hover-bg': colors['bg-quaternary'],
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
@@ -108,11 +160,17 @@ export default function HelpCenterModal({
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-[#344054] text-sm font-medium leading-tight">
+                <div 
+                  className="text-sm font-medium leading-tight"
+                  style={{ color: colors['text-secondary'] }}
+                >
                   Take a look at our roadmap
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+              <div 
+                className="text-xs font-normal leading-[18px]"
+                style={{ color: colors['text-secondary'] }}
+              >
                 ⌘D
               </div>
             </div>
@@ -123,7 +181,16 @@ export default function HelpCenterModal({
             href="https://join.slack.com/t/processflowcommunity/shared_invite/zt-2z10aormq-aFsRf5mw1~~Y~ryFXgrwog"
             target="_blank"
             rel="noopener noreferrer"
-            className="self-stretch px-1.5 py-px flex items-center transition duration-300 hover:bg-[#F9FAFB] rounded-lg"
+            className="self-stretch px-1.5 py-px flex items-center rounded-lg transition-colors duration-200"
+            style={{ 
+              '--hover-bg': colors['bg-quaternary'],
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
               <div className="flex-grow flex items-center gap-2">
@@ -135,11 +202,17 @@ export default function HelpCenterModal({
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-[#344054] text-sm font-medium leading-tight">
+                <div 
+                  className="text-sm font-medium leading-tight"
+                  style={{ color: colors['text-secondary'] }}
+                >
                   Join our Slack community
                 </div>
               </div>
-              <div className="text-[#667085] text-xs font-normal leading-[18px]">
+              <div 
+                className="text-xs font-normal leading-[18px]"
+                style={{ color: colors['text-secondary'] }}
+              >
                 ⌘X
               </div>
             </div>

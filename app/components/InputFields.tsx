@@ -1,9 +1,10 @@
 'use client';
 
-import { cn } from "@/lib/utils/cn";
-import DynamicIcon from "../../utils/DynamicIcon";
-import { useState, useMemo } from "react";
-import theme from "@/theme";
+import React, { useState } from 'react';
+import { useTheme } from '@/app/theme/hooks';
+import { InputTokens } from '@/app/theme/types';
+import { cn } from '@/lib/utils';
+import DynamicIcon from '../../utils/DynamicIcon';
 
 // =======================================================
 // Constant Styles
@@ -16,6 +17,11 @@ const BASE_STYLES = {
   outline: "none",
   border: "none",
   background: 'transparent',
+  padding: 0,
+  margin: 0,
+  boxSizing: 'border-box' as 'border-box',
+  fontFamily: 'Inter, sans-serif',
+  minWidth: 0, // Prevent input from overflowing its container
 };
 
 const SELECT_STYLE = {
@@ -99,8 +105,8 @@ const LEADING_TEXT_PREFIX_CONTAINER = {
   justifyContent: "flex-start",
   alignItems: "center",
   display: "flex",
-  background: theme.colors["Base/White"],
-  border: `1px solid ${theme.colors["Gray (light mode)/300"]}`,
+  background: 'white',
+  border: `1px solid #D0D5DD`,
 };
 
 const LEADING_TEXT_PREFIX_TEXT = {
@@ -119,11 +125,11 @@ const LEADING_TEXT_MAIN_INPUT_CONTAINER = {
   paddingRight: 12,
   paddingTop: 8,
   paddingBottom: 8,
-  background: theme.colors["Base/White"],
+  background: 'white',
   borderTopLeftRadius: 6,
   borderTopRightRadius: 6,
   overflow: "hidden",
-  border: `1px solid ${theme.colors["Gray (light mode)/300"]}`,
+  border: `1px solid #D0D5DD`,
   justifyContent: "flex-start",
   alignItems: "center",
   gap: 8,
@@ -157,6 +163,7 @@ interface InputFieldProps {
   size?: "small" | "medium";
   type?:
     | "default"
+    | "password"
     | "icon-leading"
     | "leading-dropdown"
     | "trailing-dropdown"
@@ -182,219 +189,61 @@ interface InputFieldProps {
   mode?: 'light' | 'dark';
 }
 
-// Add this near the top with other component definitions
-const Tooltip: React.FC<{ text: string; mode?: 'light' | 'dark' }> = ({ text, mode = 'light' }) => {
+const Tooltip: React.FC<{ text: string }> = ({ text }) => {
+  const { getCssVariable } = useTheme();
+  
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: 'calc(100% + 8px)',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      background: mode === 'dark' ? theme.colors["Gray (dark mode)/900"] : '#101828',
-      padding: '12px 16px',
-      borderRadius: 6,
-      width: '25ch',
-      boxShadow: mode === 'dark' 
-        ? '0px 4px 6px -2px rgba(0, 0, 0, 0.2)' 
-        : '0px 4px 6px -2px rgba(16, 24, 40, 0.05)',
-      color: mode === 'dark' ? theme.colors["Gray (dark mode)/100"] : 'white',
-      fontSize: 14,
-      fontFamily: 'Inter',
-      lineHeight: '20px',
-      zIndex: 50,
-      border: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
-    }}>
-      <div style={{
-        position: 'absolute',
-        bottom: -4,
-        left: '50%',
-        transform: 'translateX(-50%) rotate(45deg)',
-        width: 8,
-        height: 8,
-        background: mode === 'dark' ? theme.colors["Gray (dark mode)/900"] : '#101828',
-        borderRight: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
-        borderBottom: mode === 'dark' ? `1px solid ${theme.colors["Gray (dark mode)/800"]}` : 'none',
-      }} />
-      <div style={{ position: 'relative' }}>{text}</div>
+    <div className="absolute z-10 invisible group-hover:visible bg-white dark:bg-gray-800 text-sm text-gray-500 px-2 py-1 rounded-md shadow-sm max-w-xs"
+      style={{
+        backgroundColor: getCssVariable('input-bg'),
+        color: getCssVariable('input-hint'),
+        borderColor: getCssVariable('input-border'),
+        borderWidth: '1px',
+      }}>
+      {text}
     </div>
   );
 };
 
-// Modify the HelpIcon component
-const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string; mode?: 'light' | 'dark' }> = 
-  ({ destructive, tooltipText, mode = 'light' }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+const HelpIcon: React.FC<{ destructive?: boolean; tooltipText?: string }> = ({ destructive, tooltipText }) => {
+  const { getCssVariable } = useTheme();
+  
   return (
-    <div 
-      style={{ 
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-      }}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <g clipPath="url(#clip0_helpIcon)">
-          <path
-            d="M6.05992 5.99998C6.21665 5.55442 6.52602 5.17872 6.93322 4.9394C7.34042 4.70009 7.81918 4.61261 8.2847 4.69245C8.75022 4.7723 9.17246 5.01433 9.47664 5.37567C9.78081 5.737 9.94729 6.19433 9.94659 6.66665C9.94659 7.99998 7.94659 8.66665 7.94659 8.66665M7.99992 11.3333H8.00659M14.6666 7.99998C14.6666 11.6819 11.6818 14.6666 7.99992 14.6666C4.31802 14.6666 1.33325 11.6819 1.33325 7.99998C1.33325 4.31808 4.31802 1.33331 7.99992 1.33331C11.6818 1.33331 14.6666 4.31808 14.6666 7.99998Z"
-            stroke={destructive ? "#FF0000" : mode === 'dark' ? "#98A2B3" : "#98A2B3"}
-            strokeWidth="1.33333"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
-        <defs>
-          <clipPath id="clip0_helpIcon">
-            <rect width="16" height="16" fill="white" />
-          </clipPath>
-        </defs>
-      </svg>
-      {showTooltip && (
-        <Tooltip 
-          text={tooltipText || "Tooltips are used to describe or identify an element. In most scenarios, tooltips help the user understand meaning, function or alt-text."} 
-          mode={mode}
-        />
-      )}
-    </div>
-  );
-};
-
-// Add this after the HelpIcon component
-const ErrorIcon: React.FC<{ tooltipText?: string; mode?: 'light' | 'dark' }> = 
-  ({ tooltipText, mode = 'light' }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  return (
-    <div 
-      style={{ 
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-      }}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
+    <div className="group relative inline-block ml-1">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 5.33333V8M8 10.6667H8.00667M14.6667 8C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.31811 14.6667 1.33334 11.6819 1.33334 8C1.33334 4.31811 4.31811 1.33334 8 1.33334C11.6819 1.33334 14.6667 4.31811 14.6667 8Z" 
-          stroke="#F04438" 
-          strokeWidth="1.33333" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        />
+        <path d="M8.00004 14.6666C11.6819 14.6666 14.6667 11.6819 14.6667 7.99998C14.6667 4.31808 11.6819 1.33331 8.00004 1.33331C4.31814 1.33331 1.33337 4.31808 1.33337 7.99998C1.33337 11.6819 4.31814 14.6666 8.00004 14.6666Z" stroke={destructive ? getCssVariable('input-destructive-icon') : getCssVariable('input-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8 10.6667V8" stroke={destructive ? getCssVariable('input-destructive-icon') : getCssVariable('input-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8 5.33331H8.00667" stroke={destructive ? getCssVariable('input-destructive-icon') : getCssVariable('input-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
-      {showTooltip && (
-        <Tooltip 
-          text={tooltipText || "This field contains an error"} 
-          mode={mode}
-        />
-      )}
+      {tooltipText && <Tooltip text={tooltipText} />}
     </div>
   );
 };
 
-// Define variant styles with light and dark mode
-const getVariantStyles = (isFocused: boolean, destructive: boolean, mode: 'light' | 'dark') => ({
-  default: {
-    light: {
-      background: theme.colors["Base/White"],
-      border: `1px solid ${
-        destructive 
-          ? theme.colors['Error/300']
-          : isFocused 
-            ? theme.colors['Brand/600']
-            : theme.colors['Gray (light mode)/300']
-      }`,
-      boxShadow: isFocused
-        ? destructive
-          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
-          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
-        : '0px 1px 2px rgba(16, 24, 40, 0.05)',
-      color: theme.colors['Gray (light mode)/600'],
-    },
-    dark: {
-      background: theme.colors["Gray (dark mode)/950"],
-      border: `1px solid ${
-        destructive 
-          ? theme.colors['Error/300']
-          : isFocused 
-            ? theme.colors['Brand/600']
-            : theme.colors['Gray (dark mode)/700']
-      }`,
-      boxShadow: isFocused
-        ? destructive
-          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
-          : '0px 0px 0px 4px rgba(127, 86, 217, 0.12)'
-        : 'none',
-      color: theme.colors["Gray (dark mode)/50"],
-    }
-  },
-  label: {
-    light: {
-      color: theme.colors["Gray (light mode)/700"],
-    },
-    dark: {
-      color: theme.colors["Gray (dark mode)/300"],
-    }
-  },
-  hint: {
-    light: {
-      color: theme.colors["Gray (light mode)/600"],
-    },
-    dark: {
-      color: theme.colors["Gray (dark mode)/400"],
-    }
-  },
-  error: {
-    light: {
-      color: theme.colors["Error/600"],
-    },
-    dark: {
-      color: '#F97066',
-    }
-  },
-  prefix: {
-    light: {
-      background: theme.colors["Base/White"],
-      color: theme.colors["Gray (light mode)/900"],
-      borderColor: theme.colors["Gray (light mode)/300"],
-    },
-    dark: {
-      background: theme.colors["Gray (dark mode)/950"],
-      color: theme.colors["Gray (dark mode)/50"],
-      borderColor: theme.colors["Gray (dark mode)/700"],
-    }
-  },
-  placeholder: {
-    light: {
-      color: theme.colors["Gray (light mode)/500"],
-    },
-    dark: {
-      color: theme.colors["Gray (dark mode)/400"],
-    }
-  },
-  asterisk: {
-    light: {
-      color: theme.colors["Brand/600"],
-    },
-    dark: {
-      color: theme.colors["Brand/400"],
-    }
-  },
-  dropdown: {
-    light: {
-      chevronColor: theme.colors["Gray (light mode)/500"],
-      textColor: theme.colors["Gray (light mode)/900"],
-      background: theme.colors["Base/White"],
-    },
-    dark: {
-      chevronColor: theme.colors["Gray (dark mode)/400"],
-      textColor: theme.colors["Gray (dark mode)/50"],
-      background: theme.colors["Gray (dark mode)/950"],
-    }
+const ErrorIcon: React.FC<{ tooltipText?: string }> = ({ tooltipText }) => {
+  const { getCssVariable } = useTheme();
+  
+  return (
+    <div className="group relative inline-block ml-1">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.00004 14.6666C11.6819 14.6666 14.6667 11.6819 14.6667 7.99998C14.6667 4.31808 11.6819 1.33331 8.00004 1.33331C4.31814 1.33331 1.33337 4.31808 1.33337 7.99998C1.33337 11.6819 4.31814 14.6666 8.00004 14.6666Z" stroke={getCssVariable('input-destructive-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8 5.33331V7.99998" stroke={getCssVariable('input-destructive-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8 10.6667H8.00667" stroke={getCssVariable('input-destructive-icon')} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      {tooltipText && <Tooltip text={tooltipText} />}
+    </div>
+  );
+};
+
+const getInputToken = (state: 'normal' | 'hover' | 'focus', type: 'bg' | 'fg' | 'border', destructive: boolean = false, disabled: boolean = false): keyof InputTokens => {
+  if (disabled) {
+    return `input-disabled-${type}` as keyof InputTokens;
   }
-});
+  
+  const prefix = destructive ? 'input-destructive-' : 'input-';
+  const suffix = state === 'normal' ? '' : `-${state}`;
+  return `${prefix}${type}${suffix}` as keyof InputTokens;
+};
 
 // =======================================================
 // Main Component
@@ -419,112 +268,79 @@ const InputField: React.FC<InputFieldProps> = ({
   mode = 'light',
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [hasCopied, setHasCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { getCssVariable } = useTheme();
 
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
 
-  const styles = getVariantStyles(isFocused, destructive, mode);
-
-  const inputStyle = useMemo(() => ({
-    ...BASE_STYLES,
-    '::placeholder': {
-      color: mode === 'light' 
-        ? 'text-lightMode-text-quaternary'
-        : 'text-darkMode-text-quaternary',
-    },
-    color: mode === 'light'
-      ? theme.colors["Gray (light mode)/900"]
-      : theme.colors["Gray (dark mode)/50"],
-  }), [mode]);
-
-  // Update the input container styles to remove duplicates
-  const inputContainerStyle = useMemo(
-    () => ({
-      flex: 1,
-      display: "flex",
-      alignItems: "center",
-      padding: '8px 12px',
-      background: mode === 'light' 
-        ? theme.colors["Base/White"]
-        : theme.colors["Gray (dark mode)/950"],
-      borderLeft: '1px solid #D0D5DD',
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
-      zIndex: 1,
-    }),
-    [mode]
-  );
-
-  // Consolidate focus styles to avoid duplicates
-  const focusStyles = useMemo(
-    () => ({
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 8,
-      padding: '8px 12px',
-      background: mode === 'light' 
-        ? theme.colors["Base/White"] 
-        : theme.colors["Gray (dark mode)/950"],
-      borderRadius: 6,
-      border: `1px solid ${
-        destructive 
-          ? theme.colors['Error/300']
-          : isFocused 
-            ? theme.colors['Brand/600']
-            : mode === 'light' 
-              ? theme.colors['Gray (light mode)/300']
-              : theme.colors['Gray (dark mode)/700']
-      }`,
-      boxShadow: isFocused
-        ? destructive
-          ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
-          : "0px 0px 0px 4px rgba(78,107,215,0.12)"
-        : mode === 'light' 
-          ? '0px 1px 2px rgba(16, 24, 40, 0.05)'
-          : 'none',
-      transition: "border-color 0.2s, box-shadow 0.2s",
-    }),
-    [isFocused, destructive, mode]
-  );
-
-  const handleCopy = () => {
-    if (value) {
-      navigator.clipboard.writeText(value);
-      setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 2000); // Reset after 2 seconds
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onChange) {
+      onChange(e.target.value);
     }
   };
 
-  // Update label styles
-  const labelStyle = {
-    ...LEADING_TEXT_LABEL,
-    ...styles.label[mode],
+  const baseStyles = {
+    backgroundColor: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+    color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+    borderColor: getCssVariable(getInputToken('normal', 'border', destructive, disabled)),
   };
 
-  // Update hint text styles
-  const hintStyle = {
-    ...LEADING_TEXT_HINT,
-    ...styles.hint[mode],
+  const hoverStyles = {
+    backgroundColor: getCssVariable(getInputToken('hover', 'bg', destructive, disabled)),
+    color: getCssVariable(getInputToken('hover', 'fg', destructive, disabled)),
+    borderColor: getCssVariable(getInputToken('hover', 'border', destructive, disabled)),
   };
 
-  // Update error message styles
-  const errorStyle = {
-    color: mode === 'light' 
-      ? theme.colors["Error/600"]
-      : '#F97066',  // Using the same error color as the border in dark mode
-    fontSize: 14,
-    fontFamily: 'Inter',
-    fontWeight: 400,
-    lineHeight: '20px',
-    marginTop: 6,
+  const focusStyles = {
+    backgroundColor: getCssVariable(getInputToken('focus', 'bg', destructive, disabled)),
+    color: getCssVariable(getInputToken('focus', 'fg', destructive, disabled)),
+    borderColor: getCssVariable(getInputToken('focus', 'border', destructive, disabled)),
   };
 
-  // Update prefix container styles for dropdown/leading-text variants
-  const prefixContainerStyle = {
-    ...LEADING_TEXT_PREFIX_CONTAINER,
-    ...styles.prefix[mode],
+  const labelStyles = {
+    color: destructive 
+      ? getCssVariable('input-destructive-label')
+      : disabled
+      ? getCssVariable('input-disabled-label')
+      : getCssVariable('input-label'),
+  };
+
+  const hintStyles = {
+    color: destructive
+      ? getCssVariable('input-destructive-hint')
+      : getCssVariable('input-hint'),
+  };
+
+  const iconStyles = {
+    color: destructive
+      ? getCssVariable('input-destructive-icon')
+      : disabled
+      ? getCssVariable('input-disabled-fg')
+      : getCssVariable('input-icon'),
+  };
+
+  const prefixStyles = {
+    color: getCssVariable('input-prefix'),
+  };
+
+  const inputStyle = {
+    ...BASE_STYLES,
+    '::placeholder': {
+      color: getCssVariable(disabled ? 'input-disabled-placeholder' : 'input-placeholder'),
+    },
+  };
+
+  const inputContainerStyle: React.CSSProperties = {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    padding: '8px 12px',
+    background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+    borderLeft: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+    zIndex: 1,
   };
 
   const renderInputContent = () => {
@@ -532,29 +348,40 @@ const InputField: React.FC<InputFieldProps> = ({
       case "icon-leading":
       case "default":
         return (
-          <div style={focusStyles}>
+          <>
             {iconUrl && (
               <div style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}>
-                <DynamicIcon url={iconUrl} color={iconColor} size={16} />
+                <DynamicIcon url={iconUrl} color={iconStyles.color} size={16} />
               </div>
             )}
             <input
               type="text"
               placeholder={placeholder}
               value={value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={handleChange}
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                minWidth: 0,
+                flex: '1 1 auto',
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+              }}
             />
-            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
-            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
-          </div>
+            {destructive && <ErrorIcon tooltipText={errorMessage} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+          </>
         );
 
       case "leading-dropdown":
@@ -572,11 +399,9 @@ const InputField: React.FC<InputFieldProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 12px',
-                background: mode === 'dark' ? '#0C111D' : '#F9FAFB',
-                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderLeft: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderRight: '0px solid transparent',
+                background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+                border: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+                borderRight: 'none',
                 borderTopLeftRadius: 6,
                 borderBottomLeftRadius: 6,
                 position: 'relative',
@@ -591,7 +416,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         border: 'none',
                         outline: 'none',
                         fontSize: 16,
-                        color: mode === 'dark' ? '#CECFD2' : '#344054',
+                        color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
                         cursor: 'pointer',
                         appearance: 'none',
                         fontFamily: 'Inter',
@@ -612,24 +437,30 @@ const InputField: React.FC<InputFieldProps> = ({
                       pointerEvents: 'none'
                     }}>
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M5 7.5L10 12.5L15 7.5" stroke="#667085" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   </>
                 ) : (
                   <div style={{
-                    color: mode === 'dark' ? '#94969C' : '#475467',
+                    color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
                     fontSize: 16,
                     fontFamily: 'Inter',
                     lineHeight: '24px',
                   }}>
-                    http://
+                    app.process-flow.io/
                   </div>
                 )}
               </div>
               <div style={{
                 ...focusStyles,
-                borderLeft: '1px solid #D0D5DD',
+                border: `1px solid ${
+                  destructive 
+                    ? getCssVariable('input-destructive-border')
+                    : isFocused 
+                      ? getCssVariable(getInputToken('focus', 'border', destructive, disabled))
+                      : getCssVariable(getInputToken('normal', 'border', destructive, disabled))
+                }`,
                 borderTopLeftRadius: 0,
                 borderBottomLeftRadius: 0,
                 zIndex: 1,
@@ -639,14 +470,23 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={type === "leading-text" ? "www.example.com" : placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
-                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
-                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
+                {destructive && <ErrorIcon tooltipText={errorMessage} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
               </div>
             </div>
           </div>
@@ -673,23 +513,32 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
-                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
-                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
+                {destructive && <ErrorIcon tooltipText={errorMessage} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
               </div>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 12px',
-                background: mode === 'dark' ? '#0C111D' : '#F9FAFB',
-                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+                borderTop: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+                borderBottom: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+                borderRight: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
                 borderLeft: '0px solid transparent',
                 borderTopRightRadius: 6,
                 borderBottomRightRadius: 6,
@@ -703,7 +552,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     border: 'none',
                     outline: 'none',
                     fontSize: 16,
-                    color: mode === 'dark' ? '#CECFD2' : '#344054',
+                    color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
                     cursor: 'pointer',
                     appearance: 'none',
                     fontFamily: 'Inter',
@@ -726,7 +575,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path 
                       d="M5 7.5L10 12.5L15 7.5" 
-                      stroke={mode === 'dark' ? '#94969C' : '#667085'} 
+                      stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} 
                       strokeWidth="1.66667" 
                       strokeLinecap="round" 
                       strokeLinejoin="round"
@@ -766,9 +615,7 @@ const InputField: React.FC<InputFieldProps> = ({
                   <div
                     key={index}
                     style={{
-                      background: mode === 'dark' 
-                        ? theme.colors["Gray (dark mode)/800"]
-                        : theme.colors["Gray (light mode)/100"],
+                      background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
                       borderRadius: 6,
                       padding: "2px 6px",
                       display: "flex",
@@ -777,9 +624,7 @@ const InputField: React.FC<InputFieldProps> = ({
                       flexShrink: 0,
                       height: 24,
                       border: `1px solid ${
-                        mode === 'dark'
-                          ? theme.colors["Gray (dark mode)/700"]
-                          : theme.colors["Gray (light mode)/200"]
+                        getCssVariable(getInputToken('normal', 'border', destructive, disabled))
                       }`,
                     }}
                   >
@@ -798,9 +643,7 @@ const InputField: React.FC<InputFieldProps> = ({
                         alt=""
                       />
                       <span style={{
-                        color: mode === 'dark'
-                          ? theme.colors["Gray (dark mode)/50"]
-                          : theme.colors["Gray (light mode)/700"],
+                        color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
                         fontSize: 14,
                         fontFamily: "Inter",
                         fontWeight: "500",
@@ -809,7 +652,9 @@ const InputField: React.FC<InputFieldProps> = ({
                       </span>
                     </div>
                     <button
-                      onClick={() => {
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent event from bubbling up
                         const tags = value.split(",").filter((t) => t.trim() !== "");
                         tags.splice(index, 1);
                         onChange?.(tags.join(","));
@@ -826,10 +671,7 @@ const InputField: React.FC<InputFieldProps> = ({
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                         <path 
                           d="M9 3L3 9M3 3L9 9" 
-                          stroke={mode === 'dark' 
-                            ? theme.colors["Gray (dark mode)/400"]
-                            : theme.colors["Gray (light mode)/400"]
-                          } 
+                          stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} 
                           strokeWidth="1.5" 
                           strokeLinecap="round" 
                           strokeLinejoin="round"
@@ -846,9 +688,15 @@ const InputField: React.FC<InputFieldProps> = ({
                 onBlur={handleBlur}
                 style={{
                   ...inputStyle,
-                  color: mode === 'dark'
-                    ? theme.colors["Gray (dark mode)/50"]
-                    : theme.colors["Gray (light mode)/900"],
+                  width: '100%',
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: "24px",
+                  outline: "none",
+                  border: "none",
+                  background: 'transparent',
+                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                  minWidth: '20px', // Ensure there's always space to type
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === ",") {
@@ -898,122 +746,238 @@ const InputField: React.FC<InputFieldProps> = ({
                   type="text"
                   placeholder={placeholder}
                   value={value}
-                  onChange={(e) => onChange?.(e.target.value)}
+                  onChange={handleChange}
                   disabled={disabled}
                   onFocus={handleFocus}
                   onBlur={handleBlur}
-                  style={inputStyle}
+                  style={{
+                    ...inputStyle,
+                    width: '100%',
+                    flex: 1,
+                    fontSize: 16,
+                    lineHeight: "24px",
+                    outline: "none",
+                    border: "none",
+                    background: 'transparent'
+                  }}
                 />
-                {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
-                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
+                {destructive && <ErrorIcon tooltipText={errorMessage} />}
+                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
               </div>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 14px',
-                background: mode === 'dark' ? '#0C111D' : 'white',
-                borderTop: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderBottom: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
-                borderRight: `1px solid ${mode === 'dark' ? '#333741' : '#D0D5DD'}`,
+                background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+                borderTop: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+                borderBottom: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
+                borderRight: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
                 borderTopRightRadius: 6,
                 borderBottomRightRadius: 6,
                 position: 'relative',
                 minWidth: 'fit-content',
                 cursor: value ? 'pointer' : 'not-allowed',
                 userSelect: 'none',
-                color: mode === 'dark' ? '#E4E4E7' : '#344054',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
                 fontSize: 14,
                 fontFamily: 'Inter',
                 fontWeight: 500,
                 zIndex: 1,
                 opacity: value ? 1 : 0.5,
               }}
-              onClick={handleCopy}
+              onClick={() => {
+                if (value) {
+                  navigator.clipboard.writeText(value);
+                }
+              }}
               >
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                 }}>
-                  {hasCopied ? (
+                  {value && (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3333 6H7.33333C6.59695 6 6 6.59695 6 7.33333V13.3333C6 14.0697 6.59695 14.6667 7.33333 14.6667H13.3333C14.0697 14.6667 14.6667 14.0697 14.6667 13.3333V7.33333C14.6667 6.59695 14.0697 6 13.3333 6Z" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M3.33333 10H2.66667C2.31305 10 1.97391 9.85953 1.72386 9.60948C1.47381 9.35943 1.33334 9.02029 1.33334 8.66667V2.66667C1.33334 2.31305 1.47381 1.97391 1.72386 1.72386C1.97391 1.47381 2.31305 1.33334 2.66667 1.33334H8.66667C9.02029 1.33334 9.35943 1.47381 9.60948 1.72386C9.85953 1.97391 10 2.31305 10 2.66667V3.33334" stroke={mode === 'dark' ? '#E4E4E7' : '#344054'} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
-                  {hasCopied ? 'Copied!' : 'Copy'}
+                  {value ? 'Copied!' : 'Copy'}
                 </div>
               </div>
             </div>
           </div>
         );
 
+      case "password":
+        return (
+          <>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`}
+                color={iconStyles.color}
+                size={16}
+              />
+            </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              disabled={disabled}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                minWidth: 0,
+                flex: '1 1 auto',
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <DynamicIcon 
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}
+                color={iconStyles.color}
+                size={16}
+              />
+            </button>
+            {destructive && <ErrorIcon tooltipText={errorMessage} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+          </>
+        );
+
       default:
         return (
-          <div style={focusStyles}>
+          <>
             {iconUrl && (
               <div style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}>
-                <DynamicIcon url={iconUrl} color={iconColor} size={20} />
+                <DynamicIcon url={iconUrl} color={iconStyles.color} size={20} />
               </div>
             )}
             <input
               type="text"
               placeholder={placeholder}
               value={value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={handleChange}
               disabled={disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                width: '100%',
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+              }}
             />
-            {destructive && <ErrorIcon tooltipText={errorMessage} mode={mode} />}
-            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} mode={mode} />}
-          </div>
+            {destructive && <ErrorIcon tooltipText={errorMessage} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+          </>
         );
     }
   };
 
   return (
-    <div style={DEFAULT_CONTAINER_STYLE}>
+    <div className="flex flex-col gap-1.5 w-full">
       {label && (
         <div style={{ display: "inline-flex", flexDirection: "row", gap: 2 }}>
           <div 
             className={cn("font-medium text-sm")}
-            style={styles.label[mode]}
+            style={labelStyles}
           >
             {label}
           </div>
           {required && (
             <div 
               className={cn("text-sm font-medium")}
-              style={styles.asterisk[mode]}
+              style={{ color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)) }}
             >
               *
             </div>
           )}
         </div>
       )}
-      {renderInputContent()}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '8px 12px',
+        width: '100%',
+        background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
+        borderRadius: 6,
+        border: `1px solid ${
+          destructive 
+            ? getCssVariable('input-destructive-border')
+            : isFocused 
+              ? getCssVariable(getInputToken('focus', 'border', destructive, disabled))
+              : getCssVariable(getInputToken('normal', 'border', destructive, disabled))
+        }`,
+        boxShadow: isFocused
+          ? destructive
+            ? '0px 0px 0px 4px rgba(253, 139, 139, 0.12)'
+            : "0px 0px 0px 4px rgba(78,107,215,0.12)"
+          : '0px 1px 2px rgba(16, 24, 40, 0.05)',
+        transition: "border-color 0.2s, box-shadow 0.2s",
+      } as React.CSSProperties}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 8,
+          width: '100%',
+          position: 'relative'
+        }}>
+          {renderInputContent()}
+        </div>
+      </div>
       {hintText && (
         <div
           className={cn(
             "text-sm leading-5",
             destructive ? "text-red-500" : "text-gray-600"
           )}
+          style={hintStyles}
         >
           {hintText}
         </div>
       )}
       {errorMessage && (
-        <div style={errorStyle}>
+        <div style={{
+          color: getCssVariable('input-destructive-fg'),
+          fontSize: 14,
+          fontFamily: 'Inter',
+          fontWeight: 400,
+          lineHeight: '20px',
+          marginTop: 6,
+        }}>
           {errorMessage}
         </div>
       )}

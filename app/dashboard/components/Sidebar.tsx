@@ -9,8 +9,11 @@ import TabButton from '@/app/components/TabButton';
 import { cache } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import Image from 'next/image';
-import { useTheme } from '@/app/context/ThemeContext';
+import { useTheme, useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import CreateWorkspaceModal from './CreateWorkspaceModal';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -27,6 +30,10 @@ interface SidebarProps {
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
   selectedFolder?: Folder;
+  onLogout: () => void;
+  isSettingsView: boolean;
+  setIsSettingsView: (isSettingsView: boolean) => void;
+  setWorkspaces: (workspaces: Workspace[]) => void;
 }
 
 export default function Sidebar({
@@ -44,8 +51,13 @@ export default function Sidebar({
   onOpenUserSettings,
   onOpenHelpCenter,
   selectedFolder,
+  onLogout,
+  isSettingsView,
+  setIsSettingsView,
+  setWorkspaces,
 }: SidebarProps) {
-  const { mode } = useTheme();
+  const { currentTheme } = useTheme();
+  const colors = useColors();
   const [activeTabId, setActiveTabId] = useState<string | null>('flows');
   const [expandedFolders, setExpandedFolders] = useState<Set<number>>(new Set());
   const folderContainerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +65,9 @@ export default function Sidebar({
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
     setIsResizing(true);
@@ -75,6 +90,9 @@ export default function Sidebar({
   }, [sidebarWidth]);
 
   const handleTabClick = (tabId: string | null, folder?: Folder) => {
+    if (isSettingsView && (tabId === 'flows' || tabId?.startsWith('folder-'))) {
+      setIsSettingsView(false);
+    }
     setActiveTabId(tabId);
     if (folder) {
       onSelectFolder(folder);
@@ -102,6 +120,85 @@ export default function Sidebar({
     setDropdownVisible(false);
   };
 
+  const handleOpenCreateWorkspaceModal = () => {
+    setShowCreateWorkspaceModal(true);
+  };
+
+  const handleCreateWorkspace = async (workspaceData: {
+    name: string;
+    logo?: File;
+    url: string;
+  }) => {
+    try {
+      setIsLoading(true);
+      // Format the URL slug to be URL-friendly
+      const urlSlug = workspaceData.url
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+      let response;
+      
+      // If there's a logo, we need to use FormData
+      if (workspaceData.logo) {
+        const formData = new FormData();
+        formData.append('logo', workspaceData.logo);
+        formData.append('data', JSON.stringify({
+          name: workspaceData.name,
+          slug: urlSlug
+        }));
+        
+        response = await fetch('/api/workspace/create', {
+          method: 'POST',
+          body: formData,
+        });
+      } else {
+        // Otherwise, use JSON
+        response = await fetch('/api/workspace/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: workspaceData.name,
+            slug: urlSlug
+          }),
+        });
+      }
+      
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Error creating workspace:', error);
+        toast.error('Failed to create workspace: ' + (error.error || 'Unknown error'));
+        setIsLoading(false);
+        return;
+      }
+      
+      const result = await response.json();
+      
+      // Add the new workspace to local state
+      if (workspaces && result.workspace) {
+        setWorkspaces([...workspaces, result.workspace]);
+      }
+      
+      // Close the modal
+      setShowCreateWorkspaceModal(false);
+      
+      // Display success message
+      toast.success('Workspace created successfully!');
+      
+      // Navigate to the new workspace
+      if (result.workspace && result.workspace.id) {
+        router.push(`/workspace/${result.workspace.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating workspace:', error);
+      toast.error('An error occurred while creating your workspace');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderFolderWithSubfolders = (folder: Folder) => {
     const isExpanded = expandedFolders.has(folder.id);
     const subfolders = activeWorkspace.folders.filter(
@@ -121,7 +218,7 @@ export default function Sidebar({
           icon={folder.emote ? '' : folderIcon}
           label={folder.name}
           emote={folder.emote}
-          isActive={activeTabId === `folder-${folder.id}`}
+          isActive={!isSettingsView && activeTabId === `folder-${folder.id}`}
           onClick={() => handleTabClick(`folder-${folder.id}`, folder)}
           isFolder={true}
           folder={folder}
@@ -142,175 +239,214 @@ export default function Sidebar({
     );
   };
 
+  const getHeaderStyles = () => {
+    const headerId = `workspace-header-${Math.random().toString(36).substr(2, 9)}`;
+    return {
+      id: headerId,
+      style: {
+        backgroundColor: colors['bg-primary'],
+      },
+      hoverStyle: `
+        #${headerId}:hover {
+          background-color: ${colors['bg-secondary']} !important;
+        }
+      `
+    };
+  };
+
+  const { id, style, hoverStyle } = getHeaderStyles();
+
   return (
-    <div 
-      ref={sidebarRef}
-      style={{ width: `${sidebarWidth}px` }}
-      className={`h-full border-r flex flex-col relative ${
-        mode === 'dark' 
-          ? 'bg-darkMode-bg-primary border-darkMode-border-primary' 
-          : 'bg-white border-[#e4e7ec]'
-      }`}
-    >
-      {/* Sidebar Header */}
-      <div className="h-[72px] w-full px-4 py-3 flex-col justify-start items-start inline-flex">
-        <div
-          onClick={toggleDropdown}
-          className="self-stretch px-3 py-2.5 cursor-pointer bg-white rounded-md hover:bg-gray-50 flex justify-between items-center overflow-hidden"
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex items-start gap-2.5">
-              <div className="flex justify-start items-start ">
+    <>
+      <style>{hoverStyle}</style>
+      <div 
+        ref={sidebarRef}
+        style={{ 
+          width: `${sidebarWidth}px`,
+          backgroundColor: colors['bg-primary'],
+          borderColor: colors['border-secondary']
+        }}
+        className="h-full border-r flex flex-col relative"
+      >
+        {/* Sidebar Header */}
+        <div className="h-[72px] w-full px-4 py-3 flex-col justify-start items-start inline-flex">
+          <div
+            id={id}
+            onClick={toggleDropdown}
+            style={style}
+            className="self-stretch px-3 py-2.5 cursor-pointer rounded-md flex justify-between items-center overflow-hidden transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <div className="relative w-8 h-8">
+                {activeWorkspace.icon_url && (
+                  <img
+                    src={activeWorkspace.icon_url}
+                    alt={activeWorkspace.name}
+                    className="w-8 h-8 rounded-lg object-cover absolute inset-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-medium absolute inset-0"
                   style={{
-                    backgroundColor:
-                      activeWorkspace.background_colour || '#4299E1',
+                    backgroundColor: activeWorkspace.background_colour || '#4299E1',
+                    display: 'flex',
+                    opacity: activeWorkspace.icon_url ? 0 : 1
                   }}
                 >
                   {activeWorkspace.name.charAt(0).toUpperCase()}
                 </div>
               </div>
-            </div>
-            {/* Display activeWorkspace name */}
-            <div className="relative flex flex-col px-0.5">
-              <div className="h-4 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
-                {activeWorkspace.name}
-              </div>
-            </div>
-            {dropdownVisible && (
-              <div 
-                className="fixed inset-0 z-10"
-                onClick={closeDropDown}
-              >
+              {/* Display activeWorkspace name */}
+              <div className="relative flex flex-col px-0.5">
                 <div 
-                  className="absolute top-14 left-4 mt-2"
-                  onClick={(e) => e.stopPropagation()}
+                  style={{ color: colors['text-primary'] }}
+                  className="h-4 text-sm font-medium font-['Inter'] leading-tight"
                 >
-                  <WorkspaceDropdownMenu
-                    userEmail={userEmail}
-                    workspaces={workspaces}
-                    activeWorkspace={activeWorkspace}
-                    setActiveWorkspace={setActiveWorkspace}
-                    onClose={closeDropDown}
-                  />
+                  {activeWorkspace.name}
                 </div>
               </div>
-            )}
+              {dropdownVisible && (
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={closeDropDown}
+                >
+                  <div 
+                    className="absolute top-14 left-4 mt-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <WorkspaceDropdownMenu
+                      userEmail={userEmail}
+                      workspaces={workspaces}
+                      activeWorkspace={activeWorkspace}
+                      setActiveWorkspace={setActiveWorkspace}
+                      onClose={closeDropDown}
+                      onOpenSettings={() => setIsSettingsView(true)}
+                      onLogout={onLogout}
+                      onOpenCreateWorkspaceModal={handleOpenCreateWorkspaceModal}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="relative w-5 h-5 overflow-hidden" />
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="self-stretch h-px border-t bg-[#e4e7ec] my-0" />
+        {/* Divider */}
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-t my-0" 
+        />
 
-      {/* "My Workflows" Button */}
-      <div className="px-4 p-2">
-        <TabButton
-          icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-icon.svg`}
-          label="My Flows"
-          isActive={activeTabId === 'flows'}
-          onClick={() => handleTabClick('flows')}
+        {/* "My Workflows" Button */}
+        <div className="px-4 p-2">
+          <TabButton
+            icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-icon.svg`}
+            label="My Flows"
+            isActive={!isSettingsView && activeTabId === 'flows'}
+            onClick={() => handleTabClick('flows')}
+          />
+        </div>
+
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-t my-0" 
+        />
+
+        {/* Folder section with proper scrolling */}
+        <div 
+          ref={folderContainerRef}
+          className="flex-grow overflow-y-auto"
+        >
+          {/* My folders header */}
+          <div className="w-full px-7 py-4 flex justify-between items-center">
+            <div 
+              style={{ color: colors['text-quaternary'] }}
+              className="text-xs font-normal leading-tight"
+            >
+              MY FOLDERS
+            </div>
+            <button
+              onClick={() => onCreateFolder()}
+              className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100"
+            >
+              <Image
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
+                alt="Add Folder"
+                width={20}
+                height={20}
+                className="w-5 h-5"
+                style={{ filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}` }}
+              />
+            </button>
+          </div>
+
+          {/* Folders container */}
+          <div className="px-4">
+            <div className="flex flex-col w-full">
+              {activeWorkspace?.folders
+                ?.filter((folder) => folder.parent_id === null)
+                .map((folder) => renderFolderWithSubfolders(folder))}
+            </div>
+          </div>
+        </div>
+
+        {/* Integrated Footer */}
+        <div 
+          style={{ 
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary']
+          }}
+          className="w-full p-4 flex-col justify-start items-center gap-3 inline-flex border-t"
+        >
+          <ButtonNormal
+            variant="secondary"
+            size="small"
+            className="w-full"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/send-01.svg`}
+            onClick={() => window.open(`https://tally.so/r/wkRej6?email=${encodeURIComponent(userEmail)}`, '_blank')}
+          >
+            Send a feedback
+          </ButtonNormal>
+          <div 
+            style={{ color: colors['text-tertiary'] }}
+            className="w-full justify-center items-center gap-2 inline-flex"
+          >
+            <div className="text-center text-sm font-normal font-['Inter'] leading-tight">
+              @ 2025 ProcessFlow, Inc.
+            </div>
+          </div>
+        </div>
+
+        {/* Add resize handle */}
+        <div
+          style={{ 
+            backgroundColor: isResizing ? colors['bg-secondary'] : 'transparent'
+          }}
+          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-colors hover:bg-opacity-80"
+          onMouseDown={startResizing}
         />
       </div>
 
-      <div className="self-stretch h-px border-t bg-[#e4e7ec] my-0" />
-
-      {/* Folder section with proper scrolling */}
-      <div 
-        ref={folderContainerRef}
-        className="flex-grow overflow-y-auto"
-      >
-        {/* My folders header */}
-        <div className="w-full px-7 py-4 flex justify-between items-center">
-          <div className="text-lightMode-text-quaternary text-xs font-normal leading-tight">
-            MY FOLDERS
-          </div>
-          <button
-            onClick={() => onCreateFolder()}
-            className="w-5 h-5 relative overflow-hidden  opacity-70 hover:opacity-100"
-          >
-            <Image
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-dark.svg`}
-              alt="Add Folder"
-              width={20}
-              height={20}
-              className="w-5 h-5"
+      {/* CreateWorkspaceModal overlay */}
+      {showCreateWorkspaceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div 
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+            className="absolute inset-0" 
+            onClick={() => setShowCreateWorkspaceModal(false)} 
+          />
+          <div className="relative z-50">
+            <CreateWorkspaceModal
+              onClose={() => setShowCreateWorkspaceModal(false)}
+              onCreateWorkspace={handleCreateWorkspace}
             />
-          </button>
-        </div>
-
-        {/* Folders container with fixed width and no shrinking */}
-        <div className="px-4">
-          <div className="flex flex-col w-full">
-            {activeWorkspace?.folders
-              ?.filter((folder) => folder.parent_id === null)
-              .map((folder) => renderFolderWithSubfolders(folder))}
           </div>
         </div>
-      </div>
-
-      {/* Integrated Footer */}
-      <div className="w-full p-4 border-t border-[#e4e7ec] flex-col justify-start items-center gap-3 inline-flex bg-white">
-        <div className="w-full self-stretch flex-col justify-start items-start gap-1 flex">
-          <div
-            onClick={onOpenHelpCenter}
-            className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
-          >
-            <div className="w-full grow shrink basis-0 justify-start items-center gap-3 flex">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`}
-                alt="Support Icon"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
-                Support
-              </div>
-            </div>
-          </div>
-          <div
-            onClick={onOpenUserSettings}
-            className="w-full self-stretch px-3 py-2 bg-white rounded-md justify-start items-center gap-2 inline-flex overflow-hidden hover:bg-[#F9FAFB] transition duration-300 cursor-pointer"
-          >
-            <div className="w-full grow shrink basis-0 justify-start items-center gap-3 flex">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
-                alt="Settings Icon"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-              />
-              <div className="text-lightMode-text-secondary text-sm font-medium font-['Inter'] leading-tight">
-                Settings
-              </div>
-            </div>
-          </div>
-        </div>
-        <ButtonNormal
-          variant="secondaryGray"
-          mode="light"
-          size="small"
-          className="w-full"
-          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/send-01.svg`}
-          onClick={() => window.open(`https://tally.so/r/wkRej6?email=${encodeURIComponent(userEmail)}`, '_blank')}
-        >
-          Send a feedback
-        </ButtonNormal>
-        <div className="w-full justify-center items-center gap-2 inline-flex">
-          <div className="text-center text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
-            @ 2025 ProcessFlow, Inc.
-          </div>
-        </div>
-      </div>
-      {/* Add resize handle */}
-      <div
-        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-gray-300 transition-colors"
-        onMouseDown={startResizing}
-      />
-    </div>
+      )}
+    </>
   );
 }
 

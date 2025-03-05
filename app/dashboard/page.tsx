@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
@@ -13,9 +13,10 @@ import ConfirmChangePasswordModal from './components/ConfirmChangePasswordModal'
 import dynamic from 'next/dynamic';
 import { cache } from 'react';
 import { getIcons } from '@/app/utils/icons';
-
-// Make sure that supabase is correctly imported and configured.
-import { createClient } from '@/utils/supabase/client';
+import { useTheme, useColors } from '@/app/theme/hooks';
+import Modal from '@/app/components/Modal';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import SettingsPage from '@/app/dashboard/components/SettingsPage';
 import CreateFolderModal from './components/CreateFolderModal';
 import CreateSubfolderModal from './components/CreateSubfolderModal';
 import EditFolderModal from './components/EditFolderModal';
@@ -31,21 +32,21 @@ import ConfirmDeleteFlowModal from './components/ConfirmDeleteFlowModal';
 import EditFlowModal from './components/EditFlowModal';
 import { updateWorkflow } from '@/app/utils/updateWorkflow';
 import MoveWorkflowModal from './components/MoveWorkflowModal';
-import ThemeSwitch from '@/app/components/ThemeSwitch';
-import ButtonNormal from '@/app/components/ButtonNormal';
-const HelpCenterModalDynamic = dynamic(
-  () => import('./components/HelpCenterModal'),
-  {
-    loading: () => <p>Loading...</p>,
-    ssr: false,
-  }
-);
+import InputField from '@/app/components/InputFields';
+import IconModifier from './components/IconModifier';
+import { createClient } from '@/utils/supabase/client';
+
+const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
+  ssr: false,
+});
 
 const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
   ssr: false,
 });
 
 export default function Page() {
+  const { currentTheme } = useTheme();
+  const colors = useColors();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -87,7 +88,7 @@ export default function Page() {
   const supabase = createClient();
 
   // States for password change
-  const [newPassword, setNewPassword] = useState<string>(''); // if empty string, treat as not active
+  const [newPassword, setNewPassword] = useState<string>('');
 
   // Ref used as a flag so that the active_workspace update is performed only once
   const activeWorkspaceUpdatedRef = useRef(false);
@@ -103,13 +104,35 @@ export default function Page() {
   // Add this to the Canvas props
   const [currentView, setCurrentView] = useState<'grid' | 'table'>('grid');
 
+  // Add new state near other states
+  const [isSettingsView, setIsSettingsView] = useState(false);
+
+  // Add new state near other states
+  const [folderName, setFolderName] = useState('');
+  const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+  const [emote, setEmote] = useState<string | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Fetch user data from your API
   useEffect(() => {
     const fetchUser = async () => {
-      const res = await fetch('/api/user');
-      const data = await res.json();
-      if (data) {
-        setUser(data);
+      try {
+        // Check authentication status first
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (!authUser || authError) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const res = await fetch('/api/user');
+        const data = await res.json();
+        if (data) {
+          setUser(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        window.location.href = '/login';
       }
     };
     fetchUser();
@@ -510,10 +533,6 @@ export default function Page() {
     setCreateSubfolderVisible(false);
   };
 
-  const closeCreateFolder = () => {
-    setCreateFolderVisible(false);
-  };
-
   const closeEditFolder = () => {
     setFolderParent(null);
     setEditFolderVisible(false);
@@ -529,31 +548,51 @@ export default function Page() {
   };
 
   // Function to update the user in state
-  const updateUser = (user: User) => {
-    setUser(user);
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
   };
 
   const updateActiveWorkspace = async (workspace: Workspace) => {
     if (user) {
-      const updateRes = await fetch('/api/user/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: user.id,
-          active_workspace_id: workspace.id,
-        }),
-      });
-      if (updateRes.ok) {
-        const updatedUser = await updateRes.json();
-        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
-          setUser(updatedUser);
-          setActiveWorkspace(workspace);
+      try {
+        const updateRes = await fetch('/api/user/update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: user.id,
+            active_workspace_id: workspace.id,
+          }),
+        });
+        
+        if (!updateRes.ok) {
+          throw new Error('Failed to update active workspace');
         }
-      } else {
-        console.error('Error updating user active_workspace_id');
+        
+        const updatedUser = await updateRes.json();
+        
+        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+          // Update the user state with the new active workspace
+          setUser(updatedUser);
+          
+          // Update the active workspace state
+          setActiveWorkspace(workspace);
+          
+          // If in settings view, force a re-render by toggling and restoring the state
+          if (isSettingsView) {
+            // Briefly toggle off settings view to force a re-render when it's toggled back on
+            setIsSettingsView(false);
+            
+            // After a very short delay, switch back to settings view with the new workspace
+            setTimeout(() => {
+              setIsSettingsView(true);
+            }, 10);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating user active_workspace_id:', error);
       }
     } else {
-      console.log('no user to update');
+      console.log('No user to update');
     }
   };
 
@@ -729,82 +768,259 @@ export default function Page() {
     setDropdownVisible(!dropdownVisible);
   };
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error.message);
+    } else {
+      console.log('Successfully logged out');
+      window.location.href = '/login';
+    }
+  };
+
+  // Add this useEffect to preload the component
+  useEffect(() => {
+    // Preload the HelpCenterModal component
+    import('./components/HelpCenterModal');
+  }, []);
+
+  useEffect(() => {
+    // Preload images
+    const imageUrls = [
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/certificate.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/compass-icon.svg`,
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`
+    ];
+    
+    imageUrls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, []);
+
+  const onWorkspaceUpdate = async (updates: Partial<Workspace>) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const response = await fetch(`/api/workspace/${activeWorkspace.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update workspace');
+      }
+
+      const updatedWorkspace = await response.json();
+      
+      // Update both activeWorkspace and the workspace in the workspaces array
+      setActiveWorkspace(updatedWorkspace);
+      setWorkspaces(prevWorkspaces => 
+        prevWorkspaces.map(w => 
+          w.id === updatedWorkspace.id ? updatedWorkspace : w
+        )
+      );
+    } catch (error) {
+      console.error('Error updating workspace:', error);
+      throw error;
+    }
+  };
+
+  const onWorkspaceDelete = async (workspaceId: number) => {
+    try {
+      const response = await fetch(`/api/workspace/${workspaceId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete workspace');
+      }
+
+      // Remove the deleted workspace from the workspaces array
+      setWorkspaces(prevWorkspaces => 
+        prevWorkspaces.filter(w => w.id !== workspaceId)
+      );
+
+      // If the deleted workspace was the active one, set a new active workspace
+      if (activeWorkspace && activeWorkspace.id === workspaceId) {
+        // Find another workspace to set as active, or null if none exist
+        const nextWorkspace = workspaces.find(w => w.id !== workspaceId) || null;
+        
+        if (nextWorkspace) {
+          // Update the user's active workspace in the database
+          await updateActiveWorkspace(nextWorkspace);
+        } else {
+          // If no workspaces left, set active workspace to null
+          setActiveWorkspace(null);
+          
+          // Update the user in the database
+          if (user) {
+            await fetch('/api/user/update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: user.id,
+                active_workspace_id: null,
+              }),
+            });
+          }
+        }
+      }
+
+      // Close the settings view
+      setIsSettingsView(false);
+      
+      // Redirect to the dashboard or onboarding if no workspaces left
+      if (workspaces.length <= 1) {
+        // If this was the last workspace, redirect to onboarding
+        window.location.href = '/onboarding/workspace-setup';
+      }
+    } catch (error) {
+      console.error('Error deleting workspace:', error);
+      throw error;
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!folderName.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      if (iconUrl) await handleAddFolder(folderName, iconUrl);
+      else if (emote) await handleAddFolder(folderName, undefined, emote);
+      else await handleAddFolder(folderName);
+      closeCreateFolder();
+    } catch (error) {
+      console.error("Error creating folder:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const updateIcon = (icon?: string, emote?: string) => {
+    if (icon) {
+      setIconUrl(icon);
+      setEmote(undefined);
+    } else if (emote) {
+      setIconUrl(undefined);
+      setEmote(emote);
+    } else {
+      setIconUrl(undefined);
+      setEmote(undefined);
+    }
+  };
+
+  const closeCreateFolder = () => {
+    setCreateFolderVisible(false);
+    setFolderName('');
+    setIconUrl(undefined);
+    setEmote(undefined);
+  };
+
   return (
-    <>
-      <div className="flex h-screen w-screen overflow-hidden">
-        {/* Sidebar with header and list of workspaces */}
-        {user && user.email && activeWorkspace && (
-          <Sidebar
-            workspaces={workspaces}
-            userEmail={user.email}
-            activeWorkspace={activeWorkspace}
-            setActiveWorkspace={updateActiveWorkspace}
-            onCreateFolder={openCreateFolder}
-            onEditFolder={openEditFolder}
-            onCreateSubfolder={openCreateSubFolder}
-            onDeleteFolder={openDeleteFolder}
-            onSelectFolder={onSelectFolderSidebar}
-            onSelectFolderView={onSelectFolderView}
-            onOpenUserSettings={openUserSettings}
-            user={user}
-            onOpenHelpCenter={openHelpCenter}
-            selectedFolder={sidebarSelectedFolder}
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* Sidebar with header and list of workspaces */}
+      {user && user.email && activeWorkspace && (
+        <Sidebar
+          workspaces={workspaces}
+          userEmail={user.email}
+          activeWorkspace={activeWorkspace}
+          setActiveWorkspace={updateActiveWorkspace}
+          onCreateFolder={openCreateFolder}
+          onEditFolder={openEditFolder}
+          onCreateSubfolder={openCreateSubFolder}
+          onDeleteFolder={openDeleteFolder}
+          onSelectFolder={onSelectFolderSidebar}
+          onSelectFolderView={onSelectFolderView}
+          onOpenUserSettings={openUserSettings}
+          user={user}
+          onOpenHelpCenter={openHelpCenter}
+          selectedFolder={selectedFolder}
+          onLogout={handleLogout}
+          isSettingsView={isSettingsView}
+          setIsSettingsView={setIsSettingsView}
+          setWorkspaces={setWorkspaces}
+        />
+      )}
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Page header */}
+        <header 
+          style={{ 
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary']
+          }}
+          className="min-h-[73px] flex justify-between items-center px-4 relative border-b"
+        >
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
           />
-        )}
-
-        <div className="flex flex-col flex-1">
-          {/* Page header */}
-          <header className="min-h-[73px] bg-lightMode-bg-primary border-b border-gray-200 flex justify-between items-center px-4 relative">
-            <SearchBar
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
+          <div className="flex items-center gap-4">
+            <ButtonNormal
+              variant="primary"
+              size="small"
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
+              onClick={openCreateFlow}
+            >
+              New Flow
+            </ButtonNormal>
+            {/* Divider */}
+            <div 
+              style={{ borderColor: colors['border-secondary'] }}
+              className="h-[25px] border-r justify-center items-center" 
             />
-            <div className="flex items-center gap-4">
-              {/* Temporarily disabled theme switcher - uncomment when ready */}
-              {/* <ThemeSwitch /> */}
-
-              <ButtonNormal
-                variant="primary"
-                size="small"
-                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
-                onClick={openCreateFlow}
+            <div className="relative">
+              <div
+                className="relative cursor-pointer"
+                onClick={handleUserInfoClick}
               >
-                New Flow
-              </ButtonNormal>
-              {/* Divider */}
-              <div className=" h-[25px] border-r border-gray-300 justify-center items-center" />
-              <div className="relative">
-                <div
-                  className="relative cursor-pointer"
-                  onClick={handleUserInfoClick}
-                >
-                  <UserInfo user={user} isActive={dropdownVisible} />
-                  {dropdownVisible && (
+                <UserInfo user={user} isActive={dropdownVisible} />
+                {dropdownVisible && (
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setDropdownVisible(false)}
+                  >
                     <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setDropdownVisible(false)}
+                      className="absolute top-[68px] right-3.5"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <div
-                        className="absolute top-[68px] right-3.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <UserDropdown
-                          user={user}
-                          onOpenUserSettings={openUserSettings}
-                          onOpenHelpCenter={openHelpCenter}
-                          onClose={() => setDropdownVisible(false)}
-                        />
-                      </div>
+                      <UserDropdown
+                        user={user}
+                        onOpenUserSettings={openUserSettings}
+                        onOpenHelpCenter={openHelpCenter}
+                        onClose={() => setDropdownVisible(false)}
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Main content */}
-          <main className="flex-1 w-full h-[100%] bg-gray-100">
-            {activeWorkspace && (
+        {/* Main content */}
+        <main 
+          style={{ backgroundColor: colors['bg-secondary'] }}
+          className="flex-1 w-full h-[100%]"
+        >
+          {isSettingsView ? (
+            <div className="h-full">
+              <SettingsPage
+                user={user}
+                onClose={() => setIsSettingsView(false)}
+                workspace={activeWorkspace || undefined}
+                onWorkspaceUpdate={onWorkspaceUpdate}
+                onWorkspaceDelete={onWorkspaceDelete}
+              />
+            </div>
+          ) : (
+            activeWorkspace && (
               <Canvas
                 workspace={activeWorkspace}
                 selectedFolder={selectedFolder}
@@ -818,13 +1034,13 @@ export default function Page() {
                 currentView={currentView}
                 onViewChange={setCurrentView}
               />
-            )}
-          </main>
-        </div>
+            )
+          )}
+        </main>
       </div>
 
-      {/* Modal for user settings */}
-      {user && userSettingsVisible && (
+     {/* Modal for user settings */}
+     {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
           <UserSettingsDynamic
             user={user}
@@ -850,10 +1066,55 @@ export default function Page() {
       )}
 
       {createFolderVisible && (
-        <CreateFolderModal
+        <Modal
           onClose={closeCreateFolder}
-          onCreate={handleAddFolder}
-        ></CreateFolderModal>
+          title="Create a folder"
+          icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
+          actions={
+            <>
+              <ButtonNormal
+                variant="secondary"
+                size="small"
+                onClick={closeCreateFolder}
+                className="flex-1"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </ButtonNormal>
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                onClick={handleCreateFolder}
+                disabled={!folderName.trim() || isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? 'Creating...' : 'Create'}
+              </ButtonNormal>
+            </>
+          }
+          showActionsSeparator={true}
+        >
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: colors['text-primary'] }}>
+                Folder name <span style={{ color: colors['text-accent'] }}>*</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <IconModifier
+                  initialIcon={iconUrl}
+                  onUpdate={updateIcon}
+                  emote={emote}
+                />
+                <InputField
+                  type="default"
+                  value={folderName}
+                  onChange={setFolderName}
+                  placeholder="Enter folder name"
+                />
+              </div>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {createSubfolderVisible && folderParent && (
@@ -875,7 +1136,15 @@ export default function Page() {
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+        <Suspense fallback={
+          <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40 z-50">
+            <div className="bg-white rounded-xl p-4 shadow-lg">
+              <p>Loading...</p>
+            </div>
+          </div>
+        }>
+          <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+        </Suspense>
       )}
 
       {uploadImageVisible && (
@@ -937,7 +1206,6 @@ export default function Page() {
           selectedWorkflow={selectedWorkflow}
         />
       )}
-    </>
+    </div>
   );
 }
-

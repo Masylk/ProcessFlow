@@ -27,12 +27,21 @@ export interface Block {
   path_id: number; // Required field for the path relationship
   path?: Path; // Optional, the path this block belongs to
   coordinates?: { x: number; y: number } | null; // Optional, block coordinates
+  children?: Block[]; // Add this line
 }
 
 // Enum for Block types
 export enum BlockType {
   DELAY = 'DELAY',
   STEP = 'STEP',
+  PATH = 'PATH',
+  END = 'END',
+  LAST = 'LAST',
+}
+
+export enum BlockEndType {
+  END = 'END',
+  LAST = 'LAST',
   PATH = 'PATH',
 }
 

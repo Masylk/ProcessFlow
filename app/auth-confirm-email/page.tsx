@@ -1,6 +1,22 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [userEmail, setUserEmail] = useState<string>('');
+  
+  // Get email from sessionStorage on component mount
+  useEffect(() => {
+    try {
+      const email = sessionStorage.getItem('confirmationEmail');
+      if (email) {
+        setUserEmail(email);
+      }
+    } catch (error) {
+      console.error('Error retrieving email from session:', error);
+    }
+  }, []);
+
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex items-center justify-center">
       {/* Outer gray parent container */}
@@ -109,74 +125,70 @@ export default function Home() {
           {/* Confirmation message */}
           <div className="self-stretch text-center">
             <span className="text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
-              We’ve sent a confirmation link to
+              We've sent a confirmation link to
             </span>
             <br/>
             <span className="text-[#475467] text-sm font-semibold font-['Inter'] leading-tight">
-              ceo@process-flow.io
+              {userEmail || 'your email address'}
             </span>
           </div>
 
           {/* Email button */}
                 
-                <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-onboarding.svg`}
-                    alt="Check Icon"
-                    className="w-12 h-12"
-                />
-                <div className="self-stretch h-9 rounded-xl flex flex-col justify-start items-center gap-6">
-                <div className="self-stretch h-9 flex flex-col justify-start items-start gap-4">
-                    <a 
-                    href="mailto:" 
-                    className="self-stretch px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] flex justify-center items-center gap-1 cursor-pointer transition duration-300 hover:bg-[#374c99] no-underline"
-                    >
-                    <div className="px-0.5 flex justify-center items-center">
-                        <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
-                        Open email app
-                        </div>
-                    </div>
-                    </a>
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-onboarding.svg`}
+            alt="Check Icon"
+            className="w-12 h-12"
+          />
+          <div className="self-stretch h-9 rounded-xl flex flex-col justify-start items-center gap-6">
+            <div className="self-stretch h-9 flex flex-col justify-start items-start gap-4">
+              <a 
+                href={userEmail ? `mailto:${userEmail}` : "mailto:"} 
+                className="self-stretch px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] flex justify-center items-center gap-1 cursor-pointer transition duration-300 hover:bg-[#374c99] no-underline"
+              >
+                <div className="px-0.5 flex justify-center items-center">
+                  <div className="text-white text-sm font-semibold font-['Inter'] leading-tight">
+                    Open email app
+                  </div>
                 </div>
-                </div>
-
-
+              </a>
+            </div>
+          </div>
 
           {/* Back to login */}
-                <a 
-                href="/login" 
-                className="justify-center items-center gap-1.5 flex cursor-pointer text-inherit no-underline"
-                >
-                <div className="w-5 h-5 relative flex justify-center items-center">
-                    <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                    alt="Arrow Left Icon"
-                    className="w-5 h-5"
-                    />
-                </div>
-                <div className="text-[#475467] text-sm font-semibold font-['Inter'] leading-tight">
-                    Back to log in
-                </div>
-                </a>
-
-
+          <a 
+            href="/login" 
+            className="justify-center items-center gap-1.5 flex cursor-pointer text-inherit no-underline"
+          >
+            <div className="w-5 h-5 relative flex justify-center items-center">
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                alt="Arrow Left Icon"
+                className="w-5 h-5"
+              />
+            </div>
+            <div className="text-[#475467] text-sm font-semibold font-['Inter'] leading-tight">
+              Back to log in
+            </div>
+          </a>
         </div>
 
         {/* Resend email outside the white container */}
-            <a 
-            href="/resend-email" 
-            className="py-3 flex justify-center items-baseline gap-1 cursor-pointer no-underline"
-            >
-            <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
-                Didn’t receive the email?
+        <a 
+          href="/resend-email" 
+          className="py-3 flex justify-center items-baseline gap-1 cursor-pointer no-underline"
+        >
+          <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
+            Didn't receive the email?
+          </div>
+          <div className="flex justify-center items-center gap-1.5">
+            <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+              Click to resend
             </div>
-            <div className="flex justify-center items-center gap-1.5">
-                <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
-                Click to resend
-                </div>
-            </div>
-            </a>
+          </div>
+        </a>
 
-            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
           <div className="w-[420px] h-9 px-2 py-1.5 bg-gray-50 rounded-full border border-[#e4e7ec] flex justify-center items-center">
             <div className="grow shrink basis-0 h-6 px-2 py-0.5 bg-white rounded-[99px] flex justify-between items-center">
               <div className="text-[#475467] text-sm font-normal">2025 © Processflow</div>
@@ -189,7 +201,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useColors } from '@/app/theme/hooks';
 
 const TABS = ['Icons', 'Apps', 'Emoji'];
 
@@ -12,81 +13,20 @@ interface IconSelectorProps {
 }
 
 const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
+  const colors = useColors();
   const [applist, setAppList] = useState<Entity[]>([]);
   const [iconlist, setIconList] = useState<Entity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('Icons');
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [emojiList] = useState<string[]>([
-    '💼',
-    '📅',
-    '📝',
-    '📊',
-    '📈',
-    '💻',
-    '🖥️',
-    '📎',
-    '📂',
-    '🗂️',
-    '📌',
-    '📏',
-    '📐',
-    '🖊️',
-    '🖋️',
-    '🖌️',
-    '🖍️',
-    '✂️',
-    '🔍',
-    '🔎',
-    '⌛',
-    '⏳',
-    '⏰',
-    '🕰️',
-    '🏢',
-    '🏛️',
-    '🏠',
-    '📬',
-    '📥',
-    '📤',
-    '📖',
-    '📕',
-    '📗',
-    '📘',
-    '📙',
-    '📚',
-    '🧠',
-    '🎯',
-    '🏆',
-    '🥇',
-    '🏅',
-    '💡',
-    '🔦',
-    '🛠️',
-    '🔧',
-    '🔨',
-    '🏗️',
-    '🏭',
-    '🏪',
-    '📠',
-    '📜',
-    '🏋️‍♂️',
-    '🚀',
-    '🎓',
-    '📣',
-    '🏃‍♂️',
-    '🏃‍♀️',
-    '🎼',
-    '🎨',
-    '🧑‍💻',
-    '👨‍💻',
-    '👩‍💻',
-    '📡',
-    '🎙️',
-    '🔢',
-    '💰',
-    '🏦',
-    '🏛️',
-    '🗃️',
-    '📊',
+    '💼', '📅', '📝', '📊', '📈', '💻', '🖥️', '📎', '📂', '🗂️',
+    '📌', '📏', '📐', '🖊️', '🖋️', '🖌️', '🖍️', '✂️', '🔍', '🔎',
+    '⌛', '⏳', '⏰', '🕰️', '🏢', '🏛️', '🏠', '📬', '📥', '📤',
+    '📖', '📕', '📗', '📘', '📙', '📚', '🧠', '🎯', '🏆', '🥇',
+    '🏅', '💡', '🔦', '🛠️', '🔧', '🔨', '🏗️', '🏭', '🏪', '📠',
+    '📜', '🏋️‍♂️', '🚀', '🎓', '📣', '🏃‍♂️', '🏃‍♀️', '🎼', '🎨', '🧑‍💻',
+    '👨‍💻', '👩‍💻', '📡', '🎙️', '🔢', '💰', '🏦', '🏛️', '🗃️', '📊',
   ]);
 
   useEffect(() => {
@@ -117,18 +57,37 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
   }, []);
 
   return (
-    <div className="w-[502px] h-[328px] bg-white rounded-xl border border-[#e4e7ec] flex flex-col overflow-hidden">
+    <div 
+      className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden"
+      style={{ 
+        backgroundColor: colors['bg-primary'],
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: colors['border-secondary']
+      }}
+    >
       {/* Tabs */}
-      <div className="self-stretch border border-[#e4e7ec] flex justify-between items-center">
+      <div 
+        className="self-stretch flex justify-between items-center"
+        style={{ 
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: colors['border-secondary']
+        }}
+      >
         <div className="flex gap-3 pt-3 px-3">
           {TABS.map((tab) => (
             <div
               key={tab}
-              className={`px-2 pb-3 cursor-pointer ${
+              className={`px-2 pb-3 cursor-pointer transition-colors duration-200 ${
                 activeTab === tab
-                  ? 'border-b-2 border-[#4761c4] text-[#374c99] font-medium'
-                  : 'text-[#667085]'
+                  ? 'border-b-2 font-medium'
+                  : ''
               }`}
+              style={{
+                color: activeTab === tab ? colors['text-brand-secondary'] : colors['text-secondary'],
+                borderBottomColor: activeTab === tab ? colors['bg-brand-solid'] : 'transparent'
+              }}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
@@ -136,7 +95,8 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
           ))}
         </div>
         <div
-          className="px-4 cursor-pointer text-[#667085]"
+          className="px-4 cursor-pointer transition-colors duration-200"
+          style={{ color: colors['text-secondary'] }}
           onClick={() => onSelect()}
         >
           Reset
@@ -144,10 +104,18 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
       </div>
 
       {/* Search Bar */}
-      <div className="self-stretch px-4 py-3 bg-white border-b border-[#e4e7ec] flex items-center gap-2">
+      <div 
+        className="self-stretch px-4 py-3 flex items-center gap-2"
+        style={{ 
+          backgroundColor: colors['bg-primary'],
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: colors['border-secondary']
+        }}
+      >
         <img
           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-lg-icon.svg`}
-          alt="Folder icon"
+          alt="Search icon"
           className="w-4 h-4"
         />
         <input
@@ -155,12 +123,16 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search..."
-          className="flex-grow text-[#667085] text-sm bg-transparent focus:outline-none"
+          className="flex-grow text-sm bg-transparent focus:outline-none placeholder:text-secondary"
+          style={{ color: colors['text-primary'] }}
         />
       </div>
 
       {/* Content */}
-      <div className="self-stretch h-60 flex flex-col overflow-y-auto p-3">
+      <div 
+        className="self-stretch h-60 flex flex-col overflow-y-auto p-3"
+        style={{ backgroundColor: colors['bg-primary'] }}
+      >
         {activeTab === 'Apps' && (
           <div className="grid grid-cols-12 gap-3">
             {applist
@@ -171,7 +143,12 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
                 <button
                   key={index}
                   onClick={() => onSelect(app.basicUrl)}
-                  className="w-10 h-10"
+                  className="w-10 h-10 rounded-md transition-colors duration-200"
+                  style={{ 
+                    backgroundColor: hoveredButton === `app-${index}` ? colors['bg-quaternary'] : 'transparent'
+                  }}
+                  onMouseEnter={() => setHoveredButton(`app-${index}`)}
+                  onMouseLeave={() => setHoveredButton(null)}
                 >
                   <img
                     src={app.signedUrl}
@@ -193,7 +170,12 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
                 <button
                   key={index}
                   onClick={() => onSelect(icon.basicUrl)}
-                  className="w-10 h-10"
+                  className="w-10 h-10 rounded-md transition-colors duration-200"
+                  style={{ 
+                    backgroundColor: hoveredButton === `icon-${index}` ? colors['bg-quaternary'] : 'transparent'
+                  }}
+                  onMouseEnter={() => setHoveredButton(`icon-${index}`)}
+                  onMouseLeave={() => setHoveredButton(null)}
                 >
                   <img
                     src={icon.signedUrl}
@@ -211,7 +193,12 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
               <button
                 key={index}
                 onClick={() => onSelect(undefined, emoji)}
-                className="w-10 h-10 flex items-center justify-center"
+                className="w-10 h-10 flex items-center justify-center rounded-md transition-colors duration-200"
+                style={{ 
+                  backgroundColor: hoveredButton === `emoji-${index}` ? colors['bg-quaternary'] : 'transparent'
+                }}
+                onMouseEnter={() => setHoveredButton(`emoji-${index}`)}
+                onMouseLeave={() => setHoveredButton(null)}
               >
                 {emoji}
               </button>

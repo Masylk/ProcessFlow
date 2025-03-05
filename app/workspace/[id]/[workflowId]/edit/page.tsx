@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import { PathObject, SidebarBlock } from '@/types/sidebar';
 import Canvas from '../components/Canvas';
 import StatusIndicator from '../components/StatusIndicator';
-import TitleBar from '../components/TitleBar';
+// import TitleBar from '../components/TitleBar';
 import { Path } from '@/types/path';
 import { BlockProvider } from '../components/BlockContext';
 import { Block } from '@/types/block';
@@ -500,3 +500,4 @@ export default function WorkflowPage() {
     </div>
   );
 }
+

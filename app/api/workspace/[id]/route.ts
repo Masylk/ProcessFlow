@@ -108,6 +108,65 @@ import prisma from '@/lib/prisma'; // Adjust the path to your Prisma client
  *                 error:
  *                   type: string
  *                   example: "Internal server error"
+ *   patch:
+ *     summary: Update a workspace
+ *     description: Updates a workspace's properties (e.g., name, icon_url, team_tags, etc.).
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Updated Workspace"
+ *               team_tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["tag1", "tag2"]
+ *               icon_url:
+ *                 type: string
+ *                 example: "/path/to/icon.svg"
+ *               background_colour:
+ *                 type: string
+ *                 example: "#4299E1"
+ *     responses:
+ *       200:
+ *         description: Workspace updated successfully
+ *       404:
+ *         description: Workspace not found
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     summary: Delete a workspace
+ *     description: Deletes a workspace and all associated data (folders, workflows, etc.)
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace to delete
+ *     responses:
+ *       200:
+ *         description: Workspace deleted successfully
+ *       404:
+ *         description: Workspace not found
+ *       500:
+ *         description: Internal server error
  */
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -148,6 +207,121 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     return NextResponse.json(workspace, { status: 200 });
   } catch (error) {
     console.error('Error fetching workspace:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const workspaceId = parseInt(params.id);
+
+  try {
+    const updates = await req.json();
+
+    // Check if workspace exists
+    const existingWorkspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+
+    if (!existingWorkspace) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
+    }
+
+    // Update workspace and include all related data in the response
+    const updatedWorkspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: updates,
+      include: {
+        user_workspaces: {
+          include: {
+            user: true,
+          },
+        },
+        workflows: {
+          include: {
+            blocks: true,
+            paths: true,
+          },
+        },
+        folders: true,
+      },
+    });
+
+    return NextResponse.json(updatedWorkspace, { status: 200 });
+  } catch (error) {
+    console.error('Error updating workspace:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const workspaceId = parseInt(params.id);
+
+  try {
+    // Check if workspace exists
+    const existingWorkspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+    });
+
+    if (!existingWorkspace) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
+    }
+
+    // First, update any users who have this as their active workspace
+    await prisma.user.updateMany({
+      where: { active_workspace_id: workspaceId },
+      data: { active_workspace_id: null },
+    });
+
+    // Delete all user_workspace associations
+    await prisma.user_workspace.deleteMany({
+      where: { workspace_id: workspaceId },
+    });
+
+    // Delete all workflows in this workspace
+    // First, delete all blocks and paths associated with workflows
+    const workflowsInWorkspace = await prisma.workflow.findMany({
+      where: { workspace_id: workspaceId },
+      select: { id: true },
+    });
+
+    const workflowIds = workflowsInWorkspace.map(w => w.id);
+
+    // Delete blocks
+    await prisma.block.deleteMany({
+      where: { workflow_id: { in: workflowIds } },
+    });
+
+    // Delete paths
+    await prisma.path.deleteMany({
+      where: { workflow_id: { in: workflowIds } },
+    });
+
+    // Delete workflows
+    await prisma.workflow.deleteMany({
+      where: { workspace_id: workspaceId },
+    });
+
+    // Delete all folders in this workspace
+    await prisma.folder.deleteMany({
+      where: { workspace_id: workspaceId },
+    });
+
+    // Finally, delete the workspace itself
+    await prisma.workspace.delete({
+      where: { id: workspaceId },
+    });
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting workspace:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

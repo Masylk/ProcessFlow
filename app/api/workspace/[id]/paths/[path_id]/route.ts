@@ -122,10 +122,10 @@ export async function GET(
   const workspaceId = parseInt(params.id);
   const path_id = parseInt(params.path_id);
 
-  // Validate parameters
+  // Validate inputs
   if (!workflow_id || isNaN(workspaceId) || isNaN(path_id)) {
     return NextResponse.json(
-      { error: 'Valid workspaceId, path_id, and workflow_id are required' },
+      { error: 'workflow_id, valid workspaceId and path_id are required' },
       { status: 400 }
     );
   }
@@ -140,33 +140,23 @@ export async function GET(
       );
     }
 
-    // Fetch path data including blocks, path_block, step_block, and delay field
-    const pathData = await prisma.path.findUnique({
-      where: { id: path_id },
+    // Fetch blocks for the workflow
+    const blocks = await prisma.block.findMany({
+      where: { workflow_id: parsedworkflow_id },
       include: {
-        blocks: {
-          where: { workflow_id: parsedworkflow_id }, // Adjust to match your data structure
+        child_paths: {
           include: {
-            path_block: true, // Include related path_block information
-            step_block: true, // Include related step_block information
-            delay_block: true,
-          },
-          orderBy: {
-            position: 'asc',
-          },
-        },
+            path: true
+          }
+        }
       },
     });
 
-    if (!pathData) {
-      return NextResponse.json({ error: 'Path not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(pathData);
+    return NextResponse.json(blocks);
   } catch (error) {
-    console.error('Error fetching path data:', error);
+    console.error('Error fetching blocks:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Failed to fetch blocks' },
       { status: 500 }
     );
   }

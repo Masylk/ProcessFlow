@@ -1,8 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
 import IconModifier from './IconModifier';
 import { Folder } from '@/types/workspace';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
+import { useColors } from '@/app/theme/hooks';
+import Modal from '@/app/components/Modal';
 
 interface EditFolderModalProps {
   onClose: () => void;
@@ -20,13 +24,18 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
   onEdit,
   folder,
 }) => {
+  const colors = useColors();
   const [folderName, setFolderName] = useState(folder.name);
   const [iconUrl, setIconUrl] = useState<string | undefined>(
     folder.icon_url || undefined
   );
   const [emote, setEmote] = useState<string | undefined>(folder.emote);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const createFolder = async (name: string) => {
+  const saveChanges = async (name: string) => {
+    if (!name.trim()) return;
+    
+    setIsSubmitting(true);
     try {
       if (iconUrl) await onEdit(name, iconUrl);
       else if (emote) await onEdit(name, undefined, emote);
@@ -35,6 +44,8 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Error editing folder:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -51,35 +62,52 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
     }
   };
 
-  return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-xl shadow-lg w-[400px] p-6 flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+  // Define modal actions
+  const modalActions = (
+    <>
+      <ButtonNormal
+        variant="secondary"
+        size="small"
+        onClick={onClose}
+        className="flex-1"
+        disabled={isSubmitting}
       >
-        {/* Header */}
-        <div className="flex flex-col items-start gap-4">
-          <div className="w-12 h-12 p-3 bg-white rounded-[10px] border border-[#e4e7ec] shadow-sm flex items-center justify-center">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
-              alt="Folder icon"
-              className="w-12 h-12"
-            />
-          </div>
-          <h2 className="text-[#101828] text-lg font-semibold">
-            Edit a folder
-          </h2>
-        </div>
+        Discard changes
+      </ButtonNormal>
+      <ButtonNormal
+        variant="primary"
+        size="small"
+        onClick={() => saveChanges(folderName)}
+        disabled={!folderName.trim() || isSubmitting}
+        className="flex-1"
+      >
+        {isSubmitting ? 'Saving...' : 'Save changes'}
+      </ButtonNormal>
+    </>
+  );
 
+  // Folder icon for this modal
+  const folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`;
+
+  return (
+    <Modal
+      onClose={onClose}
+      title="Edit a folder"
+      icon={folderIcon}
+      iconBackgroundColor={colors['bg-secondary']}
+      actions={modalActions}
+      showActionsSeparator={true}
+    >
+      <div className="flex flex-col gap-4">
         {/* Input Field */}
-        <div className="mt-4">
-          <label className="block text-[#344054] text-sm font-semibold">
-            Folder name <span className="text-[#4761c4]">*</span>
+        <div>
+          <label 
+            className="block text-sm font-semibold mb-2"
+            style={{ color: colors['text-primary'] }}
+          >
+            Folder name <span style={{ color: colors['text-accent'] }}>*</span>
           </label>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <IconModifier
               initialIcon={iconUrl}
               onUpdate={updateIcon}
@@ -87,38 +115,14 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
             />
             <InputField
               type="default"
-              mode="light"
               value={folderName}
               onChange={setFolderName}
               placeholder="Enter folder name"
             />
           </div>
         </div>
-
-        {/* Buttons */}
-        <div className="mt-6 flex gap-3">
-          <ButtonNormal
-            variant="secondaryGray"
-            mode="light"
-            size="small"
-            onClick={onClose}
-            className="flex-1"
-          >
-            Discard changes
-          </ButtonNormal>
-          <ButtonNormal
-            variant="primary"
-            mode="light"
-            size="small"
-            onClick={() => createFolder(folderName)}
-            disabled={!folderName.trim()}
-            className="flex-1"
-          >
-            Save changes
-          </ButtonNormal>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

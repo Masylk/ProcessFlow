@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { BlockEndType } from '@/types/block';
 
 /**
  * @swagger
@@ -80,7 +81,7 @@ import { Prisma } from '@prisma/client';
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "workflow_id is required"
+ *                   example: "workflow_id and valid workspaceId are required"
  *       500:
  *         description: Internal server error
  *         content:
@@ -92,97 +93,224 @@ import { Prisma } from '@prisma/client';
  *                   type: string
  *                   example: "Failed to fetch or create paths"
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
 
-  if (!workflow_id) {
+  if (!workflow_id || isNaN(workspaceId)) {
     return NextResponse.json(
-      { error: 'workflow_id is required' },
+      { error: 'workflow_id and valid workspaceId are required' },
       { status: 400 }
     );
   }
 
   try {
-    const result = await prisma.$transaction(
-      async (prisma: Prisma.TransactionClient) => {
-        const parsedworkflow_id = parseInt(workflow_id, 10);
+    const result = await prisma.$transaction(async (prisma: Prisma.TransactionClient) => {
+      const parsedworkflow_id = parseInt(workflow_id, 10);
 
-        // Fetch paths for the given workflow_id
-        const existingPaths = await prisma.path.findMany({
-          where: {
-            workflow_id: parsedworkflow_id, // Use `workflow_id` instead of `workflow_id`
+      // Fetch paths for the given workflow_id
+      let existingPaths = await prisma.path.findMany({
+        where: {
+          workflow_id: parsedworkflow_id,
+        },
+        include: {
+          blocks: {
+            orderBy: {
+              position: 'asc',
+            },
+            include: {
+              child_paths: {
+                include: {
+                  path: true
+                }
+              }
+            }
+          },
+          parent_blocks: true,
+        }
+      });
+
+      // Function to fix block positions in a path
+      const fixPathBlockPositions = async (path: any) => {
+        const blocks = [...path.blocks];
+        let needsUpdate = false;
+
+        // Find BEGIN and end-type blocks
+        const beginBlock = blocks.find(b => b.type === 'BEGIN');
+        const endTypeBlock = blocks.find(b => Object.values(BlockEndType).includes(b.type as BlockEndType));
+
+        // Create BEGIN block if it doesn't exist
+        if (!beginBlock) {
+          needsUpdate = true;
+          const newBeginBlock = await prisma.block.create({
+            data: {
+              type: 'BEGIN',
+              position: 0,
+              icon: '/step-icons/default-icons/begin.svg',
+              description: 'Start of the workflow',
+              workflow: { connect: { id: path.workflow_id } },
+              path: { connect: { id: path.id } },
+              step_details: 'Begin',
+            }
+          });
+          blocks.unshift({ ...newBeginBlock, child_paths: [] });
+        } else if (beginBlock.position !== 0) {
+          needsUpdate = true;
+          // Remove BEGIN block from current position
+          const beginIndex = blocks.findIndex(b => b.type === 'BEGIN');
+          blocks.splice(beginIndex, 1);
+          // Insert BEGIN block at position 0
+          blocks.unshift(beginBlock);
+        }
+
+        // Check if end-type block exists and has child paths
+        if (endTypeBlock) {
+          if (endTypeBlock.child_paths?.length > 0 && endTypeBlock.type !== BlockEndType.PATH) {
+            needsUpdate = true;
+            await prisma.block.update({
+              where: { id: endTypeBlock.id },
+              data: { type: BlockEndType.PATH }
+            });
+            endTypeBlock.type = BlockEndType.PATH;
+          }
+        } else {
+          // Create default end-type block if none exists
+          needsUpdate = true;
+          const newEndBlock = await prisma.block.create({
+            data: {
+              type: BlockEndType.LAST,
+              position: blocks.length,
+              icon: '/step-icons/default-icons/end.svg',
+              description: 'Last block in the workflow',
+              workflow: { connect: { id: path.workflow_id } },
+              path: { connect: { id: path.id } },
+              step_details: 'Last',
+            }
+          });
+          blocks.push({ ...newEndBlock, child_paths: [] });
+        }
+
+        // Create default STEP block if there are no blocks between BEGIN and end-type block
+        if (blocks.length === 2) { // Only BEGIN and end-type blocks exist
+          needsUpdate = true;
+          const newStepBlock = await prisma.block.create({
+            data: {
+              type: 'STEP',
+              position: 1,
+              icon: '/step-icons/default-icons/container.svg',
+              description: 'This is a default block',
+              workflow: { connect: { id: path.workflow_id } },
+              path: { connect: { id: path.id } },
+              step_details: 'Default step details',
+            }
+          });
+          blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
+        }
+
+        if (needsUpdate) {
+          // Update positions for all blocks
+          const updates = blocks.map((block, index) => 
+            prisma.block.update({
+              where: { id: block.id },
+              data: { position: index }
+            })
+          );
+
+          await Promise.all(updates);
+
+          // Return updated path with correct block positions
+          return {
+            ...path,
+            blocks: blocks.map((block, index) => ({
+              ...block,
+              position: index
+            }))
+          };
+        }
+
+        return path;
+      };
+
+      // Process existing paths or create new one
+      if (existingPaths.length === 0) {
+        // Create new path if none exists
+        const newPath = await prisma.path.create({
+          data: {
+            name: 'First Path',
+            workflow_id: parsedworkflow_id,
           },
           include: {
             blocks: {
-              orderBy: {
-                position: 'asc',
-              },
               include: {
-                path_block: {
+                child_paths: {
                   include: {
-                    paths: {
-                      include: {
-                        blocks: {
-                          include: {
-                            path_block: true,
-                            step_block: true,
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-                step_block: true,
-              },
-            },
-          },
+                    path: true
+                  }
+                }
+              }
+            }
+          }
         });
 
-        if (existingPaths.length === 0) {
-          const newPath = await prisma.path.create({
-            data: {
-              name: 'First Path',
-              workflow_id: parsedworkflow_id,
-              path_block_id: null,
-            },
-          });
-
-          // Create the default step block inside the new path
-          const defaultBlockData: any = {
-            type: 'STEP',
+        // Create BEGIN block
+        await prisma.block.create({
+          data: {
+            type: 'BEGIN',
             position: 0,
-            icon: '/step-icons/default-icons/container.svg',
-            description: 'This is the default step block',
+            icon: '/step-icons/default-icons/begin.svg',
+            description: 'Start of the workflow',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_block: {
-              create: {
-                step_details: 'Default step details',
-              },
-            },
-          };
+            step_details: 'Begin',
+          }
+        });
 
-          const defaultBlock = await prisma.block.create({
-            data: defaultBlockData,
-            include: {
-              step_block: true,
-            },
-          });
+        // Create default block
+        await prisma.block.create({
+          data: {
+            type: 'STEP',
+            position: 1,
+            icon: '/step-icons/default-icons/container.svg',
+            description: 'This is a default block',
+            workflow: { connect: { id: parsedworkflow_id } },
+            path: { connect: { id: newPath.id } },
+            step_details: 'Default step details',
+          }
+        });
 
-          return { paths: [{ ...newPath, blocks: [defaultBlock] }] };
-        }
+        // Create END block
+        await prisma.block.create({
+          data: {
+            type: 'LAST',
+            position: 2,
+            icon: '/step-icons/default-icons/end.svg',
+            description: 'End of the workflow',
+            workflow: { connect: { id: parsedworkflow_id } },
+            path: { connect: { id: newPath.id } },
+            step_details: 'End',
+          }
+        });
 
-        // Return existing paths with their associated blocks
-        return { paths: existingPaths };
+        return { paths: [newPath] };
+      } else {
+        // Fix positions in all existing paths
+        const updatedPaths = await Promise.all(
+          existingPaths.map(path => fixPathBlockPositions(path))
+        );
+
+        return { paths: updatedPaths };
       }
-    );
+    });
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching or creating paths:', error);
+    console.error('Error fetching or creating paths:', error instanceof Error ? error.message : 'Unknown error');
+    
     return NextResponse.json(
       { error: 'Failed to fetch or create paths' },
       { status: 500 }

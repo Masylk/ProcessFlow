@@ -4,6 +4,9 @@
 
 Table user {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  archived_at DateTime
   auth_id String [unique, not null]
   first_name String [not null]
   last_name String [not null]
@@ -15,34 +18,45 @@ Table user {
   sentry_id String
   post_hog_id String
   phone String
-  archived_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
   last_login_at DateTime
+  onboarding_step onboarding_step [default: 'PERSONAL_INFO']
+  onboarding_completed_at DateTime
+  professional_role String
+  source String
+  temp_industry String
+  temp_company_size String
   active_workspace workspace
-  user_workspaces user_workspace [not null]
+  workspaces user_workspace [not null]
   actions action [not null]
+  created_versions workflow_version [not null]
+  saved_searches saved_search [not null]
 }
 
 Table workspace {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  archived_at DateTime
   name String [not null]
+  slug String [unique]
   team_tags String[] [not null]
   icon_url String
   background_colour String
   linear_customer_id String
   stripe_customer_id String
   hubspot_company_id String
-  archived_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
   subscription_id Int [unique]
+  industry String
+  company_size String
   subscription subscription
   billing_infos workspace_billing_infos [not null]
   user_workspaces user_workspace [not null]
   active_users user [not null]
   folders folder [not null]
   workflows workflow [not null]
+  billings billing [not null]
+  invitations invitation [not null]
+  workflow_templates workflow_template [not null]
 }
 
 Table workspace_billing_infos {
@@ -59,25 +73,27 @@ Table workspace_billing_infos {
 
 Table subscription {
   id Int [pk, increment]
-  workspace_id Int [unique, not null]
-  workspace workspace
-  stripe_subscription_id String [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
+  canceled_at DateTime
+  workspace_id Int [unique, not null]
+  stripe_subscription_id String [not null]
   trial_end_date DateTime
   plan_type plan_type [not null]
   quantity_seats Int [not null]
   current_period_start DateTime [not null]
   current_period_end DateTime [not null]
   status subscription_status [not null]
-  canceled_at DateTime
+  workspace workspace
   billings billing [not null]
 }
 
 Table billing {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  paid_at DateTime
   subscription_id Int [not null]
-  subscription subscription [not null]
   stripe_invoice_id String [unique, not null]
   amount_net Int [not null]
   tax_amount Int [not null]
@@ -85,17 +101,31 @@ Table billing {
   currency String [not null]
   invoice_date DateTime [not null]
   due_date DateTime [not null]
-  paid_at DateTime
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
+  workspace_id Int [not null]
+  subscription subscription [not null]
+  workspace workspace [not null]
 }
 
 Table user_workspace {
   id Int [pk, increment]
   user_id Int [not null]
   workspace_id Int [not null]
-  role role [not null, default: 'ADMIN']
+  role user_role [not null, default: 'ADMIN']
   user user [not null]
+  workspace workspace [not null]
+}
+
+Table invitation {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  email String [not null]
+  token String [unique, not null]
+  expires_at DateTime [not null]
+  used Boolean [not null, default: false]
+  used_at DateTime
+  workspace_id Int [not null]
+  role user_role [not null, default: 'READER']
   workspace workspace [not null]
 }
 
@@ -107,6 +137,7 @@ Table folder {
   icon_url String
   emote String
   team_tags String[] [not null]
+  path String
   workspace workspace [not null]
   parent folder
   subfolders folder [not null]
@@ -115,17 +146,28 @@ Table folder {
 
 Table workflow {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  last_opened DateTime
   name String [not null]
   description String [not null]
   workspace_id Int [not null]
   team_tags String[] [not null]
-  workspace workspace [not null]
-  blocks block [not null]
-  history action [not null]
-  paths path [not null]
-  folder folder
   folder_id Int
-  last_opened DateTime
+  is_public Boolean [not null, default: false]
+  public_access_id String [unique]
+  status workflow_status [not null, default: 'DRAFT']
+  is_template Boolean [not null, default: false]
+  template_id Int
+  version_number Int [not null, default: 1]
+  workspace workspace [not null]
+  folder folder
+  blocks block [not null]
+  paths path [not null]
+  actions action [not null]
+  template workflow_template
+  stroke_lines stroke_line [not null]
+  versions workflow_version [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -135,70 +177,137 @@ Table workflow {
 Table path {
   id Int [pk, increment]
   name String [not null]
-  blocks block [not null]
-  path_block_id Int
-  path_block path_block
   workflow_id Int [not null]
   workflow workflow [not null]
+  blocks block [not null]
+  parent_blocks path_parent_block [not null]
+
+  Note: 'Collection of connected blocks forming a workflow path'
+}
+
+Table path_parent_block {
+  path_id Int [not null]
+  block_id Int [not null]
+  created_at DateTime [default: `now()`, not null]
+  path path [not null]
+  block block [not null]
+
+  indexes {
+    (path_id, block_id) [pk]
+  }
+
+  Note: 'Junction table that allows paths to be triggered from multiple parent blocks'
 }
 
 Table block {
   id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  last_modified DateTime
   type block_type [not null]
+  step_details String
+  delay_seconds Int
   position Int [not null]
   title String
   icon String
   description String
   image String
   image_description String
-  last_modified DateTime
   average_time String
   task_type task_type
   workflow_id Int [not null]
-  workflow workflow [not null]
-  actions action [not null]
-  step_block step_block
-  path_block path_block
-  delay_block delay_block
   path_id Int [not null]
-  path path [not null]
   click_position Json
-}
-
-Table step_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  step_details String [not null]
-  block block [not null]
-}
-
-Table path_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  block block [not null]
-  paths path [not null]
-}
-
-Table delay_block {
-  id Int [pk, increment]
-  block_id Int [unique, not null]
-  block block [not null]
-  seconds Int [not null]
+  delay_type delay_type
+  delay_event String
+  workflow workflow [not null]
+  path path [not null]
+  actions action [not null]
+  child_paths path_parent_block [not null]
+  source_stroke_lines stroke_line [not null]
+  target_stroke_lines stroke_line [not null]
 }
 
 Table action {
   id Int [pk, increment]
   user_id Int [not null]
-  user user [not null]
   type String [not null]
   target_id Int [not null]
-  target block [not null]
   workflow_id Int [not null]
-  workflow workflow [not null]
   value Int [not null]
+  created_at DateTime [default: `now()`, not null]
+  user user [not null]
+  target block [not null]
+  workflow workflow [not null]
 }
 
-Enum role {
+Table workflow_version {
+  id Int [pk, increment]
+  workflow_id Int [not null]
+  version_number Int [not null]
+  name String [not null]
+  description String [not null]
+  created_at DateTime [default: `now()`, not null]
+  created_by_id Int [not null]
+  change_summary String
+  snapshot Json [not null]
+  workflow workflow [not null]
+  created_by user [not null]
+
+  indexes {
+    (workflow_id, version_number) [unique]
+  }
+}
+
+Table workflow_template {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null]
+  workspace_id Int [not null]
+  category String [not null]
+  tags String[] [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  structure Json [not null]
+  rating Float
+  rating_count Int [not null, default: 0]
+  workspace workspace [not null]
+  workflows workflow [not null]
+}
+
+Table saved_search {
+  id Int [pk, increment]
+  user_id Int [not null]
+  name String [not null]
+  query String [not null]
+  filters Json
+  created_at DateTime [default: `now()`, not null]
+  user user [not null]
+}
+
+Table stroke_line {
+  id Int [pk, increment]
+  source_block_id Int [not null]
+  target_block_id Int [not null]
+  workflow_id Int [not null]
+  label String [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  is_loop Boolean [not null, default: false]
+  source_block block [not null]
+  target_block block [not null]
+  workflow workflow [not null]
+}
+
+Enum onboarding_step {
+  PERSONAL_INFO
+  PROFESSIONAL_INFO
+  WORKSPACE_SETUP
+  INVITED_USER
+  COMPLETED
+}
+
+Enum user_role {
   ADMIN
   EDITOR
   READER
@@ -207,7 +316,10 @@ Enum role {
 Enum block_type {
   DELAY
   STEP
+  BEGIN
+  END
   PATH
+  LAST
 }
 
 Enum subscription_status {
@@ -228,6 +340,17 @@ Enum task_type {
   AUTOMATIC
 }
 
+Enum delay_type {
+  FIXED_DURATION
+  WAIT_FOR_EVENT
+}
+
+Enum workflow_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
@@ -236,9 +359,13 @@ Ref: workspace_billing_infos.workspace_id > workspace.id
 
 Ref: billing.subscription_id > subscription.id
 
+Ref: billing.workspace_id > workspace.id
+
 Ref: user_workspace.user_id > user.id
 
 Ref: user_workspace.workspace_id > workspace.id
+
+Ref: invitation.workspace_id > workspace.id
 
 Ref: folder.workspace_id > workspace.id
 
@@ -248,22 +375,34 @@ Ref: workflow.workspace_id > workspace.id
 
 Ref: workflow.folder_id > folder.id
 
-Ref: path.path_block_id > path_block.id [delete: Cascade]
+Ref: workflow.template_id > workflow_template.id
 
 Ref: path.workflow_id > workflow.id
+
+Ref: path_parent_block.path_id > path.id [delete: Cascade]
+
+Ref: path_parent_block.block_id > block.id [delete: Cascade]
 
 Ref: block.workflow_id > workflow.id [delete: Cascade]
 
 Ref: block.path_id > path.id [delete: Cascade]
-
-Ref: step_block.block_id - block.id [delete: Cascade]
-
-Ref: path_block.block_id - block.id [delete: Cascade]
-
-Ref: delay_block.block_id - block.id [delete: Cascade]
 
 Ref: action.user_id > user.id
 
 Ref: action.target_id > block.id
 
 Ref: action.workflow_id > workflow.id
+
+Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
+
+Ref: workflow_version.created_by_id > user.id
+
+Ref: workflow_template.workspace_id > workspace.id
+
+Ref: saved_search.user_id > user.id
+
+Ref: stroke_line.source_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.target_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]

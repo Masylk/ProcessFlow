@@ -10,8 +10,8 @@ import { Prisma } from '@prisma/client';
  *     summary: Retrieve paths and blocks for a given workflow in a workspace
  *     description: Fetches all paths and their associated blocks for a given workflow in a workspace. If no paths exist, it creates a default path.
  *     tags:
- *       - Workspace 
-*     parameters:
+ *       - Workspace
+ *     parameters:
  *       - in: path
  *         name: id
  *         required: true
@@ -106,7 +106,10 @@ import { Prisma } from '@prisma/client';
  *                   type: string
  *                   example: "Failed to fetch or create paths and blocks"
  */
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
@@ -148,21 +151,49 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
                 position: 'asc',
               },
               include: {
-                path_block: {
+                child_paths: {
                   include: {
-                    paths: {
+                    path: {
                       include: {
                         blocks: {
+                          orderBy: {
+                            position: 'asc',
+                          },
                           include: {
-                            path_block: true,
-                            step_block: true,
+                            child_paths: {
+                              include: {
+                                path: {
+                                  include: {
+                                    blocks: {
+                                      orderBy: {
+                                        position: 'asc',
+                                      },
+                                      include: {
+                                        child_paths: {
+                                          include: {
+                                            path: {
+                                              include: {
+                                                blocks: {
+                                                  include: {
+                                                    child_paths: true
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
                           },
                         },
                       },
                     },
                   },
                 },
-                step_block: true,
               },
             },
           },
@@ -174,26 +205,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
             data: {
               name: 'First Path',
               workflow_id: parsedworkflow_id,
-              path_block_id: null,
             },
             include: {
               blocks: {
                 include: {
-                  path_block: {
+                  child_paths: {
                     include: {
-                      paths: {
-                        include: {
-                          blocks: {
-                            include: {
-                              path_block: true,
-                              step_block: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                  step_block: true,
+                      path: true
+                    }
+                  }
                 },
               },
             },

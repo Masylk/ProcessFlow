@@ -21,7 +21,7 @@ const PathCreationModal: React.FC<PathCreationModalProps> = ({
           <div className="w-[1440px] h-[960px] relative opacity-70 bg-[#0c111d]/70" />
         </div>
         {/* Modal content */}
-        <div className="h-[566px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] shadow-[0px_20px_24px_-4px_rgba(16,24,40,0.08)] flex-col justify-start items-center flex overflow-hidden">
+        <div className="h-[566px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-center flex overflow-hidden">
           {/* Circular graphics */}
           <div className="w-[336px] h-[336px] relative">
             <div className="w-[336px] h-[336px] left-0 top-0 absolute justify-center items-center inline-flex">

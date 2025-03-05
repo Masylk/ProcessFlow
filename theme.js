@@ -707,7 +707,7 @@ const theme = { colors:
       // Background assignments
       "bg-primary": theme.colors["Base/White"],
       "bg-primary_alt": theme.colors["Base/White"],
-      "bg-primary_hover": theme.colors["Gray (light mode)/50"],
+      "bg-primary_hover": theme.colors["Gray (light mode)/100"],
       "bg-primary-solid": theme.colors["Gray (light mode)/950"],
       "bg-secondary": theme.colors["Gray (light mode)/50"],
       "bg-secondary_alt": theme.colors["Gray (light mode)/50"],

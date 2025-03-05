@@ -4,7 +4,7 @@ import ButtonCTA from '@/app/components/ButtonCTA';
 import React, { useEffect, useState } from 'react';
 import TitleBar from './TitleBar';
 import { useRouter, usePathname } from 'next/navigation';
-import FakeButtonCTA from '@/app/components/FakeButtonCTA';
+// import FakeButtonCTA from '@/app/components/FakeButtonCTA';
 import AvatarGroup from '@/app/components/AvatarGroup';
 
 interface WorkflowHeaderProps {
@@ -73,13 +73,13 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
         <AvatarGroup urls={avatarUrls} />
 
         <div className="pl-4 border-l border-[#d0d5dd] justify-start items-center gap-2 flex">
-          <FakeButtonCTA
+          {/* <FakeButtonCTA
             start_icon="/assets/shared_components/cloud.svg"
             bgColor="transparent"
             textColor="#475467"
           >
             Saved
-          </FakeButtonCTA>
+          </FakeButtonCTA> */}
 
           <ButtonCTA
             start_icon="/assets/shared_components/play-icon.svg"

@@ -7,11 +7,12 @@ import { User } from '@/types/user';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import ButtonDestructive from '@/app/components/ButtonDestructive';
 import InputField from '@/app/components/InputFields';
+import { useColors } from '@/app/theme/hooks';
 
 interface UserSettingsProps {
   user: User;
   onClose: () => void;
-  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
+  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;  
   passwordChanged: boolean;
   openImageUpload: () => void;
   openDeleteAccount: () => void;
@@ -33,6 +34,7 @@ export default function UserSettings({
   isDeleteAvatar,
   onDeleteAvatar,
 }: UserSettingsProps) {
+  const colors = useColors();
   const supabase = createClient();
 
   const handleLogout = async () => {
@@ -71,6 +73,10 @@ export default function UserSettings({
   const [newPasswordError, setNewPasswordError] = useState<string>('');
   const [confirmPasswordError, setConfirmPasswordError] = useState<string>('');
 
+  // Add this to your existing state declarations
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   // Update local state when user changes.
   useEffect(() => {
     setFirstName(user.first_name);
@@ -85,9 +91,65 @@ export default function UserSettings({
     }
   }, [selectedFile]);
 
-  // Trigger the file selector.
-  const handleUploadClick = () => {
+  const handleImageClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        // Create a preview URL for immediate visual feedback
+        const objectURL = URL.createObjectURL(file);
+        setPreviewUrl(objectURL);
+
+        // Create FormData and upload the file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const uploadData = await uploadRes.json();
+        
+        if (uploadData.filePath) {
+          // Update the user record with the new avatar URL
+          const updateRes = await fetch('/api/user/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: user.id,
+              avatar_url: uploadData.filePath,
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`,
+              delete_avatar: false,
+            }),
+          });
+
+          if (updateRes.ok) {
+            const updatedUser = await updateRes.json();
+            if (onUserUpdate) {
+              onUserUpdate(updatedUser);
+            }
+          } else {
+            throw new Error('Failed to update user profile');
+          }
+        }
+      } catch (error) {
+        console.error('Error updating profile picture:', error);
+        // Reset preview on error
+        setPreviewUrl(null);
+      }
+      // Reset the input value to allow selecting the same file again
+      event.target.value = '';
+    }
   };
 
   // Simple email validation.
@@ -117,35 +179,36 @@ export default function UserSettings({
 
   // Save changes: upload new avatar (if selected) and update the user record (excluding email).
   const handleSave = async () => {
-    let newAvatarUrl = user.avatar_url; // Default to current avatar.
-
-    // If a new file was selected, perform the upload.
-    if (selectedFile && !isDeleteAvatar) {
-      try {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        const uploadData = await uploadRes.json();
-
-        if (uploadRes.ok && uploadData.filePath) {
-          newAvatarUrl = uploadData.filePath;
-        } else {
-          console.error('File upload failed', uploadData.error);
-        }
-      } catch (error) {
-        console.error('Error during file upload:', error);
-      }
-    }
-
-    // Compute full_name based on updated firstName and lastName.
-    const fullName = `${firstName} ${lastName}`;
-
-    // Update the user record in your database (excluding the email update).
+    setIsSaving(true);
     try {
+      let newAvatarUrl = user.avatar_url; // Default to current avatar.
+
+      // If a new file was selected, perform the upload.
+      if (selectedFile && !isDeleteAvatar) {
+        try {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          const uploadData = await uploadRes.json();
+
+          if (uploadRes.ok && uploadData.filePath) {
+            newAvatarUrl = uploadData.filePath;
+          } else {
+            console.error('File upload failed', uploadData.error);
+          }
+        } catch (error) {
+          console.error('Error during file upload:', error);
+        }
+      }
+
+      // Compute full_name based on updated firstName and lastName.
+      const fullName = `${firstName} ${lastName}`;
+
+      // Update the user record in your database (excluding the email update).
       const updateRes = await fetch('/api/user/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -168,12 +231,14 @@ export default function UserSettings({
       } else {
         console.error('Failed to update user information');
       }
-    } catch (error) {
-      console.error('Error during user update:', error);
-    }
 
-    // Close the modal after saving.
-    onClose();
+      // Close the modal after saving.
+      onClose();
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle canceling the password change.
@@ -189,40 +254,44 @@ export default function UserSettings({
 
   // Handle updating the password.
   const handleUpdatePassword = async () => {
-    // Reset previous error messages.
+    // Reset previous error messages
     setOldPasswordError('');
     setNewPasswordError('');
     setConfirmPasswordError('');
-
-    // Check that new password is at least 6 characters.
+    
+    // Check that new password is at least 6 characters
     if (newPassword.length < 6) {
-      setNewPasswordError(
-        'Le nouveau mot de passe doit comporter au moins 6 caractères.'
-      );
+      setNewPasswordError('The new password must be at least 6 characters.');
       return;
     }
 
-    // Check that new password and confirm password match.
+    // Check that new password and confirm password match
     if (newPassword !== confirmNewPassword) {
-      setConfirmPasswordError('Les mots de passe ne correspondent pas.');
+      setConfirmPasswordError('The passwords do not match.');
       return;
     }
 
-    // Verify that the old password is correct.
-    // Here we attempt to sign in with the current email and the provided old password.
-    const data = {
-      email: user.email as string,
-      password: oldPassword as string,
-    };
+    setIsUpdatingPassword(true);
+    try {
+      // Verify that the old password is correct
+      const data = {
+        email: user.email as string,
+        password: oldPassword as string,
+      };
 
-    const { error } = await supabase.auth.signInWithPassword(data);
-    if (error) {
-      setOldPasswordError("L'ancien mot de passe est incorrect.");
-      return;
+      const { error } = await supabase.auth.signInWithPassword(data);
+      if (error) {
+        setOldPasswordError("The old password is incorrect.");
+        return;
+      }
+
+      updateNewPassword(newPassword);
+      handleCancelPasswordChange();
+    } catch (error) {
+      console.error('Error updating password:', error);
+    } finally {
+      setIsUpdatingPassword(false);
     }
-
-    updateNewPassword(newPassword);
-    handleCancelPasswordChange();
   };
 
   // Clean up the preview URL when the component unmounts.
@@ -236,28 +305,43 @@ export default function UserSettings({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40"
+      className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
+      {/* Backdrop */}
+      <div className="absolute inset-0">
+        <div 
+          style={{ backgroundColor: colors['bg-overlay'] }}
+          className="absolute inset-0 opacity-70" 
+        />
+      </div>
+
       <div 
-        className="w-[628px] h-[856px] bg-white rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
+        style={{ backgroundColor: colors['bg-primary'] }}
+        className="w-[628px] h-fit rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="self-stretch h-[92px] flex-col justify-start items-center flex">
           <div className="self-stretch px-6 pt-6 justify-start items-center gap-4 inline-flex">
-            <div className="w-12 h-12 p-3 bg-[#f2f4f7] rounded-full justify-center items-center flex overflow-hidden">
+            <div 
+              style={{ backgroundColor: colors['bg-tertiary'] }}
+              className="w-12 h-12 p-3 rounded-full justify-center items-center flex overflow-hidden"
+            >
               <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-profile.svg`}
                   alt="Settings Icon"
                   className="w-6 h-6 object-contain"
                 />
               </div>
             </div>
             <div className="w-[432px] flex-col justify-start items-start gap-1 inline-flex">
-              <div className="self-stretch text-[#101828] text-lg font-semibold font-['Inter'] leading-7">
-                Settings
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="self-stretch text-lg font-semibold font-['Inter'] leading-7"
+              >
+                Account settings
               </div>
             </div>
           </div>
@@ -267,17 +351,7 @@ export default function UserSettings({
         {/* Body */}
         <div className="self-stretch justify-start items-center inline-flex">
           <div className="grow shrink basis-0 p-6 flex-col justify-start items-start gap-5 inline-flex">
-            {/* Tabs */}
-            <div className="self-stretch h-8 border-b border-[#e4e7ec] flex-col justify-start items-start gap-2 flex">
-              <div className="justify-start items-start gap-3 inline-flex">
-                <div className="px-1 pb-3 border-b-2 border-[#4761c4] justify-center items-center gap-2 flex">
-                  <div className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
-                    Account
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            
             {/* Main settings form */}
             <div className="self-stretch h-min flex-col justify-start items-start gap-6 flex">
               <div className="self-stretch h-[579px] p-1 flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
@@ -286,18 +360,37 @@ export default function UserSettings({
                   {/* Photo label */}
                   <div className="self-stretch h-10 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Your photo
                       </div>
                     </div>
-                    <div className="self-stretch text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
+                    <div 
+                      style={{ color: colors['text-secondary'] }}
+                      className="self-stretch text-sm font-normal font-['Inter'] leading-tight"
+                    >
                       This will be displayed as your avatar.
                     </div>
                   </div>
                   {/* Photo controls */}
                   <div className="self-stretch justify-start items-center gap-4 inline-flex">
-                    <div className="w-16 h-16 rounded-full justify-center items-center flex">
-                      <div className="w-16 h-16 relative rounded-full border border-black/10">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <div 
+                      className="w-16 h-16 rounded-full justify-center items-center flex relative group cursor-pointer"
+                      onClick={handleImageClick}
+                    >
+                      <div 
+                        style={{ borderColor: colors['border-secondary'] }}
+                        className="w-16 h-16 relative rounded-full border"
+                      >
                         <img
                           src={
                             isDeleteAvatar
@@ -309,20 +402,20 @@ export default function UserSettings({
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
                         />
+                        {/* Edit overlay on hover */}
+                        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                              alt="Edit"
+                              className="w-5 h-5 brightness-[10]"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <ButtonNormal
-                      variant="secondaryColor"
-                      mode="light"
-                      size="small"
-                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-icon.svg`}
-                      onClick={() => openImageUpload()}
-                    >
-                      Upload new picture
-                    </ButtonNormal>
                     <ButtonDestructive
                       variant="tertiary"
-                      mode="light"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
                       onClick={() => onDeleteAvatar()}
@@ -334,7 +427,10 @@ export default function UserSettings({
                   <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                     <div className="self-stretch h-5 flex-col justify-start items-start flex">
                       <div className="inline-flex gap-0.5">
-                        <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                        <div 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-semibold font-['Inter'] leading-tight"
+                        >
                           Name
                         </div>
                       </div>
@@ -343,7 +439,6 @@ export default function UserSettings({
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                         <InputField
                           type="default"
-                          mode="light"
                           value={lastName}
                           onChange={setLastName}
                           placeholder="Last name"
@@ -352,7 +447,6 @@ export default function UserSettings({
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                         <InputField
                           type="default"
-                          mode="light"
                           value={firstName}
                           onChange={setFirstName}
                           placeholder="First name"
@@ -362,12 +456,18 @@ export default function UserSettings({
                   </div>
                 </div>
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
                 {/* Email section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Email
                       </div>
                     </div>
@@ -378,8 +478,8 @@ export default function UserSettings({
                         <div className="relative self-stretch">
                           <InputField
                             type="default"
-                            mode="light"
                             value={newEmail}
+                            iconColor={colors['text-primary']}
                             onChange={setNewEmail}
                             placeholder="Enter email"
                             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
@@ -388,8 +488,7 @@ export default function UserSettings({
                       </div>
                     </div>
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       onClick={handleChangeEmail}
                       disabled={newEmail === user.email}
@@ -400,7 +499,10 @@ export default function UserSettings({
                   </div>
                 </div>
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
                 {/* Password section */}
 
                 {!showPasswordForm ? (
@@ -410,14 +512,16 @@ export default function UserSettings({
                     <div className="self-stretch flex flex-col gap-4">
                       <div className="self-stretch h-5 flex items-center">
                         <div className="inline-flex gap-0.5">
-                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          <div 
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-semibold font-['Inter'] leading-tight"
+                          >
                             Password
                           </div>
                         </div>
                       </div>
                       <ButtonNormal
-                        variant="secondaryGray"
-                        mode="light"
+                        variant="secondary"
                         size="small"
                         onClick={() => setShowPasswordForm(true)}
                         className="w-fit"
@@ -428,8 +532,11 @@ export default function UserSettings({
 
                     {/* Confirmation Message - displayed when passwordChanged is true */}
                     {passwordChanged && (
-                      <div className="h-[52px] py-0 bg-white rounded-xl flex items-center gap-4 mt-0">
-                        <div className="w-5 h-5 bg-[#dbf9e6] rounded-full overflow-hidden">
+                      <div className="h-[52px] py-0 rounded-xl flex items-center gap-4 mt-0">
+                        <div 
+                          style={{ backgroundColor: colors['bg-success'] }}
+                          className="w-5 h-5 rounded-full overflow-hidden"
+                        >
                           <img
                             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-green.svg`}
                             alt="Mail Icon"
@@ -437,7 +544,10 @@ export default function UserSettings({
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                          <div 
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-semibold font-['Inter'] leading-tight"
+                          >
                             Your password has been changed successfully
                           </div>
                         </div>
@@ -447,72 +557,71 @@ export default function UserSettings({
                 ) : (
                   // When the form is displayed, show the full password change section.
                   <div className="flex flex-col w-96 gap-4 rounded-lg">
-                    <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                    <div 
+                      style={{ color: colors['text-primary'] }}
+                      className="text-sm font-semibold font-['Inter'] leading-tight"
+                    >
                       Password
                     </div>
                     <div className="flex flex-col gap-4">
                       {/* Old password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           Old password
                         </label>
-                        <input
+                        <InputField
                           type="password"
                           value={oldPassword}
-                          onChange={(e) => setOldPassword(e.target.value)}
+                          onChange={setOldPassword}
                           placeholder="Old password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          iconColor={colors['text-primary']}
+                          errorMessage={oldPasswordError}
                         />
-                        {oldPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {oldPasswordError}
-                          </p>
-                        )}
                       </div>
+
                       {/* New password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           New password
                         </label>
-                        <input
+                        <InputField
                           type="password"
                           value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
+                          iconColor={colors['text-primary']}
+                          onChange={setNewPassword}
                           placeholder="New password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          errorMessage={newPasswordError}
                         />
-                        {newPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {newPasswordError}
-                          </p>
-                        )}
                       </div>
+
                       {/* Confirm new password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                        <label 
+                          style={{ color: colors['text-primary'] }}
+                          className="text-sm font-medium font-['Inter'] leading-tight"
+                        >
                           Confirm new password
                         </label>
-                        <input
+                        <InputField
                           type="password"
                           value={confirmNewPassword}
-                          onChange={(e) =>
-                            setConfirmNewPassword(e.target.value)
-                          }
+                          iconColor={colors['text-primary']}
+                          onChange={setConfirmNewPassword}
                           placeholder="Confirm new password"
-                          className="w-full px-3.5 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+                          errorMessage={confirmPasswordError}
                         />
-                        {confirmPasswordError && (
-                          <p className="text-red-500 text-sm">
-                            {confirmPasswordError}
-                          </p>
-                        )}
                       </div>
                     </div>
                     {/* Action buttons */}
                     <div className="flex gap-4">
                       <ButtonNormal
-                        variant="secondaryGray"
-                        mode="light"
+                        variant="secondary"
                         size="small"
                         onClick={handleCancelPasswordChange}
                       >
@@ -520,9 +629,10 @@ export default function UserSettings({
                       </ButtonNormal>
                       <ButtonNormal
                         variant="primary"
-                        mode="light"
                         size="small"
                         onClick={handleUpdatePassword}
+                        isLoading={isUpdatingPassword}
+                        loadingText="Updating password..."
                       >
                         Update password
                       </ButtonNormal>
@@ -531,21 +641,26 @@ export default function UserSettings({
                 )}
 
                  {/* Divider */}
-                 <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+                 <div 
+                   style={{ borderColor: colors['border-secondary'] }}
+                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                 />
 
                 {/* Account Security section */}
                 <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
                   <div className="self-stretch h-5 flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
+                      <div 
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-semibold font-['Inter'] leading-tight"
+                      >
                         Account Security
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
                       onClick={() => handleLogout()}
@@ -554,7 +669,6 @@ export default function UserSettings({
                     </ButtonNormal>
                     <ButtonDestructive
                       variant="secondary"
-                      mode="light"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/delete-icon-red.svg`}
                       onClick={() => openDeleteAccount()}
@@ -566,14 +680,16 @@ export default function UserSettings({
                  
               </div>
               {/* Divider */}
-              <div className="self-stretch border-b border-[#e4e7ec] flex-col justify-start items-start flex" />
+              <div 
+                style={{ borderColor: colors['border-secondary'] }}
+                className="self-stretch border-b flex-col justify-start items-start flex" 
+              />
               {/* Footer buttons */}
-              <div className="self-stretch h-[61px] flex-col justify-start items-center gap-5 flex">
+              <div className="self-stretch h-fit flex-col justify-start items-center gap-5 flex">
                 <div className="self-stretch flex justify-end items-center gap-5">
                   <div className="grow shrink basis-0 h-10 flex justify-end items-center gap-3">
                     <ButtonNormal
-                      variant="secondaryGray"
-                      mode="light"
+                      variant="secondary"
                       size="small"
                       onClick={onClose}
                     >
@@ -581,9 +697,10 @@ export default function UserSettings({
                     </ButtonNormal>
                     <ButtonNormal
                       variant="primary"
-                      mode="light"
                       size="small"
                       onClick={handleSave}
+                      isLoading={isSaving}
+                      loadingText="Saving..."
                     >
                       Save
                     </ButtonNormal>
