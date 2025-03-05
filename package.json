@@ -47,6 +47,7 @@
     "uuid": "^11.0.2"
   },
   "devDependencies": {
+    "@sentry/cli": "^2.42.2",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.9",
     "@types/mjml": "^4.7.4",
