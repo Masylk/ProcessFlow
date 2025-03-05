@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { BlockEndType } from '@/types/block';
 
 /**
  * @swagger
@@ -139,9 +140,9 @@ export async function GET(
         const blocks = [...path.blocks];
         let needsUpdate = false;
 
-        // Find BEGIN and END blocks
+        // Find BEGIN and end-type blocks
         const beginBlock = blocks.find(b => b.type === 'BEGIN');
-        const endBlock = blocks.find(b => b.type === 'END');
+        const endTypeBlock = blocks.find(b => Object.values(BlockEndType).includes(b.type as BlockEndType));
 
         // Create BEGIN block if it doesn't exist
         if (!beginBlock) {
@@ -167,32 +168,35 @@ export async function GET(
           blocks.unshift(beginBlock);
         }
 
-        // Create END block if it doesn't exist
-        if (!endBlock) {
+        // Check if end-type block exists and has child paths
+        if (endTypeBlock) {
+          if (endTypeBlock.child_paths?.length > 0 && endTypeBlock.type !== BlockEndType.PATH) {
+            needsUpdate = true;
+            await prisma.block.update({
+              where: { id: endTypeBlock.id },
+              data: { type: BlockEndType.PATH }
+            });
+            endTypeBlock.type = BlockEndType.PATH;
+          }
+        } else {
+          // Create default end-type block if none exists
           needsUpdate = true;
           const newEndBlock = await prisma.block.create({
             data: {
-              type: 'END',
+              type: BlockEndType.LAST,
               position: blocks.length,
               icon: '/step-icons/default-icons/end.svg',
-              description: 'End of the workflow',
+              description: 'Last block in the workflow',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'End',
+              step_details: 'Last',
             }
           });
           blocks.push({ ...newEndBlock, child_paths: [] });
-        } else if (endBlock.position !== blocks.length - 1) {
-          needsUpdate = true;
-          // Remove END block from current position
-          const endIndex = blocks.findIndex(b => b.type === 'END');
-          blocks.splice(endIndex, 1);
-          // Add END block at the end
-          blocks.push(endBlock);
         }
 
-        // Create default STEP block if there are no blocks between BEGIN and END
-        if (blocks.length === 2) { // Only BEGIN and END blocks exist
+        // Create default STEP block if there are no blocks between BEGIN and end-type block
+        if (blocks.length === 2) { // Only BEGIN and end-type blocks exist
           needsUpdate = true;
           const newStepBlock = await prisma.block.create({
             data: {
@@ -282,7 +286,7 @@ export async function GET(
         // Create END block
         await prisma.block.create({
           data: {
-            type: 'END',
+            type: 'LAST',
             position: 2,
             icon: '/step-icons/default-icons/end.svg',
             description: 'End of the workflow',

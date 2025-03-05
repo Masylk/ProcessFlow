@@ -35,6 +35,14 @@ export enum BlockType {
   DELAY = 'DELAY',
   STEP = 'STEP',
   PATH = 'PATH',
+  END = 'END',
+  LAST = 'LAST',
+}
+
+export enum BlockEndType {
+  END = 'END',
+  LAST = 'LAST',
+  PATH = 'PATH',
 }
 
 export enum FormType {

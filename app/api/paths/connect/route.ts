@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { BlockEndType } from '@/types/block';
 
 interface ConnectPathsRequest {
   child_path_ids: number[];
@@ -22,16 +23,26 @@ export async function POST(req: NextRequest) {
 
     // Use transaction to ensure all operations succeed or none do
     const result = await prisma.$transaction(async (tx) => {
-      // Find the END block of the destination path
+      // Find any end-type block of the destination path
       const destinationEndBlock = await tx.block.findFirst({
         where: {
           path_id: destination_path_id,
-          type: 'END'
+          type: {
+            in: Object.values(BlockEndType)
+          }
         }
       });
 
       if (!destinationEndBlock) {
-        throw new Error('Destination path has no END block');
+        throw new Error('Destination path has no end-type block');
+      }
+
+      // Update block type to PATH if it isn't already
+      if (destinationEndBlock.type !== BlockEndType.PATH) {
+        await tx.block.update({
+          where: { id: destinationEndBlock.id },
+          data: { type: BlockEndType.PATH }
+        });
       }
 
       // Delete existing parent block relationships for the child paths
