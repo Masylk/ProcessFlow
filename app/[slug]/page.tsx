@@ -5,22 +5,26 @@ interface PageParams {
   slug: string;
 }
 
-// Keep params as a Promise as Next.js 15 seems to expect this
+interface SearchParams {
+  [key: string]: string | string[] | undefined;
+}
+
+// Keep params and searchParams as Promises as Next.js 15 expects this
 export default async function WorkspaceSlugPage({
   params,
   searchParams,
 }: {
   params: Promise<PageParams>;
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<SearchParams>;
 }) {
-  const resolvedParams = await params; // For Next.js 15
+  const resolvedParams = await params;
   const { slug } = resolvedParams;
-  
+
   try {
     // Find the workspace by slug
     const workspace = await prisma.workspace.findUnique({
       where: { slug },
-      select: { id: true }
+      select: { id: true },
     });
 
     if (!workspace) {
@@ -31,7 +35,7 @@ export default async function WorkspaceSlugPage({
     // Redirect to the dashboard page with the workspace id
     return redirect(`/dashboard?workspace=${workspace.id}`);
   } catch (error) {
-    console.error("Error in slug page:", error);
+    console.error('Error in slug page:', error);
     return redirect('/dashboard');
   }
 }
@@ -39,4 +43,4 @@ export default async function WorkspaceSlugPage({
 // This satisfies Next.js expectations for static generation
 export function generateStaticParams(): { slug: string }[] {
   return [];
-} 
+}
