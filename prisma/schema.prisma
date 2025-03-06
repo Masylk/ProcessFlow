@@ -83,6 +83,7 @@ model user {
   last_login_at            DateTime?
   onboarding_step          onboarding_step?   @default(PERSONAL_INFO)
   onboarding_completed_at  DateTime?
+  tutorial_completed       Boolean            @default(false)
   
   // Professional Info fields - Individual specific
   professional_role     String?   // renamed from 'role' to avoid confusion with user_role enum

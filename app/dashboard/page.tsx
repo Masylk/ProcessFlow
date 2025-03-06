@@ -35,6 +35,7 @@ import MoveWorkflowModal from './components/MoveWorkflowModal';
 import InputField from '@/app/components/InputFields';
 import IconModifier from './components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
+import TutorialOverlay from './components/TutorialOverlay';
 
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
   ssr: false,
@@ -112,6 +113,9 @@ export default function Page() {
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add this state near other state declarations
+  const [showTutorial, setShowTutorial] = useState(false);
 
   // Fetch user data from your API
   useEffect(() => {
@@ -922,6 +926,45 @@ export default function Page() {
     setEmote(undefined);
   };
 
+  // Effect to check tutorial status
+  useEffect(() => {
+    const checkTutorialStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await fetch(`/api/user/tutorial-status/${user.id}`);
+        const data = await response.json();
+        
+        if (!data.hasCompletedTutorial) {
+          setShowTutorial(true);
+        }
+      } catch (error) {
+        console.error('Error checking tutorial status:', error);
+      }
+    };
+
+    checkTutorialStatus();
+  }, [user]);
+
+  // Handler for tutorial completion
+  const handleTutorialComplete = async () => {
+    if (!user) return;
+    
+    try {
+      await fetch(`/api/user/tutorial-status/${user.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hasCompletedTutorial: true }),
+      });
+      
+      setShowTutorial(false);
+    } catch (error) {
+      console.error('Error updating tutorial status:', error);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar with header and list of workspaces */}
@@ -967,6 +1010,7 @@ export default function Page() {
               size="small"
               leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
               onClick={openCreateFlow}
+              data-testid="new-flow-button"
             >
               New Flow
             </ButtonNormal>
@@ -1205,6 +1249,11 @@ export default function Page() {
           onDelete={handleDeleteWorkflow}
           selectedWorkflow={selectedWorkflow}
         />
+      )}
+
+      {/* Add the tutorial overlay */}
+      {showTutorial && (
+        <TutorialOverlay onComplete={handleTutorialComplete} />
       )}
     </div>
   );

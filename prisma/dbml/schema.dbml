@@ -21,6 +21,7 @@ Table user {
   last_login_at DateTime
   onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
+  tutorial_completed Boolean [not null, default: false]
   professional_role String
   source String
   temp_industry String

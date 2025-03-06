@@ -275,6 +275,7 @@ export default function Sidebar({
             onClick={toggleDropdown}
             style={style}
             className="self-stretch px-3 py-2.5 cursor-pointer rounded-md flex justify-between items-center overflow-hidden transition-colors"
+            data-testid="workspace-switcher"
           >
             <div className="flex items-center gap-2">
               <div className="relative w-8 h-8">
@@ -300,10 +301,10 @@ export default function Sidebar({
                 </div>
               </div>
               {/* Display activeWorkspace name */}
-              <div className="relative flex flex-col px-0.5">
+              <div className="relative flex flex-col px-0.5 min-w-0 flex-1">
                 <div 
                   style={{ color: colors['text-primary'] }}
-                  className="h-4 text-sm font-medium font-['Inter'] leading-tight"
+                  className="text-sm font-medium font-['Inter'] leading-tight truncate"
                 >
                   {activeWorkspace.name}
                 </div>
@@ -361,34 +362,39 @@ export default function Sidebar({
           className="flex-grow overflow-y-auto"
         >
           {/* My folders header */}
-          <div className="w-full px-7 py-4 flex justify-between items-center">
+          <div className="flex flex-col">
             <div 
-              style={{ color: colors['text-quaternary'] }}
-              className="text-xs font-normal leading-tight"
+              className="flex items-center justify-between px-7 py-4"
+              data-testid="folders-section"
             >
-              MY FOLDERS
+              <span 
+                style={{ color: colors['text-tertiary'] }}
+                className="text-xs font-normal"
+              >
+                MY FOLDERS
+              </span>
+              <button
+                onClick={() => onCreateFolder()}
+                className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100"
+              >
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
+                  alt="Add Folder"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                  style={{ filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}` }}
+                />
+              </button>
             </div>
-            <button
-              onClick={() => onCreateFolder()}
-              className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100"
-            >
-              <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
-                alt="Add Folder"
-                width={20}
-                height={20}
-                className="w-5 h-5"
-                style={{ filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}` }}
-              />
-            </button>
-          </div>
 
-          {/* Folders container */}
-          <div className="px-4">
-            <div className="flex flex-col w-full">
-              {activeWorkspace?.folders
-                ?.filter((folder) => folder.parent_id === null)
-                .map((folder) => renderFolderWithSubfolders(folder))}
+            {/* Folders container */}
+            <div className="px-4">
+              <div className="flex flex-col w-full">
+                {activeWorkspace?.folders
+                  ?.filter((folder) => folder.parent_id === null)
+                  .map((folder) => renderFolderWithSubfolders(folder))}
+              </div>
             </div>
           </div>
         </div>
@@ -421,11 +427,17 @@ export default function Sidebar({
         </div>
 
         {/* Add resize handle */}
+        <style>{`
+          .resize-handle:hover {
+            background-color: ${colors['border-secondary']} !important;
+            opacity: 0.5 !important;
+          }
+        `}</style>
         <div
           style={{ 
             backgroundColor: isResizing ? colors['bg-secondary'] : 'transparent'
           }}
-          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize transition-colors hover:bg-opacity-80"
+          className="absolute right-0 top-0 bottom-0 w-[3px] cursor-col-resize resize-handle transition-all"
           onMouseDown={startResizing}
         />
       </div>
