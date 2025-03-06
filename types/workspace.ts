@@ -18,4 +18,5 @@ export interface Workspace {
   team_tags?: string[];
   icon_url?: string;
   background_colour?: string;
+  slug?: string;
 }

@@ -555,6 +555,20 @@ export default function Page() {
   const updateActiveWorkspace = async (workspace: Workspace) => {
     if (user) {
       try {
+        // First, update the URL immediately before any state changes or API calls
+        if (workspace.slug) {
+          const newPath = `/${workspace.slug}`;
+          // Only update if the URL is different
+          if (!window.location.pathname.endsWith(newPath)) {
+            window.history.pushState({}, '', newPath);
+          }
+        }
+        
+        // Then, update the active workspace in the state immediately
+        // This prevents the UI from flashing or showing intermediate states
+        setActiveWorkspace(workspace);
+        
+        // Now make the API call to persist the change (after UI is already updated)
         const updateRes = await fetch('/api/user/update', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -573,9 +587,6 @@ export default function Page() {
         if (updatedUser.active_workspace_id !== user.active_workspace_id) {
           // Update the user state with the new active workspace
           setUser(updatedUser);
-          
-          // Update the active workspace state
-          setActiveWorkspace(workspace);
           
           // If in settings view, force a re-render by toggling and restoring the state
           if (isSettingsView) {
@@ -921,6 +932,79 @@ export default function Page() {
     setIconUrl(undefined);
     setEmote(undefined);
   };
+
+  // Add this near your other useEffect hooks
+  useEffect(() => {
+    // Only redirect if we have a workspace with a slug and we're on the dashboard page
+    if (activeWorkspace?.slug && window.location.pathname === '/dashboard') {
+      // Update URL to the workspace slug without refreshing the page
+      window.history.replaceState(
+        {}, 
+        '', 
+        `/${activeWorkspace.slug}`
+      );
+    }
+  }, [activeWorkspace]);
+
+  // Add this near the beginning of your component
+  useEffect(() => {
+    if (workspaces.length > 0) {
+      // Get slug from URL if available
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      const slugFromUrl = pathSegments.length > 0 ? pathSegments[0] : null;
+      
+      if (slugFromUrl) {
+        // Find workspace with matching slug
+        const workspaceFromSlug = workspaces.find(w => w.slug === slugFromUrl);
+        
+        if (workspaceFromSlug && (!activeWorkspace || activeWorkspace.id !== workspaceFromSlug.id)) {
+          // Set this workspace as active
+          updateActiveWorkspace(workspaceFromSlug);
+          return;
+        }
+      }
+      
+      // If no matching workspace found from URL or no slug in URL, and we have an active workspace
+      // Redirect to the active workspace slug URL
+      if (activeWorkspace?.slug && !slugFromUrl) {
+        window.history.replaceState({}, '', `/${activeWorkspace.slug}`);
+      }
+    }
+  }, [workspaces, activeWorkspace]);
+
+  // Add this near your other useEffect hooks
+  useEffect(() => {
+    // Handle click events on workspace links
+    const handleNavigation = (e: MouseEvent) => {
+      // Check if the clicked element is a workspace link
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link && link.pathname.split('/').filter(Boolean).length === 1) {
+        // This looks like a workspace slug link
+        const slug = link.pathname.split('/').filter(Boolean)[0];
+        
+        // Find the workspace with this slug
+        const workspace = workspaces.find(w => w.slug === slug);
+        
+        if (workspace) {
+          // Prevent the default navigation
+          e.preventDefault();
+          
+          // Update the active workspace directly
+          updateActiveWorkspace(workspace);
+        }
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('click', handleNavigation);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('click', handleNavigation);
+    };
+  }, [workspaces, updateActiveWorkspace]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
