@@ -1,11 +1,12 @@
 ---
-description: Help to understand the structure of the project
+description: Help to understand the structure of the projectDo not hesitate to ask questions to the user to help you understand about the context. Only provide the code snippet needed for the changes, not all the code on the file. The code comments must always be in English language.
 globs: 
+alwaysApply: false
 ---
 
-# Your rule content
 
-Generate a complete, understandable, and high-quality codebase for a web application.
+Do not hesitate to ask questions to the user to help you understand about the context. Only provide the code snippet needed for the changes, not all the code on the file. The code comments must always be in English language.
+
 
 ## Technology Stack
 

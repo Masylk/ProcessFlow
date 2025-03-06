@@ -27,6 +27,7 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
           ? 'border-[#4E6BD7] shadow-[0px_0px_0px_4px_rgba(78,107,215,0.12)]' 
           : 'border-transparent'
       }`}
+      data-testid="user-settings"
     >
     
       {/* Avatar */}
