@@ -114,7 +114,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
           onClick={onClick}
           onKeyDown={(e) => e.key === 'Enter' && onClick()}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full overflow-hidden">
             {/* Chevron (shows on hover) */}
             {isFolder && hasSubfolders && (
               <div
@@ -150,10 +150,10 @@ export const TabButton: React.FC<TabButtonProps> = ({
             </div>
 
             {/* Label */}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <span 
                 style={{ color: colors['text-secondary'] }}
-                className="text-sm font-medium truncate block max-w-[140px]"
+                className="text-sm font-medium truncate block"
               >
                 {label}
               </span>

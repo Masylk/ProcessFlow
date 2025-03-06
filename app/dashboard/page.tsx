@@ -1010,6 +1010,7 @@ export default function Page() {
               size="small"
               leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
               onClick={openCreateFlow}
+              data-testid="new-flow-button"
             >
               New Flow
             </ButtonNormal>
