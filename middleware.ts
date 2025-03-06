@@ -8,7 +8,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   
-  // Skip middleware for api routes, static files, auth pages, etc.
+  // IMPORTANT: Skip middleware for auth-related routes completely
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -16,46 +16,51 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/reset-password-request') ||
+    pathname.startsWith('/set-new-password') ||
     pathname === '/'
   ) {
     return NextResponse.next();
   }
 
-  // Extract the potential workspace slug
-  const segments = pathname.split('/').filter(Boolean);
-  
-  // If it's the /dashboard route and no other segments, leave it alone
-  if (segments.length === 1 && segments[0] === 'dashboard') {
-    return NextResponse.next();
-  }
-  
-  // For a path that looks like a workspace slug
-  if (segments.length === 1) {
-    // This is likely a workspace slug - rewrite to dashboard page but preserve the URL
-    const url = request.nextUrl.clone();
-    // Use rewrite (not redirect) to preserve the URL while loading the dashboard
-    url.pathname = '/dashboard';
-    return NextResponse.rewrite(url);
-  }
-
-  const isAuthRoute = ['/login', '/signup', '/reset-password'].includes(pathname);
-
-  // If user is authenticated
+  // Handle slug-based routes only if user is authenticated
   if (user) {
-    // If trying to access auth routes while authenticated
-    if (isAuthRoute) {
-      // Check onboarding status
-      const onboardingStatus = user.user_metadata?.onboarding_status || {};
-      const isOnboardingComplete = onboardingStatus.completed_at;
-      const currentStep = onboardingStatus.current_step || 'personal-info';
-
-      if (!isOnboardingComplete) {
-        return NextResponse.redirect(new URL(`/onboarding/${currentStep}`, request.url));
+    // Extract the potential workspace slug
+    const segments = pathname.split('/').filter(Boolean);
+    
+    // If it's the /dashboard route, leave it alone
+    if (segments.length === 1 && segments[0] === 'dashboard') {
+      // Add user info to headers for protected routes
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', user.id);
+      if (user.user_metadata?.role) {
+        requestHeaders.set('x-user-role', user.user_metadata.role);
       }
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.next({
+        request: { headers: requestHeaders }
+      });
     }
-
-    // Add user info to headers for protected routes
+    
+    // For a path that looks like a workspace slug
+    if (segments.length === 1) {
+      // This is likely a workspace slug - rewrite to dashboard page but preserve the URL
+      const url = request.nextUrl.clone();
+      // Use rewrite (not redirect) to preserve the URL while loading the dashboard
+      url.pathname = '/dashboard';
+      
+      // Add user info to headers
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', user.id);
+      if (user.user_metadata?.role) {
+        requestHeaders.set('x-user-role', user.user_metadata.role);
+      }
+      
+      return NextResponse.rewrite(url);
+    }
+    
+    // Add user info to headers for all other protected routes
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', user.id);
     if (user.user_metadata?.role) {
@@ -66,19 +71,14 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  // If not authenticated and trying to access protected routes
-  if (!isAuthRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // Allow access to auth routes for non-authenticated users
-  return NextResponse.next();
+  // If not authenticated, redirect to login
+  return NextResponse.redirect(new URL('/login', request.url));
 }
 
 // Configure which paths the middleware will run on
 export const config = {
   matcher: [
-    // Skip all internal paths (_next, api)
-    '/((?!_next/|api/|static/|favicon.ico).*)',
+    // Skip specific paths we know we don't want to process
+    '/((?!_next/|api/|static/|favicon.ico|auth/|reset-password|set-new-password).*)',
   ],
 };
