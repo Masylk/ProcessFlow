@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+interface TutorialStatusRequest {
+  hasCompletedTutorial: boolean;
+}
+
 export async function GET(
   request: Request,
   context: { params: Promise<{ userId: string }> }
@@ -22,18 +26,20 @@ export async function GET(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get the user from Prisma using auth_id
-    const [dbUser] = await prisma.$queryRaw<{ id: number; tutorial_completed: boolean }[]>`
-      SELECT id, tutorial_completed 
-      FROM "user" 
-      WHERE auth_id = ${user.id}
-    `;
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        auth_id: user.id
+      },
+      select: {
+        id: true,
+        tutorial_completed: true
+      }
+    });
 
     if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Verify the requested userId matches the user's actual ID
     if (dbUser.id.toString() !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -64,37 +70,53 @@ export async function POST(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get the user from Prisma using auth_id
-    const [dbUser] = await prisma.$queryRaw<{ id: number }[]>`
-      SELECT id 
-      FROM "user" 
-      WHERE auth_id = ${user.id}
-    `;
-
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Verify the requested userId matches the user's actual ID
-    if (dbUser.id.toString() !== userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
+    // Basic request validation
     const body = await request.json();
+    if (typeof body.hasCompletedTutorial !== 'boolean') {
+      return NextResponse.json({ 
+        error: 'Invalid request body: hasCompletedTutorial must be a boolean'
+      }, { status: 400 });
+    }
 
-    // Update the tutorial status
-    await prisma.$executeRaw`
-      UPDATE "user" 
-      SET tutorial_completed = ${body.hasCompletedTutorial}
-      WHERE id = ${dbUser.id}
-    `;
+    const { hasCompletedTutorial } = body as TutorialStatusRequest;
+
+    // Use transaction to ensure both updates succeed or fail together
+    const result = await prisma.$transaction(async (tx) => {
+      const dbUser = await tx.user.findFirst({
+        where: {
+          auth_id: user.id
+        },
+        select: {
+          id: true
+        }
+      });
+
+      if (!dbUser) {
+        throw new Error('User not found');
+      }
+
+      if (dbUser.id.toString() !== userId) {
+        throw new Error('Unauthorized');
+      }
+
+      await tx.user.update({
+        where: {
+          id: dbUser.id
+        },
+        data: {
+          tutorial_completed: hasCompletedTutorial
+        }
+      });
+
+      return dbUser;
+    });
 
     // Update Supabase user metadata
     await supabase.auth.updateUser({
       data: {
         tutorial_status: {
-          completed: body.hasCompletedTutorial,
-          completed_at: body.hasCompletedTutorial ? new Date().toISOString() : null
+          completed: hasCompletedTutorial,
+          completed_at: hasCompletedTutorial ? new Date().toISOString() : null
         }
       }
     });
@@ -102,6 +124,16 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating tutorial status:', error);
+    
+    if (error instanceof Error) {
+      if (error.message === 'User not found') {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+    }
+    
     return NextResponse.json({ error: 'Failed to update tutorial status' }, { status: 500 });
   }
 } 
