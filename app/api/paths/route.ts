@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
           description: 'This is a default block',
         },
         {
-          type: 'END',
+          type: 'LAST',
           position: 2,
           workflow_id,
           path_id: path.id,

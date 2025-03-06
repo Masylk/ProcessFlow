@@ -37,6 +37,7 @@
     "react-quill": "^2.0.0",
     "react-zoom-pan-pinch": "^3.6.1",
     "reactflow": "^11.11.4",
+    "sonner": "^2.0.1",
     "stripe": "^17.7.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-dist": "^5.18.3",
@@ -46,6 +47,7 @@
     "uuid": "^11.0.2"
   },
   "devDependencies": {
+    "@sentry/cli": "^2.42.2",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.9",
     "@types/mjml": "^4.7.4",

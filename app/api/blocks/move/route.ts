@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { BlockEndType } from '@/types/block';
 
 interface MoveBlocksRequest {
   block_ids: number[];
@@ -83,10 +84,13 @@ export async function POST(req: NextRequest) {
         orderBy: { position: 'asc' },
       });
 
-      // Find the END block
-      const endBlock = destinationBlocks.find(block => block.type === 'END');
+      // Find any end-type block
+      const endBlock = destinationBlocks.find(block => 
+        Object.values(BlockEndType).includes(block.type as BlockEndType)
+      );
+
       if (!endBlock) {
-        throw new Error('Destination path has no END block');
+        throw new Error('Destination path has no end-type block');
       }
 
       // Calculate position before END block
@@ -104,7 +108,7 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // First, shift existing blocks (except END block) to make space
+      // First, shift existing blocks (except end-type blocks) to make space
       const shiftsNeeded = block_ids.length;
       if (shiftsNeeded > 0) {
         await tx.block.updateMany({
@@ -114,7 +118,9 @@ export async function POST(req: NextRequest) {
               lte: positionBeforeEnd,
               gte: positionBeforeEnd - shiftsNeeded + 1
             },
-            type: { not: 'END' }
+            type: { 
+              notIn: Object.values(BlockEndType)
+            }
           },
           data: {
             position: {
@@ -188,4 +194,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

@@ -29,11 +29,16 @@ import { processPath } from '../utils/processPath';
 import BeginNode from './BeginNode';
 import EndNode from './EndNode';
 import SmoothStepCustomParent from './SmoothStepCustomParent';
+import { BlockEndType } from '@/types/block';
+import LastNode from './LastNode';
+import PathNode from './PathNode';
 
 const nodeTypes = {
   custom: CustomNode,
   begin: BeginNode,
   end: EndNode,
+  last: LastNode,
+  path: PathNode,
 } as const;
 
 const edgeTypes = {
@@ -52,6 +57,8 @@ interface FlowProps {
     position: number
   ) => Promise<void>;
   setPaths: (paths: Path[]) => void;
+  strokeLines: any[];
+  setStrokeLines: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export function Flow({
@@ -61,6 +68,8 @@ export function Flow({
   workflowId,
   onBlockAdd,
   setPaths,
+  strokeLines,
+  setStrokeLines,
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -157,7 +166,9 @@ export function Flow({
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
-          paths
+          paths,
+          new Set<string>(),
+          setPaths
         );
         setNodes(nodes);
         setEdges(edges);
@@ -166,7 +177,7 @@ export function Flow({
       }
     };
     createLayoutedNodes();
-  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView]);
+  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView, setPaths]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
