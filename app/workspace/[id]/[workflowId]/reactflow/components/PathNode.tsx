@@ -6,15 +6,10 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
     <>
       <div
-        className={`transition-all duration-300 flex items-center justify-center`}
+        className="transition-all duration-300 relative"
         style={{
-          width: '200px',
-          height: '50px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
-          background: '#eff6ff',
-          position: 'relative',
+          width: '32px',
+          height: '32px',
         }}
       >
         <Handle
@@ -22,22 +17,38 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           position={Position.Top}
           id="top"
           style={{
-            width: 8,
-            height: 8,
+            width: 6,
+            height: 6,
+            opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
           }}
         />
-        <div className="text-blue-600 font-medium truncate">
-          {'Path Start Here'}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '4px',
+            background: '#2563EB',
+            transform: 'rotate(45deg)',
+          }}
+        >
+          <span
+            className="text-white text-xl leading-none"
+            style={{ transform: 'rotate(-45deg)' }}
+          >
+            +
+          </span>
         </div>
         <Handle
           type="source"
           position={Position.Bottom}
           id="bottom"
           style={{
-            width: 8,
-            height: 8,
+            width: 6,
+            height: 6,
+            opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
           }}
@@ -47,4 +58,4 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   );
 }
 
-export default PathNode; 
+export default PathNode;
