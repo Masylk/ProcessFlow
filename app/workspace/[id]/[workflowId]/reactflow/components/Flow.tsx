@@ -32,6 +32,9 @@ import SmoothStepCustomParent from './SmoothStepCustomParent';
 import { BlockEndType } from '@/types/block';
 import LastNode from './LastNode';
 import PathNode from './PathNode';
+import { useModalStore } from '../store/modalStore';
+import CreateParallelPathModal from './CreateParallelPathModal';
+import { createParallelPaths } from '../utils/createParallelPaths';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -243,6 +246,37 @@ export function Flow({
     [setCenter]
   ); // Only depend on stable function, not nodes state
 
+  const showParallelPathModal = useModalStore((state) => state.showParallelPathModal);
+  const modalData = useModalStore((state) => state.modalData);
+  const setShowModal = useModalStore((state) => state.setShowModal);
+
+  const handleCreateParallelPaths = async (data: {
+    paths_to_create: string[];
+    path_to_move: number;
+  }) => {
+    try {
+      setShowModal(false);
+      if (modalData.path) {
+        // Create parallel paths using the modal data
+        await createParallelPaths(modalData.path, modalData.position, {
+          paths_to_create: data.paths_to_create,
+          path_to_move: data.path_to_move,
+        });
+
+        // Fetch updated paths data
+        const pathsResponse = await fetch(
+          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        );
+        if (pathsResponse.ok) {
+          const pathsData = await pathsResponse.json();
+          setPaths(pathsData.paths);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating parallel paths:', error);
+    }
+  };
+
   return (
     <div className="h-screen w-screen relative">
       {/* Include the Sidebar component */}
@@ -301,6 +335,16 @@ export function Flow({
           workspaceId={workspaceId}
           workflowId={workflowId}
           onPathsUpdate={setPaths}
+        />
+      )}
+
+      {showParallelPathModal && modalData.path && (
+        <CreateParallelPathModal
+          onClose={() => setShowModal(false)}
+          onConfirm={handleCreateParallelPaths}
+          path={modalData.path}
+          position={modalData.position}
+          existingPaths={modalData.existingPaths}
         />
       )}
     </div>
