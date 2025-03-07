@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabaseServerClient';
+import { workspaceProtection } from './app/middlewares/workspaceProtection';
 
 export async function middleware(request: NextRequest) {
   const supabase = createClient();
@@ -28,6 +29,12 @@ export async function middleware(request: NextRequest) {
     if (user.user_metadata?.role) {
       requestHeaders.set('x-user-role', user.user_metadata.role);
     }
+
+    // Check if this is a workspace or workflow route
+    if (request.url.includes('/workspace/') || request.url.includes('/workflow/')) {
+      return workspaceProtection(request, user);
+    }
+
     return NextResponse.next({
       request: { headers: requestHeaders }
     });
@@ -53,5 +60,6 @@ export const config = {
     '/onboarding/:path*',
     '/settings/:path*',
     '/workspace/:path*',
+    '/workflow/:path*'
   ]
 }
