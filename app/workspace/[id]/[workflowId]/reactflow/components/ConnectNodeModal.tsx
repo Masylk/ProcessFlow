@@ -88,6 +88,18 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     };
   }, [selectedNodeId, sourceNode.id, setEdges, getEdges]);
 
+  // Add escape key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchTerm('');
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
   const filteredNodes = availableNodes.filter(
     (node) =>
       // Only include STEP type nodes
@@ -135,11 +147,11 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           <div className="flex flex-col gap-4">
             <div className="text-sm text-gray-600">Select Node</div>
 
-            {/* Two Column Layout with Left Padding */}
-            <div className="pl-24">
-              <div className="flex gap-2">
+            {/* Two Column Layout */}
+            <div className="flex justify-end">
+              <div className="flex gap-0">
                 {/* Connection Line Image Column */}
-                <div className="w-10 flex-shrink-0 relative">
+                <div className="w-4 flex-shrink-0 relative">
                   <div className="absolute top-[60px] bottom-[60px]">
                     <img
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-line.svg`}
@@ -158,7 +170,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                 </div>
 
                 {/* Nodes Column */}
-                <div className="flex-1 flex flex-col gap-6">
+                <div className="w-[450px] flex flex-col gap-6">
                   {/* Source Block */}
                   <div className="w-full p-4 bg-white border rounded-lg">
                     <div className="text-sm text-gray-600 mb-2">Node 1</div>
@@ -228,8 +240,9 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                           />
                         </div>
 
+                        {/* Search list - Adjusted positioning */}
                         {searchTerm && (
-                          <div className="absolute left-0 right-0 mt-1 border rounded-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
+                          <div className="absolute left-0 right-0 top-[calc(100%_-_1px)] border rounded-b-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
                             {filteredNodes.map((node) => (
                               <button
                                 key={node.id}
