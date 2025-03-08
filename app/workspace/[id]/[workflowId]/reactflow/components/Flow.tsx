@@ -78,7 +78,7 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView, setCenter } = useReactFlow();
+  const { fitView, setCenter, getNode } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
@@ -169,7 +169,7 @@ export function Flow({
         // Process regular path nodes and edges
         processPath(
           firstPath,
-          nodes,
+          nodes, // Pass nodes directly first
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
@@ -178,6 +178,17 @@ export function Flow({
           setPaths,
           setStrokeLines
         );
+
+        // After nodes are created, then set their initial visibility state
+        const nodesWithVisibility = nodes.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            strokeLinesVisible: true,
+          },
+        }));
+
+        setNodes(nodesWithVisibility);
 
         // Add stroke edges
         const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
@@ -200,13 +211,20 @@ export function Flow({
           };
         });
 
-        setNodes(nodes);
-        // Combine regular edges with stroke edges
-        setEdges([...edges, ...strokeEdges]);
+        // Filter edges based on node visibility before setting them
+        const allEdges = [...edges, ...strokeEdges];
+        const filteredEdges = allEdges.filter((edge) => {
+          const sourceNode = nodesWithVisibility.find(
+            (n) => n.id === edge.source
+          );
+          return sourceNode?.data.strokeLinesVisible !== false;
+        });
 
-        // Only layout the nodes, not the edges
+        setEdges(filteredEdges);
+
+        // Only layout the nodes
         const layoutedNodes = await createElkLayout(
-          nodes,
+          nodesWithVisibility,
           edges.filter((e) => !e.type?.includes('stroke'))
         );
         setNodes(layoutedNodes);
