@@ -15,7 +15,8 @@ export function processPath(
     event?: { clientX: number; clientY: number }) => void,
   allPaths: Path[],
   visitedPaths = new Set<string>(),
-  handlePathsUpdate: (paths: Path[]) => void
+  handlePathsUpdate: (paths: Path[]) => void,
+  handleStrokeLinesUpdate: (strokeLines: any[]) => void
 ): void {
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
@@ -38,7 +39,7 @@ export function processPath(
         y: 0
       },
       data: {
-        label: block.step_details || 'Block',
+        label: block.title || block.step_details || 'Block',
         position: block.position,
         type: block.type,
         onDelete: handleDeleteBlock,
@@ -48,6 +49,7 @@ export function processPath(
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,
         onPathsUpdate: handlePathsUpdate,
+        onStrokeLinesUpdate: handleStrokeLinesUpdate,
       },
     });
     
@@ -94,7 +96,7 @@ export function processPath(
         });
       }
       if (fullChildPath) {
-        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths, handlePathsUpdate);
+        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths, handlePathsUpdate, handleStrokeLinesUpdate);
       }
     });
   });

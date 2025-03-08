@@ -35,6 +35,7 @@ import PathNode from './PathNode';
 import { useModalStore } from '../store/modalStore';
 import CreateParallelPathModal from './CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
+import StrokeEdge from './StrokeEdge';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -47,6 +48,7 @@ const nodeTypes = {
 const edgeTypes = {
   smoothstepCustom: CustomSmoothStepEdge,
   smoothstepCustomParent: SmoothStepCustomParent,
+  strokeEdge: StrokeEdge,
 } as const;
 
 interface FlowProps {
@@ -163,6 +165,8 @@ export function Flow({
       if (firstPath) {
         const nodes: Node[] = [];
         const edges: Edge[] = [];
+
+        // Process regular path nodes and edges
         processPath(
           firstPath,
           nodes,
@@ -171,16 +175,52 @@ export function Flow({
           handleAddBlockOnEdge,
           paths,
           new Set<string>(),
-          setPaths
+          setPaths,
+          setStrokeLines
         );
+
+        // Add stroke edges
+        const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
+          const isSelfLoop =
+            strokeLine.source_block_id === strokeLine.target_block_id;
+          return {
+            id: `stroke-edge-${strokeLine.id}`,
+            source: `block-${strokeLine.source_block_id}`,
+            target: `block-${strokeLine.target_block_id}`,
+            sourceHandle: 'stroke_source',
+            targetHandle: isSelfLoop ? 'stroke_self_target' : 'stroke_target',
+            type: 'strokeEdge',
+            data: {
+              source: `block-${strokeLine.source_block_id}`,
+              target: `block-${strokeLine.target_block_id}`,
+              onStrokeLinesUpdate: setStrokeLines,
+            },
+            // Set zIndex to ensure stroke edges appear above regular edges
+            style: { zIndex: 1000 },
+          };
+        });
+
         setNodes(nodes);
-        setEdges(edges);
-        const layoutedNodes = await createElkLayout(nodes, edges);
+        // Combine regular edges with stroke edges
+        setEdges([...edges, ...strokeEdges]);
+
+        // Only layout the nodes, not the edges
+        const layoutedNodes = await createElkLayout(
+          nodes,
+          edges.filter((e) => !e.type?.includes('stroke'))
+        );
         setNodes(layoutedNodes);
       }
     };
     createLayoutedNodes();
-  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView, setPaths]);
+  }, [
+    paths,
+    strokeLines,
+    handleDeleteBlock,
+    handleAddBlockOnEdge,
+    setPaths,
+    setStrokeLines,
+  ]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
@@ -246,7 +286,9 @@ export function Flow({
     [setCenter]
   ); // Only depend on stable function, not nodes state
 
-  const showParallelPathModal = useModalStore((state) => state.showParallelPathModal);
+  const showParallelPathModal = useModalStore(
+    (state) => state.showParallelPathModal
+  );
   const modalData = useModalStore((state) => state.modalData);
   const setShowModal = useModalStore((state) => state.setShowModal);
 

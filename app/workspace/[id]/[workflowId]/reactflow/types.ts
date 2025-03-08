@@ -16,6 +16,7 @@ export interface NodeData {
     event?: { clientX: number; clientY: number }
   ) => void;
   onPathsUpdate?: (paths: Path[]) => void;
+  onStrokeLinesUpdate?: (strokeLines: any[]) => void;
 }
 
 export interface EdgeData {

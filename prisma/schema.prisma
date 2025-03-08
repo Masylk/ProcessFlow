@@ -332,7 +332,7 @@ model block {
   description       String?
   image             String?
   image_description String?
-  average_time      String?
+  average_time      String? 
   task_type         task_type?
   workflow_id       Int
   path_id           Int
