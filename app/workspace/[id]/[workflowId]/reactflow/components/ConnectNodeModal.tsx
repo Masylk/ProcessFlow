@@ -104,7 +104,8 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     (node) =>
       // Only include STEP type nodes
       node.data.type === 'STEP' &&
-      (node.data.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ((typeof node.data.label === 'string' &&
+        node.data.label.toLowerCase().includes(searchTerm.toLowerCase())) ||
         `Block ${node.data.position}`
           .toLowerCase()
           .includes(searchTerm.toLowerCase()))
@@ -176,7 +177,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                     <div className="text-sm text-gray-600 mb-2">Node 1</div>
                     <div className="text-xs text-gray-500 mb-1">#STEP</div>
                     <div className="text-sm font-medium">
-                      {sourceNode.data.label}
+                      {sourceNode.data.label as string}
                     </div>
                   </div>
 
@@ -209,7 +210,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                       </div>
                       <div className="text-xs text-gray-500 mb-1">#STEP</div>
                       <div className="text-sm font-medium">
-                        {getNode(selectedNodeId)?.data.label}
+                        {getNode(selectedNodeId)?.data.label as string}
                       </div>
                     </div>
                   ) : (
@@ -249,7 +250,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                 onClick={() => setSelectedNodeId(node.id)}
                                 className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
                               >
-                                {node.data.label}
+                                {node.data.label as string}
                               </button>
                             ))}
                             {filteredNodes.length === 0 && (
