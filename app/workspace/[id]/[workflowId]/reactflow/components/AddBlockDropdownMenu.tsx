@@ -147,9 +147,31 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
           </button>
         )}
 
-        {isLastNode && (
+        {isLastNode && block && (
           <button
-            onClick={() => console.log('Merge paths clicked')}
+            onClick={async () => {
+              try {
+                await fetch(`/api/blocks/${block.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: BlockEndType.MERGE,
+                  }),
+                });
+                
+                // Fetch updated paths data
+                const pathsResponse = await fetch(
+                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+                );
+                if (pathsResponse.ok) {
+                  const pathsData = await pathsResponse.json();
+                  onPathsUpdate(pathsData.paths);
+                }
+                onClose();
+              } catch (error) {
+                console.error('Error converting to merge block:', error);
+              }
+            }}
             className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
           >
             <img src="/step-icons/default-icons/merge.svg" alt="Merge" className="w-5 h-5" />
