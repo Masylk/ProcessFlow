@@ -218,6 +218,13 @@ export const darkTheme: Theme = {
       'input-disabled-placeholder': getThemeColor('Gray (dark mode)/600'),
       'input-disabled-label': getThemeColor('Gray (dark mode)/600'),
 
+      // Breadcrumb tokens
+      'breadcrumb-active-bg': getThemeColor('Brand/900'),
+      'breadcrumb-active-fg': getThemeColor('Brand/400'),
+      'breadcrumb-inactive-fg': getThemeColor('Gray (dark mode)/400'),
+      'breadcrumb-separator': getThemeColor('Gray (dark mode)/600'),
+      'breadcrumb-hover-opacity': '0.75',
+
       // Utility colors
       // Gray
       'utility-gray-50': getThemeColor('Gray (dark mode)/900'),
