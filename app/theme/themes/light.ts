@@ -436,6 +436,13 @@ export const lightTheme: Theme = {
       'tooltip-supporting-text': getThemeColor('Gray (light mode)/300'),
       'wysiwyg-editor-icon-fg': getThemeColor('Gray (light mode)/400'),
       'wysiwyg-editor-icon-fg_active': getThemeColor('Gray (light mode)/500'),
+
+      // Breadcrumb tokens
+      'breadcrumb-active-bg': getThemeColor('Brand/50'),
+      'breadcrumb-active-fg': getThemeColor('Brand/700'),
+      'breadcrumb-inactive-fg': getThemeColor('Gray (light mode)/600'),
+      'breadcrumb-separator': getThemeColor('Gray (light mode)/400'),
+      'breadcrumb-hover-opacity': '0.75',
     },
     typography: {
       'body-default': {
