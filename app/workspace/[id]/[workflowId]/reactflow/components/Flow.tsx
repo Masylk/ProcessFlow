@@ -32,6 +32,10 @@ import SmoothStepCustomParent from './SmoothStepCustomParent';
 import { BlockEndType } from '@/types/block';
 import LastNode from './LastNode';
 import PathNode from './PathNode';
+import { useModalStore } from '../store/modalStore';
+import CreateParallelPathModal from './CreateParallelPathModal';
+import { createParallelPaths } from '../utils/createParallelPaths';
+import StrokeEdge from './StrokeEdge';
 
 const nodeTypes = {
   custom: CustomNode,
@@ -44,6 +48,7 @@ const nodeTypes = {
 const edgeTypes = {
   smoothstepCustom: CustomSmoothStepEdge,
   smoothstepCustomParent: SmoothStepCustomParent,
+  strokeEdge: StrokeEdge,
 } as const;
 
 interface FlowProps {
@@ -73,7 +78,7 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView, setCenter } = useReactFlow();
+  const { fitView, setCenter, getNode } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
@@ -160,24 +165,80 @@ export function Flow({
       if (firstPath) {
         const nodes: Node[] = [];
         const edges: Edge[] = [];
+
+        // Process regular path nodes and edges
         processPath(
           firstPath,
-          nodes,
+          nodes, // Pass nodes directly first
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
           paths,
           new Set<string>(),
-          setPaths
+          setPaths,
+          setStrokeLines
         );
-        setNodes(nodes);
-        setEdges(edges);
-        const layoutedNodes = await createElkLayout(nodes, edges);
+
+        // After nodes are created, then set their initial visibility state
+        const nodesWithVisibility = nodes.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            strokeLinesVisible: true,
+          },
+        }));
+
+        setNodes(nodesWithVisibility);
+
+        // Add stroke edges
+        const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
+          const isSelfLoop =
+            strokeLine.source_block_id === strokeLine.target_block_id;
+          return {
+            id: `stroke-edge-${strokeLine.id}`,
+            source: `block-${strokeLine.source_block_id}`,
+            target: `block-${strokeLine.target_block_id}`,
+            sourceHandle: 'stroke_source',
+            targetHandle: isSelfLoop ? 'stroke_self_target' : 'stroke_target',
+            type: 'strokeEdge',
+            data: {
+              source: `block-${strokeLine.source_block_id}`,
+              target: `block-${strokeLine.target_block_id}`,
+              onStrokeLinesUpdate: setStrokeLines,
+            },
+            // Set zIndex to ensure stroke edges appear above regular edges
+            style: { zIndex: 1000 },
+          };
+        });
+
+        // Filter edges based on node visibility before setting them
+        const allEdges = [...edges, ...strokeEdges];
+        const filteredEdges = allEdges.filter((edge) => {
+          const sourceNode = nodesWithVisibility.find(
+            (n) => n.id === edge.source
+          );
+          return sourceNode?.data.strokeLinesVisible !== false;
+        });
+
+        setEdges(filteredEdges);
+
+        // Only layout the nodes
+        const layoutedNodes = await createElkLayout(
+          nodesWithVisibility,
+          edges.filter((e) => !e.type?.includes('stroke'))
+        );
         setNodes(layoutedNodes);
       }
     };
     createLayoutedNodes();
-  }, [paths, handleDeleteBlock, handleAddBlockOnEdge, fitView, setPaths]);
+  }, [
+    paths,
+    strokeLines,
+    handleDeleteBlock,
+    handleAddBlockOnEdge,
+    setPaths,
+    setStrokeLines,
+  ]);
 
   const handleBlockTypeSelect = useCallback(
     async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
@@ -243,6 +304,39 @@ export function Flow({
     [setCenter]
   ); // Only depend on stable function, not nodes state
 
+  const showParallelPathModal = useModalStore(
+    (state) => state.showParallelPathModal
+  );
+  const modalData = useModalStore((state) => state.modalData);
+  const setShowModal = useModalStore((state) => state.setShowModal);
+
+  const handleCreateParallelPaths = async (data: {
+    paths_to_create: string[];
+    path_to_move: number;
+  }) => {
+    try {
+      setShowModal(false);
+      if (modalData.path) {
+        // Create parallel paths using the modal data
+        await createParallelPaths(modalData.path, modalData.position, {
+          paths_to_create: data.paths_to_create,
+          path_to_move: data.path_to_move,
+        });
+
+        // Fetch updated paths data
+        const pathsResponse = await fetch(
+          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        );
+        if (pathsResponse.ok) {
+          const pathsData = await pathsResponse.json();
+          setPaths(pathsData.paths);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating parallel paths:', error);
+    }
+  };
+
   return (
     <div className="h-screen w-screen relative">
       {/* Include the Sidebar component */}
@@ -301,6 +395,16 @@ export function Flow({
           workspaceId={workspaceId}
           workflowId={workflowId}
           onPathsUpdate={setPaths}
+        />
+      )}
+
+      {showParallelPathModal && modalData.path && (
+        <CreateParallelPathModal
+          onClose={() => setShowModal(false)}
+          onConfirm={handleCreateParallelPaths}
+          path={modalData.path}
+          position={modalData.position}
+          existingPaths={modalData.existingPaths}
         />
       )}
     </div>

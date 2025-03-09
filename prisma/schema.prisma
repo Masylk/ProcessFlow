@@ -393,6 +393,7 @@ enum block_type {
   BEGIN
   END
   LAST
+  MERGE
 }
 
 enum subscription_status {

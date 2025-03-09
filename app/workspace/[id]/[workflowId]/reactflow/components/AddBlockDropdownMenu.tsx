@@ -47,16 +47,20 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
         setShowParallelPathModal(true);
       } else {
         onSelect(type as 'STEP' | 'PATH' | 'DELAY');
+        onClose();
       }
     },
-    [onSelect]
+    [onSelect, onClose]
   );
 
-  const handleCreateParallelPaths = async (data: {
+  const handleCreateParallelPaths = useCallback(async (data: {
     paths_to_create: string[];
     path_to_move: number;
   }) => {
     try {
+      setShowParallelPathModal(false); // Close modal first
+      onClose(); // Close dropdown
+
       console.log('Create parallel paths data', data);
       await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
         paths_to_create: data.paths_to_create,
@@ -71,17 +75,18 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
         const pathsData = await pathsResponse.json();
         onPathsUpdate(pathsData.paths);
       }
-
-      onClose();
     } catch (error) {
       console.error('Error creating parallel paths:', error);
     }
-  };
+  }, [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]);
 
   const block = dropdownDatas.path.blocks.find(
     (b) => b.position === dropdownDatas.position
   );
   const isLastBlock = block?.type === BlockEndType.LAST;
+
+  // Get existing child paths for the current block
+  const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
 
   return (
     <>
@@ -140,10 +145,14 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
 
       {showParallelPathModal && (
         <CreateParallelPathModal
-          onClose={() => setShowParallelPathModal(false)}
+          onClose={() => {
+            setShowParallelPathModal(false);
+            onClose();
+          }}
           onConfirm={handleCreateParallelPaths}
           path={dropdownDatas.path}
           position={dropdownDatas.position}
+          existingPaths={existingPaths}
         />
       )}
     </>

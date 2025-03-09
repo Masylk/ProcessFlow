@@ -4,12 +4,16 @@ import { BlockEndType } from '@/types/block';
 export interface NodeData {
   label: string;
   position: number;
-  onDelete: (id: string) => void;
+  type: string;
+  strokeLinesVisible?: boolean;
+  sourcePosition?: boolean;
+  path?: any; // Add proper type if available
+  onDelete?: (id: string) => void;
+  onStrokeLinesUpdate?: (lines: any[]) => void;
+  highlighted?: boolean;
   isLastInPath?: boolean;
   pathId?: number | null;
-  highlighted?: boolean;
   pathName?: string;
-  path?: Path;
   handleAddBlockOnEdge?: (
     position: number,
     path: Path,
