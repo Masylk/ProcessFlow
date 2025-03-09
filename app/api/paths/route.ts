@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
           description: 'This is a default block',
         },
         {
-          type: 'END',
+          type: 'LAST',
           position: 2,
           workflow_id,
           path_id: path.id,
@@ -71,6 +71,45 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json(
       { error: 'Failed to create path' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { id, name } = body;
+
+    if (!id || !name) {
+      return NextResponse.json(
+        { error: 'ID and name are required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedPath = await prisma.path.update({
+      where: { id },
+      data: { name },
+      include: {
+        blocks: {
+          orderBy: { position: 'asc' },
+          include: {
+            child_paths: {
+              include: {
+                path: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(updatedPath);
+  } catch (error) {
+    console.error('Error updating path:', error);
+    return NextResponse.json(
+      { error: 'Failed to update path' },
       { status: 500 }
     );
   }

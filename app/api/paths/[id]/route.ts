@@ -42,3 +42,46 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  try {
+    const params = await props.params;
+    const id = parseInt(params.id);
+    const { name } = await req.json();
+
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Name is required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedPath = await prisma.path.update({
+      where: { id },
+      data: { name },
+      include: {
+        blocks: {
+          orderBy: { position: 'asc' },
+          include: {
+            child_paths: {
+              include: {
+                path: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(updatedPath);
+  } catch (error) {
+    console.error('Error updating path:', error);
+    return NextResponse.json(
+      { error: 'Failed to update path' },
+      { status: 500 }
+    );
+  }
+}

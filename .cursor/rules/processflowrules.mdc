@@ -1,52 +1,267 @@
 ---
-description: Help to understand the structure of the projectDo not hesitate to ask questions to the user to help you understand about the context. Only provide the code snippet needed for the changes, not all the code on the file. The code comments must always be in English language.
+description: Code Norms you must respect
 globs: 
-alwaysApply: false
+alwaysApply: true
+---
+# Code Norms 🚀
+
+## **1. Naming & Function Size**
+
+### ✅ **Mandatory**
+
+- **Function Size**: Keep functions small and focused (max **50 lines**, ideally **20-30**).
+- **Single Responsibility**: Each function should do **one thing well**.
+- **Parameter Handling**: If a function has **too many parameters**, refactor it to use an **object**.
+- **Naming Conventions**:
+    - **camelCase** for variables & functions (`fetchData`).
+    - **PascalCase** for components (`UserCard`).
+    - **kebab-case** for filenames (`user-card.tsx`).
+    - **Descriptive names** (`handleUserLogin`, not `doStuff`).
+- **Prisma Schema**: Use **snake_case** for fields and model names.
+
+### 🟡 **Recommended**
+
+- **Utility Functions**: Extract reusable logic into **separate utility functions**.
+- **Event Handlers**: Use `handleSomething` (`handleClick`).
+
 ---
 
+## **2. JSX & HTML Formatting**
 
-Do not hesitate to ask questions to the user to help you understand about the context. Only provide the code snippet needed for the changes, not all the code on the file. The code comments must always be in English language.
+### ✅ **Mandatory**
 
+- **Self-close components without children**:
+    
+    ```tsx
+    tsx
+    CopierModifier
+    <Input value="text" /> ✅
+    <Input value="text"></Input> ❌
+    
+    ```
+    
+- **Use parentheses for multi-line JSX**:
+    
+    ```tsx
+    tsx
+    CopierModifier
+    return (
+      <div>
+        <Header />
+        <Main />
+      </div>
+    );
+    
+    ```
+    
+- **Semantic HTML**:
+    - Use `<button>`, `<article>`, `<section>` instead of `<div>`.
+    - Avoid `<div>` unless necessary.
+    - Forms should always have a **label** for accessibility.
 
-## Technology Stack
+### 🟡 **Recommended**
 
-- **Framework:** Next.js
-- **Frontend:** React with TypeScript; styled with Tailwind CSS and Shadcn components
-- **Backend:** Next.js API routes
-- **Database:** Postgres accessed via Prisma ORM
+- Prefer `<section>` over `<div>` for layout grouping.
+- **Destructure props** in components:
+    
+    ```tsx
+    tsx
+    CopierModifier
+    function UserCard({ name, age }: { name: string; age: number }) ✅
+    function UserCard(props: { name: string; age: number }) ❌
+    
+    ```
+    
 
-## Detailed Technical Requirements
+---
 
-1. **Project Structure & Configuration**
-   - Clearly organize the project with directories for `pages`, `components`, `styles`, and `api`.
-   - Include essential configuration files like:
-     - `next.config.js`
-     - `tsconfig.json`
-     - ESLint and Prettier configuration files
-     - A sample `.env` file with placeholders for sensitive values like database credentials and JWT secrets.
-   - Use environment variables for managing sensitive data.
-- If you create a file for the user, you must explain where the user should put it.
+## **3. API Calls & Data Fetching**
 
-2. **Frontend Requirements**
-   - Develop reusable React components in TypeScript. The user have a component librairie, you can ask him the code base to search them if needed.
-   - Utilize Tailwind CSS for responsive and modern styling. The user also have his own design system and theme, you must use `theme.js`.
-   - Integrate Shadcn components for consistent UI elements.
-   - Implement client-side form validation for registration and login forms.
-   - Define and use TypeScript interfaces for component props and state where applicable.
+### ✅ **Mandatory**
 
-3. **Backend & API Details**
-   - Use Next.js API routes for server-side logic.
-- Use Prisma ORM.
-   - Write asynchronous database queries with error handling using try/catch blocks.
-   - The user use Supabase for the authentication.
-   - Use appropriate HTTP status codes and JSON responses for all API endpoints.
+- **Use async/await** for readability:
+    
+    ```
+    ts
+    CopierModifier
+    const data = await fetchData();
+    
+    ```
+    
+- **Client-side fetching**: Use **React Query (TanStack) or SWR**.
+- **Server-side fetching**:
+    - Use **Server Actions** (preferred) or `getServerSideProps` if needed.
+    - Place API routes inside `/app/api/` instead of `pages/api/`.
+- **Security**:
+    - **Sanitize user input** before sending it to APIs.
+    - **Escape values** before inserting into JSX:
+        
+        ```tsx
+        tsx
+        CopierModifier
+        <div>{sanitize(userInput)}</div> ✅
+        
+        ```
+        
 
-4. **Security & Best Practices**
-   - Ensure input validation and sanitization to prevent vulnerabilities like SQL injection and XSS.
-   - Follow clean code practices and SOLID principles.
-   - Include inline comments to explain key parts of the code and architectural decisions.
+### 🟡 **Recommended**
 
-## Additional informations
+- Use **Zod/Yup** for request validation before sending data to APIs.
 
-- The working methodology is iterative, you must propose what to do next to the user.
-- You always can ask the user to have more detailled explanations before answering completely.
+---
+
+## **4. Error Handling**
+
+### ✅ **Mandatory**
+
+- **Always handle errors gracefully**:
+    
+    ```
+    ts
+    CopierModifier
+    try {
+      const user = await getUser();
+    } catch (error) {
+      console.error("Failed to fetch user", error);
+    }
+    
+    ```
+    
+- **Never expose sensitive errors** to the frontend.
+- **Use logging tools** like Sentry for production errors.
+
+### 🟡 **Recommended**
+
+- **Use custom error classes** for detailed error handling.
+
+---
+
+## **5. Security Best Practices**
+
+### ✅ **Mandatory**
+
+- **Secrets**: Store in `.env` files **only**, never in the codebase.
+- **Escape user input** before inserting into a database/API.
+- **Use Next.js Middleware (`middleware.ts`)** to protect API routes.
+- **Prevent SQL injections** by validating all Prisma input.
+- **Use soft deletes** instead of `deleteMany()`:Query only active users:
+    
+    ```
+    prisma
+    CopierModifier
+    model User {
+      id        String  @id @default(uuid())
+      name      String
+      archived_at              DateTime?
+    }
+    
+    ```
+    
+    ```
+    ts
+    CopierModifier
+    const users = await prisma.user.findMany({
+      where: { archived_at: null },
+    });
+    
+    ```
+    
+
+### 🟡 **Recommended**
+
+- **Use Helmet.js** for extra HTTP security headers.
+- **Use database connection pooling** (e.g., PgBouncer for PostgreSQL).
+
+---
+
+## **6. File Structure & Organization**
+
+### ✅ **Mandatory**
+
+```
+bash
+CopierModifier
+/components  → Reusable UI components
+/hooks       → Custom React hooks
+/lib         → Utility functions (e.g., API clients, helpers)
+/app         → Next.js app router
+/prisma      → Prisma schema & migrations
+/public      → Static assets
+
+```
+
+- **Component files** should match the component name (`Button.tsx`, `Modal.tsx`).
+
+### 🟡 **Recommended**
+
+- Consider grouping API handlers in `/api` instead of inside `pages/api`.
+
+---
+
+## **7. Prisma & Database Best Practices**
+
+### ✅ **Mandatory**
+
+- **Query Optimization**: Select only necessary fields:
+    
+    ```
+    ts
+    CopierModifier
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true },
+    });
+    
+    ```
+    
+- **Use transactions** when multiple queries depend on each other:
+    
+    ```
+    ts
+    CopierModifier
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: 1 }, data: { balance: { decrement: 50 } } }),
+      prisma.payment.create({ data: { userId: 1, amount: 50 } }),
+    ]);
+    
+    ```
+    
+- **Always run migrations via Prisma** (`prisma migrate dev`).
+- **Keep `prisma/schema.prisma` clean and well-commented**.
+
+### 🟡 **Recommended**
+
+- **Use Prisma logging** for debugging performance issues:
+    
+    ```
+    ts
+    CopierModifier
+    const prisma = new PrismaClient({ log: ["query", "info", "warn", "error"] });
+    
+    ```
+    
+- **Use clear migration messages** (`add_user_role_enum`).
+
+---
+
+## **8. Next.js 15 & App Router Specific Rules**
+
+### ✅ **Mandatory**
+
+- **Use Server Components by default**:
+    
+    ```tsx
+    tsx
+    CopierModifier
+    async function Component() { ... }
+    
+    ```
+    
+- **Use `use client` only when necessary**.
+- **Use Next.js Middleware (`middleware.ts`)** for request handling.
+- **Use `useFormState`** instead of `useState` for form handling in Server Components.
+
+### 🟡 **Recommended**
+
+- Use `generateMetadata()` instead of `<Head>`.
+- Use `suspense` and `loading.tsx` for loading states.
+- Use `server-only` to enforce server-side execution of utility functions.

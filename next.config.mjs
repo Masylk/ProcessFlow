@@ -2,12 +2,17 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    APP_ENV: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+  },
+  // Add visual indicator for staging environment
+  publicRuntimeConfig: {
+    isStaging: process.env.NODE_ENV !== 'production',
+  },
   compiler: {
     styledComponents: true,
   },
 };
-
-
 
 export default withSentryConfig(nextConfig, {
   // Sentry organization and project

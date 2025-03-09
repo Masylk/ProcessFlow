@@ -4,6 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { Flow } from './Flow';
 import { Block } from '@/types/block';
 import { Path } from '../types';
+import { getWorkflowStrokeLines } from '../utils/stroke-lines';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -16,6 +17,7 @@ export function ReactFlowPageClient({
 }: ReactFlowPageClientProps) {
   const [workflowName, setWorkflowName] = useState<string>('');
   const [paths, setPaths] = useState<Path[]>([]);
+  const [strokeLines, setStrokeLines] = useState<any[]>([]);
 
   const handleBlockAdd = async (
     blockData: any,
@@ -73,19 +75,30 @@ export function ReactFlowPageClient({
 
   useEffect(() => {
     const fetchData = async () => {
-      const [workflowRes, pathsRes] = await Promise.all([
-        fetch(`/api/workspace/${workspaceId}/workflows/${workflowId}`),
-        fetch(`/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`),
-      ]);
+      try {
+        const [workflowRes, pathsRes] = await Promise.all([
+          fetch(`/api/workspace/${workspaceId}/workflows/${workflowId}`),
+          fetch(
+            `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+          ),
+        ]);
 
-      const workflow = await workflowRes.json();
-      setWorkflowName(workflow.name);
-      console.log('Workflow:', workflow);
+        const workflow = await workflowRes.json();
+        setWorkflowName(workflow.name);
 
-      const pathsData = await pathsRes.json();
-      console.log('Paths Data:', pathsData);
-      console.log('Blocks:', pathsData.paths?.[0]?.blocks);
-      setPaths(pathsData.paths);
+        const pathsData = await pathsRes.json();
+        setPaths(pathsData.paths);
+
+        // Fetch stroke lines
+        const strokeLinesData = await getWorkflowStrokeLines(
+          parseInt(workflowId)
+        );
+        if (strokeLinesData) {
+          setStrokeLines(strokeLinesData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
     fetchData();
   }, [workspaceId, workflowId]);
@@ -99,6 +112,8 @@ export function ReactFlowPageClient({
         workflowId={workflowId}
         onBlockAdd={handleBlockAdd}
         setPaths={setPaths}
+        strokeLines={strokeLines}
+        setStrokeLines={setStrokeLines}
       />
     </ReactFlowProvider>
   );

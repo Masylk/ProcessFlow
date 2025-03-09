@@ -1,18 +1,25 @@
 import { Workflow } from '@/types/workflow';
+import { BlockEndType } from '@/types/block';
 
 export interface NodeData {
   label: string;
   position: number;
-  onDelete: (id: string) => void;
+  type: string;
+  strokeLinesVisible?: boolean;
+  sourcePosition?: boolean;
+  path?: any; // Add proper type if available
+  onDelete?: (id: string) => void;
+  onStrokeLinesUpdate?: (lines: any[]) => void;
+  highlighted?: boolean;
   isLastInPath?: boolean;
   pathId?: number | null;
-  highlighted?: boolean;
   pathName?: string;
   handleAddBlockOnEdge?: (
     position: number,
-    path_id: number | null,
+    path: Path,
     event?: { clientX: number; clientY: number }
   ) => void;
+  onPathsUpdate?: (paths: Path[]) => void;
 }
 
 export interface EdgeData {
@@ -69,7 +76,7 @@ export interface Block {
 }
 
 // Assuming enums and other interfaces
-export type BlockType = 'STEP' | 'DELAY' | 'PATH' | 'BEGIN' | 'END';  // Example enum
+export type BlockType = 'STEP' | 'DELAY' | 'BEGIN' | BlockEndType;
 export type TaskType = 'TASK_TYPE_1' | 'TASK_TYPE_2';  // Example enum
 
 export interface PathParentBlock {

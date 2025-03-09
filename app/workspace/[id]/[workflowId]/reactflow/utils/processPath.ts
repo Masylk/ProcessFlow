@@ -3,6 +3,7 @@ import {
     Edge,
   } from '@xyflow/react';
 import { Path } from '../types';
+import { BlockEndType } from '@/types/block';
 // Recursive function to process paths into nodes and edges
 export function processPath(
   path: Path,
@@ -13,7 +14,9 @@ export function processPath(
     path: Path,
     event?: { clientX: number; clientY: number }) => void,
   allPaths: Path[],
-  visitedPaths = new Set<string>()
+  visitedPaths = new Set<string>(),
+  handlePathsUpdate: (paths: Path[]) => void,
+  handleStrokeLinesUpdate: (strokeLines: any[]) => void
 ): void {
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
@@ -24,22 +27,29 @@ export function processPath(
       id: nodeId,
       type: block.type === 'BEGIN' 
         ? 'begin' 
-        : block.type === 'END' 
+        : block.type === BlockEndType.END
           ? 'end'
-          : 'custom',
+          : block.type === BlockEndType.LAST
+            ? 'last'
+            : block.type === BlockEndType.PATH
+              ? 'path'
+              : 'custom',
       position: { 
         x: 0,
         y: 0
       },
       data: {
-        label: block.step_details || 'Block',
+        label: block.title || block.step_details || 'Block',
         position: block.position,
         type: block.type,
         onDelete: handleDeleteBlock,
         pathId: block.path_id,
+        path: path,
         handleAddBlockOnEdge,
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,
+        onPathsUpdate: handlePathsUpdate,
+        onStrokeLinesUpdate: handleStrokeLinesUpdate,
       },
     });
     
@@ -86,7 +96,7 @@ export function processPath(
         });
       }
       if (fullChildPath) {
-        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths);
+        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths, handlePathsUpdate, handleStrokeLinesUpdate);
       }
     });
   });

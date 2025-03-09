@@ -1,6 +1,7 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from '@xyflow/react';
 import { CSSProperties } from 'react';
+import { BlockEndType } from '@/types/block';
 
 const elk = new ELK();
 
@@ -16,10 +17,21 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   console.log('Nodes ids:', nodeIds);
   console.log('Valid edges:', validEdges);
 
+  const isEndTypeNode = (type: string | undefined) => 
+    type && Object.values(BlockEndType).map(t => t.toLowerCase()).includes(type);
+
   const elkNodes = nodes.map((node) => ({
     id: node.id,
-    width: node.type === 'begin' || node.type === 'end' ? 200 : 481,
-    height: node.type === 'begin' || node.type === 'end' ? 50 : 120,
+    width: node.type === 'begin' ? 200 : 
+          node.type === 'last' ? 32 :
+          node.type === 'path' ? 32 :
+          node.type === 'end' ? 290 :
+          481,
+    height: node.type === 'begin' ? 50 : 
+           node.type === 'last' ? 32 :
+           node.type === 'path' ? 32 :
+           node.type === 'end' ? 48 :
+           120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
@@ -65,8 +77,6 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
       console.error('Invalid layout result:', layout);
       return nodes;
     }
-
-    const centerX = layout.children.reduce((sum, node) => sum + node.x!, 0) / layout.children.length;
 
     return nodes.map((node) => {
       const elkNode = layout.children?.find((n) => n.id === node.id);

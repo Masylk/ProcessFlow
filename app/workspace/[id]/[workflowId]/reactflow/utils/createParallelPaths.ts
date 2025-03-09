@@ -1,6 +1,7 @@
 import { Path, Block } from '../types';
 import { getBlocksAfterPosition } from './getBlocksAfterPosition';
 import { getChildPathsIds } from './getChildPathsIds';
+import { BlockEndType } from '@/types/block';
 
 interface CreateParallelPathsOptions {
   paths_to_create?: string[];
@@ -12,24 +13,46 @@ export async function createParallelPaths(
   position: number,
   options: CreateParallelPathsOptions = {}
 ) {
+  console.log('options', options);
   try {
     const { 
       paths_to_create = ["If", "Else"],
       path_to_move = 0 
     } = options;
 
+    console.log('paths_to_create', paths_to_create);
     if (path_to_move >= paths_to_create.length) {
       throw new Error('path_to_move index is out of bounds');
     }
 
-    // 1. Create all parallel paths
+    // Find any end-type block in parent path
+    const parentEndBlock = parent_path.blocks.find(block => 
+      Object.values(BlockEndType).includes(block.type as BlockEndType)
+    );
+    if (!parentEndBlock) throw new Error('No end-type block found in parent path');
+
+    // Get existing child paths
+    const existingChildPaths = parentEndBlock.child_paths.map(cp => cp.path);
+    
+    // Filter out paths that already exist (case-insensitive comparison)
+    const pathsToCreate = paths_to_create.filter(newPath => 
+      !existingChildPaths.some(existingPath => 
+        existingPath.name.toLowerCase() === newPath.toLowerCase()
+      )
+    );
+
+    if (pathsToCreate.length === 0) {
+      throw new Error('All specified paths already exist in the parent path');
+    }
+
+    // 1. Create new parallel paths
     const createdPaths = await Promise.all(
-      paths_to_create.map(async (branchName, index) => {
+      pathsToCreate.map(async (branchName) => {
         const response = await fetch('/api/paths/minimal', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: `${parent_path.name} - ${branchName}`,
+            name: `${branchName}`,
             workflow_id: parent_path.workflow_id,
           }),
         });
@@ -43,8 +66,9 @@ export async function createParallelPaths(
 
     console.log('blocksToMove', blocksToMove);
     console.log('childPathIdsToMove', childPathIdsToMove);
-    // 3. Move blocks to specified path
-    if (blocksToMove.length > 0) {
+    
+    // 3. Move blocks to specified path (if path_to_move is within the new paths)
+    if (blocksToMove.length > 0 && path_to_move < createdPaths.length) {
       await fetch('/api/blocks/move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,7 +80,7 @@ export async function createParallelPaths(
     }
 
     // 4. Move child paths to specified path
-    if (childPathIdsToMove.length > 0) {
+    if (childPathIdsToMove.length > 0 && path_to_move < createdPaths.length) {
       console.log('connecting child paths', childPathIdsToMove);
       await fetch('/api/paths/connect', {
         method: 'POST',
@@ -68,25 +92,30 @@ export async function createParallelPaths(
       });
     }
 
-    // 5. Link all parallel paths to parent path's END block
-    const parentEndBlock = parent_path.blocks.find(block => block.type === 'END');
-    if (!parentEndBlock) throw new Error('No END block found in parent path');
+    // 5. Link all parallel paths (both new and existing) to parent path's END block
+    const allChildPathIds = [
+      ...createdPaths.map(path => path.id),
+      ...existingChildPaths.map(path => path.id)
+    ];
 
     await fetch('/api/paths/connect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        child_path_ids: createdPaths.map(path => path.id),
+        child_path_ids: allChildPathIds,
         destination_path_id: parent_path.id,
       }),
     });
 
     // 6. Get updated paths data
-    const updatedPaths = await Promise.all(
-      createdPaths.map(path => 
+    const updatedPaths = await Promise.all([
+      ...createdPaths.map(path => 
+        fetch(`/api/paths/${path.id}?id=${path.id}`).then(res => res.json())
+      ),
+      ...existingChildPaths.map(path =>
         fetch(`/api/paths/${path.id}?id=${path.id}`).then(res => res.json())
       )
-    );
+    ]);
 
     return {
       paths: updatedPaths
