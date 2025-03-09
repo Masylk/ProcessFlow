@@ -12,12 +12,372 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model user {
+  id                      Int                @id @default(autoincrement())
+  created_at              DateTime           @default(now())
+  updated_at              DateTime           @default(now()) @updatedAt
+  archived_at             DateTime?
+  auth_id                 String             @unique
+  first_name              String
+  last_name               String
+  full_name               String
+  email                   String             @unique
+  avatar_url              String?
+  active_workspace_id     Int?
+  hubspot_contact_id      String?
+  sentry_id               String?
+  post_hog_id             String?
+  phone                   String?
+  last_login_at           DateTime?
+  onboarding_completed_at DateTime?
+  onboarding_step         onboarding_step?   @default(PERSONAL_INFO)
+  professional_role       String?
+  source                  String?
+  temp_company_size       String?
+  temp_industry           String?
+  tutorial_completed      Boolean            @default(false)
+  actions                 action[]
+  saved_searches          saved_search[]
+  active_workspace        workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
+  workspaces              user_workspace[]
+  created_versions        workflow_version[] @relation("created_by")
+
+  @@index([active_workspace_id])
+  @@index([email])
+  @@index([auth_id])
+  @@index([auth_id], map: "auth_id_cover_idx")
+  @@map("user")
+}
+
+model workspace {
+  id                 Int                       @id @default(autoincrement())
+  created_at         DateTime                  @default(now())
+  updated_at         DateTime                  @default(now()) @updatedAt
+  archived_at        DateTime?
+  name               String
+  slug               String?                   @unique
+  team_tags          String[]
+  icon_url           String?
+  background_colour  String?
+  linear_customer_id String?
+  stripe_customer_id String?
+  hubspot_company_id String?
+  subscription_id    Int?                      @unique
+  company_size       String?
+  industry           String?
+  billings           billing[]
+  folders            folder[]
+  invitations        invitation[]
+  active_users       user[]                    @relation("active_workspace")
+  user_workspaces    user_workspace[]
+  workflows          workflow[]
+  workflow_templates workflow_template[]
+  subscription       subscription?             @relation(fields: [subscription_id], references: [id])
+  billing_infos      workspace_billing_infos[]
+
+  @@index([stripe_customer_id])
+  @@index([subscription_id])
+  @@map("workspace")
+}
+
+model workspace_billing_infos {
+  id              Int       @id @default(autoincrement())
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  billing_email   String
+  billing_address String
+  tax_rate        Decimal   @db.Decimal(5, 2)
+  vat_number      String?
+  workspace_id    Int
+  workspace       workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+  @@map("workspace_billing_infos")
+}
+
+model subscription {
+  id                     Int                 @id @default(autoincrement())
+  created_at             DateTime            @default(now())
+  updated_at             DateTime            @default(now()) @updatedAt
+  canceled_at            DateTime?
+  workspace_id           Int                 @unique
+  stripe_subscription_id String
+  trial_end_date         DateTime?
+  plan_type              plan_type
+  quantity_seats         Int
+  current_period_start   DateTime
+  current_period_end     DateTime
+  status                 subscription_status
+  billings               billing[]
+  workspace              workspace?
+
+  @@map("subscription")
+}
+
+model billing {
+  id                Int          @id @default(autoincrement())
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @default(now()) @updatedAt
+  paid_at           DateTime?
+  subscription_id   Int
+  stripe_invoice_id String       @unique
+  amount_net        Int
+  tax_amount        Int
+  amount_gross      Int
+  currency          String       @db.VarChar(3)
+  invoice_date      DateTime
+  due_date          DateTime
+  workspace_id      Int
+  subscription      subscription @relation(fields: [subscription_id], references: [id])
+  workspace         workspace    @relation(fields: [workspace_id], references: [id])
+
+  @@index([subscription_id])
+  @@index([workspace_id])
+  @@index([stripe_invoice_id])
+  @@map("billing")
+}
+
+model user_workspace {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  workspace_id Int
+  role         user_role @default(ADMIN)
+  user         user      @relation(fields: [user_id], references: [id])
+  workspace    workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([user_id, workspace_id], map: "user_workspace_composite_idx")
+  @@index([user_id])
+  @@index([workspace_id])
+  @@map("user_workspace")
+}
+
+model invitation {
+  id           Int       @id @default(autoincrement())
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now()) @updatedAt
+  email        String
+  token        String    @unique
+  expires_at   DateTime
+  used         Boolean   @default(false)
+  used_at      DateTime?
+  workspace_id Int
+  role         user_role @default(READER)
+  workspace    workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+  @@index([token])
+  @@index([email])
+  @@map("invitation")
+}
+
+model folder {
+  id           Int        @id @default(autoincrement())
+  name         String
+  workspace_id Int
+  parent_id    Int?
+  icon_url     String?
+  emote        String?
+  team_tags    String[]
+  path         String?
+  parent       folder?    @relation("folder_hierarchy", fields: [parent_id], references: [id])
+  subfolders   folder[]   @relation("folder_hierarchy")
+  workspace    workspace  @relation(fields: [workspace_id], references: [id])
+  workflows    workflow[]
+
+  @@index([workspace_id])
+  @@index([parent_id])
+  @@index([path])
+  @@map("folder")
+}
+
+model workflow {
+  id               Int                @id @default(autoincrement())
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @default(now()) @updatedAt
+  last_opened      DateTime?
+  name             String
+  description      String
+  workspace_id     Int
+  team_tags        String[]
+  folder_id        Int?
+  is_public        Boolean            @default(false)
+  public_access_id String?            @unique
+  is_template      Boolean            @default(false)
+  status           workflow_status    @default(DRAFT)
+  template_id      Int?
+  version_number   Int                @default(1)
+  actions          action[]
+  blocks           block[]
+  paths            path[]
+  stroke_lines     stroke_line[]
+  folder           folder?            @relation(fields: [folder_id], references: [id])
+  template         workflow_template? @relation(fields: [template_id], references: [id])
+  workspace        workspace          @relation(fields: [workspace_id], references: [id])
+  versions         workflow_version[]
+
+  @@unique([name, workspace_id])
+  @@index([workspace_id])
+  @@index([folder_id])
+  @@map("workflow")
+}
+
+/// Collection of connected blocks forming a workflow path
+model path {
+  id            Int                 @id @default(autoincrement())
+  name          String
+  workflow_id   Int
+  blocks        block[]
+  workflow      workflow            @relation(fields: [workflow_id], references: [id])
+  parent_blocks path_parent_block[]
+
+  @@index([workflow_id])
+  @@map("path")
+}
+
+/// Junction table that allows paths to be triggered from multiple parent blocks
+model path_parent_block {
+  path_id    Int
+  block_id   Int
+  created_at DateTime @default(now())
+  block      block    @relation("path_parent", fields: [block_id], references: [id], onDelete: Cascade)
+  path       path     @relation(fields: [path_id], references: [id], onDelete: Cascade)
+
+  @@id([path_id, block_id])
+  @@index([path_id])
+  @@index([block_id])
+  @@map("path_parent_block")
+}
+
+model block {
+  id                  Int                 @id @default(autoincrement())
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @default(now()) @updatedAt
+  last_modified       DateTime?
+  type                block_type
+  position            Int
+  title               String?
+  icon                String?
+  description         String?
+  image               String?
+  image_description   String?
+  average_time        String?
+  task_type           task_type?
+  workflow_id         Int
+  path_id             Int
+  click_position      Json?
+  delay_seconds       Int?
+  step_details        String?
+  delay_event         String?
+  delay_type          delay_type?
+  actions             action[]
+  path                path                @relation(fields: [path_id], references: [id], onDelete: Cascade)
+  workflow            workflow            @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  child_paths         path_parent_block[] @relation("path_parent")
+  source_stroke_lines stroke_line[]       @relation("stroke_source")
+  target_stroke_lines stroke_line[]       @relation("stroke_target")
+
+  @@index([workflow_id])
+  @@index([path_id])
+  @@index([type])
+  @@map("block")
+}
+
+model action {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  type        String
+  target_id   Int
+  workflow_id Int
+  value       Int
+  created_at  DateTime @default(now())
+  target      block    @relation(fields: [target_id], references: [id])
+  user        user     @relation(fields: [user_id], references: [id])
+  workflow    workflow @relation(fields: [workflow_id], references: [id])
+
+  @@index([user_id])
+  @@index([target_id])
+  @@index([workflow_id])
+  @@index([created_at])
+  @@map("action")
+}
+
+model workflow_version {
+  id             Int      @id @default(autoincrement())
+  workflow_id    Int
+  version_number Int
+  name           String
+  description    String
+  created_at     DateTime @default(now())
+  created_by_id  Int
+  change_summary String?
+  snapshot       Json
+  created_by     user     @relation("created_by", fields: [created_by_id], references: [id])
+  workflow       workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+
+  @@unique([workflow_id, version_number])
+  @@index([workflow_id])
+  @@index([created_by_id])
+  @@map("workflow_version")
+}
+
+model workflow_template {
+  id           Int        @id @default(autoincrement())
+  name         String
+  description  String
+  workspace_id Int
+  category     String
+  tags         String[]
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @default(now()) @updatedAt
+  structure    Json
+  rating       Float?
+  rating_count Int        @default(0)
+  workflows    workflow[]
+  workspace    workspace  @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+  @@index([category])
+  @@map("workflow_template")
+}
+
+model saved_search {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  name       String
+  query      String
+  filters    Json?
+  created_at DateTime @default(now())
+  user       user     @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@map("saved_search")
+}
+
+model stroke_line {
+  id              Int      @id @default(autoincrement())
+  source_block_id Int
+  target_block_id Int
+  workflow_id     Int
+  label           String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now()) @updatedAt
+  is_loop         Boolean  @default(false)
+  source_block    block    @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
+  target_block    block    @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)
+  workflow        workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+
+  @@index([source_block_id])
+  @@index([target_block_id])
+  @@index([workflow_id])
+  @@map("stroke_line")
+}
+
 enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
   WORKSPACE_SETUP
-  INVITED_USER
   COMPLETED
+  INVITED_USER
 }
 
 enum user_role {
@@ -29,10 +389,11 @@ enum user_role {
 enum block_type {
   DELAY
   STEP
+  PATH
   BEGIN
   END
-  PATH
   LAST
+  MERGE
 }
 
 enum subscription_status {
@@ -43,9 +404,7 @@ enum subscription_status {
 
 enum plan_type {
   FREE
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
+  EARLY_ADOPTER
 }
 
 enum task_type {
@@ -62,388 +421,4 @@ enum workflow_status {
   DRAFT
   PUBLISHED
   ARCHIVED
-}
-
-model user {
-  id                        Int                @id @default(autoincrement())
-  created_at               DateTime           @default(now())
-  updated_at               DateTime           @default(now()) @updatedAt
-  archived_at              DateTime?
-  auth_id                  String             @unique
-  first_name               String
-  last_name                String
-  full_name                String
-  email                    String             @unique
-  avatar_url               String?
-  active_workspace_id      Int?
-  hubspot_contact_id       String?
-  sentry_id                String?
-  post_hog_id              String?
-  phone                    String?
-  last_login_at            DateTime?
-  onboarding_step          onboarding_step?   @default(PERSONAL_INFO)
-  onboarding_completed_at  DateTime?
-  tutorial_completed       Boolean            @default(false)
-  
-  // Professional Info fields - Individual specific
-  professional_role     String?   // renamed from 'role' to avoid confusion with user_role enum
-  source                String?   // How this user found the platform
-  
-  // Temporary fields for onboarding process
-  temp_industry         String?
-  temp_company_size     String?
-  
-  // Relations
-  active_workspace         workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
-  workspaces              user_workspace[]
-  actions                 action[]
-  created_versions        workflow_version[]  @relation("created_by")
-  saved_searches          saved_search[]
-
-  @@index([active_workspace_id])
-  @@index([email])
-  @@index([auth_id])
-  @@map("user")
-}
-
-model workspace {
-  id                   Int                   @id @default(autoincrement())
-  created_at           DateTime              @default(now())
-  updated_at           DateTime              @default(now()) @updatedAt
-  archived_at          DateTime?
-  name                 String
-  slug                 String?                @unique
-  team_tags           String[]
-  icon_url            String?
-  background_colour   String?
-  linear_customer_id   String?
-  stripe_customer_id   String?
-  hubspot_company_id   String?
-  subscription_id      Int?                  @unique
-  
-  // Company Info fields - moved from user table
-  industry            String?
-  company_size        String?
-  
-  // Relations
-  subscription         subscription?         @relation(fields: [subscription_id], references: [id])
-  billing_infos        workspace_billing_infos[]
-  user_workspaces      user_workspace[]
-  active_users         user[]               @relation("active_workspace")
-  folders              folder[]
-  workflows            workflow[]
-  billings             billing[]
-  invitations          invitation[]
-  workflow_templates   workflow_template[]
-
-  @@index([stripe_customer_id])
-  @@index([subscription_id])
-  @@map("workspace")
-}
-
-model workspace_billing_infos {
-  id              Int       @id @default(autoincrement())
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @default(now()) @updatedAt
-  billing_email   String
-  billing_address String
-  tax_rate        Decimal   @db.Decimal(5,2)
-  vat_number      String?
-  workspace_id    Int
-  workspace       workspace @relation(fields: [workspace_id], references: [id])
-
-  @@index([workspace_id])
-  @@map("workspace_billing_infos")
-}
-
-model subscription {
-  id                    Int                 @id @default(autoincrement())
-  created_at            DateTime            @default(now())
-  updated_at            DateTime            @default(now()) @updatedAt
-  canceled_at           DateTime?
-  workspace_id          Int                 @unique
-  stripe_subscription_id String
-  trial_end_date        DateTime?
-  plan_type             plan_type
-  quantity_seats        Int
-  current_period_start  DateTime
-  current_period_end    DateTime
-  status                subscription_status
-  workspace             workspace?
-  billings              billing[]
-
-  @@map("subscription")
-}
-
-model billing {
-  id                 Int          @id @default(autoincrement())
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @default(now()) @updatedAt
-  paid_at            DateTime?
-  subscription_id    Int
-  stripe_invoice_id  String       @unique
-  amount_net         Int          // Amount in cents
-  tax_amount         Int          // Amount in cents
-  amount_gross       Int          // Amount in cents
-  currency           String       @db.VarChar(3)
-  invoice_date       DateTime
-  due_date           DateTime
-  workspace_id       Int
-  subscription       subscription @relation(fields: [subscription_id], references: [id])
-  workspace          workspace    @relation(fields: [workspace_id], references: [id])
-
-  @@index([subscription_id])
-  @@index([workspace_id])
-  @@index([stripe_invoice_id])
-  @@map("billing")
-}
-
-model user_workspace {
-  id           Int       @id @default(autoincrement())
-  user_id      Int
-  workspace_id Int
-  role         user_role @default(ADMIN)
-
-  user      user      @relation(fields: [user_id], references: [id])
-  workspace workspace @relation(fields: [workspace_id], references: [id])
-
-  @@index([user_id, workspace_id], name: "user_workspace_composite_idx")
-  @@index([user_id])
-  @@index([workspace_id])
-  @@map("user_workspace")
-}
-
-model invitation {
-  id              Int         @id @default(autoincrement())
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @default(now()) @updatedAt
-  email           String
-  token           String      @unique
-  expires_at      DateTime
-  used            Boolean     @default(false)
-  used_at         DateTime?
-  workspace_id    Int
-  role            user_role   @default(READER)
-  
-  workspace       workspace   @relation(fields: [workspace_id], references: [id])
-
-  @@index([workspace_id])
-  @@index([token])
-  @@index([email])
-  @@map("invitation")
-}
-
-model folder {
-  id            Int         @id @default(autoincrement())
-  name          String
-  workspace_id  Int
-  parent_id     Int?
-  icon_url      String?
-  emote         String?
-  team_tags     String[]
-  path          String?     // Materialized path for efficient tree queries
-  
-  workspace     workspace   @relation(fields: [workspace_id], references: [id])
-  parent        folder?     @relation("folder_hierarchy", fields: [parent_id], references: [id])
-  subfolders    folder[]    @relation("folder_hierarchy")
-  workflows     workflow[]
-
-  @@index([workspace_id])
-  @@index([parent_id])
-  @@index([path])
-  @@map("folder")
-}
-
-model workflow {
-  id            Int         @id @default(autoincrement())
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @default(now()) @updatedAt
-  last_opened   DateTime?
-  name          String
-  description   String
-  workspace_id  Int
-  team_tags     String[]
-  folder_id     Int?
-  is_public         Boolean  @default(false)
-  public_access_id  String?  @unique // This will be our shareable ID
-  status          workflow_status    @default(DRAFT)
-  is_template     Boolean            @default(false)
-  template_id     Int?
-  version_number  Int               @default(1)
-  
-  workspace     workspace   @relation(fields: [workspace_id], references: [id])
-  folder        folder?     @relation(fields: [folder_id], references: [id])
-  blocks        block[]
-  paths         path[]
-  actions       action[]
-  template        workflow_template? @relation(fields: [template_id], references: [id])
-  stroke_lines    stroke_line[]
-  versions        workflow_version[]
-
-  @@unique([name, workspace_id])
-  @@index([workspace_id])
-  @@index([folder_id])
-  @@map("workflow")
-}
-
-/// Collection of connected blocks forming a workflow path
-model path {
-  id             Int       @id @default(autoincrement())
-  name           String
-  workflow_id    Int
-  
-  workflow       workflow  @relation(fields: [workflow_id], references: [id])
-  blocks         block[]
-  parent_blocks  path_parent_block[]
-
-  @@index([workflow_id])
-  @@map("path")
-}
-
-/// Junction table that allows paths to be triggered from multiple parent blocks
-model path_parent_block {
-  path_id        Int
-  block_id       Int
-  created_at     DateTime  @default(now())
-
-  path           path      @relation(fields: [path_id], references: [id], onDelete: Cascade)
-  block          block     @relation("path_parent", fields: [block_id], references: [id], onDelete: Cascade)
-
-  @@id([path_id, block_id])
-  @@index([path_id])
-  @@index([block_id])
-  @@map("path_parent_block")
-}
-
-model block {
-  id                Int       @id @default(autoincrement())
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @default(now()) @updatedAt
-  last_modified     DateTime?
-  type              block_type
-  
-  // Type-specific fields
-  step_details      String?   // Used when type is STEP
-  delay_seconds     Int?      // Used when type is DELAY
-  
-  position          Int
-  title             String?
-  icon              String?
-  description       String?
-  image             String?
-  image_description String?
-  average_time      String? 
-  task_type         task_type?
-  workflow_id       Int
-  path_id           Int
-  click_position    Json?
-  delay_type        delay_type?   // Fixed duration or wait for event
-  delay_event       String?       // Description of event to wait for (if delay_type is WAIT_FOR_EVENT)
-  
-  workflow          workflow            @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
-  path              path                @relation(fields: [path_id], references: [id], onDelete: Cascade)
-  actions           action[]
-  child_paths       path_parent_block[] @relation("path_parent")
-  source_stroke_lines stroke_line[]     @relation("stroke_source")
-  target_stroke_lines stroke_line[]     @relation("stroke_target")
-
-  @@index([workflow_id])
-  @@index([path_id])
-  @@index([type])
-  @@map("block")
-}
-
-model action {
-  id           Int       @id @default(autoincrement())
-  user_id      Int
-  type         String
-  target_id    Int
-  workflow_id  Int
-  value        Int
-  created_at   DateTime  @default(now())
-  
-  user         user      @relation(fields: [user_id], references: [id])
-  target       block     @relation(fields: [target_id], references: [id])
-  workflow     workflow  @relation(fields: [workflow_id], references: [id])
-
-  @@index([user_id])
-  @@index([target_id])
-  @@index([workflow_id])
-  @@index([created_at])
-  @@map("action")
-}
-
-model workflow_version {
-  id              Int         @id @default(autoincrement())
-  workflow_id     Int
-  version_number  Int
-  name            String
-  description     String
-  created_at      DateTime    @default(now())
-  created_by_id   Int
-  change_summary  String?     // Description of changes in this version
-  snapshot        Json        // JSON snapshot of workflow structure at this version
-  
-  workflow        workflow    @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
-  created_by      user        @relation("created_by", fields: [created_by_id], references: [id])
-
-  @@unique([workflow_id, version_number])
-  @@index([workflow_id])
-  @@index([created_by_id])
-  @@map("workflow_version")
-}
-
-model workflow_template {
-  id              Int         @id @default(autoincrement())
-  name            String
-  description     String
-  workspace_id    Int
-  category        String
-  tags            String[]
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @default(now()) @updatedAt
-  structure       Json        // JSON representation of the template
-  rating          Float?      // Average rating
-  rating_count    Int         @default(0)
-  
-  workspace       workspace   @relation(fields: [workspace_id], references: [id])
-  workflows       workflow[]  // Workflows created from this template
-
-  @@index([workspace_id])
-  @@index([category])
-  @@map("workflow_template")
-}
-
-model saved_search {
-  id              Int       @id @default(autoincrement())
-  user_id         Int
-  name            String
-  query           String
-  filters         Json?
-  created_at      DateTime  @default(now())
-  
-  user            user      @relation(fields: [user_id], references: [id])
-
-  @@index([user_id])
-  @@map("saved_search")
-}
-
-model stroke_line {
-  id              Int       @id @default(autoincrement())
-  source_block_id Int       // The block where the stroke line starts
-  target_block_id Int       // The block where the stroke line ends
-  workflow_id     Int
-  label           String    // Label/description for the stroke line
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @default(now()) @updatedAt
-  is_loop         Boolean   @default(false) // Flag for self-referencing connections
-  
-  source_block    block     @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
-  target_block    block     @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)
-  workflow        workflow  @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
-
-  @@index([source_block_id])
-  @@index([target_block_id])
-  @@index([workflow_id])
-  @@map("stroke_line")
 }
