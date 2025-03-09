@@ -9,7 +9,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   // Find the path block to get the count of existing child paths
   const pathBlock = data.path?.blocks.find(
-    (block) => block.id === parseInt(id.replace('block-', ''))
+    (block: { id: number }) => block.id === parseInt(id.replace('block-', ''))
   );
 
   const existingPathsCount = pathBlock?.child_paths?.length || 0;
