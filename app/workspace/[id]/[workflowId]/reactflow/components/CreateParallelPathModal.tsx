@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '@/app/components/Modal';
 import { Path } from '../types';
 
@@ -10,6 +10,7 @@ interface CreateParallelPathModalProps {
   }) => void;
   path: Path;
   position: number;
+  existingPaths?: string[];
 }
 
 const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
@@ -17,12 +18,19 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   onConfirm,
   path,
   position,
+  existingPaths = [],
 }) => {
-  const [pathNames, setPathNames] = useState<string[]>([
-    'Path n°1',
-    'Path n°2',
-  ]);
+  const [pathNames, setPathNames] = useState<string[]>([]);
   const [selectedPath, setSelectedPath] = useState<number>(0);
+
+  // Initialize pathNames with existing paths when the modal opens
+  useEffect(() => {
+    if (existingPaths.length > 0) {
+      setPathNames(existingPaths);
+    } else {
+      setPathNames(['Path n°1', 'Path n°2']);
+    }
+  }, [existingPaths]);
 
   // Check if there are blocks after the specified position
   const hasBlocksAfterPosition = (position: number) => {

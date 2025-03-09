@@ -321,6 +321,7 @@ Enum block_type {
   BEGIN
   END
   LAST
+  MERGE
 }
 
 Enum subscription_status {
