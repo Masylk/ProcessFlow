@@ -11,3 +11,4 @@ export interface UserTeam {
   user: User;
   team: Team;
 }
+
