@@ -44,11 +44,13 @@ Table workspace {
   icon_url String
   background_colour String
   linear_customer_id String
-  stripe_customer_id String
+  stripe_customer_id String [unique]
   hubspot_company_id String
-  subscription_id Int [unique]
   company_size String
   industry String
+  subscription_id Int [unique]
+  subscription subscription
+  billing_infos workspace_billing_infos
   billings billing [not null]
   folders folder [not null]
   invitations invitation [not null]
@@ -56,8 +58,6 @@ Table workspace {
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
   workflow_templates workflow_template [not null]
-  subscription subscription
-  billing_infos workspace_billing_infos [not null]
 }
 
 Table workspace_billing_infos {
@@ -68,7 +68,7 @@ Table workspace_billing_infos {
   billing_address String [not null]
   tax_rate Decimal [not null]
   vat_number String
-  workspace_id Int [not null]
+  workspace_id Int [unique, not null]
   workspace workspace [not null]
 }
 
@@ -78,15 +78,15 @@ Table subscription {
   updated_at DateTime [default: `now()`, not null]
   canceled_at DateTime
   workspace_id Int [unique, not null]
-  stripe_subscription_id String [not null]
+  stripe_subscription_id String [unique, not null]
   trial_end_date DateTime
   plan_type plan_type [not null]
   quantity_seats Int [not null]
   current_period_start DateTime [not null]
   current_period_end DateTime [not null]
   status subscription_status [not null]
-  billings billing [not null]
   workspace workspace
+  billings billing [not null]
 }
 
 Table billing {
@@ -355,7 +355,7 @@ Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
 
-Ref: workspace_billing_infos.workspace_id > workspace.id
+Ref: workspace_billing_infos.workspace_id - workspace.id
 
 Ref: billing.subscription_id > subscription.id
 
