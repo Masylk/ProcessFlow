@@ -41,7 +41,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
     setShowDropdown(false);
   };
 
-  const handleConnect = async (targetNodeId: string) => {
+  const handleConnect = async (targetNodeId: string, label: string) => {
     try {
       if (!data.path) {
         throw new Error('Path not found');
@@ -55,7 +55,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           source_block_id: parseInt(id.replace('block-', '')),
           target_block_id: parseInt(targetNodeId.replace('block-', '')),
           workflow_id: data.path.workflow_id,
-          label: 'Connection',
+          label: label,
         }),
       });
 

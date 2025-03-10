@@ -204,6 +204,7 @@ export function Flow({
             data: {
               source: `block-${strokeLine.source_block_id}`,
               target: `block-${strokeLine.target_block_id}`,
+              label: strokeLine.label,
               onStrokeLinesUpdate: setStrokeLines,
             },
             // Set zIndex to ensure stroke edges appear above regular edges

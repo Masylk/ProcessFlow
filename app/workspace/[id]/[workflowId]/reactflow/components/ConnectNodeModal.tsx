@@ -6,7 +6,7 @@ import { useColors } from '@/app/theme/hooks';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
-  onConfirm: (targetNodeId: string) => void;
+  onConfirm: (targetNodeId: string, label: string) => void;
   sourceNode: Node;
   availableNodes: Node[];
 }
@@ -17,8 +17,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   sourceNode,
   availableNodes,
 }) => {
+  const [step, setStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
+  const [label, setLabel] = useState('');
   const { fitView, getNode, setEdges, getEdges } = useReactFlow();
   const colors = useColors();
 
@@ -115,6 +117,18 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     e.stopPropagation();
   };
 
+  const handleNext = () => {
+    if (selectedNodeId) {
+      setStep(2);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (selectedNodeId && label.trim()) {
+      onConfirm(selectedNodeId, label);
+    }
+  };
+
   const modalContent = (
     <div className="fixed inset-0 z-50" onClick={onClose}>
       {/* Backdrop */}
@@ -133,140 +147,176 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center gap-4 px-6 pt-6">
-          <div className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
-              alt="Connect"
-              className="w-6 h-6"
-            />
-          </div>
-          <h2 className="text-lg font-semibold">Create a path to a node</h2>
+          {step === 1 ? (
+            <div className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center">
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
+                alt="Connect"
+                className="w-6 h-6"
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setStep(1)}
+              className="flex items-center gap-2 text-gray-600"
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                alt="Back"
+                className="w-5 h-5"
+              />
+              <span className="text-sm text-[#475467]">Back</span>
+            </button>
+          )}
+          <h2 className="text-lg font-semibold">
+            {step === 1 ? 'Create a path to a node' : ''}
+          </h2>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <div className="flex flex-col gap-4">
-            <div className="text-sm text-gray-600">Select Node</div>
+          {step === 1 ? (
+            <div className="flex flex-col gap-4">
+              <div className="text-sm text-gray-600">Select Node</div>
 
-            {/* Two Column Layout */}
-            <div className="flex justify-end">
-              <div className="flex gap-0">
-                {/* Connection Line Image Column */}
-                <div className="w-4 flex-shrink-0 relative">
-                  <div className="absolute top-[60px] bottom-[60px]">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-line.svg`}
-                      alt="Connection line"
-                      className="h-full w-full object-fill"
-                    />
-                    {/* Check Icon */}
-                    <div className="absolute left-[0.4px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center">
+              {/* Two Column Layout */}
+              <div className="flex justify-end">
+                <div className="flex gap-0">
+                  {/* Connection Line Image Column */}
+                  <div className="w-4 flex-shrink-0 relative">
+                    <div className="absolute top-[60px] bottom-[60px]">
                       <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-white.svg`}
-                        alt="Check"
-                        className="w-3 h-3"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-line.svg`}
+                        alt="Connection line"
+                        className="h-full w-full object-fill"
                       />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Nodes Column */}
-                <div className="w-[450px] flex flex-col gap-6">
-                  {/* Source Block */}
-                  <div className="w-full p-4 bg-white border rounded-lg">
-                    <div className="text-sm text-gray-600 mb-2">Node 1</div>
-                    <div className="text-xs text-gray-500 mb-1">#STEP</div>
-                    <div className="text-sm font-medium">
-                      {sourceNode.data.label as string}
-                    </div>
-                  </div>
-
-                  {/* Target Block */}
-                  {selectedNodeId ? (
-                    <div className="w-full p-4 bg-white border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="text-sm text-gray-600">Node 2</div>
-                        <button
-                          onClick={() => {
-                            setSelectedNodeId('');
-                            setSearchTerm('');
-                          }}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                      {/* Check Icon */}
+                      <div className="absolute left-[0.4px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-white.svg`}
+                          alt="Check"
+                          className="w-3 h-3"
+                        />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Nodes Column */}
+                  <div className="w-[450px] flex flex-col gap-6">
+                    {/* Source Block */}
+                    <div className="w-full p-4 bg-white border rounded-lg">
+                      <div className="text-sm text-gray-600 mb-2">Node 1</div>
                       <div className="text-xs text-gray-500 mb-1">#STEP</div>
                       <div className="text-sm font-medium">
-                        {getNode(selectedNodeId)?.data.label as string}
+                        {sourceNode.data.label as string}
                       </div>
                     </div>
-                  ) : (
-                    <div className="w-full p-4 bg-white border rounded-lg">
-                      <div className="text-sm text-gray-600 mb-2">Node 2</div>
-                      <div className="relative">
-                        <div className="flex items-center gap-2 text-gray-500 p-2 border border-[#D0D5DD] rounded-lg">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
-                          <input
-                            type="text"
-                            id="searchInput"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search nodes & select"
-                            className="w-full bg-transparent border-none outline-none text-sm placeholder-gray-500"
-                          />
-                        </div>
 
-                        {/* Search list - Adjusted positioning */}
-                        {searchTerm && (
-                          <div className="absolute left-0 right-0 top-[calc(100%_-_1px)] border rounded-b-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
-                            {filteredNodes.map((node) => (
-                              <button
-                                key={node.id}
-                                onClick={() => setSelectedNodeId(node.id)}
-                                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
-                              >
-                                {node.data.label as string}
-                              </button>
-                            ))}
-                            {filteredNodes.length === 0 && (
-                              <div className="p-4 text-sm text-gray-500 text-center">
-                                No matching nodes found
-                              </div>
-                            )}
-                          </div>
-                        )}
+                    {/* Target Block */}
+                    {selectedNodeId ? (
+                      <div className="w-full p-4 bg-white border rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-sm text-gray-600">Node 2</div>
+                          <button
+                            onClick={() => {
+                              setSelectedNodeId('');
+                              setSearchTerm('');
+                            }}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-500 mb-1">#STEP</div>
+                        <div className="text-sm font-medium">
+                          {getNode(selectedNodeId)?.data.label as string}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full p-4 bg-white border rounded-lg">
+                        <div className="text-sm text-gray-600 mb-2">Node 2</div>
+                        <div className="relative">
+                          <div className="flex items-center gap-2 text-gray-500 p-2 border border-[#D0D5DD] rounded-lg">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              id="searchInput"
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              placeholder="Search nodes & select"
+                              className="w-full bg-transparent border-none outline-none text-sm placeholder-gray-500"
+                            />
+                          </div>
+
+                          {/* Search list - Adjusted positioning */}
+                          {searchTerm && (
+                            <div className="absolute left-0 right-0 top-[calc(100%_-_1px)] border rounded-b-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
+                              {filteredNodes.map((node) => (
+                                <button
+                                  key={node.id}
+                                  onClick={() => setSelectedNodeId(node.id)}
+                                  className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
+                                >
+                                  {node.data.label as string}
+                                </button>
+                              ))}
+                              {filteredNodes.length === 0 && (
+                                <div className="p-4 text-sm text-gray-500 text-center">
+                                  No matching nodes found
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="text-sm text-gray-600">
+                Add a label to that path
+              </div>
+              <div className="flex flex-col gap-6">
+                <div className="w-full p-4 bg-white rounded-lg">
+                  <input
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder="Enter a label for this connection"
+                    className="w-full px-3 py-2 border rounded text-sm"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -278,15 +328,15 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             Cancel
           </button>
           <button
-            onClick={() => selectedNodeId && onConfirm(selectedNodeId)}
-            disabled={!selectedNodeId}
+            onClick={step === 1 ? handleNext : handleConfirm}
+            disabled={step === 1 ? !selectedNodeId : !label.trim()}
             className={`px-6 py-2 text-sm text-white rounded ${
-              !selectedNodeId
+              (step === 1 ? !selectedNodeId : !label.trim())
                 ? 'bg-blue-300 cursor-not-allowed'
                 : 'bg-blue-500 hover:bg-blue-600'
             }`}
           >
-            Link nodes
+            {step === 1 ? 'Next' : 'Create connection'}
           </button>
         </div>
       </div>
