@@ -1,0 +1,59 @@
+---
+description: Performance Optimization Standards
+globs: **/*.ts, **/*.tsx, **/*.prisma
+alwaysApply: false
+---
+---
+description: Performance Optimization Standards
+globs: **/*.ts, **/*.tsx
+---
+
+# Performance Guidelines
+
+- **React Component Optimization**:
+  - Use **`useMemo`** for expensive calculations and rendered components
+  - Apply **`useCallback`** for functions passed to child components
+  - Implement **proper dependency arrays** in `useEffect` hooks to prevent unnecessary re-renders
+  - Use **conditional rendering** for expensive components
+
+- **Code Splitting and Lazy Loading**:
+  - Wrap dynamic components with **`React.Suspense`** to avoid client-side rendering deopts
+  - Use Next.js **`dynamic`** imports for components not needed on initial load
+  - Implement **route-based code splitting** to reduce initial bundle size
+
+- **Resource Management**:
+  - **Cache resources** like SVGs, API responses, and frequent calculations
+  - **Optimize images** with proper formats and sizes
+  - Apply **virtualization** for long lists with libraries like `react-window`
+  - Implement **debouncing** for search inputs and resize handlers
+
+- **State Management**:
+  - Keep component state as **local as possible**
+  - **Avoid prop drilling** with contextual state where appropriate
+  - **Memoize selectors** when working with complex state
+  - Use **optimistic updates** for better perceived performance
+
+- **Database and API Optimization**:
+  - **Select only necessary fields** in database queries
+  - Use appropriate **database indexes** on frequently queried fields
+  - Apply **pagination** for large data sets
+  - Implement **caching strategies** for frequently accessed data
+  - Use **batch operations** for multiple related database changes
+
+- **Network Performance**:
+  - Implement **data prefetching** for anticipated user actions
+  - Use **SWR** or **React Query** for efficient data fetching and caching
+  - Apply **appropriate cache headers** for static assets
+  - Implement **HTTP/2** for parallel resource loading
+
+- **Rendering Performance**:
+  - **Avoid layout thrashing** by batching DOM reads and writes
+  - Use **CSS transforms** instead of properties that trigger layout
+  - Apply **throttling** for scroll and resize event handlers
+  - Keep the **number of DOM nodes** to a minimum
+
+- **Monitoring and Optimization**:
+  - Use **performance profiling** tools to identify bottlenecks
+  - Implement **error boundaries** to prevent entire app crashes
+  - Set up **performance monitoring** in production
+  - Apply **progressive enhancement** for critical functionality

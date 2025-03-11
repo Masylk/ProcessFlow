@@ -1,0 +1,19 @@
+---
+description: Database Coding Standards
+globs: **/*.prisma
+alwaysApply: false
+---
+---
+description: Database Coding Standards
+globs: **/*.prisma
+---
+
+# Standard Database Practices
+
+- **Prevent SQL injections** by validating all Prisma input
+- Query Optimization: Select only necessary fields, always think to do the most optimized schema
+- **Use transactions** when multiple queries depend on each other
+- **Always run migrations via Prisma**
+- **Keep `prisma/schema.prisma` clean and well-commented**
+- **Use Prisma logging** for debugging performance issues
+- The user use Supabase for the authentication

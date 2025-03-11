@@ -1,0 +1,50 @@
+---
+description: Security Standards and Best Practices
+globs: **/*.ts, **/*.tsx
+alwaysApply: false
+---
+---
+description: Security Standards and Best Practices
+globs: **/*.ts, **/*.tsx
+---
+
+# Security Guidelines
+
+- **Authentication**: Use Supabase for user authentication and authorization
+- **Route Protection**: Implement middleware for protecting routes (`middleware.ts`)
+- **Input Validation**: Always validate all user inputs before processing
+  - Validate form inputs on both client and server sides
+  - Enforce password complexity requirements (minimum 8 characters)
+- **Data Sanitization**: 
+  - Use `DOMPurify.sanitize()` for user-generated HTML content
+  - Escape values before inserting into JSX to prevent XSS attacks
+- **API Security**:
+  - Validate request bodies and parameters
+  - Return appropriate HTTP status codes
+  - Handle errors gracefully without exposing sensitive details
+- **File Uploads**:
+  - Validate file types before processing
+  - Use unique filenames to prevent overwriting
+  - Store uploads in secure buckets with proper access controls
+- **Headers and Cookies**:
+  - Set proper security headers
+  - Use secure and HttpOnly flags for sensitive cookies
+  - Set appropriate expiration times for authentication tokens
+- **Authorization**:
+  - Use `x-user-id` and `x-user-role` headers for passing user context
+  - Implement workspace protection for multi-tenant data
+  - Check user permissions before allowing access to resources
+- **Error Handling**:
+  - Log errors securely without exposing sensitive information
+  - Provide user-friendly error messages
+- **Environment Variables**:
+  - Keep secrets in environment variables
+  - Never expose API keys or secrets in client-side code
+- **CSRF Protection**:
+  - Use proper token validation for form submissions
+- **Rate Limiting**:
+  - Implement rate limiting for sensitive operations like password reset
+- **Password Security**:
+  - Never store plain-text passwords
+  - Implement secure password reset flows
+  - Enforce password complexity requirements

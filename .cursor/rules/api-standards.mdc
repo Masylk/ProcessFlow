@@ -1,0 +1,76 @@
+---
+description: API Development Standards and Best Practices
+globs: **/api/**/*.ts
+alwaysApply: false
+---
+---
+description: API Development Standards and Best Practices
+globs: **/api/**/*.ts
+---
+
+# API Standards
+
+- **Route Structure**:
+  - Place API routes inside `/app/api/` directory
+  - Use **resource-based URLs** (e.g., `/api/workspace/[id]/blocks`)
+  - Implement **RESTful principles** for resource manipulation
+  - Structure routes with **clear hierarchy** reflecting resource relationships
+
+- **HTTP Methods**:
+  - Use **GET** for retrieving resources
+  - Use **POST** for creating resources or actions that change state
+  - Use **PUT** for complete resource updates
+  - Use **PATCH** for partial resource updates
+  - Use **DELETE** for resource removal
+
+- **Documentation**:
+  - Document APIs with **JSDoc and Swagger annotations**
+  - Include **descriptions, parameters, and response types**
+  - Provide **example responses** in documentation
+  - Document **error responses** and status codes
+
+- **Request Handling**:
+  - Validate all **input parameters** before processing
+  - Use **appropriate parameter extraction** methods:
+    - URL parameters: `props.params`
+    - Query parameters: `searchParams.get('param')`
+    - Body data: `await request.json()`
+  - Set **proper content type headers**
+  - Implement **dynamic routes** for resource-specific operations
+
+- **Response Format**:
+  - Use **`NextResponse.json()`** for JSON responses
+  - Include **appropriate HTTP status codes**:
+    - 200: Successful operation
+    - 201: Resource created
+    - 400: Bad request (client error)
+    - 401/403: Authentication/authorization errors
+    - 404: Resource not found
+    - 409: Conflict with current state
+    - 500: Server error
+  - Return **consistent response objects** with clear properties
+
+- **Error Handling**:
+  - Wrap API logic in **try/catch blocks**
+  - Log errors with **`console.error`** for debugging
+  - Return **descriptive error messages** to clients
+  - Handle **specific error types** (e.g., Prisma errors)
+  - Don't expose **sensitive information** in error responses
+
+- **Authentication & Authorization**:
+  - **Validate authentication** in API routes or middleware
+  - **Check permissions** before accessing or modifying resources
+  - Return **appropriate 401/403 responses** for unauthorized requests
+  - Use **middleware for common auth logic**
+
+- **Performance**:
+  - Use **`dynamic = 'force-dynamic'`** only when necessary
+  - **Select only necessary fields** in database queries
+  - Implement **proper caching strategies**
+  - Consider **rate limiting** for public endpoints
+
+- **Security**:
+  - **Validate and sanitize** all input data
+  - Protect against **injection attacks**
+  - Set **appropriate CORS headers**
+  - Don't include **sensitive data** in responses

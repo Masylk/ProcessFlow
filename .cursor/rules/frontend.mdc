@@ -1,0 +1,22 @@
+---
+description: Frontend Coding Standards
+globs: **/*.tsx
+alwaysApply: false
+---
+---
+description: Frontend Coding Standards 
+globs: **/*.tsx
+---
+
+# Frontend Guidelines
+
+- Use functional React components instead of class components.
+- Apply Tailwind CSS for styling; avoid inline styles.
+- Components should be modular and reusable.
+- Maintain a consistent and clear component structure.
+- Self-close components without children
+- Use parentheses for multi-line JSX
+- Develop reusable React components in TypeScript. The user have a component librairie, you can ask him the code base to search them if needed
+- Utilize Tailwind CSS for responsive and modern styling. The user also have his own design system and theme, you must use `theme.js`
+- Integrate Shadcn components for consistent UI elements
+- Define and use TypeScript interfaces for component props and state where applicable

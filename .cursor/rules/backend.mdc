@@ -1,0 +1,28 @@
+---
+description: Backend Coding Standards
+globs: **/*.ts
+alwaysApply: false
+---
+---
+description: Backend Coding Standards
+globs: **/*.ts
+---
+
+# Backend Guidelines
+
+- Always validate API inputs before processing requests
+- Use async/await consistently; avoid callbacks
+- Follow Next.js API conventions for clear endpoint structures
+- Use Next.js API routes for server-side logic.
+- Optimize database queries for performance and scalability
+- Log errors properly but avoid excessive debugging logs in production
+- Client-side fetching: Use **React Query (TanStack) or SWR**
+- **Server-side fetching**:
+    - Use **Server Actions** (preferred) or `getServerSideProps` if needed.
+    - Place API routes inside `/app/api/` instead of `pages/api/`
+- **Security**:
+    - **Sanitize user input** before sending it to APIs.
+    - **Escape values** before inserting into JSX:
+- **Use `use client` only when necessary**.
+- **Use Next.js Middleware (`middleware.ts`)** for request handling.
+- **Use `useFormState`** instead of `useState` for form handling in Server Components.
