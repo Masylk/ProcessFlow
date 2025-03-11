@@ -3,11 +3,6 @@ description: Styling Standards and Best Practices
 globs: **/*.css, **/*.tsx
 alwaysApply: false
 ---
----
-description: Styling Standards and Best Practices
-globs: **/*.css, **/*.tsx
----
-
 # Styling Guidelines
 
 - **Use Tailwind CSS** as the primary styling method for all components

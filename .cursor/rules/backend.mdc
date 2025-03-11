@@ -3,11 +3,6 @@ description: Backend Coding Standards
 globs: **/*.ts
 alwaysApply: false
 ---
----
-description: Backend Coding Standards
-globs: **/*.ts
----
-
 # Backend Guidelines
 
 - Always validate API inputs before processing requests

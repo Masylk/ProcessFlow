@@ -3,11 +3,6 @@ description: Database Coding Standards
 globs: **/*.prisma
 alwaysApply: false
 ---
----
-description: Database Coding Standards
-globs: **/*.prisma
----
-
 # Standard Database Practices
 
 - **Prevent SQL injections** by validating all Prisma input

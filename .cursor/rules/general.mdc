@@ -3,12 +3,6 @@ description: General Guidelines
 globs: *
 alwaysApply: true
 ---
----
-description: General Guidelines
-globs: *
-alwaysApply: true
----
-
 # General Coding Guidelines
 
 - Use TypeScript for all development.

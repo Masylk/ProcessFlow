@@ -3,10 +3,6 @@ description: Component Development Standards
 globs: **/*.tsx
 alwaysApply: false
 ---
----
-description: Component Development Standards
-globs: **/*.tsx
----
 # Components Guidelines
 
 - **Use TypeScript interfaces** for all component props
@@ -22,7 +18,7 @@ globs: **/*.tsx
 - **Error handling**: Gracefully handle edge cases and provide fallbacks
 - **Responsive design**: Ensure components work across device sizes
 - **Accessibility**: Follow ARIA best practices for interactive components
-- **Event handling**: Use properly typed eve    nt handlers (e.g., `React.MouseEvent`)
+- **Event handling**: Use properly typed event handlers (e.g., `React.MouseEvent`)
 - **Performance**: Memoize expensive calculations or rendering with `useMemo` and `useCallback`
 - **State management**: Keep state minimal and use appropriate hooks (`useState`, `useReducer`)
 - **Reusability**: Design components to be reusable across different contexts

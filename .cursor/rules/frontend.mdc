@@ -3,11 +3,6 @@ description: Frontend Coding Standards
 globs: **/*.tsx
 alwaysApply: false
 ---
----
-description: Frontend Coding Standards 
-globs: **/*.tsx
----
-
 # Frontend Guidelines
 
 - Use functional React components instead of class components.

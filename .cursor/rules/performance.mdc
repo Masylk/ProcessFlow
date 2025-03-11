@@ -3,11 +3,6 @@ description: Performance Optimization Standards
 globs: **/*.ts, **/*.tsx, **/*.prisma
 alwaysApply: false
 ---
----
-description: Performance Optimization Standards
-globs: **/*.ts, **/*.tsx
----
-
 # Performance Guidelines
 
 - **React Component Optimization**:

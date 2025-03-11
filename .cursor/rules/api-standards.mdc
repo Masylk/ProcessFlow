@@ -3,11 +3,6 @@ description: API Development Standards and Best Practices
 globs: **/api/**/*.ts
 alwaysApply: false
 ---
----
-description: API Development Standards and Best Practices
-globs: **/api/**/*.ts
----
-
 # API Standards
 
 - **Route Structure**:
