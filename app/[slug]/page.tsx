@@ -6,41 +6,53 @@ interface PageParams {
 }
 
 interface SearchParams {
-  [key: string]: string | string[] | undefined;
+  checkout?: string;
+  session_id?: string;
 }
 
-// Keep params and searchParams as Promises as Next.js 15 expects this
-export default async function WorkspaceSlugPage({
-  params,
-  searchParams,
-}: {
+// Valid checkout status types
+const VALID_CHECKOUT_STATUSES = ['success', 'cancelled'] as const;
+type CheckoutStatus = typeof VALID_CHECKOUT_STATUSES[number];
+
+// Validate checkout status
+function isValidCheckoutStatus(status: string | undefined): status is CheckoutStatus {
+  return typeof status === 'string' && VALID_CHECKOUT_STATUSES.includes(status as CheckoutStatus);
+}
+
+// Configure page behavior
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+interface PageProps {
   params: Promise<PageParams>;
   searchParams: Promise<SearchParams>;
-}) {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
-
-  try {
-    // Find the workspace by slug
-    const workspace = await prisma.workspace.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-
-    if (!workspace) {
-      // Redirect to home page if workspace not found
-      return redirect('/');
-    }
-
-    // Redirect to the dashboard page with the workspace id
-    return redirect(`/dashboard?workspace=${workspace.id}`);
-  } catch (error) {
-    console.error('Error in slug page:', error);
-    return redirect('/dashboard');
-  }
 }
 
-// This satisfies Next.js expectations for static generation
-export function generateStaticParams(): { slug: string }[] {
-  return [];
+export default async function WorkspaceSlugPage(props: PageProps) {
+  // Await params before destructuring in Next.js 15
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  
+  const slug = params.slug;
+  
+  // Find the workspace by slug
+  const workspace = await prisma.workspace.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+
+  if (!workspace) {
+    return redirect('/');
+  }
+
+  // Build the target URL
+  const baseUrl = '/dashboard';
+  const workspaceParam = `workspace=${workspace.id}`;
+  
+  // Only add checkout param if it's from Stripe
+  const checkoutParam = searchParams.checkout ? `&checkout=${searchParams.checkout}` : '';
+  const sessionParam = searchParams.session_id ? `&session_id=${searchParams.session_id}` : '';
+  
+  const targetUrl = `${baseUrl}?${workspaceParam}${checkoutParam}${sessionParam}`;
+  return redirect(targetUrl);
 }

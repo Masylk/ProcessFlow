@@ -36,6 +36,7 @@ import InputField from '@/app/components/InputFields';
 import IconModifier from './components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './components/TutorialOverlay';
+import { toast } from 'sonner';
 
 const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
   ssr: false,
@@ -1048,6 +1049,56 @@ export default function Page() {
       console.error('Error updating tutorial status:', error);
     }
   };
+
+  // Check URL parameters for subscription events
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const checkoutStatus = url.searchParams.get('checkout');
+      const action = url.searchParams.get('action');
+      const error = url.searchParams.get('error');
+
+      // Only show notifications if we have checkout status
+      if (checkoutStatus) {
+        // Success notifications
+        if (checkoutStatus === 'success') {
+          if (action === 'upgrade') {
+            toast.success('Successfully Upgraded! 🚀', {
+              description: 'Your subscription has been upgraded to the Early Adopter plan. Enjoy all the premium features!',
+              duration: 7000
+            });
+          } else {
+            toast.success('Subscription Activated', {
+              description: 'Your Early Adopter subscription has been successfully activated.',
+              duration: 5000
+            });
+          }
+        } 
+        // Error notifications
+        else if (checkoutStatus === 'failed') {
+          const errorMessage = error || 'There was an issue processing your payment. Please try again or contact support.';
+          toast.error('Checkout Failed', {
+            description: errorMessage,
+            duration: 10000 // Longer duration for error messages
+          });
+        }
+        // Pending notifications
+        else if (checkoutStatus === 'pending') {
+          toast.info('Processing Your Subscription', {
+            description: 'Your payment was successful. We are setting up your subscription. This may take a few moments.',
+            duration: 5000
+          });
+        }
+
+        // Clean up URL parameters after showing toast
+        url.searchParams.delete('checkout');
+        url.searchParams.delete('action');
+        url.searchParams.delete('error');
+        url.searchParams.delete('message');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, []); // Empty dependency array means this runs once on mount
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
