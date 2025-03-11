@@ -88,6 +88,11 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   // Get existing child paths for the current block
   const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
 
+  // Check if the source block is a LastNode
+  const isLastNode = dropdownDatas.path.blocks.find(
+    block => block.position === dropdownDatas.position
+  )?.type === 'LAST';
+
   return (
     <>
       <div className="fixed inset-0" onClick={onClose} />
@@ -139,6 +144,38 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
           >
             Convert to End Block
+          </button>
+        )}
+
+        {isLastNode && block && (
+          <button
+            onClick={async () => {
+              try {
+                await fetch(`/api/blocks/${block.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: BlockEndType.MERGE,
+                  }),
+                });
+                
+                // Fetch updated paths data
+                const pathsResponse = await fetch(
+                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+                );
+                if (pathsResponse.ok) {
+                  const pathsData = await pathsResponse.json();
+                  onPathsUpdate(pathsData.paths);
+                }
+                onClose();
+              } catch (error) {
+                console.error('Error converting to merge block:', error);
+              }
+            }}
+            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
+          >
+            <img src="/step-icons/default-icons/merge.svg" alt="Merge" className="w-5 h-5" />
+            <span>Merge paths</span>
           </button>
         )}
       </div>
