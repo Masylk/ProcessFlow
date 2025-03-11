@@ -8,79 +8,108 @@ interface User {
 export async function workspaceProtection(request: NextRequest, user: User) {
   console.log('workspace protection middleware');
   
-  // Handle workspace routes
+  // Handle workspace routes with more robust URL parsing
   if (request.url.includes('/workspace/')) {
-    const workspaceId = request.url.split('/workspace/')[1]?.split('/')[0];
-    
-    if (!workspaceId) {
-      return NextResponse.next();
-    }
-
-    console.log('workspaceId', workspaceId);
-    
+    // Use URL parsing instead of string splitting for more reliability
     try {
-      // First check if workspace exists
-      const workspaceRes = await fetch(`${request.nextUrl.origin}/api/workspace/${workspaceId}`);
+      const urlObj = new URL(request.url);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
       
-      if (!workspaceRes.ok) {
-        console.log('not found');
-        return NextResponse.rewrite(new URL('/not-found', request.url));
+      // The workspace ID should be the second element after 'workspace'
+      const workspaceIndex = pathParts.findIndex(part => part === 'workspace');
+      if (workspaceIndex === -1 || workspaceIndex + 1 >= pathParts.length) {
+        return NextResponse.next();
       }
       
-      const workspace = await workspaceRes.json();
-      console.log('workspace query result:', workspace);
-
-      // Then check if user has access to this workspace
-      const userWorkspaceRes = await fetch(
-        `${request.nextUrl.origin}/api/workspace/${workspaceId}/access?userId=${user.id}`
-      );
-
-      if (!userWorkspaceRes.ok) {
-        console.log('unauthorized');
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      const workspaceId = pathParts[workspaceIndex + 1];
+      
+      if (!workspaceId) {
+        return NextResponse.next();
       }
 
-      const userWorkspace = await userWorkspaceRes.json();
-      console.log('userWorkspace query result:', userWorkspace);
-    } catch (error) {
-      console.error('Error in workspace protection:', error);
+      console.log('workspaceId', workspaceId);
+      
+      try {
+        // First check if workspace exists
+        const workspaceRes = await fetch(`${request.nextUrl.origin}/api/workspace/${workspaceId}`);
+        
+        if (!workspaceRes.ok) {
+          console.log('not found');
+          return NextResponse.rewrite(new URL('/not-found', request.url));
+        }
+        
+        const workspace = await workspaceRes.json();
+        console.log('workspace query result:', workspace);
+
+        // Then check if user has access to this workspace
+        const userWorkspaceRes = await fetch(
+          `${request.nextUrl.origin}/api/workspace/${workspaceId}/access?userId=${user.id}`
+        );
+
+        if (!userWorkspaceRes.ok) {
+          console.log('unauthorized');
+          return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+
+        const userWorkspace = await userWorkspaceRes.json();
+        console.log('userWorkspace query result:', userWorkspace);
+      } catch (error) {
+        console.error('Error in workspace protection:', error);
+        return NextResponse.redirect(new URL('/error', request.url));
+      }
+    } catch (parseError) {
+      console.error('Error parsing URL in workspace protection:', parseError);
       return NextResponse.redirect(new URL('/error', request.url));
     }
   }
 
-  // Handle workflow routes
+  // Handle workflow routes with more robust URL parsing
   if (request.url.includes('/workflow/')) {
-    const workflowId = request.url.split('/workflow/')[1]?.split('/')[0];
-    
-    if (!workflowId) {
-      return NextResponse.next();
-    }
-
     try {
-      // Check if workflow exists and get its workspace
-      const workflowRes = await fetch(`${request.nextUrl.origin}/api/workflows/${workflowId}`);
+      const urlObj = new URL(request.url);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
       
-      if (!workflowRes.ok) {
-        console.log('not found');
-        return NextResponse.rewrite(new URL('/not-found', request.url));
+      // The workflow ID should be the second element after 'workflow'
+      const workflowIndex = pathParts.findIndex(part => part === 'workflow');
+      if (workflowIndex === -1 || workflowIndex + 1 >= pathParts.length) {
+        return NextResponse.next();
+      }
+      
+      const workflowId = pathParts[workflowIndex + 1];
+      
+      if (!workflowId) {
+        return NextResponse.next();
       }
 
-      const workflow = await workflowRes.json();
+      try {
+        // Check if workflow exists and get its workspace
+        const workflowRes = await fetch(`${request.nextUrl.origin}/api/workflows/${workflowId}`);
+        
+        if (!workflowRes.ok) {
+          console.log('not found');
+          return NextResponse.rewrite(new URL('/not-found', request.url));
+        }
 
-      // Check if user has access to the workflow's workspace
-      const userWorkspaceRes = await fetch(
-        `${request.nextUrl.origin}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`
-      );
+        const workflow = await workflowRes.json();
 
-      if (!userWorkspaceRes.ok) {
-        console.log('unauthorized');
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
+        // Check if user has access to the workflow's workspace
+        const userWorkspaceRes = await fetch(
+          `${request.nextUrl.origin}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`
+        );
+
+        if (!userWorkspaceRes.ok) {
+          console.log('unauthorized');
+          return NextResponse.redirect(new URL('/unauthorized', request.url));
+        }
+
+        const userWorkspace = await userWorkspaceRes.json();
+        console.log('userWorkspace query result:', userWorkspace);
+      } catch (error) {
+        console.error('Error in workflow protection:', error);
+        return NextResponse.redirect(new URL('/error', request.url));
       }
-
-      const userWorkspace = await userWorkspaceRes.json();
-      console.log('userWorkspace query result:', userWorkspace);
-    } catch (error) {
-      console.error('Error in workflow protection:', error);
+    } catch (parseError) {
+      console.error('Error parsing URL in workflow protection:', parseError);
       return NextResponse.redirect(new URL('/error', request.url));
     }
   }

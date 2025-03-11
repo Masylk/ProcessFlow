@@ -13,6 +13,11 @@ export interface Folder {
 export interface Workspace {
   id: number;
   name: string;
+  users: Array<{
+    id: number;
+    email: string;
+    name?: string;
+  }>;
   workflows: Workflow[];
   folders: Folder[];
   team_tags?: string[];

@@ -180,6 +180,7 @@ interface InputFieldProps {
   
   helpIcon?: boolean;
   onChange?: (value: string) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   errorMessage?: string;
   iconUrl?: string; // URL for the leading icon
@@ -259,6 +260,7 @@ const InputField: React.FC<InputFieldProps> = ({
   hintText = "",
   helpIcon = false,
   onChange,
+  onBlur,
   disabled = false,
   errorMessage = "",
   iconUrl = "",
@@ -363,9 +365,12 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',
@@ -471,9 +476,12 @@ const InputField: React.FC<InputFieldProps> = ({
                   placeholder={type === "leading-text" ? "www.example.com" : placeholder}
                   value={value}
                   onChange={handleChange}
+                  onBlur={(e) => {
+                    handleBlur();
+                    onBlur?.();
+                  }}
                   disabled={disabled}
                   onFocus={handleFocus}
-                  onBlur={handleBlur}
                   style={{
                     ...inputStyle,
                     width: '100%',
@@ -514,9 +522,12 @@ const InputField: React.FC<InputFieldProps> = ({
                   placeholder={placeholder}
                   value={value}
                   onChange={handleChange}
+                  onBlur={(e) => {
+                    handleBlur();
+                    onBlur?.();
+                  }}
                   disabled={disabled}
                   onFocus={handleFocus}
-                  onBlur={handleBlur}
                   style={{
                     ...inputStyle,
                     width: '100%',
@@ -685,7 +696,10 @@ const InputField: React.FC<InputFieldProps> = ({
                 placeholder={value ? "" : placeholder}
                 disabled={disabled}
                 onFocus={handleFocus}
-                onBlur={handleBlur}
+                onBlur={(e) => {
+                  handleBlur();
+                  onBlur?.();
+                }}
                 style={{
                   ...inputStyle,
                   width: '100%',
@@ -747,9 +761,12 @@ const InputField: React.FC<InputFieldProps> = ({
                   placeholder={placeholder}
                   value={value}
                   onChange={handleChange}
+                  onBlur={(e) => {
+                    handleBlur();
+                    onBlur?.();
+                  }}
                   disabled={disabled}
                   onFocus={handleFocus}
-                  onBlur={handleBlur}
                   style={{
                     ...inputStyle,
                     width: '100%',
@@ -827,9 +844,12 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',
@@ -884,9 +904,12 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',

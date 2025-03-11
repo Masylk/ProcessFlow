@@ -4,32 +4,36 @@ import React, { useState } from 'react';
 import { loadStripe } from "@stripe/stripe-js";
 import { useTheme } from '@/app/theme/hooks';
 import { cn } from '@/lib/utils/cn';
+import ButtonNormal from './ButtonNormal';
+import { useRouter } from 'next/navigation';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface CheckoutButtonProps {
   priceId: string;
-  className?: string;
-  children?: React.ReactNode;
   variant?: 'primary' | 'secondary';
   size?: 'small' | 'medium' | 'large';
   fullWidth?: boolean;
   disabled?: boolean;
   isCurrentPlan?: boolean;
+  children: React.ReactNode;
 }
 
-const CheckoutButton: React.FC<CheckoutButtonProps> = ({ 
-  priceId, 
-  className,
-  children = "Subscribe",
+export default function CheckoutButton({
+  priceId,
   variant = 'primary',
   size = 'medium',
   fullWidth = false,
   disabled = false,
-  isCurrentPlan = false
-}) => {
+  isCurrentPlan = false,
+  children,
+}: CheckoutButtonProps) {
   const { getCssVariable } = useTheme();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { workspace } = useWorkspace();
 
   const baseStyles = 'font-semibold transition-colors duration-200 rounded-lg flex items-center justify-center gap-2';
   const disabledStyles = 'opacity-50 saturate-50 cursor-not-allowed hover:bg-transparent hover:text-inherit hover:border-inherit';
@@ -63,93 +67,91 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
   `;
 
   const handleCheckout = async () => {
-    if (isProcessing || disabled) return;
-    
-    setIsProcessing(true);
     try {
-      const stripe = await stripePromise;
-      
-      if (!stripe) {
-        console.error("Stripe failed to load");
+      setIsLoading(true);
+      setError(null);
+
+      if (!workspace?.id) {
+        throw new Error('No workspace selected');
+      }
+
+      if (isCurrentPlan) {
+        // Redirect to billing portal for current plan management
+        const response = await fetch(`/api/subscription?workspaceId=${workspace.id}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.details || data.error || 'Failed to access billing portal');
+        }
+
+        if (data.url) {
+          // Use router.push for client-side navigation within the app
+          // Use window.location.href for external URLs (like Stripe)
+          if (data.url.startsWith(process.env.NEXT_PUBLIC_APP_URL || '')) {
+            router.push(data.url);
+          } else {
+            window.location.href = data.url;
+          }
+        } else {
+          throw new Error('No redirect URL received');
+        }
         return;
       }
 
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
+      // Create new checkout session
+      const response = await fetch('/api/subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          workspaceId: workspace.id,
+          workspaceSlug: workspace.slug,
+        }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Checkout API request failed");
+        throw new Error(data.details || data.error || 'Failed to create checkout session');
       }
 
-      const { sessionId } = await response.json();
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      
-      if (error) {
-        console.error("Stripe redirect error:", error);
+      if (data.url) {
+        // Always use window.location.href for Stripe URLs
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error("Checkout error:", error);
+      console.error('Checkout error:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
   const planMap: { [key: string]: 'free' | 'earlyAdopter' } = {
-    'price_early_adopter_monthly': 'earlyAdopter',
-    'price_early_adopter_annual': 'earlyAdopter',
+    'price_1R0gMwAiIekpSP7WgmGUdlZF': 'earlyAdopter', // Monthly price
+    'price_1R14rXAiIekpSP7WxI9zoQIQ': 'earlyAdopter', // Annual price
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-2">
       <style>{hoverStyle}</style>
-      <button
-        id={buttonId}
+      <ButtonNormal
+        variant={variant}
+        size={size}
+        disabled={disabled || isLoading}
         onClick={handleCheckout}
-        onMouseDown={(e) => e.preventDefault()}
-        disabled={isProcessing || disabled || isCurrentPlan}
-        className={cn(
-          baseStyles,
-          sizeStyles[size],
-          className,
-          (isProcessing || disabled || isCurrentPlan) && disabledStyles
-        )}
-        style={style}
       >
-        {isProcessing ? (
-          <div className="flex items-center gap-2">
-            <svg
-              className="animate-spin h-4 w-4"
-              style={{ color: getCssVariable('button-loading-spinner') }}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <span>Processing...</span>
-          </div>
-        ) : (
-          <span>{isCurrentPlan ? "Current plan" : children}</span>
-        )}
-      </button>
-    </>
+        {isLoading ? 'Loading...' : children}
+      </ButtonNormal>
+      {error && (
+        <div className="text-red-500 text-sm mt-1">
+          {error}
+        </div>
+      )}
+    </div>
   );
-};
-
-export default CheckoutButton; 
+} 
