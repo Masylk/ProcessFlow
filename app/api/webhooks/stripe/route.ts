@@ -270,12 +270,9 @@ export async function POST(req: Request) {
       throw new Error('No stripe signature found');
     }
 
-    console.log('Received webhook with signature:', signature.substring(0, 10) + '...');
+    // Remove potentially sensitive logging
+    console.log('Received webhook request');
     
-    // Log the raw body for debugging (be careful with sensitive data)
-    console.log('Webhook body length:', body.length);
-    console.log('Webhook first 100 chars:', body.substring(0, 100) + '...');
-
     let event;
     try {
       event = stripe.webhooks.constructEvent(
@@ -284,30 +281,26 @@ export async function POST(req: Request) {
         webhookSecret
       );
     } catch (err) {
-      console.error('Error constructing webhook event:', err);
+      console.error('Webhook signature verification failed');
       return NextResponse.json(
         { error: 'Webhook signature verification failed' },
         { status: 400 }
       );
     }
 
-    console.log('Processing webhook event:', {
-      type: event.type,
-      id: event.id
-    });
+    // Log only non-sensitive event information
+    console.log('Processing webhook event type:', event.type);
 
-    // For subscription events, log additional details
+    // For subscription events, log only essential non-sensitive details
     if (event.type.startsWith('customer.subscription.')) {
       const subscription = event.data.object as Stripe.Subscription;
-      console.log('Subscription webhook details:', {
-        id: subscription.id,
-        status: subscription.status,
-        metadata: subscription.metadata,
-        customerId: subscription.customer
+      console.log('Processing subscription webhook:', {
+        type: event.type,
+        hasWorkspaceId: !!subscription.metadata.workspaceId
       });
       
       if (!subscription.metadata.workspaceId) {
-        console.error('Missing workspaceId in subscription metadata:', subscription.id);
+        console.error('Missing workspaceId in subscription metadata');
       }
     }
 
@@ -342,12 +335,19 @@ export async function POST(req: Request) {
           console.log(`Unhandled webhook event type: ${event.type}`);
       }
     } catch (processingError) {
-      console.error(`Error processing webhook event ${event.type}:`, processingError);
-      // Return 200 response to acknowledge receipt (prevents retries) but log the error
+      // Sanitize error logging
+      const sanitizedError = {
+        type: processingError instanceof Error ? processingError.name : 'Unknown',
+        message: processingError instanceof Error ? 
+          processingError.message.replace(/[a-zA-Z0-9]{24,}/g, '[REDACTED]') : 
+          'Unknown error'
+      };
+      console.error(`Error processing webhook:`, sanitizedError);
+      
       return NextResponse.json({ 
         received: true, 
         success: false, 
-        error: `Error processing event: ${processingError instanceof Error ? processingError.message : 'Unknown error'}`
+        error: 'Error processing webhook event'
       });
     }
 

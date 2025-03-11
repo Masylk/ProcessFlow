@@ -105,7 +105,10 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   const sessionId = String(searchParams?.session_id || '');
   const workspaceId = String(searchParams?.workspace || '');
 
-  console.log('Processing checkout success', { sessionId: sessionId.substring(0, 10) + '...', workspaceId });
+  console.log('Processing checkout success', { 
+    hasSessionId: !!sessionId,
+    workspaceId 
+  });
 
   // Validate required parameters
   if (!sessionId || !workspaceId) {
@@ -125,15 +128,15 @@ export default async function CheckoutSuccessPage(props: PageProps) {
     // Verify the checkout session
     session = await stripe.checkout.sessions.retrieve(sessionId);
   } catch (error) {
-    // Better error handling with more details
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error retrieving checkout session:', {
-      error: errorMessage,
-      sessionId: sessionId.substring(0, 10) + '...',
-      workspaceId
-    });
+    // Sanitize error logging
+    const sanitizedError = {
+      type: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? 
+        error.message.replace(/[a-zA-Z0-9]{24,}/g, '[REDACTED]') : 
+        'Unknown error'
+    };
+    console.error('Error retrieving checkout session:', sanitizedError);
     
-    // Use redirect instead of NextResponse.redirect to avoid serialization issues
     return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=invalid_session`);
   }
     
@@ -340,18 +343,20 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   } catch (error) {
     // Only handle actual errors, not redirects
     if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
-      console.error('Error in checkout flow:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const encodedError = encodeURIComponent(errorMessage);
+      // Sanitize error logging
+      const sanitizedError = {
+        type: error.name,
+        message: error.message.replace(/[a-zA-Z0-9]{24,}/g, '[REDACTED]')
+      };
+      console.error('Error in checkout flow:', sanitizedError);
+      
+      const encodedError = encodeURIComponent('An error occurred during checkout');
       
       // Track the failed checkout server-side
-      await trackCheckoutServerSide(workspaceIdNumber, sessionId, 'failed');
+      await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'failed');
       
-      // For error case, we don't have workspace info to check if it was an upgrade
-      // Just use a simple redirect without the action parameter
       return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=${encodedError}`);
     }
-    // If it's a redirect, let it propagate
     throw error;
   }
 } 
