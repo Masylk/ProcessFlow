@@ -1,13 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
+import {
+  Handle,
+  Position,
+  NodeProps,
+  Edge,
+  useReactFlow,
+  Node,
+} from '@xyflow/react';
 import { NodeData } from '../types';
-import ConnectNodeModal from './ConnectNodeModal';
+import { useModalStore } from '../store/modalStore';
+import { useConnectModeStore } from '../store/connectModeStore';
 
-function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
+interface CustomNodeProps extends NodeProps {
+  data: NodeData & {
+    onPreviewUpdate?: (edge: Edge | null) => void;
+    // ... other data props
+  };
+}
+
+function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showConnectModal, setShowConnectModal] = useState(false);
   const { getNodes, setEdges, setNodes, getEdges } = useReactFlow();
+  const setShowConnectModal = useModalStore(
+    (state) => state.setShowConnectModal
+  );
+  const setConnectData = useModalStore((state) => state.setConnectData);
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   // Handle highlight effect
   useEffect(() => {
@@ -83,53 +102,90 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setConnectData({
+      sourceNode: {
+        id,
+        data,
+        position: { x: 0, y: 0 },
+        type: 'custom',
+        width: undefined,
+        height: undefined,
+      } as Node,
+    });
     setShowConnectModal(true);
     setShowDropdown(false);
   };
 
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentVisibility = data.strokeLinesVisible ?? true; // Default to true if undefined
-    console.log('Current visibility:', currentVisibility);
-
-    const newVisibility = !currentVisibility;
-    console.log('New visibility:', newVisibility);
-
-    setNodes(
-      getNodes().map((node) => {
-        if (node.id === id) {
-          console.log('Updating node:', node.id);
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              strokeLinesVisible: newVisibility,
-            },
-          };
-        }
-        return node;
-      })
-    );
-
-    // Filter edges based on new visibility state
-    const currentEdges = getEdges();
-    console.log('Current edges:', currentEdges);
-
-    const updatedEdges = currentEdges.filter((edge) => {
-      if (edge.source === id && edge.type === 'strokeEdge') {
-        return newVisibility; // Keep edges if visible, remove if hidden
-      }
-      return true; // Keep all other edges
-    });
-
-    console.log('Updated edges:', updatedEdges);
-    setEdges(updatedEdges);
+    console.log('toggleStrokeLines', data.strokeLinesVisible);
+    const blockId = parseInt(id.replace('block-', ''));
+    data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
   };
 
   return (
     <>
+      {/* Vertical Toggle Switch Container */}
+      {getEdges().some(
+        (edge) => edge.source === id && edge.type === 'strokeEdge'
+      ) &&
+        !isConnectMode && (
+          <div
+            className={`absolute top-[20px] -translate-y-1/2 transition-opacity duration-300 ${
+              isConnectMode ? 'opacity-40' : ''
+            }`}
+            style={{
+              left: '-20px',
+              backgroundColor: '#FFFFFF',
+              padding: '4px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              paddingLeft: '6px',
+            }}
+          >
+            <div
+              onClick={toggleStrokeLines}
+              className="cursor-pointer"
+              style={{
+                width: '12px',
+                height: '20px',
+                borderRadius: '6px',
+                backgroundColor: data.strokeLinesVisible
+                  ? '#FF69A3'
+                  : '#E5E7EB',
+                transition: 'background-color 0.2s',
+                position: 'relative',
+              }}
+            >
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  position: 'absolute',
+                  left: '1px',
+                  top: data.strokeLinesVisible ? '1px' : '9px',
+                  transition: 'top 0.2s',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
       <div
-        className={`transition-all duration-300 ${isHighlighted ? 'scale-105' : ''}`}
+        className={`transition-all duration-300 ${
+          isConnectMode && !(data.isSourceNode || data.isSelectedNode)
+            ? 'opacity-40'
+            : ''
+        } ${isHighlighted ? 'scale-105' : ''}`}
         style={{
           width: '481px',
           padding: '20px 24px',
@@ -245,45 +301,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           </div>
         </div>
         <div className="text-gray-900">{data.label}</div>
-        {getEdges().some(
-          (edge) => edge.source === id && edge.type === 'strokeEdge'
-        ) && (
-          <button
-            onClick={toggleStrokeLines}
-            className="absolute -right-2 -top-2 w-4 h-4 rounded-full bg-white border border-gray-300 shadow-sm flex items-center justify-center hover:bg-gray-50"
-            title="Toggle stroke lines"
-          >
-            <svg
-              className={`w-3 h-3 ${data.strokeLinesVisible ? 'text-blue-500' : 'text-gray-400'}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </button>
-        )}
       </div>
-
-      {showConnectModal && (
-        <ConnectNodeModal
-          onClose={() => setShowConnectModal(false)}
-          onConfirm={handleConnect}
-          sourceNode={{ id, data } as any}
-          availableNodes={getNodes()}
-        />
-      )}
     </>
   );
 }

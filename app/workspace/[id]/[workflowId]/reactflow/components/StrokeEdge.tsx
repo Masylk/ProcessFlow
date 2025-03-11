@@ -7,6 +7,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
 } from '@xyflow/react';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -17,6 +18,7 @@ interface StrokeEdgeData {
   targetHandle?: string;
   label: string;
   preview?: boolean;
+  isVisible?: boolean;
 }
 
 function getPointOnLine(
@@ -58,6 +60,7 @@ function StrokeEdge({
   const [showLabel, setShowLabel] = useState(false);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -102,22 +105,25 @@ function StrokeEdge({
       <defs>
         <marker
           id={markerId}
-          markerWidth={12}
-          markerHeight={12}
-          refX={6}
-          refY={6}
+          markerWidth="6"
+          markerHeight="6"
+          refX="5"
+          refY="3"
           orient="auto"
         >
           <path
-            d="M 0 0 L 12 6 L 0 12 z"
+            d="M 0 0 L 6 3 L 0 6 z"
             fill="#FF69A3"
             className="transition-colors duration-300"
           />
         </marker>
       </defs>
+      {/* Visible stroke line */}
       <path
         id={id}
-        className="react-flow__edge-path"
+        className={`react-flow__edge-path transition-opacity duration-300 ${
+          isConnectMode && !data?.preview ? 'opacity-100' : 'opacity-40'
+        }`}
         d={edgePath}
         style={{
           ...style,
@@ -125,21 +131,29 @@ function StrokeEdge({
           stroke: '#FF69A3',
           strokeDasharray: '10,5',
           markerEnd: `url(#${markerId})`,
+          opacity: data?.isVisible === false ? 0 : 1,
+          pointerEvents: 'none',
+          transition: 'opacity 0.2s',
         }}
       />
+      {/* Hover detection path */}
       <path
         d={edgePath}
         fill="none"
-        strokeWidth="20"
+        strokeWidth="12"
         stroke="transparent"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => {
           console.log('Edge hover ended');
           setShowLabel(false);
         }}
-        style={{ cursor: 'pointer' }}
+        style={{
+          cursor: 'pointer',
+          opacity: data?.isVisible === false ? 0 : 1,
+          pointerEvents: data?.isVisible === false ? 'none' : 'stroke',
+        }}
       />
-      {showLabel && (
+      {showLabel && data?.isVisible !== false && (
         <circle
           cx={labelPosition.x}
           cy={labelPosition.y}
@@ -148,7 +162,7 @@ function StrokeEdge({
           style={{ pointerEvents: 'none' }}
         />
       )}
-      {showLabel && data?.label && (
+      {showLabel && data?.label && data?.isVisible !== false && (
         <EdgeLabelRenderer>
           <div
             style={{

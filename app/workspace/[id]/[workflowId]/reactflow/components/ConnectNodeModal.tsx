@@ -3,12 +3,14 @@ import { Node, Edge } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { useColors } from '@/app/theme/hooks';
+import { PreviewEdgePortal } from './PreviewEdgePortal';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
   onConfirm: (targetNodeId: string, label: string) => void;
   sourceNode: Node;
   availableNodes: Node[];
+  onPreviewUpdate?: (edge: Edge | null) => void;
 }
 
 const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
@@ -16,13 +18,15 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   onConfirm,
   sourceNode,
   availableNodes,
+  onPreviewUpdate,
 }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const [label, setLabel] = useState('');
-  const { fitView, getNode, setEdges, getEdges } = useReactFlow();
+  const { fitView, getNode } = useReactFlow();
   const colors = useColors();
+  const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
 
   // Helper function for consistent view options
   const getFitViewOptions = (nodes: Node[]) => ({
@@ -53,9 +57,14 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     }
   }, [selectedNodeId, sourceNode.id, getNode, fitView]);
 
+  const updatePreview = (previewEdge: Edge) => {
+    console.log('updatePreview', onPreviewUpdate);
+    onPreviewUpdate?.(previewEdge);
+  };
+
   useEffect(() => {
     if (selectedNodeId) {
-      const previewEdge: Edge = {
+      const edge: Edge = {
         id: 'preview-edge',
         source: sourceNode.id,
         target: selectedNodeId,
@@ -66,29 +75,28 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             ? 'stroke_self_target'
             : 'stroke_target',
         style: {
-          opacity: 0.6,
-          stroke: '#FF69A3',
-          strokeWidth: 2,
+          opacity: 1,
+          stroke: '#FF1493',
+          strokeWidth: 3,
           strokeDasharray: '5,5',
+          zIndex: 9999,
         },
         animated: true,
         data: {
           source: sourceNode.id,
           target: selectedNodeId,
           preview: true,
+          isVisible: true,
         },
-        zIndex: 1000,
+        zIndex: 9999,
       };
-
-      setEdges([...getEdges(), previewEdge]);
+      setPreviewEdge(edge);
+      onPreviewUpdate?.(edge);
     } else {
-      setEdges(getEdges().filter((e) => e.id !== 'preview-edge'));
+      setPreviewEdge(null);
+      onPreviewUpdate?.(null);
     }
-
-    return () => {
-      setEdges(getEdges().filter((e) => e.id !== 'preview-edge'));
-    };
-  }, [selectedNodeId, sourceNode.id, setEdges, getEdges]);
+  }, [selectedNodeId, sourceNode.id, onPreviewUpdate]);
 
   // Add escape key handler
   useEffect(() => {
@@ -129,19 +137,30 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     }
   };
 
-  const modalContent = (
-    <div className="fixed inset-0 z-50" onClick={onClose}>
-      {/* Backdrop */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 opacity-70"
-          style={{ backgroundColor: colors['bg-overlay'] }}
-        />
-      </div>
+  const handleNodeSelect = (targetNodeId: string) => {
+    console.log('handleNodeSelect', targetNodeId);
+    // Creates a temporary preview edge
+    const previewEdge = {
+      id: 'preview-edge',
+      source: sourceNode.id,
+      target: targetNodeId,
+      type: 'strokeEdge',
+      data: {
+        preview: true, // This marks it as a preview
+        isVisible: true,
+      },
+    };
 
-      {/* Modal */}
+    // Adds this preview edge to the edges
+    updatePreview(previewEdge);
+  };
+
+  const modalContent = (
+    <>
+      <PreviewEdgePortal edge={previewEdge} />
+      {/* Modal - keep high z-index */}
       <div
-        className="absolute bottom-8 right-8 w-[600px] rounded-xl shadow-lg"
+        className="fixed bottom-8 right-8 w-[600px] rounded-xl shadow-lg z-50"
         style={{ backgroundColor: colors['bg-primary'] }}
         onClick={handleModalClick}
       >
@@ -278,7 +297,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                               {filteredNodes.map((node) => (
                                 <button
                                   key={node.id}
-                                  onClick={() => setSelectedNodeId(node.id)}
+                                  onClick={() => {
+                                    setSelectedNodeId(node.id);
+                                    handleNodeSelect(node.id);
+                                  }}
                                   className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
                                 >
                                   {node.data.label as string}
@@ -340,7 +362,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 
   if (typeof window === 'undefined') return null;

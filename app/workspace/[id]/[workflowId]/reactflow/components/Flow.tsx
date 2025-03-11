@@ -36,6 +36,10 @@ import { useModalStore } from '../store/modalStore';
 import CreateParallelPathModal from './CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import StrokeEdge from './StrokeEdge';
+import ConnectNodeModal from './ConnectNodeModal';
+import { useConnectModeStore } from '../store/connectModeStore';
+
+type StrokeLineVisibility = [number, boolean];
 
 const nodeTypes = {
   custom: CustomNode,
@@ -78,13 +82,22 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView, setCenter, getNode } = useReactFlow();
+  const { fitView, setCenter, getNode, getNodes } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
     null
   );
   const isFirstRender = useRef(true);
+  const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
+    StrokeLineVisibility[]
+  >([]);
+  const [allStrokeLinesVisible, setAllStrokeLinesVisible] = useState(true);
+  const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
+  const { isConnectMode, setIsConnectMode } = useConnectModeStore((state) => ({
+    isConnectMode: state.isConnectMode,
+    setIsConnectMode: state.setIsConnectMode,
+  }));
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -157,6 +170,35 @@ export function Flow({
     []
   );
 
+  const updateStrokeLineVisibility = useCallback(
+    (blockId: number, isVisible: boolean) => {
+      setStrokeLineVisibilities((prev) => {
+        const existing = prev.find(([id]) => id === blockId);
+        if (existing) {
+          return prev.map(([id, vis]) =>
+            id === blockId ? [id, isVisible] : [id, vis]
+          );
+        }
+        return [...prev, [blockId, isVisible]];
+      });
+    },
+    []
+  );
+
+  // Initialize stroke line visibilities separately
+  useEffect(() => {
+    if (paths) {
+      const initialVisibilities: StrokeLineVisibility[] = [];
+      paths.forEach((path) => {
+        path.blocks.forEach((block) => {
+          initialVisibilities.push([block.id, true]);
+        });
+      });
+      setStrokeLineVisibilities(initialVisibilities);
+    }
+  }, [paths]);
+
+  // Main effect for creating nodes and edges
   useEffect(() => {
     if (!Array.isArray(paths)) return;
 
@@ -166,34 +208,29 @@ export function Flow({
         const nodes: Node[] = [];
         const edges: Edge[] = [];
 
-        // Process regular path nodes and edges
         processPath(
           firstPath,
-          nodes, // Pass nodes directly first
+          nodes,
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
           paths,
           new Set<string>(),
           setPaths,
-          setStrokeLines
+          setStrokeLines,
+          updateStrokeLineVisibility,
+          strokeLineVisibilities
         );
 
-        // After nodes are created, then set their initial visibility state
-        const nodesWithVisibility = nodes.map((node) => ({
-          ...node,
-          data: {
-            ...node.data,
-            strokeLinesVisible: true,
-          },
-        }));
-
-        setNodes(nodesWithVisibility);
-
-        // Add stroke edges
+        // Add stroke edges with visibility check
         const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
           const isSelfLoop =
             strokeLine.source_block_id === strokeLine.target_block_id;
+          const visibility =
+            strokeLineVisibilities.find(
+              ([id]) => id === strokeLine.source_block_id
+            )?.[1] ?? true;
+
           return {
             id: `stroke-edge-${strokeLine.id}`,
             source: `block-${strokeLine.source_block_id}`,
@@ -206,26 +243,18 @@ export function Flow({
               target: `block-${strokeLine.target_block_id}`,
               label: strokeLine.label,
               onStrokeLinesUpdate: setStrokeLines,
+              isVisible: visibility,
             },
-            // Set zIndex to ensure stroke edges appear above regular edges
             style: { zIndex: 1000 },
           };
         });
 
-        // Filter edges based on node visibility before setting them
         const allEdges = [...edges, ...strokeEdges];
-        const filteredEdges = allEdges.filter((edge) => {
-          const sourceNode = nodesWithVisibility.find(
-            (n) => n.id === edge.source
-          );
-          return sourceNode?.data.strokeLinesVisible !== false;
-        });
-
-        setEdges(filteredEdges);
+        setEdges(allEdges);
 
         // Only layout the nodes
         const layoutedNodes = await createElkLayout(
-          nodesWithVisibility,
+          nodes,
           edges.filter((e) => !e.type?.includes('stroke'))
         );
         setNodes(layoutedNodes);
@@ -239,6 +268,8 @@ export function Flow({
     handleAddBlockOnEdge,
     setPaths,
     setStrokeLines,
+    updateStrokeLineVisibility,
+    strokeLineVisibilities,
   ]);
 
   const handleBlockTypeSelect = useCallback(
@@ -338,76 +369,219 @@ export function Flow({
     }
   };
 
+  const toggleAllStrokeLines = useCallback(() => {
+    setAllStrokeLinesVisible((prev) => !prev);
+    // Update all stroke line visibilities
+    const blockIds = new Set<number>();
+    paths.forEach((path) => {
+      path.blocks.forEach((block) => {
+        blockIds.add(block.id);
+      });
+    });
+
+    blockIds.forEach((blockId) => {
+      updateStrokeLineVisibility(blockId, !allStrokeLinesVisible);
+    });
+  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility]);
+
+  // Combine regular edges with preview edge
+  const allEdges = useMemo(() => {
+    console.log('is previewEdge: ', previewEdge);
+    return previewEdge ? [...edges, previewEdge] : edges;
+  }, [edges, previewEdge]);
+
+  const showConnectModal = useModalStore((state) => state.showConnectModal);
+  const connectData = useModalStore((state) => state.connectData);
+  const setShowConnectModal = useModalStore(
+    (state) => state.setShowConnectModal
+  );
+
+  const handleConnect = useCallback(
+    async (targetNodeId: string, label: string) => {
+      try {
+        const sourceNode = nodes.find(
+          (node) => node.id === connectData?.sourceNode.id
+        );
+
+        if (!sourceNode?.data.path) {
+          throw new Error('Source path not found');
+        }
+
+        const response = await fetch('/api/stroke-lines', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source_block_id: parseInt(sourceNode.id.replace('block-', '')),
+            target_block_id: parseInt(targetNodeId.replace('block-', '')),
+            workflow_id: parseInt(workflowId),
+            label: label,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create connection');
+        }
+
+        // Close modal
+        setShowConnectModal(false);
+
+        // Fetch updated stroke lines
+        const strokeLinesResponse = await fetch(
+          `/api/stroke-lines?workflow_id=${parseInt(workflowId)}`
+        );
+        if (strokeLinesResponse.ok) {
+          const strokeLines = await strokeLinesResponse.json();
+          setStrokeLines(strokeLines);
+        }
+      } catch (error) {
+        console.error('Error creating connection:', error);
+      }
+    },
+    [nodes, connectData, setShowConnectModal, setStrokeLines]
+  );
+
+  useEffect(() => {
+    setIsConnectMode(showConnectModal);
+  }, [showConnectModal, setIsConnectMode]);
+
+  useEffect(() => {
+    if (isConnectMode && connectData?.sourceNode) {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          className: `${node.className || ''} ${
+            node.id === connectData.sourceNode.id ? 'source-node' : ''
+          } ${node.id === selectedNodeId ? 'selected-node' : ''}`,
+        }))
+      );
+    } else {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          className: node.className
+            ?.replace('source-node', '')
+            .replace('selected-node', ''),
+        }))
+      );
+    }
+  }, [isConnectMode, connectData, selectedNodeId]);
+
   return (
-    <div className="h-screen w-screen relative">
-      {/* Include the Sidebar component */}
-      {/* <Sidebar 
-        blocks={blocks}
-        workspaceId={workspaceId} 
-        workflowId={workflowId}
-        onNodeFocus={handleNodeFocus}
-      /> */}
+    <div className="h-full w-full">
+      {/* Replace the toggle with an options box */}
+      <div className="absolute top-4 right-4 z-50">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+          <div className="text-sm font-medium text-gray-700 mb-2">
+            Display options:
+          </div>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allStrokeLinesVisible}
+              onChange={toggleAllStrokeLines}
+              className="rounded border-gray-300 text-pink-500 focus:ring-pink-500"
+            />
+            <span className="text-sm text-gray-600">Links between nodes</span>
+          </label>
+        </div>
+      </div>
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        minZoom={0.1}
-        maxZoom={4}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
-        translateExtent={translateExtent}
-        onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-        onPaneClick={() => setSelectedNodeId(null)}
-        fitView={true}
-        panOnScroll
-        panOnDrag
-        zoomOnScroll
-        selectionOnDrag={false}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        elementsSelectable={true}
-        preventScrolling={false}
-        proOptions={{ hideAttribution: true }}
-        snapToGrid={true}
-        snapGrid={[15, 15]}
-        fitViewOptions={{
-          padding: 0.5,
-          duration: 200,
-          minZoom: 0.5,
-          maxZoom: 1,
-          includeHiddenNodes: true,
-        }}
-        className="bg-gray-50"
+      {/* ReactFlow container */}
+      <div
+        className={`h-screen w-screen relative transition-colors duration-300 ${
+          isConnectMode ? 'bg-gray-900' : 'bg-white'
+        }`}
       >
-        <Background gap={12} size={1} />
-        <Controls />
-        <MiniMap /> {/* Added MiniMap as requested */}
-      </ReactFlow>
-
-      {showDropdown && dropdownDatas && (
-        <AddBlockDropdownMenu
-          dropdownDatas={dropdownDatas}
-          onSelect={handleBlockTypeSelect}
-          onClose={() => {
-            console.log('closing dropdown');
-            setShowDropdown(false);
-          }}
-          workspaceId={workspaceId}
+        {/* Include the Sidebar component */}
+        {/* <Sidebar 
+          blocks={blocks}
+          workspaceId={workspaceId} 
           workflowId={workflowId}
-          onPathsUpdate={setPaths}
-        />
-      )}
+          onNodeFocus={handleNodeFocus}
+        /> */}
 
-      {showParallelPathModal && modalData.path && (
-        <CreateParallelPathModal
-          onClose={() => setShowModal(false)}
-          onConfirm={handleCreateParallelPaths}
-          path={modalData.path}
-          position={modalData.position}
-          existingPaths={modalData.existingPaths}
-        />
-      )}
+        <ReactFlow
+          nodes={nodes}
+          edges={allEdges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          minZoom={0.1}
+          maxZoom={4}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+          translateExtent={translateExtent}
+          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+          onPaneClick={() => setSelectedNodeId(null)}
+          fitView={true}
+          panOnScroll
+          panOnDrag
+          zoomOnScroll
+          selectionOnDrag={false}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={true}
+          preventScrolling={false}
+          proOptions={{ hideAttribution: true }}
+          snapToGrid={true}
+          snapGrid={[15, 15]}
+          fitViewOptions={{
+            padding: 0.5,
+            duration: 200,
+            minZoom: 0.5,
+            maxZoom: 1,
+            includeHiddenNodes: true,
+          }}
+          className={`bg-gray-50 transition-all duration-300 ${
+            isConnectMode ? 'connect-mode' : ''
+          }`}
+        >
+          <Background gap={12} size={1} />
+          <Controls />
+          <MiniMap /> {/* Added MiniMap as requested */}
+        </ReactFlow>
+
+        {showDropdown && dropdownDatas && (
+          <AddBlockDropdownMenu
+            dropdownDatas={dropdownDatas}
+            onSelect={handleBlockTypeSelect}
+            onClose={() => {
+              console.log('closing dropdown');
+              setShowDropdown(false);
+            }}
+            workspaceId={workspaceId}
+            workflowId={workflowId}
+            onPathsUpdate={setPaths}
+          />
+        )}
+
+        {showParallelPathModal && modalData.path && (
+          <CreateParallelPathModal
+            onClose={() => setShowModal(false)}
+            onConfirm={handleCreateParallelPaths}
+            path={modalData.path}
+            position={modalData.position}
+            existingPaths={modalData.existingPaths}
+          />
+        )}
+
+        {showConnectModal && connectData && connectData.sourceNode && (
+          <ConnectNodeModal
+            onClose={() => {
+              setPreviewEdge(null);
+              setShowConnectModal(false);
+            }}
+            onConfirm={handleConnect}
+            sourceNode={
+              nodes.find(
+                (node) => node.id === connectData.sourceNode.id
+              ) as Node
+            }
+            availableNodes={getNodes()}
+            onPreviewUpdate={setPreviewEdge}
+          />
+        )}
+      </div>
     </div>
   );
 }

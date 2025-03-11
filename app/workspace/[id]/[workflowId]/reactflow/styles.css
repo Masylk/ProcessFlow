@@ -1,0 +1,29 @@
+.connect-mode {
+  background-color: rgba(17, 17, 17, 0.9) !important;  /* Darker background */
+}
+
+/* Make sure the background change is smooth */
+.react-flow {
+  transition: background-color 0.3s ease;
+}
+
+.connect-mode .react-flow__node {
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.connect-mode .react-flow__edge {
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+/* Source node and selected node stay visible */
+.connect-mode .react-flow__node.source-node,
+.connect-mode .react-flow__node.selected-node {
+  opacity: 1;
+}
+
+/* Preview edge stays visible */
+.connect-mode .react-flow__edge.preview-edge {
+  opacity: 1;
+} 

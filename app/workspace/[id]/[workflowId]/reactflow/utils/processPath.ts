@@ -16,13 +16,17 @@ export function processPath(
   allPaths: Path[],
   visitedPaths = new Set<string>(),
   handlePathsUpdate: (paths: Path[]) => void,
-  handleStrokeLinesUpdate: (strokeLines: any[]) => void
+  handleStrokeLinesUpdate: (strokeLines: any[]) => void,
+  updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
+  strokeLineVisibilities: [number, boolean][]
 ): void {
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
   path.blocks.forEach((block, index) => {
     const nodeId = `block-${block.id}`;
+    const visibility = strokeLineVisibilities.find(([id]) => id === block.id)?.[1] ?? true;
+
     nodes.push({
       id: nodeId,
       type: block.type === 'BEGIN' 
@@ -50,6 +54,8 @@ export function processPath(
         pathName: block.type === 'BEGIN' ? path.name : undefined,
         onPathsUpdate: handlePathsUpdate,
         onStrokeLinesUpdate: handleStrokeLinesUpdate,
+        updateStrokeLineVisibility,
+        strokeLinesVisible: visibility,
       },
     });
     
@@ -96,7 +102,19 @@ export function processPath(
         });
       }
       if (fullChildPath) {
-        processPath(fullChildPath, nodes, edges, handleDeleteBlock, handleAddBlockOnEdge, allPaths, visitedPaths, handlePathsUpdate, handleStrokeLinesUpdate);
+        processPath(
+          fullChildPath,
+          nodes,
+          edges,
+          handleDeleteBlock,
+          handleAddBlockOnEdge,
+          allPaths,
+          visitedPaths,
+          handlePathsUpdate,
+          handleStrokeLinesUpdate,
+          updateStrokeLineVisibility,
+          strokeLineVisibilities
+        );
       }
     });
   });
