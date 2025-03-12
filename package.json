@@ -9,20 +9,7 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "use:staging": "ts-node scripts/load-env.ts staging",
-    "use:prod": "ts-node scripts/load-env.ts production",
-    "prisma:staging": "ts-node scripts/prisma-env.ts staging",
-    "prisma:prod": "ts-node scripts/prisma-env.ts production",
-    "migrate:staging": "ts-node scripts/prisma-env.ts staging migrate dev",
-    "migrate:staging:deploy": "ts-node scripts/prisma-env.ts staging migrate deploy",
-    "migrate:staging:reset": "ts-node scripts/prisma-env.ts staging migrate reset",
-    "migrate:prod": "ts-node scripts/prisma-env.ts production migrate deploy",
-    "db:push:staging": "ts-node scripts/prisma-env.ts staging db push",
-    "db:pull:staging": "ts-node scripts/prisma-env.ts staging db pull",
-    "studio:staging": "ts-node scripts/prisma-env.ts staging studio",
-    "studio:prod": "ts-node scripts/prisma-env.ts production studio",
-    "generate": "prisma generate"
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@contentsquare/tag-sdk": "^1.1.0",
