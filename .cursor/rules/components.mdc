@@ -1,5 +1,5 @@
 ---
-description: Component Development Standards
+description: Component Development Standard
 globs: **/*.tsx
 alwaysApply: false
 ---
@@ -12,7 +12,7 @@ alwaysApply: false
 - **Prop naming**: Use clear, descriptive names for component props
 - **Component size**: Keep components focused on a single responsibility
 - **Documentation**: Include a brief description of the component's purpose above the component declaration
-- **Styling**: Use Tailwind CSS classes for styling; avoid inline styles except for dynamic values
+- **Styling**: Use Tailwind CSS classes for styling; avoid inline styles except for dynamic values. Components should be theme-aware.
 - **Theme integration**: Use the `useColors()` hook for accessing theme colors
 - **Icons and images**: Support both string paths and React components for flexibility
 - **Error handling**: Gracefully handle edge cases and provide fallbacks
@@ -25,7 +25,6 @@ alwaysApply: false
 - **Testing**: Write unit tests for complex component logic
 - **Naming conventions**: Use PascalCase for component names and files
 - **File structure**: One component per file, named the same as the component
-- **Develop reusable React components in TypeScript**: The user have a component librairie, you can ask him the code base to search them if needed.
-- **theme**: The user have his own design system and theme, you must use [theme.js](mdc:theme.js)
-- Integrate Shadcn components for consistent UI elements
+- **Develop reusable React components in TypeScript**: The user have a component library, you can ask him the code base to search them if needed.
+- **theme**: The user have his own design system and theme, you must use [hooks.ts](mdc:app/theme/hooks.ts)
 - Define and use TypeScript interfaces for component props and state where applicable.

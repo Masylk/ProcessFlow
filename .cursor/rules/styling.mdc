@@ -8,7 +8,6 @@ alwaysApply: false
 - **Use Tailwind CSS** as the primary styling method for all components
 - **Follow theme variables** from [theme.js](mdc:theme.js) for consistent colors and styling
 - **Responsive design first**: Ensure all UI elements work across device sizes
-- **Dark/light mode support**: Use `darkMode: 'class'` pattern and theme variables
 - **Typography**: Use the `Inter` font family for all text elements
 - **Custom utility classes**: Create reusable utility classes in `@layer utilities` when needed
 - **Avoid inline styles** except for dynamic values that can't be handled with Tailwind
