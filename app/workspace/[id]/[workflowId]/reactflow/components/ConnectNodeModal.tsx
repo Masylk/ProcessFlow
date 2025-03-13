@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { useColors } from '@/app/theme/hooks';
 import { PreviewEdgePortal } from './PreviewEdgePortal';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -27,6 +28,9 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const { fitView, getNode } = useReactFlow();
   const colors = useColors();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
+  const { setTargetBlockId, setPreviewEdgeId } = useConnectModeStore();
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [blurTimeout, setBlurTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Helper function for consistent view options
   const getFitViewOptions = (nodes: Node[]) => ({
@@ -57,8 +61,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     }
   }, [selectedNodeId, sourceNode.id, getNode, fitView]);
 
-  const updatePreview = (previewEdge: Edge) => {
-    console.log('updatePreview', onPreviewUpdate);
+  const updatePreview = (previewEdge: Edge | null) => {
     onPreviewUpdate?.(previewEdge);
   };
 
@@ -138,26 +141,63 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   };
 
   const handleNodeSelect = (targetNodeId: string) => {
-    console.log('handleNodeSelect', targetNodeId);
-    // Creates a temporary preview edge
+    setTargetBlockId(targetNodeId);
+
+    // Create and set preview edge
     const previewEdge = {
       id: 'preview-edge',
       source: sourceNode.id,
       target: targetNodeId,
       type: 'strokeEdge',
       data: {
-        preview: true, // This marks it as a preview
+        preview: true,
         isVisible: true,
       },
     };
 
-    // Adds this preview edge to the edges
+    setPreviewEdgeId(previewEdge.id);
     updatePreview(previewEdge);
+  };
+
+  const clearSelection = () => {
+    setTargetBlockId(null);
+    setPreviewEdgeId(null);
+    setSelectedNodeId('');
+    setSearchTerm('');
+    updatePreview(null);
+  };
+
+  const handleClose = () => {
+    clearSelection();
+    onClose();
+  };
+
+  const handleBlur = () => {
+    // Set a small delay before hiding the list
+    const timeout = setTimeout(() => {
+      setIsInputFocused(false);
+    }, 200);
+    setBlurTimeout(timeout);
+  };
+
+  const handleNodeClick = (nodeId: string) => {
+    // Clear the blur timeout if it exists
+    if (blurTimeout) {
+      clearTimeout(blurTimeout);
+    }
+    setSelectedNodeId(nodeId);
+    handleNodeSelect(nodeId);
+    setIsInputFocused(false); // Hide list after selection
   };
 
   const modalContent = (
     <>
       <PreviewEdgePortal edge={previewEdge} />
+      {/* Semi-transparent overlay */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-0 z-40"
+        onClick={handleClose}
+      />
       {/* Modal - keep high z-index */}
       <div
         className="fixed bottom-8 right-8 w-[600px] rounded-xl shadow-lg z-50"
@@ -238,8 +278,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                           <div className="text-sm text-gray-600">Node 2</div>
                           <button
                             onClick={() => {
-                              setSelectedNodeId('');
-                              setSearchTerm('');
+                              clearSelection();
                             }}
                             className="text-gray-400 hover:text-gray-600"
                           >
@@ -283,23 +322,24 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                             </svg>
                             <input
                               type="text"
-                              id="searchInput"
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
-                              placeholder="Search nodes & select"
-                              className="w-full bg-transparent border-none outline-none text-sm placeholder-gray-500"
+                              onFocus={() => setIsInputFocused(true)}
+                              onBlur={handleBlur}
+                              placeholder="Search for a node..."
+                              className="w-full px-3 py-2 border rounded text-sm"
                             />
                           </div>
 
                           {/* Search list - Adjusted positioning */}
-                          {searchTerm && (
+                          {isInputFocused && (
                             <div className="absolute left-0 right-0 top-[calc(100%_-_1px)] border rounded-b-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
                               {filteredNodes.map((node) => (
                                 <button
                                   key={node.id}
-                                  onClick={() => {
-                                    setSelectedNodeId(node.id);
-                                    handleNodeSelect(node.id);
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent blur from firing before click
+                                    handleNodeClick(node.id);
                                   }}
                                   className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
                                 >
@@ -344,7 +384,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         {/* Actions */}
         <div className="flex justify-end gap-3 p-6 border-t">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-6 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded"
           >
             Cancel

@@ -1,5 +1,5 @@
 .connect-mode {
-  background-color: rgba(17, 17, 17, 0.9) !important;  /* Darker background */
+  background-color: rgb(17, 17, 17) !important;  /* Darker background */
 }
 
 /* Make sure the background change is smooth */

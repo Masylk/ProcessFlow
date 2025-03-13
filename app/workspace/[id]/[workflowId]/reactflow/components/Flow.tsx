@@ -38,6 +38,8 @@ import { createParallelPaths } from '../utils/createParallelPaths';
 import StrokeEdge from './StrokeEdge';
 import ConnectNodeModal from './ConnectNodeModal';
 import { useConnectModeStore } from '../store/connectModeStore';
+import { PathSelectionBox } from './PathSelectionBox';
+import MergeNode from './MergeNode';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -47,6 +49,7 @@ const nodeTypes = {
   end: EndNode,
   last: LastNode,
   path: PathNode,
+  merge: MergeNode,
 } as const;
 
 const edgeTypes = {
@@ -94,10 +97,8 @@ export function Flow({
   >([]);
   const [allStrokeLinesVisible, setAllStrokeLinesVisible] = useState(true);
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
-  const { isConnectMode, setIsConnectMode } = useConnectModeStore((state) => ({
-    isConnectMode: state.isConnectMode,
-    setIsConnectMode: state.setIsConnectMode,
-  }));
+  const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
+    useConnectModeStore();
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -443,8 +444,19 @@ export function Flow({
   );
 
   useEffect(() => {
-    setIsConnectMode(showConnectModal);
-  }, [showConnectModal, setIsConnectMode]);
+    if (showConnectModal && connectData?.sourceNode) {
+      setIsConnectMode(true);
+      setSourceBlockId(connectData.sourceNode.id);
+    } else {
+      reset(); // This will clear all states including sourceBlockId
+    }
+  }, [
+    showConnectModal,
+    connectData,
+    setIsConnectMode,
+    setSourceBlockId,
+    reset,
+  ]);
 
   useEffect(() => {
     if (isConnectMode && connectData?.sourceNode) {
@@ -468,120 +480,104 @@ export function Flow({
     }
   }, [isConnectMode, connectData, selectedNodeId]);
 
-  return (
-    <div className="h-full w-full">
-      {/* Replace the toggle with an options box */}
-      <div className="absolute top-4 right-4 z-50">
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            Display options:
-          </div>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={allStrokeLinesVisible}
-              onChange={toggleAllStrokeLines}
-              className="rounded border-gray-300 text-pink-500 focus:ring-pink-500"
-            />
-            <span className="text-sm text-gray-600">Links between nodes</span>
-          </label>
-        </div>
-      </div>
+  useEffect(() => {
+    const handlePathsUpdate = (event: CustomEvent) => {
+      setPaths(event.detail);
+    };
 
-      {/* ReactFlow container */}
-      <div
-        className={`h-screen w-screen relative transition-colors duration-300 ${
-          isConnectMode ? 'bg-gray-900' : 'bg-white'
+    window.addEventListener('updatePaths', handlePathsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        'updatePaths',
+        handlePathsUpdate as EventListener
+      );
+    };
+  }, [setPaths]);
+
+  return (
+    <div
+      className={`h-screen w-full transition-colors duration-300 ${
+        isConnectMode ? 'bg-[#111111]' : 'bg-white'
+      }`}
+    >
+      <ReactFlow
+        nodes={nodes}
+        edges={allEdges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        minZoom={0.1}
+        maxZoom={4}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+        translateExtent={translateExtent}
+        onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+        onPaneClick={() => setSelectedNodeId(null)}
+        fitView={true}
+        panOnScroll
+        panOnDrag
+        zoomOnScroll
+        selectionOnDrag={false}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={true}
+        preventScrolling={false}
+        proOptions={{ hideAttribution: true }}
+        snapToGrid={true}
+        snapGrid={[15, 15]}
+        fitViewOptions={{
+          padding: 0.5,
+          duration: 200,
+          minZoom: 0.5,
+          maxZoom: 1,
+          includeHiddenNodes: true,
+        }}
+        className={`bg-gray-50 transition-all duration-300 ${
+          isConnectMode ? 'connect-mode' : ''
         }`}
       >
-        {/* Include the Sidebar component */}
-        {/* <Sidebar 
-          blocks={blocks}
-          workspaceId={workspaceId} 
-          workflowId={workflowId}
-          onNodeFocus={handleNodeFocus}
-        /> */}
-
-        <ReactFlow
-          nodes={nodes}
-          edges={allEdges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          minZoom={0.1}
-          maxZoom={4}
-          defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
-          translateExtent={translateExtent}
-          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-          onPaneClick={() => setSelectedNodeId(null)}
-          fitView={true}
-          panOnScroll
-          panOnDrag
-          zoomOnScroll
-          selectionOnDrag={false}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={true}
-          preventScrolling={false}
-          proOptions={{ hideAttribution: true }}
-          snapToGrid={true}
-          snapGrid={[15, 15]}
-          fitViewOptions={{
-            padding: 0.5,
-            duration: 200,
-            minZoom: 0.5,
-            maxZoom: 1,
-            includeHiddenNodes: true,
+        <Background gap={12} size={1} />
+        <Controls />
+        <MiniMap />
+      </ReactFlow>
+      <PathSelectionBox />
+      {showDropdown && dropdownDatas && (
+        <AddBlockDropdownMenu
+          dropdownDatas={dropdownDatas}
+          onSelect={handleBlockTypeSelect}
+          onClose={() => {
+            console.log('closing dropdown');
+            setShowDropdown(false);
           }}
-          className={`bg-gray-50 transition-all duration-300 ${
-            isConnectMode ? 'connect-mode' : ''
-          }`}
-        >
-          <Background gap={12} size={1} />
-          <Controls />
-          <MiniMap /> {/* Added MiniMap as requested */}
-        </ReactFlow>
+          workspaceId={workspaceId}
+          workflowId={workflowId}
+          onPathsUpdate={setPaths}
+        />
+      )}
 
-        {showDropdown && dropdownDatas && (
-          <AddBlockDropdownMenu
-            dropdownDatas={dropdownDatas}
-            onSelect={handleBlockTypeSelect}
-            onClose={() => {
-              console.log('closing dropdown');
-              setShowDropdown(false);
-            }}
-            workspaceId={workspaceId}
-            workflowId={workflowId}
-            onPathsUpdate={setPaths}
-          />
-        )}
+      {showParallelPathModal && modalData.path && (
+        <CreateParallelPathModal
+          onClose={() => setShowModal(false)}
+          onConfirm={handleCreateParallelPaths}
+          path={modalData.path}
+          position={modalData.position}
+          existingPaths={modalData.existingPaths}
+        />
+      )}
 
-        {showParallelPathModal && modalData.path && (
-          <CreateParallelPathModal
-            onClose={() => setShowModal(false)}
-            onConfirm={handleCreateParallelPaths}
-            path={modalData.path}
-            position={modalData.position}
-            existingPaths={modalData.existingPaths}
-          />
-        )}
-
-        {showConnectModal && connectData && connectData.sourceNode && (
-          <ConnectNodeModal
-            onClose={() => {
-              setPreviewEdge(null);
-              setShowConnectModal(false);
-            }}
-            onConfirm={handleConnect}
-            sourceNode={
-              nodes.find(
-                (node) => node.id === connectData.sourceNode.id
-              ) as Node
-            }
-            availableNodes={getNodes()}
-            onPreviewUpdate={setPreviewEdge}
-          />
-        )}
-      </div>
+      {showConnectModal && connectData && connectData.sourceNode && (
+        <ConnectNodeModal
+          onClose={() => {
+            setPreviewEdge(null);
+            setShowConnectModal(false);
+          }}
+          onConfirm={handleConnect}
+          sourceNode={
+            nodes.find((node) => node.id === connectData.sourceNode.id) as Node
+          }
+          availableNodes={getNodes()}
+          onPreviewUpdate={setPreviewEdge}
+        />
+      )}
     </div>
   );
 }

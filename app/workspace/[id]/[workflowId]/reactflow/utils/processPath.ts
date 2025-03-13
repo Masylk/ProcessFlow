@@ -18,7 +18,8 @@ export function processPath(
   handlePathsUpdate: (paths: Path[]) => void,
   handleStrokeLinesUpdate: (strokeLines: any[]) => void,
   updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
-  strokeLineVisibilities: [number, boolean][]
+  strokeLineVisibilities: [number, boolean][],
+  hasSiblings: boolean = false
 ): void {
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
@@ -26,6 +27,12 @@ export function processPath(
   path.blocks.forEach((block, index) => {
     const nodeId = `block-${block.id}`;
     const visibility = strokeLineVisibilities.find(([id]) => id === block.id)?.[1] ?? true;
+
+    // Find end block and check for child paths
+    const endBlock = path.blocks.find(block => 
+      block.type === 'END' || block.type === 'LAST'
+    );
+    const pathHasChildren = endBlock?.child_paths && endBlock.child_paths.length > 0;
 
     nodes.push({
       id: nodeId,
@@ -37,7 +44,9 @@ export function processPath(
             ? 'last'
             : block.type === BlockEndType.PATH
               ? 'path'
-              : 'custom',
+              : block.type === BlockEndType.MERGE
+                ? 'merge'
+                : 'custom',
       position: { 
         x: 0,
         y: 0
@@ -56,6 +65,8 @@ export function processPath(
         onStrokeLinesUpdate: handleStrokeLinesUpdate,
         updateStrokeLineVisibility,
         strokeLinesVisible: visibility,
+        hasSiblings,
+        pathHasChildren,
       },
     });
     
@@ -113,7 +124,8 @@ export function processPath(
           handlePathsUpdate,
           handleStrokeLinesUpdate,
           updateStrokeLineVisibility,
-          strokeLineVisibilities
+          strokeLineVisibilities,
+          block.child_paths.length > 1
         );
       }
     });

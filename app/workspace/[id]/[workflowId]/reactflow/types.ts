@@ -16,6 +16,7 @@ export interface NodeData {
   isLastInPath?: boolean;
   pathId?: number | null;
   pathName?: string;
+  pathHasChildren?: boolean;
   handleAddBlockOnEdge?: (
     position: number,
     path: Path,

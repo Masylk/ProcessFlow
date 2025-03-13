@@ -10,6 +10,7 @@ import {
 import { NodeData } from '../types';
 import { useModalStore } from '../store/modalStore';
 import { useConnectModeStore } from '../store/connectModeStore';
+import { usePathSelectionStore } from '../store/pathSelectionStore';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -19,6 +20,8 @@ interface CustomNodeProps extends NodeProps {
 }
 
 function CustomNode({ id, data, selected }: CustomNodeProps) {
+  console.log(`Node ${id} pathHasChildren:`, data.pathHasChildren);
+
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const { getNodes, setEdges, setNodes, getEdges } = useReactFlow();
@@ -26,7 +29,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     (state) => state.setShowConnectModal
   );
   const setConnectData = useModalStore((state) => state.setConnectData);
-  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+  const { isConnectMode, sourceBlockId, targetBlockId } = useConnectModeStore();
+  const { selectedPaths, parentBlockId, togglePathSelection } =
+    usePathSelectionStore();
 
   // Handle highlight effect
   useEffect(() => {
@@ -123,6 +128,28 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
   };
 
+  // Check if this is the last STEP node in a path
+  const isLastStepInPath =
+    data.type === 'STEP' &&
+    data.position === (data.path?.blocks.length ?? 0) - 2; // -2 because of END block
+
+  // Get parent block ID for this path
+  const pathParentBlockId = data.path?.parent_blocks?.[0]?.block_id;
+
+  // Determine if checkbox should be disabled
+  const isCheckboxDisabled =
+    parentBlockId !== null &&
+    pathParentBlockId !== parentBlockId &&
+    !selectedPaths.includes(data.path?.id ?? -1);
+
+  // Check if parent block has more than one child path
+  const hasMultipleChildPaths = data.hasSiblings;
+
+  // Get the end block and check if it has child paths
+  const endBlock = data.path?.blocks.find(
+    (block) => block.type === 'END' || block.type === 'LAST'
+  );
+
   return (
     <>
       {/* Vertical Toggle Switch Container */}
@@ -182,7 +209,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
       <div
         className={`transition-all duration-300 ${
-          isConnectMode && !(data.isSourceNode || data.isSelectedNode)
+          isConnectMode && id !== sourceBlockId && id !== targetBlockId
             ? 'opacity-40'
             : ''
         } ${isHighlighted ? 'scale-105' : ''}`}
@@ -302,6 +329,27 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         </div>
         <div className="text-gray-900">{data.label}</div>
       </div>
+
+      {isLastStepInPath &&
+        hasMultipleChildPaths &&
+        !data.pathHasChildren &&
+        (parentBlockId === null || pathParentBlockId === parentBlockId) && (
+          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+            <input
+              type="checkbox"
+              checked={selectedPaths.includes(data.path?.id ?? -1)}
+              onChange={() =>
+                togglePathSelection(
+                  data.path?.id ?? -1,
+                  endBlock?.id ?? -1,
+                  pathParentBlockId ?? -1
+                )
+              }
+              className="w-4 h-4 rounded border-gray-300"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
     </>
   );
 }

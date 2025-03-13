@@ -6,6 +6,7 @@ import {
   useReactFlow,
   BaseEdge,
   EdgeLabelRenderer,
+  useStore,
 } from '@xyflow/react';
 import { useConnectModeStore } from '../store/connectModeStore';
 
@@ -60,7 +61,8 @@ function StrokeEdge({
   const [showLabel, setShowLabel] = useState(false);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
-  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+  const { isConnectMode, previewEdgeId } = useConnectModeStore();
+  const zoom = useStore((state) => state.transform[2]);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -121,9 +123,7 @@ function StrokeEdge({
       {/* Visible stroke line */}
       <path
         id={id}
-        className={`react-flow__edge-path transition-opacity duration-300 ${
-          isConnectMode && !data?.preview ? 'opacity-100' : 'opacity-40'
-        }`}
+        className="react-flow__edge-path transition-opacity duration-300"
         d={edgePath}
         style={{
           ...style,
@@ -131,7 +131,12 @@ function StrokeEdge({
           stroke: '#FF69A3',
           strokeDasharray: '10,5',
           markerEnd: `url(#${markerId})`,
-          opacity: data?.isVisible === false ? 0 : 1,
+          opacity:
+            isConnectMode && id !== previewEdgeId
+              ? 0.3
+              : data?.isVisible === false
+                ? 0
+                : 1,
           pointerEvents: 'none',
           transition: 'opacity 0.2s',
         }}
@@ -167,7 +172,9 @@ function StrokeEdge({
           <div
             style={{
               position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${labelPosition.y}px)`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${
+                labelPosition.y - 5 / zoom
+              }px) scale(${1 / zoom})`,
               pointerEvents: 'none',
               zIndex: 1000,
             }}
