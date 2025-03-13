@@ -3,7 +3,7 @@ import { Node, Edge } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { useColors } from '@/app/theme/hooks';
-import { PreviewEdgePortal } from './PreviewEdgePortal';
+// import { PreviewEdgePortal } from './PreviewEdgePortal';
 import { useConnectModeStore } from '../store/connectModeStore';
 
 interface ConnectNodeModalProps {
@@ -136,6 +136,8 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
 
   const handleConfirm = () => {
     if (selectedNodeId && label.trim()) {
+      setPreviewEdge(null);
+      onPreviewUpdate?.(null);  
       onConfirm(selectedNodeId, label);
     }
   };
@@ -192,7 +194,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
 
   const modalContent = (
     <>
-      <PreviewEdgePortal edge={previewEdge} />
+      {/* <PreviewEdgePortal edge={previewEdge} /> */}
       {/* Semi-transparent overlay */}
       <div
         className="fixed inset-0 bg-black bg-opacity-0 z-40"

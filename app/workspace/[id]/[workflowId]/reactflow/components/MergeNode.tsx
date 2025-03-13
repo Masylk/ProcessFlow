@@ -12,26 +12,28 @@ function MergeNode({ data }: MergeNodeProps) {
 
   return (
     <div
-      className={`px-4 py-2 shadow-md rounded-md bg-white border-2 border-gray-300 transition-opacity duration-300 ${
-        isConnectMode ? 'opacity-40' : ''
-      }`}
-      style={{
-        width: '150px',
-        textAlign: 'center',
-      }}
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
     >
       <Handle
         type="target"
         id="top"
         position={Position.Top}
-        style={{ background: '#b1b1b7' }}
+        style={{
+          background: '#b1b1b7',
+          width: 6,
+          height: 6,
+        }}
       />
-      <div className="font-bold text-sm text-gray-700">Merge</div>
+      <div className="w-3 h-3 rounded-full bg-[#b1b1b7]" />
       <Handle
         type="source"
         id="bottom"
         position={Position.Bottom}
-        style={{ background: '#b1b1b7' }}
+        style={{
+          background: '#b1b1b7',
+          width: 6,
+          height: 6,
+        }}
       />
     </div>
   );

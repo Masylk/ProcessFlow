@@ -20,7 +20,7 @@ interface CustomNodeProps extends NodeProps {
 }
 
 function CustomNode({ id, data, selected }: CustomNodeProps) {
-  console.log(`Node ${id} pathHasChildren:`, data.pathHasChildren);
+  // console.log(`Node ${id} pathHasChildren:`, data.pathHasChildren);
 
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -123,7 +123,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('toggleStrokeLines', data.strokeLinesVisible);
     const blockId = parseInt(id.replace('block-', ''));
     data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
   };
