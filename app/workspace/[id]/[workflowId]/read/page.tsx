@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components-titou/Header';
 import { useParams } from 'next/navigation';
 import { User } from '@/types/user';
@@ -40,6 +40,22 @@ interface WorkflowData {
   };
 }
 
+interface StepOption {
+  id: string;
+  title: string;
+  description: string;
+}
+
+interface StepData {
+  number: number;
+  label: string;
+  description: string;
+  icon: string;
+  isActive?: boolean;
+  isConditional?: boolean;
+  options?: StepOption[];
+}
+
 export default function ExamplePage() {
   const params = useParams();
   const supabase = createClient();
@@ -54,8 +70,10 @@ export default function ExamplePage() {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [viewMode, setViewMode] = useState<'vertical' | 'carousel'>('vertical');
   const [selectedOption, setSelectedOption] = useState<string>('');
-  const [currentStep, setCurrentStep] = useState<number>(-1); // -1 represents the ProcessCard view
+  const [currentStep, setCurrentStep] = useState<number>(-1);
+  const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
   const [showLinkCopiedAlert, setShowLinkCopiedAlert] = useState<boolean>(false);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Fetch user data
   useEffect(() => {
@@ -175,8 +193,21 @@ export default function ExamplePage() {
     {
       number: 4,
       label: 'Access the Linear',
-      description: 'Set up your Linear account to access and manage your tasks. This will be your main tool for project management and task tracking aioerazrzaeroiezjrraozjreoizazoeraoerjazoerjaoizjroiazjroiazjriojaziorjzaiorjzejr.',
-      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/linear.svg`
+      description: 'Set up your Linear account to access and manage your tasks. This will be your main tool for project management and task tracking.',
+      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/linear.svg`,
+      isConditional: true,
+      options: [
+        {
+          id: 'option1',
+          title: 'I already have a Linear account',
+          description: 'If you already have a Linear account, you can connect it to your workspace.'
+        },
+        {
+          id: 'option2',
+          title: 'I need to create a Linear account',
+          description: 'Create a new Linear account to start managing your tasks and projects.'
+        }
+      ]
     }
   ];
 
@@ -246,13 +277,45 @@ export default function ExamplePage() {
     }, 5000);
   };
 
+  // Function to handle step click from sidebar
+  const handleStepClick = (index: number) => {
+    setCurrentStep(index);
+    // Toggle expansion: if step is expanded, remove it, otherwise add it
+    setExpandedSteps(prev => 
+      prev.includes(index) 
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+    );
+
+    // Scroll to step with centering
+    const element = stepRefs.current[index];
+    if (element) {
+      setTimeout(() => {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+        // Adjust for header height
+        window.scrollBy(0, -120); // Offset for header height
+      }, 50);
+    }
+  };
+
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: colors['bg-primary'] }}>
       {user && workspace && (
         <>
-          <Sidebar steps={steps} workspace={workspace} />
+          <Sidebar
+            steps={steps.map((step, index) => ({
+              ...step,
+              isActive: currentStep === index,
+              onClick: () => handleStepClick(index)
+            }))}
+            className="w-64"
+            workspace={workspace}
+          />
           <div className="flex-1 ml-64">
-            <div className="fixed right-0 left-64 bg-primary z-50">
+            <div className="fixed right-0 left-64 bg-primary z-30">
               <Header
                 breadcrumbItems={breadcrumbItems}
                 user={user}
@@ -266,7 +329,7 @@ export default function ExamplePage() {
             
             {/* User Settings Modal */}
             {userSettingsVisible && (
-              <div className="fixed inset-0 z-20 flex items-center justify-center">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <UserSettingsDynamic
                   user={user}
                   onClose={closeUserSettings}
@@ -284,7 +347,9 @@ export default function ExamplePage() {
 
             {/* Help Center Modal */}
             {helpCenterVisible && (
-              <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+              </div>
             )}
 
             {/* Link Copied Alert */}
@@ -306,88 +371,59 @@ export default function ExamplePage() {
                   <div className="ml-28 flex flex-col gap-[72px]">
                     <ProcessCard {...processCardData} />
                     <div className="space-y-16">
-                      <Step
-                        number={1}
-                        title="Read the introduction..."
-                        description={steps[0].description}
-                        isActive={true}
-                        defaultExpanded={true}
-                        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/slack.svg`}
-                      >
-                        <div className="space-y-4">
-                          <div className="rounded-lg overflow-hidden border" style={{ borderColor: colors['border-secondary'] }}>
-                            <img 
-                              src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png" 
-                              alt="Jazzy interface showing team workspace and invitation options"
-                              className="w-full h-auto"
-                            />
-                          </div>
+                      {steps.map((step, index) => (
+                        <div key={step.number} ref={(el) => {
+                          if (el) stepRefs.current[index] = el;
+                        }}>
+                          <Step
+                            number={step.number}
+                            title={step.label}
+                            description={step.description}
+                            icon={step.icon}
+                            isActive={currentStep === index}
+                            defaultExpanded={expandedSteps.includes(index)}
+                            onToggle={(isExpanded) => {
+                              setExpandedSteps(prev => 
+                                isExpanded 
+                                  ? [...prev, index]
+                                  : prev.filter(i => i !== index)
+                              );
+                              if (isExpanded) {
+                                setCurrentStep(index);
+                                // Add scrolling behavior
+                                const element = stepRefs.current[index];
+                                if (element) {
+                                  setTimeout(() => {
+                                    element.scrollIntoView({
+                                      behavior: 'smooth',
+                                      block: 'center',
+                                    });
+                                    // Adjust for header height
+                                    window.scrollBy(0, -120); // Offset for header height
+                                  }, 50);
+                                }
+                              }
+                            }}
+                            variant={step.isConditional ? 'conditional' : 'default'}
+                            options={step.options || []}
+                            selectedOptionId={selectedOption}
+                            onOptionSelect={handleOptionSelect}
+                          >
+                            <div className="space-y-4">
+                              <div className="rounded-lg overflow-hidden border" style={{ borderColor: colors['border-secondary'] }}>
+                                <img 
+                                  src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png" 
+                                  alt="Step visualization"
+                                  className="w-full h-auto"
+                                />
+                              </div>
+                            </div>
+                          </Step>
                         </div>
-                      </Step>
-                      <Step
-                        number={2}
-                        title="Send your presentation mail to the team"
-                        description={steps[1].description}
-                        defaultExpanded={true}
-                        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/gmail.svg`}
-                      >
-                        <div className="space-y-4">
-                          <div className="rounded-lg overflow-hidden border" style={{ borderColor: colors['border-secondary'] }}>
-                            <img 
-                              src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png" 
-                              alt="Jazzy interface showing team workspace and invitation options"
-                              className="w-full h-auto"
-                            />
-                          </div>
-                        </div>
-                      </Step>
-                      <Step
-                        number={3}
-                        title="Get through all the docs..."
-                        description={steps[2].description}
-                        defaultExpanded={true}
-                        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/notion.svg`}
-                      >
-                        <div className="space-y-4">
-                          <div className="rounded-lg overflow-hidden border" style={{ borderColor: colors['border-secondary'] }}>
-                            <img 
-                              src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png" 
-                              alt="Jazzy interface showing team workspace and invitation options"
-                              className="w-full h-auto"
-                            />
-                          </div>
-                        </div>
-                      </Step>
-                      <Step
-                        variant="conditional"
-                        number={4}
-                        title="Access the Linear"
-                        description={steps[3].description}
-                        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/linear.svg`}
-                        options={[
-                          {
-                            id: 'linked',
-                            title: 'Linked',
-                            description: 'My Linear account is already linked to ProcessFlow'
-                          },
-                          {
-                            id: 'not-linked',
-                            title: 'Not Linked',
-                            description: 'My Linear account is not linked to ProcessFlow yet'
-                          },
-                          {
-                            id: 'no-account',
-                            title: 'No account yet',
-                            description: "I don't have a Linear account"
-                          }
-                        ]}
-                        selectedOptionId={selectedOption}
-                        onOptionSelect={handleOptionSelect}
-                        defaultExpanded={true}
-                      />
+                      ))}
                       <Step
                         variant="last"
-                        number={5}
+                        number={steps.length + 1}
                         title="Complete"
                         icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
                         onCopyLink={handleCopyLink}
@@ -397,11 +433,11 @@ export default function ExamplePage() {
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-center p-6">
-                  <div className="bg-white rounded-2xl border w-full max-w-3xl" style={{ borderColor: colors['border-secondary'] }}>
+                  <div className="rounded-2xl border w-full max-w-3xl" style={{ backgroundColor: colors['bg-primary'], borderColor: colors['border-secondary'] }}>
                     <div className="p-8 flex flex-col">
                       {currentStep === -1 ? (
                         <>
-                          <div style={{ height: '472px' }} className="flex items-center">
+                          <div style={{ height: '472px', backgroundColor: colors['bg-primary'] }} className="flex items-center">
                             <ProcessCard {...processCardData} />
                           </div>
                           {/* Navigation and Progress Bar */}
@@ -417,21 +453,30 @@ export default function ExamplePage() {
                                 />
 
                                 {/* Line from home to first step */}
-                                <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: currentStep >= 0 ? '#4761c4' : '#e4e7ec' }} />
+                                <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: currentStep >= 0 ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
                                 
-                                {/* Step Dots */}
+                                {/* Step Dots - Initial View */}
                                 {steps.map((_, index) => (
                                   <div key={index} className="flex items-center">
                                     {/* Step Indicator */}
                                     <div className="relative z-10 flex items-center justify-center w-6 h-6">
-                                      <div className={cn(
-                                        "w-2 h-2 rounded-full",
-                                        "bg-[#e4e7ec]"
-                                      )} />
+                                      {index < currentStep ? (
+                                        // Completed step - show tick icon
+                                        <img
+                                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/step-icon-done.svg`}
+                                          alt="Completed step"
+                                          className="w-6 h-6"
+                                        />
+                                      ) : (
+                                        // Current or future step - show simple dot
+                                        <div className={cn(
+                                          "w-2 h-2 rounded-full"
+                                        )} style={{ backgroundColor: index === currentStep ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
+                                      )}
                                     </div>
                                     {/* Connecting Line */}
                                     {index < steps.length - 1 && (
-                                      <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: '#e4e7ec' }} />
+                                      <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: index < currentStep ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
                                     )}
                                   </div>
                                 ))}
@@ -466,7 +511,7 @@ export default function ExamplePage() {
                             {currentStep === steps.length ? (
                               // Completion View
                               <div className="flex flex-col items-center justify-center h-full">
-                                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white flex items-center justify-center border mb-6" style={{ borderColor: colors['border-secondary'] }}>
+                                <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border" style={{ backgroundColor: colors['bg-secondary'], borderColor: colors['border-secondary'] }}>
                                   <img
                                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
                                     alt="Success"
@@ -493,7 +538,7 @@ export default function ExamplePage() {
                                 {/* Step Header */}
                                 <div className="flex items-center gap-4 mb-4">
                                   {/* App Icon */}
-                                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white flex items-center justify-center border" style={{ borderColor: colors['border-secondary'] }}>
+                                  <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border" style={{ backgroundColor: colors['bg-secondary'], borderColor: colors['border-secondary'] }}>
                                     <img src={steps[currentStep].icon} alt="" className="w-6 h-6" />
                                   </div>
                                   {/* Step Title */}
@@ -535,9 +580,9 @@ export default function ExamplePage() {
                                 />
 
                                 {/* Line from home to first step */}
-                                <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: currentStep >= 0 ? '#4761c4' : '#e4e7ec' }} />
+                                <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: currentStep >= 0 ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
                                 
-                                {/* Step Dots */}
+                                {/* Step Dots - Step View */}
                                 {steps.map((_, index) => (
                                   <div key={index} className="flex items-center">
                                     {/* Step Indicator */}
@@ -552,14 +597,13 @@ export default function ExamplePage() {
                                       ) : (
                                         // Current or future step - show simple dot
                                         <div className={cn(
-                                          "w-2 h-2 rounded-full",
-                                          index === currentStep ? "bg-[#4761c4]" : "bg-[#e4e7ec]"
-                                        )} />
+                                          "w-2 h-2 rounded-full"
+                                        )} style={{ backgroundColor: index === currentStep ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
                                       )}
                                     </div>
                                     {/* Connecting Line */}
                                     {index < steps.length - 1 && (
-                                      <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: index < currentStep ? '#4761c4' : '#e4e7ec' }} />
+                                      <div className="w-[40px] h-[1px] mx-2" style={{ backgroundColor: index < currentStep ? colors['bg-brand-solid'] : colors['border-secondary'] }} />
                                     )}
                                   </div>
                                 ))}
