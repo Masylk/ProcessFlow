@@ -388,6 +388,21 @@ export default function ExamplePage() {
                                   ? [...prev, index]
                                   : prev.filter(i => i !== index)
                               );
+                              if (isExpanded) {
+                                setCurrentStep(index);
+                                // Add scrolling behavior
+                                const element = stepRefs.current[index];
+                                if (element) {
+                                  setTimeout(() => {
+                                    element.scrollIntoView({
+                                      behavior: 'smooth',
+                                      block: 'center',
+                                    });
+                                    // Adjust for header height
+                                    window.scrollBy(0, -120); // Offset for header height
+                                  }, 50);
+                                }
+                              }
                             }}
                             variant={step.isConditional ? 'conditional' : 'default'}
                             options={step.options || []}
