@@ -1,4 +1,5 @@
 import { BaseEdge, EdgeProps, getSmoothStepPath } from '@xyflow/react';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 function SmoothStepCustomParent({
   sourceX,
@@ -19,6 +20,8 @@ function SmoothStepCustomParent({
     targetPosition,
   });
 
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+
   return (
     <BaseEdge 
       path={edgePath} 
@@ -28,6 +31,7 @@ function SmoothStepCustomParent({
         strokeWidth: 2,
         stroke: '#b1b1b7',
       }}
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
     />
   );
 }

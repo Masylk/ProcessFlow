@@ -36,6 +36,12 @@ import { useModalStore } from '../store/modalStore';
 import CreateParallelPathModal from './CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import StrokeEdge from './StrokeEdge';
+import ConnectNodeModal from './ConnectNodeModal';
+import { useConnectModeStore } from '../store/connectModeStore';
+import { PathSelectionBox } from './PathSelectionBox';
+import MergeNode from './MergeNode';
+
+type StrokeLineVisibility = [number, boolean];
 
 const nodeTypes = {
   custom: CustomNode,
@@ -43,6 +49,7 @@ const nodeTypes = {
   end: EndNode,
   last: LastNode,
   path: PathNode,
+  merge: MergeNode,
 } as const;
 
 const edgeTypes = {
@@ -78,13 +85,20 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView, setCenter, getNode } = useReactFlow();
+  const { fitView, setCenter, getNode, getNodes } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
     null
   );
   const isFirstRender = useRef(true);
+  const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
+    StrokeLineVisibility[]
+  >([]);
+  const [allStrokeLinesVisible, setAllStrokeLinesVisible] = useState(true);
+  const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
+  const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
+    useConnectModeStore();
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -157,6 +171,35 @@ export function Flow({
     []
   );
 
+  const updateStrokeLineVisibility = useCallback(
+    (blockId: number, isVisible: boolean) => {
+      setStrokeLineVisibilities((prev) => {
+        const existing = prev.find(([id]) => id === blockId);
+        if (existing) {
+          return prev.map(([id, vis]) =>
+            id === blockId ? [id, isVisible] : [id, vis]
+          );
+        }
+        return [...prev, [blockId, isVisible]];
+      });
+    },
+    []
+  );
+
+  // Initialize stroke line visibilities separately
+  useEffect(() => {
+    if (paths) {
+      const initialVisibilities: StrokeLineVisibility[] = [];
+      paths.forEach((path) => {
+        path.blocks.forEach((block) => {
+          initialVisibilities.push([block.id, true]);
+        });
+      });
+      setStrokeLineVisibilities(initialVisibilities);
+    }
+  }, [paths]);
+
+  // Main effect for creating nodes and edges
   useEffect(() => {
     if (!Array.isArray(paths)) return;
 
@@ -166,34 +209,29 @@ export function Flow({
         const nodes: Node[] = [];
         const edges: Edge[] = [];
 
-        // Process regular path nodes and edges
         processPath(
           firstPath,
-          nodes, // Pass nodes directly first
+          nodes,
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
           paths,
           new Set<string>(),
           setPaths,
-          setStrokeLines
+          setStrokeLines,
+          updateStrokeLineVisibility,
+          strokeLineVisibilities
         );
 
-        // After nodes are created, then set their initial visibility state
-        const nodesWithVisibility = nodes.map((node) => ({
-          ...node,
-          data: {
-            ...node.data,
-            strokeLinesVisible: true,
-          },
-        }));
-
-        setNodes(nodesWithVisibility);
-
-        // Add stroke edges
+        // Add stroke edges with visibility check
         const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
           const isSelfLoop =
             strokeLine.source_block_id === strokeLine.target_block_id;
+          const visibility =
+            strokeLineVisibilities.find(
+              ([id]) => id === strokeLine.source_block_id
+            )?.[1] ?? true;
+
           return {
             id: `stroke-edge-${strokeLine.id}`,
             source: `block-${strokeLine.source_block_id}`,
@@ -204,27 +242,20 @@ export function Flow({
             data: {
               source: `block-${strokeLine.source_block_id}`,
               target: `block-${strokeLine.target_block_id}`,
+              label: strokeLine.label,
               onStrokeLinesUpdate: setStrokeLines,
+              isVisible: visibility,
             },
-            // Set zIndex to ensure stroke edges appear above regular edges
             style: { zIndex: 1000 },
           };
         });
 
-        // Filter edges based on node visibility before setting them
         const allEdges = [...edges, ...strokeEdges];
-        const filteredEdges = allEdges.filter((edge) => {
-          const sourceNode = nodesWithVisibility.find(
-            (n) => n.id === edge.source
-          );
-          return sourceNode?.data.strokeLinesVisible !== false;
-        });
-
-        setEdges(filteredEdges);
+        setEdges(allEdges);
 
         // Only layout the nodes
         const layoutedNodes = await createElkLayout(
-          nodesWithVisibility,
+          nodes,
           edges.filter((e) => !e.type?.includes('stroke'))
         );
         setNodes(layoutedNodes);
@@ -238,6 +269,8 @@ export function Flow({
     handleAddBlockOnEdge,
     setPaths,
     setStrokeLines,
+    updateStrokeLineVisibility,
+    strokeLineVisibilities,
   ]);
 
   const handleBlockTypeSelect = useCallback(
@@ -337,19 +370,140 @@ export function Flow({
     }
   };
 
-  return (
-    <div className="h-screen w-screen relative">
-      {/* Include the Sidebar component */}
-      {/* <Sidebar 
-        blocks={blocks}
-        workspaceId={workspaceId} 
-        workflowId={workflowId}
-        onNodeFocus={handleNodeFocus}
-      /> */}
+  const toggleAllStrokeLines = useCallback(() => {
+    setAllStrokeLinesVisible((prev) => !prev);
+    // Update all stroke line visibilities
+    const blockIds = new Set<number>();
+    paths.forEach((path) => {
+      path.blocks.forEach((block) => {
+        blockIds.add(block.id);
+      });
+    });
 
+    blockIds.forEach((blockId) => {
+      updateStrokeLineVisibility(blockId, !allStrokeLinesVisible);
+    });
+  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility]);
+
+  // Combine regular edges with preview edge
+  const allEdges = useMemo(() => {
+    console.log('is previewEdge: ', previewEdge);
+    return previewEdge ? [...edges, previewEdge] : edges;
+  }, [edges, previewEdge]);
+
+  const showConnectModal = useModalStore((state) => state.showConnectModal);
+  const connectData = useModalStore((state) => state.connectData);
+  const setShowConnectModal = useModalStore(
+    (state) => state.setShowConnectModal
+  );
+
+  const handleConnect = useCallback(
+    async (targetNodeId: string, label: string) => {
+      try {
+        const sourceNode = nodes.find(
+          (node) => node.id === connectData?.sourceNode.id
+        );
+
+        if (!sourceNode?.data.path) {
+          throw new Error('Source path not found');
+        }
+
+        const response = await fetch('/api/stroke-lines', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source_block_id: parseInt(sourceNode.id.replace('block-', '')),
+            target_block_id: parseInt(targetNodeId.replace('block-', '')),
+            workflow_id: parseInt(workflowId),
+            label: label,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create connection');
+        }
+
+        // Close modal
+        setShowConnectModal(false);
+
+        // Fetch updated stroke lines
+        const strokeLinesResponse = await fetch(
+          `/api/stroke-lines?workflow_id=${parseInt(workflowId)}`
+        );
+        if (strokeLinesResponse.ok) {
+          const strokeLines = await strokeLinesResponse.json();
+          setStrokeLines(strokeLines);
+        }
+      } catch (error) {
+        console.error('Error creating connection:', error);
+      }
+    },
+    [nodes, connectData, setShowConnectModal, setStrokeLines]
+  );
+
+  useEffect(() => {
+    if (showConnectModal && connectData?.sourceNode) {
+      setIsConnectMode(true);
+      setSourceBlockId(connectData.sourceNode.id);
+    } else {
+      reset(); // This will clear all states including sourceBlockId
+    }
+  }, [
+    showConnectModal,
+    connectData,
+    setIsConnectMode,
+    setSourceBlockId,
+    reset,
+  ]);
+
+  useEffect(() => {
+    if (isConnectMode && connectData?.sourceNode) {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          className: `${node.className || ''} ${
+            node.id === connectData.sourceNode.id ? 'source-node' : ''
+          } ${node.id === selectedNodeId ? 'selected-node' : ''}`,
+        }))
+      );
+    } else {
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          className: node.className
+            ?.replace('source-node', '')
+            .replace('selected-node', ''),
+        }))
+      );
+    }
+  }, [isConnectMode, connectData, selectedNodeId]);
+
+  useEffect(() => {
+    const handlePathsUpdate = (event: CustomEvent) => {
+      setPaths(event.detail);
+    };
+
+    window.addEventListener('updatePaths', handlePathsUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        'updatePaths',
+        handlePathsUpdate as EventListener
+      );
+    };
+  }, [setPaths]);
+
+  return (
+    <div
+      className={`h-screen w-full transition-colors duration-300 ${
+        isConnectMode ? 'bg-[#111111]' : 'bg-white'
+      }`}
+    >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={allEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         minZoom={0.1}
@@ -377,13 +531,15 @@ export function Flow({
           maxZoom: 1,
           includeHiddenNodes: true,
         }}
-        className="bg-gray-50"
+        className={`bg-gray-50 transition-all duration-300 ${
+          isConnectMode ? 'connect-mode' : ''
+        }`}
       >
         <Background gap={12} size={1} />
         <Controls />
-        <MiniMap /> {/* Added MiniMap as requested */}
+        <MiniMap />
       </ReactFlow>
-
+      <PathSelectionBox />
       {showDropdown && dropdownDatas && (
         <AddBlockDropdownMenu
           dropdownDatas={dropdownDatas}
@@ -405,6 +561,21 @@ export function Flow({
           path={modalData.path}
           position={modalData.position}
           existingPaths={modalData.existingPaths}
+        />
+      )}
+
+      {showConnectModal && connectData && connectData.sourceNode && (
+        <ConnectNodeModal
+          onClose={() => {
+            setPreviewEdge(null);
+            setShowConnectModal(false);
+          }}
+          onConfirm={handleConnect}
+          sourceNode={
+            nodes.find((node) => node.id === connectData.sourceNode.id) as Node
+          }
+          availableNodes={getNodes()}
+          onPreviewUpdate={setPreviewEdge}
         />
       )}
     </div>

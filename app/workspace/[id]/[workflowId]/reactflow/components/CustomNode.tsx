@@ -1,13 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { Handle, Position, NodeProps, useReactFlow } from '@xyflow/react';
+import {
+  Handle,
+  Position,
+  NodeProps,
+  Edge,
+  useReactFlow,
+  Node,
+} from '@xyflow/react';
 import { NodeData } from '../types';
-import ConnectNodeModal from './ConnectNodeModal';
+import { useModalStore } from '../store/modalStore';
+import { useConnectModeStore } from '../store/connectModeStore';
+import { usePathSelectionStore } from '../store/pathSelectionStore';
 
-function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
+interface CustomNodeProps extends NodeProps {
+  data: NodeData & {
+    onPreviewUpdate?: (edge: Edge | null) => void;
+    // ... other data props
+  };
+}
+
+function CustomNode({ id, data, selected }: CustomNodeProps) {
+  // console.log(`Node ${id} pathHasChildren:`, data.pathHasChildren);
+
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showConnectModal, setShowConnectModal] = useState(false);
   const { getNodes, setEdges, setNodes, getEdges } = useReactFlow();
+  const setShowConnectModal = useModalStore(
+    (state) => state.setShowConnectModal
+  );
+  const setConnectData = useModalStore((state) => state.setConnectData);
+  const { isConnectMode, sourceBlockId, targetBlockId } = useConnectModeStore();
+  const { selectedPaths, parentBlockId, togglePathSelection } =
+    usePathSelectionStore();
 
   // Handle highlight effect
   useEffect(() => {
@@ -41,7 +65,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
     setShowDropdown(false);
   };
 
-  const handleConnect = async (targetNodeId: string) => {
+  const handleConnect = async (targetNodeId: string, label: string) => {
     try {
       if (!data.path) {
         throw new Error('Path not found');
@@ -55,7 +79,7 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           source_block_id: parseInt(id.replace('block-', '')),
           target_block_id: parseInt(targetNodeId.replace('block-', '')),
           workflow_id: data.path.workflow_id,
-          label: 'Connection',
+          label: label,
         }),
       });
 
@@ -83,53 +107,111 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setConnectData({
+      sourceNode: {
+        id,
+        data,
+        position: { x: 0, y: 0 },
+        type: 'custom',
+        width: undefined,
+        height: undefined,
+      } as Node,
+    });
     setShowConnectModal(true);
     setShowDropdown(false);
   };
 
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentVisibility = data.strokeLinesVisible ?? true; // Default to true if undefined
-    console.log('Current visibility:', currentVisibility);
-
-    const newVisibility = !currentVisibility;
-    console.log('New visibility:', newVisibility);
-
-    setNodes(
-      getNodes().map((node) => {
-        if (node.id === id) {
-          console.log('Updating node:', node.id);
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              strokeLinesVisible: newVisibility,
-            },
-          };
-        }
-        return node;
-      })
-    );
-
-    // Filter edges based on new visibility state
-    const currentEdges = getEdges();
-    console.log('Current edges:', currentEdges);
-
-    const updatedEdges = currentEdges.filter((edge) => {
-      if (edge.source === id && edge.type === 'strokeEdge') {
-        return newVisibility; // Keep edges if visible, remove if hidden
-      }
-      return true; // Keep all other edges
-    });
-
-    console.log('Updated edges:', updatedEdges);
-    setEdges(updatedEdges);
+    const blockId = parseInt(id.replace('block-', ''));
+    data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
   };
+
+  // Check if this is the last STEP node in a path
+  const isLastStepInPath =
+    data.type === 'STEP' &&
+    data.position === (data.path?.blocks.length ?? 0) - 2; // -2 because of END block
+
+  // Get parent block ID for this path
+  const pathParentBlockId = data.path?.parent_blocks?.[0]?.block_id;
+
+  // Determine if checkbox should be disabled
+  const isCheckboxDisabled =
+    parentBlockId !== null &&
+    pathParentBlockId !== parentBlockId &&
+    !selectedPaths.includes(data.path?.id ?? -1);
+
+  // Check if parent block has more than one child path
+  const hasMultipleChildPaths = data.hasSiblings;
+
+  // Get the end block and check if it has child paths
+  const endBlock = data.path?.blocks.find(
+    (block) => block.type === 'END' || block.type === 'LAST'
+  );
 
   return (
     <>
+      {/* Vertical Toggle Switch Container */}
+      {getEdges().some(
+        (edge) => edge.source === id && edge.type === 'strokeEdge'
+      ) &&
+        !isConnectMode && (
+          <div
+            className={`absolute top-[20px] -translate-y-1/2 transition-opacity duration-300 ${
+              isConnectMode ? 'opacity-40' : ''
+            }`}
+            style={{
+              left: '-20px',
+              backgroundColor: '#FFFFFF',
+              padding: '4px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              paddingLeft: '6px',
+            }}
+          >
+            <div
+              onClick={toggleStrokeLines}
+              className="cursor-pointer"
+              style={{
+                width: '12px',
+                height: '20px',
+                borderRadius: '6px',
+                backgroundColor: data.strokeLinesVisible
+                  ? '#FF69A3'
+                  : '#E5E7EB',
+                transition: 'background-color 0.2s',
+                position: 'relative',
+              }}
+            >
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  position: 'absolute',
+                  left: '1px',
+                  top: data.strokeLinesVisible ? '1px' : '9px',
+                  transition: 'top 0.2s',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
       <div
-        className={`transition-all duration-300 ${isHighlighted ? 'scale-105' : ''}`}
+        className={`transition-all duration-300 ${
+          isConnectMode && id !== sourceBlockId && id !== targetBlockId
+            ? 'opacity-40'
+            : ''
+        } ${isHighlighted ? 'scale-105' : ''}`}
         style={{
           width: '481px',
           padding: '20px 24px',
@@ -245,45 +327,28 @@ function CustomNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           </div>
         </div>
         <div className="text-gray-900">{data.label}</div>
-        {getEdges().some(
-          (edge) => edge.source === id && edge.type === 'strokeEdge'
-        ) && (
-          <button
-            onClick={toggleStrokeLines}
-            className="absolute -right-2 -top-2 w-4 h-4 rounded-full bg-white border border-gray-300 shadow-sm flex items-center justify-center hover:bg-gray-50"
-            title="Toggle stroke lines"
-          >
-            <svg
-              className={`w-3 h-3 ${data.strokeLinesVisible ? 'text-blue-500' : 'text-gray-400'}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </button>
-        )}
       </div>
 
-      {showConnectModal && (
-        <ConnectNodeModal
-          onClose={() => setShowConnectModal(false)}
-          onConfirm={handleConnect}
-          sourceNode={{ id, data } as any}
-          availableNodes={getNodes()}
-        />
-      )}
+      {isLastStepInPath &&
+        hasMultipleChildPaths &&
+        !data.pathHasChildren &&
+        (parentBlockId === null || pathParentBlockId === parentBlockId) && (
+          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+            <input
+              type="checkbox"
+              checked={selectedPaths.includes(data.path?.id ?? -1)}
+              onChange={() =>
+                togglePathSelection(
+                  data.path?.id ?? -1,
+                  endBlock?.id ?? -1,
+                  pathParentBlockId ?? -1
+                )
+              }
+              className="w-4 h-4 rounded border-gray-300"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
     </>
   );
 }

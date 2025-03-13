@@ -2,6 +2,7 @@ import React from 'react';
 import { EdgeProps, getSmoothStepPath } from '@xyflow/react';
 import { EdgeData } from '../types';
 import { BlockEndType } from '@/types/block';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 function CustomSmoothStepEdge({
   id,
@@ -43,11 +44,15 @@ function CustomSmoothStepEdge({
     }
   };
 
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+
   return (
     <>
       <path
         id={id}
-        className="react-flow__edge-path"
+        className={`react-flow__edge-path transition-opacity duration-300 ${
+          isConnectMode ? 'opacity-40' : ''
+        }`}
         d={edgePath}
         style={{
           strokeWidth: 2,
@@ -63,7 +68,7 @@ function CustomSmoothStepEdge({
         onClick={handleEdgeClick}
         style={{ cursor: 'pointer' }}
       />
-      {!isLastTypeInvolved && (
+      {!isLastTypeInvolved && !isConnectMode && (
         <foreignObject
           width={40}
           height={40}

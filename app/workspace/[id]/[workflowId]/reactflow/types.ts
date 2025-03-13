@@ -2,18 +2,21 @@ import { Workflow } from '@/types/workflow';
 import { BlockEndType } from '@/types/block';
 
 export interface NodeData {
+  [key: string]: any;
   label: string;
   position: number;
   type: string;
   strokeLinesVisible?: boolean;
+  updateStrokeLineVisibility?: (blockId: number, isVisible: boolean) => void;
   sourcePosition?: boolean;
-  path?: any; // Add proper type if available
+  path?: Path;
   onDelete?: (id: string) => void;
   onStrokeLinesUpdate?: (lines: any[]) => void;
   highlighted?: boolean;
   isLastInPath?: boolean;
   pathId?: number | null;
   pathName?: string;
+  pathHasChildren?: boolean;
   handleAddBlockOnEdge?: (
     position: number,
     path: Path,

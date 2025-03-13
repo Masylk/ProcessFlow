@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../types';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [isEditing, setIsEditing] = useState(false);
   const [pathName, setPathName] = useState(data.path?.name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   const handleSave = async () => {
     try {
@@ -54,63 +56,59 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   return (
     <div
-      className="relative"
+      className={`relative transition-all duration-300 flex items-center justify-center ${isConnectMode ? 'opacity-40' : ''}`}
+      style={{
+        width: '200px',
+        height: '50px',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
+        background: '#eff6ff',
+        position: 'relative',
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`transition-all duration-300 flex items-center justify-center`}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
         style={{
-          width: '200px',
-          height: '50px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
-          background: '#eff6ff',
-          position: 'relative',
+          width: 8,
+          height: 8,
+          background: '#60a5fa',
+          border: '2px solid white',
         }}
-      >
-        <Handle
-          type="target"
-          position={Position.Top}
-          id="top"
-          style={{
-            width: 8,
-            height: 8,
-            background: '#60a5fa',
-            border: '2px solid white',
-          }}
-        />
+      />
 
-        <div className="text-blue-600 font-medium truncate">
-          {isEditing ? (
-            <input
-              type="text"
-              value={pathName}
-              onChange={(e) => setPathName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handleSave}
-              autoFocus
-              className="bg-transparent outline-none w-full text-center"
-              placeholder="Enter path name"
-            />
-          ) : (
-            <span>{data.path?.name || 'Path'}</span>
-          )}
-        </div>
-
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="bottom"
-          style={{
-            width: 8,
-            height: 8,
-            background: '#60a5fa',
-            border: '2px solid white',
-          }}
-        />
+      <div className="text-blue-600 font-medium truncate">
+        {isEditing ? (
+          <input
+            type="text"
+            value={pathName}
+            onChange={(e) => setPathName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            autoFocus
+            className="bg-transparent outline-none w-full text-center"
+            placeholder="Enter path name"
+          />
+        ) : (
+          <span>{data.path?.name || 'Path'}</span>
+        )}
       </div>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        style={{
+          width: 8,
+          height: 8,
+          background: '#60a5fa',
+          border: '2px solid white',
+        }}
+      />
 
       {/* Edit button that appears on hover */}
       {isHovered && !isEditing && (

@@ -3,9 +3,11 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../types';
 import AddChildPathModal from './AddChildPathModal';
 import { createChildPaths } from '../utils/createChildPaths';
+import { useConnectModeStore } from '../store/connectModeStore';
 
 function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [showModal, setShowModal] = useState(false);
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   // Find the path block to get the count of existing child paths
   const pathBlock = data.path?.blocks.find(
@@ -40,7 +42,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   };
 
   return (
-    <>
+    <div className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}>
       <div
         className="transition-all duration-300 relative cursor-pointer"
         style={{
@@ -99,7 +101,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           existingPathsCount={existingPathsCount}
         />
       )}
-    </>
+    </div>
   );
 }
 
