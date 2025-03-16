@@ -42,6 +42,7 @@ import { PathSelectionBox } from './PathSelectionBox';
 import MergeNode from './nodes/MergeNode';
 import { usePathsStore } from '../store/pathsStore';
 import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
+import InvisibleNode from './nodes/InvisibleNode';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -52,6 +53,7 @@ const nodeTypes = {
   last: LastNode,
   path: PathNode,
   merge: MergeNode,
+  invisible: InvisibleNode,
 } as const;
 
 const edgeTypes = {

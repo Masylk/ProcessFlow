@@ -68,14 +68,71 @@ export function processPath(
   handleStrokeLinesUpdate: (strokeLines: any[]) => void,
   updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
   strokeLineVisibilities: [number, boolean][],
-  hasSiblings: boolean = false
+  hasSiblings: boolean = false,
+  longestSiblingPath: number = 0
 ): void {
   const allPaths = usePathsStore.getState().paths;
   
+  console.log('longestSiblingPath', longestSiblingPath);
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
+  const pathLength = path.blocks.length - 2;
   path.blocks.forEach((block, index) => {
+    // If this is a merge node and there's a path length difference, add invisible nodes BEFORE the merge node
+    if (block.type === BlockEndType.MERGE && longestSiblingPath > pathLength) {
+      const numInvisibleNodes = longestSiblingPath - pathLength;
+      
+      let previousNodeId = index > 0 ? `block-${path.blocks[index - 1].id}` : '';
+      
+      for (let i = 0; i < numInvisibleNodes; i++) {
+        const invisibleNodeId = `invisible-${block.id}-${i}`;
+        const invisibleNode = {
+          id: invisibleNodeId,
+          type: 'invisible',
+          position: { x: 0, y: 0 },
+          data: {
+            label: '',
+            position: block.position - numInvisibleNodes + i,
+            type: 'invisible',
+            pathId: block.path_id,
+            path: path,
+          },
+        };
+        
+        // Insert invisible node before the merge node
+        nodes.splice(nodes.length - 1, 0, invisibleNode);
+
+        // Connect nodes
+        edges.push({
+          id: `edge-${previousNodeId}-${invisibleNodeId}`,
+          source: previousNodeId,
+          target: invisibleNodeId,
+          type: 'smoothstepCustom',
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          style: { stroke: '#b1b1b7', opacity: 0 },
+          animated: true,
+        });
+
+        previousNodeId = invisibleNodeId;
+      }
+
+      // Connect last invisible node to merge node
+      if (numInvisibleNodes > 0) {
+        edges.push({
+          id: `edge-${previousNodeId}-block-${block.id}`,
+          source: previousNodeId,
+          target: `block-${block.id}`,
+          type: 'smoothstepCustom',
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          style: { stroke: '#b1b1b7', opacity: 0 },
+          animated: true,
+        });
+      }
+    }
+
     const nodeId = `block-${block.id}`;
     const visibility = strokeLineVisibilities.find(([id]) => id === block.id)?.[1] ?? true;
 
@@ -110,6 +167,7 @@ export function processPath(
         pathId: block.path_id,
         path: path,
         block: block,
+        pathLength,
         handleAddBlockOnEdge,
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,
@@ -120,6 +178,7 @@ export function processPath(
         hasSiblings,
         pathHasChildren,
         pathIsMerged,
+        longestSiblingPath,
       },
     });
     
@@ -145,6 +204,17 @@ export function processPath(
     // Sort child paths before processing them
     const sortedChildPaths = sortChildPaths(block.child_paths, allPaths);
     
+    // Find the longest blocks array among sibling paths
+    let longestSiblingPathLength = 0;
+    if (sortedChildPaths.length > 1) {
+      console.log('Sorted child paths:', sortedChildPaths);
+      longestSiblingPathLength = Math.max(
+        ...sortedChildPaths.map(childPathRelation => {
+          const fullPath = allPaths.find(p => p.id === childPathRelation.path.id);
+          return fullPath?.blocks.length || 0;
+        })
+      ) - 2;
+    }
     // Process each child path in the sorted order
     sortedChildPaths.forEach((childPathRelation) => {
       // Find the full path data from allPaths
@@ -180,7 +250,8 @@ export function processPath(
           handleStrokeLinesUpdate,
           updateStrokeLineVisibility,
           strokeLineVisibilities,
-          block.child_paths.length > 1
+          block.child_paths.length > 1,
+          longestSiblingPathLength
         );
       }
     });

@@ -14,6 +14,8 @@ export interface NodeData {
   onDelete?: (id: string) => void;
   onStrokeLinesUpdate?: (lines: any[]) => void;
   highlighted?: boolean;
+  longestSiblingPath?: number;
+  pathLength?: number;
   isLastInPath?: boolean;
   pathId?: number | null;
   pathName?: string;

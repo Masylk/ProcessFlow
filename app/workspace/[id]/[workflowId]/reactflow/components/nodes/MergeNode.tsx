@@ -14,6 +14,13 @@ function MergeNode({ id, data }: MergeNodeProps) {
   return (
     <div
       className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-50' : 'opacity-100'}`}
+      onClick={() =>
+        console.log(
+          'Longest sibling path and path length:',
+          data.longestSiblingPath,
+          data.pathLength
+        )
+      }
     >
       <Handle
         type="target"
