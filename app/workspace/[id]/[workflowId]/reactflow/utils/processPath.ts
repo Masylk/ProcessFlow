@@ -83,8 +83,6 @@ export function processPath(
     const endBlock = path.blocks.find(block => 
       block.type === 'END' || block.type === 'LAST' || block.type === 'PATH' || block.type === 'MERGE'
     );
-    console.log('path', path);
-    console.log('endBlock', endBlock);
     const pathHasChildren = endBlock?.child_paths && endBlock.child_paths.length > 0;
     const pathIsMerged = endBlock?.child_paths && endBlock.child_paths.length  === 1;
     nodes.push({
@@ -111,6 +109,7 @@ export function processPath(
         onDelete: handleDeleteBlock,
         pathId: block.path_id,
         path: path,
+        block: block,
         handleAddBlockOnEdge,
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,

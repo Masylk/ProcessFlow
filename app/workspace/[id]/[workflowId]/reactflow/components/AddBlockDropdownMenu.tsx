@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
 import { BlockEndType } from '@/types/block';
-import CreateParallelPathModal from './CreateParallelPathModal';
+import CreateParallelPathModal from './modals/CreateParallelPathModal';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -53,32 +53,32 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     [onSelect, onClose]
   );
 
-  const handleCreateParallelPaths = useCallback(async (data: {
-    paths_to_create: string[];
-    path_to_move: number;
-  }) => {
-    try {
-      setShowParallelPathModal(false); // Close modal first
-      onClose(); // Close dropdown
+  const handleCreateParallelPaths = useCallback(
+    async (data: { paths_to_create: string[]; path_to_move: number }) => {
+      try {
+        setShowParallelPathModal(false); // Close modal first
+        onClose(); // Close dropdown
 
-      console.log('Create parallel paths data', data);
-      await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
-        paths_to_create: data.paths_to_create,
-        path_to_move: data.path_to_move,
-      });
+        console.log('Create parallel paths data', data);
+        await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
+          paths_to_create: data.paths_to_create,
+          path_to_move: data.path_to_move,
+        });
 
-      // Fetch updated paths data
-      const pathsResponse = await fetch(
-        `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-      );
-      if (pathsResponse.ok) {
-        const pathsData = await pathsResponse.json();
-        onPathsUpdate(pathsData.paths);
+        // Fetch updated paths data
+        const pathsResponse = await fetch(
+          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        );
+        if (pathsResponse.ok) {
+          const pathsData = await pathsResponse.json();
+          onPathsUpdate(pathsData.paths);
+        }
+      } catch (error) {
+        console.error('Error creating parallel paths:', error);
       }
-    } catch (error) {
-      console.error('Error creating parallel paths:', error);
-    }
-  }, [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]);
+    },
+    [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]
+  );
 
   const block = dropdownDatas.path.blocks.find(
     (b) => b.position === dropdownDatas.position
@@ -89,9 +89,10 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
 
   // Check if the source block is a LastNode
-  const isLastNode = dropdownDatas.path.blocks.find(
-    block => block.position === dropdownDatas.position
-  )?.type === 'LAST';
+  const isLastNode =
+    dropdownDatas.path.blocks.find(
+      (block) => block.position === dropdownDatas.position
+    )?.type === 'LAST';
 
   return (
     <>
@@ -158,7 +159,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                     type: BlockEndType.MERGE,
                   }),
                 });
-                
+
                 // Fetch updated paths data
                 const pathsResponse = await fetch(
                   `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
@@ -174,7 +175,11 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             }}
             className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
           >
-            <img src="/step-icons/default-icons/merge.svg" alt="Merge" className="w-5 h-5" />
+            <img
+              src="/step-icons/default-icons/merge.svg"
+              alt="Merge"
+              className="w-5 h-5"
+            />
             <span>Merge paths</span>
           </button>
         )}

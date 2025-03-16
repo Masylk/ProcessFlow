@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../types';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { NodeData } from '../../types';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -69,11 +69,6 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Add block ID display */}
-      <div className="absolute -top-6 left-0 text-xs text-gray-500">
-        ID: {id.replace('block-', '')}
-      </div>
-
       <Handle
         type="target"
         position={Position.Top}
@@ -81,8 +76,10 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
         style={{
           width: 8,
           height: 8,
+          opacity: 0,
           background: '#60a5fa',
           border: '2px solid white',
+          pointerEvents: 'none',
         }}
       />
 
@@ -110,8 +107,10 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
         style={{
           width: 8,
           height: 8,
+          opacity: 0,
           background: '#60a5fa',
           border: '2px solid white',
+          pointerEvents: 'none',
         }}
       />
 

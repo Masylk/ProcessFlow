@@ -1,7 +1,7 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../types';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { NodeData } from '../../types';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 interface MergeNodeProps extends NodeProps {
   data: NodeData;
@@ -13,31 +13,29 @@ function MergeNode({ id, data }: MergeNodeProps) {
 
   return (
     <div
-      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-50' : 'opacity-100'}`}
     >
-      <div className="absolute -top-6 left-0 text-xs text-gray-500">
-        ID: {id.replace('block-', '')}
-      </div>
-
       <Handle
         type="target"
         id="top"
         position={Position.Top}
         style={{
           background: '#b1b1b7',
-          width: 6,
-          height: 6,
+          width: 1,
+          height: 1,
+          opacity: 0,
         }}
       />
-      <div className="w-3 h-3 rounded-full bg-[#b1b1b7]" />
+      <div className="w-1 h-1 rounded-full bg-[#b1b1b7]" />
       <Handle
         type="source"
         id="bottom"
         position={Position.Bottom}
         style={{
           background: '#b1b1b7',
-          width: 6,
-          height: 6,
+          width: 1,
+          height: 1,
+          opacity: 0,
         }}
       />
     </div>

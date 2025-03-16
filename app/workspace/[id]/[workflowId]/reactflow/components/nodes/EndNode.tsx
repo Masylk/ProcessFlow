@@ -1,8 +1,8 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../types';
+import { NodeData } from '../../types';
 import { BlockEndType } from '@/types/block';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
@@ -33,12 +33,9 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   };
 
   return (
-    <div className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}>
-      {/* Add block ID display */}
-      <div className="absolute -top-6 left-0 text-xs text-gray-500">
-        ID: {id.replace('block-', '')}
-      </div>
-
+    <div
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+    >
       <div
         className={`transition-all duration-300 flex items-center gap-3 w-fit text-sm`}
         style={{
@@ -61,6 +58,7 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
+            pointerEvents: 'none',
           }}
         />
         <img
@@ -81,6 +79,7 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
+            pointerEvents: 'none',
           }}
         />
       </div>

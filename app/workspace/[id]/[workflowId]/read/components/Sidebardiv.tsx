@@ -38,7 +38,6 @@ const Sidebardiv: React.FC<SidebardivProps> = ({
         if (response.ok) {
           const fetchedPaths: Path[] = await response.json();
 
-          console.log('fetched paths for block condition : ' + fetchedPaths);
           setPaths(fetchedPaths); // Set the paths fetched from the API
         } else {
           setError('Failed to fetch paths');

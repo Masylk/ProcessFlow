@@ -1,8 +1,8 @@
 import React from 'react';
 import { EdgeProps, getSmoothStepPath } from '@xyflow/react';
-import { EdgeData } from '../types';
+import { EdgeData } from '../../types';
 import { BlockEndType } from '@/types/block';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function CustomSmoothStepEdge({
   id,

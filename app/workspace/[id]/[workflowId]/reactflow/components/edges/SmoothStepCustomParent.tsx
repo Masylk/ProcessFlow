@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeProps, getSmoothStepPath } from '@xyflow/react';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function SmoothStepCustomParent({
   sourceX,
@@ -23,9 +23,9 @@ function SmoothStepCustomParent({
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   return (
-    <BaseEdge 
-      path={edgePath} 
-      markerEnd={markerEnd} 
+    <BaseEdge
+      path={edgePath}
+      markerEnd={markerEnd}
       style={{
         ...style,
         strokeWidth: 2,
@@ -36,4 +36,4 @@ function SmoothStepCustomParent({
   );
 }
 
-export default SmoothStepCustomParent; 
+export default SmoothStepCustomParent;

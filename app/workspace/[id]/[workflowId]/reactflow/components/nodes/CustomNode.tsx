@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Handle,
   Position,
@@ -7,14 +7,17 @@ import {
   useReactFlow,
   Node,
   useStore,
+  getNodesBounds,
+  getViewportForBounds,
 } from '@xyflow/react';
-import { NodeData } from '../types';
-import { useModalStore } from '../store/modalStore';
-import { useConnectModeStore } from '../store/connectModeStore';
-import { usePathSelectionStore } from '../store/pathSelectionStore';
+import { Block, NodeData } from '../../types';
+import { useModalStore } from '../../store/modalStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
+import { usePathSelectionStore } from '../../store/pathSelectionStore';
 import { createPortal } from 'react-dom';
-import { useUpdateModeStore } from '../store/updateModeStore';
-import { usePathsStore } from '../store/pathsStore';
+import { useUpdateModeStore } from '../../store/updateModeStore';
+import { usePathsStore } from '../../store/pathsStore';
+import BlockDetailsSidebar from '../BlockDetailsSidebar';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -28,9 +31,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const {
+    getNodes,
+    setEdges,
+    setNodes,
+    getEdges,
+    viewportInitialized,
+    setViewport,
+    fitView,
+  } = useReactFlow();
+
   const setShowConnectModal = useModalStore(
     (state) => state.setShowConnectModal
   );
+  const showConnectModal = useModalStore((state) => state.showConnectModal);
+  const connectData = useModalStore((state) => state.connectData);
   const setConnectData = useModalStore((state) => state.setConnectData);
   const {
     selectedPaths,
@@ -55,6 +70,26 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const zoom = useStore((state) => state.transform[2]);
   const transform = useStore((state) => state.transform);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+
+  // Add this state near the top of the CustomNode component
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  // Add block state to track changes
+  const [blockData, setBlockData] = useState(data.block);
+
+  // Handler for block updates
+  const handleBlockUpdate = (updatedData: Partial<Block>) => {
+    const newBlockData = {
+      ...blockData,
+      ...updatedData,
+    };
+    setBlockData(newBlockData);
+
+    // Update the node label if title changes
+    if (updatedData.title !== undefined) {
+      data.label = updatedData.title || 'Untitled Block';
+    }
+  };
 
   // Handle highlight effect
   useEffect(() => {
@@ -144,7 +179,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Use this condition for both checkbox and dropdown option
   const showCheckbox = mergeMode && canShowMergeUI;
 
-  const handleUpdateModeActivation = () => {
+  const handleUpdateModeActivation = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDropdown(false);
     // Find the merge block in the current path
     const mergeBlock = data.path?.blocks.find(
       (block) => block.type === 'MERGE'
@@ -250,8 +287,100 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       block.type === 'END' || block.type === 'LAST' || block.type === 'MERGE'
   )?.id;
 
+  const toggleStrokeLines = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const blockId = parseInt(id.replace('block-', ''));
+    data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
+  };
+
+  // Check if this node is the source or target in connect mode
+  const isSourceOrTargetNode =
+    showConnectModal &&
+    (connectData?.sourceNode?.id === id || connectData?.targetNode?.id === id);
+
+  // Add this function to handle zooming to the node
+  const zoomToNode = useCallback(() => {
+    const node = getNodes().find((n) => n.id === id);
+    if (!node) return;
+
+    const adjustedNode = {
+      ...node,
+      position: {
+        y: node.position.y + 1000,
+        x: node.position.x + 2000, // Move 200px to the right
+      },
+    };
+    fitView({
+      nodes: [adjustedNode],
+      duration: 800,
+      padding: 1,
+      minZoom: 0.4,
+      maxZoom: 1.5,
+    });
+  }, [id, getNodes, fitView]);
+
+  // Modify the click handler to include zooming
+  const handleNodeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowSidebar(true);
+    zoomToNode();
+  };
+
   return (
     <>
+      {/* Vertical Toggle Switch Container */}
+      {getEdges().some(
+        (edge) => edge.source === id && edge.type === 'strokeEdge'
+      ) &&
+        !showConnectModal && (
+          <div
+            className="absolute top-[20px] -translate-y-1/2 transition-opacity duration-300"
+            style={{
+              left: '-20px',
+              backgroundColor: '#FFFFFF',
+              padding: '4px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              paddingLeft: '6px',
+            }}
+          >
+            <div
+              onClick={toggleStrokeLines}
+              className="cursor-pointer"
+              style={{
+                width: '12px',
+                height: '20px',
+                borderRadius: '6px',
+                backgroundColor: data.strokeLinesVisible
+                  ? '#FF69A3'
+                  : '#E5E7EB',
+                transition: 'background-color 0.2s',
+                position: 'relative',
+              }}
+            >
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  position: 'absolute',
+                  left: '1px',
+                  top: data.strokeLinesVisible ? '1px' : '9px',
+                  transition: 'top 0.2s',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
       <div
         className={`relative transition-all duration-300 ${
           isHighlighted ? 'scale-110' : ''
@@ -260,28 +389,27 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         <div
           className={`relative rounded-lg border ${
             selected ? 'border-blue-400' : 'border-gray-200'
-          } bg-white shadow-sm hover:shadow-md transition-shadow duration-200`}
+          } bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${
+            showConnectModal && !isSourceOrTargetNode ? 'opacity-40' : ''
+          }`}
           style={{
             width: '481px',
             minHeight: '120px',
             padding: '16px',
           }}
+          onClick={handleNodeClick}
         >
-          {/* Add block ID display */}
-          <div className="absolute -top-6 left-0 text-xs text-gray-500">
-            ID: {id.replace('block-', '')}
-          </div>
-
           <Handle
             type="target"
             position={Position.Top}
             id="top"
             style={{
-              width: 10,
-              height: 10,
-              background: '#b1b1b7',
+              width: 8,
+              height: 8,
+              opacity: 0,
+              background: '#60a5fa',
               border: '2px solid white',
-              opacity: 1,
+              pointerEvents: 'none',
             }}
           />
           <Handle
@@ -294,7 +422,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               background: '#b1b1b7',
               border: '2px solid white',
               top: '35%',
-              opacity: 1,
+              opacity: 0,
+              pointerEvents: 'none',
             }}
           />
           <Handle
@@ -307,8 +436,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               background: '#b1b1b7',
               border: '2px solid white',
               top: '35%',
-              left: -4,
-              opacity: 1,
+              left: 0,
+              opacity: 0,
+              pointerEvents: 'none',
             }}
           />
           <Handle
@@ -321,7 +451,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               background: '#b1b1b7',
               border: '2px solid white',
               top: '65%',
-              opacity: 1,
+              opacity: 0,
+              pointerEvents: 'none',
             }}
           />
           <Handle
@@ -329,11 +460,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             position={Position.Bottom}
             id="bottom"
             style={{
-              width: 10,
-              height: 10,
-              background: '#b1b1b7',
+              width: 8,
+              height: 8,
+              opacity: 0,
+              background: '#60a5fa',
               border: '2px solid white',
-              opacity: 1,
+              pointerEvents: 'none',
             }}
           />
           <div className="flex justify-between items-start mb-2">
@@ -387,6 +519,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
         )}
       </div>
+
+      {showSidebar && (
+        <BlockDetailsSidebar
+          block={blockData}
+          onClose={() => setShowSidebar(false)}
+          onUpdate={handleBlockUpdate}
+        />
+      )}
     </>
   );
 }

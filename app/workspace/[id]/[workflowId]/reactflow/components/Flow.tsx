@@ -19,27 +19,27 @@ import {
   useStore,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
-import CustomNode from './CustomNode';
-import CustomSmoothStepEdge from './CustomSmoothStepEdge';
+import CustomNode from './nodes/CustomNode';
+import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
 import { NodeData, EdgeData, DropdownDatas, Path } from '../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
-import BeginNode from './BeginNode';
-import EndNode from './EndNode';
-import SmoothStepCustomParent from './SmoothStepCustomParent';
+import BeginNode from './nodes/BeginNode';
+import EndNode from './nodes/EndNode';
+import SmoothStepCustomParent from './edges/SmoothStepCustomParent';
 import { BlockEndType } from '@/types/block';
-import LastNode from './LastNode';
-import PathNode from './PathNode';
+import LastNode from './nodes/LastNode';
+import PathNode from './nodes/PathNode';
 import { useModalStore } from '../store/modalStore';
-import CreateParallelPathModal from './CreateParallelPathModal';
+import CreateParallelPathModal from './modals/CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import StrokeEdge from './StrokeEdge';
-import ConnectNodeModal from './ConnectNodeModal';
+import StrokeEdge from './edges/StrokeEdge';
+import ConnectNodeModal from './modals/ConnectNodeModal';
 import { useConnectModeStore } from '../store/connectModeStore';
 import { PathSelectionBox } from './PathSelectionBox';
-import MergeNode from './MergeNode';
+import MergeNode from './nodes/MergeNode';
 import { usePathsStore } from '../store/pathsStore';
 import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
 
