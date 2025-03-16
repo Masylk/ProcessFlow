@@ -24,6 +24,7 @@ interface SettingsPageProps {
   workspace?: Workspace;
   onWorkspaceUpdate?: (updates: Partial<Workspace>) => Promise<void>;
   onWorkspaceDelete?: (workspaceId: number) => Promise<void>;
+  initialTab?: string;
 }
 
 export default function SettingsPage({ 
@@ -32,10 +33,11 @@ export default function SettingsPage({
   workspace, 
   onWorkspaceUpdate,
   onWorkspaceDelete,
+  initialTab,
 }: SettingsPageProps) {
   const colors = useColors();
   const { currentTheme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState(workspace && onWorkspaceUpdate ? 'Workspace' : 'Team');
+  const [activeTab, setActiveTab] = useState(initialTab || (workspace && onWorkspaceUpdate ? 'Workspace' : 'Team'));
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [currentPlan, setCurrentPlan] = useState<'free' | 'earlyAdopter'>('free');
   const [isLoadingPlan, setIsLoadingPlan] = useState(true);
@@ -421,7 +423,7 @@ export default function SettingsPage({
       name: "Free. Forever.",
       price: "$0",
       features: [
-        "3 conditional processes",
+        "5 conditional processes",
         "Edit mode",
         "Read mode",
         "Basic export and sharing"

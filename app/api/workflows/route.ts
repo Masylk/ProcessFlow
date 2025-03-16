@@ -83,13 +83,59 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Get workspace with subscription info and workflow count
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        subscription: true,
+        workflows: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      );
+    }
+
+    // Log workspace details for debugging
+    console.log('Workspace details:', {
+      id: workspace.id,
+      subscription: workspace.subscription,
+      workflowCount: workspace.workflows.length,
+      isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
+    });
+
+    // Check if workspace is on free plan and has reached the limit
+    const isFreePlan = !workspace.subscription || workspace.subscription.plan_type === 'FREE';
+    const hasReachedLimit = workspace.workflows.length >= 5;
+
+    if (isFreePlan && hasReachedLimit) {
+      console.log('Blocking workflow creation: Free plan limit reached', {
+        isFreePlan,
+        workflowCount: workspace.workflows.length,
+      });
+      return NextResponse.json(
+        {
+          error: 'Free plan is limited to 5 workflows',
+          title: 'Workflow Limit Reached',
+          description: 'Your free plan is limited to 5 workflows. Upgrade to create more workflows.',
+          status: 403
+        },
+        { status: 403 }
+      );
+    }
+
     // Create a new workflow
     const newWorkflow = await prisma.workflow.create({
       data: {
         name,
-        description, // Include the required description field
+        description,
         workspace: {
-          connect: { id: workspaceId }, // Use the `connect` syntax to link the workspace
+          connect: { id: workspaceId },
         },
       },
     });

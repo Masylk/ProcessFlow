@@ -6,7 +6,7 @@ export async function createWorkflow(
   workspaceId: number,
   folderId: number | null = null,
   teamTags: string[] = []
-): Promise<Workflow | null> {
+): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
     const response = await fetch('/api/workspaces/workflows', {
       method: 'POST',
@@ -22,14 +22,28 @@ export async function createWorkflow(
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error('Failed to create workflow');
+      // Return error details for toast notification
+      return {
+        workflow: null,
+        error: {
+          title: data.title || 'Error Creating Workflow',
+          description: data.description || data.error || 'Failed to create workflow'
+        }
+      };
     }
 
-    const newWorkflow: Workflow = await response.json();
-    return newWorkflow;
+    return { workflow: data };
   } catch (error) {
     console.error('Error creating workflow:', error);
-    return null;
+    return {
+      workflow: null,
+      error: {
+        title: 'Error Creating Workflow',
+        description: 'An unexpected error occurred'
+      }
+    };
   }
 }

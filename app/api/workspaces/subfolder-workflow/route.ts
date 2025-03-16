@@ -87,11 +87,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get workspace with subscription info and workflow count
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: Number(workspace_id) },
+      include: {
+        subscription: true,
+        workflows: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if workspace is on free plan and has reached the limit
+    if (
+      workspace.subscription?.plan_type === 'FREE' &&
+      workspace.workflows.length >= 5
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Free plan is limited to 5 workflows. Please upgrade to create more workflows.',
+        },
+        { status: 403 }
+      );
+    }
+
     // Create a new workflow inside a specific subfolder
     const newWorkflow = await prisma.workflow.create({
       data: {
         name,
-        description, // Include the required description field
+        description,
         workspace_id: Number(workspace_id),
         folder_id: Number(folder_id),
       },

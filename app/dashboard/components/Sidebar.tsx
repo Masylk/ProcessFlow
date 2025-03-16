@@ -21,7 +21,7 @@ interface SidebarProps {
   activeWorkspace: Workspace;
   setActiveWorkspace: (workspace: Workspace) => Promise<void>;
   onCreateFolder: (parentId?: number) => void;
-  onEditFolder: (parentFolder: Folder) => void;
+  onEditFolder: (folder: Folder) => void;
   onCreateSubfolder: (parentFolder: Folder) => void;
   onDeleteFolder: (folder: Folder) => Promise<void>;
   user: User | null;
@@ -34,6 +34,7 @@ interface SidebarProps {
   isSettingsView: boolean;
   setIsSettingsView: (isSettingsView: boolean) => void;
   setWorkspaces: (workspaces: Workspace[]) => void;
+  setActiveTab?: (tab: string) => void;
 }
 
 export default function Sidebar({
@@ -55,6 +56,7 @@ export default function Sidebar({
   isSettingsView,
   setIsSettingsView,
   setWorkspaces,
+  setActiveTab,
 }: SidebarProps) {
   const { currentTheme } = useTheme();
   const colors = useColors();
@@ -99,6 +101,10 @@ export default function Sidebar({
       onSelectFolderView(folder);
     } else {
       onSelectFolderView(undefined);
+    }
+    // If this is a settings tab and setActiveTab is provided, call it
+    if (tabId && !tabId.startsWith('folder-') && setActiveTab) {
+      setActiveTab(tabId);
     }
   };
 
@@ -407,6 +413,80 @@ export default function Sidebar({
           }}
           className="w-full p-4 flex-col justify-start items-center gap-3 inline-flex border-t"
         >
+          {/* Free Plan Notification Card - Show when on free plan or no subscription */}
+          {(!activeWorkspace.subscription || activeWorkspace.subscription?.plan_type === 'FREE') && 
+           activeWorkspace.workflows.length >= 4 && (
+            <div 
+              style={{ backgroundColor: colors['bg-secondary'] }}
+              className="w-full p-4 flex flex-col gap-4 rounded-lg relative"
+            >
+              <div className="flex flex-col gap-1">
+                <div className="flex">
+                  <span 
+                    style={{ color: colors['text-primary'] }}
+                    className="text-sm font-semibold font-['Inter']"
+                  >
+                    Free plan
+                  </span>
+                  <button
+                    onClick={() => {/* Add dismiss handler */}}
+                    className="w-5 h-5 overflow-hidden opacity-70 hover:opacity-100 absolute top-3 right-3"
+                  >
+                    <Image
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
+                      alt="Close"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                      style={{ filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}` }}
+                    />
+                  </button>
+                </div>
+                <span 
+                  style={{ color: colors['text-secondary'] }}
+                  className="text-sm font-normal font-['Inter']"
+                >
+                  {activeWorkspace.workflows.length === 5 
+                    ? "You've reached the limit of 5 workflows in the free plan. Upgrade to create more!"
+                    : `Your team has used ${activeWorkspace.workflows.length}/5 workflows in the free plan. Need more?`
+                  }
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="flex items-center gap-3 w-full">
+                <div className="flex-grow h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#4761C4] rounded-full"
+                    style={{ width: `${Math.min((activeWorkspace.workflows.length / 5) * 100, 100)}%` }}
+                  />
+                </div>
+                <span 
+                  style={{ color: colors['text-primary'] }}
+                  className="text-sm font-medium"
+                >
+                  {Math.min(Math.round((activeWorkspace.workflows.length / 5) * 100), 100)}%
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex">
+                <ButtonNormal
+                  variant="link-color"
+                  size="small"
+                  onClick={() => {
+                    setIsSettingsView(true);
+                    if (setActiveTab) {
+                      setActiveTab('Plan');
+                    }
+                  }}
+                >
+                  {activeWorkspace.workflows.length === 5 ? 'Upgrade to create more' : 'Upgrade plan'}
+                </ButtonNormal>
+              </div>
+            </div>
+          )}
+
           <ButtonNormal
             variant="secondary"
             size="small"
