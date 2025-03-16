@@ -31,6 +31,7 @@ Table user {
   active_workspace workspace
   workspaces user_workspace [not null]
   created_versions workflow_version [not null]
+  scheduled_emails scheduled_emails [not null]
 }
 
 Table workspace {
@@ -300,6 +301,22 @@ Table stroke_line {
   workflow workflow [not null]
 }
 
+Table scheduled_emails {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  user_id Int [not null]
+  email_type String [not null]
+  scheduled_for DateTime [not null]
+  status email_status [not null, default: 'PENDING']
+  sent Boolean [not null, default: false]
+  sent_at DateTime
+  metadata Json
+  error String
+  retry_count Int [not null, default: 0]
+  user user [not null]
+}
+
 Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
@@ -349,6 +366,14 @@ Enum workflow_status {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+Enum email_status {
+  PENDING
+  CANCELLED
+  PAUSED
+  SENT
+  FAILED
 }
 
 Ref: user.active_workspace_id > workspace.id
@@ -406,3 +431,5 @@ Ref: stroke_line.source_block_id > block.id [delete: Cascade]
 Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
+
+Ref: scheduled_emails.user_id > user.id [delete: Cascade]
