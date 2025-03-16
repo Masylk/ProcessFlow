@@ -6,24 +6,25 @@ import { SenderType } from '@/lib/email';
 
 type EmailSignatureProps = {
   sender: SenderType;
-  env?: {
-    NEXT_PUBLIC_SUPABASE_URL?: string;
-    NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
-    NEXT_PUBLIC_PRODUCTHUNT_URL?: string;
-    NEXT_PUBLIC_LINKEDIN_URL?: string;
-    NEXT_PUBLIC_X_URL?: string;
-    NEXT_PUBLIC_G2_URL?: string;
+  publicUrls?: {
+    supabasePublicUrl?: string;
+    supabaseStoragePath?: string;
+    producthuntUrl?: string;
+    linkedinUrl?: string;
+    xUrl?: string;
+    g2Url?: string;
+    [key: string]: string | undefined;
   };
 };
 
-export const EmailSignature: React.FC<EmailSignatureProps> = ({ sender, env }) => {
+export const EmailSignature: React.FC<EmailSignatureProps> = ({ sender, publicUrls }) => {
   switch (sender) {
     case 'contact':
-      return <ClientServiceSignature env={env} />;
+      return <ClientServiceSignature publicUrls={publicUrls} />;
     case 'jean':
-      return <JeanSignature env={env} />;
+      return <JeanSignature publicUrls={publicUrls} />;
     case 'noreply':
     default:
-      return <NoReplySignature env={env} />;
+      return <NoReplySignature publicUrls={publicUrls} />;
   }
 }; 

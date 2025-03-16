@@ -27,6 +27,33 @@ const EMAIL_TEMPLATES: Record<string, EmailTemplateConfig> = {
   // Add more email types as needed
 };
 
+// Function to get only the whitelisted public URLs needed for emails
+function getSafePublicUrls() {
+  // Only include public-facing URLs that are needed for email templates
+  return {
+    supabasePublicUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    supabaseStoragePath: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '',
+    // Add social media URLs
+    producthuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com',
+    linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/',
+    xUrl: process.env.NEXT_PUBLIC_X_URL || 'https://x.com',
+    g2Url: process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com',
+  };
+}
+
+// Constants for retry mechanism
+const MAX_RETRY_COUNT = 5;
+const RETRY_DELAY_BASE_MINUTES = 15; // Base delay in minutes
+
+// Calculate next retry time with exponential backoff
+function calculateNextRetryTime(retryCount: number): Date {
+  // Exponential backoff: 15min, 30min, 1h, 2h, 4h
+  const delayMinutes = RETRY_DELAY_BASE_MINUTES * Math.pow(2, retryCount);
+  const nextRetry = new Date();
+  nextRetry.setMinutes(nextRetry.getMinutes() + delayMinutes);
+  return nextRetry;
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -59,6 +86,9 @@ export async function GET(request: Request) {
     console.log(`Found ${scheduledEmails.length} emails to send`);
 
     const results = [];
+    
+    // Get safe public URLs for email templates
+    const safePublicUrls = getSafePublicUrls();
 
     // Process each scheduled email
     for (const email of scheduledEmails) {
@@ -93,10 +123,8 @@ export async function GET(request: Request) {
           Component: templateConfig.Component,
           props: {
             ...metadata,
-            env: {
-              NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-              NEXT_PUBLIC_SUPABASE_STORAGE_PATH: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH,
-            },
+            // Pass only the safe public URLs instead of raw environment variables
+            publicUrls: safePublicUrls,
           },
           sender: templateConfig.sender,
         });
@@ -114,32 +142,97 @@ export async function GET(request: Request) {
           
           results.push({ id: email.id, status: 'sent', messageId: sendResult.messageId });
         } else {
-          // Update the email status to FAILED
+          // Handle failed email with retry mechanism
+          const newRetryCount = email.retry_count + 1;
+          
+          if (newRetryCount >= MAX_RETRY_COUNT) {
+            // Max retries reached, mark as permanently failed
+            await prisma.scheduled_email.update({
+              where: { id: email.id },
+              data: {
+                status: 'FAILED',
+                error: `Failed after ${MAX_RETRY_COUNT} attempts. Last error: ${String(sendResult.error)}`,
+                retry_count: newRetryCount,
+              },
+            });
+            
+            results.push({ 
+              id: email.id, 
+              status: 'permanently_failed', 
+              reason: `Max retry count (${MAX_RETRY_COUNT}) reached. Last error: ${String(sendResult.error)}` 
+            });
+          } else {
+            // Calculate next retry time with exponential backoff
+            const nextRetryTime = calculateNextRetryTime(newRetryCount - 1);
+            
+            // Update for retry
+            await prisma.scheduled_email.update({
+              where: { id: email.id },
+              data: {
+                status: 'PENDING', // Keep as pending for next attempt
+                error: String(sendResult.error),
+                retry_count: newRetryCount,
+                scheduled_for: nextRetryTime, // Reschedule with backoff
+              },
+            });
+            
+            results.push({ 
+              id: email.id, 
+              status: 'retry_scheduled', 
+              reason: String(sendResult.error),
+              nextRetry: nextRetryTime,
+              attemptNumber: newRetryCount
+            });
+            
+            console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime}`);
+          }
+        }
+      } catch (error) {
+        // Handle unexpected errors with retry mechanism
+        const newRetryCount = email.retry_count + 1;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        if (newRetryCount >= MAX_RETRY_COUNT) {
+          // Max retries reached, mark as permanently failed
           await prisma.scheduled_email.update({
             where: { id: email.id },
             data: {
               status: 'FAILED',
-              error: String(sendResult.error),
-              retry_count: email.retry_count + 1,
+              error: `Failed after ${MAX_RETRY_COUNT} attempts due to exception: ${errorMessage}`,
+              retry_count: newRetryCount,
             },
           });
           
-          results.push({ id: email.id, status: 'failed', reason: String(sendResult.error) });
+          results.push({ 
+            id: email.id, 
+            status: 'permanently_failed', 
+            reason: `Max retry count (${MAX_RETRY_COUNT}) reached. Error: ${errorMessage}` 
+          });
+        } else {
+          // Calculate next retry time with exponential backoff
+          const nextRetryTime = calculateNextRetryTime(newRetryCount - 1);
+          
+          // Update for retry
+          await prisma.scheduled_email.update({
+            where: { id: email.id },
+            data: {
+              status: 'PENDING', // Keep as pending for next attempt
+              error: errorMessage,
+              retry_count: newRetryCount,
+              scheduled_for: nextRetryTime, // Reschedule with backoff
+            },
+          });
+          
+          results.push({ 
+            id: email.id, 
+            status: 'retry_scheduled', 
+            reason: errorMessage,
+            nextRetry: nextRetryTime,
+            attemptNumber: newRetryCount
+          });
+          
+          console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime} after error: ${errorMessage}`);
         }
-      } catch (error) {
-        console.error(`Error processing scheduled email ${email.id}:`, error);
-        
-        // Update the email status to FAILED
-        await prisma.scheduled_email.update({
-          where: { id: email.id },
-          data: {
-            status: 'FAILED',
-            error: error instanceof Error ? error.message : String(error),
-            retry_count: email.retry_count + 1,
-          },
-        });
-        
-        results.push({ id: email.id, status: 'failed', reason: error instanceof Error ? error.message : String(error) });
       }
     }
 

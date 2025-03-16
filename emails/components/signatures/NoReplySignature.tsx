@@ -2,20 +2,21 @@ import * as React from 'react';
 import { Section, Text, Link, Img } from '@react-email/components';
 
 type NoReplySignatureProps = {
-  env?: {
-    NEXT_PUBLIC_SUPABASE_URL?: string;
-    NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
-    NEXT_PUBLIC_PRODUCTHUNT_URL?: string;
-    NEXT_PUBLIC_LINKEDIN_URL?: string;
-    NEXT_PUBLIC_X_URL?: string;
-    NEXT_PUBLIC_G2_URL?: string;
+  publicUrls?: {
+    supabasePublicUrl?: string;
+    supabaseStoragePath?: string;
+    producthuntUrl?: string;
+    linkedinUrl?: string;
+    xUrl?: string;
+    g2Url?: string;
+    [key: string]: string | undefined;
   };
 };
 
-export const NoReplySignature: React.FC<NoReplySignatureProps> = ({ env }) => {
-  // Construct the image URLs from environment variables or use fallbacks
-  const supabaseUrl = env?.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const storagePath = env?.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
+export const NoReplySignature: React.FC<NoReplySignatureProps> = ({ publicUrls = {} }) => {
+  // Construct the image URLs from public URLs or use fallbacks
+  const supabaseUrl = publicUrls.supabasePublicUrl || '';
+  const storagePath = publicUrls.supabaseStoragePath || '';
   
   // Social media icons from Supabase
   const xIconUrl = supabaseUrl && storagePath 
@@ -34,11 +35,11 @@ export const NoReplySignature: React.FC<NoReplySignatureProps> = ({ env }) => {
     ? `${supabaseUrl}${storagePath}/images/mail_g2.png`
     : 'https://via.placeholder.com/20';
     
-  // Social media URLs from environment variables
-  const productHuntUrl = env?.NEXT_PUBLIC_PRODUCTHUNT_URL || process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com';
-  const linkedinUrl = env?.NEXT_PUBLIC_LINKEDIN_URL || process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/';
-  const xUrl = env?.NEXT_PUBLIC_X_URL || process.env.NEXT_PUBLIC_X_URL || 'https://x.com';
-  const g2Url = env?.NEXT_PUBLIC_G2_URL || process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com';
+  // Social media URLs from public URLs or use defaults
+  const productHuntUrl = publicUrls.producthuntUrl || 'https://www.producthunt.com';
+  const linkedinUrl = publicUrls.linkedinUrl || 'https://www.linkedin.com/company/processflow1/';
+  const xUrl = publicUrls.xUrl || 'https://x.com';
+  const g2Url = publicUrls.g2Url || 'https://www.g2.com';
 
   return (
     <Section style={{ marginTop: '32px' }}>

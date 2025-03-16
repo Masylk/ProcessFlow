@@ -77,6 +77,16 @@ async function scheduleEmail(
  */
 async function sendWelcomeEmailToUser(email: string, firstName: string): Promise<{ success: boolean; error?: any }> {
   try {
+    // Get safe public URLs for email templates
+    const safePublicUrls = {
+      supabasePublicUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      supabaseStoragePath: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '',
+      producthuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com',
+      linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/',
+      xUrl: process.env.NEXT_PUBLIC_X_URL || 'https://x.com',
+      g2Url: process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com',
+    };
+
     const result = await sendReactEmail({
       to: email,
       subject: 'Welcome to ProcessFlow - Here\'s how to start decently',
@@ -85,6 +95,7 @@ async function sendWelcomeEmailToUser(email: string, firstName: string): Promise
         firstName: firstName,
         jeanRdvLink: process.env.JEAN_RDV_LINK || 'https://cal.com/jean-willame-v2aevm/15min',
         sender: 'jean',
+        publicUrls: safePublicUrls,
       },
       sender: 'jean',
     });

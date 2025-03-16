@@ -20,9 +20,10 @@ type WelcomeEmailProps = {
   firstName: string;
   jeanRdvLink: string;
   sender: SenderType;
-  env?: {
-    NEXT_PUBLIC_SUPABASE_URL?: string;
-    NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
+  publicUrls?: {
+    supabasePublicUrl?: string;
+    supabaseStoragePath?: string;
+    [key: string]: string | undefined;
   };
 };
 
@@ -30,13 +31,13 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
   firstName,
   jeanRdvLink,
   sender = 'jean',
-  env,
+  publicUrls = {},
 }) => {
-  // Construct the logo URL from environment variables or use a fallback
-  const supabaseUrl = env?.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const storagePath = env?.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
+  // Construct the logo URL from public URLs or use a fallback
+  const supabaseUrl = publicUrls.supabasePublicUrl || '';
+  const storagePath = publicUrls.supabaseStoragePath || '';
   
-  // Use a fallback image URL if the environment variables aren't available
+  // Use a fallback image URL if the URLs aren't available
   const logoUrl = supabaseUrl && storagePath 
     ? `${supabaseUrl}${storagePath}/assets/logo/logo-pf-in-app.png`
     : 'https://via.placeholder.com/200x60?text=ProcessFlow';
@@ -106,7 +107,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
             </Text>
             
             {/* Add the appropriate signature based on sender */}
-            <EmailSignature sender={sender} env={env} />
+            <EmailSignature sender={sender} publicUrls={publicUrls} />
           </Section>
           
           <Hr style={{ borderTop: '1px solid #e6e6e6', margin: '32px 0' }} />
