@@ -31,7 +31,7 @@ Table user {
   active_workspace workspace
   workspaces user_workspace [not null]
   created_versions workflow_version [not null]
-  scheduled_emails scheduled_emails [not null]
+  scheduled_emails scheduled_email [not null]
 }
 
 Table workspace {
@@ -301,7 +301,7 @@ Table stroke_line {
   workflow workflow [not null]
 }
 
-Table scheduled_emails {
+Table scheduled_email {
   id Int [pk, increment]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
@@ -432,4 +432,4 @@ Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
 
-Ref: scheduled_emails.user_id > user.id [delete: Cascade]
+Ref: scheduled_email.user_id > user.id [delete: Cascade]

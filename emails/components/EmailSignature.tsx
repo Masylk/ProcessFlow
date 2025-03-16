@@ -9,6 +9,10 @@ type EmailSignatureProps = {
   env?: {
     NEXT_PUBLIC_SUPABASE_URL?: string;
     NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
+    NEXT_PUBLIC_PRODUCTHUNT_URL?: string;
+    NEXT_PUBLIC_LINKEDIN_URL?: string;
+    NEXT_PUBLIC_X_URL?: string;
+    NEXT_PUBLIC_G2_URL?: string;
   };
 };
 

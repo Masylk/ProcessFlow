@@ -5,6 +5,10 @@ type JeanSignatureProps = {
   env?: {
     NEXT_PUBLIC_SUPABASE_URL?: string;
     NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
+    NEXT_PUBLIC_PRODUCTHUNT_URL?: string;
+    NEXT_PUBLIC_LINKEDIN_URL?: string;
+    NEXT_PUBLIC_X_URL?: string;
+    NEXT_PUBLIC_G2_URL?: string;
   };
 };
 
@@ -36,10 +40,10 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ env }) => {
     : 'https://via.placeholder.com/20';
     
   // Social media URLs from environment variables
-  const productHuntUrl = process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com';
-  const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/';
-  const xUrl = process.env.NEXT_PUBLIC_X_URL || 'https://x.com';
-  const g2Url = process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com';
+  const productHuntUrl = env?.NEXT_PUBLIC_PRODUCTHUNT_URL || process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com';
+  const linkedinUrl = env?.NEXT_PUBLIC_LINKEDIN_URL || process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/';
+  const xUrl = env?.NEXT_PUBLIC_X_URL || process.env.NEXT_PUBLIC_X_URL || 'https://x.com';
+  const g2Url = env?.NEXT_PUBLIC_G2_URL || process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com';
 
   return (
     <Section style={{ marginTop: '32px' }}>

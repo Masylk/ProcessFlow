@@ -117,6 +117,10 @@ export async function sendReactEmail<T extends object>({
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Not set',
       storagePath: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH ? 'Set' : 'Not set',
       smtpServer: process.env.SMTP_SERVER ? 'Set' : 'Not set',
+      productHuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL ? 'Set' : 'Not set',
+      linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL ? 'Set' : 'Not set',
+      xUrl: process.env.NEXT_PUBLIC_X_URL ? 'Set' : 'Not set',
+      g2Url: process.env.NEXT_PUBLIC_G2_URL ? 'Set' : 'Not set',
     });
     
     // Add the environment variables to props for use in the component
@@ -125,6 +129,10 @@ export async function sendReactEmail<T extends object>({
       env: {
         NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
         NEXT_PUBLIC_SUPABASE_STORAGE_PATH: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH,
+        NEXT_PUBLIC_PRODUCTHUNT_URL: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL,
+        NEXT_PUBLIC_LINKEDIN_URL: process.env.NEXT_PUBLIC_LINKEDIN_URL,
+        NEXT_PUBLIC_X_URL: process.env.NEXT_PUBLIC_X_URL,
+        NEXT_PUBLIC_G2_URL: process.env.NEXT_PUBLIC_G2_URL,
       },
     } as unknown as T;
     
