@@ -5,15 +5,20 @@ import { useConnectModeStore } from '../store/connectModeStore';
 
 interface MergeNodeProps extends NodeProps {
   data: NodeData;
+  id: string;
 }
 
-function MergeNode({ data }: MergeNodeProps) {
+function MergeNode({ id, data }: MergeNodeProps) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   return (
     <div
       className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
     >
+      <div className="absolute -top-6 left-0 text-xs text-gray-500">
+        ID: {id.replace('block-', '')}
+      </div>
+
       <Handle
         type="target"
         id="top"

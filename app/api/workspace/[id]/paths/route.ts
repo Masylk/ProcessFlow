@@ -184,6 +184,15 @@ export async function GET(
               data: { type: BlockEndType.MERGE }
             });
             endTypeBlock.type = BlockEndType.MERGE;
+          } else if (endTypeBlock.child_paths?.length === 0 && 
+                    endTypeBlock.type !== BlockEndType.LAST && 
+                    endTypeBlock.type !== BlockEndType.END) {
+            needsUpdate = true;
+            await prisma.block.update({
+              where: { id: endTypeBlock.id },
+              data: { type: BlockEndType.LAST }
+            });
+            endTypeBlock.type = BlockEndType.LAST;
           }
         } else {
           // Create default end-type block if none exists

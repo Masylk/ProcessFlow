@@ -4,6 +4,8 @@ import {
   } from '@xyflow/react';
 import { Path } from '../types';
 import { BlockEndType } from '@/types/block';
+import { usePathsStore } from '../store/pathsStore';
+
 // Helper function to get all descendant path IDs for a child path
 const getDescendantPathIds = (childPath: Path | undefined): number[] => {
   if (!childPath?.blocks || childPath.blocks.length === 0) return [];
@@ -61,7 +63,6 @@ export function processPath(
   handleAddBlockOnEdge: (position: number,
     path: Path,
     event?: { clientX: number; clientY: number }) => void,
-  allPaths: Path[],
   visitedPaths = new Set<string>(),
   handlePathsUpdate: (paths: Path[]) => void,
   handleStrokeLinesUpdate: (strokeLines: any[]) => void,
@@ -69,6 +70,8 @@ export function processPath(
   strokeLineVisibilities: [number, boolean][],
   hasSiblings: boolean = false
 ): void {
+  const allPaths = usePathsStore.getState().paths;
+  
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
@@ -83,6 +86,7 @@ export function processPath(
     console.log('path', path);
     console.log('endBlock', endBlock);
     const pathHasChildren = endBlock?.child_paths && endBlock.child_paths.length > 0;
+    const pathIsMerged = endBlock?.child_paths && endBlock.child_paths.length  === 1;
     nodes.push({
       id: nodeId,
       type: block.type === 'BEGIN' 
@@ -116,6 +120,7 @@ export function processPath(
         strokeLinesVisible: visibility,
         hasSiblings,
         pathHasChildren,
+        pathIsMerged,
       },
     });
     
@@ -171,7 +176,6 @@ export function processPath(
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
-          allPaths,
           visitedPaths,
           handlePathsUpdate,
           handleStrokeLinesUpdate,

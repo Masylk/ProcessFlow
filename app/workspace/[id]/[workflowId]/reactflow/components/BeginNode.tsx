@@ -69,6 +69,11 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Add block ID display */}
+      <div className="absolute -top-6 left-0 text-xs text-gray-500">
+        ID: {id.replace('block-', '')}
+      </div>
+
       <Handle
         type="target"
         position={Position.Top}

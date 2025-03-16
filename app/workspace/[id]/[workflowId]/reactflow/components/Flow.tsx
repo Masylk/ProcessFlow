@@ -40,6 +40,8 @@ import ConnectNodeModal from './ConnectNodeModal';
 import { useConnectModeStore } from '../store/connectModeStore';
 import { PathSelectionBox } from './PathSelectionBox';
 import MergeNode from './MergeNode';
+import { usePathsStore } from '../store/pathsStore';
+import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -103,6 +105,8 @@ export function Flow({
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
   const viewportHeight = useStore((store) => store.height);
+
+  const setAllPaths = usePathsStore((state) => state.setPaths);
 
   // Calculate bounds based on viewport size
   const translateExtent = useMemo((): [[number, number], [number, number]] => {
@@ -215,7 +219,6 @@ export function Flow({
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
-          paths,
           new Set<string>(),
           setPaths,
           setStrokeLines,
@@ -495,6 +498,10 @@ export function Flow({
     };
   }, [setPaths]);
 
+  useEffect(() => {
+    setAllPaths(paths);
+  }, [paths, setAllPaths]);
+
   return (
     <div
       className={`h-screen w-full transition-colors duration-300 ${
@@ -540,6 +547,10 @@ export function Flow({
         <MiniMap />
       </ReactFlow>
       <PathSelectionBox />
+      <UpdatePathSelectionBox
+        workspaceId={workspaceId}
+        workflowId={workflowId}
+      />
       {showDropdown && dropdownDatas && (
         <AddBlockDropdownMenu
           dropdownDatas={dropdownDatas}

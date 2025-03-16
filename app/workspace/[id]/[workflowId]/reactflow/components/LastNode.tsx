@@ -15,6 +15,10 @@ function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   return (
     <div className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}>
+      <div className="absolute -top-6 left-0 text-xs text-gray-500">
+        ID: {id.replace('block-', '')}
+      </div>
+
       <Handle
         type="target"
         position={Position.Top}
