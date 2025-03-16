@@ -1,6 +1,26 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+// Import the email components and utility
+import { sendReactEmail } from '@/lib/email';
+import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
+
+/**
+ * Helper function to send welcome email to users
+ */
+async function sendWelcomeEmailToUser(email: string, firstName: string) {
+  return sendReactEmail({
+    to: email,
+    subject: 'Welcome to ProcessFlow - Here\'s how to start decently',
+    Component: WelcomeEmail,
+    props: {
+      firstName,
+      jeanRdvLink: process.env.JEAN_RDV_LINK || 'https://cal.com/jean-willame-v2aevm/15min',
+      sender: 'jean',
+    },
+    sender: 'jean',
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -156,6 +176,9 @@ export async function POST(request: Request) {
             }
           }
         });
+
+        // Send welcome email
+        await sendWelcomeEmailToUser(dbUser.email, dbUser.first_name);
         break;
 
       case 'INVITED_USER':
@@ -177,6 +200,9 @@ export async function POST(request: Request) {
             }
           }
         });
+
+        // Send welcome email for invited users too
+        await sendWelcomeEmailToUser(dbUser.email, dbUser.first_name);
         break;
 
       default:
