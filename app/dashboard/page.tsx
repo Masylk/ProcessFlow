@@ -118,6 +118,9 @@ export default function Page() {
   // Add this state near other state declarations
   const [showTutorial, setShowTutorial] = useState(false);
 
+  // Add this state near other state declarations
+  const [activeTab, setActiveTab] = useState<string>('Workspace');
+
   // Fetch user data from your API
   useEffect(() => {
     const fetchUser = async () => {
@@ -293,7 +296,7 @@ export default function Page() {
       return;
     }
 
-    const newWorkflow = await createWorkflow(
+    const result = await createWorkflow(
       name,
       description,
       activeWorkspace.id,
@@ -301,14 +304,22 @@ export default function Page() {
       [] // team tags
     );
 
-    if (newWorkflow) {
+    if (result.error) {
+      toast.error(result.error.title, {
+        description: result.error.description,
+      });
+      return;
+    }
+
+    if (result.workflow) {
+      const workflow = result.workflow;
       // Update the list of workspaces
       setWorkspaces((prevWorkspaces) =>
         prevWorkspaces.map((workspace) =>
-          workspace.id === newWorkflow.workspaceId
+          workspace.id === workflow.workspaceId
             ? {
                 ...workspace,
-                workflows: [...workspace.workflows, newWorkflow],
+                workflows: [...workspace.workflows, workflow],
               }
             : workspace
         )
@@ -319,12 +330,14 @@ export default function Page() {
         prev
           ? {
               ...prev,
-              workflows: [...prev.workflows, newWorkflow],
+              workflows: [...prev.workflows, workflow],
             }
           : prev
       );
 
-      console.log('Workflow created successfully:', newWorkflow);
+      toast.success('Workflow Created', {
+        description: 'Your new workflow has been created successfully.',
+      });
     }
   };
 
@@ -1123,6 +1136,7 @@ export default function Page() {
           isSettingsView={isSettingsView}
           setIsSettingsView={setIsSettingsView}
           setWorkspaces={setWorkspaces}
+          setActiveTab={setActiveTab}
         />
       )}
 
@@ -1196,6 +1210,7 @@ export default function Page() {
                 workspace={activeWorkspace || undefined}
                 onWorkspaceUpdate={onWorkspaceUpdate}
                 onWorkspaceDelete={onWorkspaceDelete}
+                initialTab={activeTab}
               />
             </div>
           ) : (

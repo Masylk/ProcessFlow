@@ -209,17 +209,63 @@ export async function POST(req: NextRequest) {
   try {
     const {
       name,
-      description, // Added field for description
+      description,
       workspace_id,
-      folder_id = null, // Optional field for folder association
-      team_tags = [], // Optional field for team tags
+      folder_id = null,
+      team_tags = [],
     } = await req.json();
+
+    // Get workspace with subscription info and workflow count
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: Number(workspace_id) },
+      include: {
+        subscription: true,
+        workflows: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      );
+    }
+
+    // Log workspace details for debugging
+    console.log('Workspace details:', {
+      id: workspace.id,
+      subscription: workspace.subscription,
+      workflowCount: workspace.workflows.length,
+      isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
+    });
+
+    // Check if workspace is on free plan and has reached the limit
+    const isFreePlan = !workspace.subscription || workspace.subscription.plan_type === 'FREE';
+    const hasReachedLimit = workspace.workflows.length >= 5;
+
+    if (isFreePlan && hasReachedLimit) {
+      console.log('Blocking workflow creation: Free plan limit reached', {
+        isFreePlan,
+        workflowCount: workspace.workflows.length,
+      });
+      return NextResponse.json(
+        {
+          error: 'Free plan is limited to 5 workflows',
+          title: 'Workflow Limit Reached',
+          description: 'Your free plan is limited to 5 workflows. Upgrade to create more workflows.',
+          status: 403
+        },
+        { status: 403 }
+      );
+    }
 
     // Create the workflow
     const newWorkflow = await prisma.workflow.create({
       data: {
         name,
-        description, // Include description in the workflow creation
+        description,
         workspace_id: Number(workspace_id),
         folder_id: folder_id ? Number(folder_id) : null,
         team_tags,

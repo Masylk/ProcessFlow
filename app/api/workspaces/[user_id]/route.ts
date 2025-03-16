@@ -104,6 +104,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
                 user: true,
               },
             },
+            subscription: true,
           },
         },
       },
@@ -147,6 +148,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
               user: true,
             },
           },
+          subscription: true,
         },
       });
 
