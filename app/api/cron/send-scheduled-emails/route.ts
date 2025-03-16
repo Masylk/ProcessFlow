@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { sendReactEmail } from '@/lib/email';
 import { FeatureUpdateEmail } from '@/emails/templates/ShareRoadmap';
 import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
+import { FeedbackRequestEmail } from '@/emails/templates/FeedbackRequestEmail';
 import { SenderType } from '@/lib/email';
 
 // Define types for email templates
@@ -22,6 +23,11 @@ const EMAIL_TEMPLATES: Record<string, EmailTemplateConfig> = {
   'FEATURE_UPDATE': {
     Component: FeatureUpdateEmail,
     subject: 'Sneak peek: new ProcessFlow features you\'ll love',
+    sender: 'jean',
+  },
+  'FEEDBACK_REQUEST': {
+    Component: FeedbackRequestEmail,
+    subject: 'How is your experience with ProcessFlow going? 😊',
     sender: 'jean',
   },
   // Add more email types as needed
@@ -52,6 +58,38 @@ function calculateNextRetryTime(retryCount: number): Date {
   const nextRetry = new Date();
   nextRetry.setMinutes(nextRetry.getMinutes() + delayMinutes);
   return nextRetry;
+}
+
+// Check if a user has created at least one flow
+async function hasUserCreatedFlow(userId: number): Promise<boolean> {
+  try {
+    // Count workflows in workspaces where the user is a member
+    const userWorkspaces = await prisma.user_workspace.findMany({
+      where: {
+        user_id: userId,
+      },
+      select: {
+        workspace_id: true,
+      },
+    });
+
+    const workspaceIds = userWorkspaces.map(uw => uw.workspace_id);
+    
+    // Count workflows in these workspaces
+    const workflowCount = await prisma.workflow.count({
+      where: {
+        workspace_id: {
+          in: workspaceIds,
+        },
+      },
+    });
+
+    return workflowCount > 0;
+  } catch (error) {
+    console.error(`Error checking if user ${userId} has created flows:`, error);
+    // Default to false if there's an error
+    return false;
+  }
 }
 
 export const dynamic = 'force-dynamic';
@@ -116,6 +154,36 @@ export async function GET(request: Request) {
         // Get the metadata from the scheduled email
         const metadata = email.metadata as Record<string, any> || {};
         
+        // Special handling for FEEDBACK_REQUEST emails
+        if (email.email_type === 'FEEDBACK_REQUEST' && metadata.requiresFlowCheck) {
+          // Check if the user has created at least one flow
+          const hasCreatedFlow = await hasUserCreatedFlow(email.user_id);
+          
+          if (!hasCreatedFlow) {
+            // User hasn't created a flow yet, so don't send the email
+            // Mark as cancelled instead of failed
+            await prisma.scheduled_email.update({
+              where: { id: email.id },
+              data: {
+                status: 'CANCELLED',
+                error: 'User has not created any flows yet',
+              },
+            });
+            
+            results.push({ 
+              id: email.id, 
+              status: 'cancelled', 
+              reason: 'User has not created any flows yet' 
+            });
+            
+            console.log(`Feedback request email ${email.id} cancelled: User ${email.user_id} has not created any flows`);
+            continue;
+          }
+          
+          // User has created flows, so we can proceed with sending the email
+          console.log(`User ${email.user_id} has created flows, proceeding with feedback request email`);
+        }
+        
         // Send the email
         const sendResult = await sendReactEmail({
           to: email.user.email,
@@ -123,6 +191,7 @@ export async function GET(request: Request) {
           Component: templateConfig.Component,
           props: {
             ...metadata,
+            firstName: email.user.first_name,
             // Pass only the safe public URLs instead of raw environment variables
             publicUrls: safePublicUrls,
           },
@@ -243,9 +312,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Error processing scheduled emails:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to process scheduled emails' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
