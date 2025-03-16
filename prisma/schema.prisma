@@ -41,6 +41,7 @@ model user {
   active_workspace        workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
   workspaces              user_workspace[]
   created_versions        workflow_version[] @relation("created_by")
+  scheduled_emails        scheduled_email[]
 
   @@index([active_workspace_id])
   @@index([email])
@@ -372,6 +373,28 @@ model stroke_line {
   @@map("stroke_line")
 }
 
+model scheduled_email {
+  id            Int                @id @default(autoincrement())
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @default(now()) @updatedAt
+  user_id       Int
+  email_type    String
+  scheduled_for DateTime
+  status        email_status       @default(PENDING)
+  sent          Boolean            @default(false)
+  sent_at       DateTime?
+  metadata      Json?
+  error         String?
+  retry_count   Int                @default(0)
+  user          user               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([scheduled_for])
+  @@index([status])
+  @@index([sent])
+  @@map("scheduled_emails")
+}
+
 enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
@@ -421,4 +444,12 @@ enum workflow_status {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum email_status {
+  PENDING
+  CANCELLED
+  PAUSED
+  SENT
+  FAILED
 }
