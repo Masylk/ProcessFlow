@@ -160,4 +160,4 @@ export async function sendReactEmail<T extends object>({
     console.error('Error rendering or sending React email:', error);
     return { success: false, error };
   }
-} 
+}  
