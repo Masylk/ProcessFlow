@@ -2,18 +2,23 @@ import * as React from 'react';
 import { Section, Text, Link, Img } from '@react-email/components';
 
 type JeanSignatureProps = {
-  env?: {
-    NEXT_PUBLIC_SUPABASE_URL?: string;
-    NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
+  publicUrls?: {
+    supabasePublicUrl?: string;
+    supabaseStoragePath?: string;
+    producthuntUrl?: string;
+    linkedinUrl?: string;
+    xUrl?: string;
+    g2Url?: string;
+    [key: string]: string | undefined;
   };
 };
 
-export const JeanSignature: React.FC<JeanSignatureProps> = ({ env }) => {
-  // Construct the profile image URL from environment variables or use a fallback
-  const supabaseUrl = env?.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const storagePath = env?.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
+export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} }) => {
+  // Construct the profile image URL from public URLs or use a fallback
+  const supabaseUrl = publicUrls.supabasePublicUrl || '';
+  const storagePath = publicUrls.supabaseStoragePath || '';
   
-  // Use a fallback image URL if the environment variables aren't available
+  // Use a fallback image URL if the URLs aren't available
   const profileImageUrl = supabaseUrl && storagePath 
     ? `${supabaseUrl}${storagePath}/images/Profil_pean_pillame.png`
     : 'https://via.placeholder.com/48';
@@ -35,11 +40,11 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ env }) => {
     ? `${supabaseUrl}${storagePath}/images/mail_g2.png`
     : 'https://via.placeholder.com/20';
     
-  // Social media URLs from environment variables
-  const productHuntUrl = process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com';
-  const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/';
-  const xUrl = process.env.NEXT_PUBLIC_X_URL || 'https://x.com';
-  const g2Url = process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com';
+  // Social media URLs from public URLs or use defaults
+  const productHuntUrl = publicUrls.producthuntUrl || 'https://www.producthunt.com';
+  const linkedinUrl = publicUrls.linkedinUrl || 'https://www.linkedin.com/company/processflow1/';
+  const xUrl = publicUrls.xUrl || 'https://x.com';
+  const g2Url = publicUrls.g2Url || 'https://www.g2.com';
 
   return (
     <Section style={{ marginTop: '32px' }}>

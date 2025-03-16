@@ -2,16 +2,21 @@ import * as React from 'react';
 import { Section, Text, Link, Img } from '@react-email/components';
 
 type ClientServiceSignatureProps = {
-  env?: {
-    NEXT_PUBLIC_SUPABASE_URL?: string;
-    NEXT_PUBLIC_SUPABASE_STORAGE_PATH?: string;
+  publicUrls?: {
+    supabasePublicUrl?: string;
+    supabaseStoragePath?: string;
+    producthuntUrl?: string;
+    linkedinUrl?: string;
+    xUrl?: string;
+    g2Url?: string;
+    [key: string]: string | undefined;
   };
 };
 
-export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ env }) => {
-  // Construct the image URLs from environment variables or use fallbacks
-  const supabaseUrl = env?.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const storagePath = env?.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
+export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ publicUrls = {} }) => {
+  // Construct the image URLs from public URLs or use fallbacks
+  const supabaseUrl = publicUrls.supabasePublicUrl || '';
+  const storagePath = publicUrls.supabaseStoragePath || '';
   
   // Social media icons from Supabase
   const xIconUrl = supabaseUrl && storagePath 
@@ -29,6 +34,12 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
   const g2IconUrl = supabaseUrl && storagePath 
     ? `${supabaseUrl}${storagePath}/images/mail_g2.png`
     : 'https://via.placeholder.com/20';
+    
+  // Social media URLs from environment variables
+  const productHuntUrl = publicUrls.producthuntUrl || process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com';
+  const linkedinUrl = publicUrls.linkedinUrl || process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/';
+  const xUrl = publicUrls.xUrl || process.env.NEXT_PUBLIC_X_URL || 'https://x.com';
+  const g2Url = publicUrls.g2Url || process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com';
 
   return (
     <Section style={{ marginTop: '32px' }}>
@@ -55,7 +66,7 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
         </Link>
       </Text>
       <div style={{ marginTop: '8px' }}>
-        <Link href="https://www.producthunt.com" style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
+        <Link href={productHuntUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={productHuntIconUrl}
             width="20"
@@ -70,7 +81,7 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
             }}
           />
         </Link>
-        <Link href="https://www.linkedin.com/company/processflow1/" style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
+        <Link href={linkedinUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={linkedinIconUrl}
             width="20"
@@ -85,7 +96,7 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
             }}
           />
         </Link>
-        <Link href="https://x.com" style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
+        <Link href={xUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={xIconUrl}
             width="20"
@@ -100,7 +111,7 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
             }}
           />
         </Link>
-        <Link href="https://www.g2.com" style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
+        <Link href={g2Url} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={g2IconUrl}
             width="20"

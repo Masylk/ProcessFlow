@@ -13,13 +13,13 @@ import { Text } from '../components/Text';
 import { Heading } from '../components/Heading';
 import { Button } from '../components/Button';
 import { EmailSignature } from '../components/EmailSignature';
-import { CustomFont } from '../components/CustomFont';
 import { SenderType } from '@/lib/email';
+import { CustomFont } from '../components/CustomFont';
 
-type WelcomeEmailProps = {
+type FeatureUpdateEmailProps = {
   firstName: string;
-  jeanRdvLink: string;
-  sender: SenderType;
+  roadmapLink: string;
+  sender?: SenderType;
   publicUrls?: {
     supabasePublicUrl?: string;
     supabaseStoragePath?: string;
@@ -27,9 +27,9 @@ type WelcomeEmailProps = {
   };
 };
 
-export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
+export const FeatureUpdateEmail: React.FC<FeatureUpdateEmailProps> = ({
   firstName,
-  jeanRdvLink,
+  roadmapLink,
   sender = 'jean',
   publicUrls = {},
 }) => {
@@ -47,7 +47,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
       <Head>
         <CustomFont
           fontFamily="Inter"
-          fallbackFontFamily={['system-ui', 'sans-serif']}
+          fallbackFontFamily={["system-ui", "sans-serif"]}
           webFont={{
             url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
             format: 'woff2',
@@ -73,37 +73,35 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
           </Section>
           
           <Section>
-            <Heading>Welcome to ProcessFlow! 🎉</Heading>
+            <Heading>Sneak peek: new ProcessFlow features you'll love</Heading>
             <Text>Hello {firstName},</Text>
-            <Text>We are thrilled to welcome you to ProcessFlow! 🎉</Text>
             <Text>
-              As an early user, we're offering you 50% OFF for your first 6 months on the "Early Adopter" plan with this promo code: <strong>EARLYFLOW50</strong>
-            </Text>
-            
-            <Heading level={2}>Need help getting started?</Heading>
-            <Text>You can:</Text>
-            <Text>
-              - Hop on a call with founders of ProcessFlow
+              We are excited to share with you the next steps in our development journey. 🌟
             </Text>
             <Text>
-              - Join the Slack and ask immediately to us or our community!
-            </Text>
-            <Text>
-              - In any other case, feel free to answer this email 🙂
+              We are actively working to improve your experience and add new features. To stay informed about what's coming, check out our Development Roadmap!
             </Text>
             
             <Section style={{ textAlign: 'center', margin: '32px 0' }}>
-              <Button href={jeanRdvLink}>
-                Schedule a call with founders
+              <Button href={roadmapLink}>
+                Join our Roadmap
               </Button>
             </Section>
             
             <Text>
-              We are a small team that values close connections with our community, so do not hesitate to contact us!
+              On our roadmap, you'll see in real-time what the ProcessFlow team is working on.
             </Text>
             
             <Text>
-              Looking forward to helping you create amazing process flows,
+              You can also contribute by voting for the features you find most useful.
+            </Text>
+            
+            <Text>
+              Your feedback is invaluable to us, so don't hesitate to let us know what could help you in your process creation.
+            </Text>
+            
+            <Text>
+              Talk to you soon,
             </Text>
             
             {/* Add the appropriate signature based on sender */}
@@ -121,4 +119,4 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
       </Body>
     </Html>
   );
-}; 
+};
