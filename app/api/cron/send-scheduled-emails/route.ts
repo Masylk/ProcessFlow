@@ -4,6 +4,7 @@ import { sendReactEmail } from '@/lib/email';
 import { FeatureUpdateEmail } from '@/emails/templates/ShareRoadmap';
 import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { FeedbackRequestEmail } from '@/emails/templates/FeedbackRequestEmail';
+import { ProcessLimitEmail } from '@/emails/templates/ProcessLimitEmail';
 import { SenderType } from '@/lib/email';
 
 // Define types for email templates
@@ -29,6 +30,11 @@ const EMAIL_TEMPLATES: Record<string, EmailTemplateConfig> = {
     Component: FeedbackRequestEmail,
     subject: 'How is your experience with ProcessFlow going? 😊',
     sender: 'jean',
+  },
+  'PROCESS_LIMIT_REACHED': {
+    Component: ProcessLimitEmail,
+    subject: 'Process limit reached - Here\'s a tip to get more 😉',
+    sender: 'contact',
   },
   // Add more email types as needed
 };
@@ -122,6 +128,12 @@ export async function GET(request: Request) {
     });
 
     console.log(`Found ${scheduledEmails.length} emails to send`);
+    
+    // Log process limit emails specifically
+    const processLimitEmails = scheduledEmails.filter(email => email.email_type === 'PROCESS_LIMIT_REACHED');
+    if (processLimitEmails.length > 0) {
+      console.log(`Found ${processLimitEmails.length} PROCESS_LIMIT_REACHED emails to send`);
+    }
 
     const results = [];
     
@@ -184,6 +196,11 @@ export async function GET(request: Request) {
           console.log(`User ${email.user_id} has created flows, proceeding with feedback request email`);
         }
         
+        // Special logging for PROCESS_LIMIT_REACHED emails
+        if (email.email_type === 'PROCESS_LIMIT_REACHED') {
+          console.log(`Processing PROCESS_LIMIT_REACHED email for user: ${email.user.email}`);
+        }
+        
         // Send the email
         const sendResult = await sendReactEmail({
           to: email.user.email,
@@ -210,6 +227,10 @@ export async function GET(request: Request) {
           });
           
           results.push({ id: email.id, status: 'sent', messageId: sendResult.messageId });
+          
+          if (email.email_type === 'PROCESS_LIMIT_REACHED') {
+            console.log(`Successfully sent PROCESS_LIMIT_REACHED email to ${email.user.email}`);
+          }
         } else {
           // Handle failed email with retry mechanism
           const newRetryCount = email.retry_count + 1;

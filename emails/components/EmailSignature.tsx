@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ClientServiceSignature } from './signatures/ClientServiceSignature';
+import { ClientServiceSignature } from './signatures/CustomerServiceSignature';
 import { JeanSignature } from './signatures/JeanSignature';
 import { NoReplySignature } from './signatures/NoReplySignature';
 import { SenderType } from '@/lib/email';
