@@ -316,6 +316,10 @@ Table scheduled_emails {
   error String
   retry_count Int [not null, default: 0]
   user user [not null]
+
+  indexes {
+    (user_id, email_type) [unique]
+  }
 }
 
 Enum onboarding_step {

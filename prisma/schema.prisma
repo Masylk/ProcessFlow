@@ -180,6 +180,7 @@ model folder {
   emote        String?
   team_tags    String[]
   path         String?
+  position     Int        @default(0)
   parent       folder?    @relation("folder_hierarchy", fields: [parent_id], references: [id])
   subfolders   folder[]   @relation("folder_hierarchy")
   workspace    workspace  @relation(fields: [workspace_id], references: [id])
