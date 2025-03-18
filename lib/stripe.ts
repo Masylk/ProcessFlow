@@ -110,7 +110,7 @@ export async function createStripeCheckoutSession({
       metadata: enrichedMetadata,
       billing_address_collection: 'required',
       allow_promotion_codes: true,
-      currency: 'usd', // Default to USD, can be changed based on user's location
+      currency: 'eur', // Changed from USD to EUR to match the price configuration
     });
   } catch (error) {
     console.error('Error creating Stripe checkout session:', error);
