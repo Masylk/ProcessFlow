@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { useColors } from '@/app/theme/hooks';
 // import { PreviewEdgePortal } from './PreviewEdgePortal';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
+import { useModalStore } from '../../store/modalStore';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -29,6 +30,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const colors = useColors();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { setTargetBlockId, setPreviewEdgeId } = useConnectModeStore();
+  const setConnectData = useModalStore((state) => state.setConnectData);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [blurTimeout, setBlurTimeout] = useState<NodeJS.Timeout | null>(null);
 
@@ -137,19 +139,23 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const handleConfirm = () => {
     if (selectedNodeId && label.trim()) {
       setPreviewEdge(null);
-      onPreviewUpdate?.(null);  
+      onPreviewUpdate?.(null);
       onConfirm(selectedNodeId, label);
     }
   };
 
-  const handleNodeSelect = (targetNodeId: string) => {
-    setTargetBlockId(targetNodeId);
+  const handleNodeSelect = (nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setConnectData({
+      sourceNode: sourceNode,
+      targetNode: getNode(nodeId),
+    });
 
     // Create and set preview edge
     const previewEdge = {
       id: 'preview-edge',
       source: sourceNode.id,
-      target: targetNodeId,
+      target: nodeId,
       type: 'strokeEdge',
       data: {
         preview: true,

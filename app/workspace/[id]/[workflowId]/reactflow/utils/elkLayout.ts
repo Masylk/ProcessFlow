@@ -6,16 +6,11 @@ import { BlockEndType } from '@/types/block';
 const elk = new ELK();
 
 export async function createElkLayout(nodes: Node[], edges: Edge[]) {
-  console.log('Creating layout for nodes:', nodes);
-  console.log('Creating layout for edges:', edges);
 
   const nodeIds = new Set(nodes.map((node) => node.id));
   const validEdges = edges.filter(
     (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)
   );
-  console.log('Edges:', edges);
-  console.log('Nodes ids:', nodeIds);
-  console.log('Valid edges:', validEdges);
 
   const isEndTypeNode = (type: string | undefined) => 
     type && Object.values(BlockEndType).map(t => t.toLowerCase()).includes(type);
@@ -48,8 +43,6 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     edges: elkEdges,
   };
 
-  console.log('ELK Graph:', elkGraph);
-
   const layoutOptions = {
     'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
@@ -69,19 +62,14 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     'elk.layered.spacing.baseValue': '80',
     'elk.separateConnectedComponents': 'true',
     'elk.spacing': '80',
+    'elk.layered.layering.wideNodesOnMultipleLayers': 'OFF',
     'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
-    'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
     'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',
-    'elk.spacing.individualOverride': 'true',
-    'elk.partitioning.activate': 'true',
-    'elk.layered.compaction.postCompaction.strategy': 'CENTER',
-    'elk.layered.crossingMinimization.positionChoiceConstraint': 'BALANCED'
   };
 
   try {
     const layout = await elk.layout(elkGraph, { layoutOptions });
-    console.log('ELK Layout result:', layout);
 
     if (!layout || !layout.children) {
       console.error('Invalid layout result:', layout);

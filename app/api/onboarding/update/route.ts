@@ -5,15 +5,16 @@ import prisma from '@/lib/prisma';
 import { sendReactEmail } from '@/lib/email';
 import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { scheduleFollowUpEmail, scheduleTestEmail } from '@/lib/scheduledEmails';
+import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackRequestEmail';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
-// This approach avoids module resolution issues while maintaining type safety
 interface EmailScheduleResponse {
   success: boolean;
   error?: any;
   warnings?: {
     welcomeEmail?: any;
     followUpEmail?: any;
+    feedbackEmail?: any;
     emailError?: any;
   } | null;
 }
@@ -134,12 +135,23 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
       console.error('Failed to schedule follow-up email, but continuing with onboarding:', followUpResult.error);
     }
     
+    // Schedule feedback request email for 7 days later
+    // NOTE: This is the ONLY place where feedback request emails should be scheduled
+    // The scheduleFeedbackRequestEmail function has duplicate prevention built-in
+    const feedbackResult = await scheduleFeedbackRequestEmail(userId);
+    
+    if (!feedbackResult.success) {
+      // Log the error but continue with onboarding
+      console.error('Failed to schedule feedback request email, but continuing with onboarding:', feedbackResult.error);
+    }
+    
     return { 
       success: true,
       // Include warnings if any email operations failed
-      warnings: !welcomeResult.success || !followUpResult.success ? {
+      warnings: !welcomeResult.success || !followUpResult.success || !feedbackResult.success ? {
         welcomeEmail: welcomeResult.success ? null : welcomeResult.error,
         followUpEmail: followUpResult.success ? null : followUpResult.error,
+        feedbackEmail: feedbackResult.success ? null : feedbackResult.error,
       } : null
     };
   } catch (error) {

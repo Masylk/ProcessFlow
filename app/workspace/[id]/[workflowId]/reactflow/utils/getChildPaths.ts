@@ -8,14 +8,12 @@ import { Path } from '../types';
  */
 export function getChildPaths(path: Path, allPaths: Path[]): Path[] {
   if (!path || !Array.isArray(path.blocks) || path.blocks.length === 0) {
-    console.log('no path or no blocks', path);
     return [];
   }
 
   const childPaths: Path[] = [];
   const lastBlock = path.blocks[path.blocks.length - 1];
 
-  console.log('lastBlock', lastBlock);
   // Check child_paths relationships of the last block
   lastBlock.child_paths.forEach(childPathRelation => {
     // Find the full path data from allPaths

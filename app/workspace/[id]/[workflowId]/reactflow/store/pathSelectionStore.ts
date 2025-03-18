@@ -5,9 +5,11 @@ interface PathSelectionStore {
   selectedEndBlocks: number[];
   parentBlockId: number | null;
   workflowId: number;
+  mergeMode: boolean;
   setSelectedPaths: (paths: number[]) => void;
   setParentBlockId: (id: number | null) => void;
   togglePathSelection: (pathId: number, endBlockId: number, parentBlockId: number) => void;
+  setMergeMode: (enabled: boolean) => void;
   reset: () => void;
 }
 
@@ -16,8 +18,10 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
   selectedEndBlocks: [],
   parentBlockId: null,
   workflowId: parseInt(window.location.pathname.split('/')[3]), // Get from URL
+  mergeMode: false,
   setSelectedPaths: (paths) => set({ selectedPaths: paths }),
   setParentBlockId: (id) => set({ parentBlockId: id }),
+  setMergeMode: (enabled) => set({ mergeMode: enabled }),
   togglePathSelection: (pathId, endBlockId, parentBlockId) => {
     const { selectedPaths, selectedEndBlocks, parentBlockId: currentParentId } = get();
     
@@ -25,10 +29,13 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
       // Deselecting
       const newPaths = selectedPaths.filter(id => id !== pathId);
       const newEndBlocks = selectedEndBlocks.filter(id => id !== endBlockId);
+      
       set({ 
         selectedPaths: newPaths,
         selectedEndBlocks: newEndBlocks,
-        parentBlockId: newPaths.length === 0 ? null : currentParentId
+        parentBlockId: newPaths.length === 0 ? null : currentParentId,
+        // Disable merge mode if no paths are selected
+        mergeMode: newPaths.length > 0
       });
     } else {
       // Selecting
@@ -45,5 +52,10 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
       [...selectedPaths, pathId]);
     console.log('Parent Block ID:', parentBlockId);
   },
-  reset: () => set({ selectedPaths: [], selectedEndBlocks: [], parentBlockId: null }),
+  reset: () => set({ 
+    selectedPaths: [], 
+    selectedEndBlocks: [], 
+    parentBlockId: null,
+    mergeMode: false 
+  }),
 })); 

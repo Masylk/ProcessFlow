@@ -388,6 +388,7 @@ model scheduled_email {
   retry_count   Int                @default(0)
   user          user               @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([user_id, email_type], name: "unique_pending_email_per_user_type", map: "unique_pending_email_per_user_type_where")
   @@index([user_id])
   @@index([scheduled_for])
   @@index([status])

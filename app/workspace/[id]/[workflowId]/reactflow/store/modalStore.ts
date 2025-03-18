@@ -4,9 +4,12 @@ import { Node } from 'reactflow';
 
 interface ModalStore {
   showConnectModal: boolean;
-  connectData: { sourceNode: Node } | null;
+  connectData: { 
+    sourceNode: Node;
+    targetNode?: Node;
+  } | null;
   setShowConnectModal: (show: boolean) => void;
-  setConnectData: (data: { sourceNode: Node } | null) => void;
+  setConnectData: (data: { sourceNode: Node; targetNode?: Node } | null) => void;
   showParallelPathModal: boolean;
   modalData: any; // Replace 'any' with proper type if available
   setShowModal: (show: boolean) => void;
