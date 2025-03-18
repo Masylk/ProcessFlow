@@ -117,19 +117,39 @@ export async function sendReactEmail<T extends object>({
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Not set',
       storagePath: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH ? 'Set' : 'Not set',
       smtpServer: process.env.SMTP_SERVER ? 'Set' : 'Not set',
+      productHuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL ? 'Set' : 'Not set',
+      linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL ? 'Set' : 'Not set',
+      xUrl: process.env.NEXT_PUBLIC_X_URL ? 'Set' : 'Not set',
+      g2Url: process.env.NEXT_PUBLIC_G2_URL ? 'Set' : 'Not set',
     });
     
-    // Add the environment variables to props for use in the component
-    const enhancedProps = {
-      ...props,
-      env: {
-        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        NEXT_PUBLIC_SUPABASE_STORAGE_PATH: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH,
-      },
-    } as unknown as T;
+    // Create a copy of the props
+    const enhancedProps = { ...props } as any;
+    
+    // If publicUrls exists in props, enhance it with additional URLs
+    if (enhancedProps.publicUrls) {
+      enhancedProps.publicUrls = {
+        ...enhancedProps.publicUrls,
+        // Add social media URLs if not already present
+        producthuntUrl: enhancedProps.publicUrls.producthuntUrl || process.env.NEXT_PUBLIC_PRODUCTHUNT_URL,
+        linkedinUrl: enhancedProps.publicUrls.linkedinUrl || process.env.NEXT_PUBLIC_LINKEDIN_URL,
+        xUrl: enhancedProps.publicUrls.xUrl || process.env.NEXT_PUBLIC_X_URL,
+        g2Url: enhancedProps.publicUrls.g2Url || process.env.NEXT_PUBLIC_G2_URL,
+      };
+    } else {
+      // If publicUrls doesn't exist, create it
+      enhancedProps.publicUrls = {
+        supabasePublicUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseStoragePath: process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH,
+        producthuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL,
+        linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL,
+        xUrl: process.env.NEXT_PUBLIC_X_URL,
+        g2Url: process.env.NEXT_PUBLIC_G2_URL,
+      };
+    }
     
     // Render the React component to HTML
-    const emailHtml = await render(React.createElement(Component, enhancedProps));
+    const emailHtml = await render(React.createElement(Component, enhancedProps as unknown as T));
     
     // Log a sample of the rendered HTML for debugging
     console.log('Rendered email HTML sample:', emailHtml.substring(0, 200) + '...');
@@ -140,4 +160,4 @@ export async function sendReactEmail<T extends object>({
     console.error('Error rendering or sending React email:', error);
     return { success: false, error };
   }
-} 
+}  
