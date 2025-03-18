@@ -2,7 +2,7 @@ import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
-
+import { useEditModeStore } from '../../store/editModeStore';
 interface MergeNodeProps extends NodeProps {
   data: NodeData;
   id: string;
@@ -10,10 +10,10 @@ interface MergeNodeProps extends NodeProps {
 
 function MergeNode({ id, data }: MergeNodeProps) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
-
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
   return (
     <div
-      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-50' : 'opacity-100'}`}
+      className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-50' : 'opacity-100'}`}
       onClick={() =>
         console.log(
           'Longest sibling path and path length:',

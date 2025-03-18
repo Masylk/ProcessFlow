@@ -1,7 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import TextEditor from './TextEditor';
-import { Block } from '../types';
+import { Block, TaskType } from '../types';
+import BlockMediaVisualizer from './BlockMediaVisualizer';
+import MediaUploader from './MediaUploader';
+import IconModifier from './IconModifier';
+import { useEditModeStore } from '../store/editModeStore';
 
 interface BlockDetailsSidebarProps {
   block: Block;
@@ -16,65 +20,85 @@ export default function BlockDetailsSidebar({
 }: BlockDetailsSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingAverageTime, setIsEditingAverageTime] = useState(false);
   const [title, setTitle] = useState(block.title || '');
-  const [isSaving, setIsSaving] = useState(false);
+  const [averageTime, setAverageTime] = useState(block.average_time || '');
+  const [taskType, setTaskType] = useState(block.task_type || 'MANUAL');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [description, setDescription] = useState(block.description || '');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
-  const handleTitleSave = async () => {
-    if (isSaving) return;
+  const setEditMode = useEditModeStore((state) => state.setEditMode);
 
-    try {
-      setIsSaving(true);
-      const response = await fetch(`/api/blocks/${block.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: title,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update title');
-      }
-
-      onUpdate({ title });
-      setIsEditingTitle(false);
-    } catch (error) {
-      console.error('Error updating title:', error);
-      setTitle(block.title || '');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  useEffect(() => {
+    setEditMode(true, block.id.toString());
+    return () => setEditMode(false);
+  }, [block.id, setEditMode]);
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleTitleSave();
+      onUpdate({ title });
+      setIsEditingTitle(false);
     } else if (e.key === 'Escape') {
       setTitle(block.title || '');
       setIsEditingTitle(false);
     }
   };
 
-  console.log('BlockDetailsSidebar - Block Data:', {
-    id: block?.id,
-    title: block?.title,
-    type: block?.type,
-    description: block?.description,
-    taskType: block?.task_type,
-    averageTime: block?.average_time,
-    lastModified: block?.last_modified,
-    icon: block?.icon,
-    image: block?.image,
-    position: block?.position,
-  });
+  const handleAverageTimeKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === 'Enter') {
+      onUpdate({ average_time: averageTime });
+      setIsEditingAverageTime(false);
+    } else if (e.key === 'Escape') {
+      setAverageTime(block.average_time || '');
+      setIsEditingAverageTime(false);
+    }
+  };
+
+  // Only allow numbers in average time input with 12 digits limit
+  const handleAverageTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if ((value === '' || /^\d+$/.test(value)) && value.length <= 12) {
+      setAverageTime(value);
+    }
+  };
+
+  const handleTaskTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newType = e.target.value;
+    setTaskType(newType);
+    onUpdate({ task_type: newType as TaskType });
+  };
+
+  const handleDescriptionUpdate = () => {
+    if (description !== block.description) {
+      onUpdate({ description });
+    }
+    setIsEditingDescription(false);
+  };
+
+  const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleDescriptionUpdate();
+    } else if (e.key === 'Escape') {
+      setDescription(block.description || '');
+      setIsEditingDescription(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('blockId', block.id.toString());
+    navigator.clipboard.writeText(url.toString());
+  };
 
   return createPortal(
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className="fixed inset-0 bg-black bg-opacity-0 z-40"
         onClick={onClose}
       />
 
@@ -98,10 +122,13 @@ export default function BlockDetailsSidebar({
         {/* Container for the buttons to be aligned to the far right */}
         <div className="absolute top-4 right-4 flex gap-2">
           {/* Link Button */}
-          <button className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2">
+          <button
+            onClick={handleCopyLink}
+            className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
+          >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
-              alt="Link"
+              alt="Copy Link"
               className="w-4 h-4"
             />
           </button>
@@ -120,17 +147,13 @@ export default function BlockDetailsSidebar({
           <>
             {/* Information Section */}
             <div className="flex items-center mt-8 h-[50px] space-x-4">
-              <div className="w-10 h-10 rounded-lg border border-[#e4e7ec] flex items-center justify-center">
-                {block.icon && (
-                  <img src={block.icon} alt="Block Icon" className="w-6 h-6" />
-                )}
-              </div>
+              <IconModifier block={block} onUpdate={onUpdate} />
               {isEditingTitle ? (
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  onBlur={handleTitleSave}
+                  onBlur={() => onUpdate({ title })}
                   onKeyDown={handleTitleKeyDown}
                   autoFocus
                   className="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 outline-none bg-transparent"
@@ -177,22 +200,125 @@ export default function BlockDetailsSidebar({
                 </div>
 
                 {/* Average Time */}
-                <div className="flex justify-start items-center space-x-[45px]">
+                <div className="flex justify-start items-center space-x-[36px]">
                   <div className="text-[#344054] text-sm font-normal font-['Inter']">
                     Average Time
                   </div>
-                  <div className="text-[#667085] text-xs font-normal font-['Inter']">
-                    {block.average_time || 'N/A'}
-                  </div>
+                  {isEditingAverageTime ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={averageTime}
+                        onChange={handleAverageTimeChange}
+                        onBlur={() => {
+                          onUpdate({ average_time: averageTime });
+                          setIsEditingAverageTime(false);
+                        }}
+                        onKeyDown={handleAverageTimeKeyDown}
+                        autoFocus
+                        className="text-xs font-normal font-['Inter'] outline-none border border-gray-300 rounded px-2 py-1 w-16"
+                        placeholder="Enter time"
+                      />
+                      <span className="text-xs text-[#667085]">min</span>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => setIsEditingAverageTime(true)}
+                      className="text-[#667085] text-xs font-normal font-['Inter'] cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
+                    >
+                      {averageTime ? `${averageTime} min` : 'N/A'}
+                    </div>
+                  )}
                 </div>
 
                 {/* Task Type */}
-                <div className="flex justify-start items-center space-x-[100px]">
+                <div className="flex justify-start items-center space-x-[94px]">
                   <div className="text-[#344054] text-sm font-normal font-['Inter']">
                     Type
                   </div>
-                  <div className="text-[#667085] text-xs font-normal font-['Inter']">
-                    {block.task_type || 'Manual'}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center justify-between text-xs font-normal font-['Inter'] text-[#667085] outline-none hover:bg-gray-50 rounded px-2 py-1 pr-8 cursor-pointer min-w-[100px]"
+                    >
+                      {taskType === 'MANUAL' ? 'Manual' : 'Automatic'}
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M2.5 4.5L6 8L9.5 4.5"
+                            stroke="#667085"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                        <button
+                          onClick={() => {
+                            handleTaskTypeChange({
+                              target: { value: 'MANUAL' },
+                            } as any);
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between"
+                        >
+                          Manual
+                          {taskType === 'MANUAL' && (
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                            >
+                              <path
+                                d="M2 6L5 9L10 3"
+                                stroke="#667085"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleTaskTypeChange({
+                              target: { value: 'AUTOMATIC' },
+                            } as any);
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-2 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between"
+                        >
+                          Automatic
+                          {taskType === 'AUTOMATIC' && (
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                            >
+                              <path
+                                d="M2 6L5 9L10 3"
+                                stroke="#667085"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,22 +329,35 @@ export default function BlockDetailsSidebar({
               <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-3">
                 Description
               </div>
-              <TextEditor value={block.description || ''} onChange={() => {}} />
+              <div
+                className="min-h-[100px] rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200"
+                onClick={() => setIsEditingDescription(true)}
+              >
+                <TextEditor
+                  value={description}
+                  onChange={setDescription}
+                  onBlur={handleDescriptionUpdate}
+                  onKeyDown={handleDescriptionKeyDown}
+                  readOnly={!isEditingDescription}
+                  className={`p-3 text-sm text-gray-600 ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
+                  placeholder="Add a description..."
+                />
+              </div>
             </div>
 
             {/* Media Section */}
-            <div className="flex flex-col justify-start mt-2 h-[126px]">
+            <div className="flex flex-col justify-start mt-2">
               <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-2">
                 Media
               </div>
-              {block.image && (
-                <div className="relative w-full h-[267px]">
-                  <img
-                    className="w-full h-full object-cover rounded-xl"
-                    src={block.image}
-                    alt="Block Media"
-                  />
-                </div>
+              {block.image ? (
+                <BlockMediaVisualizer
+                  block={block}
+                  altText="Block Media"
+                  onUpdate={onUpdate}
+                />
+              ) : (
+                <MediaUploader block={block} onUpdate={onUpdate} />
               )}
             </div>
           </>

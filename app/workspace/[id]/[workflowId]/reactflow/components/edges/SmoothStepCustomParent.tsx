@@ -1,5 +1,6 @@
 import { BaseEdge, EdgeProps, getSmoothStepPath } from '@xyflow/react';
 import { useConnectModeStore } from '../../store/connectModeStore';
+import { useEditModeStore } from '../../store/editModeStore';
 
 function SmoothStepCustomParent({
   sourceX,
@@ -21,6 +22,7 @@ function SmoothStepCustomParent({
   });
 
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
 
   return (
     <BaseEdge
@@ -31,7 +33,9 @@ function SmoothStepCustomParent({
         strokeWidth: 2,
         stroke: '#b1b1b7',
       }}
-      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+      className={`transition-opacity duration-300 ${
+        isConnectMode || isEditMode ? 'opacity-40' : ''
+      }`}
     />
   );
 }

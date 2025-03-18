@@ -9,6 +9,7 @@ import {
   useStore,
 } from '@xyflow/react';
 import { useConnectModeStore } from '../../store/connectModeStore';
+import { useEditModeStore } from '../../store/editModeStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -63,6 +64,7 @@ function StrokeEdge({
   const { screenToFlowPosition } = useReactFlow();
   const { isConnectMode, previewEdgeId } = useConnectModeStore();
   const zoom = useStore((state) => state.transform[2]);
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -132,8 +134,8 @@ function StrokeEdge({
           strokeDasharray: '10,5',
           markerEnd: `url(#${markerId})`,
           opacity:
-            isConnectMode && id !== previewEdgeId
-              ? 0.3
+            isConnectMode || isEditMode
+              ? 0.4
               : data?.isVisible === false
                 ? 0
                 : 1,

@@ -2,23 +2,34 @@ import React from 'react';
 
 interface TextEditorProps {
   value: string;
-  onChange: (content: string) => void;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  readOnly?: boolean;
+  className?: string;
+  placeholder?: string;
 }
 
-const TextEditor: React.FC<TextEditorProps> = ({
+export default function TextEditor({
   value,
   onChange,
-}) => {
+  onBlur,
+  onKeyDown,
+  readOnly = false,
+  className = '',
+  placeholder = '',
+}: TextEditorProps) {
   return (
-    <div className="overflow-hidden flex flex-col h-[180px] rounded-sm">
+    <div className={className}>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-full p-3 text-sm font-['Inter'] rounded-lg border border-gray-200 resize-none focus:outline-none focus:border-blue-400"
-        placeholder="Add a description..."
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        className="w-full h-full min-h-[80px] bg-transparent resize-none focus:outline-none"
       />
     </div>
   );
-};
-
-export default TextEditor; 
+}

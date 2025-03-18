@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
+import { useEditModeStore } from '../../store/editModeStore';
 
 function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const handleClick = (e: React.MouseEvent) => {
@@ -12,10 +13,10 @@ function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   };
 
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
-
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
   return (
     <div
-      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+      className={`transition-opacity duration-300 ${isConnectMode || isEditMode  ? 'opacity-40' : ''}`}
     >
       <Handle
         type="target"

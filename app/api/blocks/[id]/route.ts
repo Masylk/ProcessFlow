@@ -140,6 +140,7 @@ export async function PATCH(req: NextRequest) {
 
     // Delete the previous image if the image URL has changed
     if (existingImageUrl && existingImageUrl !== image) {
+      console.log('deleting image', existingImageUrl);
       await deleteFile(existingImageUrl);
     }
 
