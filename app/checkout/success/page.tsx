@@ -94,6 +94,57 @@ interface PageProps {
   searchParams: Promise<SearchParams>;
 }
 
+async function handleSubscriptionActivated(sessionId: string, workspaceId: string) {
+  try {
+    // Get the session details from Stripe
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+      apiVersion: '2025-02-24.acacia',
+    });
+    
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (session.subscription) {
+      // Get the subscription details
+      const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+      
+      if (subscription.status === 'active') {
+        // Find the user who made the purchase
+        const user = await prisma.user.findFirst({
+          where: { 
+            workspaces: {
+              some: {
+                workspace_id: parseInt(workspaceId)
+              }
+            }
+          },
+        });
+        
+        if (user) {
+          // Send the subscription activated email
+          const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/subscription-activated`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              workspaceId: parseInt(workspaceId),
+            }),
+          });
+          
+          if (!response.ok) {
+            console.error('Failed to send subscription activated email:', await response.text());
+          } else {
+            console.log('Successfully sent subscription activated email');
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error handling subscription activation:', error);
+  }
+}
+
 export default async function CheckoutSuccessPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const sessionId = String(searchParams?.session_id || '');
@@ -279,6 +330,8 @@ export default async function CheckoutSuccessPage(props: PageProps) {
     
     const wasUpgrade = workspace.subscription && workspace.subscription.status === 'CANCELED';
     const actionParam = wasUpgrade ? '&action=upgrade' : '';
+    
+    await handleSubscriptionActivated(sessionId, workspaceId);
     
     return redirect(`/dashboard?workspace=${workspaceId}&checkout=success${actionParam}`);
 
