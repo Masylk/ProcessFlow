@@ -4,6 +4,8 @@ import {
   } from '@xyflow/react';
 import { Path } from '../types';
 import { BlockEndType } from '@/types/block';
+import { usePathsStore } from '../store/pathsStore';
+
 // Helper function to get all descendant path IDs for a child path
 const getDescendantPathIds = (childPath: Path | undefined): number[] => {
   if (!childPath?.blocks || childPath.blocks.length === 0) return [];
@@ -61,18 +63,76 @@ export function processPath(
   handleAddBlockOnEdge: (position: number,
     path: Path,
     event?: { clientX: number; clientY: number }) => void,
-  allPaths: Path[],
   visitedPaths = new Set<string>(),
   handlePathsUpdate: (paths: Path[]) => void,
   handleStrokeLinesUpdate: (strokeLines: any[]) => void,
   updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
   strokeLineVisibilities: [number, boolean][],
-  hasSiblings: boolean = false
+  hasSiblings: boolean = false,
+  longestSiblingPath: number = 0
 ): void {
+  const allPaths = usePathsStore.getState().paths;
+  
+  console.log('longestSiblingPath', longestSiblingPath);
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
+  const pathLength = path.blocks.length - 2;
   path.blocks.forEach((block, index) => {
+    // If this is a merge node and there's a path length difference, add invisible nodes BEFORE the merge node
+    if (block.type === BlockEndType.MERGE && longestSiblingPath > pathLength) {
+      const numInvisibleNodes = longestSiblingPath - pathLength;
+      
+      let previousNodeId = index > 0 ? `block-${path.blocks[index - 1].id}` : '';
+      
+      for (let i = 0; i < numInvisibleNodes; i++) {
+        const invisibleNodeId = `invisible-${block.id}-${i}`;
+        const invisibleNode = {
+          id: invisibleNodeId,
+          type: 'invisible',
+          position: { x: 0, y: 0 },
+          data: {
+            label: '',
+            position: block.position - numInvisibleNodes + i,
+            type: 'invisible',
+            pathId: block.path_id,
+            path: path,
+          },
+        };
+        
+        // Insert invisible node before the merge node
+        nodes.splice(nodes.length - 1, 0, invisibleNode);
+
+        // Connect nodes
+        edges.push({
+          id: `edge-${previousNodeId}-${invisibleNodeId}`,
+          source: previousNodeId,
+          target: invisibleNodeId,
+          type: 'smoothstepCustom',
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          style: { stroke: '#b1b1b7', opacity: 0 },
+          animated: true,
+        });
+
+        previousNodeId = invisibleNodeId;
+      }
+
+      // Connect last invisible node to merge node
+      if (numInvisibleNodes > 0) {
+        edges.push({
+          id: `edge-${previousNodeId}-block-${block.id}`,
+          source: previousNodeId,
+          target: `block-${block.id}`,
+          type: 'smoothstepCustom',
+          sourceHandle: 'bottom',
+          targetHandle: 'top',
+          style: { stroke: '#b1b1b7', opacity: 0 },
+          animated: true,
+        });
+      }
+    }
+
     const nodeId = `block-${block.id}`;
     const visibility = strokeLineVisibilities.find(([id]) => id === block.id)?.[1] ?? true;
 
@@ -80,9 +140,8 @@ export function processPath(
     const endBlock = path.blocks.find(block => 
       block.type === 'END' || block.type === 'LAST' || block.type === 'PATH' || block.type === 'MERGE'
     );
-    console.log('path', path);
-    console.log('endBlock', endBlock);
     const pathHasChildren = endBlock?.child_paths && endBlock.child_paths.length > 0;
+    const pathIsMerged = endBlock?.child_paths && endBlock.child_paths.length  === 1;
     nodes.push({
       id: nodeId,
       type: block.type === 'BEGIN' 
@@ -107,6 +166,8 @@ export function processPath(
         onDelete: handleDeleteBlock,
         pathId: block.path_id,
         path: path,
+        block: block,
+        pathLength,
         handleAddBlockOnEdge,
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,
@@ -116,6 +177,8 @@ export function processPath(
         strokeLinesVisible: visibility,
         hasSiblings,
         pathHasChildren,
+        pathIsMerged,
+        longestSiblingPath,
       },
     });
     
@@ -141,6 +204,17 @@ export function processPath(
     // Sort child paths before processing them
     const sortedChildPaths = sortChildPaths(block.child_paths, allPaths);
     
+    // Find the longest blocks array among sibling paths
+    let longestSiblingPathLength = 0;
+    if (sortedChildPaths.length > 1) {
+      console.log('Sorted child paths:', sortedChildPaths);
+      longestSiblingPathLength = Math.max(
+        ...sortedChildPaths.map(childPathRelation => {
+          const fullPath = allPaths.find(p => p.id === childPathRelation.path.id);
+          return fullPath?.blocks.length || 0;
+        })
+      ) - 2;
+    }
     // Process each child path in the sorted order
     sortedChildPaths.forEach((childPathRelation) => {
       // Find the full path data from allPaths
@@ -171,13 +245,13 @@ export function processPath(
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
-          allPaths,
           visitedPaths,
           handlePathsUpdate,
           handleStrokeLinesUpdate,
           updateStrokeLineVisibility,
           strokeLineVisibilities,
-          block.child_paths.length > 1
+          block.child_paths.length > 1,
+          longestSiblingPathLength
         );
       }
     });

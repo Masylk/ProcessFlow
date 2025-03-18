@@ -1,7 +1,7 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../types';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { NodeData } from '../../types';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const handleClick = (e: React.MouseEvent) => {
@@ -14,7 +14,9 @@ function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
 
   return (
-    <div className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}>
+    <div
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+    >
       <Handle
         type="target"
         position={Position.Top}
@@ -25,6 +27,7 @@ function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           opacity: 0,
           background: '#60a5fa',
           border: '2px solid white',
+          pointerEvents: 'none',
         }}
       />
       <button
@@ -47,6 +50,7 @@ function LastNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           opacity: 0,
           background: '#60a5fa',
           border: '2px solid white',
+          pointerEvents: 'none',
         }}
       />
     </div>

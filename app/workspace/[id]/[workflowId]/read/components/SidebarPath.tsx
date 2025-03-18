@@ -44,7 +44,6 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
         if (response.ok) {
           const fetchedPathData: PathData = await response.json();
 
-          console.log(fetchedPathData.blocks);
           setBlockList(fetchedPathData.blocks);
           setPathData(fetchedPathData);
         } else {

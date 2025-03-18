@@ -19,27 +19,30 @@ import {
   useStore,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
-import CustomNode from './CustomNode';
-import CustomSmoothStepEdge from './CustomSmoothStepEdge';
+import CustomNode from './nodes/CustomNode';
+import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
 import { Block } from '@/types/block';
 import { NodeData, EdgeData, DropdownDatas, Path } from '../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
-import BeginNode from './BeginNode';
-import EndNode from './EndNode';
-import SmoothStepCustomParent from './SmoothStepCustomParent';
+import BeginNode from './nodes/BeginNode';
+import EndNode from './nodes/EndNode';
+import SmoothStepCustomParent from './edges/SmoothStepCustomParent';
 import { BlockEndType } from '@/types/block';
-import LastNode from './LastNode';
-import PathNode from './PathNode';
+import LastNode from './nodes/LastNode';
+import PathNode from './nodes/PathNode';
 import { useModalStore } from '../store/modalStore';
-import CreateParallelPathModal from './CreateParallelPathModal';
+import CreateParallelPathModal from './modals/CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import StrokeEdge from './StrokeEdge';
-import ConnectNodeModal from './ConnectNodeModal';
+import StrokeEdge from './edges/StrokeEdge';
+import ConnectNodeModal from './modals/ConnectNodeModal';
 import { useConnectModeStore } from '../store/connectModeStore';
 import { PathSelectionBox } from './PathSelectionBox';
-import MergeNode from './MergeNode';
+import MergeNode from './nodes/MergeNode';
+import { usePathsStore } from '../store/pathsStore';
+import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
+import InvisibleNode from './nodes/InvisibleNode';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -50,6 +53,7 @@ const nodeTypes = {
   last: LastNode,
   path: PathNode,
   merge: MergeNode,
+  invisible: InvisibleNode,
 } as const;
 
 const edgeTypes = {
@@ -103,6 +107,8 @@ export function Flow({
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
   const viewportHeight = useStore((store) => store.height);
+
+  const setAllPaths = usePathsStore((state) => state.setPaths);
 
   // Calculate bounds based on viewport size
   const translateExtent = useMemo((): [[number, number], [number, number]] => {
@@ -215,7 +221,6 @@ export function Flow({
           edges,
           handleDeleteBlock,
           handleAddBlockOnEdge,
-          paths,
           new Set<string>(),
           setPaths,
           setStrokeLines,
@@ -495,6 +500,10 @@ export function Flow({
     };
   }, [setPaths]);
 
+  useEffect(() => {
+    setAllPaths(paths);
+  }, [paths, setAllPaths]);
+
   return (
     <div
       className={`h-screen w-full transition-colors duration-300 ${
@@ -540,6 +549,10 @@ export function Flow({
         <MiniMap />
       </ReactFlow>
       <PathSelectionBox />
+      <UpdatePathSelectionBox
+        workspaceId={workspaceId}
+        workflowId={workflowId}
+      />
       {showDropdown && dropdownDatas && (
         <AddBlockDropdownMenu
           dropdownDatas={dropdownDatas}

@@ -3,10 +3,10 @@ import React from 'react';
 import { usePathSelectionStore } from '../store/pathSelectionStore';
 
 export function PathSelectionBox() {
-  const { selectedPaths, selectedEndBlocks, workflowId, reset } =
+  const { selectedPaths, selectedEndBlocks, workflowId, reset, mergeMode, setMergeMode } =
     usePathSelectionStore();
 
-  if (selectedPaths.length === 0) return null;
+  if (!mergeMode) return null;
 
   const handleMerge = async () => {
     try {
@@ -44,6 +44,11 @@ export function PathSelectionBox() {
     }
   };
 
+  const handleClose = () => {
+    setMergeMode(false);
+    reset();
+  };
+
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg border">
       <div className="flex items-center gap-2">
@@ -51,7 +56,7 @@ export function PathSelectionBox() {
           {selectedPaths.length} node{selectedPaths.length > 1 ? 's' : ''}{' '}
           selected
         </span>
-        <button onClick={reset} className="p-1 hover:bg-gray-100 rounded-full">
+        <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-full">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path
               d="M6 18L18 6M6 6l12 12"

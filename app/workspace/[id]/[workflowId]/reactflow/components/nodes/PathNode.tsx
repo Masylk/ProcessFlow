@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../types';
-import AddChildPathModal from './AddChildPathModal';
-import { createChildPaths } from '../utils/createChildPaths';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { NodeData } from '../../types';
+import AddChildPathModal from '../modals/AddChildPathModal';
+import { createChildPaths } from '../../utils/createChildPaths';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [showModal, setShowModal] = useState(false);
@@ -42,7 +42,9 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   };
 
   return (
-    <div className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}>
+    <div
+      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+    >
       <div
         className="transition-all duration-300 relative cursor-pointer"
         style={{
@@ -61,6 +63,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
+            pointerEvents: 'none',
           }}
         />
         <div
@@ -90,6 +93,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             opacity: 0,
             background: '#60a5fa',
             border: '2px solid white',
+            pointerEvents: 'none',
           }}
         />
       </div>

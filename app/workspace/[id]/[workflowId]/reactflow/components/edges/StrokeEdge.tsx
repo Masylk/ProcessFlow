@@ -8,7 +8,7 @@ import {
   EdgeLabelRenderer,
   useStore,
 } from '@xyflow/react';
-import { useConnectModeStore } from '../store/connectModeStore';
+import { useConnectModeStore } from '../../store/connectModeStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
