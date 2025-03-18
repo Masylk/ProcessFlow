@@ -32,7 +32,7 @@ export type SenderType = 'contact' | 'jean' | 'noreply';
 export const senders = {
   contact: {
     email: process.env.EMAIL_SENDER_CONTACT || 'contact@process-flow.io',
-    name: 'ProcessFlow Client Service',
+    name: 'ProcessFlow Team',
     signature: 'ClientServiceSignature',
   },
   jean: {
@@ -41,7 +41,7 @@ export const senders = {
     signature: 'JeanSignature',
   },
   noreply: {
-    email: process.env.EMAIL_SENDER_NOREPLY || 'noreply@process-flow.io',
+    email: process.env.EMAIL_SENDER_NOREPLY || 'noreply@notifications.process-flow.io',
     name: 'ProcessFlow',
     signature: 'NoReplySignature',
   },

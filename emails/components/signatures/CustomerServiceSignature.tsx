@@ -50,7 +50,7 @@ export const ClientServiceSignature: React.FC<ClientServiceSignatureProps> = ({ 
         margin: '0 0 4px 0',
         color: '#000000', // Explicitly set to black
       }}>
-        Client Service
+        Customer Service
       </Text>
       <Text style={{ 
         fontFamily: 'Inter, sans-serif',
