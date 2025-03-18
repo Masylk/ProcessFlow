@@ -140,6 +140,7 @@ Table folder {
   emote String
   team_tags String[] [not null]
   path String
+  position Int [not null, default: 0]
   parent folder
   subfolders folder [not null]
   workspace workspace [not null]
@@ -315,10 +316,6 @@ Table scheduled_emails {
   error String
   retry_count Int [not null, default: 0]
   user user [not null]
-
-  indexes {
-    (user_id, email_type) [unique]
-  }
 }
 
 Enum onboarding_step {
