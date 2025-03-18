@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function GET(req: NextRequest) {
   try {
@@ -81,6 +82,66 @@ export async function PATCH(
     console.error('Error updating path:', error);
     return NextResponse.json(
       { error: 'Failed to update path' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const id = req.nextUrl.pathname.split('/')[3];
+    const pathId = parseInt(id);
+
+    // Get the path and its blocks to handle image deletion
+    const path = await prisma.path.findUnique({
+      where: { id: pathId },
+      include: {
+        blocks: true,
+        parent_blocks: true,
+      },
+    });
+
+    if (!path) {
+      return NextResponse.json({ error: 'Path not found' }, { status: 404 });
+    }
+
+    // Delete images from storage if they exist
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+    if (bucketName) {
+      for (const block of path.blocks) {
+        if (block.image) {
+          const { error } = await supabase.storage
+            .from(bucketName)
+            .remove([block.image]);
+          
+          if (error) {
+            console.error('Error deleting image:', error);
+          }
+        }
+      }
+    }
+
+    // Delete the path and all related data in a transaction
+    await prisma.$transaction([
+      // Delete path_parent_block relationships
+      prisma.path_parent_block.deleteMany({
+        where: { path_id: pathId },
+      }),
+      // Delete all blocks in the path
+      prisma.block.deleteMany({
+        where: { path_id: pathId },
+      }),
+      // Delete the path itself
+      prisma.path.delete({
+        where: { id: pathId },
+      }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting path:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete path' },
       { status: 500 }
     );
   }

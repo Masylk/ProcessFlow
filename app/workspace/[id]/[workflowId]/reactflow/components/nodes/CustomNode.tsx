@@ -18,6 +18,8 @@ import { createPortal } from 'react-dom';
 import { useUpdateModeStore } from '../../store/updateModeStore';
 import { usePathsStore } from '../../store/pathsStore';
 import BlockDetailsSidebar from '../BlockDetailsSidebar';
+import { useEditModeStore } from '../../store/editModeStore';
+import { useClipboardStore } from '../../store/clipboardStore';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -27,10 +29,9 @@ interface CustomNodeProps extends NodeProps {
 }
 
 function CustomNode({ id, data, selected }: CustomNodeProps) {
-  // console.log(`Node ${id} pathHasChildren:`, data.pathHasChildren);
-
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const {
     getNodes,
     setEdges,
@@ -65,6 +66,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     originalEndBlocks,
   } = useUpdateModeStore();
   const allPaths = usePathsStore((state) => state.paths);
+  const setAllPaths = usePathsStore((state) => state.setPaths);
 
   // Get the current zoom level from ReactFlow store
   const zoom = useStore((state) => state.transform[2]);
@@ -77,17 +79,124 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Add block state to track changes
   const [blockData, setBlockData] = useState(data.block);
 
-  // Handler for block updates
-  const handleBlockUpdate = (updatedData: Partial<Block>) => {
-    const newBlockData = {
-      ...blockData,
-      ...updatedData,
-    };
-    setBlockData(newBlockData);
+  // Add new state for image URL
+  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
 
-    // Update the node label if title changes
-    if (updatedData.title !== undefined) {
-      data.label = updatedData.title || 'Untitled Block';
+  const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+  const { isEditMode, selectedNodeId } = useEditModeStore();
+
+  const setCopiedBlock = useClipboardStore((state) => state.setCopiedBlock);
+
+  // Add useEffect to fetch signed URL when blockData.image changes
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (blockData.image) {
+        try {
+          const response = await fetch(
+            `/api/get-signed-url?path=${blockData.image}`
+          );
+          const data = await response.json();
+
+          if (response.ok && data.signedUrl) {
+            setSignedImageUrl(data.signedUrl);
+          } else {
+            setSignedImageUrl(null);
+            setBlockData((prev) => ({ ...prev, image: undefined }));
+            // Force re-render by updating node data
+            setNodes((nds) =>
+              nds.map((node) =>
+                node.id === id
+                  ? {
+                      ...node,
+                      data: {
+                        ...(node.data as NodeData),
+                        block: {
+                          ...(node.data as NodeData).block,
+                          image: undefined,
+                        },
+                      },
+                    }
+                  : node
+              )
+            );
+          }
+        } catch (error) {
+          console.error('Error fetching signed URL:', error);
+          setSignedImageUrl(null);
+          setBlockData((prev) => ({ ...prev, image: undefined }));
+          // Force re-render by updating node data
+          setNodes((nds) =>
+            nds.map((node) =>
+              node.id === id
+                ? {
+                    ...node,
+                    data: {
+                      ...(node.data as NodeData),
+                      block: {
+                        ...(node.data as NodeData).block,
+                        image: undefined,
+                      },
+                    },
+                  }
+                : node
+            )
+          );
+        }
+      } else {
+        setSignedImageUrl(null);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [blockData.image, id, setNodes]);
+
+  // Add the update method to handle all block updates
+  const handleBlockUpdate = async (updatedData: Partial<Block>) => {
+    try {
+      if (updatedData.image === undefined) {
+        updatedData.image = blockData.image;
+      }
+      const blockId = parseInt(id.replace('block-', ''));
+      const response = await fetch(`/api/blocks/${blockId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update block');
+
+      const updatedBlock = await response.json();
+      console.log('updatedBlock', updatedBlock);
+
+      // Preserve existing image if not explicitly updated
+      setBlockData((prev) => ({
+        ...prev,
+        ...updatedBlock,
+        image:
+          updatedData.image !== undefined ? updatedBlock.image : prev.image,
+      }));
+
+      if (updatedData.title !== undefined) {
+        data.label = updatedData.title || 'Untitled Block';
+      }
+
+      // Only update paths if image was changed
+      if (updatedData.image !== undefined) {
+        const updatedPaths = allPaths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...updatedBlock } : block
+          ),
+        }));
+
+        setAllPaths(updatedPaths);
+        data.onPathsUpdate?.(updatedPaths);
+      }
+
+      return updatedBlock;
+    } catch (error) {
+      console.error('Error updating block:', error);
+      throw error;
     }
   };
 
@@ -120,12 +229,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         x: rect.right - 144, // 144px is dropdown width
         y: rect.bottom + 4, // 4px offset
       };
-      console.log('Dropdown position:', {
-        rect,
-        zoom,
-        transform,
-        calculatedPosition: newPosition,
-      });
       setDropdownPosition(newPosition);
     }
     setShowDropdown(!showDropdown);
@@ -204,17 +307,48 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     // Get the parent blocks from the merge path
     const parentBlocks = mergePath.parent_blocks.map((pb) => pb.block_id);
 
-    console.log('Update mode activation:', {
-      mergeBlock,
-      mergePathId,
-      mergePath,
-      parentBlocks,
-    });
-
     setUpdateMode(true);
     setMergePathId(mergePathId);
     setSelectedEndBlocks(parentBlocks);
     setOriginalEndBlocks(parentBlocks);
+  };
+
+  const handleDuplicate = async () => {
+    try {
+      const response = await fetch(
+        `/api/blocks/${id.replace('block-', '')}/duplicate`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to duplicate block');
+
+      const result = await response.json();
+
+      // Update paths with the new data
+      setAllPaths(result.paths);
+      data.onPathsUpdate?.(result.paths);
+
+      setShowDropdown(false);
+    } catch (error) {
+      console.error('Error duplicating block:', error);
+    }
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCopiedBlock(blockData);
+    setShowDropdown(false);
+  };
+
+  // Add this function to handle copying link
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = new URL(window.location.href);
+    url.searchParams.set('blockId', id.replace('block-', ''));
+    navigator.clipboard.writeText(url.toString());
+    setShowDropdown(false);
   };
 
   const renderDropdown = () => {
@@ -268,6 +402,28 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             Update merge
           </button>
         )}
+        <button
+          onClick={handleCopy}
+          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+        >
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
+            alt="Copy"
+            className="w-4 h-4"
+          />
+          Copy
+        </button>
+        <button
+          onClick={handleCopyLink}
+          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+        >
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
+            alt="Copy Link"
+            className="w-4 h-4"
+          />
+          Copy Link
+        </button>
       </div>,
       document.body
     );
@@ -303,27 +459,28 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     const node = getNodes().find((n) => n.id === id);
     if (!node) return;
 
-    const adjustedNode = {
-      ...node,
-      position: {
-        y: node.position.y + 1000,
-        x: node.position.x + 2000, // Move 200px to the right
+    // Center on node and offset to the left to make room for sidebar
+    setViewport(
+      {
+        x: -(node.position.x - window.innerWidth / 2 + 500),
+        y: -(node.position.y - window.innerHeight / 2 + 200),
+        zoom: 1,
       },
-    };
-    fitView({
-      nodes: [adjustedNode],
-      duration: 800,
-      padding: 1,
-      minZoom: 0.4,
-      maxZoom: 1.5,
-    });
-  }, [id, getNodes, fitView]);
+      { duration: 800 }
+    );
+  }, [id, getNodes, setViewport]);
 
   // Modify the click handler to include zooming
   const handleNodeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowSidebar(true);
     zoomToNode();
+  };
+
+  const truncateDescription = (text: string, maxLength: number) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + '...';
   };
 
   return (
@@ -382,111 +539,182 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative transition-all duration-300 ${
-          isHighlighted ? 'scale-110' : ''
+        className={`relative rounded-lg border ${
+          selected ? 'border-[#3537cc] shadow-md' : 'border-[#e4e7ec]'
+        } ${isHighlighted ? 'bg-blue-50' : 'bg-white'} 
+        transition-all duration-300 min-w-[481px] max-w-[481px]
+        ${
+          (isEditMode && id !== `block-${selectedNodeId}`) ||
+          (isConnectMode &&
+            id !== connectData?.sourceNode?.id &&
+            id !== connectData?.targetNode?.id)
+            ? 'opacity-40'
+            : ''
         }`}
+        onClick={handleNodeClick}
       >
-        <div
-          className={`relative rounded-lg border ${
-            selected ? 'border-blue-400' : 'border-gray-200'
-          } bg-white shadow-sm hover:shadow-md transition-shadow duration-200 ${
-            showConnectModal && !isSourceOrTargetNode ? 'opacity-40' : ''
-          }`}
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="top"
           style={{
-            width: '481px',
-            minHeight: '120px',
-            padding: '16px',
+            width: 8,
+            height: 8,
+            opacity: 0,
+            background: '#60a5fa',
+            border: '2px solid white',
+            pointerEvents: 'none',
           }}
-          onClick={handleNodeClick}
-        >
-          <Handle
-            type="target"
-            position={Position.Top}
-            id="top"
-            style={{
-              width: 8,
-              height: 8,
-              opacity: 0,
-              background: '#60a5fa',
-              border: '2px solid white',
-              pointerEvents: 'none',
-            }}
-          />
-          <Handle
-            type="source"
-            position={Position.Left}
-            id="stroke_source"
-            style={{
-              width: 8,
-              height: 8,
-              background: '#b1b1b7',
-              border: '2px solid white',
-              top: '35%',
-              opacity: 0,
-              pointerEvents: 'none',
-            }}
-          />
-          <Handle
-            type="target"
-            position={Position.Left}
-            id="stroke_target"
-            style={{
-              width: 8,
-              height: 8,
-              background: '#b1b1b7',
-              border: '2px solid white',
-              top: '35%',
-              left: 0,
-              opacity: 0,
-              pointerEvents: 'none',
-            }}
-          />
-          <Handle
-            type="target"
-            position={Position.Left}
-            id="stroke_self_target"
-            style={{
-              width: 8,
-              height: 8,
-              background: '#b1b1b7',
-              border: '2px solid white',
-              top: '65%',
-              opacity: 0,
-              pointerEvents: 'none',
-            }}
-          />
-          <Handle
-            type="source"
-            position={Position.Bottom}
-            id="bottom"
-            style={{
-              width: 8,
-              height: 8,
-              opacity: 0,
-              background: '#60a5fa',
-              border: '2px solid white',
-              pointerEvents: 'none',
-            }}
-          />
-          <div className="flex justify-between items-start mb-2">
-            <div className="text-sm text-gray-500">
-              Position: {data.position}
-            </div>
-            <div className="relative">
-              <button
-                onClick={handleDropdownToggle}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-              >
+        />
+        <Handle
+          type="source"
+          position={Position.Left}
+          id="stroke_source"
+          style={{
+            width: 8,
+            height: 8,
+            background: '#b1b1b7',
+            border: '2px solid white',
+            top: '35%',
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="stroke_target"
+          style={{
+            width: 8,
+            height: 8,
+            background: '#b1b1b7',
+            border: '2px solid white',
+            top: '35%',
+            left: 0,
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="stroke_self_target"
+          style={{
+            width: 8,
+            height: 8,
+            background: '#b1b1b7',
+            border: '2px solid white',
+            top: '65%',
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          style={{
+            width: 8,
+            height: 8,
+            opacity: 0,
+            background: '#60a5fa',
+            border: '2px solid white',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div className="p-4 flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg border border-[#e4e7ec] flex items-center justify-center flex-shrink-0">
+              {blockData.icon ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                  alt="Menu"
-                  className="w-5 h-5"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                  alt="Block Icon"
+                  className="w-6 h-6"
                 />
-              </button>
-              {renderDropdown()}
+              ) : (
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                  alt="Default Icon"
+                  className="w-6 h-6"
+                />
+              )}
+            </div>
+
+            <div className="flex-grow">
+              <div className="flex items-start justify-between">
+                <h3 className="text-sm font-medium text-gray-900">
+                  {blockData.title || 'Untitled Block'}
+                </h3>
+                <button
+                  onClick={handleDropdownToggle}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                    alt="Menu"
+                    className="w-4 h-4"
+                  />
+                </button>
+              </div>
+
+              {blockData.description && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {showFullDescription ? (
+                    <>
+                      {blockData.description}
+                      {blockData.description.length > 50 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFullDescription(false);
+                          }}
+                          className="ml-1 text-blue-600 hover:underline"
+                        >
+                          Show less
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {truncateDescription(blockData.description, 50)}
+                      {blockData.description.length > 50 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFullDescription(true);
+                          }}
+                          className="ml-1 text-blue-600 hover:underline"
+                        >
+                          Read more
+                        </button>
+                      )}
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           </div>
-          <div className="text-gray-900">{data.label}</div>
+
+          {/* Image with signed URL */}
+          {signedImageUrl && (
+            <div className="rounded-lg overflow-hidden h-[267px] w-full">
+              <img
+                src={signedImageUrl}
+                alt="Block Media"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          {/* Average time - only show if defined */}
+          {blockData.average_time && (
+            <div className="flex items-center text-xs text-gray-500 mt-auto">
+              <span className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200">
+                {blockData.average_time} min
+              </span>
+            </div>
+          )}
         </div>
 
         {showCheckbox && (
@@ -518,6 +746,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             />
           </div>
         )}
+
+        {renderDropdown()}
       </div>
 
       {showSidebar && (

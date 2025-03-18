@@ -2,6 +2,7 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from '@xyflow/react';
 import { CSSProperties } from 'react';
 import { BlockEndType } from '@/types/block';
+import { Block } from '@/types/block';
 
 const elk = new ELK();
 
@@ -28,7 +29,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
            node.type === 'path' ? 32 :
            node.type === 'end' ? 48 :
            node.type === 'merge' ? 12 :
-           120,
+           (node.data?.block as Block)?.image ? 387 : 120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
@@ -46,9 +47,9 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const layoutOptions = {
     'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '100',
+    'elk.spacing.nodeNode': '40',
     'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-    'elk.spacing.componentComponent': '100',
+    'elk.spacing.componentComponent': '40',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
@@ -59,9 +60,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     'elk.alignment': 'CENTER',
     'elk.padding': '[top=50,left=50,bottom=50,right=50]',
     'elk.layered.crossingMinimization.semiInteractive': 'true',
-    'elk.layered.spacing.baseValue': '80',
+    'elk.layered.spacing.baseValue': '40',
     'elk.separateConnectedComponents': 'true',
-    'elk.spacing': '80',
     'elk.layered.layering.wideNodesOnMultipleLayers': 'OFF',
     'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',

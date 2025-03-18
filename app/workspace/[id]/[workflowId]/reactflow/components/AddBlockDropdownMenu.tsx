@@ -3,6 +3,7 @@ import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
 import { BlockEndType } from '@/types/block';
 import CreateParallelPathModal from './modals/CreateParallelPathModal';
+import { useClipboardStore } from '../store/clipboardStore';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -22,6 +23,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   onPathsUpdate,
 }) => {
   const [showParallelPathModal, setShowParallelPathModal] = useState(false);
+  const copiedBlock = useClipboardStore((state) => state.copiedBlock);
 
   const menuItems = [
     {
@@ -79,6 +81,34 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     },
     [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]
   );
+
+  const handlePasteBlock = async () => {
+    if (!copiedBlock) return;
+
+    try {
+      const response = await fetch(
+        `/api/blocks/${copiedBlock.id}/duplicate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            position: dropdownDatas.position,
+            path_id: dropdownDatas.path.id
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to paste block');
+
+      const result = await response.json();
+      onPathsUpdate(result.paths);
+      onClose();
+    } catch (error) {
+      console.error('Error pasting block:', error);
+    }
+  };
 
   const block = dropdownDatas.path.blocks.find(
     (b) => b.position === dropdownDatas.position
@@ -181,6 +211,23 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
               className="w-5 h-5"
             />
             <span>Merge paths</span>
+          </button>
+        )}
+
+        {copiedBlock && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePasteBlock();
+            }}
+            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
+          >
+            <img
+              src="/step-icons/default-icons/paste.svg"
+              alt="Paste"
+              className="w-5 h-5"
+            />
+            <span>Paste Block</span>
           </button>
         )}
       </div>

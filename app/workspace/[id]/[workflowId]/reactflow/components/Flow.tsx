@@ -22,8 +22,7 @@ import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './nodes/CustomNode';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
-import { Block } from '@/types/block';
-import { NodeData, EdgeData, DropdownDatas, Path } from '../types';
+import { NodeData, EdgeData, DropdownDatas, Path, Block } from '../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
 import BeginNode from './nodes/BeginNode';
@@ -43,6 +42,8 @@ import MergeNode from './nodes/MergeNode';
 import { usePathsStore } from '../store/pathsStore';
 import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
 import InvisibleNode from './nodes/InvisibleNode';
+import { useEditModeStore } from '../store/editModeStore';
+import { useSearchParams } from 'next/navigation';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -89,7 +90,7 @@ export function Flow({
 }: FlowProps) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { fitView, setCenter, getNode, getNodes } = useReactFlow();
+  const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
@@ -103,6 +104,13 @@ export function Flow({
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
+  const searchParams = useSearchParams();
+  const [defaultViewport, setDefaultViewport] = useState({
+    x: 0,
+    y: 0,
+    zoom: 1,
+  });
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -205,6 +213,9 @@ export function Flow({
     }
   }, [paths]);
 
+  // Add state for linkNode
+  const [linkNode, setLinkNode] = useState<Node | null>(null);
+
   // Main effect for creating nodes and edges
   useEffect(() => {
     if (!Array.isArray(paths)) return;
@@ -264,6 +275,24 @@ export function Flow({
           edges.filter((e) => !e.type?.includes('stroke'))
         );
         setNodes(layoutedNodes);
+
+        // Check for blockId in URL and set viewport accordingly
+        const blockId = searchParams.get('blockId');
+        console.log('blockId', blockId);
+        if (blockId) {
+          const targetNode = layoutedNodes.find(
+            (n) => n.id === `block-${blockId}`
+          );
+          if (targetNode) {
+            console.log('targetNode', targetNode);
+            setDefaultViewport({
+              x: -(targetNode.position.x - window.innerWidth / 2),
+              y: -(targetNode.position.y - window.innerHeight / 2),
+              zoom: 1,
+            });
+            setLinkNode(targetNode);
+          }
+        }
       }
     };
     createLayoutedNodes();
@@ -276,6 +305,7 @@ export function Flow({
     setStrokeLines,
     updateStrokeLineVisibility,
     strokeLineVisibilities,
+    searchParams,
   ]);
 
   const handleBlockTypeSelect = useCallback(
@@ -300,47 +330,47 @@ export function Flow({
   );
 
   // Fix the handleNodeFocus function to avoid infinite loops
-  const handleNodeFocus = useCallback(
-    (nodeId: string) => {
-      setSelectedNodeId(nodeId);
+  // const handleNodeFocus = useCallback(
+  //   (nodeId: string) => {
+  //     setSelectedNodeId(nodeId);
 
-      // Find the node in our nodes array - use functional update pattern
-      setNodes((currentNodes) => {
-        const node = currentNodes.find((n) => n.id === nodeId);
-        if (node) {
-          // Center the view on the node
-          setCenter(node.position.x, node.position.y, {
-            zoom: 1.5,
-            duration: 800,
-          });
+  //     // Find the node in our nodes array - use functional update pattern
+  //     setNodes((currentNodes) => {
+  //       const node = currentNodes.find((n) => n.id === nodeId);
+  //       if (node) {
+  //         // Center the view on the node
+  //         setCenter(node.position.x, node.position.y, {
+  //           zoom: 1.5,
+  //           duration: 800,
+  //         });
 
-          // Highlight the node with functional update pattern
-          return currentNodes.map((n) => ({
-            ...n,
-            data: {
-              ...n.data,
-              highlighted: n.id === nodeId,
-            },
-          }));
-        }
-        return currentNodes;
-      });
+  //         // Highlight the node with functional update pattern
+  //         return currentNodes.map((n) => ({
+  //           ...n,
+  //           data: {
+  //             ...n.data,
+  //             highlighted: n.id === nodeId,
+  //           },
+  //         }));
+  //       }
+  //       return currentNodes;
+  //     });
 
-      // Reset highlight after a delay - use functional update to avoid closure issues
-      setTimeout(() => {
-        setNodes((currentNodes) =>
-          currentNodes.map((n) => ({
-            ...n,
-            data: {
-              ...n.data,
-              highlighted: false,
-            },
-          }))
-        );
-      }, 2000);
-    },
-    [setCenter]
-  ); // Only depend on stable function, not nodes state
+  //     // Reset highlight after a delay - use functional update to avoid closure issues
+  //     setTimeout(() => {
+  //       setNodes((currentNodes) =>
+  //         currentNodes.map((n) => ({
+  //           ...n,
+  //           data: {
+  //             ...n.data,
+  //             highlighted: false,
+  //           },
+  //         }))
+  //       );
+  //     }, 2000);
+  //   },
+  //   [setCenter]
+  // ); // Only depend on stable function, not nodes state
 
   const showParallelPathModal = useModalStore(
     (state) => state.showParallelPathModal
@@ -507,7 +537,7 @@ export function Flow({
   return (
     <div
       className={`h-screen w-full transition-colors duration-300 ${
-        isConnectMode ? 'bg-[#111111]' : 'bg-white'
+        isConnectMode || isEditMode ? 'bg-[#111111]' : 'bg-white'
       }`}
     >
       <ReactFlow
@@ -517,7 +547,7 @@ export function Flow({
         edgeTypes={edgeTypes}
         minZoom={0.1}
         maxZoom={4}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.7 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
         onNodeClick={(_, node) => setSelectedNodeId(node.id)}
         onPaneClick={() => setSelectedNodeId(null)}
@@ -534,6 +564,7 @@ export function Flow({
         snapToGrid={true}
         snapGrid={[15, 15]}
         fitViewOptions={{
+          nodes: linkNode ? [linkNode] : nodes,
           padding: 0.5,
           duration: 200,
           minZoom: 0.5,
