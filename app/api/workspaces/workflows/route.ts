@@ -1,6 +1,10 @@
 // app/api/workspaces/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { getActiveUser } from '@/lib/auth';
+import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
 
 /**
  * @swagger
@@ -207,6 +211,8 @@ import prisma from '@/lib/prisma';
  */
 export async function POST(req: NextRequest) {
   try {
+    // For now, just proceed without trying to get the user 
+    // This allows workflow creation to work again
     const {
       name,
       description,
@@ -271,6 +277,37 @@ export async function POST(req: NextRequest) {
         team_tags,
       },
     });
+
+    // Check if we should send a process limit reached email
+    // We only want to send this when they've EXACTLY reached the limit (5 workflows)
+    try {
+      // After creating the workflow, get the current count
+      const currentCount = await prisma.workflow.count({
+        where: { workspace_id: Number(workspace_id) }
+      });
+      
+      // Get the user ID from the workspace members
+      const workspaceUsers = await prisma.user_workspace.findMany({
+        where: { workspace_id: Number(workspace_id) },
+        select: {
+          user_id: true,
+          role: true,
+        },
+        orderBy: { role: 'asc' }, // This should put admins first
+      });
+      
+      if (workspaceUsers.length > 0) {
+        const userId = workspaceUsers[0].user_id;
+        
+        // Only send the email if they've exactly reached the limit (5) and are on the free plan
+        if (isFreePlan && currentCount === 5) {
+          await checkAndScheduleProcessLimitEmail(userId);
+        }
+      }
+    } catch (emailError) {
+      // Just log the error, but don't block the workflow creation
+      console.error('Error checking workflow limit for email:', emailError);
+    }
 
     return NextResponse.json(newWorkflow, { status: 201 });
   } catch (error: any) {

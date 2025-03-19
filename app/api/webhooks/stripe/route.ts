@@ -271,6 +271,66 @@ export async function POST(req: Request) {
           await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
           break;
       }
+
+      // Handle the event
+      if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object as Stripe.Subscription;
+        
+        // Check if this is an Early Adopter plan
+        const earlyAdopterMonthlyPriceId = process.env.NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_MONTHLY_PRICE_ID;
+        const earlyAdopterAnnualPriceId = process.env.NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_ANNUAL_PRICE_ID;
+        
+        const isEarlyAdopterPlan = subscription.items.data.some(item => 
+          item.price.id === earlyAdopterMonthlyPriceId || 
+          item.price.id === earlyAdopterAnnualPriceId
+        );
+        
+        if (isEarlyAdopterPlan && subscription.status === 'active') {
+          // Find the workspace with this subscription
+          const workspace = await prisma.workspace.findFirst({
+            where: { stripe_customer_id: subscription.customer as string },
+          });
+          
+          if (workspace) {
+            // Find the active users for this workspace
+            const activeUsers = await prisma.user.findMany({
+              where: { active_workspace_id: workspace.id },
+            });
+            
+            if (activeUsers.length > 0) {
+              // Send the subscription activated email to each active user
+              for (const user of activeUsers) {
+                console.log(`Sending subscription activated email to user ${user.id} (${user.email})`);
+                
+                try {
+                  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/subscription-activated`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      userId: user.id,
+                      workspaceId: workspace.id,
+                    }),
+                  });
+                  
+                  if (!response.ok) {
+                    console.error(`Failed to send subscription activated email to ${user.email}:`, await response.text());
+                  } else {
+                    console.log(`Successfully sent subscription activated email to ${user.email}`);
+                  }
+                } catch (error) {
+                  console.error(`Error sending subscription activated email to ${user.email}:`, error);
+                }
+              }
+            } else {
+              console.log(`No active users found for workspace ${workspace.id}`);
+            }
+          } else {
+            console.log(`No workspace found for Stripe customer ${subscription.customer}`);
+          }
+        }
+      }
     } catch (processingError) {
       return NextResponse.json({ 
         received: true, 

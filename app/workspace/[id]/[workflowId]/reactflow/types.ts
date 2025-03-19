@@ -31,6 +31,7 @@ export interface NodeData {
 export interface EdgeData {
   blocks: Block[];
   path: Path;
+  onPathsUpdate?: (paths: Path[]) => void;
   handleAddBlockOnEdge: (
     position: number,
     path: Path,

@@ -3,10 +3,11 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useConnectModeStore } from '../../store/connectModeStore';
+import { useEditModeStore } from '../../store/editModeStore';
 
 function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
-
+  const isEditMode = useEditModeStore((state) => state.isEditMode);
   const handleConvertToLast = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -34,7 +35,7 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   return (
     <div
-      className={`transition-opacity duration-300 ${isConnectMode ? 'opacity-40' : ''}`}
+      className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
     >
       <div
         className={`transition-all duration-300 flex items-center gap-3 w-fit text-sm`}

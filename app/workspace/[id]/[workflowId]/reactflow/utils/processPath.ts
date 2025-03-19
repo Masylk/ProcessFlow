@@ -196,6 +196,7 @@ export function processPath(
         data: {
           blocks: path.blocks,
           handleAddBlockOnEdge,
+          onPathsUpdate: handlePathsUpdate,
           path: path,
         },
       });
