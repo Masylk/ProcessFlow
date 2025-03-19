@@ -8,6 +8,7 @@ export interface Folder {
   team_tags: string[];
   icon_url?: string;
   emote?: string;
+  position: number;
 }
 
 export type SubscriptionStatus = 'ACTIVE' | 'TRIALING' | 'CANCELED';
