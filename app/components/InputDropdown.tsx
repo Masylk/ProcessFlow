@@ -27,6 +27,7 @@ interface InputDropdownProps {
     handle: string, 
     avatarUrl?: string 
   }) => void;
+  errorMessage?: string;
 }
 
 const InputDropdown: React.FC<InputDropdownProps> = ({
@@ -45,6 +46,7 @@ const InputDropdown: React.FC<InputDropdownProps> = ({
   type = 'default',
   selectedTags = [],
   onTagRemove,
+  errorMessage,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -455,6 +457,18 @@ const InputDropdown: React.FC<InputDropdownProps> = ({
           marginTop: '6px',
         }}>
           {hintText}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div style={{
+          color: mode === 'light'
+            ? theme.colors["Error/600"]
+            : theme.colors["Error/300"],
+          fontSize: '14px',
+          marginTop: '6px',
+        }}>
+          {errorMessage}
         </div>
       )}
     </div>

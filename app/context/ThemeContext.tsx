@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { ThemeContextType, ThemeMode, ButtonTokens, InputTokens } from '../theme/types';
+import { ThemeContextType, ThemeMode, ButtonTokens, InputTokens, BreadcrumbTokens } from '../theme/types';
 import { themeRegistry } from '../theme/registry';
 import { lightTheme } from '../theme/themes/light';
 import { darkTheme } from '../theme/themes/dark';
@@ -16,7 +16,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
   const theme = themeRegistry.get(currentTheme);
 
-  const getCssVariable = (token: keyof (ButtonTokens & InputTokens)): string => {
+  const getCssVariable = (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens)): string => {
     return `var(--${token})`;
   };
 

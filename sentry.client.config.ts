@@ -15,25 +15,7 @@ Sentry.init({
     return 1;
   },
 
-  // Ajout de l'intégration du feedback utilisateur
-  integrations: [
-    Sentry.feedbackIntegration({
-      colorScheme: "system",
-      isEmailRequired: true,
-      disabledPaths: [
-        "/login",
-        "/reset-password",
-        "/forgot-password",
-        "/auth-design",
-        "/auth-signup-design",
-        "/login/",
-        "/reset-password/",
-        "/forgot-password/",
-        "/auth-design/",
-        "/auth-signup-design/"
-      ]
-    }),
-  ],
+  //
 
   debug: false,
 });

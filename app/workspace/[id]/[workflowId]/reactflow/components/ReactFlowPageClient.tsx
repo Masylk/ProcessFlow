@@ -1,10 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import { Flow } from './Flow';
-import { Block } from '@/types/block';
-import { Path } from '../types';
+import { NodeData, Path, Block } from '../types';
 import { getWorkflowStrokeLines } from '../utils/stroke-lines';
+import WorkflowHeader from './WorkflowHeader';
+import { useSearchParams } from 'next/navigation';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -18,6 +19,12 @@ export function ReactFlowPageClient({
   const [workflowName, setWorkflowName] = useState<string>('');
   const [paths, setPaths] = useState<Path[]>([]);
   const [strokeLines, setStrokeLines] = useState<any[]>([]);
+  const [parentFolder, setParentFolder] = useState<string | undefined>();
+  const [grandParentFolder, setGrandParentFolder] = useState<
+    string | undefined
+  >();
+
+  const searchParams = useSearchParams();
 
   const handleBlockAdd = async (
     blockData: any,
@@ -84,7 +91,10 @@ export function ReactFlowPageClient({
         ]);
 
         const workflow = await workflowRes.json();
+        console.log(workflow);
         setWorkflowName(workflow.name);
+        setParentFolder(workflow.folder?.name);
+        setGrandParentFolder(workflow.folder?.parent?.name);
 
         const pathsData = await pathsRes.json();
         setPaths(pathsData.paths);
@@ -104,17 +114,24 @@ export function ReactFlowPageClient({
   }, [workspaceId, workflowId]);
 
   return (
-    <ReactFlowProvider>
-      <Flow
-        workflowName={workflowName}
-        paths={paths}
-        workspaceId={workspaceId}
+    <div className="h-screen flex flex-col">
+      <WorkflowHeader
         workflowId={workflowId}
-        onBlockAdd={handleBlockAdd}
-        setPaths={setPaths}
-        strokeLines={strokeLines}
-        setStrokeLines={setStrokeLines}
+        parentFolder={parentFolder}
+        grandParentFolder={grandParentFolder}
       />
-    </ReactFlowProvider>
+      <ReactFlowProvider>
+        <Flow
+          workflowName={workflowName}
+          paths={paths}
+          workspaceId={workspaceId}
+          workflowId={workflowId}
+          onBlockAdd={handleBlockAdd}
+          setPaths={setPaths}
+          strokeLines={strokeLines}
+          setStrokeLines={setStrokeLines}
+        />
+      </ReactFlowProvider>
+    </div>
   );
 }

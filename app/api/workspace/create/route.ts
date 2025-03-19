@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const workspace = await prisma.workspace.create({
       data: {
         name: formData.name,
-        slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        slug: formData.slug || generateSlug(formData.name),
         icon_url: formData.icon_url || null,
         industry: formData.industry || null,
         company_size: formData.company_size || null,
@@ -98,4 +98,14 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : 'Internal server error' 
     }, { status: 500 });
   }
+}
+
+// Helper function to generate a slug
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-')       // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '') // Remove any non-alphanumeric characters
+    .replace(/-+/g, '-')        // Replace multiple hyphens with a single one
+    .replace(/^-|-$/g, '');     // Remove leading/trailing hyphens
 } 

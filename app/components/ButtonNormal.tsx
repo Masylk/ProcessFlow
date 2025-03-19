@@ -32,14 +32,16 @@ const ButtonNormal: React.FC<ButtonProps> = ({
 }) => {
   const { getCssVariable } = useTheme();
   
-  const baseStyles = 'font-semibold transition-colors duration-200 rounded-lg flex items-center justify-center gap-2';
+  const baseStyles = variant.startsWith('link') 
+    ? 'transition-colors flex items-center'
+    : 'font-semibold transition-colors duration-200 rounded-lg flex items-center justify-center';
   const disabledStyles = 'opacity-50 saturate-50 cursor-not-allowed hover:bg-transparent hover:text-inherit hover:border-inherit';
-  const linkStyles = 'font-normal transition-all self-stretch';
+  const linkStyles = 'font-normal';
 
   const sizeStyles = {
-    small: iconOnly ? 'p-2' : 'px-3 py-2 text-sm gap-1 font-normal rounded-md',
-    medium: iconOnly ? 'p-2.5' : 'px-3.5 py-2.5 text-base gap-1 font-medium rounded-md',
-    large: iconOnly ? 'p-3' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-md',
+    small: iconOnly ? 'p-2' : variant.startsWith('link') ? 'text-sm font-normal gap-1' : 'px-3 py-2 text-sm gap-1 font-normal rounded-md',
+    medium: iconOnly ? 'p-2.5' : variant.startsWith('link') ? 'text-base font-medium gap-1' : 'px-3.5 py-2.5 text-base gap-1 font-medium rounded-md',
+    large: iconOnly ? 'p-3' : variant.startsWith('link') ? 'text-lg font-semibold gap-2' : 'px-4 py-2.5 text-lg gap-2 font-semibold rounded-md',
   };
 
   const getButtonToken = (variant: string, type: 'bg' | 'fg' | 'border', state: 'normal' | 'hover' = 'normal'): keyof ButtonTokens => {
@@ -60,6 +62,29 @@ const ButtonNormal: React.FC<ButtonProps> = ({
 
     const mappedVariant = variantMap[variant];
     const buttonId = `btn-${variant}`;
+
+    // Special handling for link variants
+    if (variant.startsWith('link')) {
+      return {
+        id: buttonId,
+        style: {
+          backgroundColor: 'transparent',
+          color: variant === 'link' 
+            ? getCssVariable(getButtonToken('tertiary', 'fg'))
+            : getCssVariable(getButtonToken('tertiary-color', 'fg')),
+          borderWidth: '0',
+          padding: '0',
+        },
+        hoverStyle: `
+          #${buttonId}:not(:disabled):hover {
+            color: ${variant === 'link' 
+              ? getCssVariable(getButtonToken('tertiary', 'fg', 'hover'))
+              : getCssVariable(getButtonToken('tertiary-color', 'fg', 'hover'))} !important;
+            background-color: transparent !important;
+          }
+        `
+      };
+    }
 
     const normalBg = getCssVariable(getButtonToken(mappedVariant, 'bg'));
     const normalColor = getCssVariable(getButtonToken(mappedVariant, 'fg'));

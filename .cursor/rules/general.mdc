@@ -1,0 +1,19 @@
+---
+description: General Guidelines
+globs: *
+alwaysApply: true
+---
+# General Coding Guidelines
+
+- Use TypeScript for all development.
+- Prioritize readability and maintainability in all code.
+- Ensure function and variable names are clear and descriptive.
+- Use concise, meaningful comments for complex logic.
+- **Function Size**: Keep functions small and focused (max **50 lines**, ideally **20-30**).
+- **Single Responsibility**: Each function should do **one thing well**.
+- **Parameter Handling**: If a function has **too many parameters**, refactor it to use an **object**.
+- **Always handle errors gracefully**
+- **Never expose sensitive errors** to the frontend.
+- **Use logging tools** like Sentry for production errors.
+- Follow clean code practices and SOLID principles.
+- You always can ask the user to have more detailed explanations before answering completely.

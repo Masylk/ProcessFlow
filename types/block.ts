@@ -37,12 +37,14 @@ export enum BlockType {
   PATH = 'PATH',
   END = 'END',
   LAST = 'LAST',
+  MERGE = 'MERGE',
 }
 
 export enum BlockEndType {
   END = 'END',
   LAST = 'LAST',
   PATH = 'PATH',
+  MERGE = 'MERGE',
 }
 
 export enum FormType {

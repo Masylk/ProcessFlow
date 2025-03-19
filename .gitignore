@@ -28,6 +28,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.staging
 
 # vercel
 .vercel
@@ -42,3 +43,4 @@ nftl.txt
 
 # Claude documentation
 CLAUDE.md
+.qodo

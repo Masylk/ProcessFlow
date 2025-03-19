@@ -2,20 +2,16 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from '@xyflow/react';
 import { CSSProperties } from 'react';
 import { BlockEndType } from '@/types/block';
+import { Block } from '@/types/block';
 
 const elk = new ELK();
 
 export async function createElkLayout(nodes: Node[], edges: Edge[]) {
-  console.log('Creating layout for nodes:', nodes);
-  console.log('Creating layout for edges:', edges);
 
   const nodeIds = new Set(nodes.map((node) => node.id));
   const validEdges = edges.filter(
     (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target)
   );
-  console.log('Edges:', edges);
-  console.log('Nodes ids:', nodeIds);
-  console.log('Valid edges:', validEdges);
 
   const isEndTypeNode = (type: string | undefined) => 
     type && Object.values(BlockEndType).map(t => t.toLowerCase()).includes(type);
@@ -23,15 +19,17 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const elkNodes = nodes.map((node) => ({
     id: node.id,
     width: node.type === 'begin' ? 200 : 
-          node.type === 'last' ? 32 : 
-          node.type === 'path' ? 200 : 
-          node.type === 'end' ? 200 : 
+          node.type === 'last' ? 32 :
+          node.type === 'path' ? 32 :
+          node.type === 'end' ? 290 :
+          node.type === 'merge' ? 12 :
           481,
     height: node.type === 'begin' ? 50 : 
-           node.type === 'last' ? 32 : 
-           node.type === 'path' ? 50 : 
-           node.type === 'end' ? 50 : 
-           120,
+           node.type === 'last' ? 32 :
+           node.type === 'path' ? 32 :
+           node.type === 'end' ? 48 :
+           node.type === 'merge' ? 12 :
+           (node.data?.block as Block)?.image ? 387 : 120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
@@ -46,39 +44,37 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     edges: elkEdges,
   };
 
-  console.log('ELK Graph:', elkGraph);
-
   const layoutOptions = {
-    'elk.algorithm': 'mrtree',
+    'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '100',
+    'elk.spacing.nodeNode': '40',
     'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-    'elk.spacing.componentComponent': '100',
+    'elk.spacing.componentComponent': '40',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
     'elk.layered.spacing.edgeNodeBetweenLayers': '50',
-    'elk.layered.mergeEdges': 'false',
+    'elk.layered.mergeEdges': 'true',
     'elk.layered.priority.direction': '1',
     'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
     'elk.alignment': 'CENTER',
     'elk.padding': '[top=50,left=50,bottom=50,right=50]',
     'elk.layered.crossingMinimization.semiInteractive': 'true',
-    'elk.layered.spacing.baseValue': '80',
+    'elk.layered.spacing.baseValue': '40',
     'elk.separateConnectedComponents': 'true',
-    'elk.spacing': '80',
+    'elk.layered.layering.wideNodesOnMultipleLayers': 'OFF',
+    'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
+    'elk.layered.nodePlacement.favorStraightEdges': 'true',
+    'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',
   };
 
   try {
     const layout = await elk.layout(elkGraph, { layoutOptions });
-    console.log('ELK Layout result:', layout);
 
     if (!layout || !layout.children) {
       console.error('Invalid layout result:', layout);
       return nodes;
     }
-
-    const centerX = layout.children.reduce((sum, node) => sum + node.x!, 0) / layout.children.length;
 
     return nodes.map((node) => {
       const elkNode = layout.children?.find((n) => n.id === node.id);

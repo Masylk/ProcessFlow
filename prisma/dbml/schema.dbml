@@ -19,17 +19,19 @@ Table user {
   post_hog_id String
   phone String
   last_login_at DateTime
-  onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   onboarding_completed_at DateTime
+  onboarding_step onboarding_step [default: 'PERSONAL_INFO']
   professional_role String
   source String
-  temp_industry String
   temp_company_size String
+  temp_industry String
+  tutorial_completed Boolean [not null, default: false]
+  actions action [not null]
+  saved_searches saved_search [not null]
   active_workspace workspace
   workspaces user_workspace [not null]
-  actions action [not null]
   created_versions workflow_version [not null]
-  saved_searches saved_search [not null]
+  scheduled_emails scheduled_emails [not null]
 }
 
 Table workspace {
@@ -43,19 +45,19 @@ Table workspace {
   icon_url String
   background_colour String
   linear_customer_id String
-  stripe_customer_id String
+  stripe_customer_id String [unique]
   hubspot_company_id String
-  subscription_id Int [unique]
-  industry String
   company_size String
+  industry String
+  subscription_id Int [unique]
   subscription subscription
-  billing_infos workspace_billing_infos [not null]
-  user_workspaces user_workspace [not null]
-  active_users user [not null]
-  folders folder [not null]
-  workflows workflow [not null]
+  billing_infos workspace_billing_infos
   billings billing [not null]
+  folders folder [not null]
   invitations invitation [not null]
+  active_users user [not null]
+  user_workspaces user_workspace [not null]
+  workflows workflow [not null]
   workflow_templates workflow_template [not null]
 }
 
@@ -67,7 +69,7 @@ Table workspace_billing_infos {
   billing_address String [not null]
   tax_rate Decimal [not null]
   vat_number String
-  workspace_id Int [not null]
+  workspace_id Int [unique, not null]
   workspace workspace [not null]
 }
 
@@ -77,7 +79,7 @@ Table subscription {
   updated_at DateTime [default: `now()`, not null]
   canceled_at DateTime
   workspace_id Int [unique, not null]
-  stripe_subscription_id String [not null]
+  stripe_subscription_id String [unique, not null]
   trial_end_date DateTime
   plan_type plan_type [not null]
   quantity_seats Int [not null]
@@ -138,9 +140,10 @@ Table folder {
   emote String
   team_tags String[] [not null]
   path String
-  workspace workspace [not null]
+  position Int [not null, default: 0]
   parent folder
   subfolders folder [not null]
+  workspace workspace [not null]
   workflows workflow [not null]
 }
 
@@ -156,17 +159,17 @@ Table workflow {
   folder_id Int
   is_public Boolean [not null, default: false]
   public_access_id String [unique]
-  status workflow_status [not null, default: 'DRAFT']
   is_template Boolean [not null, default: false]
+  status workflow_status [not null, default: 'DRAFT']
   template_id Int
   version_number Int [not null, default: 1]
-  workspace workspace [not null]
-  folder folder
+  actions action [not null]
   blocks block [not null]
   paths path [not null]
-  actions action [not null]
-  template workflow_template
   stroke_lines stroke_line [not null]
+  folder folder
+  template workflow_template
+  workspace workspace [not null]
   versions workflow_version [not null]
 
   indexes {
@@ -178,8 +181,8 @@ Table path {
   id Int [pk, increment]
   name String [not null]
   workflow_id Int [not null]
-  workflow workflow [not null]
   blocks block [not null]
+  workflow workflow [not null]
   parent_blocks path_parent_block [not null]
 
   Note: 'Collection of connected blocks forming a workflow path'
@@ -189,8 +192,8 @@ Table path_parent_block {
   path_id Int [not null]
   block_id Int [not null]
   created_at DateTime [default: `now()`, not null]
-  path path [not null]
   block block [not null]
+  path path [not null]
 
   indexes {
     (path_id, block_id) [pk]
@@ -205,8 +208,6 @@ Table block {
   updated_at DateTime [default: `now()`, not null]
   last_modified DateTime
   type block_type [not null]
-  step_details String
-  delay_seconds Int
   position Int [not null]
   title String
   icon String
@@ -218,11 +219,13 @@ Table block {
   workflow_id Int [not null]
   path_id Int [not null]
   click_position Json
-  delay_type delay_type
+  delay_seconds Int
+  step_details String
   delay_event String
-  workflow workflow [not null]
-  path path [not null]
+  delay_type delay_type
   actions action [not null]
+  path path [not null]
+  workflow workflow [not null]
   child_paths path_parent_block [not null]
   source_stroke_lines stroke_line [not null]
   target_stroke_lines stroke_line [not null]
@@ -236,8 +239,8 @@ Table action {
   workflow_id Int [not null]
   value Int [not null]
   created_at DateTime [default: `now()`, not null]
-  user user [not null]
   target block [not null]
+  user user [not null]
   workflow workflow [not null]
 }
 
@@ -251,8 +254,8 @@ Table workflow_version {
   created_by_id Int [not null]
   change_summary String
   snapshot Json [not null]
-  workflow workflow [not null]
   created_by user [not null]
+  workflow workflow [not null]
 
   indexes {
     (workflow_id, version_number) [unique]
@@ -271,8 +274,8 @@ Table workflow_template {
   structure Json [not null]
   rating Float
   rating_count Int [not null, default: 0]
-  workspace workspace [not null]
   workflows workflow [not null]
+  workspace workspace [not null]
 }
 
 Table saved_search {
@@ -299,12 +302,32 @@ Table stroke_line {
   workflow workflow [not null]
 }
 
+Table scheduled_emails {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  user_id Int [not null]
+  email_type String [not null]
+  scheduled_for DateTime [not null]
+  status email_status [not null, default: 'PENDING']
+  sent Boolean [not null, default: false]
+  sent_at DateTime
+  metadata Json
+  error String
+  retry_count Int [not null, default: 0]
+  user user [not null]
+
+  indexes {
+    (user_id, email_type) [unique]
+  }
+}
+
 Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
   WORKSPACE_SETUP
-  INVITED_USER
   COMPLETED
+  INVITED_USER
 }
 
 Enum user_role {
@@ -316,10 +339,11 @@ Enum user_role {
 Enum block_type {
   DELAY
   STEP
+  PATH
   BEGIN
   END
-  PATH
   LAST
+  MERGE
 }
 
 Enum subscription_status {
@@ -330,9 +354,7 @@ Enum subscription_status {
 
 Enum plan_type {
   FREE
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
+  EARLY_ADOPTER
 }
 
 Enum task_type {
@@ -351,11 +373,19 @@ Enum workflow_status {
   ARCHIVED
 }
 
+Enum email_status {
+  PENDING
+  CANCELLED
+  PAUSED
+  SENT
+  FAILED
+}
+
 Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
 
-Ref: workspace_billing_infos.workspace_id > workspace.id
+Ref: workspace_billing_infos.workspace_id - workspace.id
 
 Ref: billing.subscription_id > subscription.id
 
@@ -367,35 +397,35 @@ Ref: user_workspace.workspace_id > workspace.id
 
 Ref: invitation.workspace_id > workspace.id
 
-Ref: folder.workspace_id > workspace.id
-
 Ref: folder.parent_id - folder.id
 
-Ref: workflow.workspace_id > workspace.id
+Ref: folder.workspace_id > workspace.id
 
 Ref: workflow.folder_id > folder.id
 
 Ref: workflow.template_id > workflow_template.id
 
-Ref: path.workflow_id > workflow.id
+Ref: workflow.workspace_id > workspace.id
 
-Ref: path_parent_block.path_id > path.id [delete: Cascade]
+Ref: path.workflow_id > workflow.id
 
 Ref: path_parent_block.block_id > block.id [delete: Cascade]
 
-Ref: block.workflow_id > workflow.id [delete: Cascade]
+Ref: path_parent_block.path_id > path.id [delete: Cascade]
 
 Ref: block.path_id > path.id [delete: Cascade]
 
-Ref: action.user_id > user.id
+Ref: block.workflow_id > workflow.id [delete: Cascade]
 
 Ref: action.target_id > block.id
 
+Ref: action.user_id > user.id
+
 Ref: action.workflow_id > workflow.id
 
-Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
-
 Ref: workflow_version.created_by_id > user.id
+
+Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
 
 Ref: workflow_template.workspace_id > workspace.id
 
@@ -406,3 +436,5 @@ Ref: stroke_line.source_block_id > block.id [delete: Cascade]
 Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
+
+Ref: scheduled_emails.user_id > user.id [delete: Cascade]

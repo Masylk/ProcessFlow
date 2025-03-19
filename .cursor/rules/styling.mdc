@@ -1,0 +1,26 @@
+---
+description: Styling Standards and Best Practices
+globs: **/*.css, **/*.tsx
+alwaysApply: false
+---
+# Styling Guidelines
+
+- **Use Tailwind CSS** as the primary styling method for all components
+- **Follow theme variables** from [theme.js](mdc:theme.js) for consistent colors and styling
+- **Responsive design first**: Ensure all UI elements work across device sizes
+- **Typography**: Use the `Inter` font family for all text elements
+- **Custom utility classes**: Create reusable utility classes in `@layer utilities` when needed
+- **Avoid inline styles** except for dynamic values that can't be handled with Tailwind
+- **Color naming**: Use semantic color names from the theme (e.g., `text-primary` instead of `text-gray-800`)
+- **Spacing consistency**: Use the spacing scale from the theme for margins and padding
+- **CSS variables**: Use CSS variables for dynamic theming and values that change based on state
+- **Component-specific styling**: Keep component-specific styles within the component file
+- **Class naming**: Use clear, descriptive class names following Tailwind conventions
+- **Tailwind directives**: Use `@apply` sparingly and only for complex, repeating patterns
+- **Media queries**: Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, etc.) for breakpoints
+- **Accessibility**: Ensure sufficient color contrast and focus states for interactive elements
+- **Animation**: Use Tailwind's transition utilities for simple animations
+- **Border radius**: Follow the border radius scale from the theme for consistent UI elements
+- **Shadows**: Use the shadow scale from the theme for consistent elevation
+- **State styling**: Use Tailwind's state variants (`:hover`, `:active`, `:focus`, etc.) consistently
+- **Custom scrollbars**: Follow the global scrollbar styling defined in [globals.css](mdc:app/globals.css)

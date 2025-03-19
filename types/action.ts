@@ -13,3 +13,4 @@ export interface Action {
   workflow: Workflow;
   value: number;
 }
+

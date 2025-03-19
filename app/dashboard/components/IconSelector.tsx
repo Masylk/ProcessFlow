@@ -143,7 +143,7 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
                 <button
                   key={index}
                   onClick={() => onSelect(app.basicUrl)}
-                  className="w-10 h-10 rounded-md transition-colors duration-200"
+                  className="w-10 h-10 rounded-md transition-colors duration-200 flex items-center justify-center"
                   style={{ 
                     backgroundColor: hoveredButton === `app-${index}` ? colors['bg-quaternary'] : 'transparent'
                   }}
@@ -170,7 +170,7 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
                 <button
                   key={index}
                   onClick={() => onSelect(icon.basicUrl)}
-                  className="w-10 h-10 rounded-md transition-colors duration-200"
+                  className="w-10 h-10 rounded-md transition-colors duration-200 flex items-center justify-center"
                   style={{ 
                     backgroundColor: hoveredButton === `icon-${index}` ? colors['bg-quaternary'] : 'transparent'
                   }}

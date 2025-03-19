@@ -13,14 +13,12 @@ export async function createParallelPaths(
   position: number,
   options: CreateParallelPathsOptions = {}
 ) {
-  console.log('options', options);
   try {
     const { 
       paths_to_create = ["If", "Else"],
       path_to_move = 0 
     } = options;
 
-    console.log('paths_to_create', paths_to_create);
     if (path_to_move >= paths_to_create.length) {
       throw new Error('path_to_move index is out of bounds');
     }
@@ -50,8 +48,6 @@ export async function createParallelPaths(
     const blocksToMove = getBlocksAfterPosition(parent_path, position);
     const childPathIdsToMove = getChildPathsIds(parent_path);
 
-    console.log('blocksToMove', blocksToMove);
-    console.log('childPathIdsToMove', childPathIdsToMove);
     // 3. Move blocks to specified path
     if (blocksToMove.length > 0) {
       await fetch('/api/blocks/move', {
@@ -66,7 +62,6 @@ export async function createParallelPaths(
 
     // 4. Move child paths to specified path
     if (childPathIdsToMove.length > 0) {
-      console.log('connecting child paths', childPathIdsToMove);
       await fetch('/api/paths/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

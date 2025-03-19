@@ -7,7 +7,29 @@ import { ThemeProvider } from './context/ThemeContext';
 import AuthCheck from './components/AuthCheck';
 import { Toaster } from 'sonner';
 
+// Import environment checker
+import '../lib/env-check';
+
 const inter = Inter({ subsets: ['latin'] });
+
+// Server-side environment check
+function checkServerEnvironment() {
+  if (process.env.NODE_ENV !== 'production') {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      console.warn('⚠️ Server-side check: STRIPE_SECRET_KEY is missing!');
+      console.warn('Available env vars:', Object.keys(process.env)
+        .filter(key => !key.includes('SECRET') && !key.includes('KEY'))
+        .join(', '));
+    } else {
+      console.log('✅ STRIPE_SECRET_KEY is available on the server');
+    }
+  }
+  return null;
+}
+
+// Run the check during server rendering
+checkServerEnvironment();
 
 export const metadata: Metadata = {
   title: 'ProcessFlow',

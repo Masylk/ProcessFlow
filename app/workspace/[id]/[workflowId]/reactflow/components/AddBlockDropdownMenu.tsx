@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
 import { BlockEndType } from '@/types/block';
-import CreateParallelPathModal from './CreateParallelPathModal';
+import CreateParallelPathModal from './modals/CreateParallelPathModal';
+import { useClipboardStore } from '../store/clipboardStore';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -22,6 +23,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   onPathsUpdate,
 }) => {
   const [showParallelPathModal, setShowParallelPathModal] = useState(false);
+  const copiedBlock = useClipboardStore((state) => state.copiedBlock);
 
   const menuItems = [
     {
@@ -47,34 +49,64 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
         setShowParallelPathModal(true);
       } else {
         onSelect(type as 'STEP' | 'PATH' | 'DELAY');
+        onClose();
       }
     },
-    [onSelect]
+    [onSelect, onClose]
   );
 
-  const handleCreateParallelPaths = async (data: {
-    paths_to_create: string[];
-    path_to_move: number;
-  }) => {
-    try {
-      console.log('Create parallel paths data', data);
-      await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
-        paths_to_create: data.paths_to_create,
-        path_to_move: data.path_to_move,
-      });
+  const handleCreateParallelPaths = useCallback(
+    async (data: { paths_to_create: string[]; path_to_move: number }) => {
+      try {
+        setShowParallelPathModal(false); // Close modal first
+        onClose(); // Close dropdown
 
-      // Fetch updated paths data
-      const pathsResponse = await fetch(
-        `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-      );
-      if (pathsResponse.ok) {
-        const pathsData = await pathsResponse.json();
-        onPathsUpdate(pathsData.paths);
+        console.log('Create parallel paths data', data);
+        await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
+          paths_to_create: data.paths_to_create,
+          path_to_move: data.path_to_move,
+        });
+
+        // Fetch updated paths data
+        const pathsResponse = await fetch(
+          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        );
+        if (pathsResponse.ok) {
+          const pathsData = await pathsResponse.json();
+          onPathsUpdate(pathsData.paths);
+        }
+      } catch (error) {
+        console.error('Error creating parallel paths:', error);
       }
+    },
+    [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]
+  );
 
+  const handlePasteBlock = async () => {
+    if (!copiedBlock) return;
+
+    try {
+      const response = await fetch(
+        `/api/blocks/${copiedBlock.id}/duplicate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            position: dropdownDatas.position,
+            path_id: dropdownDatas.path.id
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to paste block');
+
+      const result = await response.json();
+      onPathsUpdate(result.paths);
       onClose();
     } catch (error) {
-      console.error('Error creating parallel paths:', error);
+      console.error('Error pasting block:', error);
     }
   };
 
@@ -82,6 +114,15 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     (b) => b.position === dropdownDatas.position
   );
   const isLastBlock = block?.type === BlockEndType.LAST;
+
+  // Get existing child paths for the current block
+  const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
+
+  // Check if the source block is a LastNode
+  const isLastNode =
+    dropdownDatas.path.blocks.find(
+      (block) => block.position === dropdownDatas.position
+    )?.type === 'LAST';
 
   return (
     <>
@@ -136,14 +177,71 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             Convert to End Block
           </button>
         )}
+
+        {isLastNode && block && (
+          <button
+            onClick={async () => {
+              try {
+                await fetch(`/api/blocks/${block.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: BlockEndType.MERGE,
+                  }),
+                });
+
+                // Fetch updated paths data
+                const pathsResponse = await fetch(
+                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+                );
+                if (pathsResponse.ok) {
+                  const pathsData = await pathsResponse.json();
+                  onPathsUpdate(pathsData.paths);
+                }
+                onClose();
+              } catch (error) {
+                console.error('Error converting to merge block:', error);
+              }
+            }}
+            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
+          >
+            <img
+              src="/step-icons/default-icons/merge.svg"
+              alt="Merge"
+              className="w-5 h-5"
+            />
+            <span>Merge paths</span>
+          </button>
+        )}
+
+        {copiedBlock && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePasteBlock();
+            }}
+            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
+          >
+            <img
+              src="/step-icons/default-icons/paste.svg"
+              alt="Paste"
+              className="w-5 h-5"
+            />
+            <span>Paste Block</span>
+          </button>
+        )}
       </div>
 
       {showParallelPathModal && (
         <CreateParallelPathModal
-          onClose={() => setShowParallelPathModal(false)}
+          onClose={() => {
+            setShowParallelPathModal(false);
+            onClose();
+          }}
           onConfirm={handleCreateParallelPaths}
           path={dropdownDatas.path}
           position={dropdownDatas.position}
+          existingPaths={existingPaths}
         />
       )}
     </>

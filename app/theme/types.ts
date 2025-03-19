@@ -14,6 +14,14 @@ export type SpacingToken = {
   [key: string]: string;
 };
 
+export type BreadcrumbTokens = {
+  'breadcrumb-active-bg': string;
+  'breadcrumb-active-fg': string;
+  'breadcrumb-inactive-fg': string;
+  'breadcrumb-separator': string;
+  'breadcrumb-hover-opacity': string;
+};
+
 export type InputTokens = {
   // Default input tokens
   'input-bg': string;
@@ -121,11 +129,11 @@ export type ButtonTokens = {
 };
 
 export type CSSVariables = {
-  [K in keyof (ButtonTokens & InputTokens) as `--${K}`]: string;
+  [K in keyof (ButtonTokens & InputTokens & BreadcrumbTokens) as `--${K}`]: string;
 };
 
 export type ThemeTokens = {
-  colors: ColorToken & ButtonTokens & InputTokens;
+  colors: ColorToken & ButtonTokens & InputTokens & BreadcrumbTokens;
   typography: Record<string, TypographyToken>;
   spacing: SpacingToken;
   borderRadius: Record<string, string>;
@@ -149,5 +157,5 @@ export type ThemeContextType = {
   currentTheme: ThemeMode;
   themes: Record<string, Theme>;
   setTheme: (mode: ThemeMode) => void;
-  getCssVariable: (token: keyof (ButtonTokens & InputTokens)) => string;
+  getCssVariable: (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens)) => string;
 }; 

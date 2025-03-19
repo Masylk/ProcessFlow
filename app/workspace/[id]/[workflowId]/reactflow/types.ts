@@ -2,14 +2,24 @@ import { Workflow } from '@/types/workflow';
 import { BlockEndType } from '@/types/block';
 
 export interface NodeData {
+  [key: string]: any;
   label: string;
   position: number;
-  onDelete: (id: string) => void;
+  type: string;
+  strokeLinesVisible?: boolean;
+  updateStrokeLineVisibility?: (blockId: number, isVisible: boolean) => void;
+  sourcePosition?: boolean;
+  path?: Path;
+  block: Block;
+  onDelete?: (id: string) => void;
+  onStrokeLinesUpdate?: (lines: any[]) => void;
+  highlighted?: boolean;
+  longestSiblingPath?: number;
+  pathLength?: number;
   isLastInPath?: boolean;
   pathId?: number | null;
-  highlighted?: boolean;
   pathName?: string;
-  path?: Path;
+  pathHasChildren?: boolean;
   handleAddBlockOnEdge?: (
     position: number,
     path: Path,
@@ -21,6 +31,7 @@ export interface NodeData {
 export interface EdgeData {
   blocks: Block[];
   path: Path;
+  onPathsUpdate?: (paths: Path[]) => void;
   handleAddBlockOnEdge: (
     position: number,
     path: Path,
