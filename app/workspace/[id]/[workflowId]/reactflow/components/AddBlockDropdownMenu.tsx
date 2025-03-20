@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
 import { DropdownDatas, Path } from '../types';
 import { BlockEndType } from '@/types/block';
-import CreateParallelPathModal from './modals/CreateParallelPathModal';
 import { useClipboardStore } from '../store/clipboardStore';
+import { useModalStore } from '../store/modalStore';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -11,7 +11,7 @@ interface AddBlockDropdownMenuProps {
   onClose: () => void;
   workspaceId: string;
   workflowId: string;
-  onPathsUpdate: (paths: Path[]) => void;
+  onPathsUpdate: (paths: Path[] | ((currentPaths: Path[]) => Path[])) => void;
 }
 
 const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
@@ -22,8 +22,8 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   workflowId,
   onPathsUpdate,
 }) => {
-  const [showParallelPathModal, setShowParallelPathModal] = useState(false);
   const copiedBlock = useClipboardStore((state) => state.copiedBlock);
+  const { setShowModal, setModalData } = useModalStore();
 
   const menuItems = [
     {
@@ -46,59 +46,35 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
-        setShowParallelPathModal(true);
+        setModalData({
+          path: dropdownDatas.path,
+          position: dropdownDatas.position,
+          existingPaths: [],
+        });
+        setShowModal(true);
+        onClose();
       } else {
         onSelect(type as 'STEP' | 'PATH' | 'DELAY');
         onClose();
       }
     },
-    [onSelect, onClose]
-  );
-
-  const handleCreateParallelPaths = useCallback(
-    async (data: { paths_to_create: string[]; path_to_move: number }) => {
-      try {
-        setShowParallelPathModal(false); // Close modal first
-        onClose(); // Close dropdown
-
-        console.log('Create parallel paths data', data);
-        await createParallelPaths(dropdownDatas.path, dropdownDatas.position, {
-          paths_to_create: data.paths_to_create,
-          path_to_move: data.path_to_move,
-        });
-
-        // Fetch updated paths data
-        const pathsResponse = await fetch(
-          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-        );
-        if (pathsResponse.ok) {
-          const pathsData = await pathsResponse.json();
-          onPathsUpdate(pathsData.paths);
-        }
-      } catch (error) {
-        console.error('Error creating parallel paths:', error);
-      }
-    },
-    [dropdownDatas, workspaceId, workflowId, onPathsUpdate, onClose]
+    [onSelect, onClose, setShowModal, setModalData, dropdownDatas]
   );
 
   const handlePasteBlock = async () => {
     if (!copiedBlock) return;
 
     try {
-      const response = await fetch(
-        `/api/blocks/${copiedBlock.id}/duplicate`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            position: dropdownDatas.position,
-            path_id: dropdownDatas.path.id
-          }),
-        }
-      );
+      const response = await fetch(`/api/blocks/${copiedBlock.id}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          position: dropdownDatas.position,
+          path_id: dropdownDatas.path.id,
+        }),
+      });
 
       if (!response.ok) throw new Error('Failed to paste block');
 
@@ -158,14 +134,22 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                   }),
                 });
 
-                // Fetch updated paths data
-                const pathsResponse = await fetch(
-                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+                // Update the block type in paths store
+                onPathsUpdate((currentPaths) =>
+                  currentPaths.map((path) => {
+                    if (path.id === dropdownDatas.path.id) {
+                      return {
+                        ...path,
+                        blocks: path.blocks.map((b) =>
+                          b.id === block.id
+                            ? { ...b, type: BlockEndType.END }
+                            : b
+                        ),
+                      };
+                    }
+                    return path;
+                  })
                 );
-                if (pathsResponse.ok) {
-                  const pathsData = await pathsResponse.json();
-                  onPathsUpdate(pathsData.paths);
-                }
 
                 onClose();
               } catch (error) {
@@ -175,42 +159,6 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
           >
             Convert to End Block
-          </button>
-        )}
-
-        {isLastNode && block && (
-          <button
-            onClick={async () => {
-              try {
-                await fetch(`/api/blocks/${block.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    type: BlockEndType.MERGE,
-                  }),
-                });
-
-                // Fetch updated paths data
-                const pathsResponse = await fetch(
-                  `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-                );
-                if (pathsResponse.ok) {
-                  const pathsData = await pathsResponse.json();
-                  onPathsUpdate(pathsData.paths);
-                }
-                onClose();
-              } catch (error) {
-                console.error('Error converting to merge block:', error);
-              }
-            }}
-            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
-          >
-            <img
-              src="/step-icons/default-icons/merge.svg"
-              alt="Merge"
-              className="w-5 h-5"
-            />
-            <span>Merge paths</span>
           </button>
         )}
 
@@ -231,19 +179,6 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
           </button>
         )}
       </div>
-
-      {showParallelPathModal && (
-        <CreateParallelPathModal
-          onClose={() => {
-            setShowParallelPathModal(false);
-            onClose();
-          }}
-          onConfirm={handleCreateParallelPaths}
-          path={dropdownDatas.path}
-          position={dropdownDatas.position}
-          existingPaths={existingPaths}
-        />
-      )}
     </>
   );
 };

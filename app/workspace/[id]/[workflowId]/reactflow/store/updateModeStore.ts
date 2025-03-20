@@ -5,10 +5,12 @@ interface UpdateModeStore {
   mergePathId: number | null;
   selectedEndBlocks: number[];
   originalEndBlocks: number[];
-  setUpdateMode: (enabled: boolean) => void;
-  setMergePathId: (id: number | null) => void;
-  setSelectedEndBlocks: (blockIds: number[]) => void;
-  setOriginalEndBlocks: (blocks: number[]) => void;
+  triggerPathId: number | null;
+  setUpdateMode: (isUpdateMode: boolean) => void;
+  setMergePathId: (mergePathId: number | null) => void;
+  setSelectedEndBlocks: (selectedEndBlocks: number[]) => void;
+  setOriginalEndBlocks: (originalEndBlocks: number[]) => void;
+  setTriggerPathId: (triggerPathId: number | null) => void;
   toggleEndBlockSelection: (blockId: number) => void;
   reset: () => void;
 }
@@ -18,10 +20,12 @@ export const useUpdateModeStore = create<UpdateModeStore>((set, get) => ({
   mergePathId: null,
   selectedEndBlocks: [],
   originalEndBlocks: [],
-  setUpdateMode: (enabled) => set({ isUpdateMode: enabled }),
-  setMergePathId: (id) => set({ mergePathId: id }),
-  setSelectedEndBlocks: (blockIds) => set({ selectedEndBlocks: blockIds }),
-  setOriginalEndBlocks: (blocks) => set({ originalEndBlocks: blocks }),
+  triggerPathId: null,
+  setUpdateMode: (isUpdateMode) => set({ isUpdateMode }),
+  setMergePathId: (mergePathId) => set({ mergePathId }),
+  setSelectedEndBlocks: (selectedEndBlocks) => set({ selectedEndBlocks }),
+  setOriginalEndBlocks: (originalEndBlocks) => set({ originalEndBlocks }),
+  setTriggerPathId: (triggerPathId) => set({ triggerPathId }),
   toggleEndBlockSelection: (blockId) => {
     const { selectedEndBlocks } = get();
     if (selectedEndBlocks.includes(blockId)) {
@@ -35,5 +39,6 @@ export const useUpdateModeStore = create<UpdateModeStore>((set, get) => ({
     mergePathId: null,
     selectedEndBlocks: [],
     originalEndBlocks: [],
+    triggerPathId: null,
   }),
 })); 
