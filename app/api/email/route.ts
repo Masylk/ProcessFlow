@@ -1,7 +1,8 @@
 // app/api/email/route.ts
 import { render } from '@react-email/render';
-import WelcomeEmail from '@/app/emails/WelcomeEmail'; // Adjust the import path if needed
+import { WelcomeEmail } from '@/emails/templates/WelcomeEmail'; // Changed from default to named import
 import { sendEmail } from '@/app/utils/mail'; // The utility function you already have
+import React from 'react';
 
 /**
  * @swagger
@@ -71,8 +72,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Render the email content using the WelcomeEmail component
-    const emailHtml = await render(WelcomeEmail({ firstName: firstName }));
+    // Render the email content using the WelcomeEmail component with explicit React.createElement
+    const emailHtml = await render(
+      React.createElement(WelcomeEmail, { 
+        firstName, 
+        jeanRdvLink: process.env.NEXT_PUBLIC_BASE_URL || 'https://process-flow.io',
+        sender: 'jean'
+      })
+    );
 
     // Send the welcome email using the sendEmail utility
     const emailResponse = await sendEmail(
