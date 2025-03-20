@@ -1,15 +1,38 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Path } from '../types';
+import { Block, Path } from '../types';
 import { PathContainer } from './PathContainer';
+import { usePathsStore } from '../store/pathsStore';
+import { BlockEndType, BlockType } from '@/types/block';
 
 interface SidebarProps {
-  paths: Path[];
   workspaceId: string;
   workflowId: string;
 }
 
-export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
+interface PathObject {
+  id: number;
+  name: string;
+  blocks: Block[];
+  parent_blocks_ids: number[];
+  child_paths: PathObject[];
+}
+
+export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
+  const originalPaths = usePathsStore((state) => state.paths);
+  // Create a shallow copy of paths with deep copy of blocks and child_paths
+  const paths = useMemo(
+    () =>
+      originalPaths.map((path) => ({
+        ...path,
+        blocks: path.blocks.map((block) => ({
+          ...block,
+          child_paths: block.child_paths || [],
+        })),
+      })),
+    [originalPaths]
+  );
+
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
@@ -21,12 +44,174 @@ export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
   const navigationIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/navigation-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
 
+  // Function to get the great grandparent path ID
+  const getGreatGrandParentPathId = (path: Path): number | null => {
+    // Get parent path
+    const parentBlock = path.parent_blocks[0]?.block_id;
+    if (!parentBlock) return null;
+
+    // Find parent path
+    const parentPath = paths.find((p) =>
+      p.blocks.some((b) => b.id === parentBlock)
+    );
+    if (!parentPath) return null;
+
+    // Get grandparent path
+    const grandParentBlock = parentPath.parent_blocks[0]?.block_id;
+    if (!grandParentBlock) return null;
+
+    // Find grandparent path
+    const grandParentPath = paths.find((p) =>
+      p.blocks.some((b) => b.id === grandParentBlock)
+    );
+    if (!grandParentPath) return null;
+
+    // Get great grandparent path
+    const greatGrandParentBlock = grandParentPath.parent_blocks[0]?.block_id;
+    if (!greatGrandParentBlock) return null;
+
+    // Find and return great grandparent path ID
+    const greatGrandParentPath = paths.find((p) =>
+      p.blocks.some((b) => b.id === greatGrandParentBlock)
+    );
+    return greatGrandParentPath?.id ?? null;
+  };
+
+  // Organize paths
+  const { mainPaths, mergePaths } = useMemo(() => {
+    const mergeChildPaths = new Set<number>();
+    const mainPathsArray: Path[] = [];
+    const mergePathsArray: Path[] = [];
+
+    // Collect merge paths (avoiding duplicates)
+    paths.forEach((path) => {
+      path.blocks.forEach((block) => {
+        if (block.type === 'MERGE') {
+          const child_paths = paths.filter((p) =>
+            block.child_paths?.some((childPath) => childPath.path.id === p.id)
+          );
+          child_paths.forEach((childPath) => {
+            if (!mergeChildPaths.has(childPath.id)) {
+              mergeChildPaths.add(childPath.id);
+              mergePathsArray.push(childPath);
+            }
+          });
+        }
+      });
+    });
+
+    // Find first path
+    paths.forEach((path) => {
+      if (path.parent_blocks.length === 0) {
+        mainPathsArray.push(path);
+      }
+    });
+
+    // Process merge paths
+    mergePathsArray.forEach((mergePath) => {
+      const greatGrandParentId = getGreatGrandParentPathId(mergePath);
+
+      if (!greatGrandParentId) {
+        mainPathsArray.push(mergePath);
+      } else {
+        // Find great grandparent path and add merge path to its last block's child_paths
+        const greatGrandParent = paths.find((p) => p.id === greatGrandParentId);
+        if (greatGrandParent) {
+          const lastBlock =
+            greatGrandParent.blocks[greatGrandParent.blocks.length - 1];
+          if (!lastBlock.child_paths) {
+            lastBlock.child_paths = [];
+          }
+          if (!lastBlock.child_paths.some((p) => p.path.id === mergePath.id)) {
+            // Find parent path (path that contains the parent block)
+            const parent_path = paths.find((p) =>
+              p.blocks.some(
+                (block) => block.id === mergePath.parent_blocks[0]?.block_id
+              )
+            );
+
+            // Find grandparent path (path that contains the parent's parent block)
+            const grandparent_path = paths.find((p) =>
+              p.blocks.some(
+                (block) => block.id === parent_path?.parent_blocks[0]?.block_id
+              )
+            );
+
+            // Find position of grandparent in child_paths and insert merge path after it
+            if (grandparent_path) {
+              const grandparentIndex = lastBlock.child_paths.findIndex(
+                (cp) => cp.path_id === grandparent_path.id
+              );
+
+              if (grandparentIndex !== -1) {
+                // Remove merge path if it exists
+                const mergePathIndex = lastBlock.child_paths.findIndex(
+                  (cp) => cp.path_id === mergePath.id
+                );
+                if (mergePathIndex !== -1) {
+                  lastBlock.child_paths.splice(mergePathIndex, 1);
+                }
+
+                const grandparent_last_block =
+                  grandparent_path.blocks[grandparent_path.blocks.length - 1];
+                // Get child paths that should be moved to merge path
+                const childPathsToMove =
+                  grandparent_last_block.child_paths.filter(
+                    (childPath) =>
+                      !mergePath.parent_blocks.some((pb) => {
+                        const lastBlockOfChildPath = paths
+                          .find((p) => p.id === childPath.path_id)
+                          ?.blocks.slice(-1)[0];
+                        return lastBlockOfChildPath?.id === pb.block_id;
+                      })
+                  );
+
+                // Remove these paths from lastBlock.child_paths
+                grandparent_last_block.child_paths =
+                  grandparent_last_block.child_paths.filter(
+                    (cp) => !childPathsToMove.includes(cp)
+                  );
+                // Add merge path after grandparent
+                lastBlock.child_paths.splice(grandparentIndex + 1, 0, {
+                  path: mergePath,
+                  path_id: mergePath.id,
+                  block_id: lastBlock.id,
+                  created_at: new Date().toISOString(),
+                  block: lastBlock,
+                });
+
+                // Move filtered child paths to merge path's last block
+                mergePath.blocks[mergePath.blocks.length - 1].type =
+                  BlockEndType.PATH;
+                const mergePathLastBlock =
+                  mergePath.blocks[mergePath.blocks.length - 1];
+                if (!mergePathLastBlock.child_paths) {
+                  mergePathLastBlock.child_paths = [];
+                }
+                mergePathLastBlock.child_paths.push(...childPathsToMove);
+                console.log(
+                  'mergePathLastBlock.child_paths',
+                  mergePathLastBlock.child_paths
+                );
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return {
+      mainPaths: mainPathsArray,
+      mergePaths: mergePathsArray,
+    };
+  }, [paths]);
+
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
   };
 
-  // Find the main path (path with no parent blocks)
-  const mainPath = paths.find((path) => path.parent_blocks.length === 0);
+  // Find the main path from filtered paths
+  const mainPath = mainPaths.find((path) => path.parent_blocks.length === 0);
 
   // Function to handle block click and zoom to node
   const handleBlockClick = (blockId: number) => {
@@ -57,8 +242,45 @@ export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
     });
   };
 
+  // Helper function to check if a block matches the search filter
+  const blockMatchesSearch = (block: any) => {
+    if (!searchFilter) return true;
+
+    const searchTerm = searchFilter.toLowerCase();
+    const blockTitle = (
+      block.title ||
+      block.step_details ||
+      `Block ${block.id}`
+    ).toLowerCase();
+
+    return blockTitle.includes(searchTerm);
+  };
+
+  // Helper function to check if a path or its children contain matching blocks
+  const pathContainsMatchingBlocks = (path: Path): boolean => {
+    if (!searchFilter) return true;
+
+    // Check if any direct blocks match
+    const hasMatchingBlocks = path.blocks.some(blockMatchesSearch);
+    if (hasMatchingBlocks) return true;
+
+    // Check child paths recursively
+    const childPaths = path.blocks
+      .filter((block) => block.type === 'MERGE' || block.type === 'PATH')
+      .flatMap((block) => block.child_paths || [])
+      .map((childPath) => paths.find((p) => p.id === childPath.path.id))
+      .filter((p): p is Path => p !== undefined);
+
+    return childPaths.some(pathContainsMatchingBlocks);
+  };
+
   const renderPathContent = (path: Path, level: number = 0) => {
     const isPathCollapsed = collapsedPaths.has(path.id);
+
+    // Only render the path if it contains matching blocks or if there's no search filter
+    if (!pathContainsMatchingBlocks(path)) {
+      return null;
+    }
 
     return (
       <div key={path.id}>
@@ -99,15 +321,19 @@ export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
           <>
             {path.blocks
               .filter(
-                (block) => block.type !== 'LAST' && block.type !== 'BEGIN'
+                (block) =>
+                  block.type !== 'LAST' &&
+                  block.type !== 'BEGIN' &&
+                  blockMatchesSearch(block)
               )
               .map((block) => {
                 if (block.type === 'MERGE' || block.type === 'PATH') {
+                  if (block.type === 'MERGE') return null;
                   return block.child_paths?.map((childPathConnection) => {
                     const childPath = paths.find(
                       (p) => p.id === childPathConnection.path.id
                     );
-                    if (childPath) {
+                    if (childPath && pathContainsMatchingBlocks(childPath)) {
                       return (
                         <PathContainer
                           key={childPath.id}
@@ -252,12 +478,30 @@ export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
 
           {/* Content Area with both x and y scrolling */}
           <div className="flex-1 overflow-auto p-4">
-            {mainPath && (
+            {mainPaths.map((path) => (
               <PathContainer
-                path={mainPath}
+                key={path.id}
+                path={path}
                 level={0}
                 renderContent={renderPathContent}
               />
+            ))}
+
+            {/* Merge Paths Section */}
+            {mergePaths.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-gray-900 mb-2 px-4">
+                  Merge Paths
+                </h3>
+                {mergePaths.map((path) => (
+                  <PathContainer
+                    key={path.id}
+                    path={path}
+                    level={0}
+                    renderContent={renderPathContent}
+                  />
+                ))}
+              </div>
             )}
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Handle,
   Position,
@@ -64,6 +64,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     selectedEndBlocks,
     toggleEndBlockSelection,
     originalEndBlocks,
+    triggerPathId,
+    setTriggerPathId,
   } = useUpdateModeStore();
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
@@ -285,6 +287,15 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const handleUpdateModeActivation = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDropdown(false);
+
+    // Get the parent block ID of the current node
+    const parentBlockId = data.path?.parent_blocks?.[0]?.block_id;
+
+    if (!parentBlockId) {
+      console.error('No parent block found');
+      return;
+    }
+
     // Find the merge block in the current path
     const mergeBlock = data.path?.blocks.find(
       (block) => block.type === 'MERGE'
@@ -295,7 +306,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       return;
     }
 
-    // Get the merge path (child path of merge block)
     const mergePathId = mergeBlock.child_paths[0].path_id;
     const mergePath = allPaths.find((path) => path.id === mergePathId);
 
@@ -304,17 +314,19 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       return;
     }
 
-    // Get the parent blocks from the merge path
     const parentBlocks = mergePath.parent_blocks.map((pb) => pb.block_id);
 
     setUpdateMode(true);
     setMergePathId(mergePathId);
     setSelectedEndBlocks(parentBlocks);
     setOriginalEndBlocks(parentBlocks);
+    setTriggerPathId(parentBlockId); // Set the triggering node's parent block ID
   };
 
-  const handleDuplicate = async () => {
+  const handleDuplicate = async (e: React.MouseEvent) => {
     try {
+      e.stopPropagation();
+      setShowDropdown(false);
       const response = await fetch(
         `/api/blocks/${id.replace('block-', '')}/duplicate`,
         {
@@ -375,7 +387,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             onClick={(e) => {
               e.stopPropagation();
               setMergeMode(true);
-              // Auto-select the current node
               togglePathSelection(
                 data.path?.id ?? -1,
                 endBlock?.id ?? -1,
@@ -388,6 +399,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             Merge paths
           </button>
         )}
+        <button
+          onClick={handleDuplicate}
+          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Duplicate node
+        </button>
         <button
           onClick={handleDelete}
           className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
@@ -429,13 +446,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     );
   };
 
-  // Show update mode checkbox
-  const showUpdateCheckbox =
-    isUpdateMode &&
-    ((isLastStepInPath &&
-      parentHasMultipleChildPaths &&
-      !data.pathHasChildren) ||
-      data.path?.blocks.some((block) => originalEndBlocks.includes(block.id)));
+  // Modify the showUpdateCheckbox logic
+  const showUpdateCheckbox = useMemo(() => {
+    return (
+      isUpdateMode && data.path?.parent_blocks?.[0]?.block_id === triggerPathId
+    );
+  }, [isUpdateMode, data.path?.parent_blocks, triggerPathId]);
 
   // Get the end block ID for this path
   const endBlockId = data.path?.blocks.find(
