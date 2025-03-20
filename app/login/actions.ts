@@ -5,10 +5,11 @@ import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
-import WelcomeEmail from '../emails/WelcomeEmail';
+import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { Prisma } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import posthog from 'posthog-js';
+import React from 'react';
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
