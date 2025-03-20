@@ -6,6 +6,7 @@ import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { FeedbackRequestEmail } from '@/emails/templates/FeedbackRequestEmail';
 import { ProcessLimitEmail } from '@/emails/templates/ProcessLimitEmail';
 import { SenderType } from '@/lib/email';
+import { CancellationFollowUpEmail } from '@/emails/templates/CancellationFollowUpEmail';
 
 // Define types for email templates
 type EmailTemplateConfig = {
@@ -34,6 +35,11 @@ const EMAIL_TEMPLATES: Record<string, EmailTemplateConfig> = {
   'PROCESS_LIMIT_REACHED': {
     Component: ProcessLimitEmail,
     subject: 'Process limit reached - Here\'s a tip to get more 😉',
+    sender: 'contact',
+  },
+  'CANCELLATION_FOLLOW_UP': {
+    Component: CancellationFollowUpEmail,
+    subject: "We're sorry to see you go 😢",
     sender: 'contact',
   },
   // Add more email types as needed

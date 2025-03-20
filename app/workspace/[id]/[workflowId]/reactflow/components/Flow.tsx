@@ -44,6 +44,8 @@ import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
 import InvisibleNode from './nodes/InvisibleNode';
 import { useEditModeStore } from '../store/editModeStore';
 import { useSearchParams } from 'next/navigation';
+import ZoomBar from './ZoomBar';
+import { Sidebar } from './Sidebar';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -536,8 +538,8 @@ export function Flow({
 
   return (
     <div
-      className={`h-screen w-full transition-colors duration-300 ${
-        isConnectMode || isEditMode ? 'bg-[#111111]' : 'bg-white'
+      className={`flex-1 w-full h-full relative ${
+        isEditMode || isConnectMode ? 'bg-gray-900' : ''
       }`}
     >
       <ReactFlow
@@ -576,7 +578,6 @@ export function Flow({
         }`}
       >
         <Background gap={12} size={1} />
-        <Controls />
         <MiniMap />
       </ReactFlow>
       <PathSelectionBox />
@@ -622,6 +623,16 @@ export function Flow({
           onPreviewUpdate={setPreviewEdge}
         />
       )}
+
+      <Sidebar
+        paths={paths}
+        workspaceId={workspaceId}
+        workflowId={workflowId}
+      />
+
+      <div className="absolute top-4 right-4 z-10">
+        <ZoomBar />
+      </div>
     </div>
   );
 }

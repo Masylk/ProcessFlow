@@ -77,6 +77,8 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         styles.highlightUser
       );
       el.removeEventListener('click', handleElementClick);
+      // Instead of directly setting styles, use data attributes
+      el.removeAttribute('data-tutorial-active');
     });
 
     // Handle different step highlights
@@ -88,6 +90,8 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         if (newFlowButton) {
           newFlowButton.classList.add(styles.highlight);
           newFlowButton.addEventListener('click', handleElementClick);
+          // Mark as tutorial active instead of changing styles directly
+          newFlowButton.setAttribute('data-tutorial-active', 'true');
         }
         break;
 
@@ -100,11 +104,12 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
             styles.highlight,
             styles.highlightFolders
           );
-          // Add dynamic background color using inline style
-          (foldersSection as HTMLElement).style.backgroundColor =
-            currentTheme === 'dark'
-              ? 'rgba(255, 255, 255, 0.1)'
-              : colors['bg-primary'];
+          // Add class for styling rather than inline style
+          foldersSection.classList.add(
+            currentTheme === 'dark' ? styles.darkFolderHighlight : styles.lightFolderHighlight
+          );
+          foldersSection.addEventListener('click', handleElementClick);
+          foldersSection.setAttribute('data-tutorial-active', 'true');
         }
         break;
 
@@ -118,6 +123,7 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
             styles.highlightWorkspace
           );
           workspaceSwitcher.addEventListener('click', handleElementClick);
+          workspaceSwitcher.setAttribute('data-tutorial-active', 'true');
         }
         break;
 
@@ -128,6 +134,7 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         if (userSettings) {
           userSettings.classList.add(styles.highlight, styles.highlightUser);
           userSettings.addEventListener('click', handleElementClick);
+          userSettings.setAttribute('data-tutorial-active', 'true');
         }
         break;
     }
@@ -139,9 +146,13 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
           styles.highlight,
           styles.highlightFolders,
           styles.highlightWorkspace,
-          styles.highlightUser
+          styles.highlightUser,
+          styles.darkFolderHighlight,
+          styles.lightFolderHighlight
         );
         el.removeEventListener('click', handleElementClick);
+        // Clean up attribute
+        el.removeAttribute('data-tutorial-active');
       });
     };
   }, [currentStep, currentTheme, colors]);
