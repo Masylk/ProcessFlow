@@ -6,10 +6,12 @@ interface PathSelectionStore {
   parentBlockId: number | null;
   workflowId: number;
   mergeMode: boolean;
+  updateMode: boolean;
   setSelectedPaths: (paths: number[]) => void;
   setParentBlockId: (id: number | null) => void;
   togglePathSelection: (pathId: number, endBlockId: number, parentBlockId: number) => void;
   setMergeMode: (enabled: boolean) => void;
+  setUpdateMode: (mode: boolean) => void;
   reset: () => void;
 }
 
@@ -19,9 +21,11 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
   parentBlockId: null,
   workflowId: parseInt(window.location.pathname.split('/')[3]), // Get from URL
   mergeMode: false,
+  updateMode: false,
   setSelectedPaths: (paths) => set({ selectedPaths: paths }),
   setParentBlockId: (id) => set({ parentBlockId: id }),
   setMergeMode: (enabled) => set({ mergeMode: enabled }),
+  setUpdateMode: (mode) => set({ updateMode: mode }),
   togglePathSelection: (pathId, endBlockId, parentBlockId) => {
     const { selectedPaths, selectedEndBlocks, parentBlockId: currentParentId } = get();
     
@@ -56,6 +60,7 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
     selectedPaths: [], 
     selectedEndBlocks: [], 
     parentBlockId: null,
-    mergeMode: false 
+    mergeMode: false,
+    updateMode: false
   }),
 })); 

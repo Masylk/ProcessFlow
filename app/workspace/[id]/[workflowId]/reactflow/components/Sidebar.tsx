@@ -1,91 +1,197 @@
-import React, { useState, useCallback, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Block } from '@/types/block';
-import { PathObject } from '@/types/sidebar';
-import SidebarPath from './SidebarPath';
+import { Path } from '../types';
+import { PathContainer } from './PathContainer';
 
 interface SidebarProps {
-  blocks: Block[];
+  paths: Path[];
   workspaceId: string;
   workflowId: string;
-  onNodeFocus?: (nodeId: string) => void;
-  paths?: PathObject[];
-  onBlocksReorder?: (newBlocks: Block[]) => void;
 }
 
-export function Sidebar({ blocks, workspaceId, workflowId, onNodeFocus, paths, onBlocksReorder }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [sidebarWidth, setSidebarWidth] = useState(320);
-  const [isResizing, setIsResizing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [localBlocks, setLocalBlocks] = useState<Block[]>(blocks || []);
+export function Sidebar({ paths, workspaceId, workflowId }: SidebarProps) {
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
+  const [searchFilter, setSearchFilter] = useState<string>('');
+  const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
+  const [sidebarWidth, setSidebarWidth] = useState<number>(300);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const { fitView, setCenter } = useReactFlow();
-  
-  // Update localBlocks when blocks prop changes
-  React.useEffect(() => {
-    setLocalBlocks(blocks || []);
-  }, [blocks]);
-  
-  // Construct the icon URLs from environment variables
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
-  const toggleIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/align-left-02.svg`;
-  const searchIconUrl = `${supabaseUrl}${storagePath}/assets/shared_components/search-icon.svg`;
+  const { getNodes, setViewport } = useReactFlow();
 
-  // Handle sidebar resizing
-  const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
-    setIsResizing(true);
+  // Static URLs for the icons
+  const navigationIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/navigation-icon.svg`;
+  const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible((prev) => !prev);
+  };
+
+  // Find the main path (path with no parent blocks)
+  const mainPath = paths.find((path) => path.parent_blocks.length === 0);
+
+  // Function to handle block click and zoom to node
+  const handleBlockClick = (blockId: number) => {
+    const node = getNodes().find((n) => n.id === `block-${blockId}`);
+    if (!node) return;
+
+    // Center on node and offset to the left to make room for sidebar
+    setViewport(
+      {
+        x: -(node.position.x - window.innerWidth / 2 + 200),
+        y: -(node.position.y - window.innerHeight / 2 + 200),
+        zoom: 1,
+      },
+      { duration: 800 }
+    );
+  };
+
+  const togglePathVisibility = (pathId: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent block click when clicking the toggle
+    setCollapsedPaths((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(pathId)) {
+        newSet.delete(pathId);
+      } else {
+        newSet.add(pathId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderPathContent = (path: Path, level: number = 0) => {
+    const isPathCollapsed = collapsedPaths.has(path.id);
+
+    return (
+      <div key={path.id}>
+        {path.blocks
+          .filter((block) => block.type === 'BEGIN')
+          .map((block) => (
+            <div
+              key={block.id}
+              className="p-2 hover:bg-gray-50 rounded-md cursor-pointer w-[250px]"
+              onClick={() => handleBlockClick(block.id)}
+            >
+              <div className="flex items-center gap-2">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
+                  alt="Branch Icon"
+                  className="w-6 h-6 flex-shrink-0"
+                />
+                <span className="text-sm text-gray-700 whitespace-nowrap overflow-hidden">
+                  {path.name}
+                </span>
+                <button
+                  onClick={(e) => togglePathVisibility(path.id, e)}
+                  className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                      isPathCollapsed ? 'chevron-right' : 'chevron-down'
+                    }.svg`}
+                    alt={isPathCollapsed ? 'Expand' : 'Collapse'}
+                    className="w-4 h-4"
+                  />
+                </button>
+              </div>
+            </div>
+          ))}
+
+        {!isPathCollapsed && (
+          <>
+            {path.blocks
+              .filter(
+                (block) => block.type !== 'LAST' && block.type !== 'BEGIN'
+              )
+              .map((block) => {
+                if (block.type === 'MERGE' || block.type === 'PATH') {
+                  return block.child_paths?.map((childPathConnection) => {
+                    const childPath = paths.find(
+                      (p) => p.id === childPathConnection.path.id
+                    );
+                    if (childPath) {
+                      return (
+                        <PathContainer
+                          key={childPath.id}
+                          path={childPath}
+                          level={level + 1}
+                          renderContent={renderPathContent}
+                        />
+                      );
+                    }
+                    return null;
+                  });
+                }
+
+                return (
+                  <div
+                    key={block.id}
+                    className="p-2 hover:bg-gray-50 rounded-md cursor-pointer w-[250px]"
+                    style={{
+                      marginLeft: 24,
+                    }}
+                    onClick={() => handleBlockClick(block.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {block.type === 'STEP' && (
+                        <img
+                          src={
+                            block.icon
+                              ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
+                              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                          }
+                          alt={block.icon ? 'Block Icon' : 'Default Icon'}
+                          className="w-6 h-6 flex-shrink-0"
+                        />
+                      )}
+                      <span className="text-sm text-gray-700 whitespace-nowrap overflow-hidden">
+                        {block.title ||
+                          block.step_details ||
+                          `Block ${block.id}`}
+                      </span>
+                    </div>
+
+                    {block.child_paths?.map((childPathConnection) => {
+                      const childPath = paths.find(
+                        (p) => p.id === childPathConnection.path.id
+                      );
+                      if (childPath) {
+                        return (
+                          <PathContainer
+                            key={childPath.id}
+                            path={childPath}
+                            level={level + 1}
+                            renderContent={renderPathContent}
+                          />
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                );
+              })}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // Handle resize functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.pageX;
     const startWidth = sidebarWidth;
-    const startX = mouseDownEvent.clientX;
 
-    const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
-      const newWidth = startWidth + mouseMoveEvent.clientX - startX;
-      setSidebarWidth(Math.min(Math.max(280, newWidth), 480));
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = startWidth + (e.pageX - startX);
+      setSidebarWidth(Math.max(250, Math.min(400, newWidth))); // Min 250px, max 800px
     };
 
     const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  }, [sidebarWidth]);
-
-  const handleToggleSidebar = () => {
-    setIsOpen(prev => !prev);
-  };
-
-  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleNodeClick = useCallback((nodeId: string) => {
-    if (onNodeFocus) {
-      onNodeFocus(nodeId);
-    }
-  }, [onNodeFocus]);
-
-  // Handle block reordering
-  const handleBlocksReorder = useCallback((reorderedBlocks: Block[]) => {
-    setLocalBlocks(reorderedBlocks);
-    
-    // Call the parent component's reorder handler if provided
-    if (onBlocksReorder) {
-      onBlocksReorder(reorderedBlocks);
-    }
-  }, [onBlocksReorder]);
-
-  // Create main path object if no paths are provided
-  const mainPath: PathObject = {
-    id: 0,
-    name: 'Main',
-    blocks: localBlocks,
-    handleBlocksReorder: async (reorderedBlocks) => {
-      handleBlocksReorder(reorderedBlocks);
-    }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   return (
@@ -93,43 +199,36 @@ export function Sidebar({ blocks, workspaceId, workflowId, onNodeFocus, paths, o
       {/* Sidebar with icons */}
       <div className="w-15 h-full bg-white border border-[#e4e7ec] flex flex-col justify-between">
         <div className="flex flex-col pt-4 px-4 gap-6">
-          {/* Navigation Icon */}
           <div
             className="w-6 h-6 bg-white rounded-md cursor-pointer"
-            onClick={handleToggleSidebar}
+            onClick={toggleSidebar}
           >
             <img
-              src={toggleIconUrl}
+              src={navigationIconUrl}
               alt="Navigation Icon"
               className="w-full h-full object-contain"
-              onError={(e) => {
-                e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxsaW5lIHgxPSIzIiB5MT0iMTIiIHgyPSIyMSIgeTI9IjEyIj48L2xpbmU+PGxpbmUgeDE9IjMiIHkxPSI2IiB4Mj0iMjEiIHkyPSI2Ij48L2xpbmU+PGxpbmUgeDE9IjMiIHkxPSIxOCIgeDI9IjIxIiB5Mj0iMTgiPjwvbGluZT48L3N2Zz4=';
-              }}
             />
           </div>
         </div>
       </div>
 
       {/* Main Sidebar Content */}
-      {isOpen && (
+      {isSidebarVisible && (
         <div
           ref={sidebarRef}
-          className="flex-1 flex flex-col overflow-auto p-0 hide-scrollbar resize-x border border-gray-200 shadow-lg"
+          className="flex-1 flex flex-col border border-gray-200 relative"
           style={{
+            width: sidebarWidth,
             minWidth: '250px',
-            width: `${sidebarWidth}px`,
-            maxWidth: '500px',
-            cursor: isResizing ? 'ew-resize' : 'auto'
           }}
         >
-          {/* Sidebar Header */}
-          <div className="sticky top-0 z-10 px-4 py-3 border-b border-gray-200 bg-white">
-            <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
-          </div>
-        
-          {/* Search Bar */}
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="h-[26px] flex-col justify-start items-start gap-1.5 flex">
+          {/* Header Section */}
+          <div className="sticky top-0 z-10 px-2 pt-3 pb-7 border-b border-[#e4e7ec] bg-white">
+            <div className="self-stretch text-[#101828] text-base font-medium font-['Inter'] leading-normal mb-4">
+              Navigation
+            </div>
+            {/* Search bar */}
+            <div className="flex-col justify-start items-start gap-1.5">
               <div className="px-2 py-1 bg-white rounded-md shadow border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
                 <div className="grow shrink basis-0 h-[18px] justify-start items-center gap-2 flex">
                   <div className="w-4 h-4 relative">
@@ -137,15 +236,12 @@ export function Sidebar({ blocks, workspaceId, workflowId, onNodeFocus, paths, o
                       src={searchIconUrl}
                       alt="Search Icon"
                       className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjExIiBjeT0iMTEiIHI9IjgiPjwvY2lyY2xlPjxsaW5lIHgxPSIyMSIgeTE9IjIxIiB4Mj0iMTYuNjUiIHkyPSIxNi42NSI+PC9saW5lPjwvc3ZnPg==';
-                      }}
                     />
                   </div>
                   <input
                     type="text"
-                    value={searchTerm}
-                    onChange={handleSearch}
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
                     placeholder="Search"
                     className="w-[150px] text-[#667085] text-xs font-normal font-['Inter'] leading-[18px] outline-none"
                   />
@@ -153,47 +249,38 @@ export function Sidebar({ blocks, workspaceId, workflowId, onNodeFocus, paths, o
               </div>
             </div>
           </div>
-        
-          {/* Content - SidebarPath components */}
-          <div className="flex-1 overflow-y-auto p-2">
-            {paths && paths.length > 0 ? (
-              paths.map(path => (
-                <SidebarPath
-                  key={path.id}
-                  path={{
-                    ...path,
-                    handleBlocksReorder: path.handleBlocksReorder || (async (blocks) => {
-                      if (path.id === 0) {
-                        handleBlocksReorder(blocks);
-                      }
-                    })
-                  }}
-                  onNodeFocus={handleNodeClick}
-                  workspaceId={workspaceId}
-                  workflowId={workflowId}
-                  displayTitle={true}
-                  searchFilter={searchTerm}
-                />
-              ))
-            ) : (
-              <SidebarPath
+
+          {/* Content Area with both x and y scrolling */}
+          <div className="flex-1 overflow-auto p-4">
+            {mainPath && (
+              <PathContainer
                 path={mainPath}
-                onNodeFocus={handleNodeClick}
-                workspaceId={workspaceId}
-                workflowId={workflowId}
-                displayTitle={false}
-                searchFilter={searchTerm}
+                level={0}
+                renderContent={renderPathContent}
               />
             )}
           </div>
-        
-          {/* Resizer */}
+
+          {/* Resize Handle */}
           <div
-            className="absolute top-0 right-0 w-1 h-full cursor-ew-resize bg-gray-300 hover:bg-blue-500 transition-colors"
-            onMouseDown={startResizing}
-          />
+            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+            onMouseDown={handleMouseDown}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="w-4 h-4 text-gray-400"
+            >
+              <path
+                d="M22 22L12 12M22 12L12 22"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
         </div>
       )}
     </div>
   );
-} 
+}

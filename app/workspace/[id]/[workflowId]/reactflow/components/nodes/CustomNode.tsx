@@ -462,7 +462,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     // Center on node and offset to the left to make room for sidebar
     setViewport(
       {
-        x: -(node.position.x - window.innerWidth / 2 + 500),
+        x: -(node.position.x - window.innerWidth / 2 + 400),
         y: -(node.position.y - window.innerHeight / 2 + 200),
         zoom: 1,
       },
