@@ -486,23 +486,6 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                 renderContent={renderPathContent}
               />
             ))}
-
-            {/* Merge Paths Section */}
-            {mergePaths.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2 px-4">
-                  Merge Paths
-                </h3>
-                {mergePaths.map((path) => (
-                  <PathContainer
-                    key={path.id}
-                    path={path}
-                    level={0}
-                    renderContent={renderPathContent}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Resize Handle */}
