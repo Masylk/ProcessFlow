@@ -427,10 +427,14 @@ export default function Page() {
     setPasswordChanged(false);
   };
 
-  // Open the modal for the Help Center
-  const openHelpCenter = () => {
+  // Simple open handler
+  const openHelpCenter = (): void => {
     setHelpCenterVisible(true);
-    setDropdownVisible(false);
+  };
+
+  // Simple close handler
+  const closeHelpCenter = () => {
+    setHelpCenterVisible(false);
   };
 
   const openCreateFolder = (parentId?: number) => {
@@ -554,10 +558,6 @@ export default function Page() {
   const closeEditFolder = () => {
     setFolderParent(null);
     setEditFolderVisible(false);
-  };
-
-  const closeHelpCenter = () => {
-    setHelpCenterVisible(false);
   };
 
   const handleSelectWorkflow = (workflow: Workflow | null) => {
@@ -1337,7 +1337,11 @@ export default function Page() {
             </div>
           </div>
         }>
-          <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
+          <HelpCenterModalDynamic 
+            onClose={closeHelpCenter} 
+            user={user} 
+            setShowTutorial={setShowTutorial}
+          />
         </Suspense>
       )}
 

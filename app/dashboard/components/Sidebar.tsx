@@ -14,6 +14,8 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import SortableFolderList from './SortableFolderList';
+import { useFolderPositioning } from '../hooks/useFolderPositioning';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -70,6 +72,13 @@ export default function Sidebar({
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Use the folder positioning hook
+  const { updateFolderPositions, isUpdating } = useFolderPositioning(
+    activeWorkspace,
+    setWorkspaces,
+    workspaces
+  );
 
   const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
     setIsResizing(true);
@@ -394,13 +403,21 @@ export default function Sidebar({
               </button>
             </div>
 
-            {/* Folders container */}
+            {/* Folders container - REPLACED WITH SORTABLE FOLDER LIST */}
             <div className="px-4">
-              <div className="flex flex-col w-full">
-                {activeWorkspace?.folders
-                  ?.filter((folder) => folder.parent_id === null)
-                  .map((folder) => renderFolderWithSubfolders(folder))}
-              </div>
+              <SortableFolderList
+                activeWorkspace={activeWorkspace}
+                expandedFolders={expandedFolders}
+                onToggleFolder={toggleFolder}
+                activeTabId={activeTabId}
+                onTabClick={handleTabClick}
+                onCreateSubfolder={onCreateSubfolder}
+                onEditFolder={onEditFolder}
+                onDeleteFolder={onDeleteFolder}
+                onSelectFolder={onSelectFolder}
+                isSettingsView={isSettingsView}
+                updateFolderPositions={updateFolderPositions}
+              />
             </div>
           </div>
         </div>
