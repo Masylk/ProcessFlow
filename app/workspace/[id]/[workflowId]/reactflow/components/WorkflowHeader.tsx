@@ -5,6 +5,9 @@ import React, { useEffect, useState } from 'react';
 import TitleBar from '../../components/TitleBar';
 import { useRouter, usePathname } from 'next/navigation';
 import AvatarGroup from '@/app/components/AvatarGroup';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import { useColors } from '@/app/theme/hooks';
+import ShareModal from '@/app/components/ShareModal';
 
 interface WorkflowHeaderProps {
   workflowId: string;
@@ -19,10 +22,12 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const colors = useColors();
   const [avatarUrls, setAvatarUrls] = useState<string[]>([]);
   const [workflowTitle, setWorkflowTitle] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editableTitle, setEditableTitle] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     const files = [
@@ -93,72 +98,109 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
     }
   };
 
+  const openShareModal = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
+  };
+
   return (
-    <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
-      <ButtonCTA
-        start_icon="/assets/shared_components/arrow-left.svg"
-        onClick={navigateToFirstSegment}
-        bgColor="transparent"
-        hoverBgColor="transparent"
-        textColor="#475467"
+    <>
+      <div 
+        className="overflow-hidden w-full h-[68px] p-4 flex justify-between items-center z-40"
+        style={{ 
+          backgroundColor: colors['bg-primary'],
+          borderBottom: `1px solid ${colors['border-primary']}`
+        }}
       >
-        Back to Dashboard
-      </ButtonCTA>
+        <ButtonNormal
+          variant="tertiary"
+          size="small"
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+          onClick={navigateToFirstSegment}
+        >
+          Back to Dashboard
+        </ButtonNormal>
 
-      <div className="pl-24 flex items-center gap-2">
-        {grandParentFolder && (
-          <>
-            <span className="text-gray-600">{grandParentFolder}</span>
-            <span className="text-gray-400">/</span>
-          </>
-        )}
-        {parentFolder && (
-          <>
-            <span className="text-gray-600">{parentFolder}</span>
-            <span className="text-gray-400">/</span>
-          </>
-        )}
-        {isEditing ? (
-          <input
-            type="text"
-            value={editableTitle}
-            onChange={(e) => setEditableTitle(e.target.value)}
-            onBlur={handleTitleUpdate}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            className="px-2 py-1 border-b-2 border-blue-500 outline-none bg-transparent"
-          />
-        ) : (
-          <span
-            className="text-gray-900 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
-            onClick={() => setIsEditing(true)}
+        <div className="pl-24 flex items-center gap-2">
+          {grandParentFolder && (
+            <>
+              <span style={{ color: colors['text-tertiary'] }}>{grandParentFolder}</span>
+              <span style={{ color: colors['text-quaternary'] }}>/</span>
+            </>
+          )}
+          {parentFolder && (
+            <>
+              <span style={{ color: colors['text-tertiary'] }}>{parentFolder}</span>
+              <span style={{ color: colors['text-quaternary'] }}>/</span>
+            </>
+          )}
+          {isEditing ? (
+            <input
+              type="text"
+              value={editableTitle}
+              onChange={(e) => setEditableTitle(e.target.value)}
+              onBlur={handleTitleUpdate}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className="px-2 py-1 outline-none"
+              style={{ 
+                backgroundColor: 'transparent',
+                borderBottom: `2px solid ${colors['border-brand']}`,
+                color: colors['text-primary']
+              }}
+            />
+          ) : (
+            <span
+              className="cursor-pointer px-2 py-1 rounded"
+              style={{ color: colors['text-primary'] }}
+              onClick={() => setIsEditing(true)}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary_hover'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {workflowTitle || 'Untitled Workflow'}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <AvatarGroup urls={avatarUrls} />
+
+          <div className="pl-4 justify-start items-center gap-2 flex"
+            style={{ borderLeft: `1px solid ${colors['border-primary']}` }}
           >
-            {workflowTitle || 'Untitled Workflow'}
-          </span>
-        )}
-      </div>
+            <ButtonNormal
+              variant="tertiary"
+              iconOnly={true}
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/play-icon.svg`}
+              onClick={navigateToEdit}
+            />
 
-      <div className="flex items-center gap-4">
-        <AvatarGroup urls={avatarUrls} />
-
-        <div className="pl-4 border-l border-[#d0d5dd] justify-start items-center gap-2 flex">
-          <ButtonCTA
-            start_icon="/assets/shared_components/play-icon.svg"
-            onClick={navigateToEdit}
-            bgColor="transparent"
-            hoverBgColor="transparent"
-            textColor="#475467"
-          ></ButtonCTA>
-
-          <ButtonCTA
-            start_icon="/assets/workflow/share.svg"
-            onClick={() => alert('Share button clicked!')}
-          >
-            Share
-          </ButtonCTA>
+            <ButtonNormal
+              variant="primary"
+              size="small"
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/share-06.svg`}
+              onClick={openShareModal}
+            >
+              Share
+            </ButtonNormal>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Share Modal */}
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={closeShareModal} 
+        itemName={workflowTitle || 'Untitled Workflow'} 
+      />
+    </>
   );
 };
 

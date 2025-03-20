@@ -59,6 +59,21 @@ export async function POST(req: Request) {
       : STRIPE_PRICE_IDS.EARLY_ADOPTER.ANNUAL;
 
     try {
+      // Log the subscription details before update
+      console.log('Attempting to update subscription:', {
+        workspaceId,
+        subscriptionId: workspace.subscription.stripe_subscription_id,
+        currentPriceId: await stripe.subscriptions.retrieve(workspace.subscription.stripe_subscription_id)
+          .then(sub => sub.items.data[0]?.price.id)
+          .catch(e => {
+            console.error('Error retrieving current subscription:', e);
+            return null;
+          }),
+        newPriceId,
+        environment: process.env.NODE_ENV,
+        stripeMode: process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_') ? 'test' : 'live'
+      });
+
       // Update the subscription in Stripe
       const updatedSubscription = await updateStripeSubscriptionPlan(
         workspace.subscription.stripe_subscription_id,
