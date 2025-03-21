@@ -20,7 +20,7 @@ import { usePathsStore } from '../../store/pathsStore';
 import BlockDetailsSidebar from '../BlockDetailsSidebar';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useClipboardStore } from '../../store/clipboardStore';
-
+import { useColors } from '@/app/theme/hooks';
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
     onPreviewUpdate?: (edge: Edge | null) => void;
@@ -32,6 +32,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const colors = useColors();
   const {
     getNodes,
     setEdges,
@@ -771,6 +772,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           block={blockData}
           onClose={() => setShowSidebar(false)}
           onUpdate={handleBlockUpdate}
+          colors={colors}
         />
       )}
     </>
