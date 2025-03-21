@@ -4,6 +4,7 @@ import { StrictModeDroppable } from '@/app/components/StrictModeDroppable';
 import SidebarBlock from '@/app/workspace/[id]/[workflowId]/reactflow/components/SidebarBlock';
 import { Block } from '@/types/block';
 import * as ReactBeautifulDnd from 'react-beautiful-dnd';
+import { useColors } from '@/app/theme/hooks';
 
 interface SidebarListProps {
   blocks: Block[];
@@ -22,6 +23,8 @@ const SidebarList: React.FC<SidebarListProps> = ({
   workflowId,
   searchFilter,
 }) => {
+  const colors = useColors();
+  
   // Filter blocks based on search term
   const filteredBlocks = blocks.filter(block => 
     (block.title?.toLowerCase() || '').includes(searchFilter.toLowerCase()) ||
@@ -50,6 +53,7 @@ const SidebarList: React.FC<SidebarListProps> = ({
             style={{
               minHeight: filteredBlocks.length ? 'auto' : '1px',
               opacity: 1, // Always fully visible
+              backgroundColor: colors['bg-primary']
             }}
           >
             {filteredBlocks.map((block, index) => (
@@ -69,8 +73,8 @@ const SidebarList: React.FC<SidebarListProps> = ({
                       ? (provided.draggableProps.style as ReactBeautifulDnd.DraggingStyle)?.top || 'auto' 
                       : 'auto',
                     opacity: snapshot.isDragging ? 0.6 : 1,
-                    background: snapshot.isDragging ? 'white' : 'transparent',
-                    boxShadow: snapshot.isDragging ? '0 5px 10px rgba(0,0,0,0.1)' : 'none',
+                    background: snapshot.isDragging ? colors['bg-secondary'] : 'transparent',
+                    boxShadow: snapshot.isDragging ? `0 5px 10px ${colors['bg-overlay']}` : 'none',
                     zIndex: snapshot.isDragging ? 9999 : 'auto'
                   };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 import DOMPurify from 'dompurify';
 import { Block } from '@/types/block';
+import { useColors } from '@/app/theme/hooks';
 
 interface SidebarBlockProps {
   block: Block;
@@ -38,6 +39,7 @@ const SidebarBlock: React.FC<SidebarBlockProps> = ({
   const [isSubpathsVisible, setIsSubpathsVisible] = useState(true);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [iconError, setIconError] = useState(false);
+  const colors = useColors();
   
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH || '';
@@ -88,7 +90,18 @@ const SidebarBlock: React.FC<SidebarBlockProps> = ({
       : iconUrl || defaultSvgIcon;
 
   return (
-    <div className="flex items-center p-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors">
+    <div 
+      className="flex items-center p-2 rounded-md cursor-pointer transition-colors"
+      style={{ 
+        backgroundColor: colors['bg-primary']
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.backgroundColor = colors['bg-primary'];
+      }}
+    >
       {dragHandleProps && <DragHandle dragHandleProps={dragHandleProps} />}
       
       {/* Block Icon */}
@@ -103,7 +116,7 @@ const SidebarBlock: React.FC<SidebarBlockProps> = ({
       
       {/* Block Title */}
       <div className="flex-1 truncate" onClick={handleClick}>
-        <span className="text-gray-700">
+        <span style={{ color: colors['text-primary'] }}>
           {block.step_block?.stepDetails || block.title || `Block ${block.id}`}
         </span>
       </div>
@@ -112,7 +125,14 @@ const SidebarBlock: React.FC<SidebarBlockProps> = ({
       {block.children && block.children.length > 0 && (
         <button
           onClick={toggleSubpathsVisibility}
-          className="ml-2 p-1 rounded hover:bg-gray-200"
+          className="ml-2 p-1 rounded"
+          style={{ backgroundColor: 'transparent' }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-tertiary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <img
             src={isSubpathsVisible ? chevronDownIconUrl : chevronUpIconUrl}

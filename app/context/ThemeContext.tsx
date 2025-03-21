@@ -54,16 +54,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setCurrentTheme('dark');
     }
 
-    // Add transition styles to head
+    // Add transition styles to head - REMOVED to fix inconsistent transition timing
     const style = document.createElement('style');
     style.textContent = `
-      :root {
-        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-      }
-      
-      * {
-        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-      }
+      /* Transitions removed to fix inconsistent transition timing between button text and icons */
     `;
     document.head.appendChild(style);
 

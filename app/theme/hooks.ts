@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { ThemeContext } from '../context/ThemeContext';
-import { ThemeTokens, ButtonTokens } from './types';
+import { ThemeTokens, ButtonTokens, IconTokens } from './types';
 
 export function useTheme() {
   const context = useContext(ThemeContext);
@@ -31,6 +31,11 @@ export function useThemeAssets() {
 }
 
 export function useButtonToken(token: keyof ButtonTokens) {
+  const { getCssVariable } = useTheme();
+  return getCssVariable(token);
+}
+
+export function useIconToken(token: keyof IconTokens) {
   const { getCssVariable } = useTheme();
   return getCssVariable(token);
 } 

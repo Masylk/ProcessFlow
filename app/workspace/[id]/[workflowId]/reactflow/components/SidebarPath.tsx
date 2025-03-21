@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SidebarList from '@/app/workspace/[id]/[workflowId]/reactflow/components/SidebarList';
 import { Block } from '@/types/block';
 import { PathObject } from '@/types/sidebar';
+import { useColors } from '@/app/theme/hooks';
 
 interface SidebarPathProps {
   path: PathObject;
@@ -23,6 +24,7 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   searchFilter,
 }) => {
   const [isContentVisible, setIsContentVisible] = useState(defaultVisibility);
+  const colors = useColors();
 
   // Construct URLs for icons
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -50,16 +52,39 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
   };
 
   return (
-    <div className="py-1 rounded mb-0">
+    <div 
+      className="py-1 rounded mb-0"
+      style={{ 
+        backgroundColor: colors['bg-primary'] 
+      }}
+    >
       {/* Header with Toggle Icon */}
       {displayTitle && (
-        <div className="flex items-center space-x-1 cursor-pointer" onClick={toggleContentVisibility}>
+        <div 
+          className="flex items-center space-x-1 cursor-pointer p-2 rounded-md hover:bg-gray-50" 
+          onClick={toggleContentVisibility}
+          style={{ 
+            color: colors['text-primary'],
+            backgroundColor: colors['bg-primary']
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-primary'];
+          }}
+        >
           <img
             src={gitBranchIconUrl}
             alt="Git Branch Icon"
             className="w-4 h-4"
           />
-          <h2 className="text-sm font-semibold">{path.name}</h2>
+          <h2 
+            className="text-sm font-semibold"
+            style={{ color: colors['text-primary'] }}
+          >
+            {path.name}
+          </h2>
           <img
             src={isContentVisible ? chevronDownIconUrl : chevronUpIconUrl}
             alt={isContentVisible ? "Collapse" : "Expand"}
@@ -70,7 +95,10 @@ const SidebarPath: React.FC<SidebarPathProps> = ({
 
       {/* Conditional Content Rendering */}
       {isContentVisible && path.blocks && path.blocks.length > 0 && (
-        <div className={`${displayTitle ? 'ml-3 mt-1' : ''}`}>
+        <div 
+          className={`${displayTitle ? 'ml-3 mt-1' : ''}`}
+          style={{ backgroundColor: colors['bg-primary'] }}
+        >
           <SidebarList
             blocks={path.blocks as Block[]}
             onNodeFocus={onNodeFocus}
