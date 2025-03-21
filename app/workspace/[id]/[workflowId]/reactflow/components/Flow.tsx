@@ -44,6 +44,8 @@ import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
 import InvisibleNode from './nodes/InvisibleNode';
 import { useEditModeStore } from '../store/editModeStore';
 import { useSearchParams } from 'next/navigation';
+import ZoomBar from './ZoomBar';
+import { Sidebar } from './Sidebar';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -65,7 +67,6 @@ const edgeTypes = {
 
 interface FlowProps {
   workflowName: string;
-  paths: Path[];
   workspaceId: string;
   workflowId: string;
   onBlockAdd: (
@@ -73,21 +74,19 @@ interface FlowProps {
     path_id: number,
     position: number
   ) => Promise<void>;
-  setPaths: (paths: Path[]) => void;
   strokeLines: any[];
   setStrokeLines: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export function Flow({
   workflowName,
-  paths,
   workspaceId,
   workflowId,
   onBlockAdd,
-  setPaths,
   strokeLines,
   setStrokeLines,
 }: FlowProps) {
+  const { paths, setPaths } = usePathsStore();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();
@@ -150,19 +149,22 @@ export function Flow({
           method: 'DELETE',
         });
         if (response.ok) {
-          const pathsResponse = await fetch(
-            `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-          );
-          if (pathsResponse.ok) {
-            const pathsData = await pathsResponse.json();
-            setPaths(pathsData.paths);
-          }
+          // Update paths by filtering out the deleted block
+          setPaths((currentPaths) => {
+            const updatedPaths = currentPaths.map((path) => ({
+              ...path,
+              blocks: path.blocks.filter(
+                (block) => block.id !== parseInt(blockId)
+              ),
+            }));
+            return updatedPaths;
+          });
         }
       } catch (error) {
         console.error('Error deleting block:', error);
       }
     },
-    [workspaceId, workflowId, setPaths]
+    [setPaths]
   );
 
   const handleAddBlockOnEdge = useCallback(
@@ -278,7 +280,6 @@ export function Flow({
 
         // Check for blockId in URL and set viewport accordingly
         const blockId = searchParams.get('blockId');
-        console.log('blockId', blockId);
         if (blockId) {
           const targetNode = layoutedNodes.find(
             (n) => n.id === `block-${blockId}`
@@ -422,7 +423,6 @@ export function Flow({
 
   // Combine regular edges with preview edge
   const allEdges = useMemo(() => {
-    console.log('is previewEdge: ', previewEdge);
     return previewEdge ? [...edges, previewEdge] : edges;
   }, [edges, previewEdge]);
 
@@ -536,8 +536,8 @@ export function Flow({
 
   return (
     <div
-      className={`h-screen w-full transition-colors duration-300 ${
-        isConnectMode || isEditMode ? 'bg-[#111111]' : 'bg-white'
+      className={`flex-1 w-full h-full relative ${
+        isEditMode || isConnectMode ? 'bg-gray-900' : ''
       }`}
     >
       <ReactFlow
@@ -576,7 +576,6 @@ export function Flow({
         }`}
       >
         <Background gap={12} size={1} />
-        <Controls />
         <MiniMap />
       </ReactFlow>
       <PathSelectionBox />
@@ -622,6 +621,12 @@ export function Flow({
           onPreviewUpdate={setPreviewEdge}
         />
       )}
+
+      <Sidebar workspaceId={workspaceId} workflowId={workflowId} />
+
+      <div className="absolute top-4 right-4 z-10">
+        <ZoomBar />
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { NodeData, Path, Block } from '../types';
 import { getWorkflowStrokeLines } from '../utils/stroke-lines';
 import WorkflowHeader from './WorkflowHeader';
 import { useSearchParams } from 'next/navigation';
+import { usePathsStore } from '../store/pathsStore';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -17,12 +18,12 @@ export function ReactFlowPageClient({
   workflowId,
 }: ReactFlowPageClientProps) {
   const [workflowName, setWorkflowName] = useState<string>('');
-  const [paths, setPaths] = useState<Path[]>([]);
   const [strokeLines, setStrokeLines] = useState<any[]>([]);
   const [parentFolder, setParentFolder] = useState<string | undefined>();
   const [grandParentFolder, setGrandParentFolder] = useState<
     string | undefined
   >();
+  const setPaths = usePathsStore((state) => state.setPaths);
 
   const searchParams = useSearchParams();
 
@@ -111,7 +112,7 @@ export function ReactFlowPageClient({
       }
     };
     fetchData();
-  }, [workspaceId, workflowId]);
+  }, [workspaceId, workflowId, setPaths]);
 
   return (
     <div className="h-screen flex flex-col">
@@ -123,11 +124,9 @@ export function ReactFlowPageClient({
       <ReactFlowProvider>
         <Flow
           workflowName={workflowName}
-          paths={paths}
           workspaceId={workspaceId}
           workflowId={workflowId}
           onBlockAdd={handleBlockAdd}
-          setPaths={setPaths}
           strokeLines={strokeLines}
           setStrokeLines={setStrokeLines}
         />

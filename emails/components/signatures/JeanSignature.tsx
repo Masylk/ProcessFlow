@@ -72,7 +72,7 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
             margin: '0 0 4px 0',
             color: '#000000',
           }}>
-            Jean - Co-founder & CEO
+            Jean - Co-founder
           </Text>
           <Text style={{ 
             fontFamily: 'Inter, sans-serif',
