@@ -35,17 +35,23 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   return (
     <div
-      className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
+      className={`transition-opacity duration-300 relative ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
     >
+      <button
+        onClick={handleConvertToLast}
+        className="absolute -top-8 right-0 px-2 py-1 text-xs bg-white text-[#B42318] rounded-md hover:bg-red-50 transition-colors border border-[#B42318]"
+      >
+        Revert end block
+      </button>
+
       <div
-        className={`transition-all duration-300 flex items-center gap-3 w-fit text-sm`}
+        className={`transition-all duration-300 flex items-center gap-3 w-fit text-sm relative`}
         style={{
           height: '48px',
           width: '290px',
           padding: '12px 18px',
           borderRadius: '9999px',
           background: '#FECDCA',
-          position: 'relative',
           border: '1px solid #B42318',
         }}
       >
@@ -67,7 +73,7 @@ function EndNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           alt="Stop"
           className="w-4 h-4 text-[#B42318]"
         />
-        <div className="text-[#B42318] font-medium">
+        <div className="text-[#B42318] font-medium flex-1">
           This is where your process ends
         </div>
         <Handle
