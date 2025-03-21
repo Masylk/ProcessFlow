@@ -46,6 +46,7 @@ import { useEditModeStore } from '../store/editModeStore';
 import { useSearchParams } from 'next/navigation';
 import ZoomBar from './ZoomBar';
 import { Sidebar } from './Sidebar';
+import { useColors } from '@/app/theme/hooks';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -86,6 +87,7 @@ export function Flow({
   strokeLines,
   setStrokeLines,
 }: FlowProps) {
+  const colors = useColors();
   const { paths, setPaths } = usePathsStore();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -537,8 +539,13 @@ export function Flow({
   return (
     <div
       className={`flex-1 w-full h-full relative ${
-        isEditMode || isConnectMode ? 'bg-gray-900' : ''
+        isEditMode || isConnectMode ? '' : ''
       }`}
+      style={{
+        backgroundColor: isEditMode || isConnectMode 
+          ? colors['bg-primary-solid'] 
+          : colors['bg-primary']
+      }}
     >
       <ReactFlow
         nodes={nodes}
@@ -571,12 +578,22 @@ export function Flow({
           maxZoom: 1,
           includeHiddenNodes: true,
         }}
-        className={`bg-gray-50 transition-all duration-300 ${
+        className={`transition-all duration-300 ${
           isConnectMode ? 'connect-mode' : ''
         }`}
+        style={{ 
+          backgroundColor: colors['bg-secondary']
+        }}
       >
-        <Background gap={12} size={1} />
-        <MiniMap />
+        <Background 
+          gap={12} 
+          size={1} 
+          color={colors['border-primary']}
+        />
+        <MiniMap 
+          nodeColor={colors['fg-brand-primary']}
+          maskColor={`${colors['bg-primary']}80`}
+        />
       </ReactFlow>
       <PathSelectionBox />
       <UpdatePathSelectionBox

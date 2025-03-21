@@ -121,16 +121,18 @@ export function ReactFlowPageClient({
         parentFolder={parentFolder}
         grandParentFolder={grandParentFolder}
       />
-      <ReactFlowProvider>
-        <Flow
-          workflowName={workflowName}
-          workspaceId={workspaceId}
-          workflowId={workflowId}
-          onBlockAdd={handleBlockAdd}
-          strokeLines={strokeLines}
-          setStrokeLines={setStrokeLines}
-        />
-      </ReactFlowProvider>
+      <div className="pt-[56px] flex-1 h-[calc(100vh-56px)]">
+        <ReactFlowProvider>
+          <Flow
+            workflowName={workflowName}
+            workspaceId={workspaceId}
+            workflowId={workflowId}
+            onBlockAdd={handleBlockAdd}
+            strokeLines={strokeLines}
+            setStrokeLines={setStrokeLines}
+          />
+        </ReactFlowProvider>
+      </div>
     </div>
   );
 }

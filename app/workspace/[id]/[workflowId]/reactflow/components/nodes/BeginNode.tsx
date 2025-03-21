@@ -4,6 +4,7 @@ import { NodeData } from '../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { usePathsStore } from '../../store/pathsStore';
+import { useColors } from '@/app/theme/hooks';
 import DeletePathModal from '../modals/DeletePathModal';
 
 function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
@@ -15,6 +16,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const colors = useColors();
 
   const handlePathNameUpdate = async () => {
     try {
@@ -94,8 +96,8 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           height: '50px',
           padding: '12px 16px',
           borderRadius: '8px',
-          border: selected ? '2px solid #60a5fa' : '2px solid #93c5fd',
-          background: '#eff6ff',
+          border: selected ? `2px solid ${colors['utility-brand-500']}` : `2px solid ${colors['utility-brand-300']}`,
+          background: colors['bg-brand-primary'],
           position: 'relative',
         }}
         onMouseEnter={() => setIsHovered(true)}
@@ -109,13 +111,13 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             width: 8,
             height: 8,
             opacity: 0,
-            background: '#60a5fa',
+            background: colors['utility-brand-500'],
             border: '2px solid white',
             pointerEvents: 'none',
           }}
         />
 
-        <div className="text-blue-600 font-medium truncate">
+        <div className="font-medium truncate" style={{ color: colors['text-brand-primary'] }}>
           {isEditing ? (
             <input
               type="text"
@@ -125,6 +127,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
               onBlur={handlePathNameUpdate}
               autoFocus
               className="bg-transparent outline-none w-full text-center"
+              style={{ color: colors['text-brand-primary'] }}
               placeholder="Enter path name"
             />
           ) : (
@@ -140,7 +143,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             width: 8,
             height: 8,
             opacity: 0,
-            background: '#60a5fa',
+            background: colors['utility-brand-500'],
             border: '2px solid white',
             pointerEvents: 'none',
           }}

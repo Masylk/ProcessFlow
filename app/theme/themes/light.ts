@@ -179,6 +179,24 @@ export const lightTheme: Theme = {
       // Loading spinner
       'button-loading-spinner': getThemeColor('Base/White'),
 
+      // Icon colors
+      'icon-default': getThemeColor('Gray (light mode)/600'),
+      'icon-default-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-primary': getThemeColor('Gray (light mode)/700'),
+      'icon-primary-hover': getThemeColor('Gray (light mode)/900'),
+      'icon-secondary': getThemeColor('Gray (light mode)/600'),
+      'icon-secondary-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-tertiary': getThemeColor('Gray (light mode)/600'),
+      'icon-tertiary-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-success': getThemeColor('Success/600'),
+      'icon-success-hover': getThemeColor('Success/700'),
+      'icon-warning': getThemeColor('Warning/600'), 
+      'icon-warning-hover': getThemeColor('Warning/700'),
+      'icon-error': getThemeColor('Error/600'),
+      'icon-error-hover': getThemeColor('Error/700'),
+      'icon-info': getThemeColor('Brand/600'),
+      'icon-info-hover': getThemeColor('Brand/700'),
+
       // Input field tokens
       // Default input
       'input-bg': getThemeColor('Base/White'),
