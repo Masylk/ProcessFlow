@@ -86,11 +86,9 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
 
   const navigateToEdit = () => {
     const segments = pathname.split('/');
-    if (segments[segments.length - 1] === 'read') {
-      segments[segments.length - 1] = 'edit';
-      const editPath = segments.join('/');
-      router.push(editPath);
-    }
+    segments[segments.length - 1] = 'read';
+    const editPath = segments.join('/');
+    router.push(editPath);
   };
 
   return (
