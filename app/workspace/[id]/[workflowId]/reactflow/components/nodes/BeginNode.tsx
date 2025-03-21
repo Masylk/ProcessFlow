@@ -73,12 +73,16 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
         throw new Error('Failed to delete path');
       }
 
-      // Remove path from global state
-      const updatedPaths = allPaths.filter((path) => path.id !== data.path?.id);
-      setAllPaths(updatedPaths);
+      // Fetch updated paths
+      const pathsResponse = await fetch(
+        `/api/workspace/${data.path?.workflow_id}/paths?workflow_id=${data.path?.workflow_id}`
+      );
 
-      // Notify parent of update
-      data.onPathsUpdate?.(updatedPaths);
+      if (pathsResponse.ok) {
+        const pathsData = await pathsResponse.json();
+        setAllPaths(pathsData.paths);
+        data.onPathsUpdate?.(pathsData.paths);
+      }
     } catch (error) {
       console.error('Error deleting path:', error);
     }

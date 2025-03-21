@@ -1,45 +1,78 @@
-import React from 'react';
+'use client';
 
-interface BreadCrumbsProps {
-  items: string[];
+import React from 'react';
+import { useTheme, useColors } from '@/app/theme/hooks';
+import { cn } from '@/lib/utils/cn';
+import Link from 'next/link';
+
+interface BreadCrumbItem {
+  label: string;
+  href?: string;
 }
 
-const BreadCrumbs: React.FC<BreadCrumbsProps> = ({ items }) => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseStoragePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH;
+interface BreadCrumbsProps {
+  items: BreadCrumbItem[];
+  className?: string;
+}
 
-  // Construct the URL for the image
-  const separatorImageUrl = `${supabaseUrl}${supabaseStoragePath}/assets/shared_components/slash-divider.svg`;
+const BreadCrumbs: React.FC<BreadCrumbsProps> = ({ items, className }) => {
+  const colors = useColors();
 
   return (
-    <div className="h-7 justify-start items-center inline-flex">
+    <nav className={cn("h-7 justify-start items-center inline-flex", className)} aria-label="Breadcrumb">
       <div className="justify-start items-center gap-2 flex">
         {items.map((item, index) => (
           <React.Fragment key={index}>
             <div
-              className={`px-2 py-1 rounded-md justify-center items-center flex ${
-                index === items.length - 1
-                  ? 'bg-[#edf0fb] text-[#374c99] font-semibold'
-                  : 'text-[#475467] font-medium'
-              }`}
+              className={cn(
+                "px-2 py-1 rounded-md justify-center items-center flex",
+                "transition-colors duration-200",
+                "text-sm font-['Inter'] leading-tight"
+              )}
+              style={{
+                backgroundColor: index === items.length - 1 ? colors['breadcrumb-active-bg'] : 'transparent',
+                color: index === items.length - 1 ? colors['breadcrumb-active-fg'] : colors['breadcrumb-inactive-fg'],
+                fontWeight: index === items.length - 1 ? 600 : 500,
+              }}
             >
-              <div className="text-sm font-['Inter'] leading-tight">{item}</div>
+              {item.href ? (
+                <Link 
+                  href={item.href} 
+                  className="transition-opacity hover:opacity-75"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span>{item.label}</span>
+              )}
             </div>
 
-            {/* Separator with Image */}
             {index < items.length - 1 && (
-              <div className="w-5 h-5 relative overflow-hidden">
-                <img
-                  src={separatorImageUrl}
-                  alt="Separator"
-                  className="absolute top-0 left-0 right-0 bottom-0 w-full h-full"
-                />
+              <div 
+                className="w-5 h-5 flex items-center justify-center"
+                style={{ color: colors['breadcrumb-separator'] }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6 12L10 8L6 4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             )}
           </React.Fragment>
         ))}
       </div>
-    </div>
+    </nav>
   );
 };
 

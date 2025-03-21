@@ -15,31 +15,32 @@ interface SidebarProps {
   workflowId: string;
 }
 
-interface PathObject {
-  id: number;
-  name: string;
-  blocks: Block[];
-  parent_blocks_ids: number[];
-  child_paths: PathObject[];
-}
-
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const { currentTheme } = useTheme();
   const colors = useColors();
   const originalPaths = usePathsStore((state) => state.paths);
-  // Create a shallow copy of paths with deep copy of blocks and child_paths
   const paths = useMemo(
     () =>
       originalPaths.map((path) => ({
         ...path,
         blocks: path.blocks.map((block) => ({
           ...block,
-          child_paths: block.child_paths || [],
+          child_paths: block.child_paths
+            ? block.child_paths.map((cp) => ({
+                ...cp,
+                path: { ...cp.path },
+                block: { ...cp.block },
+              }))
+            : [],
+          path: { ...path },
+        })),
+        parent_blocks: path.parent_blocks.map((pb) => ({
+          ...pb,
+          block: { ...pb.block },
         })),
       })),
     [originalPaths]
   );
-
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
@@ -93,6 +94,9 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     const mainPathsArray: Path[] = [];
     const mergePathsArray: Path[] = [];
 
+    if (!paths || paths.length === 0) {
+      return { mainPaths: [], mergePaths: [] };
+    }
     // Collect merge paths (avoiding duplicates)
     paths.forEach((path) => {
       path.blocks.forEach((block) => {
