@@ -134,11 +134,13 @@ function StrokeEdge({
           strokeDasharray: '10,5',
           markerEnd: `url(#${markerId})`,
           opacity:
-            isConnectMode || isEditMode
+            isConnectMode && previewEdgeId !== id
               ? 0.4
-              : data?.isVisible === false
-                ? 0
-                : 1,
+              : isEditMode
+                ? 0.4
+                : data?.isVisible === false
+                  ? 0
+                  : 1,
           pointerEvents: 'none',
           transition: 'opacity 0.2s',
         }}
