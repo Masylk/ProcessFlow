@@ -107,7 +107,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   return (
     <>
       <div 
-        className="overflow-hidden w-full h-[68px] p-4 flex justify-between items-center z-40"
+        className="fixed top-0 left-0 w-full overflow-hidden h-[56px] p-4 flex justify-between items-center z-40"
         style={{ 
           backgroundColor: colors['bg-primary'],
           borderBottom: `1px solid ${colors['border-primary']}`

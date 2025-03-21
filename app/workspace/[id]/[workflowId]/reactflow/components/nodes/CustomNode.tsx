@@ -369,17 +369,29 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
     return createPortal(
       <div
-        className="fixed bg-white rounded-md shadow-lg border border-gray-200 py-1"
+        className="fixed rounded-md shadow-lg py-1"
         style={{
           left: dropdownPosition.x,
           top: dropdownPosition.y,
           width: '144px',
           zIndex: 99999999,
+          backgroundColor: colors['bg-primary'],
+          borderColor: colors['border-secondary'],
+          borderWidth: '1px',
         }}
       >
         <button
           onClick={handleConnectClick}
-          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
+          style={{ 
+            color: colors['fg-primary']
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           Connect node
         </button>
@@ -395,34 +407,69 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               );
               setShowDropdown(false);
             }}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
+            style={{ color: colors['fg-primary'] }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             Merge paths
           </button>
         )}
         <button
           onClick={handleDuplicate}
-          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
+          style={{ color: colors['fg-primary'] }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           Duplicate node
         </button>
         <button
           onClick={handleDelete}
-          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
+          style={{ color: colors['fg-error-primary'] }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           Delete node
         </button>
         {data.pathIsMerged && (
           <button
             onClick={handleUpdateModeActivation}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+            className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
+            style={{ color: colors['fg-primary'] }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             Update merge
           </button>
         )}
         <button
           onClick={handleCopy}
-          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+          className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-opacity-80"
+          style={{ color: colors['fg-primary'] }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
@@ -433,7 +480,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         </button>
         <button
           onClick={handleCopyLink}
-          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+          className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-opacity-80"
+          style={{ color: colors['fg-primary'] }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
@@ -511,13 +565,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             className="absolute top-[20px] -translate-y-1/2 transition-opacity duration-300"
             style={{
               left: '-20px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: colors['bg-primary'],
               padding: '4px',
               width: '32px',
               height: '32px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${colors['border-secondary']}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
@@ -533,7 +587,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 borderRadius: '6px',
                 backgroundColor: data.strokeLinesVisible
                   ? '#FF69A3'
-                  : '#E5E7EB',
+                  : colors['bg-secondary'],
                 transition: 'background-color 0.2s',
                 position: 'relative',
               }}
@@ -543,7 +597,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   width: '10px',
                   height: '10px',
                   borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: colors['bg-primary'],
                   position: 'absolute',
                   left: '1px',
                   top: data.strokeLinesVisible ? '1px' : '9px',
@@ -557,8 +611,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
       <div
         className={`relative rounded-lg border ${
-          selected ? 'border-[#3537cc] shadow-md' : 'border-[#e4e7ec]'
-        } ${isHighlighted ? 'bg-blue-50' : 'bg-white'} 
+          selected ? 'border-[#3537cc] shadow-md' : `border-[${colors['border-secondary']}]`
+        } ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
           (isEditMode && id !== `block-${selectedNodeId}`) ||
@@ -569,6 +623,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             : ''
         }`}
         onClick={handleNodeClick}
+        style={{
+          backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
+          borderColor: selected ? '#3537cc' : colors['border-secondary']
+        }}
       >
         <Handle
           type="target"
@@ -578,8 +636,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             width: 8,
             height: 8,
             opacity: 0,
-            background: '#60a5fa',
-            border: '2px solid white',
+            background: colors['fg-brand-primary'],
+            border: `2px solid ${colors['bg-primary']}`,
             pointerEvents: 'none',
           }}
         />
@@ -590,8 +648,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           style={{
             width: 8,
             height: 8,
-            background: '#b1b1b7',
-            border: '2px solid white',
+            background: colors['fg-tertiary'],
+            border: `2px solid ${colors['bg-primary']}`,
             top: '35%',
             opacity: 0,
             pointerEvents: 'none',
@@ -604,8 +662,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           style={{
             width: 8,
             height: 8,
-            background: '#b1b1b7',
-            border: '2px solid white',
+            background: colors['fg-tertiary'],
+            border: `2px solid ${colors['bg-primary']}`,
             top: '35%',
             left: 0,
             opacity: 0,
@@ -619,8 +677,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           style={{
             width: 8,
             height: 8,
-            background: '#b1b1b7',
-            border: '2px solid white',
+            background: colors['fg-tertiary'],
+            border: `2px solid ${colors['bg-primary']}`,
             top: '65%',
             opacity: 0,
             pointerEvents: 'none',
@@ -634,15 +692,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             width: 8,
             height: 8,
             opacity: 0,
-            background: '#60a5fa',
-            border: '2px solid white',
+            background: colors['fg-brand-primary'],
+            border: `2px solid ${colors['bg-primary']}`,
             pointerEvents: 'none',
           }}
         />
 
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg border border-[#e4e7ec] flex items-center justify-center flex-shrink-0">
+            <div 
+              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                border: `1px solid ${colors['border-secondary']}`,
+              }}
+            >
               {blockData.icon ? (
                 <img
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
@@ -660,12 +723,25 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
             <div className="flex-grow">
               <div className="flex items-start justify-between">
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 
+                  className="text-sm font-medium"
+                  style={{ color: colors['fg-primary'] }}
+                >
                   {blockData.title || 'Untitled Block'}
                 </h3>
                 <button
                   onClick={handleDropdownToggle}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1 rounded-full transition-colors hover:bg-opacity-80"
+                  style={{ 
+                    color: colors['fg-tertiary'],
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
@@ -676,7 +752,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               </div>
 
               {blockData.description && (
-                <p className="text-xs text-gray-600 mt-1">
+                <p 
+                  className="text-xs mt-1"
+                  style={{ color: colors['fg-tertiary'] }}
+                >
                   {showFullDescription ? (
                     <>
                       {blockData.description}
@@ -686,7 +765,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                             e.stopPropagation();
                             setShowFullDescription(false);
                           }}
-                          className="ml-1 text-blue-600 hover:underline"
+                          className="ml-1 hover:underline"
+                          style={{ color: colors['fg-brand-primary'] }}
                         >
                           Show less
                         </button>
@@ -701,7 +781,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                             e.stopPropagation();
                             setShowFullDescription(true);
                           }}
-                          className="ml-1 text-blue-600 hover:underline"
+                          className="ml-1 hover:underline"
+                          style={{ color: colors['fg-brand-primary'] }}
                         >
                           Read more
                         </button>
@@ -726,8 +807,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
           {/* Average time - only show if defined */}
           {blockData.average_time && (
-            <div className="flex items-center text-xs text-gray-500 mt-auto">
-              <span className="px-3 py-1 rounded-full bg-gray-50 border border-gray-200">
+            <div className="flex items-center text-xs mt-auto">
+              <span 
+                className="px-3 py-1 rounded-full" 
+                style={{
+                  backgroundColor: colors['bg-secondary'],
+                  borderColor: colors['border-secondary'],
+                  color: colors['fg-tertiary'],
+                  border: '1px solid'
+                }}
+              >
                 {blockData.average_time} min
               </span>
             </div>
@@ -746,7 +835,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   pathParentBlockId ?? -1
                 )
               }
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded"
+              style={{ borderColor: colors['border-secondary'] }}
               onClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -758,7 +848,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               type="checkbox"
               checked={selectedEndBlocks.includes(endBlockId)}
               onChange={() => toggleEndBlockSelection(endBlockId)}
-              className="w-4 h-4 rounded border-gray-300 bg-blue-100"
+              className="w-4 h-4 rounded"
+              style={{ 
+                borderColor: colors['border-secondary'],
+                backgroundColor: colors['bg-brand-subtle']
+              }}
               onClick={(e) => e.stopPropagation()}
             />
           </div>
