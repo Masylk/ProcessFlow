@@ -68,10 +68,10 @@ export function processPath(
   handleStrokeLinesUpdate: (strokeLines: any[]) => void,
   updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
   strokeLineVisibilities: [number, boolean][],
+  allPaths: Path[],
   hasSiblings: boolean = false,
-  longestSiblingPath: number = 0
+  longestSiblingPath: number = 0,
 ): void {
-  const allPaths = usePathsStore.getState().paths;
   
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
@@ -249,6 +249,7 @@ export function processPath(
           handleStrokeLinesUpdate,
           updateStrokeLineVisibility,
           strokeLineVisibilities,
+          allPaths,
           block.child_paths.length > 1,
           longestSiblingPathLength
         );

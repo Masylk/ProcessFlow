@@ -238,7 +238,8 @@ export function Flow({
           setPaths,
           setStrokeLines,
           updateStrokeLineVisibility,
-          strokeLineVisibilities
+          strokeLineVisibilities,
+          paths
         );
 
         // Add stroke edges with visibility check

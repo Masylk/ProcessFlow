@@ -20,19 +20,32 @@ interface PathObject {
 
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const originalPaths = usePathsStore((state) => state.paths);
-  // Create a shallow copy of paths with deep copy of blocks and child_paths
   const paths = useMemo(
     () =>
       originalPaths.map((path) => ({
         ...path,
         blocks: path.blocks.map((block) => ({
           ...block,
-          child_paths: block.child_paths || [],
+          child_paths: block.child_paths
+            ? block.child_paths.map((cp) => ({
+                ...cp,
+                path: { ...cp.path },
+                block: { ...cp.block },
+              }))
+            : [],
+          path: { ...path },
+        })),
+        parent_blocks: path.parent_blocks.map((pb) => ({
+          ...pb,
+          block: { ...pb.block },
         })),
       })),
     [originalPaths]
   );
 
+  if (!paths || paths.length === 0) {
+    return null;
+  }
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
