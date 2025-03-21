@@ -1,7 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { ThemeContextType, ThemeMode, ButtonTokens, InputTokens, BreadcrumbTokens } from '../theme/types';
+import {
+  ThemeContextType,
+  ThemeMode,
+  ButtonTokens,
+  InputTokens,
+  BreadcrumbTokens,
+  IconTokens,
+} from '../theme/types';
 import { themeRegistry } from '../theme/registry';
 import { lightTheme } from '../theme/themes/light';
 import { darkTheme } from '../theme/themes/dark';
@@ -10,20 +17,29 @@ import { darkTheme } from '../theme/themes/dark';
 themeRegistry.register(lightTheme);
 themeRegistry.register(darkTheme);
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(
+  undefined
+);
+
+type ThemeTokens = ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
   const theme = themeRegistry.get(currentTheme);
 
-  const getCssVariable = (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens)): string => {
-    return `var(--${token})`;
+  const getCssVariable = (token: keyof ThemeTokens): string => {
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue(`--${token}`)
+      .trim();
+    return value || '';
   };
 
   // Pre-compute CSS variables for both themes
   const lightThemeVars = useMemo(() => {
     const lightTheme = themeRegistry.get('light');
-    return Object.entries(lightTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
+    return Object.entries(lightTheme.tokens.colors).reduce<
+      Record<string, string>
+    >((acc, [key, value]) => {
       acc[`--${key}`] = value;
       return acc;
     }, {});
@@ -31,7 +47,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const darkThemeVars = useMemo(() => {
     const darkTheme = themeRegistry.get('dark');
-    return Object.entries(darkTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
+    return Object.entries(darkTheme.tokens.colors).reduce<
+      Record<string, string>
+    >((acc, [key, value]) => {
       acc[`--${key}`] = value;
       return acc;
     }, {});
@@ -44,9 +62,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check system preference
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const systemPrefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
     const savedTheme = localStorage.getItem('theme-mode') as ThemeMode;
-    
+
     // Use saved theme if it exists, otherwise use system preference
     if (savedTheme && themeRegistry.exists(savedTheme)) {
       setCurrentTheme(savedTheme);
@@ -86,9 +106,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={value}>
-      <div style={cssVariables as React.CSSProperties}>
-        {children}
-      </div>
+      <div style={cssVariables as React.CSSProperties}>{children}</div>
     </ThemeContext.Provider>
   );
 }
@@ -99,4 +117,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}
