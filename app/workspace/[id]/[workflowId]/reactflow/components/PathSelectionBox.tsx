@@ -74,7 +74,8 @@ export function PathSelectionBox() {
         </span>
         <button
           onClick={handleClose}
-          className="p-1 hover:bg-gray-100 rounded-full"
+          disabled={isMerging}
+          className={`p-1 hover:bg-gray-100 rounded-full ${isMerging ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path

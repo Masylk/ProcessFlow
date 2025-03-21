@@ -502,97 +502,61 @@ const InputField: React.FC<InputFieldProps> = ({
 
       case "trailing-dropdown":
         return (
-          <div style={DEFAULT_CONTAINER_STYLE}>
+          <div style={{
+            display: 'flex',
+            width: '100%',
+            alignItems: 'center',
+          }}>
+            <input
+              type="text"
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
+              disabled={disabled}
+              onFocus={handleFocus}
+              style={{
+                ...inputStyle,
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+              }}
+            />
+            {destructive && <ErrorIcon tooltipText={errorMessage} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+            
             <div style={{
               display: 'flex',
-              width: '100%',
-              height: 40,
-              borderRadius: 6,
-              overflow: 'visible',
+              alignItems: 'center',
+              marginLeft: 8,
             }}>
-              <div style={{
-                ...focusStyles,
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                flex: 1,
-                zIndex: 1,
+              <span style={{
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                fontSize: 16,
+                fontFamily: 'Inter',
+                fontWeight: 600,
+                lineHeight: '24px',
+                marginRight: 8,
               }}>
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  value={value}
-                  onChange={handleChange}
-                  onBlur={(e) => {
-                    handleBlur();
-                    onBlur?.();
-                  }}
-                  disabled={disabled}
-                  onFocus={handleFocus}
-                  style={{
-                    ...inputStyle,
-                    width: '100%',
-                    flex: 1,
-                    fontSize: 16,
-                    lineHeight: "24px",
-                    outline: "none",
-                    border: "none",
-                    background: 'transparent'
-                  }}
-                />
-                {destructive && <ErrorIcon tooltipText={errorMessage} />}
-                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
-                borderTop: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderBottom: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderRight: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderLeft: '0px solid transparent',
-                borderTopRightRadius: 6,
-                borderBottomRightRadius: 6,
-                position: 'relative',
-                minWidth: 80,
-                zIndex: 0,
-              }}>
-                <select
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: 16,
-                    color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
-                    cursor: 'pointer',
-                    appearance: 'none',
-                    fontFamily: 'Inter',
-                    lineHeight: '24px',
-                    paddingRight: 20,
-                  }}
-                  disabled={disabled}
-                >
-                  {dropdownOptions?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  )) || <option value="Option 1">Option 1</option>}
-                </select>
-                <div style={{ 
-                  position: 'absolute',
-                  right: 12,
-                  pointerEvents: 'none'
-                }}>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path 
-                      d="M5 7.5L10 12.5L15 7.5" 
-                      stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} 
-                      strokeWidth="1.66667" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+                {dropdownOptions && dropdownOptions.length > 0 ? dropdownOptions[0] : 'can view'}
+              </span>
+              <div>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path 
+                    d="M5 7.5L10 12.5L15 7.5" 
+                    stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))}
+                    strokeWidth="1.6667" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
           </div>

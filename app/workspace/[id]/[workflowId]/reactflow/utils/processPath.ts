@@ -73,7 +73,6 @@ export function processPath(
 ): void {
   const allPaths = usePathsStore.getState().paths;
   
-  console.log('longestSiblingPath', longestSiblingPath);
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
@@ -208,7 +207,6 @@ export function processPath(
     // Find the longest blocks array among sibling paths
     let longestSiblingPathLength = 0;
     if (sortedChildPaths.length > 1) {
-      console.log('Sorted child paths:', sortedChildPaths);
       longestSiblingPathLength = Math.max(
         ...sortedChildPaths.map(childPathRelation => {
           const fullPath = allPaths.find(p => p.id === childPathRelation.path.id);
