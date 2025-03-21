@@ -6,6 +6,8 @@ import { useColors } from '@/app/theme/hooks';
 // import { PreviewEdgePortal } from './PreviewEdgePortal';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useModalStore } from '../../store/modalStore';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import InputField from '@/app/components/InputFields';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -81,7 +83,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             : 'stroke_target',
         style: {
           opacity: 1,
-          stroke: '#FF1493',
+          stroke: colors['accent-primary'],
           strokeWidth: 3,
           strokeDasharray: '5,5',
           zIndex: 9999,
@@ -101,7 +103,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
       setPreviewEdge(null);
       onPreviewUpdate?.(null);
     }
-  }, [selectedNodeId, sourceNode.id, onPreviewUpdate]);
+  }, [selectedNodeId, sourceNode.id, onPreviewUpdate, colors]);
 
   // Add escape key handler
   useEffect(() => {
@@ -114,6 +116,20 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
+
+  // Set focus on label input when moving to step 2
+  useEffect(() => {
+    if (step === 2) {
+      // Use a tiny delay to ensure the DOM is updated
+      const timer = setTimeout(() => {
+        const labelInput = document.getElementById('connection-label-input');
+        if (labelInput) {
+          (labelInput as HTMLInputElement).focus();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
 
   const filteredNodes = availableNodes.filter(
     (node) =>
@@ -198,6 +214,14 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     setIsInputFocused(false); // Hide list after selection
   };
 
+  const handleChange = (value: string) => {
+    setSearchTerm(value);
+    // If there's a value and the dropdown isn't visible, show it
+    if (value && !isInputFocused) {
+      setIsInputFocused(true);
+    }
+  };
+
   const modalContent = (
     <>
       {/* <PreviewEdgePortal edge={previewEdge} /> */}
@@ -215,7 +239,14 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         {/* Header */}
         <div className="flex items-center gap-4 px-6 pt-6">
           {step === 1 ? (
-            <div className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center">
+            <div 
+              className="w-12 h-12 p-3 rounded-[10px] flex items-center justify-center"
+              style={{ 
+                backgroundColor: colors['bg-secondary'],
+                borderColor: colors['border-light'],
+                boxShadow: colors['shadow-sm'] 
+              }}
+            >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
                 alt="Connect"
@@ -225,17 +256,18 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           ) : (
             <button
               onClick={() => setStep(1)}
-              className="flex items-center gap-2 text-gray-600"
+              className="flex items-center gap-2"
+              style={{ color: colors['text-secondary'] }}
             >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
                 alt="Back"
                 className="w-5 h-5"
               />
-              <span className="text-sm text-[#475467]">Back</span>
+              <span className="text-sm" style={{ color: colors['text-secondary'] }}>Back</span>
             </button>
           )}
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold" style={{ color: colors['text-primary'] }}>
             {step === 1 ? 'Create a path to a node' : ''}
           </h2>
         </div>
@@ -244,7 +276,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         <div className="p-6">
           {step === 1 ? (
             <div className="flex flex-col gap-4">
-              <div className="text-sm text-gray-600">Select Node</div>
+              <div className="text-sm" style={{ color: colors['text-secondary'] }}>Select Node</div>
 
               {/* Two Column Layout */}
               <div className="flex justify-end">
@@ -271,24 +303,39 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                   {/* Nodes Column */}
                   <div className="w-[450px] flex flex-col gap-6">
                     {/* Source Block */}
-                    <div className="w-full p-4 bg-white border rounded-lg">
-                      <div className="text-sm text-gray-600 mb-2">Node 1</div>
-                      <div className="text-xs text-gray-500 mb-1">#STEP</div>
-                      <div className="text-sm font-medium">
+                    <div 
+                      className="w-full p-4 rounded-lg"
+                      style={{ 
+                        backgroundColor: colors['bg-secondary'],
+                        borderColor: colors['border-light'],
+                        border: `1px solid ${colors['border-light']}` 
+                      }}
+                    >
+                      <div className="text-sm mb-2" style={{ color: colors['text-secondary'] }}>Node 1</div>
+                      <div className="text-xs mb-1" style={{ color: colors['text-tertiary'] }}>#STEP</div>
+                      <div className="text-sm font-medium" style={{ color: colors['text-primary'] }}>
                         {sourceNode.data.label as string}
                       </div>
                     </div>
 
                     {/* Target Block */}
                     {selectedNodeId ? (
-                      <div className="w-full p-4 bg-white border rounded-lg">
+                      <div 
+                        className="w-full p-4 rounded-lg"
+                        style={{ 
+                          backgroundColor: colors['bg-secondary'],
+                          borderColor: colors['border-light'],
+                          border: `1px solid ${colors['border-light']}` 
+                        }}
+                      >
                         <div className="flex justify-between items-start mb-2">
-                          <div className="text-sm text-gray-600">Node 2</div>
+                          <div className="text-sm" style={{ color: colors['text-secondary'] }}>Node 2</div>
                           <button
                             onClick={() => {
                               clearSelection();
                             }}
-                            className="text-gray-400 hover:text-gray-600"
+                            style={{ color: colors['text-tertiary'] }}
+                            className="hover:text-gray-600"
                           >
                             <svg
                               className="w-4 h-4"
@@ -305,43 +352,61 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                             </svg>
                           </button>
                         </div>
-                        <div className="text-xs text-gray-500 mb-1">#STEP</div>
-                        <div className="text-sm font-medium">
+                        <div className="text-xs mb-1" style={{ color: colors['text-tertiary'] }}>#STEP</div>
+                        <div className="text-sm font-medium" style={{ color: colors['text-primary'] }}>
                           {getNode(selectedNodeId)?.data.label as string}
                         </div>
                       </div>
                     ) : (
-                      <div className="w-full p-4 bg-white border rounded-lg">
-                        <div className="text-sm text-gray-600 mb-2">Node 2</div>
+                      <div 
+                        className="w-full p-4 rounded-lg"
+                        style={{ 
+                          backgroundColor: colors['bg-secondary'],
+                          borderColor: colors['border-light'],
+                          border: `1px solid ${colors['border-light']}` 
+                        }}
+                      >
+                        <div className="text-sm mb-2" style={{ color: colors['text-secondary'] }}>Node 2</div>
                         <div className="relative">
-                          <div className="flex items-center gap-2 text-gray-500 p-2 border border-[#D0D5DD] rounded-lg">
+                          <div onClick={() => setIsInputFocused(true)}>
+                            <InputField
+                              type="icon-leading"
+                              iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search.svg`}
+                              value={searchTerm}
+                              onChange={handleChange}
+                              placeholder="Search for a node..."
+                            />
+                          </div>
+
+                          <div 
+                            className="flex items-center gap-2 absolute right-2 top-2.5 z-50 cursor-pointer"
+                            onClick={() => setIsInputFocused(!isInputFocused)}
+                          >
                             <svg
-                              className="w-4 h-4"
+                              className="w-5 h-5"
                               fill="none"
-                              stroke="currentColor"
+                              stroke={colors['text-tertiary']}
                               viewBox="0 0 24 24"
                             >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                d={isInputFocused ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"}
                               />
                             </svg>
-                            <input
-                              type="text"
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              onFocus={() => setIsInputFocused(true)}
-                              onBlur={handleBlur}
-                              placeholder="Search for a node..."
-                              className="w-full px-3 py-2 border rounded text-sm"
-                            />
                           </div>
 
                           {/* Search list - Adjusted positioning */}
                           {isInputFocused && (
-                            <div className="absolute left-0 right-0 top-[calc(100%_-_1px)] border rounded-b-lg bg-white shadow-lg max-h-[240px] overflow-y-auto z-10">
+                            <div 
+                              className="absolute left-0 right-0 top-[calc(100%_+_5px)] rounded-lg shadow-lg max-h-[240px] overflow-y-auto z-10"
+                              style={{ 
+                                backgroundColor: colors['bg-secondary'],
+                                borderColor: colors['border-light'],
+                                border: `1px solid ${colors['border-light']}`
+                              }}
+                            >
                               {filteredNodes.map((node) => (
                                 <button
                                   key={node.id}
@@ -349,13 +414,20 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                     e.preventDefault(); // Prevent blur from firing before click
                                     handleNodeClick(node.id);
                                   }}
-                                  className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 border-b last:border-b-0"
+                                  className="w-full px-4 py-3 text-left text-sm border-b last:border-b-0 hover:bg-black hover:bg-opacity-5 transition-colors"
+                                  style={{ 
+                                    color: colors['text-primary'],
+                                    borderColor: colors['border-light']
+                                  }}
                                 >
                                   {node.data.label as string}
                                 </button>
                               ))}
                               {filteredNodes.length === 0 && (
-                                <div className="p-4 text-sm text-gray-500 text-center">
+                                <div 
+                                  className="p-4 text-sm text-center"
+                                  style={{ color: colors['text-tertiary'] }}
+                                >
                                   No matching nodes found
                                 </div>
                               )}
@@ -370,19 +442,25 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm" style={{ color: colors['text-secondary'] }}>
                 Add a label to that path
               </div>
               <div className="flex flex-col gap-6">
-                <div className="w-full p-4 bg-white rounded-lg">
-                  <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    placeholder="Enter a label for this connection"
-                    className="w-full px-3 py-2 border rounded text-sm"
-                    autoFocus
-                  />
+                <div 
+                  className="w-full p-4 rounded-lg"
+                  style={{ 
+                    backgroundColor: colors['bg-secondary'],
+                    borderColor: colors['border-light'],
+                    border: `1px solid ${colors['border-light']}` 
+                  }}
+                >
+                  <div id="connection-label-input">
+                    <InputField
+                      value={label}
+                      onChange={(value) => setLabel(value)}
+                      placeholder="Enter a label for this connection"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -390,24 +468,29 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 p-6 border-t">
-          <button
-            onClick={handleClose}
-            className="px-6 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={step === 1 ? handleNext : handleConfirm}
-            disabled={step === 1 ? !selectedNodeId : !label.trim()}
-            className={`px-6 py-2 text-sm text-white rounded ${
-              (step === 1 ? !selectedNodeId : !label.trim())
-                ? 'bg-blue-300 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600'
-            }`}
-          >
-            {step === 1 ? 'Next' : 'Create connection'}
-          </button>
+        <div 
+          className="flex justify-end gap-3 p-6"
+          style={{ 
+            borderTop: `1px solid ${colors['border-light']}` 
+          }}
+        >
+          <div className="flex gap-2">
+            <ButtonNormal
+              variant="tertiary"
+              onClick={handleClose}
+              size="medium"
+            >
+              Cancel
+            </ButtonNormal>
+            <ButtonNormal
+              variant="primary"
+              onClick={step === 1 ? handleNext : handleConfirm}
+              disabled={step === 1 ? !selectedNodeId : !label.trim()}
+              size="medium"
+            >
+              {step === 1 ? 'Next' : 'Create connection'}
+            </ButtonNormal>
+          </div>
         </div>
       </div>
     </>

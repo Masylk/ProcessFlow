@@ -272,7 +272,7 @@ export default function HelpCenterModal({
                   className="text-sm font-medium leading-tight"
                   style={{ color: colors['text-secondary'] }}
                 >
-                  Restart tutorial
+                  Tutorial
                 </div>
               </div>
               <div 

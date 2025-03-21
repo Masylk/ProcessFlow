@@ -11,12 +11,14 @@ interface BlockDetailsSidebarProps {
   block: Block;
   onClose: () => void;
   onUpdate: (updatedData: Partial<Block>) => void;
+  colors: Record<string, string>;
 }
 
 export default function BlockDetailsSidebar({
   block,
   onClose,
   onUpdate,
+  colors,
 }: BlockDetailsSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -104,7 +106,8 @@ export default function BlockDetailsSidebar({
 
       {/* Sidebar */}
       <div
-        className="fixed top-0 right-0 h-screen w-[540px] bg-white shadow-lg p-6 border-l border-[#e4e7ec] z-50 flex flex-col overflow-y-auto"
+        className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l border-[#e4e7ec] z-50 flex flex-col overflow-y-auto"
+        style={{ backgroundColor: colors['bg-primary'] }}
         ref={sidebarRef}
       >
         {/* Close Button */}

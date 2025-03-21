@@ -180,6 +180,24 @@ export const darkTheme: Theme = {
       // Loading spinner
       'button-loading-spinner': getThemeColor('Base/White'),
 
+      // Icon colors
+      'icon-default': getThemeColor('Gray (dark mode)/400'),
+      'icon-default-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-primary': getThemeColor('Gray (dark mode)/300'),
+      'icon-primary-hover': getThemeColor('Gray (dark mode)/100'),
+      'icon-secondary': getThemeColor('Gray (dark mode)/400'),
+      'icon-secondary-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-tertiary': getThemeColor('Gray (dark mode)/400'),
+      'icon-tertiary-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-success': getThemeColor('Success/400'),
+      'icon-success-hover': getThemeColor('Success/300'),
+      'icon-warning': getThemeColor('Warning/400'), 
+      'icon-warning-hover': getThemeColor('Warning/300'),
+      'icon-error': getThemeColor('Error/400'),
+      'icon-error-hover': getThemeColor('Error/300'),
+      'icon-info': getThemeColor('Brand/400'),
+      'icon-info-hover': getThemeColor('Brand/300'),
+
       // Input field tokens
       // Default input
       'input-bg': getThemeColor('Gray (dark mode)/950'),

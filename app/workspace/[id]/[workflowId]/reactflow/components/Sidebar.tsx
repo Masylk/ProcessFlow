@@ -4,44 +4,55 @@ import { Block, Path } from '../types';
 import { PathContainer } from './PathContainer';
 import { usePathsStore } from '../store/pathsStore';
 import { BlockEndType, BlockType } from '@/types/block';
+import { useTheme, useColors } from '@/app/theme/hooks';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
+import DynamicIcon from '@/utils/DynamicIcon';
+import { User } from '@/types/user';
 
 interface SidebarProps {
   workspaceId: string;
   workflowId: string;
 }
 
-interface PathObject {
-  id: number;
-  name: string;
-  blocks: Block[];
-  parent_blocks_ids: number[];
-  child_paths: PathObject[];
-}
-
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
+  const { currentTheme } = useTheme();
+  const colors = useColors();
   const originalPaths = usePathsStore((state) => state.paths);
-  // Create a shallow copy of paths with deep copy of blocks and child_paths
   const paths = useMemo(
     () =>
       originalPaths.map((path) => ({
         ...path,
         blocks: path.blocks.map((block) => ({
           ...block,
-          child_paths: block.child_paths || [],
+          child_paths: block.child_paths
+            ? block.child_paths.map((cp) => ({
+                ...cp,
+                path: { ...cp.path },
+                block: { ...cp.block },
+              }))
+            : [],
+          path: { ...path },
+        })),
+        parent_blocks: path.parent_blocks.map((pb) => ({
+          ...pb,
+          block: { ...pb.block },
         })),
       })),
     [originalPaths]
   );
-
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
   const [sidebarWidth, setSidebarWidth] = useState<number>(300);
+  const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
 
   // Static URLs for the icons
   const navigationIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/navigation-icon.svg`;
+  const supportIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`;
+  const settingsIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
 
   // Function to get the great grandparent path ID
@@ -83,6 +94,9 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     const mainPathsArray: Path[] = [];
     const mergePathsArray: Path[] = [];
 
+    if (!paths || paths.length === 0) {
+      return { mainPaths: [], mergePaths: [] };
+    }
     // Collect merge paths (avoiding duplicates)
     paths.forEach((path) => {
       path.blocks.forEach((block) => {
@@ -210,6 +224,10 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     setIsSidebarVisible((prev) => !prev);
   };
 
+  const toggleHelpModal = () => {
+    setShowHelpModal(prevState => !prevState);
+  };
+
   // Find the main path from filtered paths
   const mainPath = mainPaths.find((path) => path.parent_blocks.length === 0);
 
@@ -289,28 +307,63 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
           .map((block) => (
             <div
               key={block.id}
-              className="p-2 hover:bg-gray-50 rounded-md cursor-pointer w-[250px]"
+              className="rounded-md cursor-pointer transition-all duration-200"
+              style={{ 
+                backgroundColor: 'transparent',
+                padding: '2px',
+                marginBottom: '2px',
+                width: '100%',
+              }}
               onClick={() => handleBlockClick(block.id)}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                e.currentTarget.style.transform = 'translateX(2px)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }}
             >
-              <div className="flex items-center gap-2">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
-                  alt="Branch Icon"
-                  className="w-6 h-6 flex-shrink-0"
+              <div className="flex items-center gap-2 py-1.5 px-2">
+                <DynamicIcon
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
+                  size={20}
+                  variant="tertiary"
+                  className="flex-shrink-0"
                 />
-                <span className="text-sm text-gray-700 whitespace-nowrap overflow-hidden">
+                <span 
+                  className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
+                  style={{ color: colors['text-primary'] }}
+                >
                   {path.name}
                 </span>
                 <button
                   onClick={(e) => togglePathVisibility(path.id, e)}
-                  className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
+                  className="rounded-full flex-shrink-0 transition-all"
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = colors['bg-tertiary'];
+                    e.stopPropagation();
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.stopPropagation();
+                  }}
                 >
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                  <DynamicIcon
+                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
                       isPathCollapsed ? 'chevron-right' : 'chevron-down'
                     }.svg`}
-                    alt={isPathCollapsed ? 'Expand' : 'Collapse'}
-                    className="w-4 h-4"
+                    size={16}
+                    variant="tertiary"
+                    className="flex-shrink-0"
                   />
                 </button>
               </div>
@@ -350,25 +403,41 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                 return (
                   <div
                     key={block.id}
-                    className="p-2 hover:bg-gray-50 rounded-md cursor-pointer w-[250px]"
+                    className="rounded-md cursor-pointer transition-all duration-200"
                     style={{
-                      marginLeft: 24,
+                      backgroundColor: 'transparent',
+                      marginLeft: 22,
+                      padding: '2px',
+                      marginBottom: '2px',
+                      width: 'calc(100% - 22px)',
                     }}
                     onClick={() => handleBlockClick(block.id)}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                      e.currentTarget.style.transform = 'translateX(2px)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 py-1.5 px-2">
                       {block.type === 'STEP' && (
-                        <img
-                          src={
+                        <DynamicIcon
+                          url={
                             block.icon
                               ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
                               : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
                           }
-                          alt={block.icon ? 'Block Icon' : 'Default Icon'}
-                          className="w-6 h-6 flex-shrink-0"
+                          size={20}
+                          variant="tertiary"
+                          className="flex-shrink-0"
                         />
                       )}
-                      <span className="text-sm text-gray-700 whitespace-nowrap overflow-hidden">
+                      <span 
+                        className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
+                        style={{ color: colors['text-primary'] }}
+                      >
                         {block.title ||
                           block.step_details ||
                           `Block ${block.id}`}
@@ -420,94 +489,190 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Helper function to generate button IDs
+  const generateButtonId = (name: string) => `sidebar-button-${name}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  // Button IDs for hover styling
+  const navButtonId = generateButtonId('nav');
+  const historyButtonId = generateButtonId('history');
+  const supportButtonId = generateButtonId('support');
+  const settingsButtonId = generateButtonId('settings');
+  
+  // Hover styles
+  const hoverStyles = `
+    ${navButtonId}:hover, ${historyButtonId}:hover, ${supportButtonId}:hover, ${settingsButtonId}:hover {
+      background-color: ${colors['bg-secondary']} !important;
+    }
+  `;
+
+  // Add a style block for the search input placeholder
+  const searchInputId = generateButtonId('search-input');
+  const placeholderStyles = `
+    #${searchInputId}::placeholder {
+      color: ${colors['text-tertiary']};
+    }
+    #${searchInputId}:focus {
+      border-color: ${colors['accent-primary']};
+      box-shadow: 0 0 0 2px ${colors['accent-primary']}40;
+    }
+  `;
+
+  // Fix linter error by creating a mock user object that matches User type
+  const mockUser: Partial<User> = {
+    id: parseInt(workspaceId),
+    auth_id: workspaceId,
+    email: '',
+    first_name: '',
+    last_name: '',
+    full_name: '',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
   return (
-    <div className="fixed z-10 bg-white flex h-[93vh] top-[7vh]">
-      {/* Sidebar with icons */}
-      <div className="w-15 h-full bg-white border border-[#e4e7ec] flex flex-col justify-between">
-        <div className="flex flex-col pt-4 px-4 gap-6">
-          <div
-            className="w-6 h-6 bg-white rounded-md cursor-pointer"
-            onClick={toggleSidebar}
-          >
-            <img
-              src={navigationIconUrl}
-              alt="Navigation Icon"
-              className="w-full h-full object-contain"
+    <>
+      <style>{hoverStyles}</style>
+      <style>{placeholderStyles}</style>
+      <div 
+        className="fixed z-10 flex top-[56px] left-0 h-[calc(100vh-56px)]"
+        style={{ backgroundColor: colors['bg-primary'] }}
+      >
+        {/* Sidebar with icons */}
+        <div 
+          className="w-[80px] h-full flex flex-col justify-between border-r"
+          style={{ 
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary'] 
+          }}
+        >
+          <div className="flex flex-col pt-4 items-center gap-2">
+            <ButtonNormal
+              variant="tertiary"
+              iconOnly
+              leadingIcon={navigationIconUrl}
+              onClick={toggleSidebar}
+              className={isSidebarVisible ? "bg-opacity-10" : ""}
+            />
+            <ButtonNormal
+              variant="tertiary"
+              iconOnly
+              leadingIcon={navigationIconUrl}
+              className="hidden"
+            />
+          </div>
+          <div className="flex flex-col pb-6 items-center gap-2">
+            <ButtonNormal
+              variant="tertiary"
+              iconOnly
+              leadingIcon={supportIconUrl}
+              onClick={toggleHelpModal}
+            />
+            <ButtonNormal
+              variant="tertiary"
+              iconOnly
+              leadingIcon={settingsIconUrl}
             />
           </div>
         </div>
-      </div>
 
-      {/* Main Sidebar Content */}
-      {isSidebarVisible && (
-        <div
-          ref={sidebarRef}
-          className="flex-1 flex flex-col border border-gray-200 relative"
-          style={{
-            width: sidebarWidth,
-            minWidth: '250px',
-          }}
-        >
-          {/* Header Section */}
-          <div className="sticky top-0 z-10 px-2 pt-3 pb-7 border-b border-[#e4e7ec] bg-white">
-            <div className="self-stretch text-[#101828] text-base font-medium font-['Inter'] leading-normal mb-4">
-              Navigation
-            </div>
-            {/* Search bar */}
-            <div className="flex-col justify-start items-start gap-1.5">
-              <div className="px-2 py-1 bg-white rounded-md shadow border border-[#d0d5dd] justify-start items-center gap-2 inline-flex">
-                <div className="grow shrink basis-0 h-[18px] justify-start items-center gap-2 flex">
-                  <div className="w-4 h-4 relative">
-                    <img
-                      src={searchIconUrl}
-                      alt="Search Icon"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchFilter}
-                    onChange={(e) => setSearchFilter(e.target.value)}
-                    placeholder="Search"
-                    className="w-[150px] text-[#667085] text-xs font-normal font-['Inter'] leading-[18px] outline-none"
+        {/* Main Sidebar Content */}
+        {isSidebarVisible && (
+          <div
+            ref={sidebarRef}
+            className="flex-1 flex flex-col relative border-r"
+            style={{
+              width: sidebarWidth,
+              minWidth: '250px',
+              backgroundColor: colors['bg-primary'],
+              borderColor: colors['border-secondary']
+            }}
+          >
+            {/* Header Section */}
+            <div 
+              className="sticky top-0 z-10 px-4 pt-4 pb-3 border-b"
+              style={{ 
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-secondary'] 
+              }}
+            >
+              <div 
+                className="text-base font-semibold mb-4"
+                style={{ color: colors['text-primary'] }}
+              >
+                Navigation
+              </div>
+              {/* Search bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <DynamicIcon
+                    url={searchIconUrl}
+                    size={16}
+                    variant="tertiary"
+                    className="opacity-70"
                   />
                 </div>
+                <input
+                  id={searchInputId}
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none"
+                  style={{ 
+                    backgroundColor: colors['bg-secondary'],
+                    color: colors['text-primary'],
+                    borderColor: colors['border-primary'],
+                    boxShadow: 'none'
+                  }}
+                />
               </div>
             </div>
-          </div>
 
-          {/* Content Area with both x and y scrolling */}
-          <div className="flex-1 overflow-auto p-4">
-            {mainPaths.map((path) => (
-              <PathContainer
-                key={path.id}
-                path={path}
-                level={0}
-                renderContent={renderPathContent}
-              />
-            ))}
-          </div>
-
-          {/* Resize Handle */}
-          <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-            onMouseDown={handleMouseDown}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              className="w-4 h-4 text-gray-400"
+            {/* Content Area with both x and y scrolling */}
+            <div 
+              className="flex-1 overflow-auto p-4"
+              style={{ backgroundColor: colors['bg-primary'] }}
             >
-              <path
-                d="M22 22L12 12M22 12L12 22"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
+              {mainPaths.map((path) => (
+                <PathContainer
+                  key={path.id}
+                  path={path}
+                  level={0}
+                  renderContent={renderPathContent}
+                />
+              ))}
+            </div>
+
+            {/* Resize Handle */}
+            <div
+              className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+              onMouseDown={handleMouseDown}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="w-4 h-4"
+                style={{ color: colors['text-tertiary'] }}
+              >
+                <path
+                  d="M22 22L12 12M22 12L12 22"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Help Center Modal */}
+      {showHelpModal && (
+        <HelpCenterModal
+          onClose={toggleHelpModal}
+          user={mockUser as User}
+        />
       )}
-    </div>
+    </>
   );
 }
