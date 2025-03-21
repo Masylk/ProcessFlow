@@ -1,93 +1,227 @@
 'use client';
 
-import ButtonCTA from '@/app/components/ButtonCTA';
-import React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import AvatarGroup from '@/app/components/AvatarGroup';
-import BreadCrumbs from './BreadCrumbs'; // Corrected import path
+import { useState, createContext } from 'react';
+import { useTheme, useColors } from '@/app/theme/hooks';
+import { cn } from '@/lib/utils/cn';
+import BreadCrumbs from './BreadCrumbs';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import Image from 'next/image';
+import Link from 'next/link';
+import UserInfo from '@/app/dashboard/components/UserInfo';
+import UserDropdown from '@/app/dashboard/components/UserDropdown';
+import { User } from '@/types/user';
+import FeedbackSlideout from './FeedbackSlideout';
+import { usePathname, useRouter } from 'next/navigation';
+
+export const HeaderHeightContext = createContext<number>(0);
 
 interface HeaderProps {
-  workspaceName: string;
-  workflowName: string;
+  breadcrumbItems: Array<{
+    label: string;
+    href?: string;
+  }>;
+  user: User;
+  className?: string;
+  onOpenUserSettings: () => void;
+  onOpenHelpCenter: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ workspaceName, workflowName }) => {
+const Header: React.FC<HeaderProps> = ({
+  breadcrumbItems,
+  user,
+  className,
+  onOpenUserSettings,
+  onOpenHelpCenter,
+}) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { getCssVariable } = useTheme();
+  const colors = useColors();
+  const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const headerHeight = 57; // Define the height here
 
-  // URLs for avatars
-  const avatarUrls = [
-    '/images/placeholder-avatar1.png',
-    '/images/placeholder-avatar2.png',
-    '/images/placeholder-avatar3.png',
-  ];
-
-  // Function to navigate to the first segment after "workspace"
-  const navigateToFirstSegment = () => {
-    const segments = pathname.split('/'); // Split the path into segments
-    const workspaceIndex = segments.indexOf('workspace'); // Find the "workspace" segment
-    if (workspaceIndex !== -1 && workspaceIndex + 1 < segments.length) {
-      // Get the first segment after "workspace"
-      const targetSegment = segments.slice(0, workspaceIndex + 2).join('/');
-      router.push(targetSegment);
-    } else {
-      router.push('/'); // Default to root if "workspace" or its next segment is not found
-    }
+  const handleUserInfoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDropdownVisible(!dropdownVisible);
   };
 
-  // Function to navigate to the edit page
+  // Example messages - in a real app, these would come from your backend
+  const exampleMessages = [
+    {
+      id: '1',
+      user: {
+        name: 'Lana Steiner',
+        avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+        isOnline: true,
+      },
+      message:
+        'Hey! I think the 1st step should be more direct. Here is an example',
+      timestamp: 'Thursday 11:40am',
+    },
+    {
+      id: '2',
+      user: {
+        name: 'Lana Steiner',
+        avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+        isOnline: true,
+      },
+      attachment: {
+        name: 'Onboarding.pdf',
+        type: 'pdf',
+        size: '1.2 MB',
+      },
+      timestamp: 'Thursday 11:40am',
+    },
+    {
+      id: '3',
+      isYou: true,
+      user: {
+        name: 'You',
+        avatar:
+          user.avatar_url ||
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+      },
+      message: 'Awesome! Thanks.',
+      timestamp: 'Thursday 11:41am',
+    },
+    {
+      id: '4',
+      user: {
+        name: 'Demi Wilkinson',
+        avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+        isOnline: true,
+      },
+      message: 'Good timing — was just looking at this.',
+      timestamp: 'Thursday 11:44am',
+    },
+    {
+      id: '5',
+      user: {
+        name: 'Phoenix Baker',
+        avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+        isOnline: true,
+      },
+      message: 'Hey Olivia, can you please review the process date?',
+      timestamp: 'Friday 2:20pm',
+    },
+    {
+      id: '6',
+      isYou: true,
+      user: {
+        name: 'You',
+        avatar:
+          user.avatar_url ||
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-avatar.svg`,
+      },
+      message: "Sure thing, I'll have a look today.",
+      timestamp: 'Friday 2:20pm',
+    },
+  ];
+
   const navigateToEdit = () => {
     const segments = pathname.split('/');
-    if (segments[segments.length - 1] === 'read') {
-      // Replace 'read' with 'edit'
-      segments[segments.length - 1] = 'edit';
-      const editPath = segments.join('/');
-      router.push(editPath);
-    }
+    segments[segments.length - 1] = 'reactflow';
+    const editPath = segments.join('/');
+    router.push(editPath);
+  };
+
+  const handleSendMessage = (message: string) => {
+    // In a real app, this would send the message to your backend
+    console.log('Sending message:', message);
   };
 
   return (
-    <div className="overflow-hidden w-full h-[68px] p-4 bg-white border-b border-[#e4e7ec] flex justify-between items-center z-40">
-      {/* Left Section: ButtonCTA and Breadcrumbs */}
-      <div className="flex items-center gap-4">
-        <ButtonCTA
-          start_icon="/assets/shared_components/arrow-left.svg"
-          onClick={navigateToFirstSegment}
-          bgColor="transparent"
-          hoverBgColor="transparent"
-          textColor="#475467"
-        ></ButtonCTA>
+    <HeaderHeightContext.Provider value={headerHeight}>
+      <header
+        className={cn('w-full flex items-center justify-between', 'border-b')}
+        style={{
+          borderColor: colors['border-secondary'],
+          backgroundColor: colors['bg-primary'],
+          height: `${headerHeight}px`,
+          padding: '0 16px',
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <ButtonNormal
+            variant="tertiary"
+            size="small"
+            iconOnly
+            className="!p-2"
+            onClick={() => window.history.back()}
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+          />
+          <BreadCrumbs items={breadcrumbItems} />
+        </div>
 
-        {/* Breadcrumb Section */}
-        <BreadCrumbs items={[workspaceName, workflowName]} />
-      </div>
+        <div className="flex items-center gap-3">
+          {/* Comment Button */}
+          <ButtonNormal
+            variant="secondary"
+            size="small"
+            iconOnly={true}
+            onClick={() => setIsFeedbackOpen(!isFeedbackOpen)}
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-text-square-02.svg`}
+          >
+            Comment
+          </ButtonNormal>
 
-      {/* Right Section: User Avatars and Action Buttons */}
-      <div className="flex items-center gap-4">
-        {/* Button Section with Line */}
-        <div className="pl-4 border-[#d0d5dd] justify-start items-center gap-2 flex">
-          {/* Button edit */}
-          <ButtonCTA
-            start_icon="/assets/shared_components/edit-icon.svg"
-            bgColor="transparent"
-            hoverBgColor="transparent"
-            textColor="#475467"
-            borderColor="#D0D5DD"
-            onClick={navigateToEdit} // Add onClick handler
+          {/* Edit Button */}
+          <ButtonNormal
+            variant="secondary"
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-06.svg`}
+            onClick={navigateToEdit}
           >
             Edit
-          </ButtonCTA>
+          </ButtonNormal>
 
-          {/* Button share */}
-          <ButtonCTA
-            start_icon="/assets/workflow/share.svg"
-            onClick={() => alert('Share button clicked!')}
+          {/* Share Button */}
+          <ButtonNormal
+            variant="primary"
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/share-06.svg`}
           >
             Share
-          </ButtonCTA>
+          </ButtonNormal>
+
+          {/* User Avatar with Dropdown */}
+          <div className="relative">
+            <div
+              className="relative cursor-pointer"
+              onClick={handleUserInfoClick}
+            >
+              <UserInfo user={user} isActive={dropdownVisible} />
+              {dropdownVisible && (
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setDropdownVisible(false)}
+                >
+                  <div
+                    className="absolute top-[68px] right-3.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <UserDropdown
+                      user={user}
+                      onOpenUserSettings={onOpenUserSettings}
+                      onOpenHelpCenter={onOpenHelpCenter}
+                      onClose={() => setDropdownVisible(false)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </header>
+
+      <FeedbackSlideout
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        messages={exampleMessages}
+        onSendMessage={handleSendMessage}
+      />
+    </HeaderHeightContext.Provider>
   );
 };
 

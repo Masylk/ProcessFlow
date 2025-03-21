@@ -10,14 +10,6 @@ interface SidebarProps {
   workflowId: string;
 }
 
-interface PathObject {
-  id: number;
-  name: string;
-  blocks: Block[];
-  parent_blocks_ids: number[];
-  child_paths: PathObject[];
-}
-
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const originalPaths = usePathsStore((state) => state.paths);
   const paths = useMemo(
@@ -42,10 +34,6 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       })),
     [originalPaths]
   );
-
-  if (!paths || paths.length === 0) {
-    return null;
-  }
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
@@ -96,6 +84,9 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     const mainPathsArray: Path[] = [];
     const mergePathsArray: Path[] = [];
 
+    if (!paths || paths.length === 0) {
+      return { mainPaths: [], mergePaths: [] };
+    }
     // Collect merge paths (avoiding duplicates)
     paths.forEach((path) => {
       path.blocks.forEach((block) => {
