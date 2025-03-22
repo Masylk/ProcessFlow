@@ -8,6 +8,7 @@ interface TextEditorProps {
   readOnly?: boolean;
   className?: string;
   placeholder?: string;
+  textColor?: string;
 }
 
 export default function TextEditor({
@@ -18,6 +19,7 @@ export default function TextEditor({
   readOnly = false,
   className = '',
   placeholder = '',
+  textColor,
 }: TextEditorProps) {
   return (
     <div className={className}>
@@ -29,6 +31,7 @@ export default function TextEditor({
         readOnly={readOnly}
         placeholder={placeholder}
         className="w-full h-full min-h-[80px] bg-transparent resize-none focus:outline-none"
+        style={{ color: textColor }}
       />
     </div>
   );
