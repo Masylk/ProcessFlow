@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import IconSelector from './IconSelector';
 import { Block } from '../types';
+import { useColors, useThemeAssets } from '@/app/theme/hooks';
 
 interface IconModifierProps {
   block: Block;
@@ -9,6 +10,9 @@ interface IconModifierProps {
 
 export default function IconModifier({ block, onUpdate }: IconModifierProps) {
   const [showSelector, setShowSelector] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const colors = useColors();
+  const themeAssets = useThemeAssets();
 
   const handleIconSelect = (icon?: string) => {
     if (icon) {
@@ -27,8 +31,18 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
     <div className="relative">
       {/* Icon Display */}
       <div
-        className="w-10 h-10 rounded-lg border border-[#e4e7ec] flex items-center justify-center cursor-pointer hover:bg-gray-50"
+        className="w-10 h-10 rounded-lg border flex items-center justify-center cursor-pointer transition-colors duration-200"
+        style={{ 
+          borderColor: colors['border-primary'],
+          backgroundColor: showSelector 
+            ? colors['bg-active']
+            : isHovering 
+              ? colors['bg-primary_hover']
+              : 'transparent',
+        }}
         onClick={() => setShowSelector(!showSelector)}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
       >
         {block.icon ? (
           <img
@@ -39,7 +53,7 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
         ) : (
           <div className="w-6 h-6 flex justify-center items-center">
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+              src={themeAssets.icons?.['folder'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
               alt="Default Icon"
               className="w-6 h-6"
             />
@@ -50,7 +64,11 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
       {/* Backdrop */}
       {showSelector && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50"
+          className="fixed inset-0"
+          style={{ 
+            backgroundColor: colors['bg-overlay'],
+            opacity: 0.50 
+          }}
           onClick={handleOverlayClick}
         />
       )}

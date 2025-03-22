@@ -866,7 +866,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           block={blockData}
           onClose={() => setShowSidebar(false)}
           onUpdate={handleBlockUpdate}
-          colors={colors}
         />
       )}
     </>
