@@ -21,7 +21,6 @@ import BlockDetailsSidebar from '../BlockDetailsSidebar';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
-
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
     onPreviewUpdate?: (edge: Edge | null) => void;
