@@ -41,6 +41,29 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       })),
     [originalPaths]
   );
+  const getLastOccurrenceIds = useMemo(() => {
+    const lastOccurrenceIds: number[] = [];
+
+    paths.forEach((path) => {
+      // Check if any parent block is of type MERGE
+      const hasMergeParent = path.parent_blocks.some((pb) =>
+        paths.find((p) =>
+          p.blocks.find((b) => b.id === pb.block_id && b.type === 'MERGE')
+        )
+      );
+
+      if (hasMergeParent) {
+        // Get the last parent block ID
+        const lastParentBlockId =
+          path.parent_blocks[path.parent_blocks.length - 1]?.block_id;
+        if (lastParentBlockId) {
+          lastOccurrenceIds.push(lastParentBlockId);
+        }
+      }
+    });
+
+    return lastOccurrenceIds;
+  }, [paths]);
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
@@ -55,182 +78,16 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const settingsIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
 
-  // Function to get the great grandparent path ID
-  const getGreatGrandParentPathId = (path: Path): number | null => {
-    // Get parent path
-    const parentBlock = path.parent_blocks[0]?.block_id;
-    if (!parentBlock) return null;
-
-    // Find parent path
-    const parentPath = paths.find((p) =>
-      p.blocks.some((b) => b.id === parentBlock)
-    );
-    if (!parentPath) return null;
-
-    // Get grandparent path
-    const grandParentBlock = parentPath.parent_blocks[0]?.block_id;
-    if (!grandParentBlock) return null;
-
-    // Find grandparent path
-    const grandParentPath = paths.find((p) =>
-      p.blocks.some((b) => b.id === grandParentBlock)
-    );
-    if (!grandParentPath) return null;
-
-    // Get great grandparent path
-    const greatGrandParentBlock = grandParentPath.parent_blocks[0]?.block_id;
-    if (!greatGrandParentBlock) return null;
-
-    // Find and return great grandparent path ID
-    const greatGrandParentPath = paths.find((p) =>
-      p.blocks.some((b) => b.id === greatGrandParentBlock)
-    );
-    return greatGrandParentPath?.id ?? null;
-  };
-
-  // Organize paths
-  const { mainPaths, mergePaths } = useMemo(() => {
-    const mergeChildPaths = new Set<number>();
-    const mainPathsArray: Path[] = [];
-    const mergePathsArray: Path[] = [];
-
-    if (!paths || paths.length === 0) {
-      return { mainPaths: [], mergePaths: [] };
-    }
-    // Collect merge paths (avoiding duplicates)
-    paths.forEach((path) => {
-      path.blocks.forEach((block) => {
-        if (block.type === 'MERGE') {
-          const child_paths = paths.filter((p) =>
-            block.child_paths?.some((childPath) => childPath.path.id === p.id)
-          );
-          child_paths.forEach((childPath) => {
-            if (!mergeChildPaths.has(childPath.id)) {
-              mergeChildPaths.add(childPath.id);
-              mergePathsArray.push(childPath);
-            }
-          });
-        }
-      });
-    });
-
-    // Find first path
-    paths.forEach((path) => {
-      if (path.parent_blocks.length === 0) {
-        mainPathsArray.push(path);
-      }
-    });
-
-    // Process merge paths
-    mergePathsArray.forEach((mergePath) => {
-      const greatGrandParentId = getGreatGrandParentPathId(mergePath);
-
-      if (!greatGrandParentId) {
-        mainPathsArray.push(mergePath);
-      } else {
-        // Find great grandparent path and add merge path to its last block's child_paths
-        const greatGrandParent = paths.find((p) => p.id === greatGrandParentId);
-        if (greatGrandParent) {
-          const lastBlock =
-            greatGrandParent.blocks[greatGrandParent.blocks.length - 1];
-          if (!lastBlock.child_paths) {
-            lastBlock.child_paths = [];
-          }
-          if (!lastBlock.child_paths.some((p) => p.path.id === mergePath.id)) {
-            // Find parent path (path that contains the parent block)
-            const parent_path = paths.find((p) =>
-              p.blocks.some(
-                (block) => block.id === mergePath.parent_blocks[0]?.block_id
-              )
-            );
-
-            // Find grandparent path (path that contains the parent's parent block)
-            const grandparent_path = paths.find((p) =>
-              p.blocks.some(
-                (block) => block.id === parent_path?.parent_blocks[0]?.block_id
-              )
-            );
-
-            // Find position of grandparent in child_paths and insert merge path after it
-            if (grandparent_path) {
-              const grandparentIndex = lastBlock.child_paths.findIndex(
-                (cp) => cp.path_id === grandparent_path.id
-              );
-
-              if (grandparentIndex !== -1) {
-                // Remove merge path if it exists
-                const mergePathIndex = lastBlock.child_paths.findIndex(
-                  (cp) => cp.path_id === mergePath.id
-                );
-                if (mergePathIndex !== -1) {
-                  lastBlock.child_paths.splice(mergePathIndex, 1);
-                }
-
-                const grandparent_last_block =
-                  grandparent_path.blocks[grandparent_path.blocks.length - 1];
-                // Get child paths that should be moved to merge path
-                const childPathsToMove =
-                  grandparent_last_block.child_paths.filter(
-                    (childPath) =>
-                      !mergePath.parent_blocks.some((pb) => {
-                        const lastBlockOfChildPath = paths
-                          .find((p) => p.id === childPath.path_id)
-                          ?.blocks.slice(-1)[0];
-                        return lastBlockOfChildPath?.id === pb.block_id;
-                      })
-                  );
-
-                // Remove these paths from lastBlock.child_paths
-                grandparent_last_block.child_paths =
-                  grandparent_last_block.child_paths.filter(
-                    (cp) => !childPathsToMove.includes(cp)
-                  );
-                // Add merge path after grandparent
-                lastBlock.child_paths.splice(grandparentIndex + 1, 0, {
-                  path: mergePath,
-                  path_id: mergePath.id,
-                  block_id: lastBlock.id,
-                  created_at: new Date().toISOString(),
-                  block: lastBlock,
-                });
-
-                // Move filtered child paths to merge path's last block
-                mergePath.blocks[mergePath.blocks.length - 1].type =
-                  BlockEndType.PATH;
-                const mergePathLastBlock =
-                  mergePath.blocks[mergePath.blocks.length - 1];
-                if (!mergePathLastBlock.child_paths) {
-                  mergePathLastBlock.child_paths = [];
-                }
-                mergePathLastBlock.child_paths.push(...childPathsToMove);
-                console.log(
-                  'mergePathLastBlock.child_paths',
-                  mergePathLastBlock.child_paths
-                );
-              }
-            }
-          }
-        }
-      }
-    });
-
-    return {
-      mainPaths: mainPathsArray,
-      mergePaths: mergePathsArray,
-    };
-  }, [paths]);
-
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
   };
 
   const toggleHelpModal = () => {
-    setShowHelpModal(prevState => !prevState);
+    setShowHelpModal((prevState) => !prevState);
   };
 
   // Find the main path from filtered paths
-  const mainPath = mainPaths.find((path) => path.parent_blocks.length === 0);
-
+  const mainPath = paths.find((path) => path.parent_blocks.length === 0);
   // Function to handle block click and zoom to node
   const handleBlockClick = (blockId: number) => {
     const node = getNodes().find((n) => n.id === `block-${blockId}`);
@@ -308,7 +165,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             <div
               key={block.id}
               className="rounded-md cursor-pointer transition-all duration-200"
-              style={{ 
+              style={{
                 backgroundColor: 'transparent',
                 padding: '2px',
                 marginBottom: '2px',
@@ -331,11 +188,11 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                   variant="tertiary"
                   className="flex-shrink-0"
                 />
-                <span 
+                <span
                   className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
                   style={{ color: colors['text-primary'] }}
                 >
-                  {path.name}
+                  {path.name}{' '}
                 </span>
                 <button
                   onClick={(e) => togglePathVisibility(path.id, e)}
@@ -349,7 +206,8 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                     backgroundColor: 'transparent',
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-tertiary'];
+                    e.currentTarget.style.backgroundColor =
+                      colors['bg-tertiary'];
                     e.stopPropagation();
                   }}
                   onMouseOut={(e) => {
@@ -381,17 +239,28 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               )
               .map((block) => {
                 if (block.type === 'MERGE' || block.type === 'PATH') {
-                  if (block.type === 'MERGE') return null;
                   return block.child_paths?.map((childPathConnection) => {
                     const childPath = paths.find(
                       (p) => p.id === childPathConnection.path.id
                     );
+
                     if (childPath && pathContainsMatchingBlocks(childPath)) {
+                      // Only render if this is the last occurrence of this path ID
+                      if (
+                        block.type === 'MERGE' &&
+                        !getLastOccurrenceIds.includes(block.id)
+                      ) {
+                        return null;
+                      }
                       return (
                         <PathContainer
-                          key={childPath.id}
+                          key={`${childPath.id}-${block.id}`}
                           path={childPath}
-                          level={level + 1}
+                          level={
+                            block.type === 'MERGE'
+                              ? Math.max(level - 2, -1)
+                              : Math.max(level, 0) + 1
+                          }
                           renderContent={renderPathContent}
                         />
                       );
@@ -413,7 +282,8 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                     }}
                     onClick={() => handleBlockClick(block.id)}
                     onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                      e.currentTarget.style.backgroundColor =
+                        colors['bg-secondary'];
                       e.currentTarget.style.transform = 'translateX(2px)';
                     }}
                     onMouseOut={(e) => {
@@ -434,7 +304,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                           className="flex-shrink-0"
                         />
                       )}
-                      <span 
+                      <span
                         className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
                         style={{ color: colors['text-primary'] }}
                       >
@@ -490,14 +360,15 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   };
 
   // Helper function to generate button IDs
-  const generateButtonId = (name: string) => `sidebar-button-${name}-${Math.random().toString(36).substring(2, 9)}`;
-  
+  const generateButtonId = (name: string) =>
+    `sidebar-button-${name}-${Math.random().toString(36).substring(2, 9)}`;
+
   // Button IDs for hover styling
   const navButtonId = generateButtonId('nav');
   const historyButtonId = generateButtonId('history');
   const supportButtonId = generateButtonId('support');
   const settingsButtonId = generateButtonId('settings');
-  
+
   // Hover styles
   const hoverStyles = `
     ${navButtonId}:hover, ${historyButtonId}:hover, ${supportButtonId}:hover, ${settingsButtonId}:hover {
@@ -526,14 +397,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     last_name: '',
     full_name: '',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
   };
 
   return (
     <>
       <style>{hoverStyles}</style>
       <style>{placeholderStyles}</style>
-      <div 
+      <div
         className="fixed z-10 flex top-[56px] left-0 h-[calc(100vh-56px)]"
         style={{ backgroundColor: colors['bg-primary'] }}
       >
@@ -542,7 +413,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
           className="w-fit px-2 h-full flex flex-col justify-between border-r"
           style={{ 
             backgroundColor: colors['bg-primary'],
-            borderColor: colors['border-secondary'] 
+            borderColor: colors['border-secondary'],
           }}
         >
           <div className="flex flex-col pt-4 items-center gap-2">
@@ -551,7 +422,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               iconOnly
               leadingIcon={navigationIconUrl}
               onClick={toggleSidebar}
-              className={isSidebarVisible ? "bg-opacity-10" : ""}
+              className={isSidebarVisible ? 'bg-opacity-10' : ''}
             />
             <ButtonNormal
               variant="tertiary"
@@ -584,18 +455,18 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               width: sidebarWidth,
               minWidth: '250px',
               backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary']
+              borderColor: colors['border-secondary'],
             }}
           >
             {/* Header Section */}
-            <div 
+            <div
               className="sticky top-0 z-10 px-4 pt-4 pb-3 border-b"
-              style={{ 
+              style={{
                 backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'] 
+                borderColor: colors['border-secondary'],
               }}
             >
-              <div 
+              <div
                 className="text-base font-semibold mb-4"
                 style={{ color: colors['text-primary'] }}
               >
@@ -618,29 +489,29 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Search"
                   className="w-full pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none"
-                  style={{ 
+                  style={{
                     backgroundColor: colors['bg-secondary'],
                     color: colors['text-primary'],
                     borderColor: colors['border-primary'],
-                    boxShadow: 'none'
+                    boxShadow: 'none',
                   }}
                 />
               </div>
             </div>
 
             {/* Content Area with both x and y scrolling */}
-            <div 
+            <div
               className="flex-1 overflow-auto p-4"
               style={{ backgroundColor: colors['bg-primary'] }}
             >
-              {mainPaths.map((path) => (
+              {mainPath && (
                 <PathContainer
-                  key={path.id}
-                  path={path}
+                  key={mainPath.id}
+                  path={mainPath}
                   level={0}
                   renderContent={renderPathContent}
                 />
-              ))}
+              )}
             </div>
 
             {/* Resize Handle */}
@@ -668,10 +539,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
       {/* Help Center Modal */}
       {showHelpModal && (
-        <HelpCenterModal
-          onClose={toggleHelpModal}
-          user={mockUser as User}
-        />
+        <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
       )}
     </>
   );
