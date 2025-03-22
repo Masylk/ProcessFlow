@@ -14,7 +14,7 @@ export const PathContainer: React.FC<PathContainerProps> = ({
   renderContent,
 }) => {
   const colors = useColors();
-  
+
   return (
     <div
       className="relative"
@@ -22,9 +22,9 @@ export const PathContainer: React.FC<PathContainerProps> = ({
         marginLeft: level * 18, // 24px indent for each level
       }}
     >
-      <div 
-        className="absolute left-3 top-10 bottom-2 border-l" 
-        style={{ 
+      <div
+        className="absolute left-3 top-10 bottom-2"
+        style={{
           borderColor: colors['border-primary'],
           opacity: 0.8,
         }}
