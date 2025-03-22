@@ -24,6 +24,7 @@ import { useColors } from '@/app/theme/hooks';
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
     onPreviewUpdate?: (edge: Edge | null) => void;
+    lastCreatedBlockId?: number | null;
     // ... other data props
   };
 }
@@ -89,6 +90,30 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { isEditMode, selectedNodeId } = useEditModeStore();
 
   const setCopiedBlock = useClipboardStore((state) => state.setCopiedBlock);
+
+  // Add this function to handle zooming to the node
+  const zoomToNode = useCallback(() => {
+    const node = getNodes().find((n) => n.id === id);
+    if (!node) return;
+
+    // Center on node and offset to the left to make room for sidebar
+    setViewport(
+      {
+        x: -(node.position.x - window.innerWidth / 2 + 400),
+        y: -(node.position.y - window.innerHeight / 2 + 200),
+        zoom: 1,
+      },
+      { duration: 800 }
+    );
+  }, [id, getNodes, setViewport]);
+
+  // Effect to automatically open the sidebar when this is a newly created block
+  useEffect(() => {
+    if (data.lastCreatedBlockId && parseInt(id.replace('block-', '')) === data.lastCreatedBlockId) {
+      setShowSidebar(true);
+      zoomToNode();
+    }
+  }, [data.lastCreatedBlockId, id, zoomToNode]);
 
   // Add useEffect to fetch signed URL when blockData.image changes
   useEffect(() => {
@@ -525,22 +550,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     showConnectModal &&
     (connectData?.sourceNode?.id === id || connectData?.targetNode?.id === id);
 
-  // Add this function to handle zooming to the node
-  const zoomToNode = useCallback(() => {
-    const node = getNodes().find((n) => n.id === id);
-    if (!node) return;
-
-    // Center on node and offset to the left to make room for sidebar
-    setViewport(
-      {
-        x: -(node.position.x - window.innerWidth / 2 + 400),
-        y: -(node.position.y - window.innerHeight / 2 + 200),
-        zoom: 1,
-      },
-      { duration: 800 }
-    );
-  }, [id, getNodes, setViewport]);
-
   // Modify the click handler to include zooming
   const handleNodeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -610,9 +619,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-lg border ${
-          selected ? 'border-[#3537cc] shadow-md' : `border-[${colors['border-secondary']}]`
-        } ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
+        className={`relative rounded-lg border 
+        ${showSidebar ? 'focused-node' : ''} 
+        ${selected ? 'border-[#3537cc] shadow-md' : `border-[${colors['border-secondary']}]`} 
+        ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
           (isEditMode && id !== `block-${selectedNodeId}`) ||
@@ -625,7 +635,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
-          borderColor: selected ? '#3537cc' : colors['border-secondary']
+          borderColor: showSidebar ? colors['fg-brand-primary'] : (selected ? '#3537cc' : colors['border-secondary']),
+          boxShadow: showSidebar ? `0 0 0 4px ${colors['fg-brand-primary']}40, 0 0 0 2px ${colors['fg-brand-primary']}` : undefined,
+          transform: showSidebar ? 'scale(1.02)' : undefined,
+          zIndex: showSidebar ? 10 : undefined,
+          transition: 'all 0.3s ease',
         }}
       >
         <Handle

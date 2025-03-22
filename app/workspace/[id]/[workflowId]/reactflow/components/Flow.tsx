@@ -112,6 +112,8 @@ export function Flow({
     y: 0,
     zoom: 1,
   });
+  const { setEditMode } = useEditModeStore();
+  const [lastCreatedBlockId, setLastCreatedBlockId] = useState<number | null>(null);
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -220,6 +222,17 @@ export function Flow({
   // Add state for linkNode
   const [linkNode, setLinkNode] = useState<Node | null>(null);
 
+  // Effect to reset lastCreatedBlockId after a delay
+  useEffect(() => {
+    if (lastCreatedBlockId) {
+      const timer = setTimeout(() => {
+        setLastCreatedBlockId(null);
+      }, 500); // Reset after 500ms to ensure the node has been created
+      
+      return () => clearTimeout(timer);
+    }
+  }, [lastCreatedBlockId]);
+
   // Main effect for creating nodes and edges
   useEffect(() => {
     if (!Array.isArray(paths)) return;
@@ -241,7 +254,8 @@ export function Flow({
           setStrokeLines,
           updateStrokeLineVisibility,
           strokeLineVisibilities,
-          paths
+          paths,
+          lastCreatedBlockId
         );
 
         // Add stroke edges with visibility check
@@ -310,6 +324,7 @@ export function Flow({
     updateStrokeLineVisibility,
     strokeLineVisibilities,
     searchParams,
+    lastCreatedBlockId,
   ]);
 
   const handleBlockTypeSelect = useCallback(
@@ -324,13 +339,21 @@ export function Flow({
       };
 
       setShowDropdown(false);
-      await onBlockAdd(
+      
+      // Add block and get the new block ID
+      const newBlockId = await onBlockAdd(
         defaultBlock,
         dropdownDatas.path.id,
         defaultBlock.position
       );
+      
+      // If we got a block ID back, set it to automatically open the sidebar
+      if (newBlockId !== undefined && newBlockId !== null) {
+        setLastCreatedBlockId(newBlockId);
+        setEditMode(true, `block-${newBlockId}`);
+      }
     },
-    [dropdownDatas, workflowId, onBlockAdd]
+    [dropdownDatas, workflowId, onBlockAdd, setEditMode]
   );
 
   // Fix the handleNodeFocus function to avoid infinite loops

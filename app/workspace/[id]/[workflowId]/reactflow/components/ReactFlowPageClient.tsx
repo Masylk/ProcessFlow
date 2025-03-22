@@ -68,6 +68,9 @@ export function ReactFlowPageClient({
         return;
       }
 
+      // Get the newly created block
+      const newBlock = await response.json();
+
       // Refresh paths data
       const pathsResponse = await fetch(
         `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
@@ -76,6 +79,9 @@ export function ReactFlowPageClient({
         const pathsData = await pathsResponse.json();
         setPaths(pathsData.paths);
       }
+      
+      // Return the newly created block ID
+      return newBlock.id;
     } catch (error) {
       console.error('Error adding block:', error);
     }

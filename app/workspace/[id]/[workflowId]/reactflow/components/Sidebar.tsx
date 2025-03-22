@@ -539,7 +539,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       >
         {/* Sidebar with icons */}
         <div 
-          className="w-[80px] h-full flex flex-col justify-between border-r"
+          className="w-fit px-2 h-full flex flex-col justify-between border-r"
           style={{ 
             backgroundColor: colors['bg-primary'],
             borderColor: colors['border-secondary'] 
