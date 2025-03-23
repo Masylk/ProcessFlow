@@ -74,7 +74,7 @@ export default function RootLayout({
         </ThemeProvider>
 
         <Script
-          src="https://js-na1.hs-scripts.com/47874121.js"
+          src="//js.hs-scripts.com/47874121.js"
           strategy="afterInteractive"
           id="hs-script-loader"
           async
