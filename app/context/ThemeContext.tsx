@@ -1,14 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import {
-  ThemeContextType,
-  ThemeMode,
-  ButtonTokens,
-  InputTokens,
-  BreadcrumbTokens,
-  IconTokens,
-} from '../theme/types';
+import { ThemeContextType, ThemeMode, ButtonTokens, InputTokens, BreadcrumbTokens, IconTokens } from '../theme/types';
 import { themeRegistry } from '../theme/registry';
 import { lightTheme } from '../theme/themes/light';
 import { darkTheme } from '../theme/themes/dark';
@@ -17,29 +10,20 @@ import { darkTheme } from '../theme/themes/dark';
 themeRegistry.register(lightTheme);
 themeRegistry.register(darkTheme);
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined
-);
-
-type ThemeTokens = ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens;
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
   const theme = themeRegistry.get(currentTheme);
 
-  const getCssVariable = (token: keyof ThemeTokens): string => {
-    const value = getComputedStyle(document.documentElement)
-      .getPropertyValue(`--${token}`)
-      .trim();
-    return value || '';
+  const getCssVariable = (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens)): string => {
+    return `var(--${token})`;
   };
 
   // Pre-compute CSS variables for both themes
   const lightThemeVars = useMemo(() => {
     const lightTheme = themeRegistry.get('light');
-    return Object.entries(lightTheme.tokens.colors).reduce<
-      Record<string, string>
-    >((acc, [key, value]) => {
+    return Object.entries(lightTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
       acc[`--${key}`] = value;
       return acc;
     }, {});
@@ -47,9 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const darkThemeVars = useMemo(() => {
     const darkTheme = themeRegistry.get('dark');
-    return Object.entries(darkTheme.tokens.colors).reduce<
-      Record<string, string>
-    >((acc, [key, value]) => {
+    return Object.entries(darkTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
       acc[`--${key}`] = value;
       return acc;
     }, {});
@@ -62,11 +44,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check system preference
-    const systemPrefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme-mode') as ThemeMode;
-
+    
     // Use saved theme if it exists, otherwise use system preference
     if (savedTheme && themeRegistry.exists(savedTheme)) {
       setCurrentTheme(savedTheme);
@@ -74,10 +54,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setCurrentTheme('dark');
     }
 
-    // Add transition styles to head - REMOVED to fix inconsistent transition timing
+    // Add transition styles to head
     const style = document.createElement('style');
     style.textContent = `
-      /* Transitions removed to fix inconsistent transition timing between button text and icons */
+      :root {
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      }
+      
+      * {
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      }
+      
+      /* Make icon transitions instant */
+      svg, svg path, svg circle, svg rect, svg line, svg polygon, svg *, 
+      [class*="icon"], [class*="Icon"] {
+        transition: fill 0s, stroke 0s, color 0.05s ease !important;
+      }
     `;
     document.head.appendChild(style);
 
@@ -106,7 +98,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={value}>
-      <div style={cssVariables as React.CSSProperties}>{children}</div>
+      <div style={cssVariables as React.CSSProperties}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

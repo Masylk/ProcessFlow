@@ -1,24 +1,37 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import TextEditor from './TextEditor';
+import { useColors } from '@/app/theme/hooks';
+import { ThemeProvider } from '@/app/context/ThemeContext';
 import { Block, TaskType } from '../types';
 import BlockMediaVisualizer from './BlockMediaVisualizer';
 import MediaUploader from './MediaUploader';
 import IconModifier from './IconModifier';
 import { useEditModeStore } from '../store/editModeStore';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import { InputTokens } from '@/app/theme/types';
+
+// Helper function from TextAreaInput
+const getInputToken = (state: 'normal' | 'hover' | 'focus', type: 'bg' | 'fg' | 'border', destructive: boolean = false, disabled: boolean = false): keyof InputTokens => {
+  if (disabled) {
+    return `input-disabled-${type}` as keyof InputTokens;
+  }
+  
+  const prefix = destructive ? 'input-destructive-' : 'input-';
+  const suffix = state === 'normal' ? '' : `-${state}`;
+  return `${prefix}${type}${suffix}` as keyof InputTokens;
+};
 
 interface BlockDetailsSidebarProps {
   block: Block;
   onClose: () => void;
   onUpdate: (updatedData: Partial<Block>) => void;
-  colors: Record<string, string>;
 }
 
 export default function BlockDetailsSidebar({
   block,
   onClose,
   onUpdate,
-  colors,
 }: BlockDetailsSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -29,6 +42,7 @@ export default function BlockDetailsSidebar({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [description, setDescription] = useState(block.description || '');
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const colors = useColors(); // Get colors from the theme hook
 
   const setEditMode = useEditModeStore((state) => state.setEditMode);
 
@@ -96,7 +110,8 @@ export default function BlockDetailsSidebar({
     navigator.clipboard.writeText(url.toString());
   };
 
-  return createPortal(
+  // Create sidebar content to be wrapped with ThemeProvider
+  const sidebarContent = (
     <>
       {/* Overlay */}
       <div
@@ -106,44 +121,44 @@ export default function BlockDetailsSidebar({
 
       {/* Sidebar */}
       <div
-        className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l border-[#e4e7ec] z-50 flex flex-col overflow-y-auto"
-        style={{ backgroundColor: colors['bg-primary'] }}
+        className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l z-50 flex flex-col overflow-y-auto"
+        style={{ 
+          backgroundColor: colors['bg-primary'],
+          borderColor: colors['border-primary']
+        }}
         ref={sidebarRef}
       >
         {/* Close Button */}
-        <button
+        <ButtonNormal
           onClick={onClose}
-          className="absolute top-4 left-6 h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
-        >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/close-drawer.svg`}
-            alt="Close"
-            className="w-4 h-4"
-          />
-        </button>
+          className="absolute top-4 left-6"
+          size="small"
+          variant="secondary"
+          iconOnly
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/close-drawer.svg`}
+          aria-label="Close"
+        />
 
         {/* Container for the buttons to be aligned to the far right */}
         <div className="absolute top-4 right-4 flex gap-2">
           {/* Link Button */}
-          <button
+          <ButtonNormal
             onClick={handleCopyLink}
-            className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2"
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
-              alt="Copy Link"
-              className="w-4 h-4"
-            />
-          </button>
+            size="small"
+            variant="secondary"
+            iconOnly
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
+            aria-label="Copy Link"
+          />
 
           {/* Message Button */}
-          <button className="h-7 w-7 p-1 bg-white rounded-lg border border-[#d0d5dd] inline-flex items-center justify-center gap-2">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-icon.svg`}
-              alt="Message"
-              className="w-4 h-4"
-            />
-          </button>
+          <ButtonNormal 
+            size="small"
+            variant="secondary"
+            iconOnly
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-icon.svg`}
+            aria-label="Message"
+          />
         </div>
 
         {block && (
@@ -159,12 +174,20 @@ export default function BlockDetailsSidebar({
                   onBlur={() => onUpdate({ title })}
                   onKeyDown={handleTitleKeyDown}
                   autoFocus
-                  className="text-lg font-semibold text-gray-800 border-b-2 border-blue-500 outline-none bg-transparent"
+                  className="text-lg font-semibold border-b-2 outline-none bg-transparent"
+                  style={{ 
+                    color: colors['text-primary'],
+                    borderColor: colors['accent-primary'] 
+                  }}
                   placeholder="Enter title"
                 />
               ) : (
                 <h1
-                  className="text-lg font-semibold text-gray-800 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
+                  className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50"
+                  style={{ 
+                    color: colors['text-primary'],
+                    backgroundColor: 'transparent',
+                  }}
                   onClick={() => {
                     setIsEditingTitle(true);
                     setTitle(block.title || '');
@@ -176,26 +199,15 @@ export default function BlockDetailsSidebar({
             </div>
 
             {/* Main Info Container */}
-            <div className="border-t border-b border-[#e4e7ec] my-4 py-4">
-              <div className="h-[152px] flex flex-col gap-4">
-                {/* Assignee */}
-                <div className="flex justify-start items-center space-x-[72px]">
-                  <div className="text-[#344054] text-sm font-normal font-['Inter']">
-                    Assignee
-                  </div>
-                  <div className="px-1.5 py-0.5 bg-[#eef3ff] rounded-md border-[#c6d7fe]">
-                    <div className="text-center text-[#3537cc] text-xs font-medium font-['Inter']">
-                      Human Resources
-                    </div>
-                  </div>
-                </div>
-
+            <div className="border-t border-b my-4 py-4" style={{ borderColor: colors['border-primary'] }}>
+              <div className=" flex flex-col gap-4">
+                
                 {/* Last Modified */}
                 <div className="flex justify-start items-center space-x-[45px]">
-                  <div className="text-[#344054] text-sm font-normal font-['Inter']">
+                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
                     Last Modified
                   </div>
-                  <div className="text-[#667085] text-xs font-normal font-['Inter']">
+                  <div className="text-xs font-normal font-['Inter']" style={{ color: colors['text-secondary'] }}>
                     {block.last_modified
                       ? new Date(block.last_modified).toLocaleDateString()
                       : 'N/A'}
@@ -204,7 +216,7 @@ export default function BlockDetailsSidebar({
 
                 {/* Average Time */}
                 <div className="flex justify-start items-center space-x-[36px]">
-                  <div className="text-[#344054] text-sm font-normal font-['Inter']">
+                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
                     Average Time
                   </div>
                   {isEditingAverageTime ? (
@@ -219,15 +231,23 @@ export default function BlockDetailsSidebar({
                         }}
                         onKeyDown={handleAverageTimeKeyDown}
                         autoFocus
-                        className="text-xs font-normal font-['Inter'] outline-none border border-gray-300 rounded px-2 py-1 w-16"
+                        className="text-xs font-normal font-['Inter'] outline-none border rounded px-2 py-1 w-16"
+                        style={{ 
+                          borderColor: colors['border-primary'],
+                          color: colors['text-primary']
+                        }}
                         placeholder="Enter time"
                       />
-                      <span className="text-xs text-[#667085]">min</span>
+                      <span className="text-xs" style={{ color: colors['text-secondary'] }}>min</span>
                     </div>
                   ) : (
                     <div
                       onClick={() => setIsEditingAverageTime(true)}
-                      className="text-[#667085] text-xs font-normal font-['Inter'] cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
+                      className="text-xs font-normal font-['Inter'] cursor-pointer px-2 py-1 rounded hover:bg-opacity-50"
+                      style={{ 
+                        color: colors['text-secondary'],
+                        backgroundColor: 'transparent'
+                      }}
                     >
                       {averageTime ? `${averageTime} min` : 'N/A'}
                     </div>
@@ -236,90 +256,56 @@ export default function BlockDetailsSidebar({
 
                 {/* Task Type */}
                 <div className="flex justify-start items-center space-x-[94px]">
-                  <div className="text-[#344054] text-sm font-normal font-['Inter']">
+                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
                     Type
                   </div>
                   <div className="relative">
-                    <button
+                    <ButtonNormal
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center justify-between text-xs font-normal font-['Inter'] text-[#667085] outline-none hover:bg-gray-50 rounded px-2 py-1 pr-8 cursor-pointer min-w-[100px]"
+                      variant="secondary"
+                      size="small"
+                      className="min-w-[100px] text-left justify-between pr-8"
+                      trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
                     >
                       {taskType === 'MANUAL' ? 'Manual' : 'Automatic'}
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M2.5 4.5L6 8L9.5 4.5"
-                            stroke="#667085"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    </button>
+                    </ButtonNormal>
 
                     {isDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                        <button
+                      <div 
+                        className="absolute top-full left-0 mt-1 w-full border rounded-md shadow-lg z-50"
+                        style={{ 
+                          backgroundColor: colors['bg-secondary'],
+                          borderColor: colors['border-primary'] 
+                        }}
+                      >
+                        <ButtonNormal
                           onClick={() => {
                             handleTaskTypeChange({
                               target: { value: 'MANUAL' },
                             } as any);
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-left px-2 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between"
+                          variant="secondary"
+                          size="small"
+                          className="w-full text-left justify-between"
+                          trailingIcon={taskType === 'MANUAL' ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg` : undefined}
                         >
                           Manual
-                          {taskType === 'MANUAL' && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 12 12"
-                              fill="none"
-                            >
-                              <path
-                                d="M2 6L5 9L10 3"
-                                stroke="#667085"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                        <button
+                        </ButtonNormal>
+                        <ButtonNormal
                           onClick={() => {
                             handleTaskTypeChange({
                               target: { value: 'AUTOMATIC' },
                             } as any);
                             setIsDropdownOpen(false);
                           }}
-                          className="w-full text-left px-2 py-1.5 text-xs hover:bg-gray-50 flex items-center justify-between"
+                          variant="secondary"
+                          size="small"
+                          className="w-full text-left justify-between"
+                          trailingIcon={taskType === 'AUTOMATIC' ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg` : undefined}
                         >
                           Automatic
-                          {taskType === 'AUTOMATIC' && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 12 12"
-                              fill="none"
-                            >
-                              <path
-                                d="M2 6L5 9L10 3"
-                                stroke="#667085"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          )}
-                        </button>
+                        </ButtonNormal>
                       </div>
                     )}
                   </div>
@@ -328,29 +314,44 @@ export default function BlockDetailsSidebar({
             </div>
 
             {/* Description Section */}
-            <div className="mt-0">
-              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-3">
+            <div className="my-4">
+              <div className="text-sm font-medium font-['Inter'] leading-tight mb-3" style={{ color: colors['text-primary'] }}>
                 Description
               </div>
               <div
-                className="min-h-[100px] rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200"
+                className="min-h-[100px] rounded-lg transition-colors duration-200"
                 onClick={() => setIsEditingDescription(true)}
               >
-                <TextEditor
-                  value={description}
-                  onChange={setDescription}
-                  onBlur={handleDescriptionUpdate}
-                  onKeyDown={handleDescriptionKeyDown}
-                  readOnly={!isEditingDescription}
-                  className={`p-3 text-sm text-gray-600 ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
-                  placeholder="Add a description..."
-                />
+                <div
+                  style={{
+                    backgroundColor: colors[getInputToken('normal', 'bg', false, !isEditingDescription)],
+                    color: colors[getInputToken('normal', 'fg', false, !isEditingDescription)],
+                    borderColor: colors[getInputToken('normal', 'border', false, !isEditingDescription)],
+                    boxShadow: isEditingDescription
+                      ? "0px 0px 0px 4px rgba(78,107,215,0.12)"
+                      : '0px 1px 2px rgba(16, 24, 40, 0.05)',
+                    borderWidth: '1px',
+                    borderRadius: '0.5rem',
+                  }}
+                  className="relative flex items-start gap-2 p-3 transition-all duration-200"
+                >
+                  <TextEditor
+                    value={description}
+                    onChange={setDescription}
+                    onBlur={handleDescriptionUpdate}
+                    onKeyDown={handleDescriptionKeyDown}
+                    readOnly={!isEditingDescription}
+                    className={`w-full border-none outline-none  resize-vertical text-base leading-6 font-inter ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
+                    placeholder="Add a description..."
+                    textColor={colors['text-primary']}
+                  />
+                </div>
               </div>
             </div>
 
             {/* Media Section */}
             <div className="flex flex-col justify-start mt-2">
-              <div className="text-[#344054] text-sm font-medium font-['Inter'] leading-tight mb-2">
+              <div className="text-sm font-medium font-['Inter'] leading-tight mb-3" style={{ color: colors['text-primary'] }}>
                 Media
               </div>
               {block.image ? (
@@ -366,7 +367,14 @@ export default function BlockDetailsSidebar({
           </>
         )}
       </div>
-    </>,
+    </>
+  );
+
+  // Use createPortal with ThemeProvider
+  return createPortal(
+    <ThemeProvider>
+      {sidebarContent}
+    </ThemeProvider>,
     document.body
   );
 }

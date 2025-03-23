@@ -4,7 +4,6 @@ import { Workspace } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
 import { usePathsStore } from '../../store/pathsStore';
 import StepsContainer from './StepsContainer';
-import { organizePaths } from '../../utils/pathUtils';
 import { Path } from '../../reactflow/types';
 
 interface SidebarProps {
@@ -25,8 +24,8 @@ export default function Sidebar({
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
 
-  // Deep clone paths before organizing
-  const clonedPaths = useMemo(
+  // Deep clone paths
+  const paths = useMemo(
     () =>
       originalPaths.map((path) => ({
         ...path,
@@ -49,11 +48,36 @@ export default function Sidebar({
     [originalPaths]
   );
 
-  // Use the shared path organization logic
-  const { paths, mainPaths } = useMemo(
-    () => organizePaths(clonedPaths || []),
-    [clonedPaths]
+  // Find main path (path with no parent blocks)
+  const mainPath = useMemo(
+    () => paths.find((path) => path.parent_blocks.length === 0),
+    [paths]
   );
+
+  // Get last occurrence IDs for merge paths
+  const getLastOccurrenceIds = useMemo(() => {
+    const lastOccurrenceIds: number[] = [];
+
+    paths.forEach((path) => {
+      // Check if any parent block is of type MERGE
+      const hasMergeParent = path.parent_blocks.some((pb) =>
+        paths.find((p) =>
+          p.blocks.find((b) => b.id === pb.block_id && b.type === 'MERGE')
+        )
+      );
+
+      if (hasMergeParent) {
+        // Get the last parent block ID
+        const lastParentBlockId =
+          path.parent_blocks[path.parent_blocks.length - 1]?.block_id;
+        if (lastParentBlockId) {
+          lastOccurrenceIds.push(lastParentBlockId);
+        }
+      }
+    });
+
+    return lastOccurrenceIds;
+  }, [paths]);
 
   const renderPathContent = (path: Path, level: number = 0) => {
     const isPathCollapsed = collapsedPaths.has(path.id);
@@ -81,15 +105,31 @@ export default function Sidebar({
 
         {!isPathCollapsed &&
           path.blocks
-            .filter((block) => block.type !== 'LAST')
+            .filter((block) => block.type !== 'LAST' && block.type !== 'BEGIN')
             .map((block) => {
-              if (block.type === 'PATH' && block.child_paths) {
-                return block.child_paths.map((childPathConnection) => {
-                  const childPath = paths?.find(
+              if (block.type === 'MERGE' || block.type === 'PATH') {
+                return block.child_paths?.map((childPathConnection) => {
+                  const childPath = paths.find(
                     (p) => p.id === childPathConnection.path.id
                   );
                   if (childPath) {
-                    return renderPathContent(childPath, level + 1);
+                    // Skip if this is not the last occurrence of a merge path
+                    if (
+                      block.type === 'MERGE' &&
+                      !getLastOccurrenceIds.includes(block.id)
+                    ) {
+                      return null;
+                    }
+                    return (
+                      <div key={`${childPath.id}-${block.id}`}>
+                        {renderPathContent(
+                          childPath,
+                          block.type === 'MERGE'
+                            ? Math.max(level - 2, 0)
+                            : Math.max(level, 0) + 1
+                        )}
+                      </div>
+                    );
                   }
                   return null;
                 });
@@ -154,13 +194,13 @@ export default function Sidebar({
           className="text-xs font-normal"
           style={{ color: colors['text-secondary'] }}
         >
-          {mainPaths[0]?.blocks.length || 0} Steps
+          {mainPath?.blocks.length || 0} Steps
         </span>
       </div>
 
       {/* Steps list */}
       <div className="flex-1 overflow-y-auto px-4">
-        {mainPaths.map((path) => renderPathContent(path, 0))}
+        {mainPath && renderPathContent(mainPath, 0)}
       </div>
     </div>
   );
