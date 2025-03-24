@@ -1,4 +1,4 @@
-import { Block, Path } from '../types';
+import { Block, Path } from '../../types';
 import { BlockEndType } from '@/types/block';
 
 /**

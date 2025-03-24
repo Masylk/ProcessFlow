@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/app/components/Modal';
-import { Path } from '../../types';
+import { Path } from '../../../types';
 
 interface CreateParallelPathModalProps {
   onClose: () => void;

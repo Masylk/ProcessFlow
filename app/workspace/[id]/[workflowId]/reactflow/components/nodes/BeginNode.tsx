@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../../types';
+import { NodeData } from '../../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { usePathsStore } from '../../store/pathsStore';
@@ -100,7 +100,9 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           height: '50px',
           padding: '12px 16px',
           borderRadius: '8px',
-          border: selected ? `2px solid ${colors['utility-brand-500']}` : `2px solid ${colors['utility-brand-300']}`,
+          border: selected
+            ? `2px solid ${colors['utility-brand-500']}`
+            : `2px solid ${colors['utility-brand-300']}`,
           background: colors['bg-brand-primary'],
           position: 'relative',
         }}
@@ -121,7 +123,10 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
 
-        <div className="font-medium truncate" style={{ color: colors['text-brand-primary'] }}>
+        <div
+          className="font-medium truncate"
+          style={{ color: colors['text-brand-primary'] }}
+        >
           {isEditing ? (
             <input
               type="text"

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import { DropdownDatas, Path } from '../types';
+import { DropdownDatas, Path } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useClipboardStore } from '../store/clipboardStore';
 import { useModalStore } from '../store/modalStore';

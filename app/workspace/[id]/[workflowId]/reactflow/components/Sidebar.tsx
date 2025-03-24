@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Block, Path } from '../types';
+import { Block, Path } from '../../types';
 import { PathContainer } from './PathContainer';
 import { usePathsStore } from '../store/pathsStore';
 import { BlockEndType, BlockType } from '@/types/block';

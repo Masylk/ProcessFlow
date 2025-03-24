@@ -1,5 +1,5 @@
 import React, { ChangeEvent, DragEvent, useState } from 'react';
-import { Block } from '../types';
+import { Block } from '../../types';
 import { useColors } from '@/app/theme/hooks';
 
 interface MediaUploaderProps {
@@ -30,7 +30,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
   const handleDrop = async (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     setIsDragOver(false);
-    
+
     const file = event.dataTransfer.files[0];
     if (file) {
       await uploadFile(file);
@@ -62,8 +62,12 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     <label
       className={`flex flex-col justify-center items-center w-full h-[267px] rounded-xl border-2 border-dashed transition-colors cursor-pointer ${isDragOver ? 'bg-opacity-10' : 'hover:bg-opacity-100'}`}
       style={{
-        borderColor: isDragOver ? colors['button-primary-fg'] : colors['input-border'],
-        backgroundColor: isDragOver ? `${colors['button-primary-bg']}10` : colors['input-bg-hover']
+        borderColor: isDragOver
+          ? colors['button-primary-fg']
+          : colors['input-border'],
+        backgroundColor: isDragOver
+          ? `${colors['button-primary-bg']}10`
+          : colors['input-bg-hover'],
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -76,8 +80,10 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
         className="hidden"
       />
       <div className="self-stretch h-[94px] flex flex-col justify-start items-center gap-3">
-        <div className="w-10 h-10 p-2.5 rounded-lg border flex justify-center items-center"
-          style={{ borderColor: colors['input-border'] }}>
+        <div
+          className="w-10 h-10 p-2.5 rounded-lg border flex justify-center items-center"
+          style={{ borderColor: colors['input-border'] }}
+        >
           <div className="w-5 h-5 rounded-full flex justify-center items-center">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-cloud-icon.svg`}
@@ -88,18 +94,27 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
         </div>
         <div className="self-stretch h-[42px] flex flex-col justify-start items-center gap-1">
           <div className="self-stretch flex justify-center items-center gap-1">
-            <div className="text-sm font-semibold leading-tight" style={{ color: colors['button-primary-fg'] }}>
+            <div
+              className="text-sm font-semibold leading-tight"
+              style={{ color: colors['button-primary-fg'] }}
+            >
               Click to upload
             </div>
-            <div className="text-sm font-normal leading-tight" style={{ color: colors['input-hint'] }}>
+            <div
+              className="text-sm font-normal leading-tight"
+              style={{ color: colors['input-hint'] }}
+            >
               or drag and drop
             </div>
           </div>
-          <div className="self-stretch text-center text-xs font-normal leading-[18px]" style={{ color: colors['input-hint'] }}>
+          <div
+            className="self-stretch text-center text-xs font-normal leading-[18px]"
+            style={{ color: colors['input-hint'] }}
+          >
             SVG, PNG, JPG or GIF
           </div>
         </div>
       </div>
     </label>
   );
-} 
+}

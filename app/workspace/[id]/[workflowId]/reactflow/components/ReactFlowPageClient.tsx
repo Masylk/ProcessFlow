@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import { Flow } from './Flow';
-import { NodeData, Path, Block } from '../types';
+import { NodeData, Path, Block } from '../../types';
 import { getWorkflowStrokeLines } from '../utils/stroke-lines';
 import WorkflowHeader from './WorkflowHeader';
 import { useSearchParams } from 'next/navigation';

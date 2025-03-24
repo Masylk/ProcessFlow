@@ -1,6 +1,6 @@
 import React from 'react';
 import { NodeProps } from '@xyflow/react';
-import { NodeData } from '../../types';
+import { NodeData } from '../../../types';
 
 interface InvisibleNodeProps extends NodeProps {
   data: NodeData;
@@ -8,10 +8,7 @@ interface InvisibleNodeProps extends NodeProps {
 }
 
 function InvisibleNode({ data }: InvisibleNodeProps) {
-  return (
-    
-    <div className="w-full h-[120px] pointer-events-none" />
-  );
+  return <div className="w-full h-[120px] pointer-events-none" />;
 }
 
-export default InvisibleNode; 
+export default InvisibleNode;

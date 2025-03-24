@@ -2,9 +2,9 @@ import React, { useMemo, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Workspace } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
-import { usePathsStore } from '../../store/pathsStore';
+import { usePathsStore } from '../store/pathsStore';
 import StepsContainer from './StepsContainer';
-import { Path } from '../../reactflow/types';
+import { Path } from '../../types';
 
 interface SidebarProps {
   className?: string;

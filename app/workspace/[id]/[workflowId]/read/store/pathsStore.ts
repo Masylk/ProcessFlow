@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Block, Path } from '../reactflow/types';
+import { Block, Path } from '../../types';
 
 interface PathsStore {
   paths: Path[];
