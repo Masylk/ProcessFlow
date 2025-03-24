@@ -33,11 +33,17 @@ const ZoomBar: React.FC<ZoomBarProps> = ({ className = '' }) => {
       {/* Zoom Out Button */}
       <div
         onClick={handleZoomOut}
-        className="px-3 py-2 h-full justify-center items-center gap-2 flex cursor-pointer hover:bg-gray-50"
+        className="px-3 py-2 h-full justify-center items-center gap-2 flex cursor-pointer transition-all duration-200 ease-in-out"
         style={{ 
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-primary'],
           color: colors['text-primary'] 
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary_hover'];
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary'];
         }}
       >
         <img
@@ -50,10 +56,16 @@ const ZoomBar: React.FC<ZoomBarProps> = ({ className = '' }) => {
       {/* Zoom Percentage Button */}
       <button
         onClick={() => setIsDropdownVisible(!isDropdownVisible)}
-        className="px-3 py-2 h-full border-l border-r justify-center items-center gap-2 flex cursor-pointer hover:bg-gray-50"
+        className="px-3 py-2 h-full border-l border-r justify-center items-center gap-2 flex cursor-pointer transition-all duration-200 ease-in-out"
         style={{ 
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-primary']
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary_hover'];
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary'];
         }}
       >
         <span className="text-sm font-semibold" style={{ color: colors['text-secondary'] }}>
@@ -64,11 +76,17 @@ const ZoomBar: React.FC<ZoomBarProps> = ({ className = '' }) => {
       {/* Zoom In Button */}
       <div
         onClick={handleZoomIn}
-        className="px-3 py-2 h-full justify-center items-center gap-2 flex cursor-pointer hover:bg-gray-50"
+        className="px-3 py-2 h-full justify-center items-center gap-2 flex cursor-pointer transition-all duration-200 ease-in-out"
         style={{ 
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-primary'],
           color: colors['text-primary'] 
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary_hover'];
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = colors['bg-primary'];
         }}
       >
         <img

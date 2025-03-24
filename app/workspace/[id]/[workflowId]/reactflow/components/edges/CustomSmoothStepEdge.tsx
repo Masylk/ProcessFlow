@@ -153,7 +153,7 @@ function CustomSmoothStepEdge({
                 backgroundColor: colors['bg-primary'],
                 borderColor: colors['border-secondary']
               }}
-              className="flex rounded-lg overflow-hidden border shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05),inset_0px_-2px_0px_0px_rgba(16,24,40,0.05),inset_0px_0px_0px_1px_rgba(16,24,40,0.18)]"
+              className="flex rounded-lg overflow-hidden border"
             >
               <button
                 onClick={handleEdgeClick}

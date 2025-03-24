@@ -43,7 +43,7 @@ const PathCreationModal: React.FC<PathCreationModalProps> = ({
           {/* Title and description */}
           <div className="self-stretch h-40 flex-col justify-start items-center flex">
             <div className="self-stretch h-[140px] px-6 pt-6 flex-col justify-start items-start gap-4 flex">
-              <div className="w-12 h-12 p-3 bg-white rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
+              <div className="w-12 h-12 p-3 bg-white rounded-[10px]  border border-[#e4e7ec] justify-center items-center inline-flex overflow-hidden">
                 <div className="w-6 h-6 relative flex-col justify-start items-start flex overflow-hidden" />
               </div>
               <div className="self-stretch h-[52px] flex-col justify-start items-start gap-1 flex">
@@ -86,7 +86,7 @@ const PathCreationModal: React.FC<PathCreationModalProps> = ({
           <div className="self-stretch h-[100px] pt-8 flex-col justify-start items-start flex">
             <div className="self-stretch px-6 pb-6 justify-start items-start gap-3 inline-flex">
               <button
-                className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden"
+                className="grow shrink basis-0 h-11 px-4 py-2.5 bg-white rounded-lg  border border-[#d0d5dd] justify-center items-center gap-1.5 flex overflow-hidden"
                 onClick={onClose}
               >
                 <span className="text-[#344054] text-base font-semibold font-['Inter'] leading-normal">
@@ -94,7 +94,7 @@ const PathCreationModal: React.FC<PathCreationModalProps> = ({
                 </span>
               </button>
               <button
-                className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_-2px_0px_0px_rgba(16,24,40,0.05)] shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden"
+                className="grow shrink basis-0 h-11 px-4 py-2.5 bg-[#4e6bd7] rounded-lg border-2 border-white justify-center items-center gap-1.5 flex overflow-hidden"
                 onClick={onConfirm}
               >
                 <span className="text-white text-base font-semibold font-['Inter'] leading-normal">

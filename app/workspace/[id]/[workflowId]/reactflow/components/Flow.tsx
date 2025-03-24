@@ -618,8 +618,8 @@ export function Flow({
         }}
       >
         <Background 
-          gap={12} 
-          size={1} 
+          gap={20} 
+          size={3} 
           color={colors['border-primary']}
         />
         <MiniMap 

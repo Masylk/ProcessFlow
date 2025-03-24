@@ -19,7 +19,7 @@ export const PathContainer: React.FC<PathContainerProps> = ({
     <div
       className="relative"
       style={{
-        marginLeft: level * 18, // 24px indent for each level
+        marginLeft: level * 10, // 24px indent for each level
       }}
     >
       <div
