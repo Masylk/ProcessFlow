@@ -36,8 +36,6 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const colors = useColors();
   
-  // Add console logging to debug theme colors
-  console.log('Theme colors loaded:', colors);
 
   const {
     getNodes,

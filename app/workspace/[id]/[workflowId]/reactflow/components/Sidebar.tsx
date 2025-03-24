@@ -329,6 +329,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
     mouseDownEvent.preventDefault();
     setIsResizing(true);
+    document.body.style.cursor = 'col-resize';
     
     const startWidth = sidebarWidth;
     const startX = mouseDownEvent.clientX;
@@ -340,13 +341,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
     const handleMouseUp = () => {
       setIsResizing(false);
+      document.body.style.cursor = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [sidebarWidth]);
+  }, [sidebarWidth, setIsResizing]);
 
   // Helper function to generate button IDs
   const generateButtonId = (name: string) =>

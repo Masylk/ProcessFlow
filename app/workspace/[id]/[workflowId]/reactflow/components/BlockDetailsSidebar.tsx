@@ -62,9 +62,7 @@ export default function BlockDetailsSidebar({
     }
   };
 
-  const handleAverageTimeKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
+  const handleAverageTimeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onUpdate({ average_time: averageTime });
       setIsEditingAverageTime(false);
@@ -234,6 +232,7 @@ export default function BlockDetailsSidebar({
                         onUpdate({ average_time: averageTime });
                         setIsEditingAverageTime(false);
                       }}
+                      onKeyDown={handleAverageTimeKeyDown}
                       placeholder="Enter time"
                     />
                     <span className="text-xs" style={{ color: colors['text-secondary'] }}>min</span>
