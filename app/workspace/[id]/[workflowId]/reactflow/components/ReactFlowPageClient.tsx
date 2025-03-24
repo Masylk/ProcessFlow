@@ -24,6 +24,7 @@ export function ReactFlowPageClient({
     string | undefined
   >();
   const setPaths = usePathsStore((state) => state.setPaths);
+  const [newBlockId, setNewBlockId] = useState<number | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -67,6 +68,10 @@ export function ReactFlowPageClient({
         console.error('Failed to add block:', errorData);
         return;
       }
+
+      // Get the newly created block's ID from the response
+      const newBlock = await response.json();
+      setNewBlockId(newBlock.id);
 
       // Refresh paths data
       const pathsResponse = await fetch(
@@ -130,6 +135,8 @@ export function ReactFlowPageClient({
             onBlockAdd={handleBlockAdd}
             strokeLines={strokeLines}
             setStrokeLines={setStrokeLines}
+            newBlockId={newBlockId}
+            clearNewBlockId={() => setNewBlockId(null)}
           />
         </ReactFlowProvider>
       </div>

@@ -229,7 +229,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     if (!showDropdown) {
       const rect = e.currentTarget.getBoundingClientRect();
       const newPosition = {
-        x: rect.right - 144, // 144px is dropdown width
+        x: rect.right - 170, // 144px is dropdown width
         y: rect.bottom + 4, // 4px offset
       };
       setDropdownPosition(newPosition);
@@ -369,34 +369,45 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
     return createPortal(
       <div
-        className="fixed rounded-md shadow-lg py-1"
         style={{
+          backgroundColor: colors['bg-secondary'],
+          border: `1px solid ${colors['border-primary']}`,
           left: dropdownPosition.x,
           top: dropdownPosition.y,
-          width: '144px',
           zIndex: 99999999,
-          backgroundColor: colors['bg-primary'],
-          borderColor: colors['border-secondary'],
-          borderWidth: '1px',
         }}
+        className="fixed shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 flex flex-col overflow-hidden cursor-pointer rounded-lg"
       >
-        <button
+        <div
           onClick={handleConnectClick}
-          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
-          style={{ 
-            color: colors['fg-primary']
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          Connect node
-        </button>
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-[170px] grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`}
+                  alt="Connect"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                Connect node
+              </div>
+            </div>
+          </div>
+        </div>
+
         {canShowMergeUI && (
-          <button
+          <div
             onClick={(e) => {
               e.stopPropagation();
               setMergeMode(true);
@@ -407,95 +418,181 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               );
               setShowDropdown(false);
             }}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
-            style={{ color: colors['fg-primary'] }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
           >
-            Merge paths
-          </button>
+            <div 
+              style={{
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+            >
+              <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                <div className="w-4 h-4 relative overflow-hidden">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-merge.svg`}
+                    alt="Merge Paths"
+                    className="w-4 h-4"
+                  />
+                </div>
+                <div 
+                  style={{ color: colors['text-primary'] }}
+                  className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                >
+                  Merge paths
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        <button
-          onClick={handleDuplicate}
-          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
-          style={{ color: colors['fg-primary'] }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          Duplicate node
-        </button>
-        <button
-          onClick={handleDelete}
-          className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
-          style={{ color: colors['fg-error-primary'] }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          Delete node
-        </button>
+
         {data.pathIsMerged && (
-          <button
+          <div
             onClick={handleUpdateModeActivation}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-opacity-80"
-            style={{ color: colors['fg-primary'] }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
           >
-            Update merge
-          </button>
+            <div 
+              style={{
+                '--hover-bg': colors['bg-quaternary']
+              } as React.CSSProperties}
+              className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+            >
+              <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                <div className="w-4 h-4 relative overflow-hidden">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                    alt="Edit Merge"
+                    className="w-4 h-4"
+                  />
+                </div>
+                <div 
+                  style={{ color: colors['text-primary'] }}
+                  className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                >
+                  Edit merge
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        <button
+
+        <div
+          onClick={handleDuplicate}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+        >
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
+                  alt="Duplicate"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                Duplicate node
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+
+        <div
           onClick={handleCopy}
-          className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-opacity-80"
-          style={{ color: colors['fg-primary'] }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
-            alt="Copy"
-            className="w-4 h-4"
-          />
-          Copy
-        </button>
-        <button
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
+                  alt="Copy"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                Copy
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
           onClick={handleCopyLink}
-          className="w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-opacity-80"
-          style={{ color: colors['fg-primary'] }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-icon.svg`}
-            alt="Copy Link"
-            className="w-4 h-4"
-          />
-          Copy Link
-        </button>
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-link-icon.svg`}
+                  alt="Copy Link"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                Copy Link
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div 
+          style={{ borderColor: colors['border-secondary'] }}
+          className="self-stretch h-px border-b my-1" 
+        />
+
+        <div
+          onClick={handleDelete}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+        >
+          <div 
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                  alt="Delete"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div 
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                Delete node
+              </div>
+            </div>
+          </div>
+        </div>
       </div>,
       document.body
     );
@@ -554,6 +651,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     return text.slice(0, maxLength) + '...';
   };
 
+  // Add this effect to automatically open the sidebar when the node is selected via edit mode
+  useEffect(() => {
+    // Check if the current node is the selected node in edit mode
+    if (isEditMode && selectedNodeId && `block-${selectedNodeId}` === id) {
+      // Automatically open the sidebar
+      setShowSidebar(true);
+      
+      // Only zoom to node if we're not handling a newly created node
+      // (The Flow component already handles zooming for new nodes)
+      if (viewportInitialized) {
+        zoomToNode();
+      }
+    }
+  }, [isEditMode, selectedNodeId, id, zoomToNode, viewportInitialized]);
+
   return (
     <>
       {/* Vertical Toggle Switch Container */}
@@ -562,7 +674,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       ) &&
         !showConnectModal && (
           <div
-            className="absolute top-[20px] -translate-y-1/2 transition-opacity duration-300"
+            className="absolute top-[50%] -translate-y-1/2 transition-opacity duration-300"
             style={{
               left: '-20px',
               backgroundColor: colors['bg-primary'],
@@ -587,7 +699,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 borderRadius: '6px',
                 backgroundColor: data.strokeLinesVisible
                   ? '#FF69A3'
-                  : colors['bg-secondary'],
+                  : colors['bg-quaternary'],
                 transition: 'background-color 0.2s',
                 position: 'relative',
               }}
@@ -731,7 +843,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 </h3>
                 <button
                   onClick={handleDropdownToggle}
-                  className="p-1 rounded-full transition-colors hover:bg-opacity-80"
+                  className="p-1 rounded-md transition-colors hover:bg-opacity-80"
                   style={{ 
                     color: colors['fg-tertiary'],
                     backgroundColor: 'transparent'

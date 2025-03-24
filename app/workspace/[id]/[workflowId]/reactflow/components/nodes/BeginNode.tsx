@@ -11,6 +11,8 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [isEditing, setIsEditing] = useState(false);
   const [pathName, setPathName] = useState(data.path?.name || '');
   const [isHovered, setIsHovered] = useState(false);
+  const [isEditButtonHovered, setIsEditButtonHovered] = useState(false);
+  const [isDeleteButtonHovered, setIsDeleteButtonHovered] = useState(false);
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const allPaths = usePathsStore((state) => state.paths);
@@ -155,13 +157,28 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
         {/* Edit and Delete buttons that appear on hover */}
         {isHovered && !isEditing && (
-          <div className="absolute -right-2 -top-2 flex gap-1">
+          <div 
+            className="absolute -right-2 -top-[50%] flex rounded-lg"
+            style={{
+              background: colors['bg-secondary'],
+              border: `1px solid ${colors['border-primary']}`,
+              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)"
+            }}
+          >
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow duration-200"
+              onMouseEnter={() => setIsEditButtonHovered(true)}
+              onMouseLeave={() => setIsEditButtonHovered(false)}
+              className="flex items-center justify-center p-2 transition-colors duration-200"
+              style={{
+                borderRight: `1px solid ${colors['border-primary']}`,
+                borderTopLeftRadius: "8px",
+                borderBottomLeftRadius: "8px",
+                background: isEditButtonHovered ? colors['bg-tertiary'] : colors['bg-secondary']
+              }}
             >
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-icon.svg`}
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
                 alt="Edit"
                 className="w-3 h-3"
               />
@@ -169,10 +186,17 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="p-1 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow duration-200"
+                onMouseEnter={() => setIsDeleteButtonHovered(true)}
+                onMouseLeave={() => setIsDeleteButtonHovered(false)}
+                className="flex items-center justify-center p-2 transition-colors duration-200"
+                style={{
+                  borderTopRightRadius: "8px",
+                  borderBottomRightRadius: "8px",
+                  background: isDeleteButtonHovered ? colors['bg-tertiary'] : colors['bg-secondary']
+                }}
               >
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
                   alt="Delete"
                   className="w-3 h-3"
                 />

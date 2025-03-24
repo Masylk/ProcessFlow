@@ -77,6 +77,8 @@ interface FlowProps {
   ) => Promise<void>;
   strokeLines: any[];
   setStrokeLines: React.Dispatch<React.SetStateAction<any[]>>;
+  newBlockId: number | null;
+  clearNewBlockId: () => void;
 }
 
 export function Flow({
@@ -86,6 +88,8 @@ export function Flow({
   onBlockAdd,
   strokeLines,
   setStrokeLines,
+  newBlockId,
+  clearNewBlockId,
 }: FlowProps) {
   const colors = useColors();
   const { paths, setPaths } = usePathsStore();
@@ -112,6 +116,7 @@ export function Flow({
     y: 0,
     zoom: 1,
   });
+  const { setEditMode } = useEditModeStore();
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -536,6 +541,32 @@ export function Flow({
   useEffect(() => {
     setAllPaths(paths);
   }, [paths, setAllPaths]);
+
+  useEffect(() => {
+    if (newBlockId && nodes.length > 0) {
+      // Find the node with the new block ID
+      const nodeId = `block-${newBlockId}`;
+      const node = nodes.find(n => n.id === nodeId);
+
+      if (node) {
+        // Set this node as selected in edit mode
+        setEditMode(true, newBlockId.toString());
+        
+        // Center the view on the node and offset to make room for sidebar
+        setViewport(
+          {
+            x: -(node.position.x - window.innerWidth / 2 + 400),
+            y: -(node.position.y - window.innerHeight / 2 + 200),
+            zoom: 1,
+          },
+          { duration: 800 }
+        );
+        
+        // Clear the newBlockId after handling it
+        clearNewBlockId();
+      }
+    }
+  }, [newBlockId, nodes, setEditMode, setViewport, clearNewBlockId]);
 
   return (
     <div
