@@ -413,7 +413,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
           className="w-fit px-2 h-full flex flex-col justify-between border-r"
           style={{ 
             backgroundColor: colors['bg-primary'],
-            borderColor: colors['border-secondary'],
+            borderColor: colors['border-primary'],
           }}
         >
           <div className="flex flex-col pt-4 items-center gap-2">
@@ -455,7 +455,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               width: sidebarWidth,
               minWidth: '250px',
               backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
+              borderColor: colors['border-primary'],
             }}
           >
             {/* Header Section */}
@@ -463,7 +463,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               className="sticky top-0 z-10 px-4 pt-4 pb-3 border-b"
               style={{
                 backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'],
+                borderColor: colors['border-primary'],
               }}
             >
               <div

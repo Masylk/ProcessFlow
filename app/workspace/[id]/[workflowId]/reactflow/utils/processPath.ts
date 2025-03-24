@@ -69,7 +69,6 @@ export function processPath(
   updateStrokeLineVisibility: (blockId: number, isVisible: boolean) => void,
   strokeLineVisibilities: [number, boolean][],
   allPaths: Path[],
-  lastCreatedBlockId?: number | null,
   hasSiblings: boolean = false,
   longestSiblingPath: number = 0,
 ): void {
@@ -179,7 +178,6 @@ export function processPath(
         pathHasChildren,
         pathIsMerged,
         longestSiblingPath,
-        lastCreatedBlockId,
       },
     });
     
@@ -252,7 +250,6 @@ export function processPath(
           updateStrokeLineVisibility,
           strokeLineVisibilities,
           allPaths,
-          fullChildPath.blocks.length > 1 ? fullChildPath.blocks[fullChildPath.blocks.length - 2].id : null,
           block.child_paths.length > 1,
           longestSiblingPathLength
         );

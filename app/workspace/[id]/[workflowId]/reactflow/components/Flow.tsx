@@ -77,6 +77,8 @@ interface FlowProps {
   ) => Promise<void>;
   strokeLines: any[];
   setStrokeLines: React.Dispatch<React.SetStateAction<any[]>>;
+  newBlockId: number | null;
+  clearNewBlockId: () => void;
 }
 
 export function Flow({
@@ -86,6 +88,8 @@ export function Flow({
   onBlockAdd,
   strokeLines,
   setStrokeLines,
+  newBlockId,
+  clearNewBlockId,
 }: FlowProps) {
   const colors = useColors();
   const { paths, setPaths } = usePathsStore();
@@ -113,7 +117,6 @@ export function Flow({
     zoom: 1,
   });
   const { setEditMode } = useEditModeStore();
-  const [lastCreatedBlockId, setLastCreatedBlockId] = useState<number | null>(null);
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -222,17 +225,6 @@ export function Flow({
   // Add state for linkNode
   const [linkNode, setLinkNode] = useState<Node | null>(null);
 
-  // Effect to reset lastCreatedBlockId after a delay
-  useEffect(() => {
-    if (lastCreatedBlockId) {
-      const timer = setTimeout(() => {
-        setLastCreatedBlockId(null);
-      }, 500); // Reset after 500ms to ensure the node has been created
-      
-      return () => clearTimeout(timer);
-    }
-  }, [lastCreatedBlockId]);
-
   // Main effect for creating nodes and edges
   useEffect(() => {
     if (!Array.isArray(paths)) return;
@@ -254,8 +246,7 @@ export function Flow({
           setStrokeLines,
           updateStrokeLineVisibility,
           strokeLineVisibilities,
-          paths,
-          lastCreatedBlockId
+          paths
         );
 
         // Add stroke edges with visibility check
@@ -324,7 +315,6 @@ export function Flow({
     updateStrokeLineVisibility,
     strokeLineVisibilities,
     searchParams,
-    lastCreatedBlockId,
   ]);
 
   const handleBlockTypeSelect = useCallback(
@@ -339,21 +329,13 @@ export function Flow({
       };
 
       setShowDropdown(false);
-      
-      // Add block and get the new block ID
-      const newBlockId = await onBlockAdd(
+      await onBlockAdd(
         defaultBlock,
         dropdownDatas.path.id,
         defaultBlock.position
       );
-      
-      // If we got a block ID back, set it to automatically open the sidebar
-      if (newBlockId !== undefined && newBlockId !== null) {
-        setLastCreatedBlockId(newBlockId);
-        setEditMode(true, `block-${newBlockId}`);
-      }
     },
-    [dropdownDatas, workflowId, onBlockAdd, setEditMode]
+    [dropdownDatas, workflowId, onBlockAdd]
   );
 
   // Fix the handleNodeFocus function to avoid infinite loops
@@ -559,6 +541,32 @@ export function Flow({
   useEffect(() => {
     setAllPaths(paths);
   }, [paths, setAllPaths]);
+
+  useEffect(() => {
+    if (newBlockId && nodes.length > 0) {
+      // Find the node with the new block ID
+      const nodeId = `block-${newBlockId}`;
+      const node = nodes.find(n => n.id === nodeId);
+
+      if (node) {
+        // Set this node as selected in edit mode
+        setEditMode(true, newBlockId.toString());
+        
+        // Center the view on the node and offset to make room for sidebar
+        setViewport(
+          {
+            x: -(node.position.x - window.innerWidth / 2 + 400),
+            y: -(node.position.y - window.innerHeight / 2 + 200),
+            zoom: 1,
+          },
+          { duration: 800 }
+        );
+        
+        // Clear the newBlockId after handling it
+        clearNewBlockId();
+      }
+    }
+  }, [newBlockId, nodes, setEditMode, setViewport, clearNewBlockId]);
 
   return (
     <div
