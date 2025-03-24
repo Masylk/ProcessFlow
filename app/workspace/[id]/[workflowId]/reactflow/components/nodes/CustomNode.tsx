@@ -21,6 +21,8 @@ import BlockDetailsSidebar from '../BlockDetailsSidebar';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
+import styles from './CustomNode.module.css';
+
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
     onPreviewUpdate?: (edge: Edge | null) => void;
@@ -33,6 +35,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const colors = useColors();
+  
+  // Add console logging to debug theme colors
+  console.log('Theme colors loaded:', colors);
+
   const {
     getNodes,
     setEdges,
@@ -947,8 +953,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   pathParentBlockId ?? -1
                 )
               }
-              className="w-4 h-4 rounded"
-              style={{ borderColor: colors['border-secondary'] }}
+              className={`${styles.checkbox}`}
+              style={{ 
+                borderColor: colors['border-primary'],
+                '--bg-brand-primary': colors['bg-brand-solid'],
+                '--border-brand': colors['border-brand'],
+                '--bg-secondary': colors['bg-primary']
+              } as React.CSSProperties}
               onClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -960,11 +971,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               type="checkbox"
               checked={selectedEndBlocks.includes(endBlockId)}
               onChange={() => toggleEndBlockSelection(endBlockId)}
-              className="w-4 h-4 rounded"
+              className={`${styles.checkbox} ${styles.updateCheckbox}`}
               style={{ 
-                borderColor: colors['border-secondary'],
-                backgroundColor: colors['bg-brand-subtle']
-              }}
+                borderColor: colors['border-primary'],
+                '--bg-brand-solid': colors['bg-brand-solid'],
+                '--border-brand': colors['border-brand'],
+                '--bg-secondary': colors['bg-primary']
+              } as React.CSSProperties}
               onClick={(e) => e.stopPropagation()}
             />
           </div>

@@ -94,10 +94,10 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   );
   const isLastBlock = block?.type === BlockEndType.LAST;
 
-  // Get existing child paths for the current block
+  // Get existing child paths for the current path
   const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
 
-  // Check if the source block is a LastNode
+  // Check if the source path is a LastNode
   const isLastNode =
     dropdownDatas.path.blocks.find(
       (block) => block.position === dropdownDatas.position

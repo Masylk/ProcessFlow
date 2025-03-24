@@ -10,6 +10,7 @@ import IconModifier from './IconModifier';
 import { useEditModeStore } from '../store/editModeStore';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { InputTokens } from '@/app/theme/types';
+import InputField from '@/app/components/InputFields';
 
 // Helper function from TextAreaInput
 const getInputToken = (state: 'normal' | 'hover' | 'focus', type: 'bg' | 'fg' | 'border', destructive: boolean = false, disabled: boolean = false): keyof InputTokens => {
@@ -219,39 +220,24 @@ export default function BlockDetailsSidebar({
                   <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
                     Average Time
                   </div>
-                  {isEditingAverageTime ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="text"
-                        value={averageTime}
-                        onChange={handleAverageTimeChange}
-                        onBlur={() => {
-                          onUpdate({ average_time: averageTime });
-                          setIsEditingAverageTime(false);
-                        }}
-                        onKeyDown={handleAverageTimeKeyDown}
-                        autoFocus
-                        className="text-xs font-normal font-['Inter'] outline-none border rounded px-2 py-1 w-16"
-                        style={{ 
-                          borderColor: colors['border-primary'],
-                          color: colors['text-primary']
-                        }}
-                        placeholder="Enter time"
-                      />
-                      <span className="text-xs" style={{ color: colors['text-secondary'] }}>min</span>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => setIsEditingAverageTime(true)}
-                      className="text-xs font-normal font-['Inter'] cursor-pointer px-2 py-1 rounded hover:bg-opacity-50"
-                      style={{ 
-                        color: colors['text-secondary'],
-                        backgroundColor: 'transparent'
+                  <div className="flex items-center gap-2" style={{ width: '140px' }}>
+                    <InputField
+                      type="default"
+                      size="small"
+                      value={averageTime}
+                      onChange={(value) => {
+                        if ((value === '' || /^\d+$/.test(value)) && value.length <= 12) {
+                          setAverageTime(value);
+                        }
                       }}
-                    >
-                      {averageTime ? `${averageTime} min` : 'N/A'}
-                    </div>
-                  )}
+                      onBlur={() => {
+                        onUpdate({ average_time: averageTime });
+                        setIsEditingAverageTime(false);
+                      }}
+                      placeholder="Enter time"
+                    />
+                    <span className="text-xs" style={{ color: colors['text-secondary'] }}>min</span>
+                  </div>
                 </div>
 
                 {/* Task Type */}
@@ -259,53 +245,74 @@ export default function BlockDetailsSidebar({
                   <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
                     Type
                   </div>
-                  <div className="relative">
-                    <ButtonNormal
+                  <div className="relative" style={{ width: '140px' }}>
+                    <div
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      variant="secondary"
-                      size="small"
-                      className="min-w-[100px] text-left justify-between pr-8"
-                      trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
+                      className={`flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all duration-200 cursor-pointer`}
+                      style={{
+                        backgroundColor: colors[getInputToken('normal', 'bg', false, false)],
+                        borderColor: isDropdownOpen 
+                          ? colors[getInputToken('focus', 'border', false, false)]
+                          : colors[getInputToken('normal', 'border', false, false)],
+                        boxShadow: isDropdownOpen
+                          ? "0px 0px 0px 4px rgba(78,107,215,0.12)"
+                          : '0px 1px 2px rgba(16, 24, 40, 0.05)',
+                      }}
                     >
-                      {taskType === 'MANUAL' ? 'Manual' : 'Automatic'}
-                    </ButtonNormal>
+                      <div className="flex items-center gap-2">
+                        
+                        <span className="text-sm font-medium" style={{ color: colors['text-primary'] }}>
+                          {taskType === 'MANUAL' ? 'Manual' : 'Automatic'}
+                        </span>
+                      </div>
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-${isDropdownOpen ? 'up' : 'down'}.svg`}
+                        alt="Toggle dropdown"
+                        className="w-4 h-4"
+                      />
+                    </div>
 
                     {isDropdownOpen && (
                       <div 
-                        className="absolute top-full left-0 mt-1 w-full border rounded-md shadow-lg z-50"
+                        className="absolute top-full left-0 mt-1 w-full border rounded-lg shadow-lg z-50 overflow-hidden"
                         style={{ 
-                          backgroundColor: colors['bg-secondary'],
-                          borderColor: colors['border-primary'] 
+                          backgroundColor: colors['bg-primary'],
+                          borderColor: colors['border-primary']
                         }}
                       >
-                        <ButtonNormal
-                          onClick={() => {
-                            handleTaskTypeChange({
-                              target: { value: 'MANUAL' },
-                            } as any);
-                            setIsDropdownOpen(false);
-                          }}
-                          variant="secondary"
-                          size="small"
-                          className="w-full text-left justify-between"
-                          trailingIcon={taskType === 'MANUAL' ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg` : undefined}
-                        >
-                          Manual
-                        </ButtonNormal>
-                        <ButtonNormal
-                          onClick={() => {
-                            handleTaskTypeChange({
-                              target: { value: 'AUTOMATIC' },
-                            } as any);
-                            setIsDropdownOpen(false);
-                          }}
-                          variant="secondary"
-                          size="small"
-                          className="w-full text-left justify-between"
-                          trailingIcon={taskType === 'AUTOMATIC' ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg` : undefined}
-                        >
-                          Automatic
-                        </ButtonNormal>
+                        {[
+                          { value: 'MANUAL', label: 'Manual', icon: 'manual-icon.svg' },
+                          { value: 'AUTOMATIC', label: 'Automatic', icon: 'automatic-icon.svg' }
+                        ].map((option) => (
+                          <div
+                            key={option.value}
+                            onClick={() => {
+                              handleTaskTypeChange({ target: { value: option.value } } as any);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="flex items-center justify-between px-3 py-2 cursor-pointer transition-colors duration-150"
+                            style={{
+                              backgroundColor: taskType === option.value 
+                                ? colors['bg-selected'] 
+                                : 'transparent',
+                              color: colors['text-primary']
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                             
+                              <span className="text-sm font-medium">
+                                {option.label}
+                              </span>
+                            </div>
+                            {taskType === option.value && (
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
+                                alt="Selected"
+                                className="w-4 h-4"
+                              />
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
