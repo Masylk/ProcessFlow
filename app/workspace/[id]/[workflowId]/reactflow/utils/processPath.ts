@@ -111,7 +111,6 @@ export function processPath(
           sourceHandle: 'bottom',
           targetHandle: 'top',
           style: { stroke: '#b1b1b7', opacity: 0 },
-          animated: true,
         });
 
         previousNodeId = invisibleNodeId;
@@ -127,7 +126,6 @@ export function processPath(
           sourceHandle: 'bottom',
           targetHandle: 'top',
           style: { stroke: '#b1b1b7', opacity: 0 },
-          animated: true,
         });
       }
     }
@@ -191,7 +189,6 @@ export function processPath(
         sourceHandle: 'bottom',
         targetHandle: 'top',
         style: { stroke: '#b1b1b7' },
-        animated: true,
         data: {
           blocks: path.blocks,
           handleAddBlockOnEdge,
@@ -233,7 +230,6 @@ export function processPath(
             sourceHandle: 'bottom',
             targetHandle: 'top',
             style: { stroke: '#b1b1b7' },
-            animated: true,
           });
         });
       }

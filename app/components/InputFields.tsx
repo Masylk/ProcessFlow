@@ -377,8 +377,7 @@ const InputField: React.FC<InputFieldProps> = ({
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",
@@ -663,26 +662,8 @@ const InputField: React.FC<InputFieldProps> = ({
               <input
                 type="text"
                 placeholder={value ? "" : placeholder}
-                onKeyDown={(e) => onKeyDown?.(e)}
-                disabled={disabled}
-                onFocus={handleFocus}
-                onBlur={(e) => {
-                  handleBlur();
-                  onBlur?.();
-                }}
-                style={{
-                  ...inputStyle,
-                  width: '100%',
-                  flex: 1,
-                  fontSize: 16,
-                  lineHeight: "24px",
-                  outline: "none",
-                  border: "none",
-                  background: 'transparent',
-                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
-                  minWidth: '20px', // Ensure there's always space to type
-                }}
                 onKeyDown={(e) => {
+                  onKeyDown?.(e);
                   if (e.key === "Enter" || e.key === ",") {
                     e.preventDefault();
                     const tagValue = e.currentTarget.value.trim();
@@ -700,6 +681,24 @@ const InputField: React.FC<InputFieldProps> = ({
                       onChange?.(tags.join(","));
                     }
                   }
+                }}
+                disabled={disabled}
+                onFocus={handleFocus}
+                onBlur={(e) => {
+                  handleBlur();
+                  onBlur?.();
+                }}
+                style={{
+                  ...inputStyle,
+                  width: '100%',
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: "24px",
+                  outline: "none",
+                  border: "none",
+                  background: 'transparent',
+                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                  minWidth: '20px', // Ensure there's always space to type
                 }}
               />
             </div>
@@ -825,8 +824,7 @@ const InputField: React.FC<InputFieldProps> = ({
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",

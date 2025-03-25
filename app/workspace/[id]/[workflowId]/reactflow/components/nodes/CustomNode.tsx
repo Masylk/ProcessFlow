@@ -726,9 +726,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-lg border ${
-          selected ? 'border-[#3537cc] shadow-md' : `border-[${colors['border-secondary']}]`
-        } ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
+        className={`relative rounded-lg border-2
+        ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
           (isEditMode && id !== `block-${selectedNodeId}`) ||
@@ -741,7 +740,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
-          borderColor: selected ? '#3537cc' : colors['border-secondary']
+          borderColor: showSidebar ? '#4e6bd7' : colors['border-primary'],
+          boxShadow: showSidebar ? '0 4px 6px -1px rgba(78, 107, 215, 0.1), 0 2px 4px -1px rgba(78, 107, 215, 0.06)' : 'none'
         }}
       >
         <Handle
@@ -815,100 +815,98 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         />
 
         <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-start gap-3">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                border: `1px solid ${colors['border-secondary']}`,
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{
+                  border: `2px solid ${colors['border-secondary']}`,
+                }}
+              >
+                {blockData.icon ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                  />
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                    alt="Default Icon"
+                    className="w-6 h-6"
+                  />
+                )}
+              </div>
+              <h3 
+                className="text-sm font-medium"
+                style={{ color: colors['fg-primary'] }}
+              >
+                {blockData.title || 'Untitled Block'}
+              </h3>
+            </div>
+            
+            <button
+              onClick={handleDropdownToggle}
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{ 
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {blockData.icon ? (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                  alt="Block Icon"
-                  className="w-6 h-6"
-                />
-              ) : (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
-                  alt="Default Icon"
-                  className="w-6 h-6"
-                />
-              )}
-            </div>
-
-            <div className="flex-grow">
-              <div className="flex items-start justify-between">
-                <h3 
-                  className="text-sm font-medium"
-                  style={{ color: colors['fg-primary'] }}
-                >
-                  {blockData.title || 'Untitled Block'}
-                </h3>
-                <button
-                  onClick={handleDropdownToggle}
-                  className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-                  style={{ 
-                    color: colors['fg-tertiary'],
-                    backgroundColor: 'transparent'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                    alt="Menu"
-                    className="w-4 h-4"
-                  />
-                </button>
-              </div>
-
-              {blockData.description && (
-                <p 
-                  className="text-xs mt-1"
-                  style={{ color: colors['fg-tertiary'] }}
-                >
-                  {showFullDescription ? (
-                    <>
-                      {blockData.description}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(false);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Show less
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {truncateDescription(blockData.description, 50)}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(true);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Read more
-                        </button>
-                      )}
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                alt="Menu"
+                className="w-6 h-6"
+              />
+            </button>
           </div>
+
+          {blockData.description && (
+            <p 
+              className="text-xs w-full"
+              style={{ color: colors['fg-tertiary'] }}
+            >
+              {showFullDescription ? (
+                <>
+                  {blockData.description}
+                  {blockData.description.length > 50 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowFullDescription(false);
+                      }}
+                      className="ml-1 hover:underline"
+                      style={{ color: colors['fg-brand-primary'] }}
+                    >
+                      Show less
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {truncateDescription(blockData.description, 50)}
+                  {blockData.description.length > 50 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowFullDescription(true);
+                      }}
+                      className="ml-1 hover:underline"
+                      style={{ color: colors['fg-brand-primary'] }}
+                    >
+                      Read more
+                    </button>
+                  )}
+                </>
+              )}
+            </p>
+          )}
 
           {/* Image with signed URL */}
           {signedImageUrl && (
@@ -940,44 +938,54 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         </div>
 
         {showCheckbox && (
-          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-            <input
-              type="checkbox"
-              checked={selectedPaths.includes(data.path?.id ?? -1)}
-              onChange={() =>
-                togglePathSelection(
-                  data.path?.id ?? -1,
-                  endBlock?.id ?? -1,
-                  pathParentBlockId ?? -1
-                )
-              }
-              className={`${styles.checkbox}`}
-              style={{ 
-                borderColor: colors['border-primary'],
-                '--bg-brand-primary': colors['bg-brand-solid'],
-                '--border-brand': colors['border-brand'],
-                '--bg-secondary': colors['bg-primary']
-              } as React.CSSProperties}
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="absolute -top-8 left-0 flex items-center gap-2">
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+              <input
+                type="checkbox"
+                checked={selectedPaths.includes(data.path?.id ?? -1)}
+                onChange={() =>
+                  togglePathSelection(
+                    data.path?.id ?? -1,
+                    endBlock?.id ?? -1,
+                    pathParentBlockId ?? -1
+                  )
+                }
+                className={`${styles.checkbox}`}
+                style={{ 
+                  borderColor: colors['border-primary'],
+                  '--bg-brand-primary': colors['bg-brand-solid'],
+                  '--border-brand': colors['border-brand'],
+                  '--bg-secondary': colors['bg-primary']
+                } as React.CSSProperties}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="text-sm text-gray-300 dark:text-gray-600">
+                {selectedPaths.includes(data.path?.id ?? -1) ? 'Selected' : 'Not selected'}
+              </span>
+            </div>
           </div>
         )}
 
         {showUpdateCheckbox && endBlockId && (
-          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-            <input
-              type="checkbox"
-              checked={selectedEndBlocks.includes(endBlockId)}
-              onChange={() => toggleEndBlockSelection(endBlockId)}
-              className={`${styles.checkbox} ${styles.updateCheckbox}`}
-              style={{ 
-                borderColor: colors['border-primary'],
-                '--bg-brand-solid': colors['bg-brand-solid'],
-                '--border-brand': colors['border-brand'],
-                '--bg-secondary': colors['bg-primary']
-              } as React.CSSProperties}
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="absolute -top-8 left-0 flex items-center gap-2">
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+              <input
+                type="checkbox"
+                checked={selectedEndBlocks.includes(endBlockId)}
+                onChange={() => toggleEndBlockSelection(endBlockId)}
+                className={`${styles.checkbox} ${styles.updateCheckbox}`}
+                style={{ 
+                  borderColor: colors['border-primary'],
+                  '--bg-brand-primary': colors['bg-brand-solid'],
+                  '--border-brand': colors['border-brand'],
+                  '--bg-secondary': colors['bg-primary']
+                } as React.CSSProperties}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="text-sm text-gray-300 dark:text-gray-600">
+                {selectedEndBlocks.includes(endBlockId) ? 'Selected' : 'Not selected'}
+              </span>
+            </div>
           </div>
         )}
 

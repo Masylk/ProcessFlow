@@ -33,7 +33,7 @@ function SmoothStepCustomParent({
         strokeWidth: 2,
         stroke: '#b1b1b7',
       }}
-      className={`transition-opacity duration-300 ${
+      className={`${
         isConnectMode || isEditMode ? 'opacity-40' : ''
       }`}
     />

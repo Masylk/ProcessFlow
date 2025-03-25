@@ -170,8 +170,8 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <AvatarGroup urls={avatarUrls} />
+        <div className="flex items-center gap-4 ">
+          {/*<AvatarGroup urls={avatarUrls} />*/}
 
           <div className="pl-4 justify-start items-center gap-2 flex"
             style={{ borderLeft: `1px solid ${colors['border-primary']}` }}
