@@ -145,7 +145,7 @@ const Modal: React.FC<ModalProps> = ({
           {renderIcon()}
           <div className="flex flex-col gap-1">
             <h2 
-              className="text-lg font-semibold"
+              className="text-lg font-medium"
               style={{ color: colors['text-primary'] }}
             >
               {title}

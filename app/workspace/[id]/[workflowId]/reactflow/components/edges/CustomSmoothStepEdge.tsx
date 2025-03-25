@@ -6,6 +6,7 @@ import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import DeleteBlocksModal from '../modals/DeleteBlocksModal';
 import { usePathsStore } from '../../store/pathsStore';
+import { useColors, useThemeAssets } from '@/app/theme/hooks';
 
 function CustomSmoothStepEdge({
   id,
@@ -20,6 +21,9 @@ function CustomSmoothStepEdge({
   style = {},
   data,
 }: EdgeProps & { data: EdgeData }) {
+  const colors = useColors();
+  const assets = useThemeAssets();
+
   const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -122,7 +126,7 @@ function CustomSmoothStepEdge({
         d={edgePath}
         style={{
           strokeWidth: 2,
-          stroke: '#b1b1b7',
+          stroke: colors['border'],
           ...style,
         }}
       />
@@ -136,33 +140,54 @@ function CustomSmoothStepEdge({
       />
       {!isLastTypeInvolved && !isConnectMode && !isEditMode && (
         <foreignObject
-          width={40}
+          width={100}
           height={40}
-          x={(sourceX + targetX) / 2 - 20}
+          x={(sourceX + targetX) / 2 - 50}
           y={(sourceY + targetY) / 2 - 20}
           className="edgebutton-foreignobject"
           requiredExtensions="http://www.w3.org/1999/xhtml"
         >
           <div className="flex items-center justify-center w-full h-full">
-            <button
-              onClick={handleEdgeClick}
-              className="w-8 h-8 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors flex items-center justify-center text-xl"
-            >
-              +
-            </button>
-            <button
-              className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteModal(true);
+            <div 
+              style={{ 
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-secondary']
               }}
+              className="flex rounded-lg overflow-hidden border"
             >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
-                alt="Delete"
-                className="w-3 h-3"
-              />
-            </button>
+              <button
+                onClick={handleEdgeClick}
+                style={{ 
+                  '--hover-bg': colors['bg-secondary'],
+                  borderRight: `1px solid ${colors['border-secondary']}`
+                } as React.CSSProperties}
+                className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
+              >
+                <img 
+                  src={assets.icons['plus'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`} 
+                  alt="Add" 
+                  style={{ stroke: colors['icon-secondary'] }}
+                  className="w-3 h-3" 
+                />
+              </button>
+              <button
+                style={{ 
+                  '--hover-bg': colors['bg-secondary']
+                } as React.CSSProperties}
+                className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteModal(true);
+                }}
+              >
+                <img 
+                  src={assets.icons['trash'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`} 
+                  alt="Delete" 
+                  style={{ stroke: colors['icon-secondary'] }}
+                  className="w-3 h-3" 
+                />
+              </button>
+            </div>
           </div>
         </foreignObject>
       )}
