@@ -1,4 +1,4 @@
-import React, { useState, useCallback, CSSProperties, useRef, ReactNode } from 'react';
+import React, { useState, useCallback, CSSProperties, useRef, ReactNode, useEffect } from 'react';
 import {
   EdgeProps,
   getSmoothStepPath,
@@ -59,7 +59,7 @@ function StrokeEdge({
   targetPosition,
   style = {} as CSSProperties,
   data,
-}: EdgeProps): ReactNode {
+}: EdgeProps): JSX.Element {
   const [showLabel, setShowLabel] = useState(false);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
@@ -85,6 +85,15 @@ function StrokeEdge({
     },
     [screenToFlowPosition]
   );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     if (hideTimeoutRef.current) {

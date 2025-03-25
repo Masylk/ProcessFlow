@@ -184,6 +184,7 @@ interface InputFieldProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   disabled?: boolean;
   errorMessage?: string;
+  setError?: (message: string) => void;
   iconUrl?: string; // URL for the leading icon
   iconColor?: string; // Tailwind color class for the icon
   dropdownOptions?: string[];
@@ -265,6 +266,7 @@ const InputField: React.FC<InputFieldProps> = ({
   onKeyDown,
   disabled = false,
   errorMessage = "",
+  setError,
   iconUrl = "",
   iconColor = "currentColor",
   dropdownOptions,
@@ -279,6 +281,10 @@ const InputField: React.FC<InputFieldProps> = ({
   const handleBlur = () => setIsFocused(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear any existing error when user starts typing
+    if (setError && errorMessage) {
+      setError('');
+    }
     if (onChange) {
       onChange(e.target.value);
     }
