@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Path } from '../types';
+import { Path } from '../../types';
 
 interface PathsStore {
   paths: Path[];

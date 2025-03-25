@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import { DropdownDatas, Path } from '../types';
+import { DropdownDatas, Path } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useClipboardStore } from '../store/clipboardStore';
 import { useModalStore } from '../store/modalStore';
+import { useColors } from '@/app/theme/hooks';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -22,24 +23,26 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   workflowId,
   onPathsUpdate,
 }) => {
+  const colors = useColors();
   const copiedBlock = useClipboardStore((state) => state.copiedBlock);
   const { setShowModal, setModalData } = useModalStore();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   const menuItems = [
     {
       type: 'STEP' as const,
-      label: 'Step Block',
-      icon: '/step-icons/default-icons/container.svg',
+      label: 'Step',
+      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-commit.svg`,
     },
     {
       type: 'PATH' as const,
-      label: 'Path Block',
-      icon: '/step-icons/default-icons/path.svg',
+      label: 'Condition',
+      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`,
     },
     {
       type: 'DELAY' as const,
-      label: 'Delay Block',
-      icon: '/step-icons/default-icons/delay.svg',
+      label: 'Delay',
+      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`,
     },
   ];
 
@@ -91,10 +94,10 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   );
   const isLastBlock = block?.type === BlockEndType.LAST;
 
-  // Get existing child paths for the current block
+  // Get existing child paths for the current path
   const existingPaths = block?.child_paths.map((cp) => cp.path.name) || [];
 
-  // Check if the source block is a LastNode
+  // Check if the source path is a LastNode
   const isLastNode =
     dropdownDatas.path.blocks.find(
       (block) => block.position === dropdownDatas.position
@@ -104,80 +107,150 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     <>
       <div className="fixed inset-0" onClick={onClose} />
       <div
-        className="absolute bg-white rounded-lg shadow-lg border border-gray-200 w-48 z-50"
+        className="absolute shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)] rounded-lg border z-50 py-1 flex flex-col overflow-hidden cursor-pointer"
         style={{
           top: dropdownDatas.y,
           left: dropdownDatas.x,
           transform: 'translate(-50%, -100%)',
+          backgroundColor: colors['bg-secondary'],
+          borderColor: colors['border-primary'],
+          zIndex: 99999999
         }}
       >
-        {menuItems.map((item) => (
-          <button
-            key={item.type}
-            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
-            onClick={() => handleSelect(item.type)}
+        <div className="py-1">
+          <div 
+            className="w-[240px] px-2.5 py-[9px] text-sm font-normal"
+            style={{ color: colors['text-secondary'] }}
           >
-            <img src={item.icon} alt={item.label} className="w-5 h-5" />
-            <span>{item.label}</span>
-          </button>
-        ))}
+            Add under this a:
+          </div>
+          
+          <div 
+            className="h-px my-1" 
+            style={{ backgroundColor: colors['border-secondary'] }}
+          />
+          
+          {menuItems.map((item) => (
+            <div
+              key={item.type}
+              className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+              onClick={() => handleSelect(item.type)}
+            >
+              <div 
+                style={{
+                  '--hover-bg': colors['bg-quaternary']
+                } as React.CSSProperties}
+                className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+              >
+                <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                  <div className="w-4 h-4 relative overflow-hidden">
+                    <img src={item.icon} alt={item.label} className="w-4 h-4" />
+                  </div>
+                  <div 
+                    style={{ color: colors['text-primary'] }}
+                    className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                  >
+                    {item.label}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
 
-        {isLastBlock && (
-          <button
-            onClick={async () => {
-              try {
-                await fetch(`/api/blocks/${block.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    type: BlockEndType.END,
-                  }),
-                });
+          {isLastBlock && (
+            <div
+              className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+              onClick={async () => {
+                try {
+                  await fetch(`/api/blocks/${block.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      type: BlockEndType.END,
+                    }),
+                  });
 
-                // Update the block type in paths store
-                onPathsUpdate((currentPaths) =>
-                  currentPaths.map((path) => {
-                    if (path.id === dropdownDatas.path.id) {
-                      return {
-                        ...path,
-                        blocks: path.blocks.map((b) =>
-                          b.id === block.id
-                            ? { ...b, type: BlockEndType.END }
-                            : b
-                        ),
-                      };
-                    }
-                    return path;
-                  })
-                );
+                  // Update the block type in paths store
+                  onPathsUpdate((currentPaths) =>
+                    currentPaths.map((path) => {
+                      if (path.id === dropdownDatas.path.id) {
+                        return {
+                          ...path,
+                          blocks: path.blocks.map((b) =>
+                            b.id === block.id
+                              ? { ...b, type: BlockEndType.END }
+                              : b
+                          ),
+                        };
+                      }
+                      return path;
+                    })
+                  );
 
-                onClose();
-              } catch (error) {
-                console.error('Error converting block to END:', error);
-              }
-            }}
-            className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
-          >
-            Convert to End Block
-          </button>
-        )}
+                  onClose();
+                } catch (error) {
+                  console.error('Error converting block to END:', error);
+                }
+              }}
+            >
+              <div 
+                style={{
+                  '--hover-bg': colors['bg-quaternary']
+                } as React.CSSProperties}
+                className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+              >
+                <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                  <div className="w-4 h-4 relative overflow-hidden">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/stop-circle.svg`}
+                      alt="End of the Flow"
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div 
+                    style={{ color: colors['text-primary'] }}
+                    className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                  >
+                    End of the Flow
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {copiedBlock && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePasteBlock();
-            }}
-            className="w-full px-4 py-2 flex items-center gap-2 hover:bg-gray-50 text-left"
-          >
-            <img
-              src="/step-icons/default-icons/paste.svg"
-              alt="Paste"
-              className="w-5 h-5"
-            />
-            <span>Paste Block</span>
-          </button>
-        )}
+          {copiedBlock && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePasteBlock();
+              }}
+              className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+            >
+              <div 
+                style={{
+                  '--hover-bg': colors['bg-quaternary']
+                } as React.CSSProperties}
+                className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+              >
+                <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                  <div className="w-4 h-4 relative overflow-hidden">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
+                      alt="Paste"
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <div 
+                    style={{ color: colors['text-primary'] }}
+                    className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                  >
+                    Paste Block
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

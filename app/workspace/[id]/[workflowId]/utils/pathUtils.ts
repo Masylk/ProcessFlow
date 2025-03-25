@@ -1,4 +1,4 @@
-import { Path, Block } from '../reactflow/types';
+import { Path, Block } from '../types';
 import { BlockEndType } from '@/types/block';
 
 // Function to get the great grandparent path ID

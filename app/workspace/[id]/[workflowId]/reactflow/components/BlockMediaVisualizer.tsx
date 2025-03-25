@@ -1,4 +1,4 @@
-import { Block } from '../types';
+import { Block } from '../../types';
 import React, { useEffect, useState } from 'react';
 
 interface BlockMediaVisualizerProps {

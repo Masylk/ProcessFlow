@@ -122,17 +122,17 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
           Back to Dashboard
         </ButtonNormal>
 
-        <div className="pl-24 flex items-center gap-2">
+        <div className="pl-24 flex items-center gap-3">
           {grandParentFolder && (
             <>
-              <span style={{ color: colors['text-tertiary'] }}>{grandParentFolder}</span>
-              <span style={{ color: colors['text-quaternary'] }}>/</span>
+              <span className="text-sm" style={{ color: colors['text-secondary'] }}>{grandParentFolder}</span>
+              <span className="text-sm" style={{ color: colors['text-quaternary'] }}>/</span>
             </>
           )}
           {parentFolder && (
             <>
-              <span style={{ color: colors['text-tertiary'] }}>{parentFolder}</span>
-              <span style={{ color: colors['text-quaternary'] }}>/</span>
+              <span className="text-sm" style={{ color: colors['text-secondary'] }}>{parentFolder}</span>
+              <span className="text-sm" style={{ color: colors['text-quaternary'] }}>/</span>
             </>
           )}
           {isEditing ? (
@@ -143,7 +143,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
               onBlur={handleTitleUpdate}
               onKeyDown={handleKeyDown}
               autoFocus
-              className="px-2 py-1 outline-none"
+              className="text-sm px-2 py-1 outline-none"
               style={{ 
                 backgroundColor: 'transparent',
                 borderBottom: `2px solid ${colors['border-brand']}`,
@@ -152,14 +152,17 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
             />
           ) : (
             <span
-              className="cursor-pointer px-2 py-1 rounded"
-              style={{ color: colors['text-primary'] }}
+              className="text-sm cursor-pointer px-2 py-1 rounded"
+              style={{ 
+                color: colors['text-primary'],
+                backgroundColor: colors['bg-tertiary']
+              }}
               onClick={() => setIsEditing(true)}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-secondary_hover'];
+                e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.backgroundColor = colors['bg-tertiary'];
               }}
             >
               {workflowTitle || 'Untitled Workflow'}

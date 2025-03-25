@@ -181,6 +181,7 @@ interface InputFieldProps {
   helpIcon?: boolean;
   onChange?: (value: string) => void;
   onBlur?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   disabled?: boolean;
   errorMessage?: string;
   iconUrl?: string; // URL for the leading icon
@@ -261,6 +262,7 @@ const InputField: React.FC<InputFieldProps> = ({
   helpIcon = false,
   onChange,
   onBlur,
+  onKeyDown,
   disabled = false,
   errorMessage = "",
   iconUrl = "",
@@ -369,6 +371,7 @@ const InputField: React.FC<InputFieldProps> = ({
                 handleBlur();
                 onBlur?.();
               }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
               style={{
@@ -480,6 +483,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     handleBlur();
                     onBlur?.();
                   }}
+                  onKeyDown={(e) => onKeyDown?.(e)}
                   disabled={disabled}
                   onFocus={handleFocus}
                   style={{
@@ -516,6 +520,7 @@ const InputField: React.FC<InputFieldProps> = ({
                 handleBlur();
                 onBlur?.();
               }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
               style={{
@@ -658,6 +663,7 @@ const InputField: React.FC<InputFieldProps> = ({
               <input
                 type="text"
                 placeholder={value ? "" : placeholder}
+                // onKeyDown={(e) => onKeyDown?.(e)}
                 disabled={disabled}
                 onFocus={handleFocus}
                 onBlur={(e) => {
@@ -729,6 +735,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     handleBlur();
                     onBlur?.();
                   }}
+                  onKeyDown={(e) => onKeyDown?.(e)}
                   disabled={disabled}
                   onFocus={handleFocus}
                   style={{
@@ -812,6 +819,7 @@ const InputField: React.FC<InputFieldProps> = ({
                 handleBlur();
                 onBlur?.();
               }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
               style={{
@@ -872,6 +880,7 @@ const InputField: React.FC<InputFieldProps> = ({
                 handleBlur();
                 onBlur?.();
               }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
               style={{

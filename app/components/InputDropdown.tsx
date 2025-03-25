@@ -435,7 +435,7 @@ const InputDropdown: React.FC<InputDropdownProps> = ({
                   </div>
                   {isSelected && (
                     <img 
-                      src="https://grzxiilmiwwwepaymqnu.supabase.co/storage/v1/object/public/public-assets/assets/shared_components/blue-check.svg"
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
                       alt="Selected"
                       width={20}
                       height={20}

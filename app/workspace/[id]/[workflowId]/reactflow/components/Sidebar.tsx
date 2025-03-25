@@ -1,11 +1,12 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Block, Path } from '../types';
+import { Block, Path } from '../../types';
 import { PathContainer } from './PathContainer';
 import { usePathsStore } from '../store/pathsStore';
 import { BlockEndType, BlockType } from '@/types/block';
 import { useTheme, useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import InputField from '@/app/components/InputFields';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { User } from '@/types/user';
@@ -68,6 +69,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
   const [sidebarWidth, setSidebarWidth] = useState<number>(300);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
@@ -174,14 +176,20 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               onClick={() => handleBlockClick(block.id)}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                e.currentTarget.style.transform = 'translateX(2px)';
+                e.currentTarget.style.transform = 'translateX(0px)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.transform = 'translateX(0)';
               }}
             >
-              <div className="flex items-center gap-2 py-1.5 px-2">
+              <div 
+                className="flex items-center gap-2 py-1.5 px-2 w-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePathVisibility(path.id, e);
+                }}
+              >
                 <DynamicIcon
                   url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
                   size={20}
@@ -194,36 +202,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                 >
                   {path.name}{' '}
                 </span>
-                <button
-                  onClick={(e) => togglePathVisibility(path.id, e)}
-                  className="rounded-full flex-shrink-0 transition-all"
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'transparent',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      colors['bg-tertiary'];
-                    e.stopPropagation();
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.stopPropagation();
-                  }}
-                >
-                  <DynamicIcon
-                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                      isPathCollapsed ? 'chevron-right' : 'chevron-down'
-                    }.svg`}
-                    size={16}
-                    variant="tertiary"
-                    className="flex-shrink-0"
-                  />
-                </button>
+                <DynamicIcon
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                    isPathCollapsed ? 'chevron-right' : 'chevron-down'
+                  }.svg`}
+                  size={16}
+                  variant="tertiary"
+                  className="flex-shrink-0"
+                />
               </div>
             </div>
           ))}
@@ -275,7 +261,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                     className="rounded-md cursor-pointer transition-all duration-200"
                     style={{
                       backgroundColor: 'transparent',
-                      marginLeft: 22,
+                      marginLeft: 10,
                       padding: '2px',
                       marginBottom: '2px',
                       width: 'calc(100% - 22px)',
@@ -284,7 +270,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                     onMouseOver={(e) => {
                       e.currentTarget.style.backgroundColor =
                         colors['bg-secondary'];
-                      e.currentTarget.style.transform = 'translateX(2px)';
+                      e.currentTarget.style.transform = 'translateX(0px)';
                     }}
                     onMouseOut={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
@@ -339,25 +325,30 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     );
   };
 
-  // Handle resize functionality
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.pageX;
+  // Enhanced resize functionality similar to dashboard sidebar
+  const startResizing = useCallback((mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsResizing(true);
+    document.body.style.cursor = 'col-resize';
+    
     const startWidth = sidebarWidth;
+    const startX = mouseDownEvent.clientX;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = startWidth + (e.pageX - startX);
-      setSidebarWidth(Math.max(250, Math.min(400, newWidth))); // Min 250px, max 800px
+    const handleMouseMove = (mouseMoveEvent: MouseEvent) => {
+      const newWidth = startWidth + mouseMoveEvent.clientX - startX;
+      setSidebarWidth(Math.max(250, Math.min(400, newWidth))); // Min 250px, max 400px
     };
 
     const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  };
+  }, [sidebarWidth, setIsResizing]);
 
   // Helper function to generate button IDs
   const generateButtonId = (name: string) =>
@@ -376,15 +367,17 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     }
   `;
 
-  // Add a style block for the search input placeholder
-  const searchInputId = generateButtonId('search-input');
-  const placeholderStyles = `
-    #${searchInputId}::placeholder {
-      color: ${colors['text-tertiary']};
+  // Hover styles for resize handle
+  const resizeHandleStyles = `
+    .resize-handle:hover {
+      background-color: ${colors['border-secondary']} !important;
+      opacity: 0.5 !important;
     }
-    #${searchInputId}:focus {
-      border-color: ${colors['accent-primary']};
-      box-shadow: 0 0 0 2px ${colors['accent-primary']}40;
+    .resize-handle.resizing {
+      background-color: ${colors['accent-primary']} !important;
+      opacity: 1 !important;
+      box-shadow: 0 0 8px 1px ${colors['accent-primary']}80;
+      transition: all 0.15s ease;
     }
   `;
 
@@ -403,23 +396,24 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   return (
     <>
       <style>{hoverStyles}</style>
-      <style>{placeholderStyles}</style>
+      <style>{resizeHandleStyles}</style>
       <div
         className="fixed z-10 flex top-[56px] left-0 h-[calc(100vh-56px)]"
         style={{ backgroundColor: colors['bg-primary'] }}
       >
         {/* Sidebar with icons */}
-        <div
-          className="w-[80px] h-full flex flex-col justify-between border-r"
-          style={{
+        <div 
+          className="w-fit px-2 h-full flex flex-col justify-between border-r"
+          style={{ 
             backgroundColor: colors['bg-primary'],
-            borderColor: colors['border-secondary'],
+            borderColor: colors['border-primary'],
           }}
         >
           <div className="flex flex-col pt-4 items-center gap-2">
             <ButtonNormal
               variant="tertiary"
               iconOnly
+              size="medium"
               leadingIcon={navigationIconUrl}
               onClick={toggleSidebar}
               className={isSidebarVisible ? 'bg-opacity-10' : ''}
@@ -427,6 +421,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             <ButtonNormal
               variant="tertiary"
               iconOnly
+              size="medium"
               leadingIcon={navigationIconUrl}
               className="hidden"
             />
@@ -435,12 +430,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             <ButtonNormal
               variant="tertiary"
               iconOnly
+              size="medium"
               leadingIcon={supportIconUrl}
               onClick={toggleHelpModal}
             />
             <ButtonNormal
               variant="tertiary"
               iconOnly
+              size="medium"
               leadingIcon={settingsIconUrl}
             />
           </div>
@@ -455,15 +452,15 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               width: sidebarWidth,
               minWidth: '250px',
               backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
+              borderColor: colors['border-primary'],
             }}
           >
             {/* Header Section */}
             <div
-              className="sticky top-0 z-10 px-4 pt-4 pb-3 border-b"
+              className="sticky top-0 z-10 px-4 pt-4 pb-4 border-b"
               style={{
                 backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'],
+                borderColor: colors['border-primary'],
               }}
             >
               <div
@@ -474,34 +471,21 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               </div>
               {/* Search bar */}
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <DynamicIcon
-                    url={searchIconUrl}
-                    size={16}
-                    variant="tertiary"
-                    className="opacity-70"
-                  />
-                </div>
-                <input
-                  id={searchInputId}
-                  type="text"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
+                <InputField
+                  type="icon-leading"
                   placeholder="Search"
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none"
-                  style={{
-                    backgroundColor: colors['bg-secondary'],
-                    color: colors['text-primary'],
-                    borderColor: colors['border-primary'],
-                    boxShadow: 'none',
-                  }}
+                  value={searchFilter}
+                  onChange={(value) => setSearchFilter(value)}
+                  iconUrl={searchIconUrl}
+                  size="small"
+                  mode={currentTheme === 'light' ? 'light' : 'dark'}
                 />
               </div>
             </div>
 
             {/* Content Area with both x and y scrolling */}
             <div
-              className="flex-1 overflow-auto p-4"
+              className="flex-1 overflow-auto p-2"
               style={{ backgroundColor: colors['bg-primary'] }}
             >
               {mainPath && (
@@ -516,23 +500,12 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
             {/* Resize Handle */}
             <div
-              className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-              onMouseDown={handleMouseDown}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="w-4 h-4"
-                style={{ color: colors['text-tertiary'] }}
-              >
-                <path
-                  d="M22 22L12 12M22 12L12 22"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
+              style={{ 
+                backgroundColor: isResizing ? colors['accent-primary'] : 'transparent'
+              }}
+              className={`absolute right-0 top-0 bottom-0 w-[3px] cursor-col-resize resize-handle transition-all ${isResizing ? 'resizing' : ''}`}
+              onMouseDown={startResizing}
+            />
           </div>
         )}
       </div>

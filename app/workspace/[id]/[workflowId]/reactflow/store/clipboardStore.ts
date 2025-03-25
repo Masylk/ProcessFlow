@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Block } from '../types';
+import { Block } from '../../types';
 
 interface ClipboardStore {
   copiedBlock: Block | null;

@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { NodeData } from '../../types';
+import { NodeData } from '../../../types';
 import AddChildPathModal from '../modals/AddChildPathModal';
 import { createChildPaths } from '../../utils/createChildPaths';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
+import { useColors } from '@/app/theme/hooks';
+
 function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [showModal, setShowModal] = useState(false);
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
+  const colors = useColors();
+  
   // Find the path block to get the count of existing child paths
   const pathBlock = data.path?.blocks.find(
     (block: { id: number }) => block.id === parseInt(id.replace('block-', ''))
@@ -61,7 +65,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             width: 6,
             height: 6,
             opacity: 0,
-            background: '#60a5fa',
+            background: colors['utility-brand-500'],
             border: '2px solid white',
             pointerEvents: 'none',
           }}
@@ -72,7 +76,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             width: '32px',
             height: '32px',
             borderRadius: '4px',
-            background: '#4E6BD7',
+            background: colors['utility-brand-500'],
             transform: 'rotate(45deg)',
           }}
         >
@@ -91,7 +95,7 @@ function PathNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             width: 6,
             height: 6,
             opacity: 0,
-            background: '#60a5fa',
+            background: colors['utility-brand-500'],
             border: '2px solid white',
             pointerEvents: 'none',
           }}
