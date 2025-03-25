@@ -9,8 +9,8 @@ export interface BaseStepProps {
   children?: React.ReactNode;
   onCopyLink?: () => void;
   stepRef?: React.RefObject<HTMLDivElement>;
-  selectedOptionIds?: number[];
-  onOptionSelect?: (optionId: number, isMerge?: boolean) => void;
+  selectedOptionIds?: [number, number][];
+  onOptionSelect?: (optionId: number, blockId: number, isMerge?: boolean) => void;
   isLastStep?: boolean;
   variant?: 'default' | 'last';
   icon?: string | React.ReactNode;

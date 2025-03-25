@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Block } from '../../../types';
 import { BaseStepProps } from './BaseStep';
 import { BlockEndType, BlockType } from '@/types/block';
+import { usePathsStore } from '../../store/pathsStore';
 
 export default function VerticalStep({
   block,
@@ -27,6 +28,7 @@ export default function VerticalStep({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const hasMergePathSelected = useRef(false);
+  const paths = usePathsStore((state) => state.paths);
 
   useEffect(() => {
     setIsExpanded(defaultExpanded);
@@ -36,12 +38,18 @@ export default function VerticalStep({
     // Only trigger once when it's a MERGE block and hasn't been handled yet
     if (
       block.type === 'MERGE' &&
-      !hasMergePathSelected.current &&
-      block.child_paths?.[0]
+      block.child_paths?.[0] &&
+      !hasMergePathSelected.current
     ) {
+      console.log('MERGE BLOCK');
       hasMergePathSelected.current = true;
-      onOptionSelect?.(block.child_paths[0].path.id, true);
+      onOptionSelect?.(block.child_paths[0].path.id, block.id, true);
     }
+
+    // Cleanup function to reset the ref when component unmounts
+    return () => {
+      hasMergePathSelected.current = false;
+    };
   }, []); // Empty dependency array - only run once on mount
 
   const handleToggle = () => {
@@ -105,8 +113,12 @@ export default function VerticalStep({
     }
   };
 
-  const handleOptionSelect = (optionId: number) => {
-    onOptionSelect?.(optionId);
+  const handleOptionSelect = (
+    optionId: number,
+    blockId: number,
+    isMerge?: boolean
+  ) => {
+    onOptionSelect?.(optionId, blockId, isMerge);
   };
 
   const slideUpVariants = {
@@ -255,11 +267,6 @@ export default function VerticalStep({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
-                  onAnimationComplete={() => {
-                    if (block.child_paths?.[0]) {
-                      onOptionSelect?.(block.child_paths[0].path.id, true);
-                    }
-                  }}
                 ></motion.div>
               ) : (
                 // For non-MERGE blocks, show options as before
@@ -278,12 +285,16 @@ export default function VerticalStep({
                     {block.child_paths.map((option, index) => (
                       <motion.button
                         key={option.path.id}
-                        onClick={() => handleOptionSelect(option.path.id)}
+                        onClick={() =>
+                          handleOptionSelect(option.path.id, block.id, false)
+                        }
                         className={cn(
                           'w-full p-4 rounded-lg border transition-colors duration-200 will-change-transform',
                           'flex items-start gap-3 text-left',
-                          selectedOptionIds?.includes(option.path.id) &&
-                            'border-brand'
+                          selectedOptionIds?.some(
+                            ([pathId, blockId]) =>
+                              pathId === option.path.id && blockId === block.id
+                          ) && 'border-brand'
                         )}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -295,8 +306,9 @@ export default function VerticalStep({
                         whileTap={{ scale: 0.99 }}
                         style={{
                           backgroundColor: colors['bg-primary'],
-                          borderColor: selectedOptionIds?.includes(
-                            option.path.id
+                          borderColor: selectedOptionIds?.some(
+                            ([pathId, blockId]) =>
+                              pathId === option.path.id && blockId === block.id
                           )
                             ? colors['border-brand']
                             : colors['border-secondary'],
@@ -306,20 +318,28 @@ export default function VerticalStep({
                         <div
                           className="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-1.5 flex items-center justify-center"
                           style={{
-                            borderColor: selectedOptionIds?.includes(
-                              option.path.id
+                            borderColor: selectedOptionIds?.some(
+                              ([pathId, blockId]) =>
+                                pathId === option.path.id &&
+                                blockId === block.id
                             )
                               ? colors['border-brand']
                               : colors['border-secondary'],
-                            backgroundColor: selectedOptionIds?.includes(
-                              option.path.id
+                            backgroundColor: selectedOptionIds?.some(
+                              ([pathId, blockId]) =>
+                                pathId === option.path.id &&
+                                blockId === block.id
                             )
                               ? colors['bg-brand-solid']
                               : 'transparent',
                           }}
                         >
                           <AnimatePresence>
-                            {selectedOptionIds?.includes(option.path.id) && (
+                            {selectedOptionIds?.some(
+                              ([pathId, blockId]) =>
+                                pathId === option.path.id &&
+                                blockId === block.id
+                            ) && (
                               <motion.div
                                 className="w-2 h-2 bg-white rounded-full"
                                 initial={{ scale: 0 }}

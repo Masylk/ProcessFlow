@@ -11,6 +11,7 @@ interface SidebarProps {
   workspace: Workspace;
   activeStepId: number;
   onStepClick: (stepId: number) => void;
+  pathsToDisplay: Path[];
 }
 
 export default function Sidebar({
@@ -18,68 +19,19 @@ export default function Sidebar({
   workspace,
   activeStepId,
   onStepClick,
+  pathsToDisplay,
 }: SidebarProps) {
   const colors = useColors();
-  const originalPaths = usePathsStore((state) => state.paths);
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
 
-  // Deep clone paths
-  const paths = useMemo(
-    () =>
-      originalPaths.map((path) => ({
-        ...path,
-        blocks: path.blocks.map((block) => ({
-          ...block,
-          child_paths: block.child_paths
-            ? block.child_paths.map((cp) => ({
-                ...cp,
-                path: { ...cp.path },
-                block: { ...cp.block },
-              }))
-            : [],
-          path: { ...path },
-        })),
-        parent_blocks: path.parent_blocks.map((pb) => ({
-          ...pb,
-          block: { ...pb.block },
-        })),
-      })),
-    [originalPaths]
-  );
-
-  // Find main path (path with no parent blocks)
-  const mainPath = useMemo(
-    () => paths.find((path) => path.parent_blocks.length === 0),
-    [paths]
-  );
-
-  // Get last occurrence IDs for merge paths
-  const getLastOccurrenceIds = useMemo(() => {
-    const lastOccurrenceIds: number[] = [];
-
-    paths.forEach((path) => {
-      // Check if any parent block is of type MERGE
-      const hasMergeParent = path.parent_blocks.some((pb) =>
-        paths.find((p) =>
-          p.blocks.find((b) => b.id === pb.block_id && b.type === 'MERGE')
-        )
-      );
-
-      if (hasMergeParent) {
-        // Get the last parent block ID
-        const lastParentBlockId =
-          path.parent_blocks[path.parent_blocks.length - 1]?.block_id;
-        if (lastParentBlockId) {
-          lastOccurrenceIds.push(lastParentBlockId);
-        }
-      }
-    });
-
-    return lastOccurrenceIds;
-  }, [paths]);
-
-  const renderPathContent = (path: Path, level: number = 0) => {
+  const renderPathContent = (
+    path: Path,
+    level: number = 0,
+    renderedPaths: Set<number> = new Set()
+  ) => {
+    // Add current path to rendered set
+    renderedPaths.add(path.id);
     const isPathCollapsed = collapsedPaths.has(path.id);
 
     return (
@@ -107,26 +59,29 @@ export default function Sidebar({
           path.blocks
             .filter((block) => block.type !== 'LAST' && block.type !== 'BEGIN')
             .map((block) => {
-              if (block.type === 'MERGE' || block.type === 'PATH') {
+              if (
+                block.type === 'MERGE' ||
+                block.type === 'PATH' ||
+                block.type === 'STEP'
+              ) {
                 return block.child_paths?.map((childPathConnection) => {
-                  const childPath = paths.find(
+                  // Skip if we've already rendered this path
+                  if (renderedPaths.has(childPathConnection.path.id)) {
+                    return null;
+                  }
+
+                  const childPath = pathsToDisplay.find(
                     (p) => p.id === childPathConnection.path.id
                   );
                   if (childPath) {
-                    // Skip if this is not the last occurrence of a merge path
-                    if (
-                      block.type === 'MERGE' &&
-                      !getLastOccurrenceIds.includes(block.id)
-                    ) {
-                      return null;
-                    }
                     return (
                       <div key={`${childPath.id}-${block.id}`}>
                         {renderPathContent(
                           childPath,
                           block.type === 'MERGE'
                             ? Math.max(level - 2, 0)
-                            : Math.max(level, 0) + 1
+                            : Math.max(level, 0) + 1,
+                          renderedPaths
                         )}
                       </div>
                     );
@@ -139,6 +94,10 @@ export default function Sidebar({
       </div>
     );
   };
+
+  const mainPath = pathsToDisplay.find(
+    (path) => path.parent_blocks.length === 0
+  );
 
   return (
     <div

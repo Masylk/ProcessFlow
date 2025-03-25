@@ -22,6 +22,8 @@ import { usePathsStore } from './store/pathsStore';
 import ProcessCanvas from './components/ProcessCanvas';
 import VerticalLastStep from './components/steps/VerticalLastStep';
 import HorizontalStep from './components/steps/HorizontalStep';
+import { Block, Path } from '../types';
+import { BlockEndType } from '@/types/block';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
@@ -66,6 +68,14 @@ interface StepData {
   options?: StepOption[];
 }
 
+interface StrokeLine {
+  id: number;
+  source_block_id: number;
+  target_block_id: number;
+  workflow_id: number;
+  label: string;
+}
+
 export default function ExamplePage() {
   const params = useParams();
   const supabase = createClient();
@@ -80,13 +90,16 @@ export default function ExamplePage() {
   const [newPassword, setNewPassword] = useState<string>('');
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [viewMode, setViewMode] = useState<'vertical' | 'carousel'>('vertical');
-  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<[number, number][]>(
+    []
+  );
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
   const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
     useState<boolean>(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
+  const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
 
   const paths = usePathsStore((state) => state.paths);
   const mainPath = useMemo(
@@ -148,21 +161,126 @@ export default function ExamplePage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    console.log('paths', paths);
+  }, [paths]);
   // Fetch paths
   useEffect(() => {
-    const fetchPaths = async () => {
+    const fetchPathsAndStrokeLines = async () => {
       try {
+        // Fetch paths
         const response = await fetch(
           `/api/workspace/${params.id}/paths?workflow_id=${params.workflowId}`
         );
-        const paths = await response.json();
-        usePathsStore.getState().setPaths(paths.paths);
+        const pathsData = await response.json();
+
+        // Fetch stroke lines
+        const strokeLinesResponse = await fetch(
+          `/api/stroke-lines?workflow_id=${params.workflowId}`
+        );
+        if (strokeLinesResponse.ok) {
+          const strokeLinesData: StrokeLine[] =
+            await strokeLinesResponse.json();
+          setStrokeLines(strokeLinesData);
+
+          // Create new paths from stroke lines
+          const newPaths: Path[] = [...pathsData.paths];
+
+          strokeLinesData.forEach((strokeLine) => {
+            const sourcePath = pathsData.paths.find((p: Path) =>
+              p.blocks.some((b) => b.id === strokeLine.source_block_id)
+            );
+            const targetPath = pathsData.paths.find((p: Path) =>
+              p.blocks.some((b) => b.id === strokeLine.target_block_id)
+            );
+
+            if (sourcePath && targetPath) {
+              const targetBlockIndex = targetPath.blocks.findIndex(
+                (b: Block) => b.id === strokeLine.target_block_id
+              );
+
+              if (targetBlockIndex !== -1) {
+                const { clonedPath: newPath, sourceBlocks } =
+                  clonePathWithMergeBlocks(
+                    {
+                      id: generateUniqueId(newPaths),
+                      name: strokeLine.label,
+                      workflow_id: parseInt(params.workflowId as string),
+                      workflow: targetPath.workflow,
+                      blocks: targetPath.blocks.slice(targetBlockIndex),
+                      parent_blocks: [
+                        {
+                          path_id: -1,
+                          block_id: strokeLine.source_block_id,
+                          created_at: new Date().toISOString(),
+                          path: {} as Path,
+                          block: {} as Block,
+                        },
+                      ],
+                    },
+                    pathsData.paths,
+                    strokeLine.source_block_id
+                  );
+
+                // Add the new path to the original source block as a child path
+                console.log('newPaths', newPaths);
+                console.log(
+                  'strokeLine source block id',
+                  strokeLine.source_block_id
+                );
+                const sourceBlock = newPaths
+                  .flatMap((p) => p.blocks)
+                  .find((b: Block) => b.id === strokeLine.source_block_id);
+                console.log('sourceBlock', sourceBlock);
+                if (sourceBlock) {
+                  console.log(
+                    'adding original child path to source block',
+                    sourceBlock
+                  );
+                  sourceBlock.child_paths = [
+                    ...(sourceBlock.child_paths || []),
+                    {
+                      path_id: newPath.id,
+                      block_id: sourceBlock.id,
+                      created_at: new Date().toISOString(),
+                      path: newPath,
+                      block: sourceBlock,
+                    },
+                  ];
+                }
+                // Add the new path to all cloned source blocks as a child path
+                sourceBlocks.forEach((sourceBlock) => {
+                  console.log(
+                    'adding child path to duplicate source blocks',
+                    newPath,
+                    sourceBlock
+                  );
+                  sourceBlock.child_paths = [
+                    ...(sourceBlock.child_paths || []),
+                    {
+                      path_id: newPath.id,
+                      block_id: sourceBlock.id,
+                      created_at: new Date().toISOString(),
+                      path: newPath,
+                      block: sourceBlock,
+                    },
+                  ];
+                });
+
+                newPaths.push(newPath);
+
+                // Update paths store with the new paths
+                usePathsStore.getState().setPaths(newPaths);
+              }
+            }
+          });
+        }
       } catch (error) {
-        console.error('Error fetching paths:', error);
+        console.error('Error fetching paths and stroke lines:', error);
       }
     };
 
-    fetchPaths();
+    fetchPathsAndStrokeLines();
   }, [params.id, params.workflowId]);
 
   // Update this useEffect to set initial pathsToDisplay
@@ -171,6 +289,73 @@ export default function ExamplePage() {
       setPathsToDisplay([mainPath]);
     }
   }, [mainPath]);
+
+  // Update the deepCloneBlock function to handle MERGE blocks
+  const deepCloneBlock = (
+    block: Block,
+    sourceBlockId: number,
+    sourceBlocks: Block[]
+  ): Block => {
+    const clonedBlock = {
+      ...block,
+      id: Math.floor(Math.random() * -1000000), // Negative ID to avoid conflicts
+      child_paths: block.child_paths
+        ? block.child_paths.map((cp) => ({
+            ...cp,
+            block_id: block.id,
+            path: { ...cp.path },
+          }))
+        : [],
+    };
+    if (block.id === sourceBlockId) {
+      sourceBlocks.push(clonedBlock);
+    }
+
+    return clonedBlock;
+  };
+
+  // Update the clonePathWithMergeBlocks function to track stroke line source blocks
+  const clonePathWithMergeBlocks = (
+    path: Path,
+    allPaths: Path[],
+    sourceBlockId: number
+  ): { clonedPath: Path; sourceBlocks: Block[] } => {
+    // Find all blocks in all paths that match the source block ID
+    const sourceBlocks: Block[] = [];
+
+    // Clone the path normally
+    const clonedPath = {
+      ...path,
+      id: Math.floor(Math.random() * -1000000),
+      blocks: path.blocks.reduce<Block[]>((acc, block) => {
+        if (block.type === 'MERGE' && block.child_paths?.[0]) {
+          const childPath = allPaths.find(
+            (p) => p.id === block.child_paths[0].path.id
+          );
+          if (childPath) {
+            // Add only the child path's blocks
+            const childBlocks = childPath.blocks
+              .filter((b) => b.type !== 'BEGIN' && b.type !== 'END')
+              .map((b) => deepCloneBlock(b, sourceBlockId, sourceBlocks));
+            return [...acc, ...childBlocks];
+          }
+          return acc;
+        }
+        return [...acc, deepCloneBlock(block, sourceBlockId, sourceBlocks)];
+      }, []),
+    };
+
+    return { clonedPath, sourceBlocks };
+  };
+
+  // Add this helper function for generating unique IDs
+  const generateUniqueId = (existingPaths: Path[]): number => {
+    let newId: number;
+    do {
+      newId = Math.floor(Math.random() * -1000000);
+    } while (existingPaths.some((p) => p.id === newId));
+    return newId;
+  };
 
   // This is example data - in a real app, you would fetch this from your API
   const workflowData: WorkflowData = {
@@ -252,44 +437,108 @@ export default function ExamplePage() {
     duration: '15 minutes',
   };
 
-  const handleOptionSelect = (optionId: number, isMerge: boolean = false) => {
-    // Update selectedOptions first
-    // if (!isMerge) {
+  const handleOptionSelect = (
+    optionId: number,
+    blockId: number,
+    isMerge: boolean = false
+  ) => {
+    const pathToAdd = paths.find((path) => path.id === optionId);
+    if (!pathToAdd) return;
+
+    // Find if the new path shares any parent blocks with existing paths
+    const sharedParentIndex = pathsToDisplay.findIndex((displayPath) =>
+      displayPath.parent_blocks.some((displayParentBlock) =>
+        pathToAdd.parent_blocks.some(
+          (newParentBlock) =>
+            newParentBlock.block_id === displayParentBlock.block_id &&
+            newParentBlock.block_id !== blockId
+        )
+      )
+    );
+
+    // Rest of the function for normal path addition...
+    setPathsToDisplay((currentPaths) => {
+      const newPaths = [...currentPaths];
+
+      // Get all parent block IDs of the path to add
+      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
+
+      // Find if there's a path with any matching parent block
+      const sameParentIndex = newPaths.findIndex((path) =>
+        path.parent_blocks.some((pb) => parentBlockIds.includes(pb.block_id))
+      );
+
+      if (sameParentIndex !== -1) {
+        // Remove this path and all following paths
+        newPaths.splice(sameParentIndex);
+      }
+
+      // Insert the new path
+      newPaths.push(pathToAdd);
+
+      // Check if last block has exactly one child path
+      const lastBlock = pathToAdd.blocks[pathToAdd.blocks.length - 1];
+      if (lastBlock?.child_paths?.length === 1) {
+        const childPath = paths.find(
+          (p) => p.id === lastBlock.child_paths[0].path.id
+        );
+        if (childPath && !newPaths.some((p) => p.id === childPath.id)) {
+          // Add the child path if it's not already in pathsToDisplay
+          newPaths.push(childPath);
+        }
+      }
+
+      // Schedule scroll after state update
+      setTimeout(() => {
+        const firstBlock = pathToAdd.blocks.find(
+          (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+        );
+        if (firstBlock) {
+          const element = document.getElementById(`block-${firstBlock.id}`);
+          if (element) {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'end',
+            });
+          }
+        }
+      }, 100);
+
+      return newPaths;
+    });
+
+    // Update selectedOptions
     setSelectedOptions((currentSelected) => {
       const newSelected = [...currentSelected];
 
-      // Find if there's a path with any matching parent block
-      const pathToAdd = paths.find((path) => path.id === optionId);
-      if (!pathToAdd) return currentSelected;
+      // Get the block ID from the path's parent block instead of the parameter
+      const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
+      if (!blockIdFromPath) return currentSelected;
 
-      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
-      const sameParentIndex = newSelected.findIndex((selectedId) => {
-        const selectedPath = paths.find((p) => p.id === selectedId);
-        return selectedPath?.parent_blocks.some((pb) =>
-          parentBlockIds.includes(pb.block_id)
-        );
-      });
+      // Check if this selection pair already exists
+      const selectionExists = newSelected.some(
+        ([pathId, blockId]) =>
+          pathId === optionId && blockId === blockIdFromPath
+      );
 
-      if (sameParentIndex !== -1) {
-        // Remove this option and all following options
-        newSelected.splice(sameParentIndex);
+      // Only add if it doesn't exist
+      if (!selectionExists) {
+        newSelected.push([optionId, blockIdFromPath]);
       }
 
-      // Add the new option
-      newSelected.push(optionId);
-      return newSelected;
+      // Keep only selections for remaining paths
+      return newSelected.filter(([pathId]) =>
+        [
+          ...pathsToDisplay.slice(
+            0,
+            sharedParentIndex !== -1 ? sharedParentIndex : undefined
+          ),
+          pathToAdd,
+        ]
+          .map((p) => p.id)
+          .includes(pathId)
+      );
     });
-    // }
-
-    // Then find and add the path
-    const currentPathIndex = pathsToDisplay.findIndex((path) =>
-      path.blocks.some((block) =>
-        block.child_paths?.some((cp) => cp.path.id === optionId)
-      )
-    );
-    if (currentPathIndex !== -1) {
-      addPathToDisplay(optionId, currentPathIndex + 1);
-    }
   };
 
   // Add this function to handle step navigation
@@ -374,7 +623,28 @@ export default function ExamplePage() {
     const pathToAdd = paths.find((path) => path.id === pathId);
     if (!pathToAdd) return;
 
-    if (pathsToDisplay.find((p) => p.id === pathId)) return;
+    // If path already exists, scroll to its first block
+    const existingPath = pathsToDisplay.find((p) => p.id === pathId);
+    if (existingPath) {
+      const firstBlock = existingPath.blocks.find(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      );
+      if (firstBlock) {
+        // Find the block element by its ID
+        const element = document.getElementById(`block-${firstBlock.id}`);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+            window.scrollBy(0, -120); // Offset for header height
+          }, 50);
+        }
+      }
+      return;
+    }
+
     setPathsToDisplay((currentPaths) => {
       const newPaths = [...currentPaths];
 
@@ -409,6 +679,7 @@ export default function ExamplePage() {
             workspace={workspace}
             activeStepId={currentStep}
             onStepClick={handleStepClick}
+            pathsToDisplay={pathsToDisplay}
           />
           <div className="flex-1 ml-64">
             <div className="fixed right-0 left-64 bg-primary z-30">
@@ -476,6 +747,7 @@ export default function ExamplePage() {
                           .map((block, index) => (
                             <div
                               key={block.id}
+                              id={`block-${block.id}`}
                               ref={(el) => {
                                 if (el) stepRefs.current[index] = el;
                               }}
@@ -491,7 +763,9 @@ export default function ExamplePage() {
                                   handleStepToggle(block.id, isExpanded)
                                 }
                                 selectedOptionIds={selectedOptions}
-                                onOptionSelect={handleOptionSelect}
+                                onOptionSelect={(optionId, blockId) =>
+                                  handleOptionSelect(optionId, blockId)
+                                }
                                 isLastStep={false}
                               />
                             </div>
