@@ -120,7 +120,7 @@ function CustomSmoothStepEdge({
     <>
       <path
         id={id}
-        className={`react-flow__edge-path transition-opacity duration-300 ${
+        className={`react-flow__edge-path ${
           isConnectMode || isEditMode ? 'opacity-40' : ''
         }`}
         d={edgePath}

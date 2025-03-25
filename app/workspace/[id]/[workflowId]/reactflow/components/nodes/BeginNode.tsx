@@ -96,16 +96,16 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   return (
     <>
       <div
-        className={`relative transition-all duration-300 flex items-center justify-center ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
+        className={`relative transition-all duration-300 flex items-center justify-center ${
+          isConnectMode ? 'opacity-40' : ''
+        } ${isEditMode ? 'ring-2 ring-utility-brand-500' : ''}`}
         style={{
           width: '200px',
           height: '50px',
           padding: '12px 16px',
           borderRadius: '8px',
-          border: selected
-            ? `2px solid ${colors['utility-brand-500']}`
-            : `2px solid ${colors['utility-brand-300']}`,
-          background: colors['bg-brand-primary'],
+          border: selected ? `2px solid ${colors['utility-brand-500']}` : `2px solid ${colors['utility-brand-400']}`,
+          background: colors['utility-brand-100'],
           position: 'relative',
         }}
         onMouseEnter={() => setIsHovered(true)}
@@ -125,10 +125,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           }}
         />
 
-        <div
-          className="font-medium truncate"
-          style={{ color: colors['text-brand-primary'] }}
-        >
+        <div className="font-medium truncate" style={{ color: colors['text-brand-primary'] }}>
           {isEditing ? (
             <input
               type="text"

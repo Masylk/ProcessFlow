@@ -26,4 +26,22 @@
 /* Preview edge stays visible */
 .connect-mode .react-flow__edge.preview-edge {
   opacity: 1;
+}
+
+/* Stroke Edge Animation */
+.react-flow__edge-path.stroke-edge-animated {
+  stroke-width: 2 !important;
+  stroke: #FF69A3 !important;
+  stroke-dasharray: 5 !important;
+  pointer-events: none;
+  animation: flowAnimation 30s linear infinite;
+}
+
+@keyframes flowAnimation {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 1000;
+  }
 } 

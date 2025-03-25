@@ -96,7 +96,6 @@ export function Flow({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownDatas, setDropdownDatas] = useState<DropdownDatas | null>(
     null
@@ -265,6 +264,7 @@ export function Flow({
             sourceHandle: 'stroke_source',
             targetHandle: isSelfLoop ? 'stroke_self_target' : 'stroke_target',
             type: 'strokeEdge',
+            animated: true,
             data: {
               source: `block-${strokeLine.source_block_id}`,
               target: `block-${strokeLine.target_block_id}`,
@@ -337,49 +337,6 @@ export function Flow({
     },
     [dropdownDatas, workflowId, onBlockAdd]
   );
-
-  // Fix the handleNodeFocus function to avoid infinite loops
-  // const handleNodeFocus = useCallback(
-  //   (nodeId: string) => {
-  //     setSelectedNodeId(nodeId);
-
-  //     // Find the node in our nodes array - use functional update pattern
-  //     setNodes((currentNodes) => {
-  //       const node = currentNodes.find((n) => n.id === nodeId);
-  //       if (node) {
-  //         // Center the view on the node
-  //         setCenter(node.position.x, node.position.y, {
-  //           zoom: 1.5,
-  //           duration: 800,
-  //         });
-
-  //         // Highlight the node with functional update pattern
-  //         return currentNodes.map((n) => ({
-  //           ...n,
-  //           data: {
-  //             ...n.data,
-  //             highlighted: n.id === nodeId,
-  //           },
-  //         }));
-  //       }
-  //       return currentNodes;
-  //     });
-
-  //     // Reset highlight after a delay - use functional update to avoid closure issues
-  //     setTimeout(() => {
-  //       setNodes((currentNodes) =>
-  //         currentNodes.map((n) => ({
-  //           ...n,
-  //           data: {
-  //             ...n.data,
-  //             highlighted: false,
-  //           },
-  //         }))
-  //       );
-  //     }, 2000);
-  //   },
-  //   [setCenter]
-  // ); // Only depend on stable function, not nodes state
 
   const showParallelPathModal = useModalStore(
     (state) => state.showParallelPathModal
@@ -508,20 +465,18 @@ export function Flow({
           ...node,
           className: `${node.className || ''} ${
             node.id === connectData.sourceNode.id ? 'source-node' : ''
-          } ${node.id === selectedNodeId ? 'selected-node' : ''}`,
+          }`,
         }))
       );
     } else {
       setNodes((nodes) =>
         nodes.map((node) => ({
           ...node,
-          className: node.className
-            ?.replace('source-node', '')
-            .replace('selected-node', ''),
+          className: node.className?.replace('source-node', ''),
         }))
       );
     }
-  }, [isConnectMode, connectData, selectedNodeId]);
+  }, [isConnectMode, connectData]);
 
   useEffect(() => {
     const handlePathsUpdate = (event: CustomEvent) => {
@@ -589,8 +544,24 @@ export function Flow({
         maxZoom={4}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
-        onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-        onPaneClick={() => setSelectedNodeId(null)}
+        onNodeClick={(event, node) => {
+          event.preventDefault();
+          event.stopPropagation();
+          // Extract the block ID from the node ID (remove "block-" prefix)
+          const blockId = node.id.replace('block-', '');
+          // Set edit mode to true and update the selected node ID
+          setEditMode(true, blockId);
+          // Find the node and zoom to it
+          setViewport(
+            {
+              x: -(node.position.x - window.innerWidth / 2 + 400),
+              y: -(node.position.y - window.innerHeight / 2 + 200),
+              zoom: 1,
+            },
+            { duration: 800 }
+          );
+        }}
+        onPaneClick={() => setEditMode(false, null)}
         fitView={true}
         panOnScroll
         panOnDrag

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Modal from '@/app/components/Modal';
 import ButtonNormal from '@/app/components/ButtonNormal';
@@ -19,16 +19,18 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
   existingPathsCount = 0,
   existingPaths = [],
 }) => {
-  const [pathNames, setPathNames] = useState<string[]>(
-    existingPaths.length > 0 
-      ? [...existingPaths] 
-      : [
-          `Path n°${existingPathsCount + 1}`,
-          `Path n°${existingPathsCount + 2}`,
-        ]
-  );
+  const [pathNames, setPathNames] = useState<string[]>([]);
   const colors = useColors();
   const { currentTheme } = useTheme();
+
+  // Initialize pathNames with existing paths when the modal opens
+  useEffect(() => {
+    if (existingPaths.length > 0) {
+      setPathNames([...existingPaths]);
+    } else {
+      setPathNames(['Path n°1', 'Path n°2']);
+    }
+  }, [existingPaths]);
 
   // Get theme variables for direct application
   const themeVars = useMemo(() => {
@@ -43,7 +45,7 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
   const hasEmptyPath = pathNames.some((name) => name.trim() === '');
 
   const handleAddPath = () => {
-    const nextPathNumber = existingPathsCount + pathNames.length + 1;
+    const nextPathNumber = pathNames.length + 1;
     setPathNames([...pathNames, `Path n°${nextPathNumber}`]);
   };
 

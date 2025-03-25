@@ -184,6 +184,7 @@ interface InputFieldProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   disabled?: boolean;
   errorMessage?: string;
+  setError?: (message: string) => void;
   iconUrl?: string; // URL for the leading icon
   iconColor?: string; // Tailwind color class for the icon
   dropdownOptions?: string[];
@@ -265,6 +266,7 @@ const InputField: React.FC<InputFieldProps> = ({
   onKeyDown,
   disabled = false,
   errorMessage = "",
+  setError,
   iconUrl = "",
   iconColor = "currentColor",
   dropdownOptions,
@@ -279,6 +281,10 @@ const InputField: React.FC<InputFieldProps> = ({
   const handleBlur = () => setIsFocused(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear any existing error when user starts typing
+    if (setError && errorMessage) {
+      setError('');
+    }
     if (onChange) {
       onChange(e.target.value);
     }
@@ -377,8 +383,7 @@ const InputField: React.FC<InputFieldProps> = ({
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",
@@ -663,26 +668,8 @@ const InputField: React.FC<InputFieldProps> = ({
               <input
                 type="text"
                 placeholder={value ? "" : placeholder}
-                // onKeyDown={(e) => onKeyDown?.(e)}
-                disabled={disabled}
-                onFocus={handleFocus}
-                onBlur={(e) => {
-                  handleBlur();
-                  onBlur?.();
-                }}
-                style={{
-                  ...inputStyle,
-                  width: '100%',
-                  flex: 1,
-                  fontSize: 16,
-                  lineHeight: "24px",
-                  outline: "none",
-                  border: "none",
-                  background: 'transparent',
-                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
-                  minWidth: '20px', // Ensure there's always space to type
-                }}
                 onKeyDown={(e) => {
+                  onKeyDown?.(e);
                   if (e.key === "Enter" || e.key === ",") {
                     e.preventDefault();
                     const tagValue = e.currentTarget.value.trim();
@@ -700,6 +687,24 @@ const InputField: React.FC<InputFieldProps> = ({
                       onChange?.(tags.join(","));
                     }
                   }
+                }}
+                disabled={disabled}
+                onFocus={handleFocus}
+                onBlur={(e) => {
+                  handleBlur();
+                  onBlur?.();
+                }}
+                style={{
+                  ...inputStyle,
+                  width: '100%',
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: "24px",
+                  outline: "none",
+                  border: "none",
+                  background: 'transparent',
+                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                  minWidth: '20px', // Ensure there's always space to type
                 }}
               />
             </div>
@@ -825,8 +830,7 @@ const InputField: React.FC<InputFieldProps> = ({
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",
