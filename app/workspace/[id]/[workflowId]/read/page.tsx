@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import { useParams } from 'next/navigation';
 import { User } from '@/types/user';
@@ -13,12 +13,17 @@ import { Workspace } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
 import ProcessCard from './components/ProcessCard';
 import ViewModeSwitch from './components/ViewModeSwitch';
-import Step from './components/Step';
-import ProcessCanvas from './components/ProcessCanvas';
+import VerticalStep from './components/steps/VerticalStep';
+import HorizontalLastStep from './components/steps/HorizontalLastStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
 import Alert from '@/app/components/Alert';
-import { usePathsStore } from '../store/pathsStore';
+import { usePathsStore } from './store/pathsStore';
+import ProcessCanvas from './components/ProcessCanvas';
+import VerticalLastStep from './components/steps/VerticalLastStep';
+import HorizontalStep from './components/steps/HorizontalStep';
+import { Block, Path } from '../types';
+import { BlockEndType } from '@/types/block';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
@@ -63,6 +68,14 @@ interface StepData {
   options?: StepOption[];
 }
 
+interface StrokeLine {
+  id: number;
+  source_block_id: number;
+  target_block_id: number;
+  workflow_id: number;
+  label: string;
+}
+
 export default function ExamplePage() {
   const params = useParams();
   const supabase = createClient();
@@ -77,12 +90,30 @@ export default function ExamplePage() {
   const [newPassword, setNewPassword] = useState<string>('');
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [viewMode, setViewMode] = useState<'vertical' | 'carousel'>('vertical');
-  const [selectedOption, setSelectedOption] = useState<string>('');
+  const [selectedOptions, setSelectedOptions] = useState<[number, number][]>(
+    []
+  );
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
   const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
     useState<boolean>(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
+  const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
+
+  const paths = usePathsStore((state) => state.paths);
+  const mainPath = useMemo(
+    () => paths.find((path) => path.parent_blocks.length === 0),
+    [paths]
+  );
+
+  const PathsToDisplayBlocks = useMemo(() => {
+    return pathsToDisplay.flatMap((path) =>
+      path.blocks.filter(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      )
+    );
+  }, [pathsToDisplay]);
 
   // Fetch user data
   useEffect(() => {
@@ -130,22 +161,201 @@ export default function ExamplePage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    console.log('paths', paths);
+  }, [paths]);
   // Fetch paths
   useEffect(() => {
-    const fetchPaths = async () => {
+    const fetchPathsAndStrokeLines = async () => {
       try {
+        // Fetch paths
         const response = await fetch(
           `/api/workspace/${params.id}/paths?workflow_id=${params.workflowId}`
         );
-        const paths = await response.json();
-        usePathsStore.getState().setPaths(paths.paths);
+        const pathsData = await response.json();
+
+        // Fetch stroke lines
+        const strokeLinesResponse = await fetch(
+          `/api/stroke-lines?workflow_id=${params.workflowId}`
+        );
+        if (strokeLinesResponse.ok) {
+          const strokeLinesData: StrokeLine[] =
+            await strokeLinesResponse.json();
+          setStrokeLines(strokeLinesData);
+
+          // Create new paths from stroke lines
+          const newPaths: Path[] = [...pathsData.paths];
+
+          strokeLinesData.forEach((strokeLine) => {
+            const sourcePath = pathsData.paths.find((p: Path) =>
+              p.blocks.some((b) => b.id === strokeLine.source_block_id)
+            );
+            const targetPath = pathsData.paths.find((p: Path) =>
+              p.blocks.some((b) => b.id === strokeLine.target_block_id)
+            );
+
+            if (sourcePath && targetPath) {
+              const targetBlockIndex = targetPath.blocks.findIndex(
+                (b: Block) => b.id === strokeLine.target_block_id
+              );
+
+              if (targetBlockIndex !== -1) {
+                const { clonedPath: newPath, sourceBlocks } =
+                  clonePathWithMergeBlocks(
+                    {
+                      id: generateUniqueId(newPaths),
+                      name: strokeLine.label,
+                      workflow_id: parseInt(params.workflowId as string),
+                      workflow: targetPath.workflow,
+                      blocks: targetPath.blocks.slice(targetBlockIndex),
+                      parent_blocks: [
+                        {
+                          path_id: -1,
+                          block_id: strokeLine.source_block_id,
+                          created_at: new Date().toISOString(),
+                          path: {} as Path,
+                          block: {} as Block,
+                        },
+                      ],
+                    },
+                    pathsData.paths,
+                    strokeLine.source_block_id
+                  );
+
+                // Add the new path to the original source block as a child path
+                console.log('newPaths', newPaths);
+                console.log(
+                  'strokeLine source block id',
+                  strokeLine.source_block_id
+                );
+                const sourceBlock = newPaths
+                  .flatMap((p) => p.blocks)
+                  .find((b: Block) => b.id === strokeLine.source_block_id);
+                console.log('sourceBlock', sourceBlock);
+                if (sourceBlock) {
+                  console.log(
+                    'adding original child path to source block',
+                    sourceBlock
+                  );
+                  sourceBlock.child_paths = [
+                    ...(sourceBlock.child_paths || []),
+                    {
+                      path_id: newPath.id,
+                      block_id: sourceBlock.id,
+                      created_at: new Date().toISOString(),
+                      path: newPath,
+                      block: sourceBlock,
+                    },
+                  ];
+                }
+                // Add the new path to all cloned source blocks as a child path
+                sourceBlocks.forEach((sourceBlock) => {
+                  console.log(
+                    'adding child path to duplicate source blocks',
+                    newPath,
+                    sourceBlock
+                  );
+                  sourceBlock.child_paths = [
+                    ...(sourceBlock.child_paths || []),
+                    {
+                      path_id: newPath.id,
+                      block_id: sourceBlock.id,
+                      created_at: new Date().toISOString(),
+                      path: newPath,
+                      block: sourceBlock,
+                    },
+                  ];
+                });
+
+                newPaths.push(newPath);
+
+                // Update paths store with the new paths
+                usePathsStore.getState().setPaths(newPaths);
+              }
+            }
+          });
+        }
       } catch (error) {
-        console.error('Error fetching paths:', error);
+        console.error('Error fetching paths and stroke lines:', error);
       }
     };
 
-    fetchPaths();
+    fetchPathsAndStrokeLines();
   }, [params.id, params.workflowId]);
+
+  // Update this useEffect to set initial pathsToDisplay
+  useEffect(() => {
+    if (mainPath) {
+      setPathsToDisplay([mainPath]);
+    }
+  }, [mainPath]);
+
+  // Update the deepCloneBlock function to handle MERGE blocks
+  const deepCloneBlock = (
+    block: Block,
+    sourceBlockId: number,
+    sourceBlocks: Block[]
+  ): Block => {
+    const clonedBlock = {
+      ...block,
+      id: Math.floor(Math.random() * -1000000), // Negative ID to avoid conflicts
+      child_paths: block.child_paths
+        ? block.child_paths.map((cp) => ({
+            ...cp,
+            block_id: block.id,
+            path: { ...cp.path },
+          }))
+        : [],
+    };
+    if (block.id === sourceBlockId) {
+      sourceBlocks.push(clonedBlock);
+    }
+
+    return clonedBlock;
+  };
+
+  // Update the clonePathWithMergeBlocks function to track stroke line source blocks
+  const clonePathWithMergeBlocks = (
+    path: Path,
+    allPaths: Path[],
+    sourceBlockId: number
+  ): { clonedPath: Path; sourceBlocks: Block[] } => {
+    // Find all blocks in all paths that match the source block ID
+    const sourceBlocks: Block[] = [];
+
+    // Clone the path normally
+    const clonedPath = {
+      ...path,
+      id: Math.floor(Math.random() * -1000000),
+      blocks: path.blocks.reduce<Block[]>((acc, block) => {
+        if (block.type === 'MERGE' && block.child_paths?.[0]) {
+          const childPath = allPaths.find(
+            (p) => p.id === block.child_paths[0].path.id
+          );
+          if (childPath) {
+            // Add only the child path's blocks
+            const childBlocks = childPath.blocks
+              .filter((b) => b.type !== 'BEGIN' && b.type !== 'END')
+              .map((b) => deepCloneBlock(b, sourceBlockId, sourceBlocks));
+            return [...acc, ...childBlocks];
+          }
+          return acc;
+        }
+        return [...acc, deepCloneBlock(block, sourceBlockId, sourceBlocks)];
+      }, []),
+    };
+
+    return { clonedPath, sourceBlocks };
+  };
+
+  // Add this helper function for generating unique IDs
+  const generateUniqueId = (existingPaths: Path[]): number => {
+    let newId: number;
+    do {
+      newId = Math.floor(Math.random() * -1000000);
+    } while (existingPaths.some((p) => p.id === newId));
+    return newId;
+  };
 
   // This is example data - in a real app, you would fetch this from your API
   const workflowData: WorkflowData = {
@@ -199,52 +409,6 @@ export default function ExamplePage() {
     setUser(updatedUser);
   };
 
-  const steps = [
-    // {
-    //   number: 1,
-    //   label: 'Read the introduction...',
-    //   description: "Add people to your team on Jazzy. Then you should be able to add people to any of your projects and to give them access to your team's resources.",
-    //   icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/slack.svg`,
-    //   isActive: true
-    // },
-    {
-      number: 2,
-      label: 'Send your presentation...',
-      description:
-        'Follow the steps to send your presentation to the team using Jazzy. Make sure to include all the necessary information and attachments.',
-      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/gmail.svg`,
-    },
-    {
-      number: 3,
-      label: 'Get through all the docs..',
-      description:
-        'Review all the documentation provided in Notion. This includes company policies, procedures, and guidelines that you need to be familiar with.',
-      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/notion.svg`,
-    },
-    {
-      number: 4,
-      label: 'Access the Linear',
-      description:
-        'Set up your Linear account to access and manage your tasks. This will be your main tool for project management and task tracking.',
-      icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/linear.svg`,
-      isConditional: true,
-      options: [
-        {
-          id: 'option1',
-          title: 'I already have a Linear account',
-          description:
-            'If you already have a Linear account, you can connect it to your workspace.',
-        },
-        {
-          id: 'option2',
-          title: 'I need to create a Linear account',
-          description:
-            'Create a new Linear account to start managing your tasks and projects.',
-        },
-      ],
-    },
-  ];
-
   const processCardData = {
     icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
     title: workflowData.name,
@@ -269,27 +433,127 @@ export default function ExamplePage() {
       avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/placeholder-avatar1.png`,
     },
     lastUpdate: '23/08/24',
-    steps: steps.length,
+    steps: PathsToDisplayBlocks.length,
     duration: '15 minutes',
   };
 
-  const handleOptionSelect = (optionId: string) => {
-    setSelectedOption(optionId);
+  const handleOptionSelect = (
+    optionId: number,
+    blockId: number,
+    isMerge: boolean = false
+  ) => {
+    const pathToAdd = paths.find((path) => path.id === optionId);
+    if (!pathToAdd) return;
+
+    // Find if the new path shares any parent blocks with existing paths
+    const sharedParentIndex = pathsToDisplay.findIndex((displayPath) =>
+      displayPath.parent_blocks.some((displayParentBlock) =>
+        pathToAdd.parent_blocks.some(
+          (newParentBlock) =>
+            newParentBlock.block_id === displayParentBlock.block_id &&
+            newParentBlock.block_id !== blockId
+        )
+      )
+    );
+
+    // Rest of the function for normal path addition...
+    setPathsToDisplay((currentPaths) => {
+      const newPaths = [...currentPaths];
+
+      // Get all parent block IDs of the path to add
+      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
+
+      // Find if there's a path with any matching parent block
+      const sameParentIndex = newPaths.findIndex((path) =>
+        path.parent_blocks.some((pb) => parentBlockIds.includes(pb.block_id))
+      );
+
+      if (sameParentIndex !== -1) {
+        // Remove this path and all following paths
+        newPaths.splice(sameParentIndex);
+      }
+
+      // Insert the new path
+      newPaths.push(pathToAdd);
+
+      // Check if last block has exactly one child path
+      const lastBlock = pathToAdd.blocks[pathToAdd.blocks.length - 1];
+      if (lastBlock?.child_paths?.length === 1) {
+        const childPath = paths.find(
+          (p) => p.id === lastBlock.child_paths[0].path.id
+        );
+        if (childPath && !newPaths.some((p) => p.id === childPath.id)) {
+          // Add the child path if it's not already in pathsToDisplay
+          newPaths.push(childPath);
+        }
+      }
+
+      // Schedule scroll after state update
+      setTimeout(() => {
+        const firstBlock = pathToAdd.blocks.find(
+          (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+        );
+        if (firstBlock) {
+          const element = document.getElementById(`block-${firstBlock.id}`);
+          if (element) {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'end',
+            });
+          }
+        }
+      }, 100);
+
+      return newPaths;
+    });
+
+    // Update selectedOptions
+    setSelectedOptions((currentSelected) => {
+      const newSelected = [...currentSelected];
+
+      // Get the block ID from the path's parent block instead of the parameter
+      const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
+      if (!blockIdFromPath) return currentSelected;
+
+      // Check if this selection pair already exists
+      const selectionExists = newSelected.some(
+        ([pathId, blockId]) =>
+          pathId === optionId && blockId === blockIdFromPath
+      );
+
+      // Only add if it doesn't exist
+      if (!selectionExists) {
+        newSelected.push([optionId, blockIdFromPath]);
+      }
+
+      // Keep only selections for remaining paths
+      return newSelected.filter(([pathId]) =>
+        [
+          ...pathsToDisplay.slice(
+            0,
+            sharedParentIndex !== -1 ? sharedParentIndex : undefined
+          ),
+          pathToAdd,
+        ]
+          .map((p) => p.id)
+          .includes(pathId)
+      );
+    });
   };
 
   // Add this function to handle step navigation
   const handleStepNavigation = (direction: 'prev' | 'next') => {
     if (direction === 'next') {
-      if (currentStep === steps.length - 1) {
-        // Show completion view
-        setCurrentStep(steps.length);
+      if (currentStep === PathsToDisplayBlocks.length - 1) {
+        setCurrentStep(PathsToDisplayBlocks.length);
       } else {
-        setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+        setCurrentStep((prev) =>
+          Math.min(prev + 1, PathsToDisplayBlocks.length - 1)
+        );
       }
     } else {
-      if (currentStep === steps.length) {
-        // Go back to last step from completion view
-        setCurrentStep(steps.length - 1);
+      if (currentStep === PathsToDisplayBlocks.length) {
+        setCurrentStep(PathsToDisplayBlocks.length - 1);
       } else {
         setCurrentStep((prev) => Math.max(prev - 1, -1));
       }
@@ -298,7 +562,7 @@ export default function ExamplePage() {
 
   // Add this function to calculate progress
   const calculateProgress = () => {
-    return ((currentStep + 1) / (steps.length + 1)) * 100;
+    return ((currentStep + 1) / (PathsToDisplayBlocks.length + 1)) * 100;
   };
 
   const handleCopyLink = () => {
@@ -334,6 +598,75 @@ export default function ExamplePage() {
     }
   };
 
+  const handleStepToggle = (blockId: number, isExpanded: boolean) => {
+    if (isExpanded) {
+      setCurrentStep(blockId);
+      // Add scrolling behavior
+      const element = stepRefs.current[blockId];
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          window.scrollBy(0, -120);
+        }, 50);
+      }
+    }
+    setExpandedSteps((prev) =>
+      isExpanded ? [...prev, blockId] : prev.filter((i) => i !== blockId)
+    );
+  };
+
+  // Add this function after other function declarations
+  const addPathToDisplay = (pathId: number, index: number) => {
+    const pathToAdd = paths.find((path) => path.id === pathId);
+    if (!pathToAdd) return;
+
+    // If path already exists, scroll to its first block
+    const existingPath = pathsToDisplay.find((p) => p.id === pathId);
+    if (existingPath) {
+      const firstBlock = existingPath.blocks.find(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      );
+      if (firstBlock) {
+        // Find the block element by its ID
+        const element = document.getElementById(`block-${firstBlock.id}`);
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+            window.scrollBy(0, -120); // Offset for header height
+          }, 50);
+        }
+      }
+      return;
+    }
+
+    setPathsToDisplay((currentPaths) => {
+      const newPaths = [...currentPaths];
+
+      // Get all parent block IDs of the path to add
+      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
+
+      // Find if there's a path with any matching parent block
+      const sameParentIndex = newPaths.findIndex((path) =>
+        path.parent_blocks.some((pb) => parentBlockIds.includes(pb.block_id))
+      );
+
+      if (sameParentIndex !== -1) {
+        // Remove this path and all following paths
+        newPaths.splice(sameParentIndex);
+      }
+
+      // Insert the new path
+      newPaths.splice(index, 0, pathToAdd);
+      return newPaths;
+    });
+  };
+
   return (
     <div
       className="min-h-screen flex"
@@ -346,6 +679,7 @@ export default function ExamplePage() {
             workspace={workspace}
             activeStepId={currentStep}
             onStepClick={handleStepClick}
+            pathsToDisplay={pathsToDisplay}
           />
           <div className="flex-1 ml-64">
             <div className="fixed right-0 left-64 bg-primary z-30">
@@ -403,75 +737,45 @@ export default function ExamplePage() {
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
                     <ProcessCard {...processCardData} />
-                    <div className="space-y-16">
-                      {steps.map((step, index) => (
-                        <div
-                          key={step.number}
-                          ref={(el) => {
-                            if (el) stepRefs.current[index] = el;
-                          }}
-                        >
-                          <Step
-                            number={step.number}
-                            title={step.label}
-                            description={step.description}
-                            icon={step.icon}
-                            isActive={currentStep === index}
-                            defaultExpanded={expandedSteps.includes(index)}
-                            onToggle={(isExpanded) => {
-                              setExpandedSteps((prev) =>
-                                isExpanded
-                                  ? [...prev, index]
-                                  : prev.filter((i) => i !== index)
-                              );
-                              if (isExpanded) {
-                                setCurrentStep(index);
-                                // Add scrolling behavior
-                                const element = stepRefs.current[index];
-                                if (element) {
-                                  setTimeout(() => {
-                                    element.scrollIntoView({
-                                      behavior: 'smooth',
-                                      block: 'center',
-                                    });
-                                    // Adjust for header height
-                                    window.scrollBy(0, -120); // Offset for header height
-                                  }, 50);
+                    {pathsToDisplay.map((path) => (
+                      <div key={path.id} className="space-y-16">
+                        {path.blocks
+                          .filter(
+                            (block) =>
+                              block.type !== 'BEGIN' && block.type !== 'LAST'
+                          )
+                          .map((block, index) => (
+                            <div
+                              key={block.id}
+                              id={`block-${block.id}`}
+                              ref={(el) => {
+                                if (el) stepRefs.current[index] = el;
+                              }}
+                            >
+                              <VerticalStep
+                                variant="default"
+                                block={block}
+                                isActive={currentStep === block.id}
+                                defaultExpanded={expandedSteps.includes(
+                                  block.id
+                                )}
+                                onToggle={(isExpanded) =>
+                                  handleStepToggle(block.id, isExpanded)
                                 }
-                              }
-                            }}
-                            variant={
-                              step.isConditional ? 'conditional' : 'default'
-                            }
-                            options={step.options || []}
-                            selectedOptionId={selectedOption}
-                            onOptionSelect={handleOptionSelect}
-                          >
-                            <div className="space-y-4">
-                              <div
-                                className="rounded-lg overflow-hidden border"
-                                style={{
-                                  borderColor: colors['border-secondary'],
-                                }}
-                              >
-                                <img
-                                  src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png"
-                                  alt="Step visualization"
-                                  className="w-full h-auto"
-                                />
-                              </div>
+                                selectedOptionIds={selectedOptions}
+                                onOptionSelect={(optionId, blockId) =>
+                                  handleOptionSelect(optionId, blockId)
+                                }
+                                isLastStep={false}
+                              />
                             </div>
-                          </Step>
-                        </div>
-                      ))}
-                      <Step
-                        variant="last"
-                        number={steps.length + 1}
-                        title="Complete"
-                        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
-                        onCopyLink={handleCopyLink}
-                      />
-                    </div>
+                          ))}
+                      </div>
+                    ))}
+                    <VerticalLastStep
+                      onCopyLink={handleCopyLink}
+                      icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
+                    />
                   </div>
                 </div>
               ) : (
@@ -519,7 +823,7 @@ export default function ExamplePage() {
                                 />
 
                                 {/* Step Dots - Initial View */}
-                                {steps.map((_, index) => (
+                                {PathsToDisplayBlocks.map((_, index) => (
                                   <div
                                     key={index}
                                     className="flex items-center"
@@ -547,7 +851,8 @@ export default function ExamplePage() {
                                       )}
                                     </div>
                                     {/* Connecting Line */}
-                                    {index < steps.length - 1 && (
+                                    {index <
+                                      PathsToDisplayBlocks.length - 1 && (
                                       <div
                                         className="w-[40px] h-[1px] mx-2"
                                         style={{
@@ -577,7 +882,10 @@ export default function ExamplePage() {
                                 variant="primary"
                                 size="small"
                                 onClick={() => handleStepNavigation('next')}
-                                disabled={currentStep === steps.length - 1}
+                                disabled={
+                                  currentStep ===
+                                  PathsToDisplayBlocks.length - 1
+                                }
                                 trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                               >
                                 Next step
@@ -591,92 +899,12 @@ export default function ExamplePage() {
                             className="flex flex-col"
                             style={{ height: '472px' }}
                           >
-                            {currentStep === steps.length ? (
-                              // Completion View
-                              <div className="flex flex-col items-center justify-center h-full">
-                                <div
-                                  className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border"
-                                  style={{
-                                    backgroundColor: colors['bg-secondary'],
-                                    borderColor: colors['border-secondary'],
-                                  }}
-                                >
-                                  <img
-                                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
-                                    alt="Success"
-                                    className="w-6 h-6"
-                                  />
-                                </div>
-                                <h3
-                                  className="text-xl font-medium mb-3"
-                                  style={{ color: colors['text-primary'] }}
-                                >
-                                  Congratulations! You've completed the process.
-                                </h3>
-                                <p
-                                  className="text-base mb-6 text-center"
-                                  style={{ color: colors['text-secondary'] }}
-                                >
-                                  Share it with your team members!
-                                </p>
-                                <ButtonNormal
-                                  variant="primary"
-                                  size="small"
-                                  onClick={handleCopyLink}
-                                  leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02-white.svg`}
-                                >
-                                  Copy link
-                                </ButtonNormal>
-                              </div>
+                            {currentStep === PathsToDisplayBlocks.length ? (
+                              <HorizontalLastStep onCopyLink={handleCopyLink} />
                             ) : (
-                              <>
-                                {/* Step Header */}
-                                <div className="flex items-center gap-4 mb-4">
-                                  {/* App Icon */}
-                                  <div
-                                    className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border"
-                                    style={{
-                                      backgroundColor: colors['bg-secondary'],
-                                      borderColor: colors['border-secondary'],
-                                    }}
-                                  >
-                                    <img
-                                      src={steps[currentStep].icon}
-                                      alt=""
-                                      className="w-6 h-6"
-                                    />
-                                  </div>
-                                  {/* Step Title */}
-                                  <div className="flex-1">
-                                    <div
-                                      className="flex items-center text-xl font-medium"
-                                      style={{ color: colors['text-primary'] }}
-                                    >
-                                      <span className="mr-2">
-                                        {steps[currentStep].number}.
-                                      </span>
-                                      <span>{steps[currentStep].label}</span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Description */}
-                                <p
-                                  className="text-base mb-6"
-                                  style={{ color: colors['text-secondary'] }}
-                                >
-                                  {steps[currentStep].description}
-                                </p>
-
-                                {/* Step Content */}
-                                <div className="rounded-lg overflow-hidden flex-1 mb-8">
-                                  <img
-                                    src="https://cdn.prod.website-files.com/674340930391b16981ae722e/674368682422d095ac5beb80_Use%20Case.png"
-                                    alt="Step visualization"
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              </>
+                              <HorizontalStep
+                                block={PathsToDisplayBlocks[currentStep]}
+                              />
                             )}
                           </div>
 
@@ -704,7 +932,7 @@ export default function ExamplePage() {
                                 />
 
                                 {/* Step Dots - Step View */}
-                                {steps.map((_, index) => (
+                                {PathsToDisplayBlocks.map((_, index) => (
                                   <div
                                     key={index}
                                     className="flex items-center"
@@ -732,7 +960,8 @@ export default function ExamplePage() {
                                       )}
                                     </div>
                                     {/* Connecting Line */}
-                                    {index < steps.length - 1 && (
+                                    {index <
+                                      PathsToDisplayBlocks.length - 1 && (
                                       <div
                                         className="w-[40px] h-[1px] mx-2"
                                         style={{
@@ -762,10 +991,12 @@ export default function ExamplePage() {
                                 variant="primary"
                                 size="small"
                                 onClick={() => handleStepNavigation('next')}
-                                disabled={currentStep === steps.length}
+                                disabled={
+                                  currentStep === PathsToDisplayBlocks.length
+                                }
                                 trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                               >
-                                {currentStep === steps.length - 1
+                                {currentStep === PathsToDisplayBlocks.length - 1
                                   ? 'Complete'
                                   : 'Next step'}
                               </ButtonNormal>

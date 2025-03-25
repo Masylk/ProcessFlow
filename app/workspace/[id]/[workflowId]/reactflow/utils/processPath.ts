@@ -2,7 +2,7 @@ import {
     Node,
     Edge,
   } from '@xyflow/react';
-import { Path } from '../types';
+import { Path } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { usePathsStore } from '../store/pathsStore';
 

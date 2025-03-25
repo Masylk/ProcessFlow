@@ -1,4 +1,4 @@
-import { Path, Block } from '../types';
+import { Path, Block } from '../../types';
 import { getBlocksAfterPosition } from './getBlocksAfterPosition';
 import { getChildPathsIds } from './getChildPathsIds';
 import { BlockEndType } from '@/types/block';

@@ -22,7 +22,7 @@ import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './nodes/CustomNode';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
-import { NodeData, EdgeData, DropdownDatas, Path, Block } from '../types';
+import { NodeData, EdgeData, DropdownDatas, Path, Block } from '../../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
 import BeginNode from './nodes/BeginNode';
@@ -529,9 +529,10 @@ export function Flow({
         isEditMode || isConnectMode ? '' : ''
       }`}
       style={{
-        backgroundColor: isEditMode || isConnectMode 
-          ? colors['bg-primary-solid'] 
-          : colors['bg-primary']
+        backgroundColor:
+          isEditMode || isConnectMode
+            ? colors['bg-primary-solid']
+            : colors['bg-primary'],
       }}
     >
       <ReactFlow
@@ -584,8 +585,8 @@ export function Flow({
         className={`transition-all duration-300 ${
           isConnectMode ? 'connect-mode' : ''
         }`}
-        style={{ 
-          backgroundColor: colors['bg-secondary']
+        style={{
+          backgroundColor: colors['bg-secondary'],
         }}
       >
         <Background 

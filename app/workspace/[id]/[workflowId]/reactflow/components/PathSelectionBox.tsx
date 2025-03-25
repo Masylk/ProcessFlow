@@ -1,4 +1,4 @@
-import { Path } from '../types';
+import { Path } from '../../types';
 import React, { useState } from 'react';
 import { usePathSelectionStore } from '../store/pathSelectionStore';
 import { useColors } from '@/app/theme/hooks';

@@ -1,4 +1,4 @@
-import { Path } from '../types';
+import { Path } from '../../types';
 
 export async function mergePaths(paths: Path[], workflowId: number) {
   try {

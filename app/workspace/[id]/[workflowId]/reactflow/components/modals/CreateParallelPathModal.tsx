@@ -6,7 +6,7 @@ import InputField from '@/app/components/InputFields';
 import InputDropdown from '@/app/components/InputDropdown';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
-import { Path } from '../../types';
+import { Path } from '../../../types';
 
 interface CreateParallelPathModalProps {
   onClose: () => void;
@@ -34,10 +34,13 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   // Get theme variables for direct application
   const themeVars = useMemo(() => {
     const theme = themeRegistry.get(currentTheme);
-    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    }, {});
+    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        acc[`--${key}`] = value;
+        return acc;
+      },
+      {}
+    );
   }, [currentTheme]);
 
   // Initialize pathNames with existing paths when the modal opens
@@ -80,20 +83,18 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
         width="w-[600px]"
         actions={
           <div className="flex justify-end gap-2 w-full">
-            <ButtonNormal
-              variant="tertiary"
-              size="small"
-              onClick={onClose}
-            >
+            <ButtonNormal variant="tertiary" size="small" onClick={onClose}>
               Cancel
             </ButtonNormal>
             <ButtonNormal
               variant="primary"
               size="small"
-              onClick={() => onConfirm({
-                paths_to_create: pathNames,
-                path_to_move: selectedPath,
-              })}
+              onClick={() =>
+                onConfirm({
+                  paths_to_create: pathNames,
+                  path_to_move: selectedPath,
+                })
+              }
               disabled={hasEmptyPath || pathNames.length === 0}
             >
               Create paths
@@ -101,13 +102,19 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
           </div>
         }
       >
-        <div className="flex flex-col gap-6 pb-4" style={{ color: colors['text-primary'] }}>
+        <div
+          className="flex flex-col gap-6 pb-4"
+          style={{ color: colors['text-primary'] }}
+        >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto p-1">
               {pathNames.map((name, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex flex-col gap-1 flex-grow">
-                    <label className="text-sm" style={{ color: colors['text-secondary'] }}>
+                    <label
+                      className="text-sm"
+                      style={{ color: colors['text-secondary'] }}
+                    >
                       Path n°{index + 1}
                     </label>
                     <InputField
@@ -144,18 +151,21 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
 
           {hasBlocksAfterPosition(position) && (
             <div className="flex flex-col gap-1">
-              <label className="text-sm" style={{ color: colors['text-secondary'] }}>
+              <label
+                className="text-sm"
+                style={{ color: colors['text-secondary'] }}
+              >
                 Move blocks to
               </label>
               <InputDropdown
                 value={pathNames[selectedPath]}
                 onChange={(value) => {
-                  const index = pathNames.findIndex(name => name === value);
+                  const index = pathNames.findIndex((name) => name === value);
                   if (index !== -1) {
                     setSelectedPath(index);
                   }
                 }}
-                options={pathNames.map(name => ({ name, handle: name }))}
+                options={pathNames.map((name) => ({ name, handle: name }))}
                 mode={currentTheme === 'dark' ? 'dark' : 'light'}
               />
             </div>

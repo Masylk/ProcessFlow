@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
-import { Path } from '../../reactflow/types';
+import { Path } from '../../types';
 
 interface StepsContainerProps {
   path: Path;
@@ -57,19 +57,20 @@ export default function StepsContainer({
         blocks.map((block) => (
           <button
             key={block.id}
-            onClick={() => onStepClick(block.position)}
+            onClick={() => onStepClick(block.id)}
             className={cn(
               'w-full flex items-center gap-3 p-1 rounded-lg text-sm',
               'transition-colors duration-200 ease-in-out',
               'focus:outline-none cursor-pointer',
-              activeStepId === block.position 
-                ? 'bg-brand-solid text-white' 
+              activeStepId === block.id
+                ? 'bg-brand-solid text-white'
                 : 'bg-transparent hover:bg-secondary'
             )}
             style={{
-              backgroundColor: activeStepId === block.position 
-                ? colors['bg-brand-solid']
-                : 'transparent'
+              backgroundColor:
+                activeStepId === block.id
+                  ? colors['bg-brand-solid']
+                  : 'transparent',
             }}
             role="link"
             aria-label={`Navigate to ${block.title || block.step_details} section`}
@@ -78,7 +79,7 @@ export default function StepsContainer({
               className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-sm font-medium"
               style={{
                 color:
-                  activeStepId === block.position
+                  activeStepId === block.id
                     ? colors['text-white']
                     : colors['text-secondary'],
               }}
@@ -88,11 +89,11 @@ export default function StepsContainer({
             <span
               className={cn(
                 'text-left text-sm truncate flex-1',
-                activeStepId === block.position && 'font-medium'
+                activeStepId === block.id && 'font-medium'
               )}
               style={{
                 color:
-                  activeStepId === block.position
+                  activeStepId === block.id
                     ? colors['text-white']
                     : colors['text-secondary'],
               }}

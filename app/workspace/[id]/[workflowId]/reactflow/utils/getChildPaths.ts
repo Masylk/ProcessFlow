@@ -1,4 +1,4 @@
-import { Path } from '../types';
+import { Path } from '../../types';
 
 /**
  * Returns all child paths connected to the last block of a given path
