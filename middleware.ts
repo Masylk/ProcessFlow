@@ -75,7 +75,7 @@ export async function middleware(request: NextRequest) {
 
   // If not authenticated and trying to access protected routes
   if (!isAuthRoute) {
-    // return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Allow access to auth routes for non-authenticated users
