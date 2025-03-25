@@ -10,7 +10,7 @@ import {
   getNodesBounds,
   getViewportForBounds,
 } from '@xyflow/react';
-import { Block, NodeData } from '../../types';
+import { Block, NodeData } from '../../../types';
 import { useModalStore } from '../../store/modalStore';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { usePathSelectionStore } from '../../store/pathSelectionStore';
@@ -727,7 +727,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
       <div
         className={`relative rounded-lg border ${
-          selected ? 'border-[#3537cc] shadow-md' : `border-[${colors['border-secondary']}]`
+          selected
+            ? 'border-[#3537cc] shadow-md'
+            : `border-[${colors['border-secondary']}]`
         } ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
@@ -741,7 +743,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
-          borderColor: selected ? '#3537cc' : colors['border-secondary']
+          borderColor: selected ? '#3537cc' : colors['border-secondary'],
         }}
       >
         <Handle
@@ -816,7 +818,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{
                 border: `1px solid ${colors['border-secondary']}`,
@@ -839,7 +841,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
             <div className="flex-grow">
               <div className="flex items-start justify-between">
-                <h3 
+                <h3
                   className="text-sm font-medium"
                   style={{ color: colors['fg-primary'] }}
                 >
@@ -850,10 +852,11 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="p-1 rounded-md transition-colors hover:bg-opacity-80"
                   style={{ 
                     color: colors['fg-tertiary'],
-                    backgroundColor: 'transparent'
+                    backgroundColor: 'transparent',
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                    e.currentTarget.style.backgroundColor =
+                      colors['bg-secondary'];
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -868,7 +871,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               </div>
 
               {blockData.description && (
-                <p 
+                <p
                   className="text-xs mt-1"
                   style={{ color: colors['fg-tertiary'] }}
                 >
@@ -924,13 +927,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           {/* Average time - only show if defined */}
           {blockData.average_time && (
             <div className="flex items-center text-xs mt-auto">
-              <span 
-                className="px-3 py-1 rounded-full" 
+              <span
+                className="px-3 py-1 rounded-full"
                 style={{
                   backgroundColor: colors['bg-secondary'],
                   borderColor: colors['border-secondary'],
                   color: colors['fg-tertiary'],
-                  border: '1px solid'
+                  border: '1px solid',
                 }}
               >
                 {blockData.average_time} min

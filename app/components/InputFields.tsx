@@ -663,7 +663,7 @@ const InputField: React.FC<InputFieldProps> = ({
               <input
                 type="text"
                 placeholder={value ? "" : placeholder}
-                onKeyDown={(e) => onKeyDown?.(e)}
+                // onKeyDown={(e) => onKeyDown?.(e)}
                 disabled={disabled}
                 onFocus={handleFocus}
                 onBlur={(e) => {

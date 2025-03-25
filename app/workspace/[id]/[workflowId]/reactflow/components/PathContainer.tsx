@@ -1,5 +1,5 @@
 import React from 'react';
-import { Path } from '../types';
+import { Path } from '../../types';
 import { useColors } from '@/app/theme/hooks';
 
 interface PathContainerProps {

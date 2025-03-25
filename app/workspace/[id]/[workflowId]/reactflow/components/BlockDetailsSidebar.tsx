@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import TextEditor from './TextEditor';
 import { useColors } from '@/app/theme/hooks';
 import { ThemeProvider } from '@/app/context/ThemeContext';
-import { Block, TaskType } from '../types';
+import { Block, TaskType } from '../../types';
 import BlockMediaVisualizer from './BlockMediaVisualizer';
 import MediaUploader from './MediaUploader';
 import IconModifier from './IconModifier';
@@ -13,11 +13,16 @@ import { InputTokens } from '@/app/theme/types';
 import InputField from '@/app/components/InputFields';
 
 // Helper function from TextAreaInput
-const getInputToken = (state: 'normal' | 'hover' | 'focus', type: 'bg' | 'fg' | 'border', destructive: boolean = false, disabled: boolean = false): keyof InputTokens => {
+const getInputToken = (
+  state: 'normal' | 'hover' | 'focus',
+  type: 'bg' | 'fg' | 'border',
+  destructive: boolean = false,
+  disabled: boolean = false
+): keyof InputTokens => {
   if (disabled) {
     return `input-disabled-${type}` as keyof InputTokens;
   }
-  
+
   const prefix = destructive ? 'input-destructive-' : 'input-';
   const suffix = state === 'normal' ? '' : `-${state}`;
   return `${prefix}${type}${suffix}` as keyof InputTokens;
@@ -121,9 +126,9 @@ export default function BlockDetailsSidebar({
       {/* Sidebar */}
       <div
         className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l z-50 flex flex-col overflow-y-auto"
-        style={{ 
+        style={{
           backgroundColor: colors['bg-primary'],
-          borderColor: colors['border-primary']
+          borderColor: colors['border-primary'],
         }}
         ref={sidebarRef}
       >
@@ -151,7 +156,7 @@ export default function BlockDetailsSidebar({
           />
 
           {/* Message Button */}
-          <ButtonNormal 
+          <ButtonNormal
             size="small"
             variant="secondary"
             iconOnly
@@ -174,16 +179,16 @@ export default function BlockDetailsSidebar({
                   onKeyDown={handleTitleKeyDown}
                   autoFocus
                   className="text-lg font-semibold border-b-2 outline-none bg-transparent"
-                  style={{ 
+                  style={{
                     color: colors['text-primary'],
-                    borderColor: colors['accent-primary'] 
+                    borderColor: colors['accent-primary'],
                   }}
                   placeholder="Enter title"
                 />
               ) : (
                 <h1
                   className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50"
-                  style={{ 
+                  style={{
                     color: colors['text-primary'],
                     backgroundColor: 'transparent',
                   }}
@@ -198,15 +203,23 @@ export default function BlockDetailsSidebar({
             </div>
 
             {/* Main Info Container */}
-            <div className="border-t border-b my-4 py-4" style={{ borderColor: colors['border-primary'] }}>
+            <div
+              className="border-t border-b my-4 py-4"
+              style={{ borderColor: colors['border-primary'] }}
+            >
               <div className=" flex flex-col gap-4">
-                
                 {/* Last Modified */}
                 <div className="flex justify-start items-center space-x-[45px]">
-                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
+                  <div
+                    className="text-sm font-normal font-['Inter']"
+                    style={{ color: colors['text-primary'] }}
+                  >
                     Last Modified
                   </div>
-                  <div className="text-xs font-normal font-['Inter']" style={{ color: colors['text-secondary'] }}>
+                  <div
+                    className="text-xs font-normal font-['Inter']"
+                    style={{ color: colors['text-secondary'] }}
+                  >
                     {block.last_modified
                       ? new Date(block.last_modified).toLocaleDateString()
                       : 'N/A'}
@@ -215,7 +228,10 @@ export default function BlockDetailsSidebar({
 
                 {/* Average Time */}
                 <div className="flex justify-start items-center space-x-[36px]">
-                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
+                  <div
+                    className="text-sm font-normal font-['Inter']"
+                    style={{ color: colors['text-primary'] }}
+                  >
                     Average Time
                   </div>
                   <div className="flex items-center gap-2" style={{ width: '140px' }}>
@@ -241,7 +257,10 @@ export default function BlockDetailsSidebar({
 
                 {/* Task Type */}
                 <div className="flex justify-start items-center space-x-[94px]">
-                  <div className="text-sm font-normal font-['Inter']" style={{ color: colors['text-primary'] }}>
+                  <div
+                    className="text-sm font-normal font-['Inter']"
+                    style={{ color: colors['text-primary'] }}
+                  >
                     Type
                   </div>
                   <div className="relative" style={{ width: '140px' }}>
@@ -321,7 +340,10 @@ export default function BlockDetailsSidebar({
 
             {/* Description Section */}
             <div className="my-4">
-              <div className="text-sm font-medium font-['Inter'] leading-tight mb-3" style={{ color: colors['text-primary'] }}>
+              <div
+                className="text-sm font-medium font-['Inter'] leading-tight mb-3"
+                style={{ color: colors['text-primary'] }}
+              >
                 Description
               </div>
               <div
@@ -330,11 +352,35 @@ export default function BlockDetailsSidebar({
               >
                 <div
                   style={{
-                    backgroundColor: colors[getInputToken('normal', 'bg', false, !isEditingDescription)],
-                    color: colors[getInputToken('normal', 'fg', false, !isEditingDescription)],
-                    borderColor: colors[getInputToken('normal', 'border', false, !isEditingDescription)],
+                    backgroundColor:
+                      colors[
+                        getInputToken(
+                          'normal',
+                          'bg',
+                          false,
+                          !isEditingDescription
+                        )
+                      ],
+                    color:
+                      colors[
+                        getInputToken(
+                          'normal',
+                          'fg',
+                          false,
+                          !isEditingDescription
+                        )
+                      ],
+                    borderColor:
+                      colors[
+                        getInputToken(
+                          'normal',
+                          'border',
+                          false,
+                          !isEditingDescription
+                        )
+                      ],
                     boxShadow: isEditingDescription
-                      ? "0px 0px 0px 4px rgba(78,107,215,0.12)"
+                      ? '0px 0px 0px 4px rgba(78,107,215,0.12)'
                       : '0px 1px 2px rgba(16, 24, 40, 0.05)',
                     borderWidth: '1px',
                     borderRadius: '0.5rem',
@@ -357,7 +403,10 @@ export default function BlockDetailsSidebar({
 
             {/* Media Section */}
             <div className="flex flex-col justify-start mt-2">
-              <div className="text-sm font-medium font-['Inter'] leading-tight mb-3" style={{ color: colors['text-primary'] }}>
+              <div
+                className="text-sm font-medium font-['Inter'] leading-tight mb-3"
+                style={{ color: colors['text-primary'] }}
+              >
                 Media
               </div>
               {block.image ? (
@@ -378,9 +427,7 @@ export default function BlockDetailsSidebar({
 
   // Use createPortal with ThemeProvider
   return createPortal(
-    <ThemeProvider>
-      {sidebarContent}
-    </ThemeProvider>,
+    <ThemeProvider>{sidebarContent}</ThemeProvider>,
     document.body
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { EdgeProps, getSmoothStepPath } from '@xyflow/react';
-import { EdgeData } from '../../types';
+import { EdgeData } from '../../../types';
 import { BlockEndType } from '@/types/block';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';

@@ -1,4 +1,4 @@
-import { Path } from '../types';
+import { Path } from '../../types';
 
 interface CreateChildPathsResponse {
   paths: Path[];
