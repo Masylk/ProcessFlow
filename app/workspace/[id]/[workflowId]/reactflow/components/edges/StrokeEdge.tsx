@@ -1,4 +1,4 @@
-import React, { useState, useCallback, CSSProperties } from 'react';
+import React, { useState, useCallback, CSSProperties, useRef, ReactNode, useEffect } from 'react';
 import {
   EdgeProps,
   getSmoothStepPath,
@@ -10,6 +10,7 @@ import {
 } from '@xyflow/react';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
+import styles from './StrokeEdge.module.css';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -58,20 +59,23 @@ function StrokeEdge({
   targetPosition,
   style = {} as CSSProperties,
   data,
-}: EdgeProps) {
+}: EdgeProps): JSX.Element {
   const [showLabel, setShowLabel] = useState(false);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
   const { isConnectMode, previewEdgeId } = useConnectModeStore();
   const zoom = useStore((state) => state.transform[2]);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
+  const hideTimeoutRef = useRef<NodeJS.Timeout>();
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
 
   const handleMouseEnter = useCallback(
     (event: React.MouseEvent) => {
-      console.log('Edge hover detected');
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
       const flowPosition = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -81,6 +85,24 @@ function StrokeEdge({
     },
     [screenToFlowPosition]
   );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    hideTimeoutRef.current = setTimeout(() => {
+      setShowLabel(false);
+    }, 400); // Small delay to prevent flickering
+  }, []);
 
   let edgePath = '';
 
@@ -125,14 +147,13 @@ function StrokeEdge({
       {/* Visible stroke line */}
       <path
         id={id}
-        className="react-flow__edge-path transition-opacity duration-300"
+        className="react-flow__edge-path stroke-edge-animated"
         d={edgePath}
         style={{
           ...style,
           strokeWidth: 2,
           stroke: '#FF69A3',
-          strokeDasharray: '10,5',
-          markerEnd: `url(#${markerId})`,
+          strokeDasharray: '5',
           opacity:
             isConnectMode && previewEdgeId !== id
               ? 0.4
@@ -141,46 +162,35 @@ function StrokeEdge({
                 : data?.isVisible === false
                   ? 0
                   : 1,
+          markerEnd: `url(#${markerId})`,
           pointerEvents: 'none',
-          transition: 'opacity 0.2s',
         }}
       />
-      {/* Hover detection path */}
+      {/* Wide hover detection path */}
       <path
         d={edgePath}
         fill="none"
-        strokeWidth="12"
+        strokeWidth="24"
         stroke="transparent"
         onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => {
-          console.log('Edge hover ended');
-          setShowLabel(false);
-        }}
+        onMouseLeave={handleMouseLeave}
         style={{
-          cursor: 'pointer',
+          cursor: 'grab',
           opacity: data?.isVisible === false ? 0 : 1,
           pointerEvents: data?.isVisible === false ? 'none' : 'stroke',
         }}
       />
-      {showLabel && data?.isVisible !== false && (
-        <circle
-          cx={labelPosition.x}
-          cy={labelPosition.y}
-          r={4}
-          fill="red"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
+     
       {showLabel && data?.label && data?.isVisible !== false && (
         <EdgeLabelRenderer>
           <div
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${
-                labelPosition.y - 5 / zoom
+                labelPosition.y - 25 / zoom
               }px) scale(${1 / zoom})`,
               pointerEvents: 'none',
-              zIndex: 1000,
+              zIndex: 9999,
             }}
           >
             <div
@@ -196,6 +206,18 @@ function StrokeEdge({
           </div>
         </EdgeLabelRenderer>
       )}
+      <style>
+        {`
+          @keyframes flowAnimation {
+            0% {
+              stroke-dashoffset: 0;
+            }
+            100% {
+              stroke-dashoffset: 1000;
+            }
+          }
+        `}
+      </style>
     </>
   );
 }

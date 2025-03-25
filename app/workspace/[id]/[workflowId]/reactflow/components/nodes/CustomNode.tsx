@@ -726,11 +726,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-lg border ${
-          selected
-            ? 'border-[#3537cc] shadow-md'
-            : `border-[${colors['border-secondary']}]`
-        } ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
+        className={`relative rounded-lg border-2
+        ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
           (isEditMode && id !== `block-${selectedNodeId}`) ||
@@ -743,7 +740,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
-          borderColor: selected ? '#3537cc' : colors['border-secondary'],
+          borderColor: selected ? '#3537cc' : colors['border-secondary']
         }}
       >
         <Handle
@@ -818,7 +815,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div
+            <div 
               className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{
                 border: `1px solid ${colors['border-secondary']}`,
@@ -841,7 +838,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
             <div className="flex-grow">
               <div className="flex items-start justify-between">
-                <h3
+                <h3 
                   className="text-sm font-medium"
                   style={{ color: colors['fg-primary'] }}
                 >
@@ -852,11 +849,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="p-1 rounded-md transition-colors hover:bg-opacity-80"
                   style={{ 
                     color: colors['fg-tertiary'],
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'transparent'
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      colors['bg-secondary'];
+                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -871,7 +867,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               </div>
 
               {blockData.description && (
-                <p
+                <p 
                   className="text-xs mt-1"
                   style={{ color: colors['fg-tertiary'] }}
                 >
@@ -943,44 +939,54 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         </div>
 
         {showCheckbox && (
-          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-            <input
-              type="checkbox"
-              checked={selectedPaths.includes(data.path?.id ?? -1)}
-              onChange={() =>
-                togglePathSelection(
-                  data.path?.id ?? -1,
-                  endBlock?.id ?? -1,
-                  pathParentBlockId ?? -1
-                )
-              }
-              className={`${styles.checkbox}`}
-              style={{ 
-                borderColor: colors['border-primary'],
-                '--bg-brand-primary': colors['bg-brand-solid'],
-                '--border-brand': colors['border-brand'],
-                '--bg-secondary': colors['bg-primary']
-              } as React.CSSProperties}
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="absolute -top-8 left-0 flex items-center gap-2">
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+              <input
+                type="checkbox"
+                checked={selectedPaths.includes(data.path?.id ?? -1)}
+                onChange={() =>
+                  togglePathSelection(
+                    data.path?.id ?? -1,
+                    endBlock?.id ?? -1,
+                    pathParentBlockId ?? -1
+                  )
+                }
+                className={`${styles.checkbox}`}
+                style={{ 
+                  borderColor: colors['border-primary'],
+                  '--bg-brand-primary': colors['bg-brand-solid'],
+                  '--border-brand': colors['border-brand'],
+                  '--bg-secondary': colors['bg-primary']
+                } as React.CSSProperties}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="text-sm text-gray-300 dark:text-gray-600">
+                {selectedPaths.includes(data.path?.id ?? -1) ? 'Selected' : 'Not selected'}
+              </span>
+            </div>
           </div>
         )}
 
         {showUpdateCheckbox && endBlockId && (
-          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-            <input
-              type="checkbox"
-              checked={selectedEndBlocks.includes(endBlockId)}
-              onChange={() => toggleEndBlockSelection(endBlockId)}
-              className={`${styles.checkbox} ${styles.updateCheckbox}`}
-              style={{ 
-                borderColor: colors['border-primary'],
-                '--bg-brand-solid': colors['bg-brand-solid'],
-                '--border-brand': colors['border-brand'],
-                '--bg-secondary': colors['bg-primary']
-              } as React.CSSProperties}
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="absolute -top-8 left-0 flex items-center gap-2">
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+              <input
+                type="checkbox"
+                checked={selectedEndBlocks.includes(endBlockId)}
+                onChange={() => toggleEndBlockSelection(endBlockId)}
+                className={`${styles.checkbox} ${styles.updateCheckbox}`}
+                style={{ 
+                  borderColor: colors['border-primary'],
+                  '--bg-brand-primary': colors['bg-brand-solid'],
+                  '--border-brand': colors['border-brand'],
+                  '--bg-secondary': colors['bg-primary']
+                } as React.CSSProperties}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="text-sm text-gray-300 dark:text-gray-600">
+                {selectedEndBlocks.includes(endBlockId) ? 'Selected' : 'Not selected'}
+              </span>
+            </div>
           </div>
         )}
 

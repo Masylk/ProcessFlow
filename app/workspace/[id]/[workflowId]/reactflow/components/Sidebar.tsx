@@ -10,6 +10,7 @@ import InputField from '@/app/components/InputFields';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { User } from '@/types/user';
+import { useEditModeStore } from '../store/editModeStore';
 
 interface SidebarProps {
   workspaceId: string;
@@ -19,6 +20,7 @@ interface SidebarProps {
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const { currentTheme } = useTheme();
   const colors = useColors();
+  const { selectedNodeId, setEditMode } = useEditModeStore();
   const originalPaths = usePathsStore((state) => state.paths);
   const paths = useMemo(
     () =>
@@ -91,20 +93,24 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   // Find the main path from filtered paths
   const mainPath = paths.find((path) => path.parent_blocks.length === 0);
   // Function to handle block click and zoom to node
-  const handleBlockClick = (blockId: number) => {
-    const node = getNodes().find((n) => n.id === `block-${blockId}`);
-    if (!node) return;
+  const handleBlockClick = useCallback((blockId: number) => {
+    // Set the selected node ID in the store
+    setEditMode(true, blockId.toString());
 
-    // Center on node and offset to the left to make room for sidebar
-    setViewport(
-      {
-        x: -(node.position.x - window.innerWidth / 2 + 200),
-        y: -(node.position.y - window.innerHeight / 2 + 200),
-        zoom: 1,
-      },
-      { duration: 800 }
-    );
-  };
+    // Find the node and zoom to it
+    const nodeId = `block-${blockId}`;
+    const node = getNodes().find((n) => n.id === nodeId);
+    if (node) {
+      setViewport(
+        {
+          x: -(node.position.x - window.innerWidth / 2 + 400),
+          y: -(node.position.y - window.innerHeight / 2 + 200),
+          zoom: 1,
+        },
+        { duration: 800 }
+      );
+    }
+  }, [getNodes, setViewport, setEditMode]);
 
   const togglePathVisibility = (pathId: number, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent block click when clicking the toggle
@@ -151,6 +157,12 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     return childPaths.some(pathContainsMatchingBlocks);
   };
 
+  // Helper function to check if a block is selected
+  const isBlockSelected = useCallback((blockId: number) => {
+    // Handle both formats: with and without 'block-' prefix
+    return selectedNodeId === `block-${blockId}` || selectedNodeId === blockId.toString();
+  }, [selectedNodeId]);
+
   const renderPathContent = (path: Path, level: number = 0) => {
     const isPathCollapsed = collapsedPaths.has(path.id);
 
@@ -160,48 +172,36 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     }
 
     return (
-      <div key={path.id}>
+      <div key={path.id} className="w-full">
+        {/* BEGIN blocks */}
         {path.blocks
           .filter((block) => block.type === 'BEGIN')
           .map((block) => (
             <div
               key={block.id}
-              className="rounded-md cursor-pointer transition-all duration-200"
+              className="w-full cursor-pointer transition-all duration-200"
               style={{
-                backgroundColor: 'transparent',
-                padding: '2px',
-                marginBottom: '2px',
-                width: '100%',
+                backgroundColor: isBlockSelected(block.id) ? colors['brand-utility-600'] : 'transparent',
               }}
               onClick={() => handleBlockClick(block.id)}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                e.currentTarget.style.transform = 'translateX(0px)';
+                if (!isBlockSelected(block.id)) {
+                  e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                }
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.transform = 'translateX(0)';
+                if (!isBlockSelected(block.id)) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
               }}
             >
               <div 
-                className="flex items-center gap-2 py-1.5 px-2 w-full"
+                className="flex items-center gap-2 h-8 px-4 w-full"
                 onClick={(e) => {
                   e.stopPropagation();
                   togglePathVisibility(path.id, e);
                 }}
               >
-                <DynamicIcon
-                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
-                  size={20}
-                  variant="tertiary"
-                  className="flex-shrink-0"
-                />
-                <span
-                  className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
-                  style={{ color: colors['text-primary'] }}
-                >
-                  {path.name}{' '}
-                </span>
                 <DynamicIcon
                   url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
                     isPathCollapsed ? 'chevron-right' : 'chevron-down'
@@ -210,116 +210,153 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                   variant="tertiary"
                   className="flex-shrink-0"
                 />
+                <DynamicIcon
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
+                  size={20}
+                  variant="tertiary"
+                  className="flex-shrink-0"
+                />
+                <span
+                  className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
+                  style={{ color: isBlockSelected(block.id) ? colors['text-primary'] : colors['text-primary'] }}
+                >
+                  {path.name}
+                </span>
               </div>
             </div>
           ))}
 
+        {/* Other blocks */}
         {!isPathCollapsed && (
-          <>
-            {path.blocks
-              .filter(
-                (block) =>
-                  block.type !== 'LAST' &&
-                  block.type !== 'BEGIN' &&
-                  blockMatchesSearch(block)
-              )
-              .map((block) => {
-                if (block.type === 'MERGE' || block.type === 'PATH') {
-                  return block.child_paths?.map((childPathConnection) => {
-                    const childPath = paths.find(
-                      (p) => p.id === childPathConnection.path.id
-                    );
+          <div className="w-full">
+            <div className="relative w-full">
+              {/* Vertical line for the entire level */}
+              {level > 0 && (
+                <div
+                  className="absolute left-6 top-0 bottom-0 w-px"
+                  style={{ backgroundColor: colors['border-secondary'] }}
+                />
+              )}
 
-                    if (childPath && pathContainsMatchingBlocks(childPath)) {
-                      // Only render if this is the last occurrence of this path ID
-                      if (
-                        block.type === 'MERGE' &&
-                        !getLastOccurrenceIds.includes(block.id)
-                      ) {
-                        return null;
-                      }
-                      return (
-                        <PathContainer
-                          key={`${childPath.id}-${block.id}`}
-                          path={childPath}
-                          level={
-                            block.type === 'MERGE'
-                              ? Math.max(level - 2, -1)
-                              : Math.max(level, 0) + 1
-                          }
-                          renderContent={renderPathContent}
-                        />
-                      );
-                    }
-                    return null;
-                  });
-                }
-
-                return (
-                  <div
-                    key={block.id}
-                    className="rounded-md cursor-pointer transition-all duration-200"
-                    style={{
-                      backgroundColor: 'transparent',
-                      marginLeft: 10,
-                      padding: '2px',
-                      marginBottom: '2px',
-                      width: 'calc(100% - 22px)',
-                    }}
-                    onClick={() => handleBlockClick(block.id)}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        colors['bg-secondary'];
-                      e.currentTarget.style.transform = 'translateX(0px)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }}
-                  >
-                    <div className="flex items-center gap-2 py-1.5 px-2">
-                      {block.type === 'STEP' && (
-                        <DynamicIcon
-                          url={
-                            block.icon
-                              ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
-                              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-                          }
-                          size={20}
-                          variant="tertiary"
-                          className="flex-shrink-0"
-                        />
-                      )}
-                      <span
-                        className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
-                        style={{ color: colors['text-primary'] }}
-                      >
-                        {block.title ||
-                          block.step_details ||
-                          `Block ${block.id}`}
-                      </span>
-                    </div>
-
-                    {block.child_paths?.map((childPathConnection) => {
+              {path.blocks
+                .filter(
+                  (block) =>
+                    block.type !== 'LAST' &&
+                    block.type !== 'BEGIN' &&
+                    blockMatchesSearch(block)
+                )
+                .map((block, index) => {
+                  if (block.type === 'MERGE' || block.type === 'PATH') {
+                    return block.child_paths?.map((childPathConnection) => {
                       const childPath = paths.find(
                         (p) => p.id === childPathConnection.path.id
                       );
-                      if (childPath) {
+
+                      if (childPath && pathContainsMatchingBlocks(childPath)) {
+                        if (
+                          block.type === 'MERGE' &&
+                          !getLastOccurrenceIds.includes(block.id)
+                        ) {
+                          return null;
+                        }
                         return (
                           <PathContainer
-                            key={childPath.id}
+                            key={`${childPath.id}-${block.id}`}
                             path={childPath}
-                            level={level + 1}
+                            level={
+                              block.type === 'MERGE'
+                                ? Math.max(level - 2, -1)
+                                : Math.max(level, 0) + 1
+                            }
                             renderContent={renderPathContent}
                           />
                         );
                       }
                       return null;
-                    })}
-                  </div>
-                );
-              })}
-          </>
+                    });
+                  }
+
+                  const hasChildPaths = block.child_paths && block.child_paths.length > 0;
+
+                  return (
+                    <div
+                      key={block.id}
+                      className="w-full cursor-pointer transition-all duration-200"
+                      style={{
+                        backgroundColor: isBlockSelected(block.id) ? colors['brand-utility-600'] : 'transparent',
+                      }}
+                      onClick={() => handleBlockClick(block.id)}
+                      onMouseOver={(e) => {
+                        if (!isBlockSelected(block.id)) {
+                          e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isBlockSelected(block.id)) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2 h-8 w-full relative" style={{ paddingLeft: level > 0 ? '40px' : '16px', paddingRight: '16px' }}>
+                        {level > 0 && !hasChildPaths && (
+                          <>
+                            <div
+                              className="absolute left-6 top-0 bottom-0 w-px"
+                              style={{ backgroundColor: colors['border-secondary'] }}
+                            />
+                            <div
+                              className="absolute left-6 w-4 h-px"
+                              style={{
+                                backgroundColor: colors['border-secondary'],
+                                top: '50%',
+                              }}
+                            />
+                          </>
+                        )}
+                        {block.type === 'STEP' && (
+                          <>
+                            {hasChildPaths && (
+                              <div 
+                                className="cursor-pointer"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  togglePathVisibility(path.id, e);
+                                }}
+                              >
+                                <DynamicIcon
+                                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                                    isPathCollapsed ? 'chevron-right' : 'chevron-down'
+                                  }.svg`}
+                                  size={16}
+                                  variant="tertiary"
+                                  className="flex-shrink-0"
+                                />
+                              </div>
+                            )}
+                            <DynamicIcon
+                              url={
+                                block.icon
+                                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
+                                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                              }
+                              size={20}
+                              variant="tertiary"
+                              className="flex-shrink-0"
+                            />
+                          </>
+                        )}
+                        <span
+                          className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
+                          style={{ color: isBlockSelected(block.id) ? colors['text-primary'] : colors['text-primary'] }}
+                        >
+                          {block.title || block.step_details || `Block ${block.id}`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -485,7 +522,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
             {/* Content Area with both x and y scrolling */}
             <div
-              className="flex-1 overflow-auto p-2"
+              className="flex-1 overflow-auto"
               style={{ backgroundColor: colors['bg-primary'] }}
             >
               {mainPath && (
@@ -517,3 +554,4 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     </>
   );
 }
+
