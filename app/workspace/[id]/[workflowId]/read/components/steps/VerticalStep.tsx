@@ -131,6 +131,27 @@ export default function VerticalStep({
     expanded: { opacity: 1, height: 'auto' },
   };
 
+  // Helper function to get display title
+  const getDisplayTitle = (block: Block) => {
+    if (block.title) return block.title;
+    return `${block.type.charAt(0) + block.type.slice(1).toLowerCase()} Block`;
+  };
+
+  // Helper function to get icon path
+  const getIconPath = (block: Block) => {
+    console.log('getting icon of block', block);
+
+    if (block.type === 'PATH') {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`;
+    }
+
+    if (block.icon) {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    }
+
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+  };
+
   // Don't render anything for MERGE blocks except the line
   if (block.type === 'MERGE') {
     return (
@@ -182,14 +203,10 @@ export default function VerticalStep({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Image
-                src={
-                  block.icon ||
-                  `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-                }
-                alt={block.title || `Block ${block.id}`}
-                width={32}
-                height={32}
+              <img
+                src={getIconPath(block)}
+                alt={getDisplayTitle(block)}
+                className="w-8 h-8"
               />
             </motion.div>
             <div className="flex flex-col items-start gap-2 min-w-0">
@@ -209,7 +226,7 @@ export default function VerticalStep({
                     color: colors['text-primary'],
                   }}
                 >
-                  {block.title || `Block ${block.id}`}
+                  {getDisplayTitle(block)}
                 </span>
               </div>
               {block.step_details && (

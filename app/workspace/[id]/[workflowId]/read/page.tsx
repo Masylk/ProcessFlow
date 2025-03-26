@@ -504,40 +504,41 @@ export default function ExamplePage() {
         }
       }, 100);
 
+      // Update selectedOptions
+      setSelectedOptions((currentSelected) => {
+        // Get the block ID from the path's parent block
+        const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
+        if (!blockIdFromPath) return currentSelected;
+
+        // Check if this exact selection already exists
+        const selectionExists = currentSelected.some(
+          ([pathId, blockId]) =>
+            pathId === optionId && blockId === blockIdFromPath
+        );
+        if (selectionExists) return currentSelected;
+
+        const newSelected = [...currentSelected];
+
+        // Find if there's already a selection for this block
+        const existingSelectionIndex = newSelected.findIndex(
+          ([_, blockId]) => blockId === blockIdFromPath
+        );
+
+        if (existingSelectionIndex !== -1) {
+          // Update existing selection with new path ID
+          newSelected[existingSelectionIndex] = [optionId, blockIdFromPath];
+        } else {
+          // Add new selection
+          newSelected.push([optionId, blockIdFromPath]);
+        }
+
+        // Filter out selections for paths that are no longer displayed
+        const displayedPathIds = newPaths.map((path) => path.id);
+        return newSelected.filter(([pathId]) =>
+          displayedPathIds.includes(pathId)
+        );
+      });
       return newPaths;
-    });
-
-    // Update selectedOptions
-    setSelectedOptions((currentSelected) => {
-      const newSelected = [...currentSelected];
-
-      // Get the block ID from the path's parent block instead of the parameter
-      const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
-      if (!blockIdFromPath) return currentSelected;
-
-      // Check if this selection pair already exists
-      const selectionExists = newSelected.some(
-        ([pathId, blockId]) =>
-          pathId === optionId && blockId === blockIdFromPath
-      );
-
-      // Only add if it doesn't exist
-      if (!selectionExists) {
-        newSelected.push([optionId, blockIdFromPath]);
-      }
-
-      // Keep only selections for remaining paths
-      return newSelected.filter(([pathId]) =>
-        [
-          ...pathsToDisplay.slice(
-            0,
-            sharedParentIndex !== -1 ? sharedParentIndex : undefined
-          ),
-          pathToAdd,
-        ]
-          .map((p) => p.id)
-          .includes(pathId)
-      );
     });
   };
 
@@ -616,55 +617,6 @@ export default function ExamplePage() {
     setExpandedSteps((prev) =>
       isExpanded ? [...prev, blockId] : prev.filter((i) => i !== blockId)
     );
-  };
-
-  // Add this function after other function declarations
-  const addPathToDisplay = (pathId: number, index: number) => {
-    const pathToAdd = paths.find((path) => path.id === pathId);
-    if (!pathToAdd) return;
-
-    // If path already exists, scroll to its first block
-    const existingPath = pathsToDisplay.find((p) => p.id === pathId);
-    if (existingPath) {
-      const firstBlock = existingPath.blocks.find(
-        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
-      );
-      if (firstBlock) {
-        // Find the block element by its ID
-        const element = document.getElementById(`block-${firstBlock.id}`);
-        if (element) {
-          setTimeout(() => {
-            element.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-            });
-            window.scrollBy(0, -120); // Offset for header height
-          }, 50);
-        }
-      }
-      return;
-    }
-
-    setPathsToDisplay((currentPaths) => {
-      const newPaths = [...currentPaths];
-
-      // Get all parent block IDs of the path to add
-      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
-
-      // Find if there's a path with any matching parent block
-      const sameParentIndex = newPaths.findIndex((path) =>
-        path.parent_blocks.some((pb) => parentBlockIds.includes(pb.block_id))
-      );
-
-      if (sameParentIndex !== -1) {
-        // Remove this path and all following paths
-        newPaths.splice(sameParentIndex);
-      }
-
-      // Insert the new path
-      newPaths.splice(index, 0, pathToAdd);
-      return newPaths;
-    });
   };
 
   return (
