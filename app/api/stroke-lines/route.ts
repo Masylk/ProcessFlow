@@ -399,9 +399,10 @@ export async function PATCH(request: Request) {
 
     // Validate control points structure
     if (!Array.isArray(control_points) || !control_points.every(point => 
-      typeof point === 'object' && 
-      typeof point.x === 'number' && 
-      typeof point.y === 'number'
+      point !== null &&
+      typeof point === 'object' &&
+      typeof point.x === 'number' && !isNaN(point.x) &&
+      typeof point.y === 'number' && !isNaN(point.y)
     )) {
       return NextResponse.json(
         { error: 'Invalid control points format' },

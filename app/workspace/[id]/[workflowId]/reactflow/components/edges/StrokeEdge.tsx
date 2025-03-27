@@ -217,6 +217,7 @@ function StrokeEdge({
   const handleControlPointDrag = useCallback(
     (event: MouseEvent) => {
       if (isDragging && activePointIndex !== null) {
+        event.preventDefault(); // Prevent default browser drag behavior
         const flowPosition = screenToFlowPosition({
           x: event.clientX,
           y: event.clientY,
