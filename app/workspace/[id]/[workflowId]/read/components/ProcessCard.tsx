@@ -14,24 +14,21 @@ interface Author {
 
 interface ProcessCardProps {
   icon: string;
-  title: string;
-  description: string;
+  workflow: {
+    name: string;
+    description?: string;
+  };
   integrations: Integration[];
   author: Author;
   lastUpdate: string;
-  steps: number;
-  duration: string;
 }
 
 export default function ProcessCard({
   icon,
-  title,
-  description,
+  workflow,
   integrations,
   author,
   lastUpdate,
-  steps,
-  duration,
 }: ProcessCardProps) {
   const colors = useColors();
 
@@ -41,7 +38,7 @@ export default function ProcessCard({
         backgroundColor: colors['bg-primary'],
         borderColor: colors['border-secondary'],
       }}
-      className="w-[636px]  rounded-xl  flex flex-col transition-all duration-200"
+      className="w-[636px] rounded-xl flex flex-col transition-all duration-200"
     >
       <div className="flex gap-6">
         {/* Large Icon */}
@@ -51,7 +48,7 @@ export default function ProcessCard({
           }}
           className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
         >
-          <img src={icon} alt={title} className="w-10 h-10" />
+          <img src={icon} alt={workflow.name} className="w-10 h-10" />
         </div>
 
         {/* Content Container */}
@@ -62,14 +59,16 @@ export default function ProcessCard({
               style={{ color: colors['text-primary'] }}
               className="text-xl font-semibold leading-[30px]"
             >
-              {title}
+              {workflow.name}
             </h3>
-            <p
-              style={{ color: colors['text-quaternary'] }}
-              className="text-md"
-            >
-              {description}
-            </p>
+            {workflow.description && (
+              <p
+                style={{ color: colors['text-quaternary'] }}
+                className="text-md"
+              >
+                {workflow.description}
+              </p>
+            )}
           </div>
 
           {/* Integration Badges */}
@@ -100,7 +99,7 @@ export default function ProcessCard({
             ))}
           </div>
 
-          {/* Footer: Author, Last Update, Steps */}
+          {/* Footer: Author and Last Update */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <img
@@ -122,30 +121,10 @@ export default function ProcessCard({
               >
                 Last update: {lastUpdate}
               </span>
-              <div
-                style={{ backgroundColor: colors['bg-quaternary'] }}
-                className="w-1 h-1 rounded-full"
-              />
-              <span
-                style={{ color: colors['text-quaternary'] }}
-                className="text-sm"
-              >
-                {steps} steps
-              </span>
-              <div
-                style={{ backgroundColor: colors['bg-quaternary'] }}
-                className="w-1 h-1 rounded-full"
-              />
-              <span
-                style={{ color: colors['text-quaternary'] }}
-                className="text-sm"
-              >
-                {duration}
-              </span>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

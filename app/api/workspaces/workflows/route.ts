@@ -211,14 +211,13 @@ import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessL
  */
 export async function POST(req: NextRequest) {
   try {
-    // For now, just proceed without trying to get the user 
-    // This allows workflow creation to work again
     const {
       name,
       description,
       workspace_id,
       folder_id = null,
       team_tags = [],
+      author_id,
     } = await req.json();
 
     // Get workspace with subscription info and workflow count
@@ -267,7 +266,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create the workflow
+
+    console.log('Creating workflow with author_id:', author_id, typeof author_id);
+    // Create the workflow with author
     const newWorkflow = await prisma.workflow.create({
       data: {
         name,
@@ -275,6 +276,7 @@ export async function POST(req: NextRequest) {
         workspace_id: Number(workspace_id),
         folder_id: folder_id ? Number(folder_id) : null,
         team_tags,
+        author_id: author_id ? Number(author_id) : null,
       },
     });
 

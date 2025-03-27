@@ -4,17 +4,25 @@ import { NextRequest } from 'next/server';
 
 export async function GET(
   req: NextRequest,
-  props: { params: Promise<{ workflow_id: string }> } // Handle params as a Promise
+  props: { params: Promise<{ workflow_id: string }> }
 ) {
   try {
-    const params = await props.params; // Await the params
+    const params = await props.params;
     const workflowId = parseInt(params.workflow_id);
 
     const workflow = await prisma.workflow.findUnique({
       where: { id: workflowId },
       select: {
         id: true,
+        name: true,
+        description: true,
         workspace_id: true,
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

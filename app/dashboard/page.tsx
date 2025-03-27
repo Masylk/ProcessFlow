@@ -38,9 +38,12 @@ import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './components/TutorialOverlay';
 import { toast } from 'sonner';
 
-const HelpCenterModalDynamic = dynamic(() => import('./components/HelpCenterModal'), {
-  ssr: false,
-});
+const HelpCenterModalDynamic = dynamic(
+  () => import('./components/HelpCenterModal'),
+  {
+    ssr: false,
+  }
+);
 
 const UserSettingsDynamic = dynamic(() => import('./components/UserSettings'), {
   ssr: false,
@@ -126,8 +129,11 @@ export default function Page() {
     const fetchUser = async () => {
       try {
         // Check authentication status first
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: authUser },
+          error: authError,
+        } = await supabase.auth.getUser();
+
         if (!authUser || authError) {
           window.location.href = '/login';
           return;
@@ -295,13 +301,18 @@ export default function Page() {
       console.error('No active workspace selected');
       return;
     }
-
+    if (!user) {
+      console.error('No user found');
+      return;
+    }
     const result = await createWorkflow(
       name,
       description,
       activeWorkspace.id,
       selectedFolder?.id || null,
-      [] // team tags
+      [],
+      user.id,
+      null // icon
     );
 
     if (result.error) {
@@ -581,11 +592,11 @@ export default function Page() {
             window.history.pushState({}, '', newPath);
           }
         }
-        
+
         // Then, update the active workspace in the state immediately
         // This prevents the UI from flashing or showing intermediate states
         setActiveWorkspace(workspace);
-        
+
         // Now make the API call to persist the change (after UI is already updated)
         const updateRes = await fetch('/api/user/update', {
           method: 'PUT',
@@ -595,22 +606,22 @@ export default function Page() {
             active_workspace_id: workspace.id,
           }),
         });
-        
+
         if (!updateRes.ok) {
           throw new Error('Failed to update active workspace');
         }
-        
+
         const updatedUser = await updateRes.json();
-        
+
         if (updatedUser.active_workspace_id !== user.active_workspace_id) {
           // Update the user state with the new active workspace
           setUser(updatedUser);
-          
+
           // If in settings view, force a re-render by toggling and restoring the state
           if (isSettingsView) {
             // Briefly toggle off settings view to force a re-render when it's toggled back on
             setIsSettingsView(false);
-            
+
             // After a very short delay, switch back to settings view with the new workspace
             setTimeout(() => {
               setIsSettingsView(true);
@@ -820,10 +831,10 @@ export default function Page() {
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`,
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/certificate.svg`,
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/compass-icon.svg`,
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slack.svg`,
     ];
-    
-    imageUrls.forEach(url => {
+
+    imageUrls.forEach((url) => {
       const img = new Image();
       img.src = url;
     });
@@ -846,11 +857,11 @@ export default function Page() {
       }
 
       const updatedWorkspace = await response.json();
-      
+
       // Update both activeWorkspace and the workspace in the workspaces array
       setActiveWorkspace(updatedWorkspace);
-      setWorkspaces(prevWorkspaces => 
-        prevWorkspaces.map(w => 
+      setWorkspaces((prevWorkspaces) =>
+        prevWorkspaces.map((w) =>
           w.id === updatedWorkspace.id ? updatedWorkspace : w
         )
       );
@@ -871,22 +882,23 @@ export default function Page() {
       }
 
       // Remove the deleted workspace from the workspaces array
-      setWorkspaces(prevWorkspaces => 
-        prevWorkspaces.filter(w => w.id !== workspaceId)
+      setWorkspaces((prevWorkspaces) =>
+        prevWorkspaces.filter((w) => w.id !== workspaceId)
       );
 
       // If the deleted workspace was the active one, set a new active workspace
       if (activeWorkspace && activeWorkspace.id === workspaceId) {
         // Find another workspace to set as active, or null if none exist
-        const nextWorkspace = workspaces.find(w => w.id !== workspaceId) || null;
-        
+        const nextWorkspace =
+          workspaces.find((w) => w.id !== workspaceId) || null;
+
         if (nextWorkspace) {
           // Update the user's active workspace in the database
           await updateActiveWorkspace(nextWorkspace);
         } else {
           // If no workspaces left, set active workspace to null
           setActiveWorkspace(null);
-          
+
           // Update the user in the database
           if (user) {
             await fetch('/api/user/update', {
@@ -903,7 +915,7 @@ export default function Page() {
 
       // Close the settings view
       setIsSettingsView(false);
-      
+
       // Redirect to the dashboard or onboarding if no workspaces left
       if (workspaces.length <= 1) {
         // If this was the last workspace, redirect to onboarding
@@ -917,7 +929,7 @@ export default function Page() {
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
-    
+
     setIsSubmitting(true);
     try {
       if (iconUrl) await handleAddFolder(folderName, iconUrl);
@@ -925,7 +937,7 @@ export default function Page() {
       else await handleAddFolder(folderName);
       closeCreateFolder();
     } catch (error) {
-      console.error("Error creating folder:", error);
+      console.error('Error creating folder:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -956,11 +968,7 @@ export default function Page() {
     // Only redirect if we have a workspace with a slug and we're on the dashboard page
     if (activeWorkspace?.slug && window.location.pathname === '/dashboard') {
       // Update URL to the workspace slug without refreshing the page
-      window.history.replaceState(
-        {}, 
-        '', 
-        `/${activeWorkspace.slug}`
-      );
+      window.history.replaceState({}, '', `/${activeWorkspace.slug}`);
     }
   }, [activeWorkspace]);
 
@@ -970,18 +978,23 @@ export default function Page() {
       // Get slug from URL if available
       const pathSegments = window.location.pathname.split('/').filter(Boolean);
       const slugFromUrl = pathSegments.length > 0 ? pathSegments[0] : null;
-      
+
       if (slugFromUrl) {
         // Find workspace with matching slug
-        const workspaceFromSlug = workspaces.find(w => w.slug === slugFromUrl);
-        
-        if (workspaceFromSlug && (!activeWorkspace || activeWorkspace.id !== workspaceFromSlug.id)) {
+        const workspaceFromSlug = workspaces.find(
+          (w) => w.slug === slugFromUrl
+        );
+
+        if (
+          workspaceFromSlug &&
+          (!activeWorkspace || activeWorkspace.id !== workspaceFromSlug.id)
+        ) {
           // Set this workspace as active
           updateActiveWorkspace(workspaceFromSlug);
           return;
         }
       }
-      
+
       // If no matching workspace found from URL or no slug in URL, and we have an active workspace
       // Redirect to the active workspace slug URL
       if (activeWorkspace?.slug && !slugFromUrl) {
@@ -997,27 +1010,27 @@ export default function Page() {
       // Check if the clicked element is a workspace link
       const target = e.target as HTMLElement;
       const link = target.closest('a');
-      
+
       if (link && link.pathname.split('/').filter(Boolean).length === 1) {
         // This looks like a workspace slug link
         const slug = link.pathname.split('/').filter(Boolean)[0];
-        
+
         // Find the workspace with this slug
-        const workspace = workspaces.find(w => w.slug === slug);
-        
+        const workspace = workspaces.find((w) => w.slug === slug);
+
         if (workspace) {
           // Prevent the default navigation
           e.preventDefault();
-          
+
           // Update the active workspace directly
           updateActiveWorkspace(workspace);
         }
       }
     };
-    
+
     // Add event listener
     document.addEventListener('click', handleNavigation);
-    
+
     // Cleanup
     return () => {
       document.removeEventListener('click', handleNavigation);
@@ -1028,11 +1041,11 @@ export default function Page() {
   useEffect(() => {
     const checkTutorialStatus = async () => {
       if (!user) return;
-      
+
       try {
         const response = await fetch(`/api/user/tutorial-status/${user.id}`);
         const data = await response.json();
-        
+
         if (!data.hasCompletedTutorial) {
           setShowTutorial(true);
         }
@@ -1047,7 +1060,7 @@ export default function Page() {
   // Handler for tutorial completion
   const handleTutorialComplete = async () => {
     if (!user) return;
-    
+
     try {
       await fetch(`/api/user/tutorial-status/${user.id}`, {
         method: 'POST',
@@ -1056,7 +1069,7 @@ export default function Page() {
         },
         body: JSON.stringify({ hasCompletedTutorial: true }),
       });
-      
+
       setShowTutorial(false);
     } catch (error) {
       console.error('Error updating tutorial status:', error);
@@ -1077,29 +1090,34 @@ export default function Page() {
         if (checkoutStatus === 'success') {
           if (action === 'upgrade') {
             toast.success('Successfully Upgraded! 🚀', {
-              description: 'Your subscription has been upgraded to the Early Adopter plan. Enjoy all the premium features!',
-              duration: 7000
+              description:
+                'Your subscription has been upgraded to the Early Adopter plan. Enjoy all the premium features!',
+              duration: 7000,
             });
           } else {
             toast.success('Subscription Activated', {
-              description: 'Your Early Adopter subscription has been successfully activated.',
-              duration: 5000
+              description:
+                'Your Early Adopter subscription has been successfully activated.',
+              duration: 5000,
             });
           }
-        } 
+        }
         // Error notifications
         else if (checkoutStatus === 'failed') {
-          const errorMessage = error || 'There was an issue processing your payment. Please try again or contact support.';
+          const errorMessage =
+            error ||
+            'There was an issue processing your payment. Please try again or contact support.';
           toast.error('Checkout Failed', {
             description: errorMessage,
-            duration: 10000 // Longer duration for error messages
+            duration: 10000, // Longer duration for error messages
           });
         }
         // Pending notifications
         else if (checkoutStatus === 'pending') {
           toast.info('Processing Your Subscription', {
-            description: 'Your payment was successful. We are setting up your subscription. This may take a few moments.',
-            duration: 5000
+            description:
+              'Your payment was successful. We are setting up your subscription. This may take a few moments.',
+            duration: 5000,
           });
         }
 
@@ -1142,10 +1160,10 @@ export default function Page() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Page header */}
-        <header 
-          style={{ 
+        <header
+          style={{
             backgroundColor: colors['bg-primary'],
-            borderColor: colors['border-secondary']
+            borderColor: colors['border-secondary'],
           }}
           className="min-h-[73px] flex justify-between items-center px-4 relative border-b"
         >
@@ -1164,9 +1182,9 @@ export default function Page() {
               New Flow
             </ButtonNormal>
             {/* Divider */}
-            <div 
+            <div
               style={{ borderColor: colors['border-secondary'] }}
-              className="h-[25px] border-r justify-center items-center" 
+              className="h-[25px] border-r justify-center items-center"
             />
             <div className="relative">
               <div
@@ -1198,7 +1216,7 @@ export default function Page() {
         </header>
 
         {/* Main content */}
-        <main 
+        <main
           style={{ backgroundColor: colors['bg-secondary'] }}
           className="flex-1 w-full h-[100%]"
         >
@@ -1233,8 +1251,8 @@ export default function Page() {
         </main>
       </div>
 
-     {/* Modal for user settings */}
-     {user && userSettingsVisible && (
+      {/* Modal for user settings */}
+      {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
           <UserSettingsDynamic
             user={user}
@@ -1290,8 +1308,12 @@ export default function Page() {
         >
           <div className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: colors['text-primary'] }}>
-                Folder name <span style={{ color: colors['text-accent'] }}>*</span>
+              <label
+                className="block text-sm font-semibold mb-2"
+                style={{ color: colors['text-primary'] }}
+              >
+                Folder name{' '}
+                <span style={{ color: colors['text-accent'] }}>*</span>
               </label>
               <div className="flex items-center gap-2">
                 <IconModifier
@@ -1330,16 +1352,18 @@ export default function Page() {
 
       {/* Modal for Help Center */}
       {helpCenterVisible && user && (
-        <Suspense fallback={
-          <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40 z-50">
-            <div className="bg-white rounded-xl p-4 shadow-lg">
-              <p>Loading...</p>
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 flex items-center justify-center p-8 bg-[#0c111d] bg-opacity-40 z-50">
+              <div className="bg-white rounded-xl p-4 shadow-lg">
+                <p>Loading...</p>
+              </div>
             </div>
-          </div>
-        }>
-          <HelpCenterModalDynamic 
-            onClose={closeHelpCenter} 
-            user={user} 
+          }
+        >
+          <HelpCenterModalDynamic
+            onClose={closeHelpCenter}
+            user={user}
             setShowTutorial={setShowTutorial}
           />
         </Suspense>
@@ -1406,9 +1430,7 @@ export default function Page() {
       )}
 
       {/* Add the tutorial overlay */}
-      {showTutorial && (
-        <TutorialOverlay onComplete={handleTutorialComplete} />
-      )}
+      {showTutorial && <TutorialOverlay onComplete={handleTutorialComplete} />}
     </div>
   );
 }
