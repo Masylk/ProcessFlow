@@ -100,6 +100,7 @@ export default function ExamplePage() {
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
+  const [workflowData, setWorkflowData] = useState<any>(null);
 
   const paths = usePathsStore((state) => state.paths);
   const mainPath = useMemo(
@@ -357,34 +358,84 @@ export default function ExamplePage() {
     return newId;
   };
 
-  // This is example data - in a real app, you would fetch this from your API
-  const workflowData: WorkflowData = {
-    id: params.workflowId as string,
-    name: 'Employee Onboarding',
-    workspace: {
-      id: params.id as string,
-      name: 'Human Resources',
-    },
-    category: {
-      id: 'shared',
-      name: 'Shared with me',
-    },
-  };
+  // Add useEffect to fetch workflow data
+  useEffect(() => {
+    const fetchWorkflowData = async () => {
+      try {
+        const response = await fetch(`/api/workflows/${params.workflowId}`);
+        if (!response.ok) throw new Error('Failed to fetch workflow');
+        const data = await response.json();
+        setWorkflowData(data);
+      } catch (error) {
+        console.error('Error fetching workflow:', error);
+      }
+    };
 
-  // Construct breadcrumb items based on the workflow data
-  const breadcrumbItems = [
-    {
-      label: workflowData.category.name,
-      href: `/${workflowData.category.id}`,
-    },
-    {
-      label: workflowData.workspace.name,
-      href: `/workspace/${workflowData.workspace.id}`,
-    },
-    {
-      label: workflowData.name,
-    },
-  ];
+    if (params.workflowId) {
+      fetchWorkflowData();
+    }
+  }, [params.workflowId]);
+
+  // Update breadcrumb items to use fetched data
+  const breadcrumbItems = workflowData
+    ? [
+        {
+          label: workflowData.category?.name || 'Shared with me',
+          href: `/${workflowData.category?.id || 'shared'}`,
+        },
+        {
+          label: workflowData.workspace.name,
+          href: `/workspace/${workflowData.workspace.id}`,
+        },
+        {
+          label: workflowData.name,
+        },
+      ]
+    : [];
+
+  // Update processCardData to use fetched data and generate integrations from blocks
+  const processCardData = workflowData
+    ? {
+        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
+        workflow: {
+          name: workflowData.name,
+          description: workflowData.description,
+        },
+        integrations: paths
+          .flatMap((path) =>
+            path.blocks
+              .filter((block) => block.icon && block.icon.includes('/apps/'))
+              .map((block) => ({
+                name: block
+                  .icon!.split('/apps/')[1]
+                  .split('.svg')[0]
+                  .split('-')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' '),
+                icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`,
+              }))
+          )
+          .filter(
+            (integration, index, self) =>
+              index === self.findIndex((i) => i.name === integration.name)
+          ),
+        author: {
+          name: 'Jane Doe',
+          avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/placeholder-avatar1.png`,
+        },
+        lastUpdate:
+          paths
+            .flatMap((path) => path.blocks)
+            .reduce(
+              (latest, block) =>
+                block.last_modified &&
+                (!latest || new Date(block.last_modified) > new Date(latest))
+                  ? new Date(block.last_modified).toLocaleDateString('en-GB')
+                  : latest,
+              ''
+            ) || 'No updates',
+      }
+    : null;
 
   const openUserSettings = () => {
     setUserSettingsVisible(true);
@@ -407,34 +458,6 @@ export default function ExamplePage() {
   // Function to update the user in state
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
-  };
-
-  const processCardData = {
-    icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
-    title: workflowData.name,
-    description:
-      "This process guides new employees through each steps of ProcessFlow's onboarding.",
-    integrations: [
-      {
-        name: 'Linear',
-        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/linear.svg`,
-      },
-      {
-        name: 'Gmail',
-        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/gmail.svg`,
-      },
-      {
-        name: 'Figma',
-        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/figma.svg`,
-      },
-    ],
-    author: {
-      name: 'Jane Doe',
-      avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/placeholder-avatar1.png`,
-    },
-    lastUpdate: '23/08/24',
-    steps: PathsToDisplayBlocks.length,
-    duration: '15 minutes',
   };
 
   const handleOptionSelect = (
@@ -504,40 +527,41 @@ export default function ExamplePage() {
         }
       }, 100);
 
+      // Update selectedOptions
+      setSelectedOptions((currentSelected) => {
+        // Get the block ID from the path's parent block
+        const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
+        if (!blockIdFromPath) return currentSelected;
+
+        // Check if this exact selection already exists
+        const selectionExists = currentSelected.some(
+          ([pathId, blockId]) =>
+            pathId === optionId && blockId === blockIdFromPath
+        );
+        if (selectionExists) return currentSelected;
+
+        const newSelected = [...currentSelected];
+
+        // Find if there's already a selection for this block
+        const existingSelectionIndex = newSelected.findIndex(
+          ([_, blockId]) => blockId === blockIdFromPath
+        );
+
+        if (existingSelectionIndex !== -1) {
+          // Update existing selection with new path ID
+          newSelected[existingSelectionIndex] = [optionId, blockIdFromPath];
+        } else {
+          // Add new selection
+          newSelected.push([optionId, blockIdFromPath]);
+        }
+
+        // Filter out selections for paths that are no longer displayed
+        const displayedPathIds = newPaths.map((path) => path.id);
+        return newSelected.filter(([pathId]) =>
+          displayedPathIds.includes(pathId)
+        );
+      });
       return newPaths;
-    });
-
-    // Update selectedOptions
-    setSelectedOptions((currentSelected) => {
-      const newSelected = [...currentSelected];
-
-      // Get the block ID from the path's parent block instead of the parameter
-      const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
-      if (!blockIdFromPath) return currentSelected;
-
-      // Check if this selection pair already exists
-      const selectionExists = newSelected.some(
-        ([pathId, blockId]) =>
-          pathId === optionId && blockId === blockIdFromPath
-      );
-
-      // Only add if it doesn't exist
-      if (!selectionExists) {
-        newSelected.push([optionId, blockIdFromPath]);
-      }
-
-      // Keep only selections for remaining paths
-      return newSelected.filter(([pathId]) =>
-        [
-          ...pathsToDisplay.slice(
-            0,
-            sharedParentIndex !== -1 ? sharedParentIndex : undefined
-          ),
-          pathToAdd,
-        ]
-          .map((p) => p.id)
-          .includes(pathId)
-      );
     });
   };
 
@@ -618,61 +642,12 @@ export default function ExamplePage() {
     );
   };
 
-  // Add this function after other function declarations
-  const addPathToDisplay = (pathId: number, index: number) => {
-    const pathToAdd = paths.find((path) => path.id === pathId);
-    if (!pathToAdd) return;
-
-    // If path already exists, scroll to its first block
-    const existingPath = pathsToDisplay.find((p) => p.id === pathId);
-    if (existingPath) {
-      const firstBlock = existingPath.blocks.find(
-        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
-      );
-      if (firstBlock) {
-        // Find the block element by its ID
-        const element = document.getElementById(`block-${firstBlock.id}`);
-        if (element) {
-          setTimeout(() => {
-            element.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-            });
-            window.scrollBy(0, -120); // Offset for header height
-          }, 50);
-        }
-      }
-      return;
-    }
-
-    setPathsToDisplay((currentPaths) => {
-      const newPaths = [...currentPaths];
-
-      // Get all parent block IDs of the path to add
-      const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
-
-      // Find if there's a path with any matching parent block
-      const sameParentIndex = newPaths.findIndex((path) =>
-        path.parent_blocks.some((pb) => parentBlockIds.includes(pb.block_id))
-      );
-
-      if (sameParentIndex !== -1) {
-        // Remove this path and all following paths
-        newPaths.splice(sameParentIndex);
-      }
-
-      // Insert the new path
-      newPaths.splice(index, 0, pathToAdd);
-      return newPaths;
-    });
-  };
-
   return (
     <div
       className="min-h-screen flex"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      {user && workspace && (
+      {user && workspace && workflowData && (
         <>
           <Sidebar
             className="w-64"
@@ -736,7 +711,7 @@ export default function ExamplePage() {
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
-                    <ProcessCard {...processCardData} />
+                    {processCardData && <ProcessCard {...processCardData} />}
                     {pathsToDisplay.map((path) => (
                       <div key={path.id} className="space-y-16">
                         {path.blocks
@@ -797,7 +772,9 @@ export default function ExamplePage() {
                             }}
                             className="flex items-center"
                           >
-                            <ProcessCard {...processCardData} />
+                            {processCardData && (
+                              <ProcessCard {...processCardData} />
+                            )}
                           </div>
                           {/* Navigation and Progress Bar */}
                           <div className="flex items-center justify-between mt-8">

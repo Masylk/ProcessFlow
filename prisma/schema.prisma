@@ -42,7 +42,7 @@ model user {
   workspaces              user_workspace[]
   created_versions        workflow_version[] @relation("created_by")
   scheduled_emails        scheduled_email[]
-
+  workflows        workflow[]           @relation("author")
   @@index([active_workspace_id])
   @@index([email])
   @@index([auth_id])
@@ -198,6 +198,7 @@ model workflow {
   updated_at       DateTime           @default(now()) @updatedAt
   last_opened      DateTime?
   name             String
+  icon             String?
   description      String
   workspace_id     Int
   team_tags        String[]
@@ -216,6 +217,8 @@ model workflow {
   template         workflow_template? @relation(fields: [template_id], references: [id])
   workspace        workspace          @relation(fields: [workspace_id], references: [id])
   versions         workflow_version[]
+  author           user?              @relation("author", fields: [author_id], references: [id])
+  author_id        Int?
 
   @@unique([name, workspace_id])
   @@index([workspace_id])

@@ -93,120 +93,159 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const canDelete =
     data.path?.parent_blocks && data.path?.parent_blocks.length !== 0;
 
+  const hasMultipleParentBlocks =
+    data.path?.parent_blocks && data.path?.parent_blocks.length > 1;
   return (
     <>
-      <div
-        className={`relative transition-all duration-300 flex items-center justify-center ${
-          isConnectMode ? 'opacity-40' : ''
-        } ${isEditMode ? 'ring-2 ring-utility-brand-500' : ''}`}
-        style={{
-          width: '200px',
-          height: '50px',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          border: selected ? `2px solid ${colors['utility-brand-500']}` : `2px solid ${colors['utility-brand-400']}`,
-          background: colors['utility-brand-100'],
-          position: 'relative',
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <Handle
-          type="target"
-          position={Position.Top}
-          id="top"
-          style={{
-            width: 8,
-            height: 8,
-            opacity: 0,
-            background: colors['utility-brand-500'],
-            border: '2px solid white',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <div className="font-medium truncate" style={{ color: colors['text-brand-primary'] }}>
-          {isEditing ? (
-            <input
-              type="text"
-              value={pathName}
-              onChange={(e) => setPathName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onBlur={handlePathNameUpdate}
-              autoFocus
-              className="bg-transparent outline-none w-full text-center"
-              style={{ color: colors['text-brand-primary'] }}
-              placeholder="Enter path name"
-            />
-          ) : (
-            <span>{data.path?.name || 'Path'}</span>
-          )}
-        </div>
-
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="bottom"
-          style={{
-            width: 8,
-            height: 8,
-            opacity: 0,
-            background: colors['utility-brand-500'],
-            border: '2px solid white',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Edit and Delete buttons that appear on hover */}
-        {isHovered && !isEditing && (
-          <div 
-            className="absolute -right-2 -top-[50%] flex rounded-lg"
+      {hasMultipleParentBlocks ? (
+        <div className="transition-opacity duration-300">
+          <Handle
+            type="target"
+            id="top"
+            position={Position.Top}
             style={{
-              background: colors['bg-secondary'],
-              border: `1px solid ${colors['border-primary']}`,
-              boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)"
+              background: '#b1b1b7',
+              width: 1,
+              height: 1,
+              opacity: 0,
             }}
+          />
+          <div className="w-1 h-1 rounded-full bg-[#b1b1b7]" />
+          <Handle
+            type="source"
+            id="bottom"
+            position={Position.Bottom}
+            style={{
+              background: '#b1b1b7',
+              width: 1,
+              height: 1,
+              opacity: 0,
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          className={`relative transition-all duration-300 flex items-center justify-center ${
+            isConnectMode ? 'opacity-40' : ''
+          } ${isEditMode ? 'ring-2 ring-utility-brand-500' : ''}`}
+          style={{
+            width: '200px',
+            height: '50px',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            border: selected
+              ? `2px solid ${colors['utility-brand-500']}`
+              : `2px solid ${colors['utility-brand-400']}`,
+            background: colors['utility-brand-100'],
+            position: 'relative',
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <Handle
+            type="target"
+            position={Position.Top}
+            id="top"
+            style={{
+              width: 8,
+              height: 8,
+              opacity: 0,
+              background: colors['utility-brand-500'],
+              border: '2px solid white',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div
+            className="font-medium truncate"
+            style={{ color: colors['text-brand-primary'] }}
           >
-            <button
-              onClick={() => setIsEditing(true)}
-              onMouseEnter={() => setIsEditButtonHovered(true)}
-              onMouseLeave={() => setIsEditButtonHovered(false)}
-              className="flex items-center justify-center p-2 transition-colors duration-200"
+            {isEditing ? (
+              <input
+                type="text"
+                value={pathName}
+                onChange={(e) => setPathName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handlePathNameUpdate}
+                autoFocus
+                className="bg-transparent outline-none w-full text-center"
+                style={{ color: colors['text-brand-primary'] }}
+                placeholder="Enter path name"
+              />
+            ) : (
+              <span>{data.path?.name || 'Path'}</span>
+            )}
+          </div>
+
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="bottom"
+            style={{
+              width: 8,
+              height: 8,
+              opacity: 0,
+              background: colors['utility-brand-500'],
+              border: '2px solid white',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Edit and Delete buttons that appear on hover */}
+          {isHovered && !isEditing && (
+            <div
+              className="absolute -right-2 -top-[50%] flex rounded-lg"
               style={{
-                borderRight: `1px solid ${colors['border-primary']}`,
-                borderTopLeftRadius: "8px",
-                borderBottomLeftRadius: "8px",
-                background: isEditButtonHovered ? colors['bg-tertiary'] : colors['bg-secondary']
+                background: colors['bg-secondary'],
+                border: `1px solid ${colors['border-primary']}`,
+                boxShadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.05)',
               }}
             >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
-                alt="Edit"
-                className="w-3 h-3"
-              />
-            </button>
-            {canDelete && (
               <button
-                onClick={() => setShowDeleteModal(true)}
-                onMouseEnter={() => setIsDeleteButtonHovered(true)}
-                onMouseLeave={() => setIsDeleteButtonHovered(false)}
+                onClick={() => setIsEditing(true)}
+                onMouseEnter={() => setIsEditButtonHovered(true)}
+                onMouseLeave={() => setIsEditButtonHovered(false)}
                 className="flex items-center justify-center p-2 transition-colors duration-200"
                 style={{
-                  borderTopRightRadius: "8px",
-                  borderBottomRightRadius: "8px",
-                  background: isDeleteButtonHovered ? colors['bg-tertiary'] : colors['bg-secondary']
+                  borderRight: `1px solid ${colors['border-primary']}`,
+                  borderTopLeftRadius: '8px',
+                  borderBottomLeftRadius: '8px',
+                  background: isEditButtonHovered
+                    ? colors['bg-tertiary']
+                    : colors['bg-secondary'],
                 }}
               >
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
-                  alt="Delete"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                  alt="Edit"
                   className="w-3 h-3"
                 />
               </button>
-            )}
-          </div>
-        )}
-      </div>
+              {canDelete && (
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  onMouseEnter={() => setIsDeleteButtonHovered(true)}
+                  onMouseLeave={() => setIsDeleteButtonHovered(false)}
+                  className="flex items-center justify-center p-2 transition-colors duration-200"
+                  style={{
+                    borderTopRightRadius: '8px',
+                    borderBottomRightRadius: '8px',
+                    background: isDeleteButtonHovered
+                      ? colors['bg-tertiary']
+                      : colors['bg-secondary'],
+                  }}
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                    alt="Delete"
+                    className="w-3 h-3"
+                  />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {showDeleteModal && (
         <DeletePathModal
