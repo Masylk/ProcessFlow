@@ -333,13 +333,10 @@ function StrokeEdge({
   const saveControlPoints = useCallback(async () => {
     try {
       const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
-      console.log('Saving control points for stroke line:', strokeLineId, controlPoints);
-      
       const result = await updateStrokeLineControlPoints(strokeLineId, controlPoints);
-      console.log('Save result:', result);
       
       if (!result) {
-        console.error('Failed to save control points');
+        throw new Error('Failed to save control points');
       }
     } catch (error) {
       console.error('Error saving control points:', error);
@@ -350,42 +347,19 @@ function StrokeEdge({
     const loadControlPoints = async () => {
       try {
         const strokeLineId = id.replace('stroke-edge-', '');
-        console.log('Loading control points for stroke line:', strokeLineId);
-        
         const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
-        const responseText = await response.text(); // Get raw response text
-        console.log('Raw API Response:', responseText);
         
-        let strokeLine;
-        try {
-          strokeLine = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('Failed to parse response:', parseError);
-          throw new Error('Invalid JSON response');
-        }
-        
-        console.log('Parsed stroke line data:', {
-          id: strokeLine.id,
-          control_points: strokeLine.control_points,
-          // Log other relevant fields
-          source_block_id: strokeLine.source_block_id,
-          target_block_id: strokeLine.target_block_id,
-          all_fields: Object.keys(strokeLine)
-        });
-
         if (!response.ok) {
-          console.error('Failed to load stroke line data:', responseText);
           throw new Error('Failed to load stroke line data');
         }
 
+        const strokeLine = await response.json();
         const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
         const target = getConnectionPoint(targetX, targetY, targetPosition, false);
 
         if (strokeLine.control_points && Array.isArray(strokeLine.control_points) && strokeLine.control_points.length > 0) {
-          console.log('Found valid control points:', strokeLine.control_points);
           setControlPoints(strokeLine.control_points);
         } else {
-          console.log('No valid control points found. Raw control_points value:', strokeLine.control_points);
           // Initialize with three points in the most logical direction
           const isHorizontal = Math.abs(target.x - source.x) > Math.abs(target.y - source.y);
           
@@ -402,12 +376,10 @@ function StrokeEdge({
               { x: midX, y },
               { x: target.x, y }
             ];
-            console.log('Setting initial horizontal points:', initialPoints);
             setControlPoints(initialPoints);
             
             // Save initial points to database
-            const result = await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
-            console.log('Saved initial horizontal points:', result);
+            await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
           } else {
             const midX = source.x + (target.x - source.x) / 2;
             const midY = source.y + (target.y - source.y) / 2;
@@ -421,16 +393,14 @@ function StrokeEdge({
               { x, y: midY },
               { x, y: target.y }
             ];
-            console.log('Setting initial vertical points:', initialPoints);
             setControlPoints(initialPoints);
             
             // Save initial points to database
-            const result = await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
-            console.log('Saved initial vertical points:', result);
+            await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
           }
         }
       } catch (error) {
-        console.error('Detailed error in loadControlPoints:', error);
+        console.error('Error loading control points:', error);
         // Simple fallback
         const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
         const target = getConnectionPoint(targetX, targetY, targetPosition, false);
@@ -442,14 +412,12 @@ function StrokeEdge({
           { x: midX, y: midY },
           { x: target.x, y: midY }
         ];
-        console.log('Setting fallback points:', fallbackPoints);
         setControlPoints(fallbackPoints);
         
         // Save fallback points to database
         try {
           const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
-          const result = await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
-          console.log('Saved fallback points:', result);
+          await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
         } catch (saveError) {
           console.error('Error saving fallback control points:', saveError);
         }
