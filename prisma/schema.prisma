@@ -367,6 +367,7 @@ model stroke_line {
   created_at      DateTime @default(now())
   updated_at      DateTime @default(now()) @updatedAt
   is_loop         Boolean  @default(false)
+  control_points  Json?    // Array of {x: number, y: number}
   source_block    block    @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
   target_block    block    @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)
   workflow        workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
