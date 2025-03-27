@@ -32,6 +32,7 @@ Table user {
   workspaces user_workspace [not null]
   created_versions workflow_version [not null]
   scheduled_emails scheduled_emails [not null]
+  workflows workflow [not null]
 }
 
 Table workspace {
@@ -153,6 +154,7 @@ Table workflow {
   updated_at DateTime [default: `now()`, not null]
   last_opened DateTime
   name String [not null]
+  icon String
   description String [not null]
   workspace_id Int [not null]
   team_tags String[] [not null]
@@ -171,6 +173,8 @@ Table workflow {
   template workflow_template
   workspace workspace [not null]
   versions workflow_version [not null]
+  author user
+  author_id Int
 
   indexes {
     (name, workspace_id) [unique]
@@ -406,6 +410,8 @@ Ref: workflow.folder_id > folder.id
 Ref: workflow.template_id > workflow_template.id
 
 Ref: workflow.workspace_id > workspace.id
+
+Ref: workflow.author_id > user.id
 
 Ref: path.workflow_id > workflow.id
 

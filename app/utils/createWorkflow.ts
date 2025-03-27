@@ -5,7 +5,9 @@ export async function createWorkflow(
   description: string,
   workspaceId: number,
   folderId: number | null = null,
-  teamTags: string[] = []
+  teamTags: string[] = [],
+  authorId: number,
+  icon: string | null = null,
 ): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
     const response = await fetch('/api/workspaces/workflows', {
@@ -19,6 +21,8 @@ export async function createWorkflow(
         workspace_id: workspaceId,
         folder_id: folderId,
         team_tags: teamTags,
+        author_id: authorId,
+        icon: icon,
       }),
     });
 
