@@ -19,7 +19,7 @@ interface ProcessCardProps {
     description?: string;
   };
   integrations: Integration[];
-  author: Author;
+  author?: Author;
   lastUpdate: string;
 }
 
@@ -101,19 +101,21 @@ export default function ProcessCard({
 
           {/* Footer: Author and Last Update */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <img
-                src={author.avatar}
-                alt={author.name}
-                className="w-5 h-5 rounded-full"
-              />
-              <span
-                style={{ color: colors['text-secondary'] }}
-                className="text-sm font-medium"
-              >
-                {author.name}
-              </span>
-            </div>
+            {author && (
+              <div className="flex items-center gap-2">
+                <img
+                  src={author.avatar}
+                  alt={author.name}
+                  className="w-5 h-5 rounded-full"
+                />
+                <span
+                  style={{ color: colors['text-secondary'] }}
+                  className="text-sm font-medium"
+                >
+                  {author.name}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span
                 style={{ color: colors['text-quaternary'] }}
