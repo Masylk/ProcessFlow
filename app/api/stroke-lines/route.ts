@@ -35,6 +35,9 @@ import prisma from '@/lib/prisma';
  *                 type: boolean
  *                 description: Whether the connection is a loop
  *                 default: false
+ *               control_points:
+ *                 type: array
+ *                 description: Control points for the stroke line
  *     responses:
  *       200:
  *         description: Stroke line created successfully
@@ -46,7 +49,7 @@ import prisma from '@/lib/prisma';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { source_block_id, target_block_id, workflow_id, label, is_loop = false } = body;
+    const { source_block_id, target_block_id, workflow_id, label, is_loop = false, control_points = null } = body;
 
     // Validate required fields
     if (!source_block_id || !target_block_id || !workflow_id || !label) {
@@ -80,6 +83,7 @@ export async function POST(request: Request) {
         workflow_id,
         label,
         is_loop,
+        control_points: control_points ? { set: control_points } : undefined,
       },
     });
 
@@ -126,6 +130,9 @@ export async function POST(request: Request) {
  *               is_loop:
  *                 type: boolean
  *                 description: Whether the connection is a loop
+ *               control_points:
+ *                 type: array
+ *                 description: New control points for the stroke line
  *     responses:
  *       200:
  *         description: Stroke line updated successfully
@@ -137,7 +144,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, source_block_id, target_block_id, workflow_id, label, is_loop } = body;
+    const { id, source_block_id, target_block_id, workflow_id, label, is_loop, control_points } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -174,6 +181,7 @@ export async function PUT(request: Request) {
         workflow_id,
         label,
         is_loop,
+        control_points: control_points ? { set: control_points } : undefined,
       },
     });
 
@@ -238,71 +246,193 @@ export async function DELETE(request: Request) {
  * @swagger
  * /api/stroke-lines:
  *   get:
- *     summary: Get all stroke lines for a workflow
- *     description: Retrieves all stroke lines associated with a specific workflow
+ *     summary: Get stroke lines
+ *     description: Retrieves either a single stroke line by ID or all stroke lines for a workflow
  *     parameters:
  *       - in: query
- *         name: workflow_id
- *         required: true
+ *         name: id
+ *         required: false
  *         schema:
  *           type: integer
- *         description: ID of the workflow to get stroke lines for
+ *         description: ID of a specific stroke line to fetch
+ *       - in: query
+ *         name: workflow_id
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: ID of the workflow to get all stroke lines for
  *     responses:
  *       200:
- *         description: List of stroke lines
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                   source_block_id:
- *                     type: integer
- *                   target_block_id:
- *                     type: integer
- *                   workflow_id:
- *                     type: integer
- *                   label:
- *                     type: string
- *                   is_loop:
- *                     type: boolean
- *                   created_at:
- *                     type: string
- *                     format: date-time
- *                   updated_at:
- *                     type: string
- *                     format: date-time
+ *         description: Single stroke line or list of stroke lines
  *       400:
- *         description: Missing workflow ID
+ *         description: Missing required parameters
+ *       404:
+ *         description: Stroke line not found
  *       500:
  *         description: Server error
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const workflowId = searchParams.get('workflow_id');
 
-    if (!workflowId) {
-      return NextResponse.json(
-        { error: 'Missing workflow ID' },
-        { status: 400 }
-      );
+    // Helper function to transform control points
+    const transformControlPoints = (strokeLine: any) => {
+      if (strokeLine.control_points && strokeLine.control_points.set) {
+        return {
+          ...strokeLine,
+          control_points: strokeLine.control_points.set
+        };
+      }
+      return strokeLine;
+    };
+
+    // If ID is provided, fetch single stroke line
+    if (id) {
+      const strokeLine = await prisma.stroke_line.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+        select: {
+          id: true,
+          source_block_id: true,
+          target_block_id: true,
+          workflow_id: true,
+          label: true,
+          is_loop: true,
+          control_points: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
+
+      if (!strokeLine) {
+        return NextResponse.json(
+          { error: 'Stroke line not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(transformControlPoints(strokeLine));
     }
 
-    const strokeLines = await prisma.stroke_line.findMany({
-      where: {
-        workflow_id: parseInt(workflowId),
-      },
-    });
+    // If workflow_id is provided, fetch all stroke lines for that workflow
+    if (workflowId) {
+      const strokeLines = await prisma.stroke_line.findMany({
+        where: {
+          workflow_id: parseInt(workflowId),
+        },
+        select: {
+          id: true,
+          source_block_id: true,
+          target_block_id: true,
+          workflow_id: true,
+          label: true,
+          is_loop: true,
+          control_points: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
 
-    return NextResponse.json(strokeLines);
+      return NextResponse.json(strokeLines.map(transformControlPoints));
+    }
+
+    // If neither parameter is provided
+    return NextResponse.json(
+      { error: 'Missing required parameter: either id or workflow_id must be provided' },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Error fetching stroke lines:', error);
     return NextResponse.json(
       { error: 'Failed to fetch stroke lines' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * @swagger
+ * /api/stroke-lines:
+ *   patch:
+ *     summary: Update control points of a stroke line
+ *     description: Updates the control points of an existing stroke line
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *               - control_points
+ *             properties:
+ *               id:
+ *                 type: integer
+ *                 description: ID of the stroke line to update
+ *               control_points:
+ *                 type: array
+ *                 description: New control points for the stroke line
+ *     responses:
+ *       200:
+ *         description: Control points updated successfully
+ *       400:
+ *         description: Missing stroke line ID
+ *       500:
+ *         description: Server error
+ */
+export async function PATCH(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const body = await request.json();
+    const { control_points } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Missing stroke line ID' },
+        { status: 400 }
+      );
+    }
+
+    // Validate control points structure
+    if (!Array.isArray(control_points) || !control_points.every(point => 
+      typeof point === 'object' && 
+      typeof point.x === 'number' && 
+      typeof point.y === 'number'
+    )) {
+      return NextResponse.json(
+        { error: 'Invalid control points format' },
+        { status: 400 }
+      );
+    }
+
+    // Update only the control points using Prisma's set operator for JSON fields
+    const updatedStrokeLine = await prisma.stroke_line.update({
+      where: { 
+        id: parseInt(id) 
+      },
+      data: {
+        control_points: {
+          set: control_points
+        },
+        updated_at: new Date()
+      },
+    });
+
+    // Transform the response to remove the 'set' wrapper
+    const transformedStrokeLine = {
+      ...updatedStrokeLine,
+      control_points: control_points
+    };
+
+    return NextResponse.json(transformedStrokeLine);
+  } catch (error) {
+    console.error('Error updating control points:', error);
+    return NextResponse.json(
+      { error: 'Failed to update control points' },
       { status: 500 }
     );
   }

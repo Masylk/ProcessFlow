@@ -13,6 +13,7 @@ import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import DeleteStrokeEdgeModal from '../modals/DeleteStrokeEdgeModal';
 import styles from './StrokeEdge.module.css';
+import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -37,30 +38,28 @@ interface Point {
   y: number;
 }
 
-function getPointOnLine(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  px: number,
-  py: number
-) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.sqrt(dx * dx + dy * dy);
+// Helper function to calculate distance between two points
+const getDistance = (p1: Point, p2: Point) => {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+};
 
-  if (length === 0) return { x: x1, y: y1 };
+// Helper function to clamp a value between min and max
+const clamp = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
+};
 
-  const t = Math.max(
-    0,
-    Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (length * length))
-  );
+// Helper function to determine if a point is near another point
+const isNearPoint = (p1: Point, p2: Point, threshold = 20) => {
+  return getDistance(p1, p2) < threshold;
+};
 
+// Helper function to snap a point to the nearest grid position
+const snapToGrid = (point: Point, gridSize = 20) => {
   return {
-    x: x1 + t * dx,
-    y: y1 + t * dy,
+    x: Math.round(point.x / gridSize) * gridSize,
+    y: Math.round(point.y / gridSize) * gridSize,
   };
-}
+};
 
 function StrokeEdge({
   id,
@@ -79,9 +78,7 @@ function StrokeEdge({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [labelPosition, setLabelPosition] = useState({ x: 0, y: 0 });
   const [deleteButtonPosition, setDeleteButtonPosition] = useState({ x: 0, y: 0 });
-  const [controlPoints, setControlPoints] = useState<Point[]>(
-    data?.controlPoints || []
-  );
+  const [controlPoints, setControlPoints] = useState<Point[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const [isHoveringControlPoint, setIsHoveringControlPoint] = useState(false);
@@ -147,18 +144,18 @@ function StrokeEdge({
     }, 400);
   }, [isHoveringControlPoint]);
 
-  const handleControlPointMouseEnter = () => {
+  const handleControlPointMouseEnter = useCallback(() => {
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
     }
     setIsHoveringControlPoint(true);
     setShowLabel(false);
     setShowDeleteButton(false);
-  };
+  }, []);
 
-  const handleControlPointMouseLeave = () => {
+  const handleControlPointMouseLeave = useCallback(() => {
     setIsHoveringControlPoint(false);
-  };
+  }, []);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -192,63 +189,30 @@ function StrokeEdge({
     setActivePointIndex(index);
   };
 
-  // Helper function to get the midpoint between two points
-  const getMidpoint = (x1: number, y1: number, x2: number, y2: number) => ({
-    x: x1 + (x2 - x1) / 2,
-    y: y1 + (y2 - y1) / 2
-  });
+  // Helper function to get the handle position
+  const getHandlePosition = useCallback((position: Position | undefined, isSource: boolean) => {
+    if (!position) return isSource ? 'left' : 'right';
+    return position.toLowerCase();
+  }, []);
 
-  // Helper to determine if we should use vertical first layout
-  const shouldUseVerticalLayout = useCallback(() => {
-    const heightDiff = Math.abs(targetY - sourceY);
-    const widthDiff = Math.abs(targetX - sourceX);
-    return heightDiff > widthDiff;
-  }, [sourceX, sourceY, targetX, targetY]);
+  // Get actual connection points based on handle positions
+  const getConnectionPoint = useCallback((x: number, y: number, position: Position | undefined, isSource: boolean) => {
+    const handlePos = getHandlePosition(position, isSource);
+    const offset = 12; // Handle offset from node edge
 
-  // Helper to update all control points based on a new layout
-  const updateControlPointsForLayout = (
-    isVertical: boolean,
-    anchorPoint: { x: number; y: number },
-    anchorIndex: number
-  ) => {
-    const points = [];
-    
-    if (anchorIndex === 1) {
-      // Middle control point - allow free movement with smart constraints
-      const x = anchorPoint.x;
-      const y = anchorPoint.y;
-      
-      points.push(
-        getMidpoint(sourceX, sourceY, x, sourceY),
-        { x, y },
-        getMidpoint(x, targetY, targetX, targetY)
-      );
-    } else if (anchorIndex === 0) {
-      // First segment control point
-      const x = anchorPoint.x;
-      const y = sourceY;
-      const midX = controlPoints[1]?.x ?? (sourceX + (targetX - sourceX) / 2);
-      
-      points.push(
-        getMidpoint(sourceX, sourceY, x, y),
-        { x: midX, y: controlPoints[1]?.y ?? sourceY },
-        getMidpoint(midX, targetY, targetX, targetY)
-      );
-    } else {
-      // Last segment control point
-      const x = anchorPoint.x;
-      const y = targetY;
-      const midX = controlPoints[1]?.x ?? (sourceX + (targetX - sourceX) / 2);
-      
-      points.push(
-        getMidpoint(sourceX, sourceY, midX, sourceY),
-        { x: midX, y: controlPoints[1]?.y ?? targetY },
-        getMidpoint(x, y, targetX, targetY)
-      );
+    switch (handlePos) {
+      case 'left':
+        return { x: x - offset, y };
+      case 'right':
+        return { x: x + offset, y };
+      case 'top':
+        return { x, y: y - offset };
+      case 'bottom':
+        return { x, y: y + offset };
+      default:
+        return { x, y };
     }
-    
-    return points;
-  };
+  }, [getHandlePosition]);
 
   const handleControlPointDrag = useCallback(
     (event: MouseEvent) => {
@@ -257,79 +221,243 @@ function StrokeEdge({
           x: event.clientX,
           y: event.clientY,
         });
+
+        const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
+        const target = getConnectionPoint(targetX, targetY, targetPosition, false);
+        
+        // Calculate the total path length for constraints
+        const pathLength = getDistance(source, target);
+        const maxOffset = Math.min(pathLength * 0.4, 120); // Reduced max offset for better control
         
         setControlPoints((prev) => {
-          const isVertical = shouldUseVerticalLayout();
-          const newPoints = updateControlPointsForLayout(isVertical, flowPosition, activePointIndex);
+          const newPoints = [...prev];
+          const point = newPoints[activePointIndex];
+          
+          // Snap to grid for more precise control
+          const snappedPosition = snapToGrid(flowPosition);
+          
+          // For a three-point path, middle point moves with enhanced constraints
+          if (newPoints.length === 3 && activePointIndex === 1) {
+            // Determine primary direction based on source and target positions
+            const isHorizontalPrimary = Math.abs(target.x - source.x) > Math.abs(target.y - source.y);
+            
+            if (isHorizontalPrimary) {
+              // Keep middle point centered horizontally
+              const midX = source.x + (target.x - source.x) / 2;
+              const minY = Math.min(source.y, target.y) - maxOffset;
+              const maxY = Math.max(source.y, target.y) + maxOffset;
+              
+              // Snap to source or target Y if near
+              if (isNearPoint({ x: midX, y: snappedPosition.y }, { x: midX, y: source.y })) {
+                point.y = source.y;
+              } else if (isNearPoint({ x: midX, y: snappedPosition.y }, { x: midX, y: target.y })) {
+                point.y = target.y;
+              } else {
+                point.y = clamp(snappedPosition.y, minY, maxY);
+              }
+              point.x = midX;
+              
+              // Update adjacent points
+              newPoints[0].x = source.x;
+              newPoints[0].y = point.y;
+              newPoints[2].x = target.x;
+              newPoints[2].y = point.y;
+            } else {
+              // Keep middle point centered vertically
+              const midY = source.y + (target.y - source.y) / 2;
+              const minX = Math.min(source.x, target.x) - maxOffset;
+              const maxX = Math.max(source.x, target.x) + maxOffset;
+              
+              // Snap to source or target X if near
+              if (isNearPoint({ x: snappedPosition.x, y: midY }, { x: source.x, y: midY })) {
+                point.x = source.x;
+              } else if (isNearPoint({ x: snappedPosition.x, y: midY }, { x: target.x, y: midY })) {
+                point.x = target.x;
+              } else {
+                point.x = clamp(snappedPosition.x, minX, maxX);
+              }
+              point.y = midY;
+              
+              // Update adjacent points
+              newPoints[0].x = point.x;
+              newPoints[0].y = source.y;
+              newPoints[2].x = point.x;
+              newPoints[2].y = target.y;
+            }
+          } else {
+            // For end points, enhance constraints and add snapping
+            const isSource = activePointIndex === 0;
+            const handlePosition = isSource ? sourcePosition : targetPosition;
+            const anchorPoint = isSource ? source : target;
+            const otherPoint = newPoints[isSource ? 1 : newPoints.length - 2];
+            
+            if (handlePosition === Position.Left || handlePosition === Position.Right) {
+              const minY = Math.min(source.y, target.y) - maxOffset;
+              const maxY = Math.max(source.y, target.y) + maxOffset;
+              
+              // Snap to source, target, or other control point Y if near
+              if (isNearPoint({ x: anchorPoint.x, y: snappedPosition.y }, { x: anchorPoint.x, y: source.y })) {
+                point.y = source.y;
+              } else if (isNearPoint({ x: anchorPoint.x, y: snappedPosition.y }, { x: anchorPoint.x, y: target.y })) {
+                point.y = target.y;
+              } else {
+                point.y = clamp(snappedPosition.y, minY, maxY);
+              }
+              point.x = anchorPoint.x;
+              otherPoint.y = point.y;
+            } else {
+              const minX = Math.min(source.x, target.x) - maxOffset;
+              const maxX = Math.max(source.x, target.x) + maxOffset;
+              
+              // Snap to source, target, or other control point X if near
+              if (isNearPoint({ x: snappedPosition.x, y: anchorPoint.y }, { x: source.x, y: anchorPoint.y })) {
+                point.x = source.x;
+              } else if (isNearPoint({ x: snappedPosition.x, y: anchorPoint.y }, { x: target.x, y: anchorPoint.y })) {
+                point.x = target.x;
+              } else {
+                point.x = clamp(snappedPosition.x, minX, maxX);
+              }
+              point.y = anchorPoint.y;
+              otherPoint.x = point.x;
+            }
+          }
+          
           return newPoints;
         });
       }
     },
-    [isDragging, activePointIndex, screenToFlowPosition, sourceX, sourceY, targetX, targetY, shouldUseVerticalLayout]
+    [isDragging, activePointIndex, screenToFlowPosition, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, getConnectionPoint]
   );
-
-  // Initialize control points
-  useEffect(() => {
-    const loadControlPoints = async () => {
-      try {
-        const strokeLineId = id.replace('stroke-edge-', '');
-        const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
-        if (!response.ok) throw new Error('Failed to load stroke line data');
-        
-        const strokeLine = await response.json();
-        
-        if (strokeLine.controlPoints?.length === 3) {
-          setControlPoints(strokeLine.controlPoints);
-        } else {
-          // Initialize with default middle point
-          const midX = sourceX + (targetX - sourceX) / 2;
-          const midY = sourceY + (targetY - sourceY) / 2;
-          
-          setControlPoints([
-            getMidpoint(sourceX, sourceY, midX, sourceY),
-            { x: midX, y: sourceY },
-            getMidpoint(midX, targetY, targetX, targetY)
-          ]);
-        }
-      } catch (error) {
-        console.error('Error loading control points:', error);
-        // Fall back to default initialization
-        const midX = sourceX + (targetX - sourceX) / 2;
-        setControlPoints([
-          getMidpoint(sourceX, sourceY, midX, sourceY),
-          { x: midX, y: sourceY },
-          getMidpoint(midX, targetY, targetX, targetY)
-        ]);
-      }
-    };
-
-    loadControlPoints();
-  }, [id, sourceX, sourceY, targetX, targetY]);
 
   // Save control points when they change
   const saveControlPoints = useCallback(async () => {
     try {
-      // Extract the stroke line ID from the edge ID
-      const strokeLineId = id.replace('stroke-edge-', '');
+      const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
+      console.log('Saving control points for stroke line:', strokeLineId, controlPoints);
       
-      // Update the stroke line with new control points
-      const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          controlPoints,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save control points');
+      const result = await updateStrokeLineControlPoints(strokeLineId, controlPoints);
+      console.log('Save result:', result);
+      
+      if (!result) {
+        console.error('Failed to save control points');
       }
     } catch (error) {
       console.error('Error saving control points:', error);
     }
   }, [id, controlPoints]);
+
+  useEffect(() => {
+    const loadControlPoints = async () => {
+      try {
+        const strokeLineId = id.replace('stroke-edge-', '');
+        console.log('Loading control points for stroke line:', strokeLineId);
+        
+        const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
+        const responseText = await response.text(); // Get raw response text
+        console.log('Raw API Response:', responseText);
+        
+        let strokeLine;
+        try {
+          strokeLine = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError);
+          throw new Error('Invalid JSON response');
+        }
+        
+        console.log('Parsed stroke line data:', {
+          id: strokeLine.id,
+          control_points: strokeLine.control_points,
+          // Log other relevant fields
+          source_block_id: strokeLine.source_block_id,
+          target_block_id: strokeLine.target_block_id,
+          all_fields: Object.keys(strokeLine)
+        });
+
+        if (!response.ok) {
+          console.error('Failed to load stroke line data:', responseText);
+          throw new Error('Failed to load stroke line data');
+        }
+
+        const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
+        const target = getConnectionPoint(targetX, targetY, targetPosition, false);
+
+        if (strokeLine.control_points && Array.isArray(strokeLine.control_points) && strokeLine.control_points.length > 0) {
+          console.log('Found valid control points:', strokeLine.control_points);
+          setControlPoints(strokeLine.control_points);
+        } else {
+          console.log('No valid control points found. Raw control_points value:', strokeLine.control_points);
+          // Initialize with three points in the most logical direction
+          const isHorizontal = Math.abs(target.x - source.x) > Math.abs(target.y - source.y);
+          
+          if (isHorizontal) {
+            const midX = source.x + (target.x - source.x) / 2;
+            const midY = source.y + (target.y - source.y) / 2;
+            
+            // If nodes are very close vertically, add a small offset
+            const offset = Math.abs(target.y - source.y) < 50 ? 25 : 0;
+            const y = midY + (offset * (midY > source.y ? 1 : -1));
+            
+            const initialPoints = [
+              { x: source.x, y },
+              { x: midX, y },
+              { x: target.x, y }
+            ];
+            console.log('Setting initial horizontal points:', initialPoints);
+            setControlPoints(initialPoints);
+            
+            // Save initial points to database
+            const result = await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
+            console.log('Saved initial horizontal points:', result);
+          } else {
+            const midX = source.x + (target.x - source.x) / 2;
+            const midY = source.y + (target.y - source.y) / 2;
+            
+            // If nodes are very close horizontally, add a small offset
+            const offset = Math.abs(target.x - source.x) < 50 ? 25 : 0;
+            const x = midX + (offset * (midX > source.x ? 1 : -1));
+            
+            const initialPoints = [
+              { x, y: source.y },
+              { x, y: midY },
+              { x, y: target.y }
+            ];
+            console.log('Setting initial vertical points:', initialPoints);
+            setControlPoints(initialPoints);
+            
+            // Save initial points to database
+            const result = await updateStrokeLineControlPoints(parseInt(strokeLineId), initialPoints);
+            console.log('Saved initial vertical points:', result);
+          }
+        }
+      } catch (error) {
+        console.error('Detailed error in loadControlPoints:', error);
+        // Simple fallback
+        const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
+        const target = getConnectionPoint(targetX, targetY, targetPosition, false);
+        const midX = source.x + (target.x - source.x) / 2;
+        const midY = source.y + (target.y - source.y) / 2;
+        
+        const fallbackPoints = [
+          { x: source.x, y: midY },
+          { x: midX, y: midY },
+          { x: target.x, y: midY }
+        ];
+        console.log('Setting fallback points:', fallbackPoints);
+        setControlPoints(fallbackPoints);
+        
+        // Save fallback points to database
+        try {
+          const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
+          const result = await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
+          console.log('Saved fallback points:', result);
+        } catch (saveError) {
+          console.error('Error saving fallback control points:', saveError);
+        }
+      }
+    };
+
+    loadControlPoints();
+  }, [id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, getConnectionPoint]);
 
   // Debounced save when control points change
   useEffect(() => {
@@ -373,29 +501,21 @@ function StrokeEdge({
                 C ${centerX} ${sourceY} 
                   ${centerX} ${targetY} 
                   ${targetX} ${targetY}`;
-  } else if (controlPoints.length === 3) {
-    // Create path with three segments
-    const [p1, p2, p3] = controlPoints;
-    
-    // Calculate the actual segment endpoints
-    const firstSegmentEnd = {
-      x: p1.x * 2 - sourceX,
-      y: p1.y * 2 - sourceY
-    };
-    const secondSegmentEnd = {
-      x: p2.x * 2 - firstSegmentEnd.x,
-      y: p2.y * 2 - firstSegmentEnd.y
-    };
-    const thirdSegmentEnd = {
-      x: p3.x * 2 - secondSegmentEnd.x,
-      y: p3.y * 2 - secondSegmentEnd.y
-    };
+  } else if (controlPoints.length > 0) {
+    // Get actual source and target points
+    const source = getConnectionPoint(sourceX, sourceY, sourcePosition, true);
+    const target = getConnectionPoint(targetX, targetY, targetPosition, false);
 
-    edgePath = `M ${sourceX} ${sourceY}
-                L ${firstSegmentEnd.x} ${firstSegmentEnd.y}
-                L ${secondSegmentEnd.x} ${secondSegmentEnd.y}
-                L ${thirdSegmentEnd.x} ${thirdSegmentEnd.y}
-                L ${targetX} ${targetY}`;
+    // Create orthogonal path starting from source handle
+    edgePath = `M ${source.x} ${source.y}`;
+    
+    // Add all control points
+    for (const point of controlPoints) {
+      edgePath += ` L ${point.x} ${point.y}`;
+    }
+    
+    // End at target handle
+    edgePath += ` L ${target.x} ${target.y}`;
   }
 
   return (
