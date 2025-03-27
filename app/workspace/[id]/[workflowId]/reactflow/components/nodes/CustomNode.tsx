@@ -404,7 +404,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                Connect node
+                Connect block
               </div>
             </div>
           </div>
@@ -501,7 +501,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                Duplicate node
+                Duplicate block
               </div>
             </div>
           </div>
@@ -592,7 +592,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                Delete node
+                Delete block
               </div>
             </div>
           </div>
