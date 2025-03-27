@@ -3,6 +3,7 @@ import { Node, Edge } from '@xyflow/react';
 import { CSSProperties } from 'react';
 import { BlockEndType } from '@/types/block';
 import { Block } from '@/types/block';
+import { NodeData } from '../../types';
 
 const elk = new ELK();
 
@@ -16,20 +17,23 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const isEndTypeNode = (type: string | undefined) => 
     type && Object.values(BlockEndType).map(t => t.toLowerCase()).includes(type);
 
+  console.log(nodes.map((node) => (node.data as NodeData)?.path?.parent_blocks?.length))
   const elkNodes = nodes.map((node) => ({
     id: node.id,
-    width: node.type === 'begin' ? 200 : 
-          node.type === 'last' ? 32 :
-          node.type === 'path' ? 32 :
-          node.type === 'end' ? 290 :
-          node.type === 'merge' ? 12 :
-          481,
-    height: node.type === 'begin' ? 50 : 
-           node.type === 'last' ? 32 :
-           node.type === 'path' ? 32 :
-           node.type === 'end' ? 48 :
-           node.type === 'merge' ? 12 :
-           (node.data?.block as Block)?.image ? 387 : 120,
+    width: node.type === 'begin' ? 
+            (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 200) :
+            node.type === 'last' ? 32 :
+            node.type === 'path' ? 32 :
+            node.type === 'end' ? 290 :
+            node.type === 'merge' ? 12 :
+            481,
+    height: node.type === 'begin' ? 
+             (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 50) :
+             node.type === 'last' ? 32 :
+             node.type === 'path' ? 32 :
+             node.type === 'end' ? 48 :
+             node.type === 'merge' ? 12 :
+             ((node.data as NodeData)?.block as Block)?.image ? 387 : 120,
   }));
 
   const elkEdges = validEdges.map((edge) => ({
