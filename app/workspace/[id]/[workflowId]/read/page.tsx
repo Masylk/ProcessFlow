@@ -50,6 +50,12 @@ interface WorkflowData {
     id: string;
     name: string;
   };
+  icon?: string;
+  description?: string;
+  author?: {
+    full_name: string;
+    avatar_url?: string;
+  };
 }
 
 interface StepOption {
@@ -100,7 +106,7 @@ export default function ExamplePage() {
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
-  const [workflowData, setWorkflowData] = useState<any>(null);
+  const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
 
   const paths = usePathsStore((state) => state.paths);
   const mainPath = useMemo(
@@ -365,6 +371,7 @@ export default function ExamplePage() {
         const response = await fetch(`/api/workflows/${params.workflowId}`);
         if (!response.ok) throw new Error('Failed to fetch workflow');
         const data = await response.json();
+        console.log('workflowData', data);
         setWorkflowData(data);
       } catch (error) {
         console.error('Error fetching workflow:', error);
@@ -393,10 +400,13 @@ export default function ExamplePage() {
       ]
     : [];
 
-  // Update processCardData to use fetched data and generate integrations from blocks
+  // Update processCardData to use workflow data
   const processCardData = workflowData
     ? {
-        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
+        icon:
+          workflowData.icon && workflowData.icon.trim() !== ''
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.icon}`
+            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
         workflow: {
           name: workflowData.name,
           description: workflowData.description,
@@ -419,10 +429,17 @@ export default function ExamplePage() {
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
-        author: {
-          name: 'Jane Doe',
-          avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/placeholder-avatar1.png`,
-        },
+        ...(workflowData.author && {
+          author: {
+            name: workflowData.author.full_name,
+            avatar:
+              workflowData.author.avatar_url &&
+              workflowData.author.avatar_url !== null &&
+              workflowData.author.avatar_url.trim() !== ''
+                ? workflowData.author.avatar_url
+                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+          },
+        }),
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)

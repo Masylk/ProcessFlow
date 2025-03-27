@@ -1,14 +1,24 @@
 import { Workflow } from '@/types/workflow'; // Update the path to match your project structure
 
-export async function createWorkflow(
-  name: string,
-  description: string,
-  workspaceId: number,
-  folderId: number | null = null,
-  teamTags: string[] = [],
-  authorId: number,
-  icon: string | null = null,
-): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
+interface CreateWorkflowParams {
+  name: string;
+  description: string;
+  workspaceId: number;
+  folderId?: number | null;
+  teamTags?: string[];
+  authorId?: number;
+  icon?: string | null;
+}
+
+export async function createWorkflow({
+  name,
+  description,
+  workspaceId,
+  folderId,
+  teamTags,
+  authorId,
+  icon,
+}: CreateWorkflowParams): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
     const response = await fetch('/api/workspaces/workflows', {
       method: 'POST',

@@ -293,10 +293,18 @@ export default function Page() {
       counter++;
     }
 
-    await handleCreateWorkflow(duplicateName, selectedWorkflow.description);
+    await handleCreateWorkflow(
+      duplicateName,
+      selectedWorkflow.description,
+      selectedWorkflow.icon
+    );
   };
 
-  const handleCreateWorkflow = async (name: string, description: string) => {
+  const handleCreateWorkflow = async (
+    name: string,
+    description: string,
+    icon: string | null
+  ) => {
     if (!activeWorkspace) {
       console.error('No active workspace selected');
       return;
@@ -305,91 +313,93 @@ export default function Page() {
       console.error('No user found');
       return;
     }
-    const result = await createWorkflow(
-      name,
-      description,
-      activeWorkspace.id,
-      selectedFolder?.id || null,
-      [],
-      user.id,
-      null // icon
-    );
-
-    if (result.error) {
-      toast.error(result.error.title, {
-        description: result.error.description,
+    try {
+      const result = await createWorkflow({
+        name,
+        description,
+        workspaceId: activeWorkspace.id,
+        icon,
       });
-      return;
-    }
 
-    if (result.workflow) {
-      const workflow = result.workflow;
-      // Update the list of workspaces
-      setWorkspaces((prevWorkspaces) =>
-        prevWorkspaces.map((workspace) =>
-          workspace.id === workflow.workspaceId
+      if (result.error) {
+        toast.error(result.error.title, {
+          description: result.error.description,
+        });
+        return;
+      }
+
+      if (result.workflow) {
+        const workflow = result.workflow;
+        // Update the list of workspaces
+        setWorkspaces((prevWorkspaces) =>
+          prevWorkspaces.map((workspace) =>
+            workspace.id === workflow.workspaceId
+              ? {
+                  ...workspace,
+                  workflows: [...workspace.workflows, workflow],
+                }
+              : workspace
+          )
+        );
+
+        // Update the active workspace
+        setActiveWorkspace((prev) =>
+          prev
             ? {
-                ...workspace,
-                workflows: [...workspace.workflows, workflow],
+                ...prev,
+                workflows: [...prev.workflows, workflow],
               }
-            : workspace
-        )
-      );
+            : prev
+        );
 
-      // Update the active workspace
-      setActiveWorkspace((prev) =>
-        prev
-          ? {
-              ...prev,
-              workflows: [...prev.workflows, workflow],
-            }
-          : prev
-      );
-
-      toast.success('Workflow Created', {
-        description: 'Your new workflow has been created successfully.',
-      });
+        toast.success('Workflow Created', {
+          description: 'Your new workflow has been created successfully.',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating workflow:', error);
     }
   };
 
-  async function handleEditWorkflow(
-    workflowId: number,
+  const handleEditWorkflow = async (
+    id: number,
     name: string,
     description: string,
-    folder: Folder | null | undefined
-  ): Promise<Workflow | null> {
-    // Prepare the partial update data
-    if (folder === null) console.log('putting folder to root');
-    const updateData = {
-      name, // Update the name
-      description, // Update the description
-      folder_id:
-        folder === null ? 0 : folder !== undefined ? folder.id : undefined,
-    };
+    folder?: Folder | null,
+    icon?: string | null
+  ) => {
+    try {
+      const updatedWorkflow = await updateWorkflow(id, {
+        name,
+        description,
+        folder_id: folder?.id,
+        icon: icon ?? undefined,
+      });
 
-    // Call the updateWorkflow function
-    const updatedWorkflow = await updateWorkflow(workflowId, updateData);
+      if (updatedWorkflow) {
+        console.log('Workflow updated successfully:', updatedWorkflow);
 
-    if (updatedWorkflow) {
-      console.log('Workflow updated successfully:', updatedWorkflow);
+        // Update the activeWorkspace state
+        if (activeWorkspace) {
+          const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
+            workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+          );
 
-      // Update the activeWorkspace state
-      if (activeWorkspace) {
-        const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
-          workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
-        );
-
-        setActiveWorkspace({
-          ...activeWorkspace,
-          workflows: updatedWorkflows,
-        });
+          setActiveWorkspace({
+            ...activeWorkspace,
+            workflows: updatedWorkflows,
+          });
+        }
+      } else {
+        console.error('Failed to update workflow.');
       }
-    } else {
-      console.error('Failed to update workflow.');
-    }
 
-    return updatedWorkflow;
-  }
+      return updatedWorkflow;
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+      return null;
+    }
+  };
 
   const handleDeleteWorkflow = async (workflowId: number) => {
     const wasDeleted = await deleteWorkflow(workflowId);
@@ -1413,7 +1423,8 @@ export default function Page() {
               selectedWorkflow.id,
               selectedWorkflow.name,
               selectedWorkflow.description,
-              folder
+              folder,
+              selectedWorkflow.icon
             )
           }
           selectedWorkflow={selectedWorkflow}

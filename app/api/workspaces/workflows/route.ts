@@ -106,6 +106,9 @@ import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessL
  *                 items:
  *                   type: string
  *                 example: ["teamA"]
+ *               icon:
+ *                 type: string
+ *                 example: "https://example.com/icon.png"
  *     responses:
  *       200:
  *         description: Workflow updated successfully
@@ -324,14 +327,14 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const {
-      id, // ID of the workflow to update
+      id,
       name,
-      description, // Optional field for description
-      folder_id = null, // Optional field for folder association
-      team_tags = [], // Optional field for team tags
+      description,
+      folder_id = null,
+      team_tags = [],
+      icon = null,
     } = await req.json();
 
-    // Ensure the `id` is provided
     if (!id) {
       return NextResponse.json(
         { error: 'Workflow ID is required' },
@@ -339,18 +342,18 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Update the workflow
     const updatedWorkflow = await prisma.workflow.update({
       where: {
-        id: Number(id), // Ensure the ID is a number
+        id: Number(id),
       },
       data: {
-        ...(name && { name }), // Update name if provided
-        ...(description && { description }), // Update description if provided
+        ...(name && { name }),
+        ...(description && { description }),
         ...(folder_id !== null && {
           folder_id: folder_id ? Number(folder_id) : null,
-        }), // Update folder_id if provided
-        ...(team_tags && { team_tags }), // Update team_tags if provided
+        }),
+        ...(team_tags && { team_tags }),
+        ...(icon !== undefined && { icon }),
       },
     });
 
