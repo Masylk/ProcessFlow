@@ -483,6 +483,7 @@ export default function ExamplePage() {
     setPathsToDisplay((currentPaths) => {
       const newPaths = [...currentPaths];
 
+      // console.log('pathToAdd', pathToAdd);
       // Get all parent block IDs of the path to add
       const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
 
@@ -492,6 +493,7 @@ export default function ExamplePage() {
       );
 
       if (sameParentIndex !== -1) {
+        console.log('sameParentIndex', sameParentIndex);
         // Remove this path and all following paths
         newPaths.splice(sameParentIndex);
       }
@@ -529,16 +531,29 @@ export default function ExamplePage() {
 
       // Update selectedOptions
       setSelectedOptions((currentSelected) => {
-        // Get the block ID from the path's parent block
-        const blockIdFromPath = pathToAdd.parent_blocks[0]?.block_id;
-        if (!blockIdFromPath) return currentSelected;
+        // Get the block ID from the path's parent block or use provided blockId
+        const blockIdFromPath = newPaths.some((path) =>
+          path.blocks.some((block) =>
+            pathToAdd.parent_blocks.some((pb) => pb.block_id === block.id)
+          )
+        )
+          ? pathToAdd.parent_blocks[0]?.block_id
+          : blockId;
+
+        if (!blockIdFromPath) {
+          console.log('no blockIdFromPath');
+          return currentSelected;
+        }
 
         // Check if this exact selection already exists
         const selectionExists = currentSelected.some(
           ([pathId, blockId]) =>
             pathId === optionId && blockId === blockIdFromPath
         );
-        if (selectionExists) return currentSelected;
+        if (selectionExists) {
+          console.log('selectionExists', optionId, blockIdFromPath);
+          return currentSelected;
+        }
 
         const newSelected = [...currentSelected];
 
@@ -555,11 +570,24 @@ export default function ExamplePage() {
           newSelected.push([optionId, blockIdFromPath]);
         }
 
-        // Filter out selections for paths that are no longer displayed
+        // After filtering out selections for paths that are no longer displayed
         const displayedPathIds = newPaths.map((path) => path.id);
-        return newSelected.filter(([pathId]) =>
+        let finalSelections = newSelected.filter(([pathId]) =>
           displayedPathIds.includes(pathId)
         );
+
+        // Add parent block selections for displayed paths
+        newPaths.forEach((path) => {
+          // console.log('path', path);
+          if (path.parent_blocks?.length) {
+            path.parent_blocks.forEach((parentBlock) => {
+              // Add selection with path's ID and parent block's ID
+              finalSelections.push([path.id, parentBlock.block_id]);
+            });
+          }
+        });
+
+        return finalSelections;
       });
       return newPaths;
     });
@@ -712,41 +740,88 @@ export default function ExamplePage() {
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
                     {processCardData && <ProcessCard {...processCardData} />}
-                    {pathsToDisplay.map((path) => (
-                      <div key={path.id} className="space-y-16">
-                        {path.blocks
-                          .filter(
-                            (block) =>
-                              block.type !== 'BEGIN' && block.type !== 'LAST'
-                          )
-                          .map((block, index) => (
-                            <div
-                              key={block.id}
-                              id={`block-${block.id}`}
-                              ref={(el) => {
-                                if (el) stepRefs.current[index] = el;
-                              }}
-                            >
-                              <VerticalStep
-                                variant="default"
-                                block={block}
-                                isActive={currentStep === block.id}
-                                defaultExpanded={expandedSteps.includes(
-                                  block.id
-                                )}
-                                onToggle={(isExpanded) =>
-                                  handleStepToggle(block.id, isExpanded)
+                    {pathsToDisplay
+                      .map((path) => {
+                        // Check if any parent block's path has a selected block
+                        const shouldSkipPath = path.parent_blocks?.some(
+                          (parentBlock) =>
+                            selectedOptions?.some(([pathId, blockId]) => {
+                              // Don't skip if this path is the selected path
+                              if (pathId === path.id || path.id < 0)
+                                return false;
+
+                              const parentPath = paths.find((p) =>
+                                p.blocks.some(
+                                  (b) =>
+                                    b.id === parentBlock.block_id &&
+                                    b.type !== 'PATH'
+                                )
+                              );
+                              return parentPath?.blocks
+                                .filter((block) => block.type !== 'PATH')
+                                .some((block) => block.id === blockId);
+                            })
+                        );
+
+                        if (shouldSkipPath) {
+                          return null;
+                        }
+
+                        return (
+                          <div key={path.id} className="space-y-16">
+                            {path.blocks
+                              .filter(
+                                (block) =>
+                                  block.type !== 'BEGIN' &&
+                                  block.type !== 'LAST'
+                              )
+                              .map((block, index, filteredBlocks) => {
+                                // Check if any block in this path up to current index has been selected
+                                const shouldSkip = selectedOptions?.some(
+                                  ([pathId, blockId]) =>
+                                    filteredBlocks
+                                      .slice(0, index)
+                                      .some(
+                                        (prevBlock) => blockId === prevBlock.id
+                                      )
+                                );
+
+                                if (shouldSkip) {
+                                  return null;
                                 }
-                                selectedOptionIds={selectedOptions}
-                                onOptionSelect={(optionId, blockId) =>
-                                  handleOptionSelect(optionId, blockId)
-                                }
-                                isLastStep={false}
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    ))}
+
+                                return (
+                                  <div
+                                    key={block.id}
+                                    id={`block-${block.id}`}
+                                    ref={(el) => {
+                                      if (el) stepRefs.current[index] = el;
+                                    }}
+                                  >
+                                    <VerticalStep
+                                      variant="default"
+                                      block={block}
+                                      isActive={currentStep === block.id}
+                                      defaultExpanded={expandedSteps.includes(
+                                        block.id
+                                      )}
+                                      onToggle={(isExpanded) =>
+                                        handleStepToggle(block.id, isExpanded)
+                                      }
+                                      selectedOptionIds={selectedOptions}
+                                      onOptionSelect={(optionId, blockId) =>
+                                        handleOptionSelect(optionId, blockId)
+                                      }
+                                      isLastStep={false}
+                                    />
+                                  </div>
+                                );
+                              })
+                              .filter(Boolean)}{' '}
+                          </div>
+                        );
+                      })
+                      .filter(Boolean)}
                     <VerticalLastStep
                       onCopyLink={handleCopyLink}
                       icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}

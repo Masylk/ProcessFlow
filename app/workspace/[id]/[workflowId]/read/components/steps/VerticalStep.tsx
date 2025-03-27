@@ -139,8 +139,6 @@ export default function VerticalStep({
 
   // Helper function to get icon path
   const getIconPath = (block: Block) => {
-    console.log('getting icon of block', block);
-
     if (block.type === 'PATH') {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`;
     }
