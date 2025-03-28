@@ -96,7 +96,9 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showDocModal, setShowDocModal] = useState<boolean>(false);
-  const [showDocNotification, setShowDocNotification] = useState<boolean>(true);
+  const [showDocNotification, setShowDocNotification] = useState<boolean>(
+    !Cookies.get('hasSeenDocumentation')
+  );
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
 
@@ -120,11 +122,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   };
 
   useEffect(() => {
-    // Check if the user has seen the documentation in this session
-    const hasSeenDocs = Cookies.get('hasSeenDocumentation');
-    if (hasSeenDocs) {
-      setShowDocNotification(false);
-    }
+    // Additional initialization logic if needed
   }, []);
 
   const handleDocModalOpen = () => {
@@ -132,7 +130,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     setShowDocNotification(false);
     
     // Set a session cookie (expires when browser is closed)
-    Cookies.set('hasSeenDocumentation', 'true', { expires: undefined });
+    Cookies.set('hasSeenDocumentation', 'true');
   };
 
   // Find the main path from filtered paths

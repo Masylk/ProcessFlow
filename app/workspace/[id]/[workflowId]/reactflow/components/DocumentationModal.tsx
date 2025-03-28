@@ -282,7 +282,7 @@ export function DocumentationModal({ onClose }: DocumentationModalProps) {
         content.bullets?.some(bullet => bullet.toLowerCase().includes(query))
       );
     });
-  }, [searchQuery]);
+  }, [searchQuery, tabs]);
 
   // Reset scroll position when active tab changes
   useEffect(() => {
