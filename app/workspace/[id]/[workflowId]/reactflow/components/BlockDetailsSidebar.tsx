@@ -416,7 +416,9 @@ export default function BlockDetailsSidebar({
                   onUpdate={onUpdate}
                 />
               ) : (
-                <MediaUploader block={block} onUpdate={onUpdate} />
+                <div onClick={(e) => e.stopPropagation()}>
+                  <MediaUploader block={block} onUpdate={onUpdate} />
+                </div>
               )}
             </div>
           </>
