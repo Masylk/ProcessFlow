@@ -37,6 +37,7 @@ import IconModifier from './components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './components/TutorialOverlay';
 import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('./components/HelpCenterModal'),
@@ -123,6 +124,9 @@ export default function Page() {
 
   // Add this state near other state declarations
   const [activeTab, setActiveTab] = useState<string>('Workspace');
+
+  // Add near the top of the component
+  const searchParams = useSearchParams();
 
   // Fetch user data from your API
   useEffect(() => {
@@ -977,8 +981,15 @@ export default function Page() {
   useEffect(() => {
     // Only redirect if we have a workspace with a slug and we're on the dashboard page
     if (activeWorkspace?.slug && window.location.pathname === '/dashboard') {
+      // Get current URL search params
+      const currentSearchParams = new URLSearchParams(window.location.search);
+
+      // Create new URL with workspace slug and preserve existing search params
+      const newUrl = `/${activeWorkspace.slug}${currentSearchParams.toString() ? '?' + currentSearchParams.toString() : ''}`;
+
+      console.log('newUrl: ' + newUrl);
       // Update URL to the workspace slug without refreshing the page
-      window.history.replaceState({}, '', `/${activeWorkspace.slug}`);
+      window.history.replaceState({}, '', newUrl);
     }
   }, [activeWorkspace]);
 
@@ -1140,6 +1151,19 @@ export default function Page() {
       }
     }
   }, []); // Empty dependency array means this runs once on mount
+
+  // Add after your state declarations
+  useEffect(() => {
+    const folderParam = searchParams.get('folder');
+    if (folderParam) {
+      const folderId = parseInt(folderParam);
+      // Find the folder in the active workspace's folders
+      const folder = activeWorkspace?.folders?.find((f) => f.id === folderId);
+      if (folder) {
+        setSelectedFolder(folder);
+      }
+    }
+  }, [searchParams, activeWorkspace]); // Change dependency to activeWorkspace
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">

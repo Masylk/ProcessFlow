@@ -9,7 +9,7 @@ import UserSettings from '@/app/dashboard/components/UserSettings';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import dynamic from 'next/dynamic';
 import Sidebar from './components/Sidebar';
-import { Workspace } from '@/types/workspace';
+import { Workspace, Folder } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
 import ProcessCard from './components/ProcessCard';
 import ViewModeSwitch from './components/ViewModeSwitch';
@@ -56,6 +56,14 @@ interface WorkflowData {
     full_name: string;
     avatar_url?: string;
   };
+  folder?: {
+    id: string;
+    name: string;
+    parent?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 interface StepOption {
@@ -80,6 +88,11 @@ interface StrokeLine {
   target_block_id: number;
   workflow_id: number;
   label: string;
+}
+
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
 }
 
 export default function ExamplePage() {
@@ -107,6 +120,7 @@ export default function ExamplePage() {
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
   const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
+  const [breadcrumbItems, setBreadcrumbItems] = useState<BreadcrumbItem[]>([]);
 
   const paths = usePathsStore((state) => state.paths);
   const mainPath = useMemo(
@@ -168,9 +182,7 @@ export default function ExamplePage() {
     }
   }, [params.id]);
 
-  useEffect(() => {
-    console.log('paths', paths);
-  }, [paths]);
+  useEffect(() => {}, [paths]);
   // Fetch paths
   useEffect(() => {
     const fetchPathsAndStrokeLines = async () => {
@@ -230,20 +242,10 @@ export default function ExamplePage() {
                   );
 
                 // Add the new path to the original source block as a child path
-                console.log('newPaths', newPaths);
-                console.log(
-                  'strokeLine source block id',
-                  strokeLine.source_block_id
-                );
                 const sourceBlock = newPaths
                   .flatMap((p) => p.blocks)
                   .find((b: Block) => b.id === strokeLine.source_block_id);
-                console.log('sourceBlock', sourceBlock);
                 if (sourceBlock) {
-                  console.log(
-                    'adding original child path to source block',
-                    sourceBlock
-                  );
                   sourceBlock.child_paths = [
                     ...(sourceBlock.child_paths || []),
                     {
@@ -257,11 +259,6 @@ export default function ExamplePage() {
                 }
                 // Add the new path to all cloned source blocks as a child path
                 sourceBlocks.forEach((sourceBlock) => {
-                  console.log(
-                    'adding child path to duplicate source blocks',
-                    newPath,
-                    sourceBlock
-                  );
                   sourceBlock.child_paths = [
                     ...(sourceBlock.child_paths || []),
                     {
@@ -364,41 +361,42 @@ export default function ExamplePage() {
     return newId;
   };
 
-  // Add useEffect to fetch workflow data
+  // Update the useEffect to only fetch workflow data
   useEffect(() => {
-    const fetchWorkflowData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/workflows/${params.workflowId}`);
-        if (!response.ok) throw new Error('Failed to fetch workflow');
-        const data = await response.json();
-        console.log('workflowData', data);
-        setWorkflowData(data);
+        const workflowResponse = await fetch(
+          `/api/workflows/${params.workflowId}`
+        );
+        const workflowData = await workflowResponse.json();
+        setWorkflowData(workflowData);
+
+        // Create breadcrumbs from workflow data
+        const items: BreadcrumbItem[] = [];
+
+        if (workflowData.folder?.parent) {
+          items.push({
+            label: workflowData.folder.parent.name,
+            href: `/dashboard?folder=${workflowData.folder.parent.id}`,
+          });
+        }
+
+        if (workflowData.folder) {
+          items.push({
+            label: workflowData.folder.name,
+            href: `/dashboard?folder=${workflowData.folder.id}`,
+          });
+        }
+
+        items.push({ label: workflowData.name });
+        setBreadcrumbItems(items);
       } catch (error) {
-        console.error('Error fetching workflow:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    if (params.workflowId) {
-      fetchWorkflowData();
-    }
-  }, [params.workflowId]);
-
-  // Update breadcrumb items to use fetched data
-  const breadcrumbItems = workflowData
-    ? [
-        {
-          label: workflowData.category?.name || 'Shared with me',
-          href: `/${workflowData.category?.id || 'shared'}`,
-        },
-        {
-          label: workflowData.workspace.name,
-          href: `/workspace/${workflowData.workspace.id}`,
-        },
-        {
-          label: workflowData.name,
-        },
-      ]
-    : [];
+    fetchData();
+  }, [params.id, params.workflowId]);
 
   // Update processCardData to use workflow data
   const processCardData = workflowData
@@ -500,7 +498,6 @@ export default function ExamplePage() {
     setPathsToDisplay((currentPaths) => {
       const newPaths = [...currentPaths];
 
-      // console.log('pathToAdd', pathToAdd);
       // Get all parent block IDs of the path to add
       const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
 
@@ -510,7 +507,6 @@ export default function ExamplePage() {
       );
 
       if (sameParentIndex !== -1) {
-        console.log('sameParentIndex', sameParentIndex);
         // Remove this path and all following paths
         newPaths.splice(sameParentIndex);
       }
@@ -558,7 +554,6 @@ export default function ExamplePage() {
           : blockId;
 
         if (!blockIdFromPath) {
-          console.log('no blockIdFromPath');
           return currentSelected;
         }
 
@@ -568,7 +563,6 @@ export default function ExamplePage() {
             pathId === optionId && blockId === blockIdFromPath
         );
         if (selectionExists) {
-          console.log('selectionExists', optionId, blockIdFromPath);
           return currentSelected;
         }
 
@@ -595,7 +589,6 @@ export default function ExamplePage() {
 
         // Add parent block selections for displayed paths
         newPaths.forEach((path) => {
-          // console.log('path', path);
           if (path.parent_blocks?.length) {
             path.parent_blocks.forEach((parentBlock) => {
               // Add selection with path's ID and parent block's ID
@@ -869,9 +862,9 @@ export default function ExamplePage() {
                             )}
                           </div>
                           {/* Navigation and Progress Bar */}
-                          <div className="flex items-center justify-between mt-8">
-                            {/* Progress Bar */}
-                            <div className="flex items-center">
+                          <div className="flex items-center justify-end mt-8">
+                            {/* Progress Bar - hidden */}
+                            <div className="flex items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -973,14 +966,18 @@ export default function ExamplePage() {
                             ) : (
                               <HorizontalStep
                                 block={PathsToDisplayBlocks[currentStep]}
+                                selectedOptionIds={selectedOptions}
+                                onOptionSelect={(optionId, blockId) =>
+                                  handleOptionSelect(optionId, blockId)
+                                }
                               />
                             )}
                           </div>
 
                           {/* Navigation and Progress Bar */}
-                          <div className="flex items-center justify-between mt-8">
+                          <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar */}
-                            <div className="flex items-center">
+                            <div className="flex items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img

@@ -18,6 +18,18 @@ export async function GET(
         icon: true,
         description: true,
         workspace_id: true,
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         workspace: {
           select: {
             id: true,
