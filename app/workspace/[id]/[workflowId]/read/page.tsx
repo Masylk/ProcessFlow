@@ -9,7 +9,7 @@ import UserSettings from '@/app/dashboard/components/UserSettings';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import dynamic from 'next/dynamic';
 import Sidebar from './components/Sidebar';
-import { Workspace } from '@/types/workspace';
+import { Workspace, Folder } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
 import ProcessCard from './components/ProcessCard';
 import ViewModeSwitch from './components/ViewModeSwitch';
@@ -50,6 +50,20 @@ interface WorkflowData {
     id: string;
     name: string;
   };
+  icon?: string;
+  description?: string;
+  author?: {
+    full_name: string;
+    avatar_url?: string;
+  };
+  folder?: {
+    id: string;
+    name: string;
+    parent?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 interface StepOption {
@@ -76,6 +90,11 @@ interface StrokeLine {
   label: string;
 }
 
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export default function ExamplePage() {
   const params = useParams();
   const supabase = createClient();
@@ -100,7 +119,8 @@ export default function ExamplePage() {
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
-  const [workflowData, setWorkflowData] = useState<any>(null);
+  const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
+  const [breadcrumbItems, setBreadcrumbItems] = useState<BreadcrumbItem[]>([]);
 
   const paths = usePathsStore((state) => state.paths);
   const mainPath = useMemo(
@@ -109,12 +129,50 @@ export default function ExamplePage() {
   );
 
   const PathsToDisplayBlocks = useMemo(() => {
-    return pathsToDisplay.flatMap((path) =>
-      path.blocks.filter(
-        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
-      )
-    );
-  }, [pathsToDisplay]);
+    return pathsToDisplay.flatMap((path) => {
+      // Check if any parent block's path has a selected block
+      const shouldSkipPath = path.parent_blocks?.some((parentBlock) =>
+        selectedOptions?.some(([pathId, blockId]) => {
+          // Don't skip if this path is the selected path
+          if (pathId === path.id || path.id < 0) return false;
+
+          const parentPath = paths.find((p) =>
+            p.blocks.some(
+              (b) => b.id === parentBlock.block_id && b.type !== 'PATH'
+            )
+          );
+          return parentPath?.blocks
+            .filter((block) => block.type !== 'PATH')
+            .some((block) => block.id === blockId);
+        })
+      );
+
+      if (shouldSkipPath) {
+        return [];
+      }
+
+      // Filter blocks and apply skip logic
+      return path.blocks
+        .filter(
+          (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+        )
+        .filter((block, index, filteredBlocks) => {
+          // Check if any block in this path up to current index has been selected
+          const shouldSkip = selectedOptions?.some(([pathId, blockId]) => {
+            // Don't skip if the selected option is from this path
+            if (pathId === path.id) return false;
+
+            return filteredBlocks.slice(0, index).some(
+              (prevBlock) =>
+                // Only skip if block IDs match AND the paths are different
+                blockId === prevBlock.id && prevBlock.path_id !== pathId
+            );
+          });
+
+          return !shouldSkip;
+        });
+    });
+  }, [pathsToDisplay, selectedOptions, paths]);
 
   // Fetch user data
   useEffect(() => {
@@ -162,9 +220,7 @@ export default function ExamplePage() {
     }
   }, [params.id]);
 
-  useEffect(() => {
-    console.log('paths', paths);
-  }, [paths]);
+  useEffect(() => {}, [paths]);
   // Fetch paths
   useEffect(() => {
     const fetchPathsAndStrokeLines = async () => {
@@ -224,20 +280,10 @@ export default function ExamplePage() {
                   );
 
                 // Add the new path to the original source block as a child path
-                console.log('newPaths', newPaths);
-                console.log(
-                  'strokeLine source block id',
-                  strokeLine.source_block_id
-                );
                 const sourceBlock = newPaths
                   .flatMap((p) => p.blocks)
                   .find((b: Block) => b.id === strokeLine.source_block_id);
-                console.log('sourceBlock', sourceBlock);
                 if (sourceBlock) {
-                  console.log(
-                    'adding original child path to source block',
-                    sourceBlock
-                  );
                   sourceBlock.child_paths = [
                     ...(sourceBlock.child_paths || []),
                     {
@@ -251,11 +297,6 @@ export default function ExamplePage() {
                 }
                 // Add the new path to all cloned source blocks as a child path
                 sourceBlocks.forEach((sourceBlock) => {
-                  console.log(
-                    'adding child path to duplicate source blocks',
-                    newPath,
-                    sourceBlock
-                  );
                   sourceBlock.child_paths = [
                     ...(sourceBlock.child_paths || []),
                     {
@@ -358,45 +399,50 @@ export default function ExamplePage() {
     return newId;
   };
 
-  // Add useEffect to fetch workflow data
+  // Update the useEffect to only fetch workflow data
   useEffect(() => {
-    const fetchWorkflowData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/workflows/${params.workflowId}`);
-        if (!response.ok) throw new Error('Failed to fetch workflow');
-        const data = await response.json();
-        setWorkflowData(data);
+        const workflowResponse = await fetch(
+          `/api/workflows/${params.workflowId}`
+        );
+        const workflowData = await workflowResponse.json();
+        setWorkflowData(workflowData);
+
+        // Create breadcrumbs from workflow data
+        const items: BreadcrumbItem[] = [];
+
+        if (workflowData.folder?.parent) {
+          items.push({
+            label: workflowData.folder.parent.name,
+            href: `/dashboard?folder=${workflowData.folder.parent.id}`,
+          });
+        }
+
+        if (workflowData.folder) {
+          items.push({
+            label: workflowData.folder.name,
+            href: `/dashboard?folder=${workflowData.folder.id}`,
+          });
+        }
+
+        items.push({ label: workflowData.name });
+        setBreadcrumbItems(items);
       } catch (error) {
-        console.error('Error fetching workflow:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    if (params.workflowId) {
-      fetchWorkflowData();
-    }
-  }, [params.workflowId]);
+    fetchData();
+  }, [params.id, params.workflowId]);
 
-  // Update breadcrumb items to use fetched data
-  const breadcrumbItems = workflowData
-    ? [
-        {
-          label: workflowData.category?.name || 'Shared with me',
-          href: `/${workflowData.category?.id || 'shared'}`,
-        },
-        {
-          label: workflowData.workspace.name,
-          href: `/workspace/${workflowData.workspace.id}`,
-        },
-        {
-          label: workflowData.name,
-        },
-      ]
-    : [];
-
-  // Update processCardData to use fetched data and generate integrations from blocks
+  // Update processCardData to use workflow data
   const processCardData = workflowData
     ? {
-        icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
+        icon:
+          workflowData.icon && workflowData.icon.trim() !== ''
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.icon}`
+            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
         workflow: {
           name: workflowData.name,
           description: workflowData.description,
@@ -419,10 +465,17 @@ export default function ExamplePage() {
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
-        author: {
-          name: 'Jane Doe',
-          avatar: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/placeholder-avatar1.png`,
-        },
+        ...(workflowData.author && {
+          author: {
+            name: workflowData.author.full_name,
+            avatar:
+              workflowData.author.avatar_url &&
+              workflowData.author.avatar_url !== null &&
+              workflowData.author.avatar_url.trim() !== ''
+                ? workflowData.author.avatar_url
+                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+          },
+        }),
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -460,6 +513,18 @@ export default function ExamplePage() {
     setUser(updatedUser);
   };
 
+  // Add this effect to handle view mode changes
+  useEffect(() => {
+    // Reset to main path when view mode changes
+    const mainPath = paths.find((path) => path.parent_blocks.length === 0);
+    if (mainPath) {
+      setPathsToDisplay([mainPath]);
+      setSelectedOptions([]); // Clear selected options
+      setCurrentStep(-1); // Reset current step to initial state
+    }
+  }, [viewMode, paths]);
+
+  // Update handleOptionSelect to set currentStep
   const handleOptionSelect = (
     optionId: number,
     blockId: number,
@@ -483,7 +548,6 @@ export default function ExamplePage() {
     setPathsToDisplay((currentPaths) => {
       const newPaths = [...currentPaths];
 
-      // console.log('pathToAdd', pathToAdd);
       // Get all parent block IDs of the path to add
       const parentBlockIds = pathToAdd.parent_blocks.map((pb) => pb.block_id);
 
@@ -493,7 +557,6 @@ export default function ExamplePage() {
       );
 
       if (sameParentIndex !== -1) {
-        console.log('sameParentIndex', sameParentIndex);
         // Remove this path and all following paths
         newPaths.splice(sameParentIndex);
       }
@@ -541,7 +604,6 @@ export default function ExamplePage() {
           : blockId;
 
         if (!blockIdFromPath) {
-          console.log('no blockIdFromPath');
           return currentSelected;
         }
 
@@ -551,7 +613,6 @@ export default function ExamplePage() {
             pathId === optionId && blockId === blockIdFromPath
         );
         if (selectionExists) {
-          console.log('selectionExists', optionId, blockIdFromPath);
           return currentSelected;
         }
 
@@ -578,7 +639,6 @@ export default function ExamplePage() {
 
         // Add parent block selections for displayed paths
         newPaths.forEach((path) => {
-          // console.log('path', path);
           if (path.parent_blocks?.length) {
             path.parent_blocks.forEach((parentBlock) => {
               // Add selection with path's ID and parent block's ID
@@ -589,6 +649,20 @@ export default function ExamplePage() {
 
         return finalSelections;
       });
+
+      // After updating paths, find the index of the first block in the selected path
+      const firstBlock = pathToAdd.blocks.find(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      );
+      if (firstBlock) {
+        const blockIndex = PathsToDisplayBlocks.findIndex(
+          (block) => block.id === firstBlock.id
+        );
+        if (blockIndex !== -1) {
+          setCurrentStep(blockIndex);
+        }
+      }
+
       return newPaths;
     });
   };
@@ -750,6 +824,7 @@ export default function ExamplePage() {
                               if (pathId === path.id || path.id < 0)
                                 return false;
 
+                              // Find the path that contains the parent block
                               const parentPath = paths.find((p) =>
                                 p.blocks.some(
                                   (b) =>
@@ -757,6 +832,8 @@ export default function ExamplePage() {
                                     b.type !== 'PATH'
                                 )
                               );
+
+                              // Check if the parent block is in the selected path
                               return parentPath?.blocks
                                 .filter((block) => block.type !== 'PATH')
                                 .some((block) => block.id === blockId);
@@ -778,12 +855,17 @@ export default function ExamplePage() {
                               .map((block, index, filteredBlocks) => {
                                 // Check if any block in this path up to current index has been selected
                                 const shouldSkip = selectedOptions?.some(
-                                  ([pathId, blockId]) =>
-                                    filteredBlocks
-                                      .slice(0, index)
-                                      .some(
-                                        (prevBlock) => blockId === prevBlock.id
-                                      )
+                                  ([pathId, blockId]) => {
+                                    // Don't skip if the selected option is from this path
+                                    if (pathId === path.id) return false;
+
+                                    return filteredBlocks.slice(0, index).some(
+                                      (prevBlock) =>
+                                        // Only skip if block IDs match AND the paths are different
+                                        blockId === prevBlock.id &&
+                                        prevBlock.path_id !== pathId
+                                    );
+                                  }
                                 );
 
                                 if (shouldSkip) {
@@ -852,9 +934,9 @@ export default function ExamplePage() {
                             )}
                           </div>
                           {/* Navigation and Progress Bar */}
-                          <div className="flex items-center justify-between mt-8">
-                            {/* Progress Bar */}
-                            <div className="flex items-center">
+                          <div className="flex items-center justify-end mt-8">
+                            {/* Progress Bar - hidden */}
+                            <div className="flex items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -956,14 +1038,18 @@ export default function ExamplePage() {
                             ) : (
                               <HorizontalStep
                                 block={PathsToDisplayBlocks[currentStep]}
+                                selectedOptionIds={selectedOptions}
+                                onOptionSelect={(optionId, blockId) =>
+                                  handleOptionSelect(optionId, blockId)
+                                }
                               />
                             )}
                           </div>
 
                           {/* Navigation and Progress Bar */}
-                          <div className="flex items-center justify-between mt-8">
+                          <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar */}
-                            <div className="flex items-center">
+                            <div className="flex items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img

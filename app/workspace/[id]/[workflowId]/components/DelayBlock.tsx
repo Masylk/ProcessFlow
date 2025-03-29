@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Block } from '@/types/block';
-import DelayBlockMenu from './DelayBlockMenu'; // Import delay_blockMenu
+import DelayBlockMenu from './DelayBlockMenu';
+import { useColors } from '@/app/theme/hooks';
 
 interface DelayBlockProps {
   block: Block;
@@ -30,16 +31,17 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
   handleDeleteBlockFn,
   handleBlockClick,
 }) => {
-  const delay = block.delay_block?.seconds ?? 0; // Fallback to 0 if delay_block or delay is undefined
-
-  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false); // State for menu visibility
-  const menuRef = useRef<HTMLDivElement | null>(null); // Ref for the menu container
+  const colors = useColors();
+  const delay = block.delay_block?.seconds ?? 0;
+  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const toggleMenu = () => setIsMenuVisible((prev) => !prev);
 
   const handleClickOutside = (event: MouseEvent) => {
     if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-      setIsMenuVisible(false); // Hide the menu if clicked outside
+      setIsMenuVisible(false);
     }
   };
 
@@ -58,61 +60,126 @@ const DelayBlock: React.FC<DelayBlockProps> = ({
   return (
     <div
       id={`block:${block.id}`}
-      className="w-[481px] h-[124px] px-6 py-5 bg-[#FDEAD7] rounded-2xl shadow-[inset_0px_0px_0px_1px_rgba(16,24,40,0.18)] border border-[#d0d5dd] flex flex-col justify-start items-start gap-3 overflow-visible"
+      style={{
+        backgroundColor: colors['bg-primary'],
+        borderColor: colors['border-secondary'],
+      }}
+      className="w-[481px] px-6 py-4 rounded-lg border flex flex-col gap-3"
+      onClick={() => handleBlockClick(block)}
     >
-      {/* Top Row: Icon, Text, and Dots */}
-      <div className="w-full flex justify-between items-center relative">
-        {/* Left Section: Delay Icon and Text */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 p-3 bg-[#FDEAD7] rounded-[13.50px] border border-[#FFE5D5] justify-center items-center flex overflow-hidden">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/workflow/clock-stopwatch-orange.svg`}
-              alt="Delay Icon"
-              className="w-6 h-6"
-            />
-          </div>
-          <div className="flex flex-col justify-start items-start">
-            <div className="text-[#E04F16] text-base font-semibold font-['Inter'] leading-normal">
-              Delay
-            </div>
-          </div>
-        </div>
-        {/* Right Section: Dots Icon */}
-        <div
-          className="w-6 h-6 flex justify-center items-center cursor-pointer"
-          onClick={toggleMenu} // Toggle menu visibility on click
+      {/* Top Row: Icon, Text, and Menu */}
+      <div className="flex justify-between items-start gap-3">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            border: `1px solid ${colors['border-secondary']}`,
+          }}
         >
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-            alt="Options"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-heart-02.svg`}
+            alt="Event-Based Delay"
             className="w-6 h-6"
           />
         </div>
-        {/* Conditional Rendering of the Menu */}
-        {isMenuVisible && (
-          <div
-            ref={menuRef} // Attach ref to the menu
-            className="absolute top-[30px] right-[-150px] mt-2"
-          >
-            <DelayBlockMenu
-              blockId={block.id}
-              handleDeleteBlockFn={handleDeleteBlockFn}
-              handleBlockUpdate={() => {
-                handleBlockClick(block);
+
+        <div className="flex-grow">
+          <div className="flex items-start justify-between">
+            <h3 
+              style={{ color: colors['fg-primary'] }}
+              className="text-sm font-medium"
+            >
+              Event-Based Delay
+            </h3>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMenu();
               }}
-            />
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{ 
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                alt="Menu"
+                className="w-4 h-4"
+              />
+            </button>
           </div>
-        )}
+
+          <p 
+            style={{ color: colors['fg-tertiary'] }}
+            className="text-sm mt-1"
+          >
+            Waiting for: User completes onboarding
+          </p>
+        </div>
       </div>
-      {/* Bottom Row: Delay Description */}
-      <div className="w-full">
-        <span className="text-[#E04F16] text-base font-normal font-['Inter'] leading-normal">
-          Wait{' '}
-        </span>
-        <span className="text-[#E04F16] text-base font-semibold font-['Inter'] leading-normal">
-          {formatDelay(delay)}
+
+      {/* Divider */}
+      <div 
+        style={{ backgroundColor: colors['border-secondary'] }}
+        className="h-px w-full" 
+      />
+
+      {/* Bottom Section */}
+      <div className="flex items-center gap-2">
+        <img
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
+          alt="Hourglass"
+          className="w-4 h-4"
+        />
+        <span 
+          style={{ color: colors['fg-tertiary'] }}
+          className="text-sm font-medium"
+        >
+          Expires after {formatDelay(delay)}
         </span>
       </div>
+
+      {/* Warning Box */}
+      <div 
+        style={{
+          backgroundColor: colors['bg-primary'],
+          borderColor: colors['border-secondary']
+        }}
+        className="flex items-center gap-2 p-2 rounded-lg border"
+      >
+        <img
+          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/alert-circle.svg`}
+          alt="Alert"
+          className="w-4 h-4"
+        />
+        <span 
+          style={{ color: colors['fg-tertiary'] }}
+          className="text-sm"
+        >
+          Flow paused until event occurs or time expires
+        </span>
+      </div>
+
+      {/* Menu Dropdown */}
+      {isMenuVisible && (
+        <div
+          ref={menuRef}
+          className="absolute top-[30px] right-[-150px] mt-2"
+        >
+          <DelayBlockMenu
+            blockId={block.id}
+            handleDeleteBlockFn={handleDeleteBlockFn}
+            handleBlockUpdate={() => {
+              handleBlockClick(block);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

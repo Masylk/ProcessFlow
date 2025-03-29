@@ -54,6 +54,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     'elk.spacing.nodeNode': '40',
     'elk.layered.spacing.nodeNodeBetweenLayers': '80',
     'elk.spacing.componentComponent': '40',
+    'elk.edgeRouting': 'ORTHOGONAL',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
@@ -70,6 +71,18 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',
+    'elk.edges.routing': 'ORTHOGONAL',
+    'elk.spacing.edgeEdge': '30',
+    'elk.spacing.edgeNode': '30',
+    'elk.edge.thickness': '2',
+    'elk.edges.bendPoints': 'true',
+    'elk.edges.sourcePoint': 'FREE',
+    'elk.edges.targetPoint': 'FREE',
+    'elk.portAlignment.default': 'CENTER',
+    'elk.portConstraints': 'FREE',
+    'elk.layered.feedbackEdges': 'true',
+    'elk.layered.spacing.edgeEdgeBetweenLayers': '30',
+    'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
   };
 
   try {

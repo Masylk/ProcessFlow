@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { Block, Path } from '../../types';
 import { PathContainer } from './PathContainer';
@@ -8,14 +8,36 @@ import { useTheme, useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
+import { DocumentationModal } from './DocumentationModal';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { User } from '@/types/user';
 import { useEditModeStore } from '../store/editModeStore';
+import Cookies from 'js-cookie';
 
 interface SidebarProps {
   workspaceId: string;
   workflowId: string;
 }
+
+const PulsingCircle = ({ color }: { color: string }) => {
+  return (
+    <div className="absolute -top-2 -right-2 z-50 flex items-center justify-center pointer-events-none">
+      {/* Pulsing background for emphasis */}
+      <div 
+        className="absolute w-5 h-5 rounded-full animate-ping opacity-75"
+        style={{ backgroundColor: color }}
+      />
+      {/* Solid dot in the center */}
+      <div 
+        className="w-4 h-4 rounded-full"
+        style={{ 
+          backgroundColor: color,
+          boxShadow: `0 0 10px 3px ${color}`,
+        }}
+      />
+    </div>
+  );
+};
 
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const { currentTheme } = useTheme();
@@ -73,6 +95,10 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState<number>(300);
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
+  const [showDocModal, setShowDocModal] = useState<boolean>(false);
+  const [showDocNotification, setShowDocNotification] = useState<boolean>(
+    !Cookies.get('hasSeenDocumentation')
+  );
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
 
@@ -81,6 +107,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const supportIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/support-icon.svg`;
   const settingsIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
+  const bookIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/book-open-01.svg`;
 
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
@@ -88,6 +115,22 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
   const toggleHelpModal = () => {
     setShowHelpModal((prevState) => !prevState);
+  };
+
+  const toggleDocModal = () => {
+    setShowDocModal((prevState) => !prevState);
+  };
+
+  useEffect(() => {
+    // Additional initialization logic if needed
+  }, []);
+
+  const handleDocModalOpen = () => {
+    setShowDocModal(true);
+    setShowDocNotification(false);
+    
+    // Set a session cookie (expires when browser is closed)
+    Cookies.set('hasSeenDocumentation', 'true');
   };
 
   // Find the main path from filtered paths
@@ -434,13 +477,36 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     <>
       <style>{hoverStyles}</style>
       <style>{resizeHandleStyles}</style>
+      {/* Custom styles for animation */}
+      <style>{`
+        @keyframes pulse {
+          0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(78, 107, 215, 0.7);
+          }
+          
+          70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 10px rgba(78, 107, 215, 0);
+          }
+          
+          100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(78, 107, 215, 0);
+          }
+        }
+        
+        .pulse {
+          animation: pulse 2s infinite;
+        }
+      `}</style>
       <div
         className="fixed z-10 flex top-[56px] left-0 h-[calc(100vh-56px)]"
         style={{ backgroundColor: colors['bg-primary'] }}
       >
         {/* Sidebar with icons */}
         <div 
-          className="w-fit px-2 h-full flex flex-col justify-between border-r"
+          className="w-fit px-2 h-full flex flex-col justify-between border-r relative"
           style={{ 
             backgroundColor: colors['bg-primary'],
             borderColor: colors['border-primary'],
@@ -464,6 +530,33 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             />
           </div>
           <div className="flex flex-col pb-6 items-center gap-2">
+            {/* Button with notification */}
+            <div className="relative">
+              <ButtonNormal
+                variant="tertiary"
+                iconOnly
+                size="medium"
+                leadingIcon={bookIconUrl}
+                onClick={handleDocModalOpen}
+              />
+              
+              {showDocNotification && (
+                <div 
+                  className="pulse"
+                  style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: '#4e6bd7',
+                    borderRadius: '50%',
+                    boxShadow: '0 0 10px 2px #4e6bd7',
+                    zIndex: 9999
+                  }} 
+                />
+              )}
+            </div>
             <ButtonNormal
               variant="tertiary"
               iconOnly
@@ -550,6 +643,11 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       {/* Help Center Modal */}
       {showHelpModal && (
         <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
+      )}
+
+      {/* Documentation Modal */}
+      {showDocModal && (
+        <DocumentationModal onClose={toggleDocModal} />
       )}
     </>
   );

@@ -1,11 +1,17 @@
 import { toast } from 'sonner';
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface StrokeLineData {
   source_block_id: number;
   target_block_id: number;
   workflow_id: number;
   label: string;
   is_loop?: boolean;
+  control_points?: Point[];
 }
 
 interface UpdateStrokeLineData extends StrokeLineData {
@@ -119,6 +125,37 @@ export const getWorkflowStrokeLines = async (workflowId: number) => {
   } catch (error) {
     console.error('Error fetching stroke lines:', error);
     toast.error('Failed to fetch stroke lines');
+    return null;
+  }
+};
+
+/**
+ * Updates control points for a stroke line
+ * @param id The ID of the stroke line
+ * @param controlPoints Array of control points with x,y coordinates
+ * @returns The updated stroke line or null if update failed
+ */
+export const updateStrokeLineControlPoints = async (id: number, controlPoints: Point[]) => {
+  try {
+    const response = await fetch(`/api/stroke-lines?id=${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        control_points: controlPoints,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Failed to update control points:', errorData);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating control points:', error);
     return null;
   }
 }; 

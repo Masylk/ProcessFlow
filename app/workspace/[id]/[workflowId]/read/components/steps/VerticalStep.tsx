@@ -26,6 +26,7 @@ export default function VerticalStep({
 }: BaseStepProps) {
   const colors = useColors();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const hasMergePathSelected = useRef(false);
   const paths = usePathsStore((state) => state.paths);
@@ -51,6 +52,30 @@ export default function VerticalStep({
       hasMergePathSelected.current = false;
     };
   }, []); // Empty dependency array - only run once on mount
+
+  // Add useEffect to fetch signed URL when block has image
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (block.image) {
+        console.log('BLOCK IMAGE', block.image);
+        try {
+          const response = await fetch(
+            `/api/get-signed-url?path=${block.image}`
+          );
+          const data = await response.json();
+
+          if (response.ok && data.signedUrl) {
+            console.log('SIGNED IMAGE URL', data.signedUrl);
+            setSignedImageUrl(data.signedUrl);
+          }
+        } catch (error) {
+          console.error('Error fetching signed URL:', error);
+        }
+      }
+    };
+
+    fetchSignedUrl();
+  }, [block.image]);
 
   const handleToggle = () => {
     const newState = !isExpanded;
@@ -166,7 +191,7 @@ export default function VerticalStep({
   }
 
   return (
-    <div className="relative" ref={stepRef}>
+    <div className={`relative ${className}`} ref={stepRef}>
       <motion.div
         className={cn(
           'w-[550px] rounded-lg overflow-hidden will-change-transform',
@@ -262,8 +287,36 @@ export default function VerticalStep({
         </button>
 
         <AnimatePresence>
+          {/* Image Section */}
+          {isExpanded && signedImageUrl && (
+            <motion.div
+              key="image-section"
+              className="px-4 pb-4 overflow-hidden will-change-transform"
+              variants={expandVariants}
+              initial="collapsed"
+              animate="expanded"
+              exit="collapsed"
+              transition={{
+                duration: 0.3,
+                height: { duration: 0.3 },
+                opacity: { duration: 0.2 },
+              }}
+              style={{ transform: 'translateZ(0)' }}
+            >
+              <div className="mb-4 rounded-lg overflow-hidden">
+                <img
+                  src={signedImageUrl}
+                  alt="Block Media"
+                  className="w-full h-[267px] object-cover"
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Child Paths Section */}
           {isExpanded && block.child_paths && block.child_paths.length > 0 && (
             <motion.div
+              key="child-paths-section"
               className="px-4 pb-4 overflow-hidden will-change-transform"
               variants={expandVariants}
               initial="collapsed"
@@ -384,23 +437,6 @@ export default function VerticalStep({
                   </div>
                 </motion.div>
               )}
-            </motion.div>
-          )}
-
-          {isExpanded && !block.child_paths?.length && (
-            <motion.div
-              className="border-t p-4 will-change-transform"
-              variants={expandVariants}
-              initial="collapsed"
-              animate="expanded"
-              exit="collapsed"
-              transition={{ duration: 0.3 }}
-              style={{
-                borderColor: colors['border-secondary'],
-                transform: 'translateZ(0)', // Hardware acceleration
-              }}
-            >
-              {children}
             </motion.div>
           )}
         </AnimatePresence>

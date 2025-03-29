@@ -37,6 +37,7 @@ import IconModifier from './components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './components/TutorialOverlay';
 import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('./components/HelpCenterModal'),
@@ -123,6 +124,9 @@ export default function Page() {
 
   // Add this state near other state declarations
   const [activeTab, setActiveTab] = useState<string>('Workspace');
+
+  // Add near the top of the component
+  const searchParams = useSearchParams();
 
   // Fetch user data from your API
   useEffect(() => {
@@ -293,10 +297,18 @@ export default function Page() {
       counter++;
     }
 
-    await handleCreateWorkflow(duplicateName, selectedWorkflow.description);
+    await handleCreateWorkflow(
+      duplicateName,
+      selectedWorkflow.description,
+      selectedWorkflow.icon
+    );
   };
 
-  const handleCreateWorkflow = async (name: string, description: string) => {
+  const handleCreateWorkflow = async (
+    name: string,
+    description: string,
+    icon: string | null
+  ) => {
     if (!activeWorkspace) {
       console.error('No active workspace selected');
       return;
@@ -305,91 +317,93 @@ export default function Page() {
       console.error('No user found');
       return;
     }
-    const result = await createWorkflow(
-      name,
-      description,
-      activeWorkspace.id,
-      selectedFolder?.id || null,
-      [],
-      user.id,
-      null // icon
-    );
-
-    if (result.error) {
-      toast.error(result.error.title, {
-        description: result.error.description,
+    try {
+      const result = await createWorkflow({
+        name,
+        description,
+        workspaceId: activeWorkspace.id,
+        icon,
       });
-      return;
-    }
 
-    if (result.workflow) {
-      const workflow = result.workflow;
-      // Update the list of workspaces
-      setWorkspaces((prevWorkspaces) =>
-        prevWorkspaces.map((workspace) =>
-          workspace.id === workflow.workspaceId
+      if (result.error) {
+        toast.error(result.error.title, {
+          description: result.error.description,
+        });
+        return;
+      }
+
+      if (result.workflow) {
+        const workflow = result.workflow;
+        // Update the list of workspaces
+        setWorkspaces((prevWorkspaces) =>
+          prevWorkspaces.map((workspace) =>
+            workspace.id === workflow.workspaceId
+              ? {
+                  ...workspace,
+                  workflows: [...workspace.workflows, workflow],
+                }
+              : workspace
+          )
+        );
+
+        // Update the active workspace
+        setActiveWorkspace((prev) =>
+          prev
             ? {
-                ...workspace,
-                workflows: [...workspace.workflows, workflow],
+                ...prev,
+                workflows: [...prev.workflows, workflow],
               }
-            : workspace
-        )
-      );
+            : prev
+        );
 
-      // Update the active workspace
-      setActiveWorkspace((prev) =>
-        prev
-          ? {
-              ...prev,
-              workflows: [...prev.workflows, workflow],
-            }
-          : prev
-      );
-
-      toast.success('Workflow Created', {
-        description: 'Your new workflow has been created successfully.',
-      });
+        toast.success('Workflow Created', {
+          description: 'Your new workflow has been created successfully.',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating workflow:', error);
     }
   };
 
-  async function handleEditWorkflow(
-    workflowId: number,
+  const handleEditWorkflow = async (
+    id: number,
     name: string,
     description: string,
-    folder: Folder | null | undefined
-  ): Promise<Workflow | null> {
-    // Prepare the partial update data
-    if (folder === null) console.log('putting folder to root');
-    const updateData = {
-      name, // Update the name
-      description, // Update the description
-      folder_id:
-        folder === null ? 0 : folder !== undefined ? folder.id : undefined,
-    };
+    folder?: Folder | null,
+    icon?: string | null
+  ) => {
+    try {
+      const updatedWorkflow = await updateWorkflow(id, {
+        name,
+        description,
+        folder_id: folder?.id,
+        icon: icon ?? undefined,
+      });
 
-    // Call the updateWorkflow function
-    const updatedWorkflow = await updateWorkflow(workflowId, updateData);
+      if (updatedWorkflow) {
+        console.log('Workflow updated successfully:', updatedWorkflow);
 
-    if (updatedWorkflow) {
-      console.log('Workflow updated successfully:', updatedWorkflow);
+        // Update the activeWorkspace state
+        if (activeWorkspace) {
+          const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
+            workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+          );
 
-      // Update the activeWorkspace state
-      if (activeWorkspace) {
-        const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
-          workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
-        );
-
-        setActiveWorkspace({
-          ...activeWorkspace,
-          workflows: updatedWorkflows,
-        });
+          setActiveWorkspace({
+            ...activeWorkspace,
+            workflows: updatedWorkflows,
+          });
+        }
+      } else {
+        console.error('Failed to update workflow.');
       }
-    } else {
-      console.error('Failed to update workflow.');
-    }
 
-    return updatedWorkflow;
-  }
+      return updatedWorkflow;
+    } catch (error) {
+      console.error('Error updating workflow:', error);
+      return null;
+    }
+  };
 
   const handleDeleteWorkflow = async (workflowId: number) => {
     const wasDeleted = await deleteWorkflow(workflowId);
@@ -967,8 +981,15 @@ export default function Page() {
   useEffect(() => {
     // Only redirect if we have a workspace with a slug and we're on the dashboard page
     if (activeWorkspace?.slug && window.location.pathname === '/dashboard') {
+      // Get current URL search params
+      const currentSearchParams = new URLSearchParams(window.location.search);
+
+      // Create new URL with workspace slug and preserve existing search params
+      const newUrl = `/${activeWorkspace.slug}${currentSearchParams.toString() ? '?' + currentSearchParams.toString() : ''}`;
+
+      console.log('newUrl: ' + newUrl);
       // Update URL to the workspace slug without refreshing the page
-      window.history.replaceState({}, '', `/${activeWorkspace.slug}`);
+      window.history.replaceState({}, '', newUrl);
     }
   }, [activeWorkspace]);
 
@@ -1130,6 +1151,19 @@ export default function Page() {
       }
     }
   }, []); // Empty dependency array means this runs once on mount
+
+  // Add after your state declarations
+  useEffect(() => {
+    const folderParam = searchParams.get('folder');
+    if (folderParam) {
+      const folderId = parseInt(folderParam);
+      // Find the folder in the active workspace's folders
+      const folder = activeWorkspace?.folders?.find((f) => f.id === folderId);
+      if (folder) {
+        setSelectedFolder(folder);
+      }
+    }
+  }, [searchParams, activeWorkspace]); // Change dependency to activeWorkspace
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -1413,7 +1447,8 @@ export default function Page() {
               selectedWorkflow.id,
               selectedWorkflow.name,
               selectedWorkflow.description,
-              folder
+              folder,
+              selectedWorkflow.icon
             )
           }
           selectedWorkflow={selectedWorkflow}

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useColors } from '@/app/theme/hooks';
 
-const TABS = ['Icons', 'Apps', 'Emoji'];
-
 interface Entity {
   basicUrl: string;
   signedUrl: string;
@@ -10,9 +8,10 @@ interface Entity {
 
 interface IconSelectorProps {
   onSelect: (icon?: string, emote?: string) => void;
+  allowEmoji?: boolean;
 }
 
-const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
+const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true }) => {
   const colors = useColors();
   const [applist, setAppList] = useState<Entity[]>([]);
   const [iconlist, setIconList] = useState<Entity[]>([]);
@@ -28,6 +27,8 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect }) => {
     '📜', '🏋️‍♂️', '🚀', '🎓', '📣', '🏃‍♂️', '🏃‍♀️', '🎼', '🎨', '🧑‍💻',
     '👨‍💻', '👩‍💻', '📡', '🎙️', '🔢', '💰', '🏦', '🏛️', '🗃️', '📊',
   ]);
+
+  const TABS = allowEmoji ? ['Icons', 'Apps', 'Emoji'] : ['Icons', 'Apps'];
 
   useEffect(() => {
     const fetchIcons = async () => {
