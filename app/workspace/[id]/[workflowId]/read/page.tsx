@@ -129,12 +129,50 @@ export default function ExamplePage() {
   );
 
   const PathsToDisplayBlocks = useMemo(() => {
-    return pathsToDisplay.flatMap((path) =>
-      path.blocks.filter(
-        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
-      )
-    );
-  }, [pathsToDisplay]);
+    return pathsToDisplay.flatMap((path) => {
+      // Check if any parent block's path has a selected block
+      const shouldSkipPath = path.parent_blocks?.some((parentBlock) =>
+        selectedOptions?.some(([pathId, blockId]) => {
+          // Don't skip if this path is the selected path
+          if (pathId === path.id || path.id < 0) return false;
+
+          const parentPath = paths.find((p) =>
+            p.blocks.some(
+              (b) => b.id === parentBlock.block_id && b.type !== 'PATH'
+            )
+          );
+          return parentPath?.blocks
+            .filter((block) => block.type !== 'PATH')
+            .some((block) => block.id === blockId);
+        })
+      );
+
+      if (shouldSkipPath) {
+        return [];
+      }
+
+      // Filter blocks and apply skip logic
+      return path.blocks
+        .filter(
+          (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+        )
+        .filter((block, index, filteredBlocks) => {
+          // Check if any block in this path up to current index has been selected
+          const shouldSkip = selectedOptions?.some(([pathId, blockId]) => {
+            // Don't skip if the selected option is from this path
+            if (pathId === path.id) return false;
+
+            return filteredBlocks.slice(0, index).some(
+              (prevBlock) =>
+                // Only skip if block IDs match AND the paths are different
+                blockId === prevBlock.id && prevBlock.path_id !== pathId
+            );
+          });
+
+          return !shouldSkip;
+        });
+    });
+  }, [pathsToDisplay, selectedOptions, paths]);
 
   // Fetch user data
   useEffect(() => {
@@ -475,6 +513,18 @@ export default function ExamplePage() {
     setUser(updatedUser);
   };
 
+  // Add this effect to handle view mode changes
+  useEffect(() => {
+    // Reset to main path when view mode changes
+    const mainPath = paths.find((path) => path.parent_blocks.length === 0);
+    if (mainPath) {
+      setPathsToDisplay([mainPath]);
+      setSelectedOptions([]); // Clear selected options
+      setCurrentStep(-1); // Reset current step to initial state
+    }
+  }, [viewMode, paths]);
+
+  // Update handleOptionSelect to set currentStep
   const handleOptionSelect = (
     optionId: number,
     blockId: number,
@@ -599,6 +649,20 @@ export default function ExamplePage() {
 
         return finalSelections;
       });
+
+      // After updating paths, find the index of the first block in the selected path
+      const firstBlock = pathToAdd.blocks.find(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      );
+      if (firstBlock) {
+        const blockIndex = PathsToDisplayBlocks.findIndex(
+          (block) => block.id === firstBlock.id
+        );
+        if (blockIndex !== -1) {
+          setCurrentStep(blockIndex);
+        }
+      }
+
       return newPaths;
     });
   };
@@ -760,6 +824,7 @@ export default function ExamplePage() {
                               if (pathId === path.id || path.id < 0)
                                 return false;
 
+                              // Find the path that contains the parent block
                               const parentPath = paths.find((p) =>
                                 p.blocks.some(
                                   (b) =>
@@ -767,6 +832,8 @@ export default function ExamplePage() {
                                     b.type !== 'PATH'
                                 )
                               );
+
+                              // Check if the parent block is in the selected path
                               return parentPath?.blocks
                                 .filter((block) => block.type !== 'PATH')
                                 .some((block) => block.id === blockId);
@@ -788,12 +855,17 @@ export default function ExamplePage() {
                               .map((block, index, filteredBlocks) => {
                                 // Check if any block in this path up to current index has been selected
                                 const shouldSkip = selectedOptions?.some(
-                                  ([pathId, blockId]) =>
-                                    filteredBlocks
-                                      .slice(0, index)
-                                      .some(
-                                        (prevBlock) => blockId === prevBlock.id
-                                      )
+                                  ([pathId, blockId]) => {
+                                    // Don't skip if the selected option is from this path
+                                    if (pathId === path.id) return false;
+
+                                    return filteredBlocks.slice(0, index).some(
+                                      (prevBlock) =>
+                                        // Only skip if block IDs match AND the paths are different
+                                        blockId === prevBlock.id &&
+                                        prevBlock.path_id !== pathId
+                                    );
+                                  }
                                 );
 
                                 if (shouldSkip) {
