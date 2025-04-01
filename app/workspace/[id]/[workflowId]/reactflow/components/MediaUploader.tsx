@@ -96,7 +96,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
           <div className="self-stretch flex justify-center items-center gap-1">
             <div
               className="text-sm font-semibold leading-tight"
-              style={{ color: colors['button-primary-fg'] }}
+              style={{ color: colors['button-secondary-color-fg'] }}
             >
               Click to upload
             </div>

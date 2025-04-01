@@ -45,6 +45,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
     viewportInitialized,
     setViewport,
     fitView,
+    setNodes: reactFlowSetNodes,
   } = useReactFlow();
 
   const setShowConnectModal = useModalStore(
@@ -90,7 +91,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
 
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
-  const { isEditMode, selectedNodeId } = useEditModeStore();
+  const { isEditMode, selectedNodeId, setEditMode } = useEditModeStore();
 
   const setCopiedBlock = useClipboardStore((state) => state.setCopiedBlock);
 
@@ -645,7 +646,15 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Modify the click handler to include zooming
   const handleNodeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Just show the sidebar and zoom - the border styling depends on showSidebar
     setShowSidebar(true);
+    
+    // Update edit mode for other components to be aware
+    const blockId = id.replace('block-', '');
+    setEditMode(true, blockId);
+    
+    // Zoom to node
     zoomToNode();
   };
 
@@ -740,7 +749,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
-          borderColor: selected ? '#3537cc' : colors['border-secondary']
+          borderColor: showSidebar ? colors['border-brand_alt'] : colors['border-secondary']
         }}
       >
         <Handle
@@ -996,7 +1005,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       {showSidebar && (
         <BlockDetailsSidebar
           block={blockData}
-          onClose={() => setShowSidebar(false)}
+          onClose={() => {
+            setShowSidebar(false);
+            // We don't need to change edit mode or selection state
+          }}
           onUpdate={handleBlockUpdate}
         />
       )}
