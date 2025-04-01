@@ -110,6 +110,7 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({
         height: size,
         color: isHovered ? hoverColor : normalColor,
         transition: 'none !important',
+        pointerEvents: 'none',
       } as React.CSSProperties}
       dangerouslySetInnerHTML={{ __html: coloredSvg
         .replace('<svg', `<svg width="${size}" height="${size}" preserveAspectRatio="xMidYMid meet"`)
