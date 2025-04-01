@@ -43,6 +43,7 @@ model user {
   created_versions        workflow_version[] @relation("created_by")
   scheduled_emails        scheduled_email[]
   workflows        workflow[]           @relation("author")
+  ai_conversations        ai_conversation[]
   @@index([active_workspace_id])
   @@index([email])
   @@index([auth_id])
@@ -75,6 +76,7 @@ model workspace {
   user_workspaces    user_workspace[]
   workflows          workflow[]
   workflow_templates workflow_template[]
+  ai_embeddings      ai_embedding[]
 
   @@index([stripe_customer_id])
   @@index([subscription_id])
@@ -219,6 +221,7 @@ model workflow {
   versions         workflow_version[]
   author           user?              @relation("author", fields: [author_id], references: [id])
   author_id        Int?
+  ai_conversations ai_conversation[]
 
   @@unique([name, workspace_id])
   @@index([workspace_id])
@@ -399,6 +402,38 @@ model scheduled_email {
   @@index([status])
   @@index([sent])
   @@map("scheduled_emails")
+}
+
+model ai_conversation {
+  id             Int      @id @default(autoincrement())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+  user_id        Int
+  workflow_id    Int?
+  conversation_id String  @unique // Consider if this needs to be globally unique or unique per user/workspace
+  messages       Json     // Store conversation history as a JSON array [{role: "user", content: "..."}, ...]
+  user           user     @relation(fields: [user_id], references: [id])
+  workflow       workflow? @relation(fields: [workflow_id], references: [id])
+
+  @@index([user_id])
+  @@index([workflow_id])
+  @@map("ai_conversations")
+}
+
+model ai_embedding {
+  id             Int      @id @default(autoincrement())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+  content_type   String   // e.g., "workflow", "block", "documentation" - consider adding a comment
+  content_id     String   // ID of the original content (e.g., workflow.id, block.id) - consider adding a comment
+  content_text   String   // The text that was embedded - consider @db.Text if it can be very long
+  embedding_id   String   // The ID in the vector database
+  workspace_id   Int
+  workspace      workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+  @@index([content_type, content_id])
+  @@map("ai_embeddings")
 }
 
 enum onboarding_step {
