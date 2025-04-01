@@ -259,7 +259,22 @@ export default function ExamplePage() {
                     if (blocksAfterSource.length > 0) {
                       const continuePath = {
                         id: generateUniqueId(generatedPathIds, true),
-                        name: blocksAfterSource[0].title || 'Continue',
+                        name:
+                          blocksAfterSource[0].type === 'MERGE' &&
+                          blocksAfterSource[0].child_paths?.[0]
+                            ? (() => {
+                                const childPathId =
+                                  blocksAfterSource[0].child_paths[0].path_id;
+                                const childPath = paths.find(
+                                  (p) => p.id === childPathId
+                                );
+                                return (
+                                  childPath?.blocks[1]?.title ||
+                                  childPath?.blocks[1]?.type
+                                );
+                              })()
+                            : blocksAfterSource[0].title ||
+                              blocksAfterSource[0].type,
                         workflow_id: parseInt(params.workflowId as string),
                         workflow: sourcePath.workflow,
                         blocks: blocksAfterSource,
