@@ -28,7 +28,6 @@ export default function VerticalStep({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
-  const hasMergePathSelected = useRef(false);
   const paths = usePathsStore((state) => state.paths);
 
   useEffect(() => {
@@ -36,28 +35,8 @@ export default function VerticalStep({
   }, [defaultExpanded]);
 
   useEffect(() => {
-    // Only trigger once when it's a MERGE block and hasn't been handled yet
-    if (
-      block.type === 'MERGE' &&
-      block.child_paths?.[0] &&
-      !hasMergePathSelected.current
-    ) {
-      console.log('MERGE BLOCK');
-      hasMergePathSelected.current = true;
-      onOptionSelect?.(block.child_paths[0].path.id, block.id, true);
-    }
-
-    // Cleanup function to reset the ref when component unmounts
-    return () => {
-      hasMergePathSelected.current = false;
-    };
-  }, []); // Empty dependency array - only run once on mount
-
-  // Add useEffect to fetch signed URL when block has image
-  useEffect(() => {
     const fetchSignedUrl = async () => {
       if (block.image) {
-        console.log('BLOCK IMAGE', block.image);
         try {
           const response = await fetch(
             `/api/get-signed-url?path=${block.image}`
@@ -65,7 +44,6 @@ export default function VerticalStep({
           const data = await response.json();
 
           if (response.ok && data.signedUrl) {
-            console.log('SIGNED IMAGE URL', data.signedUrl);
             setSignedImageUrl(data.signedUrl);
           }
         } catch (error) {
