@@ -13,10 +13,19 @@ import DynamicIcon from '@/utils/DynamicIcon';
 import { User } from '@/types/user';
 import { useEditModeStore } from '../store/editModeStore';
 import Cookies from 'js-cookie';
+import ChatContainer from '@/components/chat/ChatContainer';
 
 interface SidebarProps {
   workspaceId: string;
   workflowId: string;
+}
+
+// Add new interface for favorite blocks
+interface FavoriteBlock {
+  id: number;
+  title: string;
+  icon?: string;
+  pathName: string;
 }
 
 const PulsingCircle = ({ color }: { color: string }) => {
@@ -99,6 +108,8 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const [showDocNotification, setShowDocNotification] = useState<boolean>(
     !Cookies.get('hasSeenDocumentation')
   );
+  const [showStars, setShowStars] = useState<boolean>(false);
+  const [favoriteBlocks, setFavoriteBlocks] = useState<FavoriteBlock[]>([]);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
 
@@ -108,9 +119,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const settingsIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
   const bookIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/book-open-01.svg`;
+  const starIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/star-01.svg`;
 
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
+    // Reset stars view when closing sidebar
+    if (showStars) {
+      setShowStars(false);
+    }
   };
 
   const toggleHelpModal = () => {
@@ -119,6 +135,104 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
   const toggleDocModal = () => {
     setShowDocModal((prevState) => !prevState);
+  };
+
+  // Toggle stars view
+  const toggleStarsView = () => {
+    setShowStars(prev => !prev);
+    // Ensure sidebar is visible when showing stars
+    if (!isSidebarVisible) {
+      setIsSidebarVisible(true);
+    }
+  };
+
+  // Handle tab switch
+  const handleTabSwitch = (tab: 'navigation' | 'stars') => {
+    if (tab === 'navigation') {
+      setShowStars(false);
+    } else {
+      setShowStars(true);
+    }
+    // Always ensure sidebar is visible when switching tabs
+    if (!isSidebarVisible) {
+      setIsSidebarVisible(true);
+    }
+  };
+
+  // Toggle favorite status for a block
+  const toggleFavorite = (block: any, pathName: string) => {
+    setFavoriteBlocks(prev => {
+      const exists = prev.some(fb => fb.id === block.id);
+      if (exists) {
+        return prev.filter(fb => fb.id !== block.id);
+      } else {
+        return [...prev, {
+          id: block.id,
+          title: block.title || block.step_details || `Block ${block.id}`,
+          icon: block.icon,
+          pathName
+        }];
+      }
+    });
+  };
+
+  // Check if a block is favorited
+  const isFavorite = (blockId: number) => {
+    return favoriteBlocks.some(fb => fb.id === blockId);
+  };
+
+  // Render favorites content
+  const renderFavoritesContent = () => {
+    return (
+      <div className="w-full h-full flex flex-col">
+        {/* Header with action buttons */}
+        <div 
+          className="sticky top-0 z-10 flex justify-end items-center gap-2 p-2 border-b"
+          style={{ borderColor: colors['border-primary'] }}
+        >
+          <ButtonNormal
+            variant="tertiary"
+            iconOnly
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
+            onClick={() => {}}
+            className="opacity-50 hover:opacity-100 transition-opacity"
+          />
+          <ButtonNormal
+            variant="tertiary"
+            iconOnly
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-rewind.svg`}
+            onClick={() => {}}
+            className="opacity-50 hover:opacity-100 transition-opacity"
+          />
+          <ButtonNormal
+            variant="tertiary"
+            iconOnly
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+            onClick={() => {}}
+            className="opacity-50 hover:opacity-100 transition-opacity"
+          />
+          <ButtonNormal
+            variant="tertiary"
+            iconOnly
+            size="small"
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
+            onClick={() => {
+              setShowStars(false);
+              setIsSidebarVisible(false);
+            }}
+            className="opacity-50 hover:opacity-100 transition-opacity"
+          />
+        </div>
+
+        {/* Replace the empty state content with ChatContainer component */}
+        <div className="flex-1">
+          <ChatContainer />
+        </div>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -394,6 +508,17 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                         >
                           {block.title || block.step_details || `Block ${block.id}`}
                         </span>
+                        <ButtonNormal
+                          variant="tertiary"
+                          iconOnly
+                          size="small"
+                          leadingIcon={starIconUrl}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(block, path.name);
+                          }}
+                          className={`opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity ${isFavorite(block.id) ? '!opacity-100' : ''}`}
+                        />
                       </div>
                     </div>
                   );
@@ -514,19 +639,26 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
         >
           <div className="flex flex-col pt-4 items-center gap-2">
             <ButtonNormal
-              variant="tertiary"
+              variant={isSidebarVisible && !showStars ? "secondary" : "tertiary"}
               iconOnly
               size="medium"
               leadingIcon={navigationIconUrl}
-              onClick={toggleSidebar}
-              className={isSidebarVisible ? 'bg-opacity-10' : ''}
+              onClick={() => handleTabSwitch('navigation')}
+              className="transition-all duration-200"
+              style={{
+                backgroundColor: isSidebarVisible && !showStars ? colors['bg-secondary'] : 'transparent',
+              }}
             />
             <ButtonNormal
-              variant="tertiary"
+              variant={showStars ? "secondary" : "tertiary"}
               iconOnly
               size="medium"
-              leadingIcon={navigationIconUrl}
-              className="hidden"
+              leadingIcon={starIconUrl}
+              onClick={() => handleTabSwitch('stars')}
+              className="transition-all duration-200"
+              style={{
+                backgroundColor: showStars ? colors['bg-secondary'] : 'transparent',
+              }}
             />
           </div>
           <div className="flex flex-col pb-6 items-center gap-2">
@@ -585,46 +717,50 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               borderColor: colors['border-primary'],
             }}
           >
-            {/* Header Section */}
-            <div
-              className="sticky top-0 z-10 px-4 pt-4 pb-4 border-b"
-              style={{
-                backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-primary'],
-              }}
-            >
+            {/* Header Section - Only show when not in stars view */}
+            {!showStars && (
               <div
-                className="text-base font-semibold mb-4"
-                style={{ color: colors['text-primary'] }}
+                className="sticky top-0 z-10 px-4 pt-4 pb-4 border-b"
+                style={{
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-primary'],
+                }}
               >
-                Navigation
+                <div
+                  className="text-base font-semibold mb-4"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  Navigation
+                </div>
+                {/* Search bar */}
+                <div className="relative">
+                  <InputField
+                    type="icon-leading"
+                    placeholder="Search"
+                    value={searchFilter}
+                    onChange={(value) => setSearchFilter(value)}
+                    iconUrl={searchIconUrl}
+                    size="small"
+                    mode={currentTheme === 'light' ? 'light' : 'dark'}
+                  />
+                </div>
               </div>
-              {/* Search bar */}
-              <div className="relative">
-                <InputField
-                  type="icon-leading"
-                  placeholder="Search"
-                  value={searchFilter}
-                  onChange={(value) => setSearchFilter(value)}
-                  iconUrl={searchIconUrl}
-                  size="small"
-                  mode={currentTheme === 'light' ? 'light' : 'dark'}
-                />
-              </div>
-            </div>
+            )}
 
             {/* Content Area with both x and y scrolling */}
             <div
               className="flex-1 overflow-auto"
               style={{ backgroundColor: colors['bg-primary'] }}
             >
-              {mainPath && (
-                <PathContainer
-                  key={mainPath.id}
-                  path={mainPath}
-                  level={0}
-                  renderContent={renderPathContent}
-                />
+              {showStars ? renderFavoritesContent() : (
+                mainPath && (
+                  <PathContainer
+                    key={mainPath.id}
+                    path={mainPath}
+                    level={0}
+                    renderContent={renderPathContent}
+                  />
+                )
               )}
             </div>
 

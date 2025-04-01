@@ -28,11 +28,11 @@ Table user {
   tutorial_completed Boolean [not null, default: false]
   actions action [not null]
   saved_searches saved_search [not null]
-  scheduled_emails scheduled_emails [not null]
   active_workspace workspace
   workspaces user_workspace [not null]
-  workflows workflow [not null]
   created_versions workflow_version [not null]
+  scheduled_emails scheduled_emails [not null]
+  workflows workflow [not null]
 }
 
 Table workspace {
@@ -48,9 +48,11 @@ Table workspace {
   linear_customer_id String
   stripe_customer_id String [unique]
   hubspot_company_id String
-  subscription_id Int [unique]
   company_size String
   industry String
+  subscription_id Int [unique]
+  subscription subscription
+  billing_infos workspace_billing_infos
   billings billing [not null]
   folders folder [not null]
   invitations invitation [not null]
@@ -58,8 +60,6 @@ Table workspace {
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
   workflow_templates workflow_template [not null]
-  subscription subscription
-  billing_infos workspace_billing_infos
 }
 
 Table workspace_billing_infos {
@@ -87,8 +87,8 @@ Table subscription {
   current_period_start DateTime [not null]
   current_period_end DateTime [not null]
   status subscription_status [not null]
-  billings billing [not null]
   workspace workspace
+  billings billing [not null]
 }
 
 Table billing {
@@ -154,6 +154,7 @@ Table workflow {
   updated_at DateTime [default: `now()`, not null]
   last_opened DateTime
   name String [not null]
+  icon String
   description String [not null]
   workspace_id Int [not null]
   team_tags String[] [not null]
@@ -164,17 +165,16 @@ Table workflow {
   status workflow_status [not null, default: 'DRAFT']
   template_id Int
   version_number Int [not null, default: 1]
-  author_id Int
-  icon String
   actions action [not null]
   blocks block [not null]
   paths path [not null]
   stroke_lines stroke_line [not null]
-  author user
   folder folder
   template workflow_template
   workspace workspace [not null]
   versions workflow_version [not null]
+  author user
+  author_id Int
 
   indexes {
     (name, workspace_id) [unique]
@@ -406,13 +406,13 @@ Ref: folder.parent_id - folder.id
 
 Ref: folder.workspace_id > workspace.id
 
-Ref: workflow.author_id > user.id
-
 Ref: workflow.folder_id > folder.id
 
 Ref: workflow.template_id > workflow_template.id
 
 Ref: workflow.workspace_id > workspace.id
+
+Ref: workflow.author_id > user.id
 
 Ref: path.workflow_id > workflow.id
 
