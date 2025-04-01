@@ -1,73 +1,105 @@
 import React, { useState, useEffect } from 'react';
-import AIThinkingOrb from '../ui/AIThinkingOrb';
+import { useColors } from '@/app/theme/hooks';
+import Lottie from 'lottie-react';
 
 interface AIChatMessageProps {
   message?: string;
   isLoading?: boolean;
+  isLastMessage?: boolean;
 }
 
 const AIChatMessage: React.FC<AIChatMessageProps> = ({
   message = '',
-  isLoading = false
+  isLoading = false,
+  isLastMessage = false
 }) => {
-  const [displayMessage, setDisplayMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [charIndex, setCharIndex] = useState(0);
+  const colors = useColors();
+  const [animationData, setAnimationData] = useState<any>(null);
+  const [isAnimationLoading, setIsAnimationLoading] = useState(true);
+  const [animationError, setAnimationError] = useState(false);
   
-  // Simulate typing effect when message changes
   useEffect(() => {
-    if (!message) {
-      setDisplayMessage('');
-      setIsTyping(false);
-      return;
-    }
+    const fetchAnimation = async () => {
+      try {
+        setIsAnimationLoading(true);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/AI-thinking.json`);
+        if (!response.ok) throw new Error('Failed to load animation');
+        const data = await response.json();
+        setAnimationData(data);
+      } catch (error) {
+        console.error('Error loading Lottie animation:', error);
+        setAnimationError(true);
+      } finally {
+        setIsAnimationLoading(false);
+      }
+    };
     
-    // Reset for new message
-    if (!isLoading && message) {
-      setDisplayMessage('');
-      setCharIndex(0);
-      setIsTyping(true);
-      
-      const typingInterval = setInterval(() => {
-        setCharIndex(prev => {
-          const nextIndex = prev + 1;
-          if (nextIndex > message.length) {
-            clearInterval(typingInterval);
-            setIsTyping(false);
-            return prev;
-          }
-          return nextIndex;
-        });
-        
-        setDisplayMessage(message.substring(0, charIndex + 1));
-      }, 20); // Adjust speed as needed
-      
-      return () => clearInterval(typingInterval);
+    fetchAnimation();
+  }, []);
+
+  const renderAvatar = () => {
+    if (isAnimationLoading || animationError || !animationData) {
+      return (
+        <div 
+          className="w-full h-full rounded-full animate-pulse"
+          style={{ backgroundColor: colors['brand-primary'] }}
+        />
+      );
     }
-  }, [message, isLoading]);
+
+    return (
+      <Lottie
+        animationData={animationData}
+        loop={isLoading}
+        autoplay={isLoading}
+        style={{
+          width: '100%',
+          height: '100%',
+        }}
+        className="rounded-full overflow-hidden"
+      />
+    );
+  };
   
   return (
-    <div className="flex items-start space-x-3 p-4 rounded-lg bg-white shadow-sm max-w-3xl">
-      {/* AI Avatar */}
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
-        AI
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        {isLoading ? (
-          <div className="flex items-center space-x-2">
-            <AIThinkingOrb size={36} isThinking={true} />
-            <span className="text-sm text-gray-500">AI is thinking...</span>
+    <div 
+      className="flex items-start space-x-3 group animate-fadeIn"
+      style={{ animationDelay: '0.1s' }}
+    >
+      {isLoading ? (
+        <div className="flex items-center gap-2 animate-fadeIn">
+          <div className="w-8 h-8 relative flex items-center justify-center rounded-full overflow-hidden">
+            {renderAvatar()}
           </div>
-        ) : (
-          <div className="prose prose-sm">
-            <p className="m-0 text-gray-800">{displayMessage}</p>
-            {isTyping && <span className="inline-block h-4 w-1.5 bg-blue-600 ml-0.5 animate-pulse"></span>}
-          </div>
-        )}
-      </div>
+          <span 
+            className="text-xs"
+            style={{ color: colors['text-secondary'] }}
+          >
+            Floz is thinking...
+          </span>
+        </div>
+      ) : (
+        <div 
+          className="prose prose-sm p-3 max-w-[85%] transition-all duration-200"
+          style={{ 
+            color: colors['text-primary']
+          }}
+        >
+          <p className="m-0 whitespace-pre-wrap break-words text-[13px] leading-[1.5]">{message}</p>
+        </div>
+      )}
     </div>
   );
 };
 
 export default AIChatMessage;
+
+// Add to your global CSS or tailwind.config.js:
+// @keyframes fadeIn {
+//   from { opacity: 0; transform: translateY(10px); }
+//   to { opacity: 1; transform: translateY(0); }
+// }
+// @keyframes slideIn {
+//   from { opacity: 0; transform: translateX(-10px); }
+//   to { opacity: 1; transform: translateX(0); }
+// }

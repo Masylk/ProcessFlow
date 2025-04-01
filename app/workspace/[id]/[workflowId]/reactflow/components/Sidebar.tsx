@@ -110,6 +110,12 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   );
   const [showStars, setShowStars] = useState<boolean>(false);
   const [favoriteBlocks, setFavoriteBlocks] = useState<FavoriteBlock[]>([]);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showHistoryMenu, setShowHistoryMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const historyMenuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLDivElement>(null);
+  const historyButtonRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { getNodes, setViewport } = useReactFlow();
 
@@ -119,7 +125,55 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const settingsIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`;
   const searchIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`;
   const bookIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/book-open-01.svg`;
-  const starIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/star-01.svg`;
+  const starIconUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/stars-01.svg`;
+
+  // Add new handlers for menu toggling
+  const handleHistoryMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showHistoryMenu) {
+      setShowHistoryMenu(false);
+    } else {
+      setShowMenu(false);
+      setShowHistoryMenu(true);
+    }
+  };
+
+  const handleDotsMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (showMenu) {
+      setShowMenu(false);
+    } else {
+      setShowHistoryMenu(false);
+      setShowMenu(true);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is outside both the menu and its button
+      if (
+        menuRef.current && 
+        !menuRef.current.contains(event.target as Node) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowMenu(false);
+      }
+      if (
+        historyMenuRef.current && 
+        !historyMenuRef.current.contains(event.target as Node) &&
+        historyButtonRef.current &&
+        !historyButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowHistoryMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarVisible((prev) => !prev);
@@ -184,7 +238,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   // Render favorites content
   const renderFavoritesContent = () => {
     return (
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full flex flex-col" style={{ backgroundColor: colors['bg-primary'] }}>
         {/* Header with action buttons */}
         <div 
           className="sticky top-0 z-10 flex justify-end items-center gap-2 p-2 border-b"
@@ -198,22 +252,227 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             onClick={() => {}}
             className="opacity-50 hover:opacity-100 transition-opacity"
           />
-          <ButtonNormal
-            variant="tertiary"
-            iconOnly
-            size="small"
-            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-rewind.svg`}
-            onClick={() => {}}
-            className="opacity-50 hover:opacity-100 transition-opacity"
-          />
-          <ButtonNormal
-            variant="tertiary"
-            iconOnly
-            size="small"
-            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-            onClick={() => {}}
-            className="opacity-50 hover:opacity-100 transition-opacity"
-          />
+          <div className="relative">
+            <div ref={historyButtonRef}>
+              <ButtonNormal
+                variant="tertiary"
+                iconOnly
+                size="small"
+                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-rewind.svg`}
+                onClick={handleHistoryMenuClick}
+                className="opacity-50 hover:opacity-100 transition-opacity !w-8 !h-8 !p-0 flex items-center justify-center"
+              />
+            </div>
+            {showHistoryMenu && (
+              <div 
+                ref={historyMenuRef}
+                className="absolute right-0 w-[192px] rounded-md border shadow-lg z-50"
+                style={{ 
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-primary'] 
+                }}
+              >
+                <div className="p-1.5 border-b" style={{ borderColor: colors['border-primary'] }}>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full bg-transparent text-xs px-1.5 py-1"
+                    style={{ color: colors['text-secondary'] }}
+                  />
+                </div>
+                <div className="p-1.5 flex flex-col gap-1">
+                  <div 
+                    className="group flex items-center justify-between w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="block truncate">Create new paths</span>
+                    </div>
+                    <div className="hidden group-hover:flex items-center gap-2 flex-shrink-0 ml-2">
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                    </div>
+                  </div>
+                  <div 
+                    className="group flex items-center w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="block truncate">Build a specific path for HR</span>
+                    </div>
+                    <div className="hidden group-hover:flex items-center gap-2 flex-shrink-0 ml-2">
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                    </div>
+                  </div>
+                  <div 
+                    className="group flex items-center justify-between w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span>Optimize this process</span>
+                    <div className="hidden group-hover:flex items-center gap-2">
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                    </div>
+                  </div>
+                  <div 
+                    className="group flex items-center justify-between w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <span>Add a delay between</span>
+                    <div className="hidden group-hover:flex items-center gap-2">
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                    </div>
+                  </div>
+                  <div 
+                    className="group flex items-center justify-between w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="block truncate">Create new paths</span>
+                    </div>
+                    <div className="hidden group-hover:flex items-center gap-2 flex-shrink-0 ml-2">
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                      <ButtonNormal
+                        variant="tertiary"
+                        iconOnly
+                        size="small"
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        onClick={() => {}}
+                        className="!bg-transparent hover:!bg-opacity-10 !w-3 !h-3 !p-0 flex items-center justify-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <div ref={menuButtonRef}>
+              <ButtonNormal
+                variant="tertiary"
+                iconOnly
+                size="small"
+                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                onClick={handleDotsMenuClick}
+                className="menu-trigger opacity-50 hover:opacity-100 transition-opacity !w-8 !h-8 !p-0 flex items-center justify-center"
+              />
+            </div>
+            {showMenu && (
+              <div 
+                ref={menuRef}
+                className="absolute right-0 w-[180px] rounded-md border shadow-lg z-50"
+                style={{ 
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-primary']
+                }}
+              >
+                <div className="p-1.5 flex flex-col gap-1">
+                  <button
+                    className="flex items-center w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    Close all chats
+                  </button>
+                  <button
+                    className="flex items-center w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    Report feedback
+                  </button>
+                  <button
+                    className="flex items-center w-full px-1.5 py-1.5 rounded text-xs transition-colors"
+                    style={{ color: colors['text-secondary'] }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors['bg-secondary']}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    Chats settings
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <ButtonNormal
             variant="tertiary"
             iconOnly
@@ -227,8 +486,8 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
           />
         </div>
 
-        {/* Replace the empty state content with ChatContainer component */}
-        <div className="flex-1">
+        {/* Show ChatContainer directly */}
+        <div className="flex-1 overflow-hidden">
           <ChatContainer />
         </div>
       </div>
