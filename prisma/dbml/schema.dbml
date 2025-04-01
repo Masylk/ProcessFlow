@@ -33,6 +33,7 @@ Table user {
   created_versions workflow_version [not null]
   scheduled_emails scheduled_emails [not null]
   workflows workflow [not null]
+  ai_conversations ai_conversations [not null]
 }
 
 Table workspace {
@@ -60,6 +61,7 @@ Table workspace {
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
   workflow_templates workflow_template [not null]
+  ai_embeddings ai_embeddings [not null]
 }
 
 Table workspace_billing_infos {
@@ -175,6 +177,7 @@ Table workflow {
   versions workflow_version [not null]
   author user
   author_id Int
+  ai_conversations ai_conversations [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -327,6 +330,30 @@ Table scheduled_emails {
   }
 }
 
+Table ai_conversations {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  user_id Int [not null]
+  workflow_id Int
+  conversation_id String [unique, not null]
+  messages Json [not null]
+  user user [not null]
+  workflow workflow
+}
+
+Table ai_embeddings {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  content_type String [not null]
+  content_id String [not null]
+  content_text String [not null]
+  embedding_id String [not null]
+  workspace_id Int [not null]
+  workspace workspace [not null]
+}
+
 Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
@@ -445,3 +472,9 @@ Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
 
 Ref: scheduled_emails.user_id > user.id [delete: Cascade]
+
+Ref: ai_conversations.user_id > user.id
+
+Ref: ai_conversations.workflow_id > workflow.id
+
+Ref: ai_embeddings.workspace_id > workspace.id
