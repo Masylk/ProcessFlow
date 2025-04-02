@@ -16,7 +16,6 @@ type TooltipProps = {
 
 const Tooltip = ({ content, children, show }: TooltipProps) => {
   const colors = useColors();
-  // Get the current zoom level from ReactFlow store
   const zoom = useStore((state) => state.transform?.[2] ?? 1);
   
   if (!show) return <>{children}</>;
@@ -24,24 +23,33 @@ const Tooltip = ({ content, children, show }: TooltipProps) => {
   return (
     <div className="relative">
       <div
-        className="absolute left-0 right-0 w-full text-center bottom-full mb-2 z-50"
+        className="absolute left-0 right-0 w-full text-center bottom-full z-50"
         style={{
           transform: `scale(${1 / zoom})`,
           transformOrigin: 'center bottom'
         }}
       >
         <div 
-          className="inline-block py-1 px-2 rounded text-xs bg-opacity-90 whitespace-normal max-w-full mx-auto"
+          className="inline-block py-1 px-1.5 rounded-lg text-xs whitespace-normal max-w-full mx-auto flex flex-col items-center bg-opacity-100"
           style={{
-            background: colors['bg-primary'],
-            border: `1px solid ${colors['border-primary']}`,
-            color: colors['text-primary'],
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            backgroundColor: colors['bg-primary-solid'],
+            color: colors['text-white'],
+            boxShadow: '0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)',
             maxWidth: '200px',
-            fontSize: `${Math.max(12, Math.min(16, 12 * (1 / zoom)))}px`,
+            fontSize: '12px',
+            fontWeight: 500,
+            lineHeight: '18px',
           }}
         >
-          {content}
+          <div className="px-1">{content}</div>
+          <div 
+            className="w-0 h-0 absolute -bottom-1"
+            style={{
+              borderLeft: '6px solid transparent',
+              borderRight: '6px solid transparent',
+              borderTop: `6px solid ${colors['bg-primary-solid']}`,
+            }}
+          />
         </div>
       </div>
       {children}

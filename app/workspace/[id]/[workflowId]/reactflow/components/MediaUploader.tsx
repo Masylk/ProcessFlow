@@ -60,7 +60,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
 
   return (
     <label
-      className={`flex flex-col justify-center items-center w-full h-[267px] rounded-xl border-2 border-dashed transition-colors cursor-pointer ${isDragOver ? 'bg-opacity-10' : 'hover:bg-opacity-100'}`}
+      className={`flex flex-col justify-center items-center w-full h-[200px] rounded-xl border-2 border-dashed transition-colors cursor-pointer ${isDragOver ? 'bg-opacity-10' : 'hover:bg-opacity-100'}`}
       style={{
         borderColor: isDragOver
           ? colors['button-primary-fg']

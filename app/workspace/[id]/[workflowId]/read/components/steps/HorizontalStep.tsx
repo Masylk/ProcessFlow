@@ -32,6 +32,17 @@ export default function HorizontalStep({
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
   };
 
+  const getDisplayTitle = (block: Block) => {
+    if (block.title) return block.title;
+    
+    // Convert block type from ALL_CAPS to Title Case
+    const typeName = block.type.toLowerCase().replace(/_/g, ' ').split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+      
+    return `${typeName}`;
+  };
+
   // Fetch signed URL for image
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -85,7 +96,7 @@ export default function HorizontalStep({
               className="flex items-center text-xl font-semibold"
               style={{ color: colors['text-primary'] }}
             >
-              <span>{block.title || `Step`}</span>
+              <span>{getDisplayTitle(block)}</span>
             </div>
           </div>
         </div>
@@ -93,9 +104,9 @@ export default function HorizontalStep({
         {/* Description */}
         <p
           className="text-base mb-6"
-          style={{ color: colors['text-secondary'] }}
+          style={{ color: colors['text-quaternary'] }}
         >
-          {block.step_details || 'No description available'}
+          {block.step_details || block.description || `Details for ${getDisplayTitle(block)}`}
         </p>
       </div>
 

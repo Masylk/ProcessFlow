@@ -72,6 +72,9 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({
   const coloredSvg = React.useMemo(() => {
     if (!svgContent) return null;
     
+    // If color is 'inherit', preserve original SVG colors
+    if (color === 'inherit') return svgContent;
+    
     return svgContent
       .replace(/stroke="([^"]+)"/g, (match, value) => {
         // Preserve special values
@@ -87,7 +90,7 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({
         }
         return `fill="currentColor"`;
       });
-  }, [svgContent]);
+  }, [svgContent, color]);
 
   useEffect(() => {
     fetchSvg(url)

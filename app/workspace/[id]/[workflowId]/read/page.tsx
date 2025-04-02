@@ -1070,9 +1070,10 @@ export default function ExamplePage() {
                                 size="small"
                                 onClick={() => handleStepNavigation('prev')}
                                 disabled={currentStep === -1}
-                                iconOnly
                                 leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              />
+                              >
+                                Previous step
+                              </ButtonNormal>
                               <ButtonNormal
                                 variant="primary"
                                 size="small"
@@ -1183,9 +1184,10 @@ export default function ExamplePage() {
                                 size="small"
                                 onClick={() => handleStepNavigation('prev')}
                                 disabled={currentStep === -1}
-                                iconOnly
                                 leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              />
+                              >
+                                Previous step
+                              </ButtonNormal>
                               <ButtonNormal
                                 variant="primary"
                                 size="small"
