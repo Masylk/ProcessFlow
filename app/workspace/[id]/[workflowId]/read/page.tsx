@@ -933,7 +933,6 @@ export default function ExamplePage() {
                               )
                               .map((block, index, filteredBlocks) => {
                                 // Check if any block in this path up to current index has been selected
-                                console.log('Block details:', block.id, block.title, block.step_details);
                                 return (
                                   <div
                                     key={block.id}
