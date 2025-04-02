@@ -763,7 +763,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                         )}
                         <span
                           className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
-                          style={{ color: isBlockSelected(block.id) ? colors['text-white'] : colors['text-primary'] }}
+                          style={{ color: isBlockSelected(block.id) ? currentTheme === 'light' ? colors['text-primary'] : colors['text-white'] : colors['text-primary'] }}
                         >
                           {block.title || block.step_details || `Block ${block.id}`}
                         </span>

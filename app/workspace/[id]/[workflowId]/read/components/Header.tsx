@@ -10,6 +10,7 @@ import Link from 'next/link';
 import UserInfo from '@/app/dashboard/components/UserInfo';
 import UserDropdown from '@/app/dashboard/components/UserDropdown';
 import { User } from '@/types/user';
+import ShareModal from '@/app/components/ShareModal';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -39,6 +40,7 @@ const Header: React.FC<HeaderProps> = ({
   const colors = useColors();
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const headerHeight = 57; // Define the height here
 
   const handleUserInfoClick = (e: React.MouseEvent) => {
@@ -131,6 +133,14 @@ const Header: React.FC<HeaderProps> = ({
     console.log('Sending message:', message);
   };
 
+  const openShareModal = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
+  };
+
   return (
     <HeaderHeightContext.Provider value={headerHeight}>
       <header
@@ -172,6 +182,7 @@ const Header: React.FC<HeaderProps> = ({
             variant="primary"
             size="small"
             leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/share-06.svg`}
+            onClick={openShareModal}
           >
             Share
           </ButtonNormal>
@@ -206,7 +217,12 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      
+      {/* Share Modal */}
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={closeShareModal} 
+        itemName={breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Untitled Workflow'} 
+      />
     </HeaderHeightContext.Provider>
   );
 };
