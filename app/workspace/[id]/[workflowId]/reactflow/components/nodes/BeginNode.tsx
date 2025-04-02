@@ -17,7 +17,7 @@ type TooltipProps = {
 const Tooltip = ({ content, children, show }: TooltipProps) => {
   const colors = useColors();
   // Get the current zoom level from ReactFlow store
-  const zoom = useStore((state) => state.transform[2]);
+  const zoom = useStore((state) => state.transform?.[2] ?? 1);
   
   if (!show) return <>{children}</>;
   

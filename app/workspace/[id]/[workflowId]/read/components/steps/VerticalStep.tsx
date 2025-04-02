@@ -344,7 +344,7 @@ export default function VerticalStep({
                   transition={{ duration: 0.2, delay: 0.1 }}
                 >
                   <p
-                    className="text-lg font-medium mb-4"
+                    className="text-sm font-medium mb-4"
                     style={{ color: colors['text-primary'] }}
                   >
                     Select an option
@@ -384,7 +384,7 @@ export default function VerticalStep({
                         }}
                       >
                         <div
-                          className="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-1.5 flex items-center justify-center"
+                          className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
                           style={{
                             borderColor: selectedOptionIds?.some(
                               ([pathId, blockId]) =>
@@ -420,7 +420,7 @@ export default function VerticalStep({
                         </div>
                         <div className="flex flex-col gap-1">
                           <p
-                            className="font-medium"
+                            className="font-normal text-sm"
                             style={{ color: colors['text-primary'] }}
                           >
                             {option.path.name}

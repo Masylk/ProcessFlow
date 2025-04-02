@@ -816,7 +816,7 @@ export default function ExamplePage() {
     }
     
     // Find the element with the matching block ID
-    const blockElement = document.getElementById(`block-${blockId}`);
+    const blockElement = document.getElementById(`block-${blockId.toString()}`);
     if (blockElement) {
       setTimeout(() => {
         blockElement.scrollIntoView({
