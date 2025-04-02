@@ -62,13 +62,13 @@ export default function HorizontalStep({
         <div className="flex items-center gap-4 mb-4">
           {/* App Icon */}
           <div
-            className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border"
+            className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
             style={{
-              backgroundColor: colors['bg-secondary'],
+              backgroundColor: colors['bg-primary'],
               borderColor: colors['border-secondary'],
             }}
           >
-            <div className="w-6 h-6 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <img
                 src={getIconPath(block)}
                 alt="Step Icon"
@@ -82,11 +82,10 @@ export default function HorizontalStep({
           {/* Step Title */}
           <div className="flex-1">
             <div
-              className="flex items-center text-xl font-medium"
+              className="flex items-center text-xl font-semibold"
               style={{ color: colors['text-primary'] }}
             >
-              <span className="mr-2">{block.position}.</span>
-              <span>{block.title || `Step ${block.position}`}</span>
+              <span>{block.title || `Step`}</span>
             </div>
           </div>
         </div>
@@ -110,11 +109,11 @@ export default function HorizontalStep({
                 <img
                   src={signedImageUrl}
                   alt="Step visualization"
-                  className="w-full h-[267px] object-cover"
+                  className="w-full h-[350px] object-cover"
                 />
               ) : (
                 <div
-                  className="w-full h-[267px] flex items-center justify-center"
+                  className="w-full h-[350px] flex items-center justify-center"
                   style={{ backgroundColor: colors['bg-secondary'] }}
                 >
                   <div
