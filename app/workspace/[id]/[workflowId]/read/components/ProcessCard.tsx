@@ -35,7 +35,6 @@ export default function ProcessCard({
   return (
     <div
       style={{
-        backgroundColor: colors['bg-primary'],
         borderColor: colors['border-secondary'],
       }}
       className="w-[636px] rounded-xl flex flex-col transition-all duration-200"
@@ -72,7 +71,7 @@ export default function ProcessCard({
           </div>
 
           {/* Integration Badges */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {integrations.map((integration, index) => (
               <div
                 key={index}
@@ -80,18 +79,18 @@ export default function ProcessCard({
                   backgroundColor: colors['bg-secondary'],
                   borderColor: colors['border-secondary'],
                 }}
-                className="h-[22px] pl-1.5 pr-2 py-0.5 rounded-md border flex items-center gap-0.5"
+                className="inline-flex items-center px-2 py-1 rounded-md border gap-1.5"
               >
                 {integration.icon && (
                   <img
                     src={integration.icon}
                     alt={integration.name}
-                    className="w-3 h-3"
+                    className="w-3.5 h-3.5 object-contain"
                   />
                 )}
                 <span
                   style={{ color: colors['text-secondary'] }}
-                  className="text-xs font-medium"
+                  className="text-xs leading-none font-medium"
                 >
                   {integration.name}
                 </span>

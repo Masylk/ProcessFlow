@@ -57,7 +57,7 @@ export default function VerticalLastStep({
       />
       <motion.div
         className={cn(
-          'w-[550px] rounded-lg overflow-hidden will-change-transform',
+          'max-w-[950px] min-w-[300px] rounded-lg overflow-hidden will-change-transform',
           'border transition-all duration-200 p-6',
           className
         )}

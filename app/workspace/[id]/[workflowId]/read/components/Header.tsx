@@ -10,7 +10,7 @@ import Link from 'next/link';
 import UserInfo from '@/app/dashboard/components/UserInfo';
 import UserDropdown from '@/app/dashboard/components/UserDropdown';
 import { User } from '@/types/user';
-import FeedbackSlideout from './FeedbackSlideout';
+
 import { usePathname, useRouter } from 'next/navigation';
 
 export const HeaderHeightContext = createContext<number>(0);
@@ -155,16 +155,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Comment Button */}
-          <ButtonNormal
-            variant="secondary"
-            size="small"
-            iconOnly={true}
-            onClick={() => setIsFeedbackOpen(!isFeedbackOpen)}
-            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-text-square-02.svg`}
-          >
-            Comment
-          </ButtonNormal>
+          
 
           {/* Edit Button */}
           <ButtonNormal
@@ -215,12 +206,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      <FeedbackSlideout
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-        messages={exampleMessages}
-        onSendMessage={handleSendMessage}
-      />
+      
     </HeaderHeightContext.Provider>
   );
 };

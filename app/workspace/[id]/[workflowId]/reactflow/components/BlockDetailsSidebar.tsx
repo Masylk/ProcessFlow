@@ -168,7 +168,7 @@ export default function BlockDetailsSidebar({
         {block && (
           <>
             {/* Information Section */}
-            <div className="flex items-center mt-8 h-[50px] space-x-4">
+            <div className="flex items-center mt-14 h-[50px] space-x-4">
               <IconModifier block={block} onUpdate={onUpdate} />
               {isEditingTitle ? (
                 <input
@@ -217,7 +217,7 @@ export default function BlockDetailsSidebar({
                     Last Modified
                   </div>
                   <div
-                    className="text-xs font-normal font-['Inter']"
+                    className="text-sm font-normal font-['Inter']"
                     style={{ color: colors['text-secondary'] }}
                   >
                     {block.last_modified
@@ -251,11 +251,11 @@ export default function BlockDetailsSidebar({
                       onKeyDown={handleAverageTimeKeyDown}
                       placeholder="Enter time"
                     />
-                    <span className="text-xs" style={{ color: colors['text-secondary'] }}>min</span>
+                    <span className="text-sm" style={{ color: colors['text-secondary'] }}>min</span>
                   </div>
                 </div>
 
-                {/* Task Type */}
+                {/* Task Type
                 <div className="flex justify-start items-center space-x-[94px]">
                   <div
                     className="text-sm font-normal font-['Inter']"
@@ -334,7 +334,7 @@ export default function BlockDetailsSidebar({
                       </div>
                     )}
                   </div>
-                </div>
+                </div>*/}
               </div>
             </div>
 
@@ -347,7 +347,7 @@ export default function BlockDetailsSidebar({
                 Description
               </div>
               <div
-                className="min-h-[100px] rounded-lg transition-colors duration-200"
+                className="h-[200px] rounded-lg transition-colors duration-200"
                 onClick={() => setIsEditingDescription(true)}
               >
                 <div
@@ -385,7 +385,7 @@ export default function BlockDetailsSidebar({
                     borderWidth: '1px',
                     borderRadius: '0.5rem',
                   }}
-                  className="relative flex items-start gap-2 p-3 transition-all duration-200"
+                  className="relative flex items-start gap-2 p-3 transition-all duration-200 h-full"
                 >
                   <TextEditor
                     value={description}
@@ -393,7 +393,7 @@ export default function BlockDetailsSidebar({
                     onBlur={handleDescriptionUpdate}
                     onKeyDown={handleDescriptionKeyDown}
                     readOnly={!isEditingDescription}
-                    className={`w-full border-none outline-none  resize-vertical text-base leading-6 font-inter ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
+                    className={`w-full h-full border-none outline-none resize-vertical text-base leading-6 font-inter ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
                     placeholder="Add a description..."
                     textColor={colors['text-primary']}
                   />

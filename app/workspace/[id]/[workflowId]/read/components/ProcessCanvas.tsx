@@ -12,7 +12,7 @@ export default function ProcessCanvas({ children }: ProcessCanvasProps) {
     <div className="relative w-[calc(100vw-256px)] h-[calc(100vh-112px)]">
       <div 
         className="h-screen pt-28 pb-16 overflow-auto scrollbar-none hover:scrollbar-default"
-        style={{ backgroundColor: colors['bg-primary'] }}
+        style={{ backgroundColor: colors['bg-secondary'] }}
       >
         {children}
       </div>
