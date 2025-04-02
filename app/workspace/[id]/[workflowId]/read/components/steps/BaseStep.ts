@@ -1,4 +1,4 @@
-import { Block } from '../../../types';
+import { Block, Path } from '../../../types';
 
 export interface BaseStepProps {
   block: Block;
@@ -12,6 +12,7 @@ export interface BaseStepProps {
   selectedOptionIds?: [number, number][];
   onOptionSelect?: (optionId: number, blockId: number, isMerge?: boolean) => void;
   isLastStep?: boolean;
+  copyPaths?: Path[];
   variant?: 'default' | 'last';
   icon?: string | React.ReactNode;
 } 

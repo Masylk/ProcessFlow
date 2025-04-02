@@ -1,3 +1,4 @@
+/*
 'use client';
 
 import React, { useState, useContext } from 'react';
@@ -190,7 +191,7 @@ const FeedbackSlideout: React.FC<FeedbackSlideoutProps> = ({
         top: `${headerHeight}px`
       }}
     >
-      {/* Header */}
+      {/* Header *//*
       <div className="flex items-center justify-between p-4">
         <h2 className="text-lg font-semibold" style={{ color: colors['text-primary'] }}>
           {activeTab === 'feedbacks' ? 'Feedbacks' : activeTab === 'resolved' ? 'Resolved' : 'Comments'}
@@ -209,7 +210,7 @@ const FeedbackSlideout: React.FC<FeedbackSlideoutProps> = ({
         </button>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs *//*
       <div className="flex px-4 border-b" style={{ borderColor: colors['border-secondary'] }}>
         {['Feedbacks', 'Resolved', 'Comments'].map((tab) => (
           <button
@@ -229,10 +230,10 @@ const FeedbackSlideout: React.FC<FeedbackSlideoutProps> = ({
         ))}
       </div>
 
-      {/* Content */}
+      {/* Content *}/*
       {renderContent()}
 
-      {/* Message Input */}
+      {/* Message Input *//*
       <div className="p-4 border-t"
         style={{ backgroundColor: colors['bg-primary'], borderColor: colors['border-secondary'] }}
       >
@@ -262,4 +263,4 @@ const FeedbackSlideout: React.FC<FeedbackSlideoutProps> = ({
   );
 };
 
-export default FeedbackSlideout; 
+export default FeedbackSlideout;*/

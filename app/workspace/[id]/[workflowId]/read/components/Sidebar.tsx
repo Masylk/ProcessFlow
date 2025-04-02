@@ -158,7 +158,7 @@ export default function Sidebar({
       </div>
 
       {/* Steps list */}
-      <div className="flex-1 overflow-y-auto px-4">
+      <div className="flex-1 overflow-y-auto px-5">
         {mainPath && renderPathContent(mainPath, 0)}
       </div>
     </div>

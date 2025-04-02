@@ -13,7 +13,7 @@ export default function VerticalStep({
   block,
   isActive = false,
   className,
-  defaultExpanded = false,
+  defaultExpanded = true,
   onToggle,
   children,
   onCopyLink,
@@ -56,6 +56,9 @@ export default function VerticalStep({
   }, [block.image]);
 
   const handleToggle = () => {
+    // Only toggle if there's an image to show
+    if (!block.image) return;
+    
     const newState = !isExpanded;
     setIsExpanded(newState);
     onToggle?.(newState);
@@ -137,7 +140,13 @@ export default function VerticalStep({
   // Helper function to get display title
   const getDisplayTitle = (block: Block) => {
     if (block.title) return block.title;
-    return `${block.type.charAt(0) + block.type.slice(1).toLowerCase()} Block`;
+    
+    // Convert block type from ALL_CAPS to Title Case
+    const typeName = block.type.toLowerCase().replace(/_/g, ' ').split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+      
+    return `${typeName}`;
   };
 
   // Helper function to get icon path
@@ -172,7 +181,7 @@ export default function VerticalStep({
     <div className={`relative ${className}`} ref={stepRef}>
       <motion.div
         className={cn(
-          'w-[550px] rounded-lg overflow-hidden will-change-transform',
+          'max-w-[950px] min-w-[300px] rounded-lg overflow-hidden will-change-transform',
           'border transition-all duration-200',
           className
         )}
@@ -191,77 +200,90 @@ export default function VerticalStep({
         <button
           onClick={handleToggle}
           className={cn(
-            'w-full flex items-start justify-between p-6',
-            'transition-colors duration-200 ease-in-out cursor-pointer'
+            'w-full flex flex-col p-6',
+            'transition-colors duration-200 ease-in-out',
+            block.image ? 'cursor-pointer' : 'cursor-default'
           )}
           style={{
             backgroundColor: colors['bg-primary'],
           }}
         >
-          <div className="flex items-start gap-4 flex-1 min-w-0">
+          {/* Header with Icon and Title */}
+          <div className="flex items-center gap-4 flex-1 min-w-0 mb-3">
             <motion.div
-              className="flex-shrink-0 w-8 h-8 mt-1"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+              style={{
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-secondary'],
+              }}
             >
               <img
                 src={getIconPath(block)}
                 alt={getDisplayTitle(block)}
-                className="w-8 h-8"
+                className="w-6 h-6"
               />
             </motion.div>
-            <div className="flex flex-col items-start gap-2 min-w-0">
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-sm font-medium"
-                  style={{ color: colors['text-secondary'] }}
-                >
-                  {block.position}.
-                </span>
-                <span
-                  className={cn(
-                    'text-left text-base',
-                    isActive && 'font-medium'
-                  )}
-                  style={{
-                    color: colors['text-primary'],
-                  }}
-                >
-                  {getDisplayTitle(block)}
-                </span>
-              </div>
-              {block.step_details && (
-                <div className="text-left w-full">
-                  <p
-                    ref={descriptionRef}
-                    className={cn(
-                      'text-sm transition-all duration-200 break-words',
-                      !isExpanded && 'line-clamp-2'
-                    )}
-                    style={{ color: colors['text-quaternary'] }}
-                  >
-                    {block.step_details}
-                  </p>
-                </div>
-              )}
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={cn(
+                  'text-left text-base font-semibold',
+                  isActive && 'font-medium'
+                )}
+                style={{
+                  color: colors['text-primary'],
+                }}
+              >
+                {getDisplayTitle(block)}
+              </span>
             </div>
+            {block.image && (
+              <motion.div
+                className="flex-shrink-0 ml-auto"
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
+                  alt="Toggle content"
+                  width={24}
+                  height={24}
+                  className="transition-transform duration-200"
+                  style={{
+                    filter: 'none',
+                  }}
+                />
+              </motion.div>
+            )}
           </div>
-          <motion.div
-            className="flex-shrink-0 ml-4"
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Image
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
-              alt="Toggle content"
-              width={24}
-              height={24}
-              className="transition-transform duration-200"
-              style={{
-                filter: 'none',
-              }}
-            />
-          </motion.div>
+          
+          {/* Description section - always displayed below icon and title */}
+          {(block.step_details || block.description) ? (
+            <div className="text-left w-full"> {/* Added padding to align with title */}
+              <p
+                ref={descriptionRef}
+                className={cn(
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem]',
+                  !isExpanded && 'line-clamp-2'
+                )}
+                style={{ color: colors['text-quaternary'] }}
+              >
+                {block.step_details || block.description || `Details for ${getDisplayTitle(block)}`}
+              </p>
+            </div>
+          ) : (
+            <div className="text-left w-full "> {/* Added padding to align with title */}
+              <p
+                ref={descriptionRef}
+                className={cn(
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem]',
+                  !isExpanded && 'line-clamp-2'
+                )}
+                style={{ color: colors['text-quaternary'] }}
+              >
+                {`Details for ${getDisplayTitle(block)}`}
+              </p>
+            </div>
+          )}
         </button>
 
         <AnimatePresence>
@@ -285,7 +307,7 @@ export default function VerticalStep({
                 <img
                   src={signedImageUrl}
                   alt="Block Media"
-                  className="w-full h-[267px] object-cover"
+                  className="w-full h-[500px] object-cover"
                 />
               </div>
             </motion.div>
@@ -322,7 +344,7 @@ export default function VerticalStep({
                   transition={{ duration: 0.2, delay: 0.1 }}
                 >
                   <p
-                    className="text-lg font-medium mb-4"
+                    className="text-sm font-medium mb-4"
                     style={{ color: colors['text-primary'] }}
                   >
                     Select an option
@@ -362,7 +384,7 @@ export default function VerticalStep({
                         }}
                       >
                         <div
-                          className="w-5 h-5 rounded-full border-2 flex-shrink-0 mt-1.5 flex items-center justify-center"
+                          className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
                           style={{
                             borderColor: selectedOptionIds?.some(
                               ([pathId, blockId]) =>
@@ -398,7 +420,7 @@ export default function VerticalStep({
                         </div>
                         <div className="flex flex-col gap-1">
                           <p
-                            className="font-medium"
+                            className="font-normal text-sm"
                             style={{ color: colors['text-primary'] }}
                           >
                             {option.path.name}
