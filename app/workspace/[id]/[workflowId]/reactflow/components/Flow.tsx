@@ -551,6 +551,9 @@ export function Flow({
           const blockId = node.id.replace('block-', '');
           // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
+          
+          // Don't set ReactFlow selection state as CustomNode handles this differently
+          
           // Find the node and zoom to it
           setViewport(
             {
@@ -561,7 +564,10 @@ export function Flow({
             { duration: 800 }
           );
         }}
-        onPaneClick={() => setEditMode(false, null)}
+        onPaneClick={() => {
+          // Only clear edit mode, don't touch ReactFlow selection state
+          setEditMode(false, null);
+        }}
         fitView={true}
         panOnScroll
         panOnDrag

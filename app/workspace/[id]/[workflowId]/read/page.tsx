@@ -153,6 +153,18 @@ export default function ExamplePage() {
     });
   }, [pathsToDisplay, selectedOptions, paths]);
 
+  // Initialize all steps as expanded when paths are loaded
+  useEffect(() => {
+    if (pathsToDisplay.length > 0) {
+      const allBlockIds = pathsToDisplay.flatMap(path =>
+        path.blocks
+          .filter(block => block.type !== 'BEGIN' && block.type !== 'LAST')
+          .map(block => block.id)
+      );
+      setExpandedSteps(allBlockIds);
+    }
+  }, [pathsToDisplay]);
+
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
@@ -889,18 +901,19 @@ export default function ExamplePage() {
   };
 
   // Function to handle step click from sidebar
-  const handleStepClick = (index: number) => {
-    setCurrentStep(index);
-    // Toggle expansion: if step is expanded, remove it, otherwise add it
-    setExpandedSteps((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
-
-    // Scroll to step with centering
-    const element = stepRefs.current[index];
-    if (element) {
+  const handleStepClick = (blockId: number) => {
+    setCurrentStep(blockId);
+    
+    // Add to expanded steps if not already expanded
+    if (!expandedSteps.includes(blockId)) {
+      setExpandedSteps(prev => [...prev, blockId]);
+    }
+    
+    // Find the element with the matching block ID
+    const blockElement = document.getElementById(`block-${blockId.toString()}`);
+    if (blockElement) {
       setTimeout(() => {
-        element.scrollIntoView({
+        blockElement.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });
@@ -1014,7 +1027,6 @@ export default function ExamplePage() {
                               )
                               .map((block, index, filteredBlocks) => {
                                 // Check if any block in this path up to current index has been selected
-
                                 return (
                                   <div
                                     key={block.id}
@@ -1057,7 +1069,7 @@ export default function ExamplePage() {
               ) : (
                 <div className="flex-1 flex items-center justify-center p-6">
                   <div
-                    className="rounded-2xl border w-full max-w-3xl"
+                    className="rounded-lg border w-full max-w-3xl"
                     style={{
                       backgroundColor: colors['bg-primary'],
                       borderColor: colors['border-secondary'],
@@ -1080,7 +1092,7 @@ export default function ExamplePage() {
                           {/* Navigation and Progress Bar */}
                           <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar - hidden */}
-                            <div className="flex items-center hidden">
+                            <div className=" items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -1153,9 +1165,10 @@ export default function ExamplePage() {
                                 size="small"
                                 onClick={() => handleStepNavigation('prev')}
                                 disabled={currentStep === -1}
-                                iconOnly
                                 leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              />
+                              >
+                                Previous step
+                              </ButtonNormal>
                               <ButtonNormal
                                 variant="primary"
                                 size="small"
@@ -1193,7 +1206,7 @@ export default function ExamplePage() {
                           {/* Navigation and Progress Bar */}
                           <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar */}
-                            <div className="flex items-center hidden">
+                            <div className=" items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -1266,9 +1279,10 @@ export default function ExamplePage() {
                                 size="small"
                                 onClick={() => handleStepNavigation('prev')}
                                 disabled={currentStep === -1}
-                                iconOnly
                                 leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              />
+                              >
+                                Previous step
+                              </ButtonNormal>
                               <ButtonNormal
                                 variant="primary"
                                 size="small"

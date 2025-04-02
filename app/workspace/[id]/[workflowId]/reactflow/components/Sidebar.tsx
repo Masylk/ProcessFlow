@@ -756,14 +756,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                                   : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
                               }
                               size={20}
-                              variant="tertiary"
+                              color="inherit"
                               className="flex-shrink-0"
                             />
                           </>
                         )}
                         <span
                           className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
-                          style={{ color: isBlockSelected(block.id) ? colors['text-primary'] : colors['text-primary'] }}
+                          style={{ color: isBlockSelected(block.id) ? currentTheme === 'light' ? colors['text-primary'] : colors['text-white'] : colors['text-primary'] }}
                         >
                           {block.title || block.step_details || `Block ${block.id}`}
                         </span>

@@ -11,7 +11,7 @@ export default function HorizontalLastStep({
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <div
-        className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border"
+        className="flex-shrink-0 w-12 h-12 rounded-sm flex items-center justify-center border"
         style={{
           backgroundColor: colors['bg-secondary'],
           borderColor: colors['border-secondary'],

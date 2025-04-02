@@ -10,7 +10,8 @@ import Link from 'next/link';
 import UserInfo from '@/app/dashboard/components/UserInfo';
 import UserDropdown from '@/app/dashboard/components/UserDropdown';
 import { User } from '@/types/user';
-import FeedbackSlideout from './FeedbackSlideout';
+import ShareModal from '@/app/components/ShareModal';
+
 import { usePathname, useRouter } from 'next/navigation';
 
 export const HeaderHeightContext = createContext<number>(0);
@@ -39,6 +40,7 @@ const Header: React.FC<HeaderProps> = ({
   const colors = useColors();
   const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const headerHeight = 57; // Define the height here
 
   const handleUserInfoClick = (e: React.MouseEvent) => {
@@ -131,6 +133,14 @@ const Header: React.FC<HeaderProps> = ({
     console.log('Sending message:', message);
   };
 
+  const openShareModal = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setIsShareModalOpen(false);
+  };
+
   return (
     <HeaderHeightContext.Provider value={headerHeight}>
       <header
@@ -155,16 +165,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Comment Button */}
-          <ButtonNormal
-            variant="secondary"
-            size="small"
-            iconOnly={true}
-            onClick={() => setIsFeedbackOpen(!isFeedbackOpen)}
-            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/message-text-square-02.svg`}
-          >
-            Comment
-          </ButtonNormal>
+          
 
           {/* Edit Button */}
           <ButtonNormal
@@ -181,6 +182,7 @@ const Header: React.FC<HeaderProps> = ({
             variant="primary"
             size="small"
             leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/share-06.svg`}
+            onClick={openShareModal}
           >
             Share
           </ButtonNormal>
@@ -215,11 +217,11 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      <FeedbackSlideout
-        isOpen={isFeedbackOpen}
-        onClose={() => setIsFeedbackOpen(false)}
-        messages={exampleMessages}
-        onSendMessage={handleSendMessage}
+      {/* Share Modal */}
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={closeShareModal} 
+        itemName={breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Untitled Workflow'} 
       />
     </HeaderHeightContext.Provider>
   );

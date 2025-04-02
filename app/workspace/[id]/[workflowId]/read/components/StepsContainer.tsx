@@ -26,20 +26,41 @@ export default function StepsContainer({
       (block) => block.type === 'STEP' || block.type === 'DELAY'
     ) || [];
 
+  // Helper function to get icon path for a block
+  const getIconPath = (block: any) => {
+    if (block.icon) {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+  };
+
   return (
     <div className="space-y-2" style={{ marginLeft: level * 16 }}>
       {/* Path header with collapse toggle */}
-      <div className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-md">
+      <div 
+        className="flex items-center gap-2 p-2 rounded-md w-full hover-bg-custom cursor-pointer"
+        style={{ 
+          '--hover-bg': colors['bg-secondary'],
+        } as React.CSSProperties}
+        onClick={onToggleCollapse}
+      >
         <img
           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
           alt="Branch Icon"
-          className="w-6 h-6"
+          className="w-4 h-4"
         />
-        <span className="text-sm text-gray-700">{path.name}</span>
+        <span 
+          className="text-sm truncate flex-1"
+          style={{ color: colors['text-secondary'] }}
+        >
+          {path.name}
+        </span>
         {onToggleCollapse && (
-          <button
-            onClick={onToggleCollapse}
-            className="p-1 hover:bg-gray-100 rounded"
+          <div
+            className="p-1 rounded flex-shrink-0 hover-bg-custom"
+            style={{ 
+              '--hover-bg': colors['bg-secondary'],
+            } as React.CSSProperties}
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
@@ -48,7 +69,7 @@ export default function StepsContainer({
               alt={isCollapsed ? 'Expand' : 'Collapse'}
               className="w-4 h-4"
             />
-          </button>
+          </div>
         )}
       </div>
 
@@ -59,54 +80,49 @@ export default function StepsContainer({
             key={block.id}
             onClick={() => onStepClick(block.id)}
             className={cn(
-              'w-full flex items-center gap-3 p-1 rounded-lg text-sm',
+              'w-full flex items-center gap-3 p-1 px-3 rounded-md text-sm max-w-full',
               'transition-colors duration-200 ease-in-out',
               'focus:outline-none cursor-pointer',
-              activeStepId === block.id
-                ? 'bg-brand-solid text-white'
-                : 'bg-transparent hover:bg-secondary'
+              activeStepId === block.id ? '' : 'hover-bg-custom'
             )}
             style={{
-              backgroundColor:
-                activeStepId === block.id
-                  ? colors['bg-brand-solid']
-                  : 'transparent',
-            }}
+              backgroundColor: activeStepId === block.id
+                ? colors['bg-brand-solid']
+                : 'transparent',
+              '--hover-bg': colors['bg-secondary'],
+            } as React.CSSProperties}
             role="link"
             aria-label={`Navigate to ${block.title || block.step_details} section`}
           >
-            <div
-              className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-sm font-medium"
-              style={{
-                color:
-                  activeStepId === block.id
-                    ? colors['text-white']
-                    : colors['text-secondary'],
+            <img
+              src={getIconPath(block)}
+              alt="Step Icon"
+              className="w-4 h-4"
+              onError={(e) => {
+                e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
               }}
-            >
-              {block.position}
-            </div>
+            />
             <span
               className={cn(
                 'text-left text-sm truncate flex-1',
                 activeStepId === block.id && 'font-medium'
               )}
               style={{
-                color:
-                  activeStepId === block.id
-                    ? colors['text-white']
-                    : colors['text-secondary'],
+                color: activeStepId === block.id
+                  ? colors['text-white']
+                  : colors['text-secondary'],
               }}
             >
               {block.title ||
                 block.step_details ||
-                `Block ${block.position + 1}`}
+                `Block`}
             </span>
           </button>
         ))}
-      <style jsx>{`
-        .step-hover:hover {
-          background-color: ${colors['bg-secondary']};
+        
+      <style jsx global>{`
+        .hover-bg-custom:hover {
+          background-color: var(--hover-bg);
         }
       `}</style>
     </div>

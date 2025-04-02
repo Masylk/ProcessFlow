@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import React, { useState, useRef } from 'react';
+import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
 import { NodeData } from '../../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
@@ -7,19 +7,70 @@ import { usePathsStore } from '../../store/pathsStore';
 import { useColors } from '@/app/theme/hooks';
 import DeletePathModal from '../modals/DeletePathModal';
 
+// Simple tooltip component
+type TooltipProps = {
+  content: string;
+  children: React.ReactNode;
+  show: boolean;
+};
+
+const Tooltip = ({ content, children, show }: TooltipProps) => {
+  const colors = useColors();
+  const zoom = useStore((state) => state.transform?.[2] ?? 1);
+  
+  if (!show) return <>{children}</>;
+  
+  return (
+    <div className="relative">
+      <div
+        className="absolute left-0 right-0 w-full text-center bottom-full z-50"
+        style={{
+          transform: `scale(${1 / zoom})`,
+          transformOrigin: 'center bottom'
+        }}
+      >
+        <div 
+          className="inline-block py-1 px-1.5 rounded-lg text-xs whitespace-normal max-w-full mx-auto flex flex-col items-center bg-opacity-100"
+          style={{
+            backgroundColor: colors['bg-primary-solid'],
+            color: colors['text-white'],
+            boxShadow: '0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)',
+            maxWidth: '200px',
+            fontSize: '12px',
+            fontWeight: 500,
+            lineHeight: '18px',
+          }}
+        >
+          <div className="px-1">{content}</div>
+          <div 
+            className="w-0 h-0 absolute -bottom-1"
+            style={{
+              borderLeft: '6px solid transparent',
+              borderRight: '6px solid transparent',
+              borderTop: `6px solid ${colors['bg-primary-solid']}`,
+            }}
+          />
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+};
+
 function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const [isEditing, setIsEditing] = useState(false);
   const [pathName, setPathName] = useState(data.path?.name || '');
   const [isHovered, setIsHovered] = useState(false);
   const [isEditButtonHovered, setIsEditButtonHovered] = useState(false);
   const [isDeleteButtonHovered, setIsDeleteButtonHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const colors = useColors();
-
+  
   const handlePathNameUpdate = async () => {
     try {
       const response = await fetch(`/api/paths/${data.path?.id}`, {
@@ -95,6 +146,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   const hasMultipleParentBlocks =
     data.path?.parent_blocks && data.path?.parent_blocks.length > 1;
+  
   return (
     <>
       {hasMultipleParentBlocks ? (
@@ -140,7 +192,10 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             position: 'relative',
           }}
           onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            setShowTooltip(false);
+          }}
         >
           <Handle
             type="target"
@@ -156,10 +211,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
             }}
           />
 
-          <div
-            className="font-medium truncate"
-            style={{ color: colors['text-brand-primary'] }}
-          >
+          <div className="w-full">
             {isEditing ? (
               <input
                 type="text"
@@ -168,12 +220,24 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
                 onKeyDown={handleKeyDown}
                 onBlur={handlePathNameUpdate}
                 autoFocus
-                className="bg-transparent outline-none w-full text-center"
+                className="bg-transparent outline-none w-full text-center font-medium"
                 style={{ color: colors['text-brand-primary'] }}
                 placeholder="Enter path name"
               />
             ) : (
-              <span>{data.path?.name || 'Path'}</span>
+              <Tooltip 
+                content={data.path?.name || 'Path'} 
+                show={showTooltip}
+              >
+                <div
+                  className="font-medium truncate text-center w-full cursor-default"
+                  style={{ color: colors['text-brand-primary'] }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                >
+                  {data.path?.name || 'Path'}
+                </div>
+              </Tooltip>
             )}
           </div>
 
