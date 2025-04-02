@@ -210,24 +210,27 @@ export default function VerticalStep({
                 className="w-8 h-8"
               />
             </motion.div>
-            <div className="flex flex-col items-start gap-2 min-w-0">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col items-start gap-2 min-w-0 flex-1">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: colors['text-secondary'] }}
+                  >
+                    {block.position}.
+                  </span>
+                  <span
+                    className={cn('text-left text-base', isActive && 'font-medium')}
+                    style={{ color: colors['text-primary'] }}
+                  >
+                    {getDisplayTitle(block)}
+                  </span>
+                </div>
                 <span
-                  className="text-sm font-medium"
-                  style={{ color: colors['text-secondary'] }}
+                  className="text-sm"
+                  style={{ color: colors['text-quaternary'] }}
                 >
-                  {block.position}.
-                </span>
-                <span
-                  className={cn(
-                    'text-left text-base',
-                    isActive && 'font-medium'
-                  )}
-                  style={{
-                    color: colors['text-primary'],
-                  }}
-                >
-                  {getDisplayTitle(block)}
+                  ID: {block.id}
                 </span>
               </div>
               {block.step_details && (
@@ -396,19 +399,21 @@ export default function VerticalStep({
                             )}
                           </AnimatePresence>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <p
-                            className="font-medium"
-                            style={{ color: colors['text-primary'] }}
-                          >
-                            {option.path.name}
-                          </p>
-                          {/* <p
-                            className="text-sm"
-                            style={{ color: colors['text-secondary'] }}
-                          >
-                            {option.path.description}
-                          </p> */}
+                        <div className="flex flex-col gap-1 flex-1">
+                          <div className="flex justify-between items-center">
+                            <p
+                              className="font-medium"
+                              style={{ color: colors['text-primary'] }}
+                            >
+                              {option.path.name}
+                            </p>
+                            <span
+                              className="text-sm"
+                              style={{ color: colors['text-quaternary'] }}
+                            >
+                              ID: {option.path.id}
+                            </span>
+                          </div>
                         </div>
                       </motion.button>
                     ))}

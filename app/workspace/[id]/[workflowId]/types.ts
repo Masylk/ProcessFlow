@@ -59,6 +59,7 @@ export interface Path {
 // Interface for Block model
 export interface Block {
   id: number;
+  original_id?: number;
   created_at: string;  // DateTime
   updated_at: string;  // DateTime
   last_modified?: string | null;  // DateTime | null
