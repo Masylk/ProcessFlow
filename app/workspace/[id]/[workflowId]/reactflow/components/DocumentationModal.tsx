@@ -296,11 +296,19 @@ export function DocumentationModal({ onClose }: DocumentationModalProps) {
   return (
     <>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
+        className="fixed inset-0 flex items-center justify-center p-8"
         onClick={onClose}
       >
+        {/* Backdrop */}
+        <div className="absolute inset-0">
+          <div 
+            style={{ backgroundColor: colors['bg-overlay'] }}
+            className="absolute inset-0 opacity-70" 
+          />
+        </div>
+
         <div 
-          className="relative w-[900px] h-[600px] rounded-3xl flex overflow-hidden shadow-[0_20px_70px_-15px_rgba(0,0,0,0.3)] border border-white/10"
+          className="relative z-10 w-[900px] h-[600px] rounded-lg flex overflow-hidden shadow-[0_20px_70px_-15px_rgba(0,0,0,0.3)] border border-white/10"
           style={{ 
             backgroundColor: colors['bg-primary'],
             boxShadow: `0 10px 50px -12px ${colors['accent-primary']}30`

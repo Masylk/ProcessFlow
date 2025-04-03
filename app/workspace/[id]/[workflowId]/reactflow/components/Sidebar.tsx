@@ -202,14 +202,22 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
   // Handle tab switch
   const handleTabSwitch = (tab: 'navigation' | 'stars') => {
-    if (tab === 'navigation') {
-      setShowStars(false);
+    if (tab === 'navigation' && isSidebarVisible && !showStars) {
+      // If clicking navigation tab while it's already active, close the sidebar
+      setIsSidebarVisible(false);
+    } else if (tab === 'stars' && isSidebarVisible && showStars) {
+      // If clicking stars tab while it's already active, close the sidebar
+      setIsSidebarVisible(false);
     } else {
-      setShowStars(true);
-    }
-    // Always ensure sidebar is visible when switching tabs
-    if (!isSidebarVisible) {
-      setIsSidebarVisible(true);
+      if (tab === 'navigation') {
+        setShowStars(false);
+      } else {
+        setShowStars(true);
+      }
+      // Always ensure sidebar is visible when switching tabs
+      if (!isSidebarVisible) {
+        setIsSidebarVisible(true);
+      }
     }
   };
 
@@ -1037,12 +1045,16 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
       {/* Help Center Modal */}
       {showHelpModal && (
-        <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
+        <div className="fixed inset-0 z-[9999]">
+          <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
+        </div>
       )}
 
       {/* Documentation Modal */}
       {showDocModal && (
-        <DocumentationModal onClose={toggleDocModal} />
+        <div className="fixed inset-0 z-[9999]">
+          <DocumentationModal onClose={toggleDocModal} />
+        </div>
       )}
     </>
   );

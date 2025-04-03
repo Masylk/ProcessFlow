@@ -3,6 +3,8 @@ import { Block } from './block';
 import { Action } from './action';
 import { User } from './user';
 
+export type WorkflowStatus = 'ACTIVE' | 'DRAFT' | 'IN_REVIEW' | 'NEEDS_UPDATE' | 'ARCHIVED';
+
 export interface Workflow {
   id: number;
   name: string;
@@ -15,5 +17,6 @@ export interface Workflow {
   folder_id?: number;
   last_opened?: Date;
   team_tags: string[];
-  author: User
+  author: User;
+  status: WorkflowStatus;
 }

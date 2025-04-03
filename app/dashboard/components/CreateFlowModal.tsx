@@ -84,7 +84,7 @@ export default function CreateFlowModal({
             style={{ borderColor: colors['border-secondary'] }}
             className="self-stretch px-6 pt-4 pb-4 border-b flex-col justify-start items-start gap-3 flex"
           >
-            <div>
+            <div className="w-full">
               <label
                 className="block text-sm font-semibold mb-2"
                 style={{ color: colors['text-primary'] }}
@@ -92,7 +92,7 @@ export default function CreateFlowModal({
                 Flow name{' '}
                 <span style={{ color: colors['text-accent'] }}>*</span>
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
                     initialIcon={flowIcon || undefined}
@@ -102,9 +102,11 @@ export default function CreateFlowModal({
                 </div>
                 <div style={{ zIndex: 0 }} className="flex-1">
                   <InputField
+                    type="default"
                     value={flowName}
                     onChange={(value) => setFlowName(value)}
                     placeholder="e.g Create a new task"
+                    required
                   />
                 </div>
               </div>
@@ -224,6 +226,7 @@ export default function CreateFlowModal({
               </ButtonNormal>
               <ButtonNormal
                 onClick={() => {
+                  if (!flowName.trim()) return;
                   setIsSaving(true);
                   onCreateFlow(flowName, flowDescription, flowIcon)
                     .then(() => {
@@ -240,6 +243,7 @@ export default function CreateFlowModal({
                 className="grow shrink basis-0"
                 isLoading={isSaving}
                 loadingText="Creating..."
+                disabled={!flowName.trim()}
               >
                 Create Flow
               </ButtonNormal>
