@@ -419,20 +419,14 @@ export default function VerticalStep({
                           </AnimatePresence>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <p
-                            className="font-normal text-sm"
-                            style={{ color: colors['text-primary'] }}
-                          >
-                            {option.path.name}
-                          </p>
-                          {/* <p
-                            className="text-sm"
-                            style={{ color: colors['text-secondary'] }}
-                          >
-                            {option.path.description}
-                          </p> */}
-                        </div>
-                      </motion.button>
+                            <p
+                              className="font-normal text-sm"
+                              style={{ color: colors['text-primary'] }}
+                            >
+                              {option.path.name}
+                            </p>
+                          </div>
+                        </motion.button>
                     ))}
                   </div>
                 </motion.div>

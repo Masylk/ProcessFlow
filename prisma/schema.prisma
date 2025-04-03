@@ -483,7 +483,9 @@ enum delay_type {
 
 enum workflow_status {
   DRAFT
-  PUBLISHED
+  ACTIVE
+  IN_REVIEW
+  NEEDS_UPDATE
   ARCHIVED
 }
 

@@ -735,7 +735,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-lg border-2
+        className={`relative rounded-xl border-2
         ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
@@ -823,104 +823,69 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         />
 
         <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-start gap-3">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                border: `1px solid ${colors['border-secondary']}`,
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+                style={{
+                  border: `1px solid ${colors['border-secondary']}`,
+                }}
+              >
+                {blockData.icon ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                  />
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                    alt="Default Icon"
+                    className="w-6 h-6"
+                  />
+                )}
+              </div>
+              <h3 
+                className="text-sm font-medium"
+                style={{ color: colors['fg-primary'] }}
+              >
+                {blockData.title || 'Untitled Block'}
+              </h3>
+            </div>
+            <button
+              onClick={handleDropdownToggle}
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{ 
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {blockData.icon ? (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                  alt="Block Icon"
-                  className="w-6 h-6"
-                />
-              ) : (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
-                  alt="Default Icon"
-                  className="w-6 h-6"
-                />
-              )}
-            </div>
-
-            <div className="flex-grow">
-              <div className="flex items-start justify-between">
-                <h3 
-                  className="text-sm font-medium"
-                  style={{ color: colors['fg-primary'] }}
-                >
-                  {blockData.title || 'Untitled Block'}
-                </h3>
-                <button
-                  onClick={handleDropdownToggle}
-                  className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-                  style={{ 
-                    color: colors['fg-tertiary'],
-                    backgroundColor: 'transparent'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                    alt="Menu"
-                    className="w-4 h-4"
-                  />
-                </button>
-              </div>
-
-              {blockData.description && (
-                <p 
-                  className="text-xs mt-1"
-                  style={{ color: colors['fg-tertiary'] }}
-                >
-                  {showFullDescription ? (
-                    <>
-                      {blockData.description}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(false);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Show less
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {truncateDescription(blockData.description, 50)}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(true);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Read more
-                        </button>
-                      )}
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                alt="Menu"
+                className="w-4 h-4"
+              />
+            </button>
           </div>
+
+          {blockData.description && (
+            <p 
+              className="text-xs mt-1 line-clamp-2"
+              style={{ color: colors['fg-tertiary'] }}
+            >
+              {blockData.description}
+            </p>
+          )}
 
           {/* Image with signed URL */}
           {signedImageUrl && (
-            <div className="rounded-lg overflow-hidden h-[267px] w-full">
+            <div className="rounded-md overflow-hidden h-[267px] w-full">
               <img
                 src={signedImageUrl}
                 alt="Block Media"
@@ -931,19 +896,17 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
           {/* Average time - only show if defined */}
           {blockData.average_time && (
-            <div className="flex items-center text-xs mt-auto">
-              <span
-                className="px-3 py-1 rounded-full"
-                style={{
-                  backgroundColor: colors['bg-secondary'],
-                  borderColor: colors['border-secondary'],
-                  color: colors['fg-tertiary'],
-                  border: '1px solid',
-                }}
-              >
-                {blockData.average_time} min
-              </span>
-            </div>
+            <span
+              className="flex w-fit px-3 py-1 rounded-full text-xs"
+              style={{
+                backgroundColor: colors['bg-secondary'],
+                borderColor: colors['border-secondary'],
+                color: colors['fg-tertiary'],
+                border: '1px solid',
+              }}
+            >
+              {blockData.average_time} min
+            </span>
           )}
         </div>
 

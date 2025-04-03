@@ -943,6 +943,14 @@ export default function ExamplePage() {
     );
   };
 
+  const handleRestart = () => {
+    setCurrentStep(-1);
+    setSelectedOptions([]);
+    if (mainPath) {
+      setPathsToDisplay([mainPath]);
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex"
@@ -950,15 +958,23 @@ export default function ExamplePage() {
     >
       {user && workspace && workflowData && (
         <>
-          <Sidebar
-            className="w-64"
-            workspace={workspace}
-            activeStepId={currentStep}
-            onStepClick={handleStepClick}
-            pathsToDisplay={pathsToDisplay}
-          />
-          <div className="flex-1 ml-64">
-            <div className="fixed right-0 left-64 bg-primary z-30">
+          {viewMode === 'vertical' && (
+            <Sidebar
+              className="w-64"
+              workspace={workspace}
+              activeStepId={currentStep}
+              onStepClick={handleStepClick}
+              pathsToDisplay={pathsToDisplay}
+            />
+          )}
+          <div className={cn(
+            "flex-1",
+            viewMode === 'vertical' ? "ml-64" : "w-full"
+          )}>
+            <div className={cn(
+              "fixed right-0 bg-primary z-30",
+              viewMode === 'vertical' ? "left-64" : "left-0"
+            )}>
               <Header
                 breadcrumbItems={breadcrumbItems}
                 user={user}
@@ -1008,15 +1024,17 @@ export default function ExamplePage() {
             )}
 
             {/* Main content */}
-            <ProcessCanvas>
+            <ProcessCanvas className={cn(
+              viewMode === 'vertical' 
+                ? "overflow-y-scroll absolute inset-0 left-64 ml-0" 
+                : "w-full overflow-hidden"
+            )}>
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
                     {processCardData && <ProcessCard {...processCardData} />}
                     {pathsToDisplay
                       .map((path) => {
-                        // Check if any parent block's path has a selected block
-
                         return (
                           <div key={path.id} className="space-y-16">
                             {path.blocks
@@ -1026,7 +1044,6 @@ export default function ExamplePage() {
                                   block.type !== 'LAST'
                               )
                               .map((block, index, filteredBlocks) => {
-                                // Check if any block in this path up to current index has been selected
                                 return (
                                   <div
                                     key={block.id}
@@ -1062,14 +1079,15 @@ export default function ExamplePage() {
                       .filter(Boolean)}
                     <VerticalLastStep
                       onCopyLink={handleCopyLink}
+                      onRestart={handleRestart}
                       icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
                     />
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex items-center justify-center p-6">
+                <div className="h-full flex items-center justify-center">
                   <div
-                    className="rounded-lg border w-full max-w-3xl"
+                    className="rounded-lg border w-full max-w-3xl mx-6"
                     style={{
                       backgroundColor: colors['bg-primary'],
                       borderColor: colors['border-secondary'],
@@ -1086,13 +1104,15 @@ export default function ExamplePage() {
                             className="flex items-center"
                           >
                             {processCardData && (
-                              <ProcessCard {...processCardData} />
+                              <div className="w-full">
+                                <ProcessCard {...processCardData} />
+                              </div>
                             )}
                           </div>
                           {/* Navigation and Progress Bar */}
                           <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar - hidden */}
-                            <div className=" items-center hidden">
+                            <div className="items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -1160,53 +1180,76 @@ export default function ExamplePage() {
 
                             {/* Navigation Buttons */}
                             <div className="flex items-center gap-2">
-                              <ButtonNormal
-                                variant="secondary"
-                                size="small"
-                                onClick={() => handleStepNavigation('prev')}
-                                disabled={currentStep === -1}
-                                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              >
-                                Previous step
-                              </ButtonNormal>
-                              <ButtonNormal
-                                variant="primary"
-                                size="small"
-                                onClick={() => handleStepNavigation('next')}
-                                disabled={
-                                  currentStep ===
-                                  PathsToDisplayBlocks.length - 1
-                                }
-                                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
-                              >
-                                Next step
-                              </ButtonNormal>
+                              {currentStep > -1 && (
+                                <ButtonNormal
+                                  variant="secondary"
+                                  size="small"
+                                  onClick={() => handleStepNavigation('prev')}
+                                  disabled={currentStep === -1}
+                                  leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                                >
+                                  Previous step
+                                </ButtonNormal>
+                              )}
+                              {currentStep < PathsToDisplayBlocks.length && (
+                                <ButtonNormal
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => handleStepNavigation('next')}
+                                  disabled={
+                                    currentStep === PathsToDisplayBlocks.length ||
+                                    (currentStep >= 0 &&
+                                      currentStep < PathsToDisplayBlocks.length &&
+                                      PathsToDisplayBlocks[currentStep]?.child_paths?.length > 0 &&
+                                      !selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                  }
+                                  trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
+                                >
+                                  {currentStep === -1 
+                                    ? "Get Started" 
+                                    : currentStep === PathsToDisplayBlocks.length - 1 &&
+                                      (!PathsToDisplayBlocks[currentStep]?.child_paths?.length ||
+                                        selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                      ? "Complete"
+                                      : "Next step"}
+                                </ButtonNormal>
+                              )}
                             </div>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div
-                            className="flex flex-col"
-                            style={{ height: '472px' }}
-                          >
-                            {currentStep === PathsToDisplayBlocks.length ? (
-                              <HorizontalLastStep onCopyLink={handleCopyLink} />
-                            ) : (
-                              <HorizontalStep
-                                block={PathsToDisplayBlocks[currentStep]}
-                                selectedOptionIds={selectedOptions}
-                                onOptionSelect={(optionId, blockId) =>
-                                  handleOptionSelect(optionId, blockId)
-                                }
-                              />
-                            )}
+                          <div className="h-[472px] flex">
+                            <div
+                              className={cn(
+                                "w-full flex flex-col",
+                                (!PathsToDisplayBlocks[currentStep]?.image && 
+                                 (!PathsToDisplayBlocks[currentStep]?.child_paths || 
+                                  PathsToDisplayBlocks[currentStep]?.child_paths.length === 0)) && 
+                                "justify-center"
+                              )}
+                            >
+                              {currentStep === PathsToDisplayBlocks.length ? (
+                                <HorizontalLastStep 
+                                  onCopyLink={handleCopyLink}
+                                  onRestart={handleRestart}
+                                />
+                              ) : (
+                                <HorizontalStep
+                                  block={PathsToDisplayBlocks[currentStep]}
+                                  selectedOptionIds={selectedOptions}
+                                  onOptionSelect={(optionId, blockId) =>
+                                    handleOptionSelect(optionId, blockId)
+                                  }
+                                />
+                              )}
+                            </div>
                           </div>
 
                           {/* Navigation and Progress Bar */}
                           <div className="flex items-center justify-end mt-8">
                             {/* Progress Bar */}
-                            <div className=" items-center hidden">
+                            <div className="items-center hidden">
                               <div className="relative flex items-center w-[400px]">
                                 {/* Home Icon */}
                                 <img
@@ -1274,28 +1317,40 @@ export default function ExamplePage() {
 
                             {/* Navigation Buttons */}
                             <div className="flex items-center gap-2">
-                              <ButtonNormal
-                                variant="secondary"
-                                size="small"
-                                onClick={() => handleStepNavigation('prev')}
-                                disabled={currentStep === -1}
-                                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                              >
-                                Previous step
-                              </ButtonNormal>
-                              <ButtonNormal
-                                variant="primary"
-                                size="small"
-                                onClick={() => handleStepNavigation('next')}
-                                disabled={
-                                  currentStep === PathsToDisplayBlocks.length
-                                }
-                                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
-                              >
-                                {currentStep === PathsToDisplayBlocks.length - 1
-                                  ? 'Complete'
-                                  : 'Next step'}
-                              </ButtonNormal>
+                              {currentStep > -1 && (
+                                <ButtonNormal
+                                  variant="secondary"
+                                  size="small"
+                                  onClick={() => handleStepNavigation('prev')}
+                                  disabled={currentStep === -1}
+                                  leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                                >
+                                  Previous step
+                                </ButtonNormal>
+                              )}
+                              {currentStep < PathsToDisplayBlocks.length && (
+                                <ButtonNormal
+                                  variant="primary"
+                                  size="small"
+                                  onClick={() => handleStepNavigation('next')}
+                                  disabled={
+                                    currentStep === PathsToDisplayBlocks.length ||
+                                    (currentStep >= 0 &&
+                                      currentStep < PathsToDisplayBlocks.length &&
+                                      PathsToDisplayBlocks[currentStep]?.child_paths?.length > 0 &&
+                                      !selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                  }
+                                  trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
+                                >
+                                  {currentStep === -1 
+                                    ? "Get Started" 
+                                    : currentStep === PathsToDisplayBlocks.length - 1 &&
+                                      (!PathsToDisplayBlocks[currentStep]?.child_paths?.length ||
+                                        selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                      ? "Complete"
+                                      : "Next step"}
+                                </ButtonNormal>
+                              )}
                             </div>
                           </div>
                         </>
