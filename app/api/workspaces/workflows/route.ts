@@ -109,6 +109,9 @@ import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessL
  *               icon:
  *                 type: string
  *                 example: "https://example.com/icon.png"
+ *               status:
+ *                 type: string
+ *                 example: "active"
  *     responses:
  *       200:
  *         description: Workflow updated successfully
@@ -333,6 +336,7 @@ export async function PUT(req: NextRequest) {
       folder_id = null,
       team_tags = [],
       icon = null,
+      status = null,
     } = await req.json();
 
     if (!id) {
@@ -354,6 +358,7 @@ export async function PUT(req: NextRequest) {
         }),
         ...(team_tags && { team_tags }),
         ...(icon !== undefined && { icon }),
+        ...(status && { status }),
       },
     });
 

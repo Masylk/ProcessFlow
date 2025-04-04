@@ -22,6 +22,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
 import styles from './CustomNode.module.css';
+import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -35,6 +36,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const colors = useColors();
+  const { allStrokeLinesVisible } = useStrokeLinesStore();
   
 
   const {
@@ -616,10 +618,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       block.type === 'END' || block.type === 'LAST' || block.type === 'MERGE'
   )?.id;
 
+  // Modify the toggleStrokeLines function
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Prevent toggling individual stroke lines when global setting is off
+    if (!allStrokeLinesVisible) {
+      // Optional: You could show a tooltip or notification here explaining why
+      // the toggle is disabled, but for now we'll just return early
+      return;
+    }
+    
     const blockId = parseInt(id.replace('block-', ''));
-    data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
+    const newVisibility = !data.strokeLinesVisible;
+    data.updateStrokeLineVisibility?.(blockId, newVisibility);
   };
 
   // Check if this node is the source or target in connect mode
@@ -705,17 +717,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           >
             <div
               onClick={toggleStrokeLines}
-              className="cursor-pointer"
+              className={`${allStrokeLinesVisible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               style={{
                 width: '12px',
                 height: '20px',
                 borderRadius: '6px',
-                backgroundColor: data.strokeLinesVisible
+                backgroundColor: allStrokeLinesVisible && data.strokeLinesVisible
                   ? '#FF69A3'
                   : colors['bg-quaternary'],
                 transition: 'background-color 0.2s',
                 position: 'relative',
+                opacity: allStrokeLinesVisible ? 1 : 0.5,
               }}
+              title={allStrokeLinesVisible 
+                ? (data.strokeLinesVisible ? "Hide connecting lines" : "Show connecting lines") 
+                : "Global connecting lines are disabled in Settings"}
             >
               <div
                 style={{
@@ -725,7 +741,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   backgroundColor: colors['bg-primary'],
                   position: 'absolute',
                   left: '1px',
-                  top: data.strokeLinesVisible ? '1px' : '9px',
+                  top: allStrokeLinesVisible && data.strokeLinesVisible ? '1px' : '9px',
                   transition: 'top 0.2s',
                   boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                 }}

@@ -352,6 +352,10 @@ export const lightTheme: Theme = {
 
       // Purple
       'utility-purple-50': getThemeColor('Purple/50'),
+      'utility-purple-100': getThemeColor('Purple/100'),
+      'utility-purple-200': getThemeColor('Purple/200'),
+      'utility-purple-300': getThemeColor('Purple/300'),
+      'utility-purple-400': getThemeColor('Purple/400'),
       'utility-purple-500': getThemeColor('Purple/500'),
       'utility-purple-600': getThemeColor('Purple/600'),
       'utility-purple-700': getThemeColor('Purple/700'),
