@@ -39,6 +39,7 @@ export function ReactFlowPageClient({
       return;
     }
 
+    console.log('blockData to add', blockData);
     // Prepare the block data
     const data = {
       type: blockData.type,
@@ -53,9 +54,12 @@ export function ReactFlowPageClient({
             ? '/step-icons/default-icons/delay.svg'
             : '/step-icons/default-icons/path.svg',
       description: `New ${blockData.type.toLowerCase()} block`,
-      delay_seconds: blockData.type === 'DELAY' ? 60 : undefined, // Default 1 minute delay
+      delay_type: blockData.delay_type,
+      delay_event: blockData.delay_event,
+      delay_seconds: blockData.delay_seconds,
     };
 
+    console.log('data to add', data);
     try {
       const response = await fetch('/api/blocks', {
         method: 'POST',

@@ -26,6 +26,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
             node.type === 'path' ? 32 :
             node.type === 'end' ? 290 :
             node.type === 'merge' ? 12 :
+            node.type === 'eventDelay' ? 531 :
+            node.type === 'fixedDelay' ? 382 :
             481,
     height: node.type === 'begin' ? 
              (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 50) :
@@ -33,6 +35,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
              node.type === 'path' ? 32 :
              node.type === 'end' ? 48 :
              node.type === 'merge' ? 12 :
+             node.type === 'eventDelay' ? 223 :
+             node.type === 'fixedDelay' ? 132 :
              ((node.data as NodeData)?.block as Block)?.image ? 387 : 120,
   }));
 

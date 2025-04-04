@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+enum DelayType {
+  FIXED_DURATION = 'FIXED_DURATION',
+  WAIT_FOR_EVENT = 'WAIT_FOR_EVENT'
+}
 /**
  * @swagger
  * /api/blocks:
@@ -37,6 +41,14 @@ import { Prisma } from '@prisma/client';
  *                 type: integer
  *                 nullable: true
  *                 description: Delay time in seconds (only for DELAY blocks).
+ *               delay_type:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Delay type for DELAY blocks.
+ *               delay_event:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Delay event for DELAY blocks.
  *               description:
  *                 type: string
  *                 nullable: true
@@ -82,6 +94,8 @@ export async function POST(req: NextRequest) {
     position,
     icon,
     delay_seconds,
+    delay_type,
+    delay_event,
     description,
     workflow_id,
     path_id,
@@ -135,6 +149,8 @@ export async function POST(req: NextRequest) {
         click_position: click_position || null,
         step_details: type === 'STEP' ? step_details : null,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
+        delay_type: type === 'DELAY' ? (delay_type as DelayType) : null,
+        delay_event: type === 'DELAY' ? delay_event : null,
       };
 
       const newBlock = await prisma.block.create({
