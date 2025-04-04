@@ -47,6 +47,7 @@ import { useSearchParams } from 'next/navigation';
 import ZoomBar from './ZoomBar';
 import { Sidebar } from './Sidebar';
 import { useColors } from '@/app/theme/hooks';
+import { useStrokeLinesStore } from '../store/strokeLinesStore';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -104,7 +105,7 @@ export function Flow({
   const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
     StrokeLineVisibility[]
   >([]);
-  const [allStrokeLinesVisible, setAllStrokeLinesVisible] = useState(true);
+  const { allStrokeLinesVisible, setAllStrokeLinesVisible } = useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
@@ -372,7 +373,9 @@ export function Flow({
   };
 
   const toggleAllStrokeLines = useCallback(() => {
-    setAllStrokeLinesVisible((prev) => !prev);
+    const newVisibility = !allStrokeLinesVisible;
+    setAllStrokeLinesVisible(newVisibility);
+    
     // Update all stroke line visibilities
     const blockIds = new Set<number>();
     paths.forEach((path) => {
@@ -382,9 +385,9 @@ export function Flow({
     });
 
     blockIds.forEach((blockId) => {
-      updateStrokeLineVisibility(blockId, !allStrokeLinesVisible);
+      updateStrokeLineVisibility(blockId, newVisibility);
     });
-  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility]);
+  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility, setAllStrokeLinesVisible]);
 
   // Combine regular edges with preview edge
   const allEdges = useMemo(() => {
@@ -522,6 +525,23 @@ export function Flow({
       }
     }
   }, [newBlockId, nodes, setEditMode, setViewport, clearNewBlockId]);
+
+  // Effect to sync individual stroke line visibilities with global setting
+  useEffect(() => {
+    if (paths.length > 0) {
+      // Update all stroke line visibilities based on global setting
+      const blockIds = new Set<number>();
+      paths.forEach((path) => {
+        path.blocks.forEach((block) => {
+          blockIds.add(block.id);
+        });
+      });
+
+      blockIds.forEach((blockId) => {
+        updateStrokeLineVisibility(blockId, allStrokeLinesVisible);
+      });
+    }
+  }, [allStrokeLinesVisible, paths, updateStrokeLineVisibility]);
 
   return (
     <div

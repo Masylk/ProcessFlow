@@ -9,6 +9,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import { DocumentationModal } from './DocumentationModal';
+import SettingsModal from './SettingsModal';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { User } from '@/types/user';
 import { useEditModeStore } from '../store/editModeStore';
@@ -105,6 +106,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showDocModal, setShowDocModal] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [showDocNotification, setShowDocNotification] = useState<boolean>(
     !Cookies.get('hasSeenDocumentation')
   );
@@ -189,6 +191,10 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
 
   const toggleDocModal = () => {
     setShowDocModal((prevState) => !prevState);
+  };
+
+  const toggleSettingsModal = () => {
+    setIsSettingsModalOpen((prevState) => !prevState);
   };
 
   // Toggle stars view
@@ -968,6 +974,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               iconOnly
               size="medium"
               leadingIcon={settingsIconUrl}
+              onClick={toggleSettingsModal}
             />
           </div>
         </div>
@@ -1046,15 +1053,27 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       {/* Help Center Modal */}
       {showHelpModal && (
         <div className="fixed inset-0 z-[9999]">
-          <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
+          <HelpCenterModal 
+            onClose={toggleHelpModal} 
+            user={mockUser as User} 
+          />
         </div>
       )}
 
       {/* Documentation Modal */}
       {showDocModal && (
         <div className="fixed inset-0 z-[9999]">
-          <DocumentationModal onClose={toggleDocModal} />
+          <DocumentationModal 
+            onClose={toggleDocModal} 
+          />
         </div>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsModalOpen && (
+        <SettingsModal
+          onClose={toggleSettingsModal}
+        />
       )}
     </>
   );

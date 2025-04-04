@@ -107,6 +107,10 @@ export default function WorkflowCard({
     router.push(`/workspace/${workspace.id}/${workflowId}/reactflow`);
   };
 
+  const navigateToEditMode = (workflowId: number) => {
+    router.push(`/workspace/${workspace.id}/${workflowId}/read`);
+  };
+
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -390,7 +394,7 @@ export default function WorkflowCard({
                   } else if (item.label === 'Edit Flow info') {
                     onEditWorkflow(workflow);
                   } else if (item.label === 'Open in read mode') {
-                    handleWorkflowClick(workflow.id);
+                    navigateToEditMode(workflow.id);
                   } else if (item.label === 'Duplicate') {
                     onDuplicateWorkflow(workflow);
                   }

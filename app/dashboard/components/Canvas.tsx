@@ -81,7 +81,7 @@ const Canvas: React.FC<CanvasProps> = ({
               Recently Used
             </h2>
             {currentView === 'grid' ? (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 x gap-4">
                 {recentlyUsedWorkflows.map((workflow) => (
                   <WorkflowCard
                     key={workflow.id}
@@ -191,7 +191,7 @@ const Canvas: React.FC<CanvasProps> = ({
             All Workflows
           </h2>
           {currentView === 'grid' ? (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {workflowsToDisplay.map((workflow) => (
                 <WorkflowCard
                   key={workflow.id}
