@@ -4,7 +4,7 @@ import { Folder, Workspace } from '@/types/workspace';
 import React from 'react';
 import CanvaHeader from './CanvaHeader';
 import WorkflowCard from './WorkflowCard';
-import { Workflow } from '@/types/workflow';
+import { Workflow, WorkflowStatus } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useColors } from '@/app/theme/hooks';
 
@@ -16,6 +16,7 @@ interface CanvasProps {
   onEditWorkflow: () => void;
   onDuplicateWorkflow: () => void;
   onMoveWorkflow: () => void;
+  onStatusChange: (workflow: Workflow, newStatus: WorkflowStatus) => void;
   selectedFolder?: Folder;
   searchTerm?: string;
   currentView: 'grid' | 'table';
@@ -31,6 +32,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
+  onStatusChange,
   searchTerm = '',
   currentView,
   onViewChange,
@@ -90,6 +92,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     onDeleteWorkflow={onDeleteWorkflow}
                     onEditWorkflow={onEditWorkflow}
                     onMoveWorkflow={onMoveWorkflow}
+                    onStatusChange={onStatusChange}
                   />
                 ))}
               </div>
@@ -199,6 +202,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   onDeleteWorkflow={onDeleteWorkflow}
                   onEditWorkflow={onEditWorkflow}
                   onMoveWorkflow={onMoveWorkflow}
+                  onStatusChange={onStatusChange}
                 />
               ))}
             </div>

@@ -147,15 +147,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Steps count */}
-      <div className="px-7 py-4">
-        <span
-          className="text-xs font-normal"
-          style={{ color: colors['text-secondary'] }}
-        >
-          {mainPath?.blocks.length || 0} Steps
-        </span>
-      </div>
+      
 
       {/* Steps list */}
       <div className="flex-1 overflow-y-auto px-5">
