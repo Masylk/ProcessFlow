@@ -14,6 +14,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import DeleteStrokeEdgeModal from '../modals/DeleteStrokeEdgeModal';
 import styles from './StrokeEdge.module.css';
 import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
+import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -88,6 +89,7 @@ function StrokeEdge({
   const zoom = useStore((state) => state.transform[2]);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
+  const { allStrokeLinesVisible } = useStrokeLinesStore();
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -462,6 +464,21 @@ function StrokeEdge({
     };
   }, [isDragging, handleControlPointDrag, handleControlPointDragEnd]);
 
+  // Inside the StrokeEdge component, add an effect to handle global visibility changes
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    // If global visibility is turned off, we need to update the UI to reflect that
+    if (!allStrokeLinesVisible) {
+      if (showLabel) {
+        setShowLabel(false);
+      }
+      if (showDeleteButton) {
+        setShowDeleteButton(false);
+      }
+    }
+  }, [allStrokeLinesVisible, showLabel, showDeleteButton]);
+
   let edgePath = '';
 
   if (isSelfLoop) {
@@ -523,7 +540,7 @@ function StrokeEdge({
               ? 0.4
               : isEditMode
                 ? 0.4
-                : data?.isVisible === false
+                : !allStrokeLinesVisible || data?.isVisible === false
                   ? 0
                   : 1,
           markerEnd: `url(#${markerId})`,
@@ -541,13 +558,13 @@ function StrokeEdge({
         onMouseLeave={handleMouseLeave}
         style={{
           cursor: 'grab',
-          opacity: data?.isVisible === false ? 0 : 1,
-          pointerEvents: data?.isVisible === false ? 'none' : 'stroke',
+          opacity: !allStrokeLinesVisible || data?.isVisible === false ? 0 : 1,
+          pointerEvents: !allStrokeLinesVisible || data?.isVisible === false ? 'none' : 'stroke',
         }}
       />
       
       {/* Control Points */}
-      {!isDeleting && data?.isVisible !== false && (isHoveringEdge || isDragging) && controlPoints.map((point, index) => (
+      {!isDeleting && allStrokeLinesVisible && data?.isVisible !== false && (isHoveringEdge || isDragging) && controlPoints.map((point, index) => (
         <EdgeLabelRenderer key={`control-${index}`}>
           <div
             style={{
@@ -576,7 +593,7 @@ function StrokeEdge({
       ))}
 
       {/* Edge Controls Container */}
-      {showLabel && !isHoveringControlPoint && data?.isVisible !== false && (
+      {showLabel && !isHoveringControlPoint && allStrokeLinesVisible && data?.isVisible !== false && (
         <EdgeLabelRenderer>
           <div
             style={{
