@@ -26,6 +26,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
             node.type === 'path' ? 32 :
             node.type === 'end' ? 290 :
             node.type === 'merge' ? 12 :
+            node.type === 'eventDelay' ? 531 :
+            node.type === 'fixedDelay' ? 382 :
             481,
     height: node.type === 'begin' ? 
              (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 50) :
@@ -33,6 +35,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
              node.type === 'path' ? 32 :
              node.type === 'end' ? 48 :
              node.type === 'merge' ? 12 :
+             node.type === 'eventDelay' ? 223 :
+             node.type === 'fixedDelay' ? 132 :
              ((node.data as NodeData)?.block as Block)?.image ? 387 : 120,
   }));
 
@@ -51,29 +55,29 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const layoutOptions = {
     'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '40',
-    'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-    'elk.spacing.componentComponent': '40',
+    'elk.spacing.nodeNode': '80',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '120',
+    'elk.spacing.componentComponent': '80',
     'elk.edgeRouting': 'ORTHOGONAL',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.layering.strategy': 'NETWORK_SIMPLEX',
-    'elk.layered.spacing.edgeNodeBetweenLayers': '50',
+    'elk.layered.spacing.edgeNodeBetweenLayers': '80',
     'elk.layered.mergeEdges': 'true',
     'elk.layered.priority.direction': '1',
     'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
     'elk.alignment': 'CENTER',
     'elk.padding': '[top=50,left=50,bottom=50,right=50]',
     'elk.layered.crossingMinimization.semiInteractive': 'true',
-    'elk.layered.spacing.baseValue': '40',
+    'elk.layered.spacing.baseValue': '80',
     'elk.separateConnectedComponents': 'true',
     'elk.layered.layering.wideNodesOnMultipleLayers': 'OFF',
     'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.crossingMinimization.forceNodeModelOrder': 'true',
     'elk.edges.routing': 'ORTHOGONAL',
-    'elk.spacing.edgeEdge': '30',
-    'elk.spacing.edgeNode': '30',
+    'elk.spacing.edgeEdge': '50',
+    'elk.spacing.edgeNode': '50',
     'elk.edge.thickness': '2',
     'elk.edges.bendPoints': 'true',
     'elk.edges.sourcePoint': 'FREE',
@@ -81,7 +85,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     'elk.portAlignment.default': 'CENTER',
     'elk.portConstraints': 'FREE',
     'elk.layered.feedbackEdges': 'true',
-    'elk.layered.spacing.edgeEdgeBetweenLayers': '30',
+    'elk.layered.spacing.edgeEdgeBetweenLayers': '50',
     'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
   };
 

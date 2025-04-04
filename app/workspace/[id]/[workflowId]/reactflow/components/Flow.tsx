@@ -22,7 +22,14 @@ import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './nodes/CustomNode';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
-import { NodeData, EdgeData, DropdownDatas, Path, Block } from '../../types';
+import {
+  NodeData,
+  EdgeData,
+  DropdownDatas,
+  Path,
+  Block,
+  DelayType,
+} from '../../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
 import BeginNode from './nodes/BeginNode';
@@ -47,6 +54,9 @@ import { useSearchParams } from 'next/navigation';
 import ZoomBar from './ZoomBar';
 import { Sidebar } from './Sidebar';
 import { useColors } from '@/app/theme/hooks';
+import FixedDelayNode from './nodes/FixedDelayNode';
+import EventDelayNode from './nodes/EventDelayNode';
+import { useStrokeLinesStore } from '../store/strokeLinesStore';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -58,6 +68,8 @@ const nodeTypes = {
   path: PathNode,
   merge: MergeNode,
   invisible: InvisibleNode,
+  fixedDelay: FixedDelayNode,
+  eventDelay: EventDelayNode,
 } as const;
 
 const edgeTypes = {
@@ -104,7 +116,7 @@ export function Flow({
   const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
     StrokeLineVisibility[]
   >([]);
-  const [allStrokeLinesVisible, setAllStrokeLinesVisible] = useState(true);
+  const { allStrokeLinesVisible, setAllStrokeLinesVisible } = useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
@@ -317,26 +329,59 @@ export function Flow({
     searchParams,
   ]);
 
-  const handleBlockTypeSelect = useCallback(
-    async (blockType: 'STEP' | 'PATH' | 'DELAY') => {
-      if (!dropdownDatas) return;
+  const handleBlockTypeSelect = async (
+    blockType: 'STEP' | 'PATH' | 'DELAY',
+    dropdownDatas: DropdownDatas,
+    delayOptions?: {
+      delayType?: DelayType;
+      eventName?: string;
+      seconds?: number;
+    }
+  ) => {
+    try {
+      console.log('delayOptions', delayOptions);
+      // Validate delay options if it's a DELAY block
+      if (blockType === 'DELAY') {
+        if (!delayOptions?.delayType) {
+          throw new Error('Delay type is required for DELAY blocks');
+        }
+        if (
+          typeof delayOptions.seconds !== 'number' ||
+          delayOptions.seconds < 0
+        ) {
+          throw new Error(
+            'A valid delay value (non-negative number) is required for DELAY blocks'
+          );
+        }
+        if (
+          delayOptions.delayType === DelayType.WAIT_FOR_EVENT &&
+          !delayOptions.eventName
+        ) {
+          throw new Error('Event name is required for event-based delays');
+        }
+      }
 
-      const defaultBlock = {
+      const blockData = {
         type: blockType,
-        workflow_id: parseInt(workflowId),
         position: dropdownDatas.position,
         path_id: dropdownDatas.path.id,
+        delay_type: delayOptions?.delayType as string,
+        delay_event: delayOptions?.eventName,
+        delay_seconds: delayOptions?.seconds,
       };
 
-      setShowDropdown(false);
+      console.log('blockData', blockData);
+
       await onBlockAdd(
-        defaultBlock,
+        blockData,
         dropdownDatas.path.id,
-        defaultBlock.position
+        dropdownDatas.position
       );
-    },
-    [dropdownDatas, workflowId, onBlockAdd]
-  );
+      setShowDropdown(false);
+    } catch (error) {
+      console.error('Error creating block:', error);
+    }
+  };
 
   const showParallelPathModal = useModalStore(
     (state) => state.showParallelPathModal
@@ -372,7 +417,9 @@ export function Flow({
   };
 
   const toggleAllStrokeLines = useCallback(() => {
-    setAllStrokeLinesVisible((prev) => !prev);
+    const newVisibility = !allStrokeLinesVisible;
+    setAllStrokeLinesVisible(newVisibility);
+    
     // Update all stroke line visibilities
     const blockIds = new Set<number>();
     paths.forEach((path) => {
@@ -382,9 +429,9 @@ export function Flow({
     });
 
     blockIds.forEach((blockId) => {
-      updateStrokeLineVisibility(blockId, !allStrokeLinesVisible);
+      updateStrokeLineVisibility(blockId, newVisibility);
     });
-  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility]);
+  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility, setAllStrokeLinesVisible]);
 
   // Combine regular edges with preview edge
   const allEdges = useMemo(() => {
@@ -501,12 +548,12 @@ export function Flow({
     if (newBlockId && nodes.length > 0) {
       // Find the node with the new block ID
       const nodeId = `block-${newBlockId}`;
-      const node = nodes.find(n => n.id === nodeId);
+      const node = nodes.find((n) => n.id === nodeId);
 
       if (node) {
         // Set this node as selected in edit mode
         setEditMode(true, newBlockId.toString());
-        
+
         // Center the view on the node and offset to make room for sidebar
         setViewport(
           {
@@ -516,12 +563,29 @@ export function Flow({
           },
           { duration: 800 }
         );
-        
+
         // Clear the newBlockId after handling it
         clearNewBlockId();
       }
     }
   }, [newBlockId, nodes, setEditMode, setViewport, clearNewBlockId]);
+
+  // Effect to sync individual stroke line visibilities with global setting
+  useEffect(() => {
+    if (paths.length > 0) {
+      // Update all stroke line visibilities based on global setting
+      const blockIds = new Set<number>();
+      paths.forEach((path) => {
+        path.blocks.forEach((block) => {
+          blockIds.add(block.id);
+        });
+      });
+
+      blockIds.forEach((blockId) => {
+        updateStrokeLineVisibility(blockId, allStrokeLinesVisible);
+      });
+    }
+  }, [allStrokeLinesVisible, paths, updateStrokeLineVisibility]);
 
   return (
     <div
@@ -551,9 +615,9 @@ export function Flow({
           const blockId = node.id.replace('block-', '');
           // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
-          
+
           // Don't set ReactFlow selection state as CustomNode handles this differently
-          
+
           // Find the node and zoom to it
           setViewport(
             {
@@ -595,12 +659,8 @@ export function Flow({
           backgroundColor: colors['bg-secondary'],
         }}
       >
-        <Background 
-          gap={20} 
-          size={3} 
-          color={colors['border-primary']}
-        />
-        <MiniMap 
+        <Background gap={20} size={3} color={colors['border-primary']} />
+        <MiniMap
           nodeColor={colors['fg-brand-primary']}
           maskColor={`${colors['bg-primary']}80`}
         />

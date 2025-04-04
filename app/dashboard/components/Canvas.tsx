@@ -4,7 +4,7 @@ import { Folder, Workspace } from '@/types/workspace';
 import React from 'react';
 import CanvaHeader from './CanvaHeader';
 import WorkflowCard from './WorkflowCard';
-import { Workflow } from '@/types/workflow';
+import { Workflow, WorkflowStatus } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useColors } from '@/app/theme/hooks';
 
@@ -16,6 +16,7 @@ interface CanvasProps {
   onEditWorkflow: () => void;
   onDuplicateWorkflow: () => void;
   onMoveWorkflow: () => void;
+  onStatusChange: (workflow: Workflow, newStatus: WorkflowStatus) => void;
   selectedFolder?: Folder;
   searchTerm?: string;
   currentView: 'grid' | 'table';
@@ -31,6 +32,7 @@ const Canvas: React.FC<CanvasProps> = ({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
+  onStatusChange,
   searchTerm = '',
   currentView,
   onViewChange,
@@ -79,7 +81,7 @@ const Canvas: React.FC<CanvasProps> = ({
               Recently Used
             </h2>
             {currentView === 'grid' ? (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {recentlyUsedWorkflows.map((workflow) => (
                   <WorkflowCard
                     key={workflow.id}
@@ -90,6 +92,7 @@ const Canvas: React.FC<CanvasProps> = ({
                     onDeleteWorkflow={onDeleteWorkflow}
                     onEditWorkflow={onEditWorkflow}
                     onMoveWorkflow={onMoveWorkflow}
+                    onStatusChange={onStatusChange}
                   />
                 ))}
               </div>
@@ -188,7 +191,7 @@ const Canvas: React.FC<CanvasProps> = ({
             All Workflows
           </h2>
           {currentView === 'grid' ? (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {workflowsToDisplay.map((workflow) => (
                 <WorkflowCard
                   key={workflow.id}
@@ -199,6 +202,7 @@ const Canvas: React.FC<CanvasProps> = ({
                   onDeleteWorkflow={onDeleteWorkflow}
                   onEditWorkflow={onEditWorkflow}
                   onMoveWorkflow={onMoveWorkflow}
+                  onStatusChange={onStatusChange}
                 />
               ))}
             </div>

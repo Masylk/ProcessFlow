@@ -3,15 +3,20 @@ import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { BaseStepProps } from './BaseStep';
 
+interface HorizontalLastStepProps extends Pick<BaseStepProps, 'onCopyLink'> {
+  onRestart: () => void;
+}
+
 export default function HorizontalLastStep({
   onCopyLink,
-}: Pick<BaseStepProps, 'onCopyLink'>) {
+  onRestart,
+}: HorizontalLastStepProps) {
   const colors = useColors();
 
   return (
-    <div className="flex flex-col items-center justify-center h-full">
+    <div className="flex flex-col items-center justify-center gap-4 h-full">
       <div
-        className="flex-shrink-0 w-12 h-12 rounded-sm flex items-center justify-center border"
+        className="flex-shrink-0 w-12 h-12 rounded-md flex items-center justify-center border"
         style={{
           backgroundColor: colors['bg-secondary'],
           borderColor: colors['border-secondary'],
@@ -24,13 +29,13 @@ export default function HorizontalLastStep({
         />
       </div>
       <h3
-        className="text-xl font-medium mb-3"
+        className="text-xl font-medium"
         style={{ color: colors['text-primary'] }}
       >
         Congratulations! You've completed the process.
       </h3>
       <p
-        className="text-base mb-6 text-center"
+        className="text-base mb-4 text-center"
         style={{ color: colors['text-secondary'] }}
       >
         Share it with your team members!
@@ -42,6 +47,14 @@ export default function HorizontalLastStep({
         leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02-white.svg`}
       >
         Copy link
+      </ButtonNormal>
+      <ButtonNormal
+        variant="tertiary"
+        size="small"
+        onClick={onRestart}
+        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/refresh-cw-01.svg`}
+      >
+        Restart process
       </ButtonNormal>
     </div>
   );

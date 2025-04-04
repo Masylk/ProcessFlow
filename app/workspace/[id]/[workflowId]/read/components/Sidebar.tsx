@@ -5,6 +5,7 @@ import { useColors } from '@/app/theme/hooks';
 import { usePathsStore } from '../store/pathsStore';
 import StepsContainer from './StepsContainer';
 import { Path } from '../../types';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   className?: string;
@@ -22,6 +23,7 @@ export default function Sidebar({
   pathsToDisplay,
 }: SidebarProps) {
   const colors = useColors();
+  const router = useRouter();
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [collapsedPaths, setCollapsedPaths] = useState<Set<number>>(new Set());
 
@@ -112,7 +114,12 @@ export default function Sidebar({
     >
       {/* Workspace Header */}
       <div className="w-full px-3 py-1 flex-col justify-start items-start inline-flex">
-        <div className="self-stretch px-3 py-2.5 rounded-md flex items-center gap-2">
+        <div 
+          className="self-stretch px-3 py-2.5 rounded-md flex items-center gap-2 cursor-pointer hover:bg-opacity-80"
+          onClick={() => router.push(`/dashboard/`)}
+          role="button"
+          aria-label="Go to workspace dashboard"
+        >
           <div className="relative w-8 h-8">
             {workspace.icon_url && (
               <img
@@ -147,15 +154,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Steps count */}
-      <div className="px-7 py-4">
-        <span
-          className="text-xs font-normal"
-          style={{ color: colors['text-secondary'] }}
-        >
-          {mainPath?.blocks.length || 0} Steps
-        </span>
-      </div>
+      
 
       {/* Steps list */}
       <div className="flex-1 overflow-y-auto px-5">

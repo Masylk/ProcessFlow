@@ -385,7 +385,7 @@ export default function BlockDetailsSidebar({
                     borderWidth: '1px',
                     borderRadius: '0.5rem',
                   }}
-                  className="relative flex items-start gap-2 p-3 transition-all duration-200 h-full"
+                  className="flex items-start gap-2 p-3 transition-all duration-200 h-full"
                 >
                   <TextEditor
                     value={description}

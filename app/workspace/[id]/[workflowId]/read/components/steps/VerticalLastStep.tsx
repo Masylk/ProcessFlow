@@ -3,16 +3,18 @@ import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { motion } from 'framer-motion';
+import { BaseStepProps } from './BaseStep';
 
-interface VerticalLastStepProps {
-  onCopyLink: () => void;
-  icon?: string | React.ReactNode;
+interface VerticalLastStepProps extends Pick<BaseStepProps, 'onCopyLink'> {
+  icon: string;
+  onRestart: () => void;
   className?: string;
 }
 
 export default function VerticalLastStep({
   onCopyLink,
   icon,
+  onRestart,
   className,
 }: VerticalLastStepProps) {
   const colors = useColors();
@@ -27,7 +29,7 @@ export default function VerticalLastStep({
 
     return (
       <motion.div
-        className="w-12 h-12 rounded-[10px] border shadow-sm flex items-center justify-center will-change-transform"
+        className="w-12 h-12 rounded-md border shadow-sm flex items-center justify-center will-change-transform"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -37,11 +39,7 @@ export default function VerticalLastStep({
           transform: 'translateZ(0)',
         }}
       >
-        {typeof icon === 'string' ? (
-          <img src={icon} alt="Success" className="w-6 h-6" />
-        ) : (
-          icon
-        )}
+        <img src={icon} alt="Success" className="w-6 h-6" />
       </motion.div>
     );
   };
@@ -104,6 +102,13 @@ export default function VerticalLastStep({
             >
               Copy link
             </ButtonNormal>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+          >
+          
           </motion.div>
         </div>
       </motion.div>

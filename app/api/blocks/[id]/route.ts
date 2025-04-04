@@ -95,6 +95,8 @@ export async function PATCH(req: NextRequest) {
       average_time,
       task_type,
       delay_seconds,
+      delay_type,
+      delay_event,
       step_details,
     } = await req.json();
 
@@ -162,6 +164,8 @@ export async function PATCH(req: NextRequest) {
         average_time,
         task_type,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
+        delay_type: type === 'DELAY' ? delay_type : null,
+        delay_event: type === 'DELAY' ? delay_event : null,
         step_details: type === 'STEP' ? step_details : null,
       },
       include: {

@@ -22,6 +22,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
 import styles from './CustomNode.module.css';
+import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -35,6 +36,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const colors = useColors();
+  const { allStrokeLinesVisible } = useStrokeLinesStore();
   
 
   const {
@@ -616,10 +618,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
       block.type === 'END' || block.type === 'LAST' || block.type === 'MERGE'
   )?.id;
 
+  // Modify the toggleStrokeLines function
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Prevent toggling individual stroke lines when global setting is off
+    if (!allStrokeLinesVisible) {
+      // Optional: You could show a tooltip or notification here explaining why
+      // the toggle is disabled, but for now we'll just return early
+      return;
+    }
+    
     const blockId = parseInt(id.replace('block-', ''));
-    data.updateStrokeLineVisibility?.(blockId, !data.strokeLinesVisible);
+    const newVisibility = !data.strokeLinesVisible;
+    data.updateStrokeLineVisibility?.(blockId, newVisibility);
   };
 
   // Check if this node is the source or target in connect mode
@@ -705,17 +717,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           >
             <div
               onClick={toggleStrokeLines}
-              className="cursor-pointer"
+              className={`${allStrokeLinesVisible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               style={{
                 width: '12px',
                 height: '20px',
                 borderRadius: '6px',
-                backgroundColor: data.strokeLinesVisible
+                backgroundColor: allStrokeLinesVisible && data.strokeLinesVisible
                   ? '#FF69A3'
                   : colors['bg-quaternary'],
                 transition: 'background-color 0.2s',
                 position: 'relative',
+                opacity: allStrokeLinesVisible ? 1 : 0.5,
               }}
+              title={allStrokeLinesVisible 
+                ? (data.strokeLinesVisible ? "Hide connecting lines" : "Show connecting lines") 
+                : "Global connecting lines are disabled in Settings"}
             >
               <div
                 style={{
@@ -725,7 +741,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   backgroundColor: colors['bg-primary'],
                   position: 'absolute',
                   left: '1px',
-                  top: data.strokeLinesVisible ? '1px' : '9px',
+                  top: allStrokeLinesVisible && data.strokeLinesVisible ? '1px' : '9px',
                   transition: 'top 0.2s',
                   boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                 }}
@@ -735,7 +751,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-lg border-2
+        className={`relative rounded-xl border-2
         ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
@@ -823,104 +839,69 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         />
 
         <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-start gap-3">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{
-                border: `1px solid ${colors['border-secondary']}`,
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+                style={{
+                  border: `1px solid ${colors['border-secondary']}`,
+                }}
+              >
+                {blockData.icon ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                  />
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                    alt="Default Icon"
+                    className="w-6 h-6"
+                  />
+                )}
+              </div>
+              <h3 
+                className="text-sm font-medium"
+                style={{ color: colors['fg-primary'] }}
+              >
+                {blockData.title || 'Untitled Block'}
+              </h3>
+            </div>
+            <button
+              onClick={handleDropdownToggle}
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{ 
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {blockData.icon ? (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                  alt="Block Icon"
-                  className="w-6 h-6"
-                />
-              ) : (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
-                  alt="Default Icon"
-                  className="w-6 h-6"
-                />
-              )}
-            </div>
-
-            <div className="flex-grow">
-              <div className="flex items-start justify-between">
-                <h3 
-                  className="text-sm font-medium"
-                  style={{ color: colors['fg-primary'] }}
-                >
-                  {blockData.title || 'Untitled Block'}
-                </h3>
-                <button
-                  onClick={handleDropdownToggle}
-                  className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-                  style={{ 
-                    color: colors['fg-tertiary'],
-                    backgroundColor: 'transparent'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                    alt="Menu"
-                    className="w-4 h-4"
-                  />
-                </button>
-              </div>
-
-              {blockData.description && (
-                <p 
-                  className="text-xs mt-1"
-                  style={{ color: colors['fg-tertiary'] }}
-                >
-                  {showFullDescription ? (
-                    <>
-                      {blockData.description}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(false);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Show less
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {truncateDescription(blockData.description, 50)}
-                      {blockData.description.length > 50 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowFullDescription(true);
-                          }}
-                          className="ml-1 hover:underline"
-                          style={{ color: colors['fg-brand-primary'] }}
-                        >
-                          Read more
-                        </button>
-                      )}
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                alt="Menu"
+                className="w-4 h-4"
+              />
+            </button>
           </div>
+
+          {blockData.description && (
+            <p 
+              className="text-xs mt-1 line-clamp-2"
+              style={{ color: colors['fg-tertiary'] }}
+            >
+              {blockData.description}
+            </p>
+          )}
 
           {/* Image with signed URL */}
           {signedImageUrl && (
-            <div className="rounded-lg overflow-hidden h-[267px] w-full">
+            <div className="rounded-md overflow-hidden h-[267px] w-full">
               <img
                 src={signedImageUrl}
                 alt="Block Media"
@@ -931,19 +912,17 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
           {/* Average time - only show if defined */}
           {blockData.average_time && (
-            <div className="flex items-center text-xs mt-auto">
-              <span
-                className="px-3 py-1 rounded-full"
-                style={{
-                  backgroundColor: colors['bg-secondary'],
-                  borderColor: colors['border-secondary'],
-                  color: colors['fg-tertiary'],
-                  border: '1px solid',
-                }}
-              >
-                {blockData.average_time} min
-              </span>
-            </div>
+            <span
+              className="flex w-fit px-3 py-1 rounded-full text-xs"
+              style={{
+                backgroundColor: colors['bg-secondary'],
+                borderColor: colors['border-secondary'],
+                color: colors['fg-tertiary'],
+                border: '1px solid',
+              }}
+            >
+              {blockData.average_time} min
+            </span>
           )}
         </div>
 

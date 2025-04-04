@@ -14,6 +14,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import DeleteStrokeEdgeModal from '../modals/DeleteStrokeEdgeModal';
 import styles from './StrokeEdge.module.css';
 import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
+import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -82,11 +83,13 @@ function StrokeEdge({
   const [isDragging, setIsDragging] = useState(false);
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const [isHoveringControlPoint, setIsHoveringControlPoint] = useState(false);
+  const [isHoveringEdge, setIsHoveringEdge] = useState(false);
   const { screenToFlowPosition } = useReactFlow();
   const { isConnectMode, previewEdgeId } = useConnectModeStore();
   const zoom = useStore((state) => state.transform[2]);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
+  const { allStrokeLinesVisible } = useStrokeLinesStore();
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -105,6 +108,7 @@ function StrokeEdge({
         setDeleteButtonPosition(flowPosition);
         setShowLabel(true);
         setShowDeleteButton(true);
+        setIsHoveringEdge(true);
       }
     },
     [screenToFlowPosition, isHoveringControlPoint]
@@ -140,6 +144,7 @@ function StrokeEdge({
       if (!isHoveringControlPoint) {
         setShowLabel(false);
         setShowDeleteButton(false);
+        setIsHoveringEdge(false);
       }
     }, 400);
   }, [isHoveringControlPoint]);
@@ -459,6 +464,21 @@ function StrokeEdge({
     };
   }, [isDragging, handleControlPointDrag, handleControlPointDragEnd]);
 
+  // Inside the StrokeEdge component, add an effect to handle global visibility changes
+
+  // Add this useEffect after the other useEffect hooks
+  useEffect(() => {
+    // If global visibility is turned off, we need to update the UI to reflect that
+    if (!allStrokeLinesVisible) {
+      if (showLabel) {
+        setShowLabel(false);
+      }
+      if (showDeleteButton) {
+        setShowDeleteButton(false);
+      }
+    }
+  }, [allStrokeLinesVisible, showLabel, showDeleteButton]);
+
   let edgePath = '';
 
   if (isSelfLoop) {
@@ -520,7 +540,7 @@ function StrokeEdge({
               ? 0.4
               : isEditMode
                 ? 0.4
-                : data?.isVisible === false
+                : !allStrokeLinesVisible || data?.isVisible === false
                   ? 0
                   : 1,
           markerEnd: `url(#${markerId})`,
@@ -537,14 +557,14 @@ function StrokeEdge({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         style={{
-          cursor: 'pointer',
-          opacity: data?.isVisible === false ? 0 : 1,
-          pointerEvents: data?.isVisible === false ? 'none' : 'stroke',
+          cursor: 'grab',
+          opacity: !allStrokeLinesVisible || data?.isVisible === false ? 0 : 1,
+          pointerEvents: !allStrokeLinesVisible || data?.isVisible === false ? 'none' : 'stroke',
         }}
       />
       
       {/* Control Points */}
-      {!isDeleting && data?.isVisible !== false && controlPoints.map((point, index) => (
+      {!isDeleting && allStrokeLinesVisible && data?.isVisible !== false && (isHoveringEdge || isDragging) && controlPoints.map((point, index) => (
         <EdgeLabelRenderer key={`control-${index}`}>
           <div
             style={{
@@ -553,6 +573,11 @@ function StrokeEdge({
               pointerEvents: 'all',
               cursor: isDragging && activePointIndex === index ? 'grabbing' : 'grab',
               zIndex: 1000,
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             onMouseDown={handleControlPointDragStart(index)}
             onMouseEnter={handleControlPointMouseEnter}
@@ -561,77 +586,72 @@ function StrokeEdge({
             <div
               className={`w-3 h-3 rounded-full bg-[#FF69A3] border-2 border-white shadow-md hover:scale-125 transition-transform duration-200 ${
                 isDragging && activePointIndex === index ? 'scale-125' : ''
-              } ${index === 1 ? 'bg-blue-500' : ''}`} // Middle point is blue
+              } ${index === 1 ? 'bg-blue-500' : ''}`}
             />
           </div>
         </EdgeLabelRenderer>
       ))}
 
-      {/* Delete button */}
-      {showDeleteButton && !isDeleting && !isHoveringControlPoint && data?.isVisible !== false && (
+      {/* Edge Controls Container */}
+      {showLabel && !isHoveringControlPoint && allStrokeLinesVisible && data?.isVisible !== false && (
         <EdgeLabelRenderer>
           <div
             style={{
               position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${deleteButtonPosition.x}px,${deleteButtonPosition.y}px) scale(${1 / zoom})`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${labelPosition.y}px) scale(${1 / zoom})`,
               pointerEvents: 'all',
-              zIndex: 1000,
+              zIndex: 9999,
             }}
             onMouseEnter={() => {
               if (hideTimeoutRef.current) {
                 clearTimeout(hideTimeoutRef.current);
               }
+              setShowLabel(true);
               setShowDeleteButton(true);
             }}
             onMouseLeave={handleMouseLeave}
           >
-            <button
-              className="w-6 h-6 rounded-full bg-[#FF69A3] hover:bg-[#ff4d93] flex items-center justify-center shadow-md transition-colors duration-200"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteModal(true);
-              }}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-md border border-[#F670C7] transition-all duration-200">
+              {/* Label */}
+              {data?.label && (
+                <span
+                  className="text-sm"
+                  style={{
+                    color: '#C11574',
+                  }}
+                >
+                  {data.label.toString()}
+                </span>
+              )}
+              
+              {/* Divider */}
+              {data?.label && (
+                <div className="w-px h-4 bg-[#F670C7] opacity-30" />
+              )}
+              
+              {/* Delete Button */}
+              <button
+                className="w-5 h-5 rounded-full bg-[#FF69A3] hover:bg-[#ff4d93] flex items-center justify-center transition-colors duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteModal(true);
+                }}
               >
-                <path
-                  d="M1 1L11 11M1 11L11 1"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </EdgeLabelRenderer>
-      )}
-     
-      {showLabel && data?.label && !isHoveringControlPoint && data?.isVisible !== false && (
-        <EdgeLabelRenderer>
-          <div
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${
-                labelPosition.y - 25 / zoom
-              }px) scale(${1 / zoom})`,
-              pointerEvents: 'none',
-              zIndex: 9999,
-            }}
-          >
-            <div
-              className="px-3 py-1 bg-white rounded shadow-md text-sm border"
-              style={{
-                color: '#C11574',
-                borderColor: '#F670C7',
-                backgroundColor: '#FFFFFF',
-              }}
-            >
-              {data?.label?.toString()}
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 1L11 11M1 11L11 1"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </EdgeLabelRenderer>

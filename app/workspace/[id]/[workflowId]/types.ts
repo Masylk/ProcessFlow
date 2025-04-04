@@ -17,6 +17,9 @@ export interface NodeData {
   longestSiblingPath?: number;
   pathLength?: number;
   isLastInPath?: boolean;
+  delayType?: DelayType;
+  eventName?: string;
+  seconds?: number;
   pathId?: number | null;
   pathName?: string;
   pathHasChildren?: boolean;
@@ -56,6 +59,11 @@ export interface Path {
   parent_blocks: PathParentBlock[];  // Assuming a PathParentBlock interface exists
 }
 
+export enum DelayType {
+  FIXED_DURATION = 'FIXED_DURATION',
+  WAIT_FOR_EVENT = 'WAIT_FOR_EVENT'
+}
+
 // Interface for Block model
 export interface Block {
   id: number;
@@ -74,6 +82,8 @@ export interface Block {
   image_description?: string | null;
   average_time?: string | null;
   task_type?: TaskType | null;  // Assuming a TaskType enum exists
+  delay_event?: string | null;
+  delay_type?: DelayType | null;  // Assuming a DelayType enum exists
   workflow_id: number;
   path_id: number;
   click_position?: any;  // Assuming `Json` type

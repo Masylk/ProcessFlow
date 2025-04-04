@@ -1,6 +1,7 @@
 'use client';
 
 import { useColors } from '@/app/theme/hooks';
+import { useState, useRef, useEffect } from 'react';
 
 interface Integration {
   name: string;
@@ -31,6 +32,57 @@ export default function ProcessCard({
   lastUpdate,
 }: ProcessCardProps) {
   const colors = useColors();
+  const [showPopover, setShowPopover] = useState(false);
+  const popoverTimerRef = useRef<NodeJS.Timeout>();
+
+  const visibleIntegrations = integrations.slice(0, 5);
+  const hiddenIntegrations = integrations.slice(5);
+  const hasHiddenIntegrations = integrations.length > 5;
+
+  const handleMouseEnter = () => {
+    if (popoverTimerRef.current) {
+      clearTimeout(popoverTimerRef.current);
+    }
+    setShowPopover(true);
+  };
+
+  const handleMouseLeave = () => {
+    popoverTimerRef.current = setTimeout(() => {
+      setShowPopover(false);
+    }, 100); // 300ms delay before hiding
+  };
+
+  useEffect(() => {
+    return () => {
+      if (popoverTimerRef.current) {
+        clearTimeout(popoverTimerRef.current);
+      }
+    };
+  }, []);
+
+  const IntegrationBadge = ({ integration }: { integration: Integration }) => (
+    <div
+      style={{
+        backgroundColor: colors['bg-secondary'],
+        borderColor: colors['border-secondary'],
+      }}
+      className="inline-flex items-center px-2 py-1 rounded-md border gap-1.5"
+    >
+      {integration.icon && (
+        <img
+          src={integration.icon}
+          alt={integration.name}
+          className="w-3.5 h-3.5 object-contain"
+        />
+      )}
+      <span
+        style={{ color: colors['text-secondary'] }}
+        className="text-xs leading-none font-medium"
+      >
+        {integration.name}
+      </span>
+    </div>
+  );
 
   return (
     <div
@@ -71,31 +123,49 @@ export default function ProcessCard({
           </div>
 
           {/* Integration Badges */}
-          <div className="flex flex-wrap gap-2">
-            {integrations.map((integration, index) => (
-              <div
-                key={index}
-                style={{
-                  backgroundColor: colors['bg-secondary'],
-                  borderColor: colors['border-secondary'],
-                }}
-                className="inline-flex items-center px-2 py-1 rounded-md border gap-1.5"
-              >
-                {integration.icon && (
-                  <img
-                    src={integration.icon}
-                    alt={integration.name}
-                    className="w-3.5 h-3.5 object-contain"
-                  />
-                )}
-                <span
-                  style={{ color: colors['text-secondary'] }}
-                  className="text-xs leading-none font-medium"
-                >
-                  {integration.name}
-                </span>
-              </div>
+          <div className="flex flex-wrap gap-2 items-center">
+            {visibleIntegrations.map((integration, index) => (
+              <IntegrationBadge key={index} integration={integration} />
             ))}
+            
+            {hasHiddenIntegrations && (
+              <div
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <div
+                  style={{
+                    backgroundColor: colors['bg-secondary'],
+                    borderColor: colors['border-secondary'],
+                    color: colors['text-secondary'],
+                  }}
+                  className="inline-flex items-center px-2 py-1 rounded-md border gap-1.5 hover:bg-opacity-80 transition-all duration-200"
+                >
+                  <span className="text-xs leading-none font-medium">
+                    +{hiddenIntegrations.length}
+                  </span>
+                </div>
+
+                {/* Popover for additional integrations */}
+                <div
+                  style={{
+                    backgroundColor: colors['bg-primary'],
+                    borderColor: colors['border-secondary'],
+                    boxShadow: `0px 4px 6px -2px ${colors['shadow-md_01']}, 0px 12px 16px -4px ${colors['shadow-md_02']}`,
+                    opacity: showPopover ? 1 : 0,
+                    visibility: showPopover ? 'visible' : 'hidden',
+                  }}
+                  className="absolute left-0 top-full mt-2 z-50 rounded-lg border p-3 min-w-[200px] max-w-[300px] transition-all duration-200"
+                >
+                  <div className="flex flex-col gap-2">
+                    {hiddenIntegrations.map((integration, index) => (
+                      <IntegrationBadge key={index} integration={integration} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer: Author and Last Update */}

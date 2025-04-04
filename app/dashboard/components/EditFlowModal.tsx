@@ -118,7 +118,7 @@ export default function EditFlowModal({
                   <span style={{ color: colors['text-accent'] }}>*</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full">
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
                     initialIcon={flowIcon || undefined}
@@ -132,6 +132,7 @@ export default function EditFlowModal({
                     value={processName}
                     onChange={setProcessName}
                     placeholder="Onboarding Process"
+                    required
                   />
                 </div>
               </div>
@@ -174,6 +175,7 @@ export default function EditFlowModal({
                 loadingText="Saving changes..."
                 onClick={handleSave}
                 className="flex-1"
+                disabled={!processName.trim()}
               >
                 Save changes
               </ButtonNormal>

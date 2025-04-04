@@ -1,11 +1,18 @@
 'use client';
 
-import { Workflow } from '@/types/workflow';
+import { Workflow, WorkflowStatus } from '@/types/workflow';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import { Workspace } from '@/types/workspace';
 import DynamicIcon from '../../../utils/DynamicIcon';
 import { useColors } from '@/app/theme/hooks';
+
+interface StatusStyle {
+  bg: string;
+  border: string;
+  text: string;
+  label: string;
+}
 
 type MenuItem = { label: string; icon: string } | 'separator';
 
@@ -27,10 +34,7 @@ interface WorkflowCardProps {
   onEditWorkflow: (workflow: Workflow) => void;
   onDuplicateWorkflow: (workflow: Workflow) => void;
   onMoveWorkflow: (workflow: Workflow) => void;
-  tags?: string[];
-  assignee?: string;
-  status?: 'active' | 'draft' | 'inactive';
-  lastEdited?: string;
+  onStatusChange: (workflow: Workflow, newStatus: WorkflowStatus) => void;
 }
 
 export default function WorkflowCard({
@@ -41,139 +45,333 @@ export default function WorkflowCard({
   onEditWorkflow,
   onDuplicateWorkflow,
   onMoveWorkflow,
-  tags = ['customer', 'onboarding'],
-  assignee = '',
-  status = 'active',
-  lastEdited = '2 hours ago',
+  onStatusChange,
 }: WorkflowCardProps) {
   const colors = useColors();
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isStarFilled, setIsStarFilled] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const router = useRouter(); // Initialize the router
+  const statusMenuRef = useRef<HTMLDivElement | null>(null);
+  const statusButtonRef = useRef<HTMLDivElement | null>(null);
+  const actionsButtonRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [statusMenuPosition, setStatusMenuPosition] = useState<'top' | 'bottom'>('bottom');
+  const [actionsMenuPosition, setActionsMenuPosition] = useState<'top' | 'bottom'>('bottom');
+  const router = useRouter();
+
+  const formatLastEdited = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const STATUS_STYLES: Record<WorkflowStatus, StatusStyle> = {
+    'ACTIVE': {
+      bg: colors['utility-success-100'],
+      border: colors['utility-success-200'],
+      text: colors['utility-success-700'],
+      label: 'Active'
+    },
+    'DRAFT': {
+      bg: colors['utility-gray-50'],
+      border: colors['utility-gray-200'],
+      text: colors['utility-gray-700'],
+      label: 'Draft'
+    },
+    'IN_REVIEW': {
+      bg: colors['utility-purple-100'],
+      border: colors['utility-purple-200'],
+      text: colors['utility-purple-700'],
+      label: 'In review'
+    },
+    'NEEDS_UPDATE': {
+      bg: colors['utility-warning-100'],
+      border: colors['utility-warning-200'],
+      text: colors['utility-warning-700'],
+      label: 'Needs update'
+    },
+    'ARCHIVED': {
+      bg: colors['utility-error-50'],
+      border: colors['utility-error-200'],
+      text: colors['utility-error-700'],
+      label: 'Archived'
+    }
+  };
 
   const handleWorkflowClick = (workflowId: number) => {
-    // Redirect to the workflow edit page
     router.push(`/workspace/${workspace.id}/${workflowId}/reactflow`);
   };
-  // Close menu when clicking outside
+
+  const navigateToEditMode = (workflowId: number) => {
+    router.push(`/workspace/${workspace.id}/${workflowId}/read`);
+  };
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isStatusMenuOpen) {
+      setIsStatusMenuOpen(false);
+    }
+    if (actionsButtonRef.current) {
+      const buttonRect = actionsButtonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - buttonRect.bottom;
+      const menuHeight = 180; // Approximate height of menu
+      setActionsMenuPosition(spaceBelow < menuHeight ? 'top' : 'bottom');
+    }
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+    if (statusButtonRef.current) {
+      const buttonRect = statusButtonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - buttonRect.bottom;
+      const menuHeight = 180; // Approximate height of status menu
+      setStatusMenuPosition(spaceBelow < menuHeight ? 'top' : 'bottom');
+    }
+    setIsStatusMenuOpen(!isStatusMenuOpen);
+  };
+
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
+        setIsStatusMenuOpen(false);
       }
     }
 
-    if (isMenuOpen) {
+    if (isMenuOpen || isStatusMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-    }
+      // Also handle escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsMenuOpen(false);
+          setIsStatusMenuOpen(false);
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [isMenuOpen, isStatusMenuOpen]);
+
+  const currentStatus = STATUS_STYLES[workflow.status as WorkflowStatus];
 
   return (
     <div
+      ref={cardRef}
       onClick={() => handleWorkflowClick(workflow.id)}
-      style={
-        {
-          backgroundColor: colors['bg-primary'],
-          borderColor:
-            isHovered || isMenuOpen
-              ? colors['border-primary']
-              : colors['border-secondary'],
-          '--hover-bg': colors['bg-quaternary'],
-        } as React.CSSProperties
-      }
-      className="rounded-lg border p-4 hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)]"
+      style={{
+        backgroundColor: colors['bg-primary'],
+        borderColor: isHovered || isMenuOpen ? colors['border-primary'] : colors['border-secondary'],
+        '--hover-bg': colors['bg-quaternary'],
+      } as React.CSSProperties}
+      className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {(isHovered || isMenuOpen) && (
-        <div className="absolute top-1 right-1 transition-opacity duration-150 z-20">
+      {/* Menu Icons */}
+      <div className="absolute top-3 right-3 z-2">
+        <div className="flex items-center gap-2">
+          {/* Star Button */}
           <div
             style={{
-              backgroundColor: colors['bg-secondary'],
-              borderColor: colors['border-primary'],
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsStarFilled(!isStarFilled);
             }}
-            className="h-6 rounded-md shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-start items-start inline-flex overflow-hidden"
           >
-            {/* Star Button - Toggle Fill on Click */}
-            <div
-              style={
-                {
-                  borderColor: colors['border-primary'],
-                  backgroundColor: colors['bg-secondary'],
-                  '--hover-bg': colors['bg-quaternary'],
-                } as React.CSSProperties
-              }
-              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsStarFilled(!isStarFilled);
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${
-                  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH
-                }/assets/shared_components/${
-                  isStarFilled ? 'star-filled.svg' : 'star-01.svg'
-                }`}
-                alt="Star Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
-            <div
-              style={
-                {
-                  borderColor: colors['border-primary'],
-                  backgroundColor: colors['bg-secondary'],
-                  '--hover-bg': colors['bg-quaternary'],
-                } as React.CSSProperties
-              }
-              className="px-2 py-1 border-r justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
-                alt="Link Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
-            <div
-              style={
-                {
-                  backgroundColor: colors['bg-secondary'],
-                  '--hover-bg': colors['bg-quaternary'],
-                } as React.CSSProperties
-              }
-              className="px-2 py-1 justify-center items-center gap-2 flex transition duration-300 hover:bg-[var(--hover-bg)] cursor-pointer"
-              onClick={(e) => {
-                onSelectWorkflow(workflow);
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
-                alt="Dots Icon"
-                className="w-4 h-4 transition duration-300"
-              />
-            </div>
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${isStarFilled ? 'star-filled.svg' : 'star-01.svg'}`}
+              alt="Star Icon"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
+
+          {/* Link Button */}
+          <div
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+          >
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
+              alt="Link Icon"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
+
+          {/* Menu Button */}
+          <div
+            ref={actionsButtonRef}
+            data-menu-button
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+            onClick={handleMenuClick}
+          >
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
+              alt="Menu"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+            />
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex flex-col h-full">
+        {/* Top Section */}
+        <div className="p-4 flex-1">
+          {/* Icon */}
+          <div className="mb-3">
+            <div className="flex items-center justify-center w-8 h-8">
+              {workflow.icon ? (
+                <DynamicIcon 
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`} 
+                  size={32} 
+                  color="inherit" 
+                />
+              ) : (
+                <img
+                  src={workspace.icon_url || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                  alt={`${workspace.name} Icon`}
+                  className="w-8 h-8"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Title and Description */}
+          <div className="space-y-1">
+            <h3 
+              style={{ color: colors['text-primary'] }} 
+              className="font-medium text-md line-clamp-2 break-words overflow-hidden"
+              title={workflow.name}
+            >
+              {workflow.name}
+            </h3>
+            
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="mt-auto">
+          <div style={{ borderColor: colors['border-secondary'] }} className="border-t w-full" />
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div
+              className="relative"
+              ref={statusButtonRef}
+              onClick={handleStatusClick}
+            >
+              <div
+                style={{
+                  backgroundColor: currentStatus.bg,
+                  borderColor: currentStatus.border,
+                  color: currentStatus.text,
+                }}
+                className="px-2 py-0.5 text-xs rounded-full border cursor-pointer transition-colors duration-150"
+              >
+                {currentStatus.label}
+              </div>
+
+              {/* Status Dropdown Menu */}
+              {isStatusMenuOpen && (
+                <div
+                  ref={statusMenuRef}
+                  style={{
+                    backgroundColor: colors['bg-secondary'],
+                    borderColor: colors['border-primary'],
+                    ...(statusMenuPosition === 'top' 
+                      ? { bottom: 'calc(100% + 4px)' }
+                      : { top: 'calc(100% + 4px)' }
+                    ),
+                  }}
+                  className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
+                >
+                  <div className="flex flex-col">
+                    {Object.entries(STATUS_STYLES).map(([key, style]) => (
+                      <div
+                        key={key}
+                        className="self-stretch px-1.5 py-px flex items-center gap-3"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onStatusChange(workflow, key as WorkflowStatus);
+                          setIsStatusMenuOpen(false);
+                        }}
+                      >
+                        <div
+                          style={{
+                            '--hover-bg': colors['bg-quaternary']
+                          } as React.CSSProperties}
+                          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                        >
+                          <div 
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-2"
+                          >
+                            <div 
+                              style={{ 
+                                backgroundColor: style.bg,
+                                borderColor: style.border
+                              }} 
+                              className="w-2 h-2 rounded-full border"
+                            ></div>
+                            {style.label}
+                          </div>
+                          {key === workflow.status && (
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
+                              alt="Selected"
+                              className="w-4 h-4 opacity-70 ml-auto"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <span style={{ color: colors['text-tertiary'] }} className="text-xs truncate ml-4">
+              Last update: {formatLastEdited(workflow.updated_at)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Menu Dropdown */}
       {isMenuOpen && (
         <div
           ref={menuRef}
           style={{
             backgroundColor: colors['bg-secondary'],
             borderColor: colors['border-primary'],
-            top: 'calc(10% + 8px)',
+            ...(actionsMenuPosition === 'top'
+              ? { bottom: 'calc(100% - 32px)' }
+              : { top: '32px' }),
             right: '4px',
           }}
-          className="absolute w-48 py-1 rounded-lg shadow-md z-30 mt-2 overflow-hidden border"
+          className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
+          onClick={e => e.stopPropagation()}
         >
           {menuItems.map((item, index) =>
             item === 'separator' ? (
@@ -185,10 +383,10 @@ export default function WorkflowCard({
             ) : (
               <div
                 key={index}
-                className="self-stretch px-1.5 py-px flex items-center gap-3"
+                className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsMenuOpen(false);
+                  onSelectWorkflow(workflow);
                   if (item.label === 'Delete Flow') {
                     onDeleteWorkflow(workflow);
                   } else if (item.label === 'Move') {
@@ -196,18 +394,17 @@ export default function WorkflowCard({
                   } else if (item.label === 'Edit Flow info') {
                     onEditWorkflow(workflow);
                   } else if (item.label === 'Open in read mode') {
-                    handleWorkflowClick(workflow.id);
+                    navigateToEditMode(workflow.id);
                   } else if (item.label === 'Duplicate') {
                     onDuplicateWorkflow(workflow);
                   }
+                  setIsMenuOpen(false);
                 }}
               >
                 <div
-                  style={
-                    {
-                      '--hover-bg': colors['bg-quaternary'],
-                    } as React.CSSProperties
-                  }
+                  style={{
+                    '--hover-bg': colors['bg-quaternary'],
+                  } as React.CSSProperties}
                   className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -231,48 +428,6 @@ export default function WorkflowCard({
           )}
         </div>
       )}
-      {/* Commented out for now - New icon implementation
-      <div className="flex mb-4">
-        <div className="bg-gray-100 rounded-[6px] flex items-center justify-center w-10 h-10">
-          <DynamicIcon url={workflow.icon || '/placeholder.svg'} size={20} color="currentColor" />
-        </div>
-      </div>
-      */}
-      {/* Title */}
-      <h3
-        style={{ color: colors['text-primary'] }}
-        className="font-medium text-lg mb-2"
-      >
-        {workflow.name}
-      </h3>
-      {/* Description */}
-      <p style={{ color: colors['text-secondary'] }} className="text-sm mb-3">
-        {workflow.description}
-      </p>
-
-      {/* Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {tags.filter(tag => tag.trim() !== '').map((tag) => (
-          <span
-            key={tag}
-            style={{
-              backgroundColor: colors['bg-secondary'],
-              color: colors['text-secondary'],
-            }}
-            className="px-3 py-1 text-xs rounded-full"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-      {/* Steps and Assignee */}
-      <div
-        style={{ color: colors['text-tertiary'] }}
-        className="flex items-center text-sm"
-      >
-        <span>6 Steps</span>
-        <span className="truncate">{assignee}</span>
-      </div>
     </div>
   );
 }
