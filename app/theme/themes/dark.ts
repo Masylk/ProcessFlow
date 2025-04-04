@@ -298,6 +298,16 @@ export const darkTheme: Theme = {
       'utility-success-600': getThemeColor('Success/400'),
       'utility-success-700': getThemeColor('Success/300'),
 
+      // Purple
+      'utility-purple-50': getThemeColor('Purple/950'),
+      'utility-purple-100': getThemeColor('Purple/900'),
+      'utility-purple-200': getThemeColor('Purple/800'),
+      'utility-purple-300': getThemeColor('Purple/700'),
+      'utility-purple-400': getThemeColor('Purple/600'),
+      'utility-purple-500': getThemeColor('Purple/500'),
+      'utility-purple-600': getThemeColor('Purple/400'),
+      'utility-purple-700': getThemeColor('Purple/300'),
+
       // Alpha colors
       'alpha-white-10': 'rgba(12, 17, 29, 0.10)',
       'alpha-white-20': 'rgba(12, 17, 29, 0.20)',

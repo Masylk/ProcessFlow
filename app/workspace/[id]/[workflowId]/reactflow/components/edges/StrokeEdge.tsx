@@ -581,9 +581,7 @@ function StrokeEdge({
           <div
             style={{
               position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${
-                labelPosition.y - 25 / zoom
-              }px) scale(${1 / zoom})`,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px,${labelPosition.y}px) scale(${1 / zoom})`,
               pointerEvents: 'all',
               zIndex: 9999,
             }}

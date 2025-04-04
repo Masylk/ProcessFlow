@@ -19,4 +19,6 @@ export interface Workflow {
   team_tags: string[];
   author: User;
   status: WorkflowStatus;
+  updated_at: string;
+  created_at: string;
 }

@@ -24,7 +24,7 @@ import Canvas from './components/Canvas';
 import UploadImageModal from './components/UploadImageModal';
 import ConfirmDeleteModal from './components/ConfirmDeleteModal';
 import CreateFlowModal from './components/CreateFlowModal';
-import { Workflow } from '@/types/workflow';
+import { Workflow, WorkflowStatus } from '@/types/workflow';
 import { createWorkflow } from '../utils/createWorkflow';
 import ConfirmDeleteFolderModal from './components/ConfirmDeleteFolderModal';
 import { deleteWorkflow } from '../utils/deleteWorkflow';
@@ -1165,6 +1165,31 @@ export default function Page() {
     }
   }, [searchParams, activeWorkspace]); // Change dependency to activeWorkspace
 
+  const handleStatusChange = async (workflow: Workflow, newStatus: WorkflowStatus) => {
+    try {
+      await updateWorkflow(workflow.id, {
+        ...workflow,
+        status: newStatus
+      });
+      
+      // Update the workflow in the active workspace
+      if (activeWorkspace) {
+        const updatedWorkflows = activeWorkspace.workflows.map(w => 
+          w.id === workflow.id ? { ...w, status: newStatus } : w
+        );
+        setActiveWorkspace({
+          ...activeWorkspace,
+          workflows: updatedWorkflows
+        });
+      }
+    } catch (error) {
+      console.error('Error updating workflow status:', error);
+      toast.error('Failed to update workflow status', {
+        description: 'Please try again or contact support if the issue persists.'
+      });
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar with header and list of workspaces */}
@@ -1279,6 +1304,7 @@ export default function Page() {
                 onMoveWorkflow={openMoveFlow}
                 currentView={currentView}
                 onViewChange={setCurrentView}
+                onStatusChange={handleStatusChange}
               />
             )
           )}
