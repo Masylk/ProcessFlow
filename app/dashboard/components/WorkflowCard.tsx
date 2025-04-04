@@ -183,7 +183,10 @@ export default function WorkflowCard({
         <div className="flex items-center gap-2">
           {/* Star Button */}
           <div
-            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               setIsStarFilled(!isStarFilled);
@@ -198,7 +201,10 @@ export default function WorkflowCard({
 
           {/* Link Button */}
           <div
-            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
@@ -211,7 +217,10 @@ export default function WorkflowCard({
           <div
             ref={actionsButtonRef}
             data-menu-button
-            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+            style={{
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
+            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
             onClick={handleMenuClick}
           >
             <img
@@ -291,7 +300,7 @@ export default function WorkflowCard({
                       : { top: 'calc(100% + 4px)' }
                     ),
                   }}
-                  className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[160px] animate-in fade-in zoom-in-95 duration-200"
+                  className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
                 >
                   <div className="flex flex-col">
                     {Object.entries(STATUS_STYLES).map(([key, style]) => (
@@ -308,19 +317,26 @@ export default function WorkflowCard({
                           style={{
                             '--hover-bg': colors['bg-quaternary']
                           } as React.CSSProperties}
-                          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                         >
                           <div 
-                            style={{ color: style.text }}
-                            className="text-sm font-normal font-['Inter'] leading-tight"
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-2"
                           >
+                            <div 
+                              style={{ 
+                                backgroundColor: style.bg,
+                                borderColor: style.border
+                              }} 
+                              className="w-2 h-2 rounded-full border"
+                            ></div>
                             {style.label}
                           </div>
                           {key === workflow.status && (
                             <img
                               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
                               alt="Selected"
-                              className="w-4 h-4 opacity-70"
+                              className="w-4 h-4 opacity-70 ml-auto"
                             />
                           )}
                         </div>
