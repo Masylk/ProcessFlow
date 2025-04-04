@@ -2,7 +2,7 @@ import {
     Node,
     Edge,
   } from '@xyflow/react';
-import { Path } from '../../types';
+import { DelayType, Path } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { usePathsStore } from '../store/pathsStore';
 
@@ -151,7 +151,11 @@ export function processPath(
               ? 'path'
               : block.type === BlockEndType.MERGE
                 ? 'merge'
-                : 'custom',
+                : block.type === 'DELAY'
+                  ? block.delay_type === DelayType.FIXED_DURATION
+                    ? 'fixedDelay'
+                    : 'eventDelay'
+                  : 'custom',
       position: { 
         x: 0,
         y: 0
@@ -168,6 +172,9 @@ export function processPath(
         handleAddBlockOnEdge,
         isLastInPath: true,
         pathName: block.type === 'BEGIN' ? path.name : undefined,
+        eventName: block.delay_event,
+        seconds: block.delay_seconds,
+        delayType: block.delay_type,
         onPathsUpdate: handlePathsUpdate,
         onStrokeLinesUpdate: handleStrokeLinesUpdate,
         updateStrokeLineVisibility,

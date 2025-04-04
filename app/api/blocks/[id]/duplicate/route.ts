@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
         click_position: originalBlock.click_position || Prisma.JsonNull,
         step_details: originalBlock.type === 'STEP' ? originalBlock.step_details : null,
         delay_seconds: originalBlock.type === 'DELAY' ? originalBlock.delay_seconds : null,
+        delay_event: originalBlock.type === 'DELAY' ? originalBlock.delay_event : null,
+        delay_type: originalBlock.type === 'DELAY' ? originalBlock.delay_type : null,
         title: `${originalBlock.title || ''} (copy)`,
         created_at: new Date(),
         updated_at: new Date(),
