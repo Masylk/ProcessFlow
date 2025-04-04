@@ -5,16 +5,22 @@ import Modal from '@/app/components/Modal';
 interface FixedDelayModalProps {
   onClose: () => void;
   onSubmit: (delaySeconds: number) => void;
+  initialSeconds?: number;
 }
 
 const FixedDelayModal: React.FC<FixedDelayModalProps> = ({
   onClose,
   onSubmit,
+  initialSeconds = 0,
 }) => {
   const colors = useColors();
-  const [days, setDays] = useState(0);
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
+  const [days, setDays] = useState(Math.floor(initialSeconds / 86400));
+  const [hours, setHours] = useState(
+    Math.floor((initialSeconds % 86400) / 3600)
+  );
+  const [minutes, setMinutes] = useState(
+    Math.floor((initialSeconds % 3600) / 60)
+  );
 
   const increment = (
     setter: React.Dispatch<React.SetStateAction<number>>,

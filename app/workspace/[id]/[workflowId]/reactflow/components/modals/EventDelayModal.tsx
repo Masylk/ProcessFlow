@@ -5,18 +5,24 @@ import Modal from '@/app/components/Modal';
 interface EventDelayModalProps {
   onClose: () => void;
   onSubmit: (eventName: string, expirationTime?: number) => void;
+  initialEventName?: string;
+  initialSeconds?: number;
 }
 
 const EventDelayModal: React.FC<EventDelayModalProps> = ({
   onClose,
   onSubmit,
+  initialEventName = '',
+  initialSeconds = 0,
 }) => {
   const colors = useColors();
-  const [eventName, setEventName] = useState('');
-  const [hasExpiration, setHasExpiration] = useState(false);
-  const [days, setDays] = useState(0);
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
+  const [eventName, setEventName] = useState(initialEventName);
+  const [hasExpiration, setHasExpiration] = useState(initialSeconds > 0);
+  
+  // Convert initial seconds to days, hours, minutes
+  const [days, setDays] = useState(Math.floor(initialSeconds / 86400));
+  const [hours, setHours] = useState(Math.floor((initialSeconds % 86400) / 3600));
+  const [minutes, setMinutes] = useState(Math.floor((initialSeconds % 3600) / 60));
 
   const increment = (
     setter: React.Dispatch<React.SetStateAction<number>>,

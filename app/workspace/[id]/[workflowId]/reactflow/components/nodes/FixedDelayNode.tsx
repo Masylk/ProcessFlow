@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { NodeProps, Position, Handle } from '@xyflow/react';
-import { NodeData } from '../../../types';
+import { DelayType, NodeData } from '../../../types';
 import { useColors } from '@/app/theme/hooks';
 import { createPortal } from 'react-dom';
-
+import DelayTypeModal from '../modals/DelayTypeModal';
+import FixedDelayModal from '../modals/FixedDelayModal';
+import EventDelayModal from '../modals/EventDelayModal';
+import { usePathsStore } from '../../store/pathsStore';
 const FixedDelayNode = ({
   id,
   data,
@@ -14,6 +17,10 @@ const FixedDelayNode = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
   const [showDelayModal, setShowDelayModal] = useState(false);
+  const [showFixedDelayModal, setShowFixedDelayModal] = useState(false);
+  const [showEventDelayModal, setShowEventDelayModal] = useState(false);
+  const allPaths = usePathsStore((state) => state.paths);
+  const setAllPaths = usePathsStore((state) => state.setPaths);
 
   const handleDropdownToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -36,6 +43,7 @@ const FixedDelayNode = ({
   const handleDuplicate = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+      setShowDropdown(false);
       const response = await fetch(
         `/api/blocks/${id.replace('block-', '')}/duplicate`,
         {
@@ -45,7 +53,6 @@ const FixedDelayNode = ({
       if (!response.ok) throw new Error('Failed to duplicate block');
       const result = await response.json();
       data.onPathsUpdate?.(result.paths);
-      setShowDropdown(false);
     } catch (error) {
       console.error('Error duplicating block:', error);
     }
@@ -59,7 +66,6 @@ const FixedDelayNode = ({
 
   const renderDropdown = () => {
     if (!showDropdown) return null;
-
     return createPortal(
       <div
         style={{
@@ -252,20 +258,49 @@ const FixedDelayNode = ({
         }}
       />
       {renderDropdown()}
-      {/* {showDelayModal && (
+      {showDelayModal && (
         <DelayTypeModal
           onClose={() => setShowDelayModal(false)}
-          onConfirm={(delayType, data) => {
-            // Handle delay update here
-            setShowDelayModal(false);
+          onSelect={async (delayType, delayData) => {
+            try {
+              setShowDelayModal(false);
+              const blockId = id.replace('block-', '');
+              const response = await fetch(`/api/blocks/${blockId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'DELAY',
+                  delay_type: delayType,
+                  delay_seconds: delayData.seconds,
+                  delay_event: delayData.eventName,
+                }),
+              });
+
+              if (!response.ok) throw new Error('Failed to update delay');
+
+              const updatedBlock = await response.json();
+              const updatedPaths = allPaths.map((path) => ({
+                ...path,
+                blocks: path.blocks.map((block) =>
+                  block.id === parseInt(blockId)
+                    ? { ...block, ...updatedBlock }
+                    : block
+                ),
+              }));
+
+              setAllPaths(updatedPaths);
+              data.onPathsUpdate?.(updatedPaths);
+            } catch (error) {
+              console.error('Error updating delay:', error);
+            }
           }}
           initialData={{
-            delayType: block.delay_type,
-            seconds: block.delay_seconds,
-            eventName: block.delay_event,
+            delayType: data.delayType || undefined,
+            eventName: data.eventName || undefined,
+            seconds: data.seconds || undefined,
           }}
         />
-      )} */}
+      )}
     </div>
   );
 };

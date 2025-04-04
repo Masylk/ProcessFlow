@@ -126,7 +126,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
       eventName: data.eventName,
     });
     onClose();
-    setShowDelayTypeModal(true);
+    // setShowDelayTypeModal(true);
   };
 
   return (

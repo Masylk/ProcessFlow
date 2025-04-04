@@ -11,19 +11,23 @@ interface DelayTypeModalProps {
     delayType: DelayType,
     data: { seconds?: number; eventName?: string }
   ) => void;
+  initialData?: {
+    delayType?: DelayType;
+    eventName?: string;
+    seconds?: number;
+  };
 }
 
 const DelayTypeModal: React.FC<DelayTypeModalProps> = ({
   onClose,
   onSelect,
+  initialData,
 }) => {
   const colors = useColors();
-  const [selectedType, setSelectedType] = useState<DelayType | null>(null);
+  const [selectedType, setSelectedType] = useState<DelayType | null>(
+    initialData?.delayType || null
+  );
   const [showNextModal, setShowNextModal] = useState(false);
-
-  useEffect(() => {
-    console.log('Selected delay type:', selectedType);
-  }, [selectedType]);
 
   const handleFixedDelaySubmit = (seconds: number) => {
     onSelect(DelayType.FIXED_DURATION, { seconds });
@@ -42,6 +46,7 @@ const DelayTypeModal: React.FC<DelayTypeModalProps> = ({
         <FixedDelayModal
           onClose={() => setShowNextModal(false)}
           onSubmit={handleFixedDelaySubmit}
+          initialSeconds={initialData?.seconds}
         />
       );
     }
@@ -50,6 +55,8 @@ const DelayTypeModal: React.FC<DelayTypeModalProps> = ({
         <EventDelayModal
           onClose={() => setShowNextModal(false)}
           onSubmit={handleEventDelaySubmit}
+          initialEventName={initialData?.eventName}
+          initialSeconds={initialData?.seconds}
         />
       );
     }
