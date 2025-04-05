@@ -119,14 +119,42 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (type === 'DELAY' && (delay_seconds === undefined || delay_seconds < 0)) {
-    return NextResponse.json(
-      {
-        error:
-          'A valid delay value (non-negative number) is required for DELAY blocks.',
-      },
-      { status: 400 }
-    );
+  if (type === 'DELAY') {
+    if (!delay_type) {
+      return NextResponse.json(
+        { error: 'Delay type is required for DELAY blocks.' },
+        { status: 400 }
+      );
+    }
+    if (
+      delay_type === DelayType.FIXED_DURATION &&
+      (delay_seconds === undefined || delay_seconds < 0)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'A valid delay value (non-negative number) is required for fixed duration delays.',
+        },
+        { status: 400 }
+      );
+    }
+    if (delay_type === DelayType.WAIT_FOR_EVENT && !delay_event) {
+      return NextResponse.json(
+        { error: 'Event name is required for event-based delays.' },
+        { status: 400 }
+      );
+    }
+    // For event-based delays, seconds is optional but must be non-negative if provided
+    if (
+      delay_type === DelayType.WAIT_FOR_EVENT &&
+      delay_seconds !== undefined &&
+      delay_seconds < 0
+    ) {
+      return NextResponse.json(
+        { error: 'If provided, expiration time must be non-negative.' },
+        { status: 400 }
+      );
+    }
   }
 
   try {

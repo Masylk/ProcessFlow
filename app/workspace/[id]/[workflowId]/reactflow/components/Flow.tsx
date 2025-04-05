@@ -346,11 +346,11 @@ export function Flow({
           throw new Error('Delay type is required for DELAY blocks');
         }
         if (
-          typeof delayOptions.seconds !== 'number' ||
-          delayOptions.seconds < 0
+          delayOptions.delayType === DelayType.FIXED_DURATION &&
+          (typeof delayOptions.seconds !== 'number' || delayOptions.seconds < 0)
         ) {
           throw new Error(
-            'A valid delay value (non-negative number) is required for DELAY blocks'
+            'A valid delay value (non-negative number) is required for fixed duration delays'
           );
         }
         if (
@@ -358,6 +358,14 @@ export function Flow({
           !delayOptions.eventName
         ) {
           throw new Error('Event name is required for event-based delays');
+        }
+        // For event-based delays, seconds is optional but must be non-negative if provided
+        if (
+          delayOptions.delayType === DelayType.WAIT_FOR_EVENT &&
+          delayOptions.seconds !== undefined &&
+          delayOptions.seconds < 0
+        ) {
+          throw new Error('If provided, expiration time must be non-negative');
         }
       }
 
