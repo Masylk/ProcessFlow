@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NodeProps, Position, Handle } from '@xyflow/react';
 import { DelayType, NodeData } from '../../../types';
 import { useColors } from '@/app/theme/hooks';
@@ -21,6 +21,20 @@ const FixedDelayNode = ({
   const [showEventDelayModal, setShowEventDelayModal] = useState(false);
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
+
+  // Add useEffect for handling clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDropdown) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleDropdownToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -196,35 +210,45 @@ const FixedDelayNode = ({
         }}
       />
       <div
-        className="px-6 py-4 rounded-lg border h-[132px] flex flex-col gap-4"
+        className="p-4 rounded-xl border-2 flex flex-col gap-4"
         style={{
-          backgroundColor: colors['bg-secondary'],
-          borderColor: colors['border-primary'],
+          backgroundColor: colors['bg-primary'],
+          borderColor: colors['border-secondary'],
         }}
       >
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch.svg`}
-              alt="Fixed Delay"
-              className="w-5 h-5"
-            />
+            <div 
+              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+              style={{
+                border: `1px solid ${colors['border-secondary']}`,
+              }}
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`}
+                alt="Fixed Delay"
+                className="w-6 h-6"
+              />
+            </div>
             <span
-              className="text-base font-semibold"
+              className="text-sm font-medium"
               style={{ color: colors['text-primary'] }}
             >
               Fixed Delay
             </span>
           </div>
           <button
-            className="opacity-0 hover:opacity-100"
+            className="p-1 rounded-md hover:bg-[var(--hover-bg)] transition-all duration-300"
             onClick={handleDropdownToggle}
+            style={{ 
+              '--hover-bg': colors['bg-quaternary']
+            } as React.CSSProperties}
           >
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/more-01.svg`}
-              alt="More"
-              className="w-5 h-5"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+              alt="Menu"
+              className="w-4 h-4"
             />
           </button>
         </div>
@@ -232,7 +256,7 @@ const FixedDelayNode = ({
         {/* Tooltip */}
         <div
           className="flex items-center gap-2 p-3 mt-auto rounded-lg bg-opacity-5"
-          style={{ backgroundColor: colors['fg-brand-primary'] }}
+          style={{ backgroundColor: colors['bg-secondary'] }}
         >
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
