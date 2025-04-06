@@ -58,7 +58,7 @@ export default function VerticalStep({
   const handleToggle = () => {
     // Only toggle if there's an image to show
     if (!block.image) return;
-    
+
     const newState = !isExpanded;
     setIsExpanded(newState);
     onToggle?.(newState);
@@ -140,12 +140,15 @@ export default function VerticalStep({
   // Helper function to get display title
   const getDisplayTitle = (block: Block) => {
     if (block.title) return block.title;
-    
+
     // Convert block type from ALL_CAPS to Title Case
-    const typeName = block.type.toLowerCase().replace(/_/g, ' ').split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    const typeName = block.type
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-      
+
     return `${typeName}`;
   };
 
@@ -255,10 +258,12 @@ export default function VerticalStep({
               </motion.div>
             )}
           </div>
-          
+
           {/* Description section - always displayed below icon and title */}
-          {(block.step_details || block.description) ? (
-            <div className="text-left w-full"> {/* Added padding to align with title */}
+          {block.step_details || block.description ? (
+            <div className="text-left w-full">
+              {' '}
+              {/* Added padding to align with title */}
               <p
                 ref={descriptionRef}
                 className={cn(
@@ -267,11 +272,15 @@ export default function VerticalStep({
                 )}
                 style={{ color: colors['text-quaternary'] }}
               >
-                {block.step_details || block.description || `Details for ${getDisplayTitle(block)}`}
+                {block.step_details ||
+                  block.description ||
+                  `Details for ${getDisplayTitle(block)}`}
               </p>
             </div>
           ) : (
-            <div className="text-left w-full "> {/* Added padding to align with title */}
+            <div className="text-left w-full ">
+              {' '}
+              {/* Added padding to align with title */}
               <p
                 ref={descriptionRef}
                 className={cn(
@@ -419,14 +428,14 @@ export default function VerticalStep({
                           </AnimatePresence>
                         </div>
                         <div className="flex flex-col gap-1">
-                            <p
-                              className="font-normal text-sm"
-                              style={{ color: colors['text-primary'] }}
-                            >
-                              {option.path.name}
-                            </p>
-                          </div>
-                        </motion.button>
+                          <p
+                            className="font-normal text-sm"
+                            style={{ color: colors['text-primary'] }}
+                          >
+                            {option.path.name}
+                          </p>
+                        </div>
+                      </motion.button>
                     ))}
                   </div>
                 </motion.div>
