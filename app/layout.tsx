@@ -55,6 +55,15 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="64x64" href="/64x64.png" />
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
+        <script
+          src="https://media-editor.cloudinary.com/all.js"
+          type="text/javascript"
+        />
+        <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"></script>
+        <script src="https://uicdn.toast.com/tui.code-snippet/latest/tui-code-snippet.min.js"></script>
+        <script src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.js"></script>
+        <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
+        <link rel="stylesheet" href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.css" />
       </head>
       <body>
 

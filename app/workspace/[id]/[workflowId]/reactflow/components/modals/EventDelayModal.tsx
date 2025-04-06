@@ -19,7 +19,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
   const colors = useColors();
   const [eventName, setEventName] = useState(initialEventName);
   const [hasExpiration, setHasExpiration] = useState(initialSeconds > 0);
-  
+
   // Convert initial seconds to days, hours, minutes
   const [days, setDays] = useState(Math.floor(initialSeconds / 86400));
   const [hours, setHours] = useState(Math.floor((initialSeconds % 86400) / 3600));
@@ -77,7 +77,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
     if (eventName.trim()) {
       const expirationSeconds = hasExpiration
         ? days * 86400 + hours * 3600 + minutes * 60
-        : undefined;
+        : 0;
       onSubmit(eventName.trim(), expirationSeconds);
     }
   };

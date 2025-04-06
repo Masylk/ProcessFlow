@@ -25,6 +25,8 @@ import HorizontalStep from './components/steps/HorizontalStep';
 import { Block, Path, PathParentBlock } from '../types';
 import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
+import VerticalDelay from './components/steps/VerticalDelay';
+import HorizontalDelay from './components/steps/HorizontalDelay';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
@@ -156,10 +158,10 @@ export default function ExamplePage() {
   // Initialize all steps as expanded when paths are loaded
   useEffect(() => {
     if (pathsToDisplay.length > 0) {
-      const allBlockIds = pathsToDisplay.flatMap(path =>
+      const allBlockIds = pathsToDisplay.flatMap((path) =>
         path.blocks
-          .filter(block => block.type !== 'BEGIN' && block.type !== 'LAST')
-          .map(block => block.id)
+          .filter((block) => block.type !== 'BEGIN' && block.type !== 'LAST')
+          .map((block) => block.id)
       );
       setExpandedSteps(allBlockIds);
     }
@@ -903,12 +905,12 @@ export default function ExamplePage() {
   // Function to handle step click from sidebar
   const handleStepClick = (blockId: number) => {
     setCurrentStep(blockId);
-    
+
     // Add to expanded steps if not already expanded
     if (!expandedSteps.includes(blockId)) {
-      setExpandedSteps(prev => [...prev, blockId]);
+      setExpandedSteps((prev) => [...prev, blockId]);
     }
-    
+
     // Find the element with the matching block ID
     const blockElement = document.getElementById(`block-${blockId.toString()}`);
     if (blockElement) {
@@ -967,14 +969,18 @@ export default function ExamplePage() {
               pathsToDisplay={pathsToDisplay}
             />
           )}
-          <div className={cn(
-            "flex-1",
-            viewMode === 'vertical' ? "ml-64" : "w-full"
-          )}>
-            <div className={cn(
-              "fixed right-0 bg-primary z-30",
-              viewMode === 'vertical' ? "left-64" : "left-0"
-            )}>
+          <div
+            className={cn(
+              'flex-1',
+              viewMode === 'vertical' ? 'ml-64' : 'w-full'
+            )}
+          >
+            <div
+              className={cn(
+                'fixed right-0 bg-primary z-30',
+                viewMode === 'vertical' ? 'left-64' : 'left-0'
+              )}
+            >
               <Header
                 breadcrumbItems={breadcrumbItems}
                 user={user}
@@ -1024,11 +1030,13 @@ export default function ExamplePage() {
             )}
 
             {/* Main content */}
-            <ProcessCanvas className={cn(
-              viewMode === 'vertical' 
-                ? "overflow-y-scroll absolute inset-0 left-64 ml-0" 
-                : "w-full overflow-hidden"
-            )}>
+            <ProcessCanvas
+              className={cn(
+                viewMode === 'vertical'
+                  ? 'overflow-y-scroll absolute inset-0 left-64 ml-0'
+                  : 'w-full overflow-hidden'
+              )}
+            >
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
@@ -1052,27 +1060,39 @@ export default function ExamplePage() {
                                       if (el) stepRefs.current[index] = el;
                                     }}
                                   >
-                                    <VerticalStep
-                                      variant="default"
-                                      block={block}
-                                      isActive={currentStep === block.id}
-                                      defaultExpanded={expandedSteps.includes(
-                                        block.id
-                                      )}
-                                      onToggle={(isExpanded) =>
-                                        handleStepToggle(block.id, isExpanded)
-                                      }
-                                      selectedOptionIds={selectedOptions}
-                                      onOptionSelect={(optionId, blockId) =>
-                                        handleOptionSelect(optionId, blockId)
-                                      }
-                                      copyPaths={copyPaths}
-                                      isLastStep={false}
-                                    />
+                                    {block.type === 'DELAY' ? (
+                                      <VerticalDelay
+                                        block={block}
+                                        isActive={currentStep === block.id}
+                                        isLastStep={
+                                          index === filteredBlocks.length - 1
+                                        }
+                                      />
+                                    ) : (
+                                      <VerticalStep
+                                        variant="default"
+                                        block={block}
+                                        isActive={currentStep === block.id}
+                                        defaultExpanded={expandedSteps.includes(
+                                          block.id
+                                        )}
+                                        onToggle={(isExpanded) =>
+                                          handleStepToggle(block.id, isExpanded)
+                                        }
+                                        selectedOptionIds={selectedOptions}
+                                        onOptionSelect={(optionId, blockId) =>
+                                          handleOptionSelect(optionId, blockId)
+                                        }
+                                        copyPaths={copyPaths}
+                                        isLastStep={
+                                          index === filteredBlocks.length - 1
+                                        }
+                                      />
+                                    )}
                                   </div>
                                 );
                               })
-                              .filter(Boolean)}{' '}
+                              .filter(Boolean)}
                           </div>
                         );
                       })
@@ -1197,21 +1217,35 @@ export default function ExamplePage() {
                                   size="small"
                                   onClick={() => handleStepNavigation('next')}
                                   disabled={
-                                    currentStep === PathsToDisplayBlocks.length ||
+                                    currentStep ===
+                                      PathsToDisplayBlocks.length ||
                                     (currentStep >= 0 &&
-                                      currentStep < PathsToDisplayBlocks.length &&
-                                      PathsToDisplayBlocks[currentStep]?.child_paths?.length > 0 &&
-                                      !selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                      currentStep <
+                                        PathsToDisplayBlocks.length &&
+                                      PathsToDisplayBlocks[currentStep]
+                                        ?.child_paths?.length > 0 &&
+                                      !selectedOptions.some(
+                                        ([_, blockId]) =>
+                                          blockId ===
+                                          PathsToDisplayBlocks[currentStep].id
+                                      ))
                                   }
                                   trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                                 >
-                                  {currentStep === -1 
-                                    ? "Get Started" 
-                                    : currentStep === PathsToDisplayBlocks.length - 1 &&
-                                      (!PathsToDisplayBlocks[currentStep]?.child_paths?.length ||
-                                        selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
-                                      ? "Complete"
-                                      : "Next step"}
+                                  {currentStep === -1
+                                    ? 'Get Started'
+                                    : currentStep ===
+                                          PathsToDisplayBlocks.length - 1 &&
+                                        (!PathsToDisplayBlocks[currentStep]
+                                          ?.child_paths?.length ||
+                                          selectedOptions.some(
+                                            ([_, blockId]) =>
+                                              blockId ===
+                                              PathsToDisplayBlocks[currentStep]
+                                                .id
+                                          ))
+                                      ? 'Complete'
+                                      : 'Next step'}
                                 </ButtonNormal>
                               )}
                             </div>
@@ -1222,17 +1256,24 @@ export default function ExamplePage() {
                           <div className="h-[472px] flex">
                             <div
                               className={cn(
-                                "w-full flex flex-col",
-                                (!PathsToDisplayBlocks[currentStep]?.image && 
-                                 (!PathsToDisplayBlocks[currentStep]?.child_paths || 
-                                  PathsToDisplayBlocks[currentStep]?.child_paths.length === 0)) && 
-                                "justify-center"
+                                'w-full flex flex-col',
+                                !PathsToDisplayBlocks[currentStep]?.image &&
+                                  (!PathsToDisplayBlocks[currentStep]
+                                    ?.child_paths ||
+                                    PathsToDisplayBlocks[currentStep]
+                                      ?.child_paths.length === 0) &&
+                                  'justify-center'
                               )}
                             >
                               {currentStep === PathsToDisplayBlocks.length ? (
-                                <HorizontalLastStep 
+                                <HorizontalLastStep
                                   onCopyLink={handleCopyLink}
                                   onRestart={handleRestart}
+                                />
+                              ) : PathsToDisplayBlocks[currentStep].type ===
+                                'DELAY' ? (
+                                <HorizontalDelay
+                                  block={PathsToDisplayBlocks[currentStep]}
                                 />
                               ) : (
                                 <HorizontalStep
@@ -1334,21 +1375,35 @@ export default function ExamplePage() {
                                   size="small"
                                   onClick={() => handleStepNavigation('next')}
                                   disabled={
-                                    currentStep === PathsToDisplayBlocks.length ||
+                                    currentStep ===
+                                      PathsToDisplayBlocks.length ||
                                     (currentStep >= 0 &&
-                                      currentStep < PathsToDisplayBlocks.length &&
-                                      PathsToDisplayBlocks[currentStep]?.child_paths?.length > 0 &&
-                                      !selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
+                                      currentStep <
+                                        PathsToDisplayBlocks.length &&
+                                      PathsToDisplayBlocks[currentStep]
+                                        ?.child_paths?.length > 0 &&
+                                      !selectedOptions.some(
+                                        ([_, blockId]) =>
+                                          blockId ===
+                                          PathsToDisplayBlocks[currentStep].id
+                                      ))
                                   }
                                   trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                                 >
-                                  {currentStep === -1 
-                                    ? "Get Started" 
-                                    : currentStep === PathsToDisplayBlocks.length - 1 &&
-                                      (!PathsToDisplayBlocks[currentStep]?.child_paths?.length ||
-                                        selectedOptions.some(([_, blockId]) => blockId === PathsToDisplayBlocks[currentStep].id))
-                                      ? "Complete"
-                                      : "Next step"}
+                                  {currentStep === -1
+                                    ? 'Get Started'
+                                    : currentStep ===
+                                          PathsToDisplayBlocks.length - 1 &&
+                                        (!PathsToDisplayBlocks[currentStep]
+                                          ?.child_paths?.length ||
+                                          selectedOptions.some(
+                                            ([_, blockId]) =>
+                                              blockId ===
+                                              PathsToDisplayBlocks[currentStep]
+                                                .id
+                                          ))
+                                      ? 'Complete'
+                                      : 'Next step'}
                                 </ButtonNormal>
                               )}
                             </div>

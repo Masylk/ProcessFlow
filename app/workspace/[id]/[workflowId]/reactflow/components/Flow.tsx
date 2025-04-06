@@ -116,7 +116,8 @@ export function Flow({
   const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
     StrokeLineVisibility[]
   >([]);
-  const { allStrokeLinesVisible, setAllStrokeLinesVisible } = useStrokeLinesStore();
+  const { allStrokeLinesVisible, setAllStrokeLinesVisible } =
+    useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
@@ -427,7 +428,7 @@ export function Flow({
   const toggleAllStrokeLines = useCallback(() => {
     const newVisibility = !allStrokeLinesVisible;
     setAllStrokeLinesVisible(newVisibility);
-    
+
     // Update all stroke line visibilities
     const blockIds = new Set<number>();
     paths.forEach((path) => {
@@ -439,7 +440,12 @@ export function Flow({
     blockIds.forEach((blockId) => {
       updateStrokeLineVisibility(blockId, newVisibility);
     });
-  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility, setAllStrokeLinesVisible]);
+  }, [
+    paths,
+    allStrokeLinesVisible,
+    updateStrokeLineVisibility,
+    setAllStrokeLinesVisible,
+  ]);
 
   // Combine regular edges with preview edge
   const allEdges = useMemo(() => {
@@ -557,6 +563,11 @@ export function Flow({
       // Find the node with the new block ID
       const nodeId = `block-${newBlockId}`;
       const node = nodes.find((n) => n.id === nodeId);
+
+      const newblock: Block | undefined = paths
+        .flatMap((p) => p.blocks)
+        .find((b) => b.id === newBlockId);
+      if (!newblock || newblock.type !== 'STEP') return;
 
       if (node) {
         // Set this node as selected in edit mode

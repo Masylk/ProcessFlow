@@ -1,5 +1,7 @@
 import { Block } from '../../types';
 import React, { useEffect, useState } from 'react';
+import ButtonNormal from '@/app/components/ButtonNormal';
+import ImageEditor from './ImageEditor';
 
 interface BlockMediaVisualizerProps {
   block: Block;
@@ -13,6 +15,7 @@ export default function BlockMediaVisualizer({
   onUpdate,
 }: BlockMediaVisualizerProps) {
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -55,25 +58,48 @@ export default function BlockMediaVisualizer({
     }
   };
 
+  const handleSaveEdit = async () => {
+    // This will be implemented later with actual image editing functionality
+    setIsEditing(false);
+  };
+
   if (!signedImageUrl) return null;
 
   return (
-    <div className="relative w-full h-[267px]">
-      <img
-        className="w-full h-full object-cover rounded-xl"
-        src={signedImageUrl}
-        alt={altText}
-      />
-      <div
-        className="absolute top-2 right-2 h-9 p-2 bg-white rounded-lg shadow border border-[#d0d5dd] flex justify-center items-center cursor-pointer"
-        onClick={handleRemoveImage}
-      >
+    <>
+      <div className="relative w-full h-[267px]">
         <img
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
-          alt="Trash Icon"
-          className="w-5 h-5"
+          className="w-full h-full object-cover rounded-xl"
+          src={signedImageUrl}
+          alt={altText}
         />
+        <div className="absolute top-2 right-2 flex gap-2">
+          <ButtonNormal
+            onClick={() => setIsEditing(true)}
+            size="small"
+            variant="secondary"
+            iconOnly
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-icon.svg`}
+            aria-label="Edit Image"
+          />
+          <ButtonNormal
+            onClick={handleRemoveImage}
+            size="small"
+            variant="secondary"
+            iconOnly
+            leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
+            aria-label="Remove Image"
+          />
+        </div>
       </div>
-    </div>
+
+      {isEditing && signedImageUrl && (
+        <ImageEditor
+          imageUrl={signedImageUrl}
+          onClose={() => setIsEditing(false)}
+          onSave={handleSaveEdit}
+        />
+      )}
+    </>
   );
 }
