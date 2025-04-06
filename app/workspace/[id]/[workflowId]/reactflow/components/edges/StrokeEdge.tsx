@@ -263,7 +263,7 @@ function StrokeEdge({
               }
               point.x = midX;
               
-              // Update adjacent points
+              // Update adjacent points to maintain orthogonal path
               newPoints[0].x = source.x;
               newPoints[0].y = point.y;
               newPoints[2].x = target.x;
@@ -284,7 +284,7 @@ function StrokeEdge({
               }
               point.y = midY;
               
-              // Update adjacent points
+              // Update adjacent points to maintain orthogonal path
               newPoints[0].x = point.x;
               newPoints[0].y = source.y;
               newPoints[2].x = point.x;
@@ -364,7 +364,14 @@ function StrokeEdge({
         const target = getConnectionPoint(targetX, targetY, targetPosition, false);
 
         if (strokeLine.control_points && Array.isArray(strokeLine.control_points) && strokeLine.control_points.length > 0) {
-          setControlPoints(strokeLine.control_points);
+          // Enforce orthogonal rules on loaded control points
+          const enforcedPoints = enforceOrthogonalConstraints(strokeLine.control_points, source, target);
+          setControlPoints(enforcedPoints);
+          
+          // Save the enforced points if they differ from the loaded ones
+          if (JSON.stringify(enforcedPoints) !== JSON.stringify(strokeLine.control_points)) {
+            await updateStrokeLineControlPoints(parseInt(strokeLineId), enforcedPoints);
+          }
         } else {
           // Initialize with three points in the most logical direction
           const isHorizontal = Math.abs(target.x - source.x) > Math.abs(target.y - source.y);
@@ -507,6 +514,52 @@ function StrokeEdge({
     edgePath += ` L ${target.x} ${target.y}`;
   }
 
+  // Add this helper function before the handleControlPointDragEnd function
+  const enforceOrthogonalConstraints = useCallback((points: Point[], source: Point, target: Point): Point[] => {
+    // If we don't have enough points for orthogonal path, return as is
+    if (points.length < 3) return points;
+    
+    // Create a copy of the points to work with
+    const newPoints = [...points];
+    
+    // Determine if this is primarily a horizontal or vertical connection
+    const isHorizontalPrimary = Math.abs(target.x - source.x) > Math.abs(target.y - source.y);
+    
+    if (isHorizontalPrimary) {
+      // For horizontal primary, all points should share the same Y coordinate (middle point's Y)
+      const middlePointIndex = Math.floor(points.length / 2);
+      const middleY = points[middlePointIndex].y;
+      
+      // First segment: horizontal from source to first bend
+      newPoints[0] = { x: source.x, y: middleY };
+      
+      // Middle segments: maintain the same Y
+      for (let i = 1; i < points.length - 1; i++) {
+        newPoints[i] = { x: points[i].x, y: middleY };
+      }
+      
+      // Last segment: horizontal to target
+      newPoints[points.length - 1] = { x: target.x, y: middleY };
+    } else {
+      // For vertical primary, all points should share the same X coordinate (middle point's X)
+      const middlePointIndex = Math.floor(points.length / 2);
+      const middleX = points[middlePointIndex].x;
+      
+      // First segment: vertical from source to first bend
+      newPoints[0] = { x: middleX, y: source.y };
+      
+      // Middle segments: maintain the same X
+      for (let i = 1; i < points.length - 1; i++) {
+        newPoints[i] = { x: middleX, y: points[i].y };
+      }
+      
+      // Last segment: vertical to target
+      newPoints[points.length - 1] = { x: middleX, y: target.y };
+    }
+    
+    return newPoints;
+  }, []);
+
   return (
     <>
       <defs>
@@ -573,20 +626,23 @@ function StrokeEdge({
               pointerEvents: 'all',
               cursor: isDragging && activePointIndex === index ? 'grabbing' : 'grab',
               zIndex: 1000,
-              width: '24px',
-              height: '24px',
+              width: '32px',
+              height: '32px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              background: 'rgba(255, 255, 255, 0.01)',
+              borderRadius: '50%',
             }}
             onMouseDown={handleControlPointDragStart(index)}
             onMouseEnter={handleControlPointMouseEnter}
             onMouseLeave={handleControlPointMouseLeave}
+            className="control-point-hitbox"
           >
             <div
-              className={`w-3 h-3 rounded-full bg-[#FF69A3] border-2 border-white shadow-md hover:scale-125 transition-transform duration-200 ${
+              className={`w-4 h-4 rounded-full bg-[#FF69A3] border-2 border-white shadow-md transition-all duration-200 ${
                 isDragging && activePointIndex === index ? 'scale-125' : ''
-              } ${index === 1 ? 'bg-blue-500' : ''}`}
+              } ${index === 1 ? 'bg-blue-500' : ''} hover:scale-150 hover:shadow-lg`}
             />
           </div>
         </EdgeLabelRenderer>
@@ -675,6 +731,19 @@ function StrokeEdge({
             100% {
               stroke-dashoffset: 1000;
             }
+          }
+          
+          /* Enhanced control point styles */
+          .control-point-hitbox {
+            transition: all 0.2s ease;
+          }
+          
+          .control-point-hitbox:hover {
+            background: rgba(255, 255, 255, 0.1);
+          }
+          
+          .control-point-hitbox:active {
+            transform: scale(1.1); 
           }
         `}
       </style>

@@ -23,6 +23,13 @@ export default function HorizontalDelay({ block }: BaseStepProps) {
     }
   };
 
+  const getDelayIcon = () => {
+    if (block.delay_type === DelayType.WAIT_FOR_EVENT) {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`;
+    }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
@@ -34,7 +41,7 @@ export default function HorizontalDelay({ block }: BaseStepProps) {
           }}
         >
           <Image
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock.svg`}
+            src={getDelayIcon()}
             alt="Delay"
             width={24}
             height={24}

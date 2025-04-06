@@ -34,6 +34,13 @@ export default function VerticalDelay({
     }
   };
 
+  const getDelayIcon = () => {
+    if (block.delay_type === DelayType.WAIT_FOR_EVENT) {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`;
+    }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`;
+  };
+
   return (
     <div className={`relative ${className}`}>
       <motion.div
@@ -69,7 +76,7 @@ export default function VerticalDelay({
               }}
             >
               <Image
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock.svg`}
+                src={getDelayIcon()}
                 alt="Delay"
                 width={24}
                 height={24}
