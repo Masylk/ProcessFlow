@@ -630,11 +630,11 @@ export function Flow({
         onNodeClick={(event, node) => {
           event.preventDefault();
           event.stopPropagation();
+          if (node.data.type !== 'STEP') return;
           // Extract the block ID from the node ID (remove "block-" prefix)
           const blockId = node.id.replace('block-', '');
           // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
-
           // Don't set ReactFlow selection state as CustomNode handles this differently
 
           // Find the node and zoom to it
