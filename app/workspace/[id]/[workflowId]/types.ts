@@ -79,6 +79,7 @@ export interface Block {
   icon?: string | null;
   description?: string | null;
   image?: string | null;
+  original_image?: string | null;
   image_description?: string | null;
   average_time?: string | null;
   task_type?: TaskType | null;  // Assuming a TaskType enum exists

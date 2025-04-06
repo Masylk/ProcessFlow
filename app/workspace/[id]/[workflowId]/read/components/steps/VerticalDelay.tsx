@@ -75,12 +75,7 @@ export default function VerticalDelay({
                 borderColor: colors['border-secondary'],
               }}
             >
-              <Image
-                src={getDelayIcon()}
-                alt="Delay"
-                width={24}
-                height={24}
-              />
+              <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
             </motion.div>
             <div className="flex items-center gap-2 min-w-0">
               <span

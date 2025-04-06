@@ -40,12 +40,7 @@ export default function HorizontalDelay({ block }: BaseStepProps) {
             borderColor: colors['border-secondary'],
           }}
         >
-          <Image
-            src={getDelayIcon()}
-            alt="Delay"
-            width={24}
-            height={24}
-          />
+          <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
         </div>
         <div className="flex flex-col gap-1">
           <span

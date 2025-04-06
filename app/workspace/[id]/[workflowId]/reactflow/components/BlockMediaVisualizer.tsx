@@ -58,9 +58,13 @@ export default function BlockMediaVisualizer({
     }
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (editedImageUrl: string) => {
     // This will be implemented later with actual image editing functionality
     setIsEditing(false);
+    onUpdate({
+      image: editedImageUrl,
+      original_image: block.original_image ? block.original_image : block.image,
+    });
   };
 
   if (!signedImageUrl) return null;
