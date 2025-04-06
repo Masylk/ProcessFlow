@@ -751,7 +751,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         )}
 
       <div
-        className={`relative rounded-xl border-2
+        className={`relative rounded-xl
         ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
@@ -765,6 +765,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         onClick={handleNodeClick}
         style={{
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
+          borderWidth: '2px',
+          borderStyle: 'solid',
           borderColor: showSidebar ? colors['border-brand_alt'] : colors['border-secondary']
         }}
       >
@@ -916,9 +918,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
               className="flex w-fit px-3 py-1 rounded-full text-xs"
               style={{
                 backgroundColor: colors['bg-secondary'],
+                borderWidth: '1px',
+                borderStyle: 'solid',
                 borderColor: colors['border-secondary'],
-                color: colors['fg-tertiary'],
-                border: '1px solid',
+                color: colors['fg-tertiary']
               }}
             >
               {blockData.average_time} min

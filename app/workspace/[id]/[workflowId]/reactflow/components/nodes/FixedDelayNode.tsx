@@ -235,7 +235,7 @@ const FixedDelayNode = ({
               className="text-sm font-medium"
               style={{ color: colors['text-primary'] }}
             >
-              Fixed Delay
+              Fixed Duration
             </span>
           </div>
           <button

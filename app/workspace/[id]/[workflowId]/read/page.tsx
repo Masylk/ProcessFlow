@@ -1121,10 +1121,10 @@ export default function ExamplePage() {
                               height: '472px',
                               backgroundColor: colors['bg-primary'],
                             }}
-                            className="flex items-center"
+                            className="flex items-center justify-center"
                           >
                             {processCardData && (
-                              <div className="w-full">
+                              <div className="w-full flex justify-center">
                                 <ProcessCard {...processCardData} />
                               </div>
                             )}
