@@ -229,8 +229,7 @@ export default function VerticalStep({
             <div className="flex items-center gap-2 min-w-0">
               <span
                 className={cn(
-                  'text-left text-base font-semibold',
-                  isActive && 'font-medium'
+                  'text-left text-base font-semibold'
                 )}
                 style={{
                   color: colors['text-primary'],
