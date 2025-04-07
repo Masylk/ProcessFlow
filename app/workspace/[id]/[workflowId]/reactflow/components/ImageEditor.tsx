@@ -5,7 +5,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 interface ImageEditorProps {
   imageUrl: string;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (editedImageUrl: string) => void;
 }
 
 declare global {
@@ -33,6 +33,27 @@ export default function ImageEditor({
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      onSave(data.filePath);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
   useEffect(() => {
     if (containerRef.current && window.tui) {
       const options = {
@@ -46,17 +67,7 @@ export default function ImageEditor({
             'common.border': `1px solid ${colors['border-primary']}`,
             'common.color': colors['text-primary'],
           },
-          menu: [
-            'crop',
-            'flip',
-            'rotate',
-            'draw',
-            'shape',
-            'icon',
-            'text',
-            'mask',
-            'filter',
-          ],
+          menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
           initMenu: 'filter',
           menuBarPosition: 'bottom',
           uiSize: {
@@ -81,11 +92,26 @@ export default function ImageEditor({
     };
   }, [imageUrl, colors]);
 
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    return new File([u8arr], filename, { type: mime });
+  };
+
   const handleSave = async () => {
     if (editorRef.current) {
-      const imageData = editorRef.current.getImageData();
-      // You can pass the edited image data to the onSave callback
-      onSave();
+      const dataUrl = editorRef.current.toDataURL();
+      const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
+      await uploadFile(imageFile);
+      onClose();
     }
   };
 

@@ -220,6 +220,7 @@ Table block {
   icon String
   description String
   image String
+  original_image String
   image_description String
   average_time String
   task_type task_type
