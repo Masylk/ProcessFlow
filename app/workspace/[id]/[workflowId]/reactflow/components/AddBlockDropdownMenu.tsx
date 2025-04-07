@@ -119,18 +119,30 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     delayType: DelayType,
     data: { seconds?: number; eventName?: string }
   ) => {
-    // Hide the dropdown menu when showing delay type modal
+    // Send the delay data to the parent component
     onSelect('DELAY', dropdownDatas, {
       delayType,
       seconds: data.seconds,
       eventName: data.eventName,
     });
     onClose();
-    // setShowDelayTypeModal(true);
+  };
+
+  const handleDelayTypeClose = () => {
+    setShowDelayTypeModal(false);
+    onClose();
   };
 
   return (
     <>
+      {/* Always render the DelayTypeModal but control visibility with isVisible prop */}
+      <DelayTypeModal
+        onClose={handleDelayTypeClose}
+        onSelect={handleDelayTypeSelect}
+        isVisible={showDelayTypeModal}
+      />
+
+      {/* Render dropdown menu only if delay type modal is not shown */}
       {!showDelayTypeModal && (
         <>
           <div className="fixed inset-0" onClick={onClose} />
@@ -239,7 +251,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                       <div className="w-4 h-4 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/stop-circle.svg`}
-                          alt="End of the Flow"
+                          alt="End Block"
                           className="w-4 h-4"
                         />
                       </div>
@@ -247,7 +259,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                         style={{ color: colors['text-primary'] }}
                         className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                       >
-                        End of the Flow
+                        End Block
                       </div>
                     </div>
                   </div>
@@ -256,11 +268,8 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
 
               {copiedBlock && (
                 <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePasteBlock();
-                  }}
                   className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+                  onClick={handlePasteBlock}
                 >
                   <div
                     style={
@@ -273,7 +282,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
                         <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clipboard-paste.svg`}
                           alt="Paste"
                           className="w-4 h-4"
                         />
@@ -291,13 +300,6 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             </div>
           </div>
         </>
-      )}
-
-      {showDelayTypeModal && (
-        <DelayTypeModal
-          onClose={() => setShowDelayTypeModal(false)}
-          onSelect={handleDelayTypeSelect}
-        />
       )}
     </>
   );

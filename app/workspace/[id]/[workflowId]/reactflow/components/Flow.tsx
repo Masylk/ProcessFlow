@@ -116,7 +116,8 @@ export function Flow({
   const [strokeLineVisibilities, setStrokeLineVisibilities] = useState<
     StrokeLineVisibility[]
   >([]);
-  const { allStrokeLinesVisible, setAllStrokeLinesVisible } = useStrokeLinesStore();
+  const { allStrokeLinesVisible, setAllStrokeLinesVisible } =
+    useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
@@ -346,11 +347,11 @@ export function Flow({
           throw new Error('Delay type is required for DELAY blocks');
         }
         if (
-          typeof delayOptions.seconds !== 'number' ||
-          delayOptions.seconds < 0
+          delayOptions.delayType === DelayType.FIXED_DURATION &&
+          (typeof delayOptions.seconds !== 'number' || delayOptions.seconds < 0)
         ) {
           throw new Error(
-            'A valid delay value (non-negative number) is required for DELAY blocks'
+            'A valid delay value (non-negative number) is required for fixed duration delays'
           );
         }
         if (
@@ -358,6 +359,14 @@ export function Flow({
           !delayOptions.eventName
         ) {
           throw new Error('Event name is required for event-based delays');
+        }
+        // For event-based delays, seconds is optional but must be non-negative if provided
+        if (
+          delayOptions.delayType === DelayType.WAIT_FOR_EVENT &&
+          delayOptions.seconds !== undefined &&
+          delayOptions.seconds < 0
+        ) {
+          throw new Error('If provided, expiration time must be non-negative');
         }
       }
 
@@ -419,7 +428,7 @@ export function Flow({
   const toggleAllStrokeLines = useCallback(() => {
     const newVisibility = !allStrokeLinesVisible;
     setAllStrokeLinesVisible(newVisibility);
-    
+
     // Update all stroke line visibilities
     const blockIds = new Set<number>();
     paths.forEach((path) => {
@@ -431,7 +440,12 @@ export function Flow({
     blockIds.forEach((blockId) => {
       updateStrokeLineVisibility(blockId, newVisibility);
     });
-  }, [paths, allStrokeLinesVisible, updateStrokeLineVisibility, setAllStrokeLinesVisible]);
+  }, [
+    paths,
+    allStrokeLinesVisible,
+    updateStrokeLineVisibility,
+    setAllStrokeLinesVisible,
+  ]);
 
   // Combine regular edges with preview edge
   const allEdges = useMemo(() => {
@@ -550,6 +564,11 @@ export function Flow({
       const nodeId = `block-${newBlockId}`;
       const node = nodes.find((n) => n.id === nodeId);
 
+      const newblock: Block | undefined = paths
+        .flatMap((p) => p.blocks)
+        .find((b) => b.id === newBlockId);
+      if (!newblock || newblock.type !== 'STEP') return;
+
       if (node) {
         // Set this node as selected in edit mode
         setEditMode(true, newBlockId.toString());
@@ -611,11 +630,11 @@ export function Flow({
         onNodeClick={(event, node) => {
           event.preventDefault();
           event.stopPropagation();
+          if (node.data.type !== 'STEP') return;
           // Extract the block ID from the node ID (remove "block-" prefix)
           const blockId = node.id.replace('block-', '');
           // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
-
           // Don't set ReactFlow selection state as CustomNode handles this differently
 
           // Find the node and zoom to it

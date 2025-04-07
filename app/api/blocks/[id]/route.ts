@@ -90,6 +90,7 @@ export async function PATCH(req: NextRequest) {
       path_id,
       workflow_id,
       image,
+      original_image,
       image_description,
       click_position,
       average_time,
@@ -100,10 +101,12 @@ export async function PATCH(req: NextRequest) {
       step_details,
     } = await req.json();
 
-    // Fetch the existing block to get the current image URL
     const existingBlock = await prisma.block.findUnique({
       where: { id: block_id },
-      select: { image: true },
+      select: { 
+        image: true,
+        original_image: true 
+      },
     });
 
     if (!existingBlock) {
@@ -140,13 +143,15 @@ export async function PATCH(req: NextRequest) {
       }
     };
 
-    // Delete the previous image if the image URL has changed
-    if (existingImageUrl && existingImageUrl !== image) {
+    // Delete the previous image only if it's not being used as original_image
+    if (existingImageUrl && 
+        existingImageUrl !== image && 
+        existingImageUrl !== original_image) {
       console.log('deleting image', existingImageUrl);
       await deleteFile(existingImageUrl);
     }
 
-    // Update the block in the database with the new schema
+    // Update block with all fields
     const updatedBlock = await prisma.block.update({
       where: { id: block_id },
       data: {
@@ -158,6 +163,7 @@ export async function PATCH(req: NextRequest) {
         path_id,
         workflow_id,
         image,
+        original_image,
         image_description,
         click_position,
         last_modified: new Date(),

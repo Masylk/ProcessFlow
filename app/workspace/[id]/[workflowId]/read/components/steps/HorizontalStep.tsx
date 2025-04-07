@@ -112,7 +112,7 @@ export default function HorizontalStep({
             {/* Step Title */}
             <div className="flex-1">
               <div
-                className="flex items-center text-xl font-semibold"
+                className="flex items-center text-base font-semibold"
                 style={{ color: colors['text-primary'] }}
               >
                 <span>{getDisplayTitle(block)}</span>
