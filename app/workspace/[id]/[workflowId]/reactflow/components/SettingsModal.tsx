@@ -13,13 +13,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { currentTheme, setTheme } = useTheme();
   const { allStrokeLinesVisible, toggleAllStrokeLines } = useStrokeLinesStore();
 
-  // Handle save preferences
-  const handleSavePreferences = () => {
-    // No need to do anything special for stroke lines as they are managed via the store
-    // and changes are applied immediately
-    onClose();
-  };
-
   // Handle reset to defaults
   const handleResetToDefaults = () => {
     setTheme('light' as ThemeMode);
@@ -48,6 +41,27 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-4 rounded-md transition duration-300"
+          style={{ 
+            '--hover-bg': colors['bg-quaternary'],
+          } as React.CSSProperties}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
+            alt="Close"
+            className="w-6 h-6"
+          />
+        </button>
+
         {/* Modal header */}
         <div className="px-6 py-6 border-b"
           style={{ borderColor: colors['border-primary'] }}>
@@ -202,27 +216,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 {allStrokeLinesVisible ? 'Visible' : 'Hidden'}
               </span>
             </div>
-          </div>
-        </div>
-
-        {/* Footer with actions */}
-        <div className="p-4 border-t flex justify-end items-center"
-          style={{ borderColor: colors['border-primary'] }}>
-          <div className="flex space-x-3">
-            <ButtonNormal
-              onClick={onClose}
-              variant="secondary"
-              size="small"
-            >
-              Cancel
-            </ButtonNormal>
-            <ButtonNormal
-              onClick={handleSavePreferences}
-              variant="primary"
-              size="small"
-            >
-              Save preferences
-            </ButtonNormal>
           </div>
         </div>
       </div>

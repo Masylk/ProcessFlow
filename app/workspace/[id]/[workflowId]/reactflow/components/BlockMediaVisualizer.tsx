@@ -58,6 +58,12 @@ export default function BlockMediaVisualizer({
     }
   };
 
+  const handleResetImage = () => {
+    if (block.original_image) {
+      onUpdate({ image: block.original_image, original_image: '' });
+    }
+  };
+
   const handleSaveEdit = async (editedImageUrl: string) => {
     // This will be implemented later with actual image editing functionality
     setIsEditing(false);
@@ -78,6 +84,16 @@ export default function BlockMediaVisualizer({
           alt={altText}
         />
         <div className="absolute top-2 right-2 flex gap-2">
+          {block.original_image && (
+            <ButtonNormal
+              onClick={handleResetImage}
+              size="small"
+              variant="secondary"
+              aria-label="Reset to Original Image"
+            >
+              Reset Edition
+            </ButtonNormal>
+          )}
           <ButtonNormal
             onClick={() => setIsEditing(true)}
             size="small"
