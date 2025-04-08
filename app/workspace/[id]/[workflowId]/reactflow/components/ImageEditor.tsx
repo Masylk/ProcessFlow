@@ -33,6 +33,19 @@ export default function ImageEditor({
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Add effect to prevent body scrolling when editor is open
+  useEffect(() => {
+    // Store the original overflow style
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // Prevent scrolling on the body
+    document.body.style.overflow = 'hidden';
+
+    // Restore original overflow style when component unmounts
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -117,11 +130,11 @@ export default function ImageEditor({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center"
+      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     >
       <div
-        className="relative w-[90vw] h-[90vh] rounded-xl p-6 flex flex-col"
+        className="relative w-[90vw] h-[90vh] rounded-xl p-6 flex flex-col overflow-hidden"
         style={{ backgroundColor: colors['bg-primary'] }}
       >
         {/* Header */}

@@ -21,25 +21,18 @@ export async function middleware(request: NextRequest) {
   
   // Check if current route is an auth route
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
-  
-  // IMPORTANT: Skip middleware for auth-related routes completely
+
+  // Skip middleware for static and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/onboarding') ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/reset-password-request') ||
-    pathname.startsWith('/set-new-password') ||
     pathname === '/'
   ) {
     return NextResponse.next();
   }
 
-  // Handle slug-based routes only if user is authenticated
+  // If user is authenticated
   if (user) {
     // If trying to access auth routes while authenticated
     if (isAuthRoute) {
@@ -75,7 +68,9 @@ export async function middleware(request: NextRequest) {
 
   // If not authenticated and trying to access protected routes
   if (!isAuthRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    const redirectUrl = new URL('/login', request.url);
+    redirectUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Allow access to auth routes for non-authenticated users
@@ -85,8 +80,7 @@ export async function middleware(request: NextRequest) {
 // Configure which paths the middleware will run on
 export const config = {
   matcher: [
-    // Skip specific paths we know we don't want to process
-    '/((?!_next/|api/|static/|favicon.ico|auth/|reset-password|set-new-password).*)',
+    '/((?!_next/|api/|static/|favicon.ico).*)',
     '/workspace/:path*'
   ],
 };
