@@ -72,7 +72,7 @@ export default function SignupPage() {
                 cookie += `; max-age=${options.maxAge}`;
               }
               if (options.domain) {
-                cookie += `; domain=${options.domain}`;
+                cookie += `; domain=.process-flow.io`;
               }
               document.cookie = cookie;
             },
