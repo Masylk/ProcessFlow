@@ -39,12 +39,15 @@ export default function HorizontalStep({
 
   const getDisplayTitle = (block: Block) => {
     if (block.title) return block.title;
-    
+
     // Convert block type from ALL_CAPS to Title Case
-    const typeName = block.type.toLowerCase().replace(/_/g, ' ').split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    const typeName = block.type
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-      
+
     return `${typeName}`;
   };
 
@@ -71,21 +74,27 @@ export default function HorizontalStep({
   }, [block.image]);
 
   // Check if the step has both image and options
-  const hasBothImageAndOptions = block.image && block.child_paths && block.child_paths.length > 0;
+  const hasBothImageAndOptions =
+    block.image && block.child_paths && block.child_paths.length > 0;
 
   return (
-    <div className={cn(
-      "grid h-[472px]",
-      (!block.image && (!block.child_paths || block.child_paths.length === 0)) 
-        ? "items-center justify-center" 
-        : "grid-rows-[auto_1fr]"
-    )}>
+    <div
+      className={cn(
+        'grid h-[472px]',
+        !block.image && (!block.child_paths || block.child_paths.length === 0)
+          ? 'items-center justify-center'
+          : 'grid-rows-[auto_1fr]'
+      )}
+    >
       {/* Content Container */}
-      <div className={cn(
-        "w-full",
-        (!block.image && (!block.child_paths || block.child_paths.length === 0)) && 
-        "max-w-[640px] mx-auto px-4"
-      )}>
+      <div
+        className={cn(
+          'w-full',
+          !block.image &&
+            (!block.child_paths || block.child_paths.length === 0) &&
+            'max-w-[640px] mx-auto px-4'
+        )}
+      >
         {/* Fixed Header Section */}
         <div className="flex-shrink-0">
           {/* Step Header */}
@@ -121,27 +130,34 @@ export default function HorizontalStep({
           </div>
 
           {/* Description */}
-          <div className={cn(
-            "relative",
-            (!block.image && (!block.child_paths || block.child_paths.length === 0)) 
-              ? "max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rounded-lg" 
-              : "mb-6"
-          )}
-          style={{
-            '--scrollbar-thumb': colors['border-secondary'],
-          } as React.CSSProperties}
+          <div
+            className={cn(
+              'relative',
+              !block.image &&
+                (!block.child_paths || block.child_paths.length === 0)
+                ? 'max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rounded-lg'
+                : 'mb-6'
+            )}
+            style={
+              {
+                '--scrollbar-thumb': colors['border-secondary'],
+              } as React.CSSProperties
+            }
           >
             <p
               className="text-base"
               style={{ color: colors['text-quaternary'] }}
             >
-              {block.step_details || block.description || `Details for ${getDisplayTitle(block)}`}
+              {block.step_details ||
+                block.description ||
+                `Details for ${getDisplayTitle(block)}`}
             </p>
           </div>
         </div>
 
         {/* Scrollable Content Section */}
-        {(block.image || (block.child_paths && block.child_paths.length > 0)) && (
+        {(block.image ||
+          (block.child_paths && block.child_paths.length > 0)) && (
           <div className="h-full overflow-hidden">
             {hasBothImageAndOptions ? (
               <div className="flex flex-col h-full">
@@ -165,96 +181,109 @@ export default function HorizontalStep({
                     </div>
                   )}
                 </div>
-                
-                {/* Scrollable options container */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-lg pr-2 pb-4"
-                  style={{
-                    '--scrollbar-thumb': colors['border-secondary'],
-                  } as React.CSSProperties}
-                >
+
+                {/* Options section with fixed header */}
+                <div className="flex flex-col h-[calc(380px-160px-32px)]">
+                  {' '}
+                  {/* 472px (container) - 160px (image) - 32px (margins) */}
                   <p
-                    className="text-sm font-medium mb-4"
+                    className="text-sm font-medium mb-4 flex-shrink-0"
                     style={{ color: colors['text-primary'] }}
                   >
                     Select an option
                   </p>
-                  <div className="space-y-2">
-                    {block.child_paths?.map((option, index) => (
-                      <div key={option.path.id} className="overflow-hidden">
-                        <motion.button
-                          onClick={() =>
-                            onOptionSelect?.(option.path.id, block.id, false)
-                          }
-                          className={cn(
-                            'w-full p-4 rounded-lg border transition-all duration-200',
-                            'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
-                            selectedOptionIds?.some(
-                              ([pathId, blockId]) =>
-                                pathId === option.path.id && blockId === block.id
-                            ) && 'border-brand'
-                          )}
-                          initial={{ opacity: 0.4 }}
-                          animate={{ 
-                            opacity: 1,
-                            transition: {
-                              duration: 0.2,
-                              ease: "easeOut",
-                              delay: index * 0.05
+                  {/* Scrollable options container */}
+                  <div
+                    className="overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-rounded-lg"
+                    style={
+                      {
+                        '--scrollbar-thumb': colors['border-secondary'],
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="space-y-2">
+                      {block.child_paths?.map((option, index) => (
+                        <div key={option.path.id} className="overflow-hidden">
+                          <motion.button
+                            onClick={() =>
+                              onOptionSelect?.(option.path.id, block.id, false)
                             }
-                          }}
-                          style={{
-                            backgroundColor: colors['bg-primary'],
-                            borderColor: selectedOptionIds?.some(
-                              ([pathId, blockId]) =>
-                                pathId === option.path.id && blockId === block.id
-                            )
-                              ? colors['border-brand']
-                              : colors['border-secondary'],
-                          }}
-                        >
-                          <div
-                            className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                            className={cn(
+                              'w-full p-4 rounded-lg border transition-all duration-200',
+                              'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
+                              selectedOptionIds?.some(
+                                ([pathId, blockId]) =>
+                                  pathId === option.path.id &&
+                                  blockId === block.id
+                              ) && 'border-brand'
+                            )}
+                            initial={{ opacity: 0.4 }}
+                            animate={{
+                              opacity: 1,
+                              transition: {
+                                duration: 0.2,
+                                ease: 'easeOut',
+                                delay: index * 0.05,
+                              },
+                            }}
                             style={{
+                              backgroundColor: colors['bg-primary'],
                               borderColor: selectedOptionIds?.some(
                                 ([pathId, blockId]) =>
-                                  pathId === option.path.id && blockId === block.id
+                                  pathId === option.path.id &&
+                                  blockId === block.id
                               )
                                 ? colors['border-brand']
                                 : colors['border-secondary'],
-                              backgroundColor: selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id && blockId === block.id
-                              )
-                                ? colors['bg-brand-solid']
-                                : 'transparent',
                             }}
                           >
-                            <AnimatePresence>
-                              {selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id && blockId === block.id
-                              ) && (
-                                <motion.div
-                                  className="w-2 h-2 bg-white rounded-full"
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  exit={{ scale: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                />
-                              )}
-                            </AnimatePresence>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p
-                              className="font-normal text-sm"
-                              style={{ color: colors['text-primary'] }}
+                            <div
+                              className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                              style={{
+                                borderColor: selectedOptionIds?.some(
+                                  ([pathId, blockId]) =>
+                                    pathId === option.path.id &&
+                                    blockId === block.id
+                                )
+                                  ? colors['border-brand']
+                                  : colors['border-secondary'],
+                                backgroundColor: selectedOptionIds?.some(
+                                  ([pathId, blockId]) =>
+                                    pathId === option.path.id &&
+                                    blockId === block.id
+                                )
+                                  ? colors['bg-brand-solid']
+                                  : 'transparent',
+                              }}
                             >
-                              {option.path.name}
-                            </p>
-                          </div>
-                        </motion.button>
-                      </div>
-                    ))}
+                              <AnimatePresence>
+                                {selectedOptionIds?.some(
+                                  ([pathId, blockId]) =>
+                                    pathId === option.path.id &&
+                                    blockId === block.id
+                                ) && (
+                                  <motion.div
+                                    className="w-2 h-2 bg-white rounded-full"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                  />
+                                )}
+                              </AnimatePresence>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p
+                                className="font-normal text-sm"
+                                style={{ color: colors['text-primary'] }}
+                              >
+                                {option.path.name}
+                              </p>
+                            </div>
+                          </motion.button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -287,7 +316,13 @@ export default function HorizontalStep({
                 {isFirstStep ? (
                   <div className="flex justify-center">
                     <motion.button
-                      onClick={() => onOptionSelect?.(block.child_paths?.[0]?.path?.id, block.id, false)}
+                      onClick={() =>
+                        onOptionSelect?.(
+                          block.child_paths?.[0]?.path?.id,
+                          block.id,
+                          false
+                        )
+                      }
                       className="px-6 py-3 rounded-lg font-medium transition-all duration-200"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -303,7 +338,8 @@ export default function HorizontalStep({
                   </div>
                 ) : (
                   /* Options Section (when no image) */
-                  block.child_paths && block.child_paths.length > 0 && (
+                  block.child_paths &&
+                  block.child_paths.length > 0 && (
                     <div className="w-full">
                       <p
                         className="text-sm font-medium mb-4"
@@ -316,30 +352,36 @@ export default function HorizontalStep({
                           <div key={option.path.id} className="overflow-hidden">
                             <motion.button
                               onClick={() =>
-                                onOptionSelect?.(option.path.id, block.id, false)
+                                onOptionSelect?.(
+                                  option.path.id,
+                                  block.id,
+                                  false
+                                )
                               }
                               className={cn(
                                 'w-full p-4 rounded-lg border transition-all duration-200',
                                 'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
                                 selectedOptionIds?.some(
                                   ([pathId, blockId]) =>
-                                    pathId === option.path.id && blockId === block.id
+                                    pathId === option.path.id &&
+                                    blockId === block.id
                                 ) && 'border-brand'
                               )}
                               initial={{ opacity: 0.4 }}
-                              animate={{ 
+                              animate={{
                                 opacity: 1,
                                 transition: {
                                   duration: 0.2,
-                                  ease: "easeOut",
-                                  delay: index * 0.05
-                                }
+                                  ease: 'easeOut',
+                                  delay: index * 0.05,
+                                },
                               }}
                               style={{
                                 backgroundColor: colors['bg-primary'],
                                 borderColor: selectedOptionIds?.some(
                                   ([pathId, blockId]) =>
-                                    pathId === option.path.id && blockId === block.id
+                                    pathId === option.path.id &&
+                                    blockId === block.id
                                 )
                                   ? colors['border-brand']
                                   : colors['border-secondary'],
@@ -350,13 +392,15 @@ export default function HorizontalStep({
                                 style={{
                                   borderColor: selectedOptionIds?.some(
                                     ([pathId, blockId]) =>
-                                      pathId === option.path.id && blockId === block.id
+                                      pathId === option.path.id &&
+                                      blockId === block.id
                                   )
                                     ? colors['border-brand']
                                     : colors['border-secondary'],
                                   backgroundColor: selectedOptionIds?.some(
                                     ([pathId, blockId]) =>
-                                      pathId === option.path.id && blockId === block.id
+                                      pathId === option.path.id &&
+                                      blockId === block.id
                                   )
                                     ? colors['bg-brand-solid']
                                     : 'transparent',
@@ -365,7 +409,8 @@ export default function HorizontalStep({
                                 <AnimatePresence>
                                   {selectedOptionIds?.some(
                                     ([pathId, blockId]) =>
-                                      pathId === option.path.id && blockId === block.id
+                                      pathId === option.path.id &&
+                                      blockId === block.id
                                   ) && (
                                     <motion.div
                                       className="w-2 h-2 bg-white rounded-full"

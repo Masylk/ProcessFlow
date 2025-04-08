@@ -279,11 +279,9 @@ export default function ExamplePage() {
                     );
                   } else {
                     // Original logic for non-PATH blocks
-                    const blocksAfterSource = sourcePath.blocks
-                      .slice(sourceBlockIndex + 1)
-                      .filter(
-                        (b: Block) => b.type !== 'END' && b.type !== 'LAST'
-                      );
+                    const blocksAfterSource = sourcePath.blocks.slice(
+                      sourceBlockIndex + 1
+                    );
                     if (blocksAfterSource.length > 0) {
                       continuePath = {
                         id: generateUniqueId(generatedPathIds, true),
@@ -307,13 +305,16 @@ export default function ExamplePage() {
                                 );
                               })()
                             : blocksAfterSource[0].title ||
-                              blocksAfterSource[0].type
-                                .charAt(0)
-                                .toUpperCase() +
-                                blocksAfterSource[0].type
-                                  .slice(1)
-                                  .toLowerCase() +
-                                ' Block',
+                              (blocksAfterSource[0].type === 'LAST' ||
+                              blocksAfterSource[0].type === 'END'
+                                ? 'Complete process'
+                                : blocksAfterSource[0].type
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                  blocksAfterSource[0].type
+                                    .slice(1)
+                                    .toLowerCase() +
+                                  ' Block'),
                         workflow_id: parseInt(params.workflowId as string),
                         workflow: sourcePath.workflow,
                         blocks: blocksAfterSource,
