@@ -42,39 +42,67 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           pathname.startsWith(path)
         );
 
+        // If user is not authenticated and trying to access protected route
         if ((!user || error) && !isPublicPath) {
           router.push('/login');
           return;
         }
 
-        if (!user || isPublicPath) {
-          setIsLoading(false);
-          return;
-        }
+        // If user is authenticated and trying to access public route
+        if (user && isPublicPath) {
+          const response = await fetch('/api/auth/check-onboarding');
+          
+          if (!response.ok) {
+            console.error('Error checking onboarding status');
+            router.push('/dashboard');
+            return;
+          }
 
-        const response = await fetch('/api/auth/check-onboarding');
+          const data = (await response.json()) as OnboardingResponse;
 
-        if (!response.ok) {
-          console.error('Error checking onboarding status');
-          setIsLoading(false);
-          return;
-        }
+          if (data.onboardingStep && !data.completed) {
+            const onboardingSteps: Record<onboarding_step, string> = {
+              'PERSONAL_INFO': '/onboarding/personal-info',
+              'PROFESSIONAL_INFO': '/onboarding/professional-info',
+              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
+              'COMPLETED': '/onboarding/completed',
+              'INVITED_USER': '/onboarding/invited-user'
+            };
 
-        const data = (await response.json()) as OnboardingResponse;
-
-        if (data.onboardingStep && !data.completed) {
-          const onboardingSteps: Record<onboarding_step, string> = {
-            'PERSONAL_INFO': '/onboarding/personal-info',
-            'PROFESSIONAL_INFO': '/onboarding/professional-info',
-            'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-            'COMPLETED': '/onboarding/completed',
-            'INVITED_USER': '/onboarding/invited-user'
-          };
-
-          const currentStep = onboardingSteps[data.onboardingStep];
-
-          if (!pathname.startsWith(currentStep)) {
+            const currentStep = onboardingSteps[data.onboardingStep];
             router.push(currentStep);
+          } else {
+            router.push('/dashboard');
+          }
+          return;
+        }
+
+        // If user is authenticated and accessing protected route
+        if (user && !isPublicPath) {
+          const response = await fetch('/api/auth/check-onboarding');
+
+          if (!response.ok) {
+            console.error('Error checking onboarding status');
+            setIsLoading(false);
+            return;
+          }
+
+          const data = (await response.json()) as OnboardingResponse;
+
+          if (data.onboardingStep && !data.completed) {
+            const onboardingSteps: Record<onboarding_step, string> = {
+              'PERSONAL_INFO': '/onboarding/personal-info',
+              'PROFESSIONAL_INFO': '/onboarding/professional-info',
+              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
+              'COMPLETED': '/onboarding/completed',
+              'INVITED_USER': '/onboarding/invited-user'
+            };
+
+            const currentStep = onboardingSteps[data.onboardingStep];
+
+            if (!pathname.startsWith(currentStep)) {
+              router.push(currentStep);
+            }
           }
         }
       } catch (error) {
