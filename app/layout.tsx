@@ -6,7 +6,6 @@ import { PostHogProvider } from './providers';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthCheck from './components/AuthCheck';
 import { Toaster } from 'sonner';
-import { useCallback } from 'react';
 
 // Import environment checker
 import '../lib/env-check';
@@ -42,13 +41,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const handleLoad = useCallback((event: React.SyntheticEvent<HTMLLinkElement, Event>) => {
-    const target = event.currentTarget;
-    if (target.media === 'print') {
-      target.media = 'all';
-    }
-  }, []);
-
   return (
     <html className="font-sans" lang="en">
       <head>
