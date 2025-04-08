@@ -49,38 +49,42 @@ function LoginContent() {
     if (email && password) {
       setIsLoading(true);
       
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      
-      const response = await login(formData);
-      
-      if (response?.error) {
-        console.error('Login error:', response.error);
-        setError(response.error);
+      try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        
+        const response = await login(formData);
+        
+        if (response?.error) {
+          console.error('Login error:', response.error);
+          setError(response.error);
+          return;
+        }
+
+        if (response?.needsEmailConfirmation) {
+          console.log('Email needs confirmation:', response.email);
+          setEmailConfirmationAlert(response.message);
+          return;
+        }
+
+        if (response?.id && response?.email) {
+          Sentry.setUser({
+            id: response.id,
+            email: response.email,
+          });
+
+          posthog.identify(response.id);
+          posthog.people.set({ email: response.email });
+          posthog.capture('login', { email: response.email });
+          router.push('/dashboard');
+        }
+      } catch (err) {
+        console.error('Unexpected error during login:', err);
+        setError('An unexpected error occurred. Please try again.');
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      if (response?.needsEmailConfirmation) {
-        console.log('Email needs confirmation:', response.email);
-        setEmailConfirmationAlert(response.message);
-        setIsLoading(false);
-        return;
-      }
-
-      if (response?.id && response?.email) {
-        Sentry.setUser({
-          id: response.id,
-          email: response.email,
-        });
-
-        posthog.identify(response.id);
-        posthog.people.set({ email: response.email });
-        posthog.capture('login', { email: response.email });
-        router.push('/dashboard');
-      }
-      setIsLoading(false);
     }
   }
 

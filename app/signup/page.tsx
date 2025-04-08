@@ -414,13 +414,13 @@ export default function SignupPage() {
             <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
               By continuing you agree to
             </div>
-            <Link href="/terms" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+            <Link href="https://www.process-flow.io/terms" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
               Terms of Service
             </Link>
             <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
               and
             </div>
-            <Link href="/privacy" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+            <Link href="https://www.process-flow.io/privacy" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
               Privacy Policy.
             </Link>
           </div>

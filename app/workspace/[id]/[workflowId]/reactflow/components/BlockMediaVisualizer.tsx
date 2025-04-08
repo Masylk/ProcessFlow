@@ -90,8 +90,9 @@ export default function BlockMediaVisualizer({
               size="small"
               variant="secondary"
               aria-label="Reset to Original Image"
+              className="h-8 min-w-[100px]"
             >
-              Reset Edition
+              Reset Original
             </ButtonNormal>
           )}
           <ButtonNormal
@@ -99,6 +100,7 @@ export default function BlockMediaVisualizer({
             size="small"
             variant="secondary"
             iconOnly
+            className="h-8 w-8"
             leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-icon.svg`}
             aria-label="Edit Image"
           />
@@ -107,6 +109,7 @@ export default function BlockMediaVisualizer({
             size="small"
             variant="secondary"
             iconOnly
+            className="h-8 w-8"
             leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
             aria-label="Remove Image"
           />
