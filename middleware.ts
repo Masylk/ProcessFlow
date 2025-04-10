@@ -13,6 +13,16 @@ const authRoutes = [
   '/set-new-password'
 ];
 
+const shareRoutes = [
+  '/read/share',
+  '/step-icons',
+  '/apps',
+  '/assets',
+  '.png',
+  '.svg',
+  '/unauthorized'
+];
+
 export async function middleware(request: NextRequest) {
   const supabase = createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -22,6 +32,7 @@ export async function middleware(request: NextRequest) {
   // Check if current route is an auth route
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
   
+  const isShareRoute = shareRoutes.some(route => pathname.includes(route));
   // IMPORTANT: Skip middleware for auth-related routes completely
   if (
     pathname.startsWith('/_next') ||
@@ -34,7 +45,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/reset-password-request') ||
     pathname.startsWith('/set-new-password') ||
-    pathname === '/'
+    pathname.includes('/read/share') ||
+    pathname === '/' 
   ) {
     return NextResponse.next();
   }
@@ -74,7 +86,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // If not authenticated and trying to access protected routes
-  if (!isAuthRoute) {
+  if (!isAuthRoute && !isShareRoute) {
+    console.log('Redirecting to login for:', pathname);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

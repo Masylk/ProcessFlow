@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useColors } from '@/app/theme/hooks';
 import ProcessCard from '../components/ProcessCard';
 import ButtonNormal from '@/app/components/ButtonNormal';
@@ -11,34 +11,8 @@ import HorizontalLastStep from '../components/steps/HorizontalLastStep';
 import HorizontalStep from '../components/steps/HorizontalStep';
 import HorizontalDelay from '../components/steps/HorizontalDelay';
 import { usePathsStore } from '../store/pathsStore';
-import { Block, Path } from '../../types';
+import { Block, Path, WorkflowData } from '../../types';
 
-interface WorkflowData {
-  id: string;
-  name: string;
-  workspace: {
-    id: string;
-    name: string;
-  };
-  category: {
-    id: string;
-    name: string;
-  };
-  icon?: string;
-  description?: string;
-  author?: {
-    full_name: string;
-    avatar_url?: string;
-  };
-  folder?: {
-    id: string;
-    name: string;
-    parent?: {
-      id: string;
-      name: string;
-    };
-  };
-}
 
 // Modify the type for source block pairs
 type SourceBlockPair = {
@@ -61,6 +35,7 @@ const generateUniqueId = (
 
 export default function SharePage() {
   const params = useParams();
+  const router = useRouter();
   const colors = useColors();
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [selectedOptions, setSelectedOptions] = useState<[number, number][]>(
@@ -337,7 +312,7 @@ export default function SharePage() {
     }
   }, [mainPath]);
 
-  // Fetch workflow data
+  // Fetch workflow data and check public status
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -345,14 +320,22 @@ export default function SharePage() {
           `/api/workflows/${params.workflowId}`
         );
         const workflowData = await workflowResponse.json();
+
+        // Check if workflow is not public
+        // if (!workflowData.is_public) {
+        //   router.push('/unauthorized');
+        //   return;
+        // }
+
         setWorkflowData(workflowData);
       } catch (error) {
         console.error('Error fetching workflow data:', error);
+        router.push('/unauthorized');
       }
     };
 
     fetchData();
-  }, [params.workflowId]);
+  }, [params.workflowId, router]);
 
   // Initialize copyPaths when paths change
   useEffect(() => {
@@ -552,6 +535,11 @@ export default function SharePage() {
             ) || 'No updates',
       }
     : null;
+
+  // Return null while checking public status
+  if (!workflowData) {
+    return null;
+  }
 
   return (
     <div

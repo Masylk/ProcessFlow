@@ -1,32 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Header from './components/Header';
+import React, { useState, useEffect, useRef, useMemo, use } from 'react';
 import { useParams } from 'next/navigation';
 import { User } from '@/types/user';
 import { createClient } from '@/utils/supabase/client';
-import UserSettings from '@/app/dashboard/components/UserSettings';
-import HelpCenterModal from '@/app/dashboard/components/HelpCenterModal';
 import dynamic from 'next/dynamic';
-import Sidebar from './components/Sidebar';
+import Sidebar from '@/app/workspace/[id]/[workflowId]/read/components/Sidebar';
 import { Workspace, Folder } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
-import ProcessCard from './components/ProcessCard';
-import ViewModeSwitch from './components/ViewModeSwitch';
-import VerticalStep from './components/steps/VerticalStep';
-import HorizontalLastStep from './components/steps/HorizontalLastStep';
+import ProcessCard from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCard';
+import ViewModeSwitch from '@/app/workspace/[id]/[workflowId]/read/components/ViewModeSwitch';
+import VerticalStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalStep';
+import HorizontalLastStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalLastStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
 import Alert from '@/app/components/Alert';
-import { usePathsStore } from './store/pathsStore';
-import ProcessCanvas from './components/ProcessCanvas';
-import VerticalLastStep from './components/steps/VerticalLastStep';
-import HorizontalStep from './components/steps/HorizontalStep';
-import { Block, Path, PathParentBlock, WorkflowData } from '../types';
+import { usePathsStore } from '@/app/workspace/[id]/[workflowId]/read/store/pathsStore';
+import ProcessCanvas from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCanvas';
+import VerticalLastStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalLastStep';
+import HorizontalStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalStep';
+import {
+  Block,
+  Path,
+  PathParentBlock,
+  WorkflowData,
+} from '@/app/workspace/[id]/[workflowId]/types';
 import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
-import VerticalDelay from './components/steps/VerticalDelay';
-import HorizontalDelay from './components/steps/HorizontalDelay';
+import VerticalDelay from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalDelay';
+import HorizontalDelay from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalDelay';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
@@ -77,8 +79,12 @@ type SourceBlockPair = {
   copies: Block[];
 };
 
-export default function ExamplePage() {
-  const params = useParams();
+export default function SharedPage({
+  params,
+}: {
+  params: Promise<{ flow: string }>;
+}) {
+  const resolvedParams = use(params);
   const supabase = createClient();
   const colors = useColors();
   const [user, setUser] = useState<User | null>(null);
@@ -109,7 +115,7 @@ export default function ExamplePage() {
   const [generatedPathIds] = useState<Set<number>>(new Set());
   const [generatedBlockIds] = useState<Set<number>>(new Set());
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
-  // const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
+  const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
 
   // Add sourceBlockPairs as a component-level variable
   const sourceBlockPairs: SourceBlockPair[] = [];
@@ -129,9 +135,9 @@ export default function ExamplePage() {
     });
   }, [pathsToDisplay, selectedOptions, paths]);
 
-  if (!params.id || !params.workflowId) {
-    return <div>No id or workflowId</div>;
-  }
+  //   if (!params.id || !params.workflowId) {
+  //     return <div>No id or workflowId</div>;
+  //   }
   // Initialize all steps as expanded when paths are loaded
   useEffect(() => {
     if (pathsToDisplay.length > 0) {
@@ -172,11 +178,13 @@ export default function ExamplePage() {
     fetchUser();
   }, []);
 
-  // Fetch workspace data
+  //   Fetch workspace data
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
-        const response = await fetch(`/api/workspace/${params.id}`);
+        const response = await fetch(
+          `/api/workspace/${workflowData?.workspace_id}`
+        );
         if (!response.ok) throw new Error('Failed to fetch workspace');
         const data = await response.json();
         setWorkspace(data);
@@ -185,28 +193,32 @@ export default function ExamplePage() {
       }
     };
 
-    if (params.id) {
+    if (workflowData) {
       fetchWorkspace();
     }
-  }, [params.id]);
+  }, [workflowData]);
 
   useEffect(() => {}, [paths]);
   // Fetch paths
   useEffect(() => {
     const fetchPathsAndStrokeLines = async () => {
+      if (!workflowData) {
+        return;
+      }
       try {
         // Fetch paths
         const response = await fetch(
-          `/api/workspace/${params.id}/paths?workflow_id=${params.workflowId}`
+          `/api/workspace/${workflowData?.id}/paths?workflow_id=${workflowData?.id}`
         );
         const pathsData = await response.json();
 
+        console.log('pathsData', pathsData);
         if (pathsData.paths) {
           const newPaths = [...pathsData.paths];
 
           // First process stroke lines
           const strokeLinesResponse = await fetch(
-            `/api/stroke-lines?workflow_id=${params.workflowId}`
+            `/api/stroke-lines?workflow_id=${workflowData?.id}`
           );
           if (strokeLinesResponse.ok) {
             const strokeLinesData: StrokeLine[] =
@@ -292,7 +304,7 @@ export default function ExamplePage() {
                                     .slice(1)
                                     .toLowerCase() +
                                   ' Block'),
-                        workflow_id: parseInt(params.workflowId as string),
+                        workflow_id: parseInt(workflowData?.id as string),
                         workflow: sourcePath.workflow,
                         blocks: blocksAfterSource,
                         parent_blocks: [
@@ -357,7 +369,7 @@ export default function ExamplePage() {
                         {
                           id: generateUniqueId(generatedPathIds, true),
                           name: strokeLine.label,
-                          workflow_id: parseInt(params.workflowId as string),
+                          workflow_id: parseInt(workflowData?.id as string),
                           workflow: targetPath.workflow,
                           blocks: targetPath.blocks.slice(targetBlockIndex),
                           parent_blocks: [
@@ -518,7 +530,7 @@ export default function ExamplePage() {
     };
 
     fetchPathsAndStrokeLines();
-  }, [params.id, params.workflowId]);
+  }, [workflowData]);
 
   // Update this useEffect to set initial pathsToDisplay
   useEffect(() => {
@@ -606,12 +618,31 @@ export default function ExamplePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Parse the flow parameter
+        const [workflowName, publicAccessId] =
+          resolvedParams.flow.split('--pf-');
+
+        if (!workflowName || !publicAccessId) {
+          console.error('Invalid URL format');
+          return;
+        }
+
+        // Convert underscores back to spaces in the workflow name
+        const decodedWorkflowName = workflowName.replace(/-/g, ' ');
+
+        // Fetch workflow data using the public API
         const workflowResponse = await fetch(
-          `/api/workflows/${params.workflowId}`
+          `/api/workflows/public?name=${encodeURIComponent(decodedWorkflowName)}&public_access_id=${encodeURIComponent(publicAccessId)}`
         );
+
+        if (!workflowResponse.ok) {
+          throw new Error('Failed to fetch workflow data');
+        }
+
         const workflowData = await workflowResponse.json();
-        setWorkflowData(workflowData);
         console.log('workflowData', workflowData);
+        setWorkflowData(workflowData);
+
         // Create breadcrumbs from workflow data
         const items: BreadcrumbItem[] = [];
 
@@ -637,7 +668,7 @@ export default function ExamplePage() {
     };
 
     fetchData();
-  }, [params.id, params.workflowId]);
+  }, [resolvedParams.flow]);
 
   // Update processCardData to use workflow data
   const processCardData = workflowData
@@ -870,19 +901,8 @@ export default function ExamplePage() {
   };
 
   const handleCopyLink = () => {
-    if (!workflowData) {
-      console.log('no workflow', workflowData);
-      return;
-    }
-    console.log('workflow copy link', workflowData);
-    // Format the workflow name (replace spaces with underscores)
-    const formattedName = workflowData.name.replace(/\s+/g, '-');
-
-    // Create the share URL
-    const shareUrl = `${window.location.origin}/shared/${formattedName}--pf-${workflowData.public_access_id}`;
-
-    // Copy to clipboard
-    navigator.clipboard.writeText(shareUrl);
+    // Copy the current URL to clipboard
+    navigator.clipboard.writeText(window.location.href);
     setShowLinkCopiedAlert(true);
 
     // Auto-dismiss after 5 seconds
@@ -944,13 +964,13 @@ export default function ExamplePage() {
 
   const toggleWorkflowAccess = async () => {
     try {
-      const response = await fetch(`/api/workflow/${params.workflowId}`, {
+      const response = await fetch(`/api/workflow/${workflowData?.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          is_public: !workflowData?.is_public,
+          is_public: !workflow?.is_public,
         }),
       });
 
@@ -959,7 +979,7 @@ export default function ExamplePage() {
       }
 
       const updatedWorkflow = await response.json();
-      setWorkflowData((prev) =>
+      setWorkflow((prev) =>
         prev ? { ...prev, is_public: !prev.is_public } : null
       );
     } catch (error) {
@@ -995,22 +1015,6 @@ export default function ExamplePage() {
                 viewMode === 'vertical' ? 'left-64' : 'left-0'
               )}
             >
-              <Header
-                breadcrumbItems={breadcrumbItems}
-                user={user}
-                onOpenUserSettings={openUserSettings}
-                onOpenHelpCenter={openHelpCenter}
-                params={
-                  params
-                    ? {
-                        id: params.id?.toString(),
-                        workflowId: params.workflowId?.toString(),
-                      }
-                    : undefined
-                }
-                is_public={workflowData?.is_public}
-                onToggleAccess={toggleWorkflowAccess}
-              />
               <div className="absolute right-4 top-20 flex items-center gap-2">
                 <ViewModeSwitch mode={viewMode} onModeChange={setViewMode} />
               </div>

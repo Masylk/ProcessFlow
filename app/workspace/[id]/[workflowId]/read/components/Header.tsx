@@ -25,6 +25,12 @@ interface HeaderProps {
   className?: string;
   onOpenUserSettings: () => void;
   onOpenHelpCenter: () => void;
+  params?: {
+    id: string;
+    workflowId: string;
+  };
+  is_public?: boolean;
+  onToggleAccess: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -33,6 +39,9 @@ const Header: React.FC<HeaderProps> = ({
   className,
   onOpenUserSettings,
   onOpenHelpCenter,
+  params,
+  is_public = false,
+  onToggleAccess,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -165,8 +174,6 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          
-
           {/* Edit Button */}
           <ButtonNormal
             variant="secondary"
@@ -218,10 +225,16 @@ const Header: React.FC<HeaderProps> = ({
       </header>
 
       {/* Share Modal */}
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onClose={closeShareModal} 
-        itemName={breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Untitled Workflow'} 
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={closeShareModal}
+        itemName={
+          breadcrumbItems[breadcrumbItems.length - 1]?.label ||
+          'Untitled Workflow'
+        }
+        params={params}
+        is_public={is_public}
+        onToggleAccess={onToggleAccess}
       />
     </HeaderHeightContext.Provider>
   );
