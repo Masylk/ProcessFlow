@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function ErrorMessage() {
   const searchParams = useSearchParams();
@@ -13,7 +14,7 @@ function ErrorMessage() {
 
 export default function ErrorPage() {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<LoadingSpinner size="medium" />}>
       <ErrorMessage />
     </Suspense>
   );

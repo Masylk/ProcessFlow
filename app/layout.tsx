@@ -101,15 +101,6 @@ export default function RootLayout({
           href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.css"
         />
 
-        {/* Google Tag Manager - No Script */}
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-M8W79RZW"
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
       </body>
     </html>
   );

@@ -7,6 +7,7 @@ import posthog from 'posthog-js';
 import { login } from './actions';
 import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
@@ -333,11 +334,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="w-full min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingSpinner fullScreen size="large" />}>
       <LoginContent />
     </Suspense>
   );
