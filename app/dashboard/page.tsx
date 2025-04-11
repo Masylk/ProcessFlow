@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense, useCallback, useMemo } from 'react';
 import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
@@ -38,6 +38,8 @@ import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './components/TutorialOverlay';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
+import { debounce } from 'lodash';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('./components/HelpCenterModal'),
@@ -128,49 +130,51 @@ export default function Page() {
   // Add near the top of the component
   const searchParams = useSearchParams();
 
-  // Fetch user data from your API
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        // Check authentication status first
-        const {
-          data: { user: authUser },
-          error: authError,
-        } = await supabase.auth.getUser();
+  // Memoize the filtered workspaces based on search term
+  const filteredWorkspaces = useMemo(() => {
+    if (!activeWorkspace?.workflows) return [];
+    return activeWorkspace.workflows.filter(workflow =>
+      workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [activeWorkspace?.workflows, searchTerm]);
 
-        if (!authUser || authError) {
-          window.location.href = '/login';
-          return;
-        }
+  // Debounced search handler
+  const debouncedSearchHandler = useCallback(
+    debounce((value: string) => {
+      setSearchTerm(value);
+    }, 300),
+    []
+  );
 
-        const res = await fetch('/api/user');
-        const data = await res.json();
-        if (data) {
-          setUser(data);
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        window.location.href = '/login';
-      }
-    };
-    fetchUser();
+  // Memoize handlers that are passed to child components
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSearchHandler(event.target.value);
+  }, [debouncedSearchHandler]);
+
+  const onSelectFolderSidebar = useCallback((folder?: Folder) => {
+    setSidebarSelectedFolder(folder);
   }, []);
 
-  // Fetch the signed URL if needed
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      if (user && user.avatar_url && !user.avatar_signed_url) {
-        console.log('getting avatar url : ' + user.avatar_url);
-        user.avatar_signed_url = user.avatar_url;
-      }
-    };
+  const onSelectFolderView = useCallback((folder?: Folder) => {
+    setSelectedFolder(folder);
+  }, []);
 
-    fetchSignedUrl();
-  }, [user]);
-
-  // Fetch workspaces
-  const fetchWorkspaces = async () => {
+  // Optimize fetchWorkspaces with caching
+  const fetchWorkspaces = useCallback(async () => {
     try {
+      const cacheKey = `workspaces-${user?.id}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        const isCacheValid = Date.now() - timestamp < 5 * 60 * 1000; // 5 minutes cache
+        
+        if (isCacheValid) {
+          setWorkspaces(data);
+          return;
+        }
+      }
+
       const response = await fetch(`/api/workspaces/${user?.id}`);
       const data = await response.json();
 
@@ -181,92 +185,91 @@ export default function Page() {
 
       if (Array.isArray(data)) {
         setWorkspaces(data);
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          data,
+          timestamp: Date.now()
+        }));
       } else {
         console.error('Unexpected data format:', data);
       }
     } catch (error) {
       console.error('Error fetching workspaces:', error);
     }
-  };
+  }, [user?.id]);
 
-  // Dans le useEffect
+  // Optimize user data fetching
+  const fetchUser = useCallback(async () => {
+    try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+
+      if (!authUser || authError) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const res = await fetch('/api/user');
+      const data = await res.json();
+      if (data) {
+        setUser(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      window.location.href = '/login';
+    }
+  }, []);
+
+  // Update useEffect dependencies
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
   useEffect(() => {
     if (user) {
       fetchWorkspaces();
     }
-  }, [user]);
+  }, [user, fetchWorkspaces]);
 
-  // Effect to set activeWorkspace.
-  useEffect(() => {
-    if (user && workspaces.length > 0) {
-      if (!user.active_workspace_id) {
-        if (!activeWorkspaceUpdatedRef.current) {
-          if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
-            setActiveWorkspace(workspaces[0]);
-          }
-          activeWorkspaceUpdatedRef.current = true;
-          const updateActiveWorkspace = async () => {
-            const updateRes = await fetch('/api/user/update', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                id: user.id,
-                active_workspace_id: workspaces[0].id,
-              }),
-            });
-            if (updateRes.ok) {
-              const updatedUser = await updateRes.json();
-              if (
-                updatedUser.active_workspace_id !== user.active_workspace_id
-              ) {
-                setUser(updatedUser);
-              }
-            } else {
-              console.error('Error updating user active_workspace_id');
-            }
-          };
-          updateActiveWorkspace();
-        }
-      } else {
-        const foundWorkspace = workspaces.find(
-          (ws) => ws.id === user.active_workspace_id
-        );
-        if (foundWorkspace) {
-          if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
-            setActiveWorkspace(foundWorkspace);
-          }
-        } else {
-          if (!activeWorkspaceUpdatedRef.current) {
-            if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
-              setActiveWorkspace(workspaces[0]);
-            }
-            activeWorkspaceUpdatedRef.current = true;
-            const updateActiveWorkspace = async () => {
-              const updateRes = await fetch('/api/user/update', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  id: user.id,
-                  active_workspace_id: workspaces[0].id,
-                }),
-              });
-              if (updateRes.ok) {
-                const updatedUser = await updateRes.json();
-                if (
-                  updatedUser.active_workspace_id !== user.active_workspace_id
-                ) {
-                  setUser(updatedUser);
-                }
-              } else {
-                console.error('Error updating user active_workspace_id');
-              }
-            };
-            updateActiveWorkspace();
-          }
-        }
+  // Optimize workspace update handler
+  const updateActiveWorkspace = useCallback(async (workspace: Workspace) => {
+    if (!user) return;
+    
+    try {
+      setActiveWorkspace(workspace);
+      
+      const updateRes = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id,
+          active_workspace_id: workspace.id,
+        }),
+      });
+
+      if (!updateRes.ok) {
+        throw new Error('Failed to update active workspace');
       }
+
+      const updatedUser = await updateRes.json();
+      setUser(updatedUser);
+      
+      // Update cache
+      const cacheKey = `workspaces-${user.id}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        const { data } = JSON.parse(cachedData);
+        const updatedWorkspaces = data.map((ws: Workspace) =>
+          ws.id === workspace.id ? workspace : ws
+        );
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          data: updatedWorkspaces,
+          timestamp: Date.now()
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating active workspace:', error);
+      toast.error('Failed to update workspace');
     }
-  }, [user, workspaces]);
+  }, [user]);
 
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
@@ -421,18 +424,6 @@ export default function Page() {
     } else {
       console.log('Failed to delete workflow');
     }
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const onSelectFolderSidebar = (folder?: Folder) => {
-    setSidebarSelectedFolder(folder);
-  };
-
-  const onSelectFolderView = (folder?: Folder) => {
-    setSelectedFolder(folder);
   };
 
   // Toggle the dropdown
@@ -593,233 +584,6 @@ export default function Page() {
   // Function to update the user in state
   const updateUser = (updatedUser: User) => {
     setUser(updatedUser);
-  };
-
-  const updateActiveWorkspace = async (workspace: Workspace) => {
-    if (user) {
-      try {
-        // First, update the URL immediately before any state changes or API calls
-        if (workspace.slug) {
-          const newPath = `/${workspace.slug}`;
-          // Only update if the URL is different
-          if (!window.location.pathname.endsWith(newPath)) {
-            window.history.pushState({}, '', newPath);
-          }
-        }
-
-        // Then, update the active workspace in the state immediately
-        // This prevents the UI from flashing or showing intermediate states
-        setActiveWorkspace(workspace);
-
-        // Now make the API call to persist the change (after UI is already updated)
-        const updateRes = await fetch('/api/user/update', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: user.id,
-            active_workspace_id: workspace.id,
-          }),
-        });
-
-        if (!updateRes.ok) {
-          throw new Error('Failed to update active workspace');
-        }
-
-        const updatedUser = await updateRes.json();
-
-        if (updatedUser.active_workspace_id !== user.active_workspace_id) {
-          // Update the user state with the new active workspace
-          setUser(updatedUser);
-
-          // If in settings view, force a re-render by toggling and restoring the state
-          if (isSettingsView) {
-            // Briefly toggle off settings view to force a re-render when it's toggled back on
-            setIsSettingsView(false);
-
-            // After a very short delay, switch back to settings view with the new workspace
-            setTimeout(() => {
-              setIsSettingsView(true);
-            }, 10);
-          }
-        }
-      } catch (error) {
-        console.error('Error updating user active_workspace_id:', error);
-      }
-    } else {
-      console.log('No user to update');
-    }
-  };
-
-  // Handle updating the password.
-  const handleUpdatePassword = async () => {
-    // Example using Supabase. Adjust as needed for your auth logic.
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      console.error(
-        'Erreur lors de la mise à jour du mot de passe:',
-        error.message
-      );
-      alert('Erreur lors de la mise à jour du mot de passe : ' + error.message);
-      return;
-    }
-
-    setPasswordChanged(true);
-    handleCancelPasswordChange();
-  };
-
-  // Resets the password change state.
-  const handleCancelPasswordChange = () => {
-    setNewPassword('');
-  };
-
-  const setDeleteAvatar = () => {
-    setIsDeleteAvatar(true);
-  };
-
-  const unsetDeleteAvatar = () => {
-    setIsDeleteAvatar(false);
-  };
-
-  // FOLDER MANAGEMENT
-  // Handler to add a top-level folder (parent_id will be null)
-  const handleAddFolder = async (
-    name: string,
-    icon_url?: string,
-    emote?: string
-  ) => {
-    if (!activeWorkspace) return;
-
-    try {
-      const res = await fetch('/api/workspaces/folders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          workspace_id: activeWorkspace.id,
-          team_tags: [],
-          icon_url,
-          emote,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to add folder');
-      }
-
-      const newFolder: Folder = await res.json();
-
-      setActiveWorkspace((prevWorkspace) =>
-        prevWorkspace
-          ? {
-              ...prevWorkspace,
-              folders: [...prevWorkspace.folders, newFolder],
-            }
-          : null
-      );
-    } catch (error) {
-      console.error('Error adding folder:', error);
-    }
-  };
-
-  // Handler to add a subfolder with a given parent folder id
-  const handleAddSubfolder = async (
-    name: string,
-    parentId: number,
-    icon_url?: string,
-    emote?: string
-  ) => {
-    if (!activeWorkspace) return;
-
-    try {
-      const res = await fetch('/api/workspaces/subfolders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          workspace_id: activeWorkspace.id,
-          parent_id: parentId,
-          team_tags: [],
-          icon_url,
-          emote,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to add subfolder');
-      }
-
-      const newSubfolder: Folder = await res.json();
-
-      setActiveWorkspace((prevWorkspace) =>
-        prevWorkspace
-          ? {
-              ...prevWorkspace,
-              folders: [...prevWorkspace.folders, newSubfolder],
-            }
-          : null
-      );
-
-      setSidebarSelectedFolder(undefined);
-    } catch (error) {
-      console.error('Error adding subfolder:', error);
-    }
-  };
-
-  //Handler to edit a specific folder
-  const handleEditFolder = async (
-    folderName: string,
-    icon_url?: string | null,
-    emote?: string | null
-  ) => {
-    if (!activeWorkspace || !editingFolder) return;
-
-    try {
-      const response = await fetch(
-        `/api/workspaces/folders/${editingFolder.id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name: folderName, icon_url, emote }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to update folder');
-      }
-
-      const updatedFolder: Folder = await response.json();
-
-      setActiveWorkspace((prevWorkspace) =>
-        prevWorkspace
-          ? {
-              ...prevWorkspace,
-              folders: prevWorkspace.folders.map((f) =>
-                f.id === editingFolder.id ? { ...f, ...updatedFolder } : f
-              ),
-            }
-          : null
-      );
-
-      // Update selected states if needed
-      if (sidebarSelectedFolder?.id === updatedFolder.id) {
-        setSidebarSelectedFolder(updatedFolder);
-      }
-
-      setEditingFolder(undefined);
-    } catch (error) {
-      console.error('Error updating folder:', error);
-    }
-  };
-
-  const handleUserInfoClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDropdownVisible(!dropdownVisible);
   };
 
   const handleLogout = async () => {
@@ -1190,128 +954,400 @@ export default function Page() {
     }
   };
 
+  // FOLDER MANAGEMENT
+  // Handler to add a top-level folder (parent_id will be null)
+  const handleAddFolder = async (
+    name: string,
+    icon_url?: string,
+    emote?: string
+  ) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const res = await fetch('/api/workspaces/folders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          workspace_id: activeWorkspace.id,
+          team_tags: [],
+          icon_url,
+          emote,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to add folder');
+      }
+
+      const newFolder: Folder = await res.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: [...prevWorkspace.folders, newFolder],
+            }
+          : null
+      );
+    } catch (error) {
+      console.error('Error adding folder:', error);
+    }
+  };
+
+  // Handler to add a subfolder with a given parent folder id
+  const handleAddSubfolder = async (
+    name: string,
+    parentId: number,
+    icon_url?: string,
+    emote?: string
+  ) => {
+    if (!activeWorkspace) return;
+
+    try {
+      const res = await fetch('/api/workspaces/subfolders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          workspace_id: activeWorkspace.id,
+          parent_id: parentId,
+          team_tags: [],
+          icon_url,
+          emote,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to add subfolder');
+      }
+
+      const newSubfolder: Folder = await res.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: [...prevWorkspace.folders, newSubfolder],
+            }
+          : null
+      );
+
+      setSidebarSelectedFolder(undefined);
+    } catch (error) {
+      console.error('Error adding subfolder:', error);
+    }
+  };
+
+  //Handler to edit a specific folder
+  const handleEditFolder = async (
+    folderName: string,
+    icon_url?: string | null,
+    emote?: string | null
+  ) => {
+    if (!activeWorkspace || !editingFolder) return;
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/folders/${editingFolder.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: folderName, icon_url, emote }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update folder');
+      }
+
+      const updatedFolder: Folder = await response.json();
+
+      setActiveWorkspace((prevWorkspace) =>
+        prevWorkspace
+          ? {
+              ...prevWorkspace,
+              folders: prevWorkspace.folders.map((f) =>
+                f.id === editingFolder.id ? { ...f, ...updatedFolder } : f
+              ),
+            }
+          : null
+      );
+
+      // Update selected states if needed
+      if (sidebarSelectedFolder?.id === updatedFolder.id) {
+        setSidebarSelectedFolder(updatedFolder);
+      }
+
+      setEditingFolder(undefined);
+    } catch (error) {
+      console.error('Error updating folder:', error);
+    }
+  };
+
+  const handleUserInfoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDropdownVisible(!dropdownVisible);
+  };
+
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Restore fetchSignedUrl effect
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (user && user.avatar_url && !user.avatar_signed_url) {
+        console.log('getting avatar url : ' + user.avatar_url);
+        user.avatar_signed_url = user.avatar_url;
+      }
+    };
+
+    fetchSignedUrl();
+  }, [user]);
+
+  // Restore workspace effect
+  useEffect(() => {
+    if (user && workspaces.length > 0) {
+      if (!user.active_workspace_id) {
+        if (!activeWorkspaceUpdatedRef.current) {
+          if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
+            setActiveWorkspace(workspaces[0]);
+          }
+          activeWorkspaceUpdatedRef.current = true;
+          const updateActiveWorkspace = async () => {
+            const updateRes = await fetch('/api/user/update', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: user.id,
+                active_workspace_id: workspaces[0].id,
+              }),
+            });
+            if (updateRes.ok) {
+              const updatedUser = await updateRes.json();
+              if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+                setUser(updatedUser);
+              }
+            } else {
+              console.error('Error updating user active_workspace_id');
+            }
+          };
+          updateActiveWorkspace();
+        }
+      } else {
+        const foundWorkspace = workspaces.find(
+          (ws) => ws.id === user.active_workspace_id
+        );
+        if (foundWorkspace) {
+          if (!activeWorkspace || activeWorkspace.id !== foundWorkspace.id) {
+            setActiveWorkspace(foundWorkspace);
+          }
+        } else {
+          if (!activeWorkspaceUpdatedRef.current) {
+            if (!activeWorkspace || activeWorkspace.id !== workspaces[0].id) {
+              setActiveWorkspace(workspaces[0]);
+            }
+            activeWorkspaceUpdatedRef.current = true;
+            const updateActiveWorkspace = async () => {
+              const updateRes = await fetch('/api/user/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: user.id,
+                  active_workspace_id: workspaces[0].id,
+                }),
+              });
+              if (updateRes.ok) {
+                const updatedUser = await updateRes.json();
+                if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+                  setUser(updatedUser);
+                }
+              } else {
+                console.error('Error updating user active_workspace_id');
+              }
+            };
+            updateActiveWorkspace();
+          }
+        }
+      }
+      setIsLoading(false);
+    }
+  }, [user, workspaces]);
+
+  // Restore password update handlers
+  const handleUpdatePassword = async () => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      console.error('Erreur lors de la mise à jour du mot de passe:', error.message);
+      alert('Erreur lors de la mise à jour du mot de passe : ' + error.message);
+      return;
+    }
+
+    setPasswordChanged(true);
+    handleCancelPasswordChange();
+  };
+
+  const handleCancelPasswordChange = () => {
+    setNewPassword('');
+  };
+
+  // Restore avatar handlers
+  const setDeleteAvatar = () => {
+    setIsDeleteAvatar(true);
+  };
+
+  const unsetDeleteAvatar = () => {
+    setIsDeleteAvatar(false);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Sidebar with header and list of workspaces */}
-      {user && user.email && activeWorkspace && (
-        <Sidebar
-          workspaces={workspaces}
-          userEmail={user.email}
-          activeWorkspace={activeWorkspace}
-          setActiveWorkspace={updateActiveWorkspace}
-          onCreateFolder={openCreateFolder}
-          onEditFolder={openEditFolder}
-          onCreateSubfolder={openCreateSubFolder}
-          onDeleteFolder={openDeleteFolder}
-          onSelectFolder={onSelectFolderSidebar}
-          onSelectFolderView={onSelectFolderView}
-          onOpenUserSettings={openUserSettings}
-          user={user}
-          onOpenHelpCenter={openHelpCenter}
-          selectedFolder={selectedFolder}
-          onLogout={handleLogout}
-          isSettingsView={isSettingsView}
-          setIsSettingsView={setIsSettingsView}
-          setWorkspaces={setWorkspaces}
-          setActiveTab={setActiveTab}
-        />
-      )}
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Page header */}
-        <header
-          style={{
-            backgroundColor: colors['bg-primary'],
-            borderColor: colors['border-secondary'],
-          }}
-          className="min-h-[73px] flex justify-between items-center px-4 relative border-b"
+      <Suspense fallback={
+        <div 
+          className="flex-1 flex items-center justify-center"
+          style={{ backgroundColor: colors['bg-primary'] }}
         >
-          <SearchBar
-            searchTerm={searchTerm}
-            onSearchChange={handleSearchChange}
-          />
-          <div className="flex items-center gap-4">
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
-              onClick={openCreateFlow}
-              data-testid="new-flow-button"
-            >
-              New Flow
-            </ButtonNormal>
-            {/* Divider */}
-            <div
-              style={{ borderColor: colors['border-secondary'] }}
-              className="h-[25px] border-r justify-center items-center"
-            />
-            <div className="relative">
-              <div
-                className="relative cursor-pointer"
-                onClick={handleUserInfoClick}
+          <LoadingSpinner size="large" />
+        </div>
+      }>
+        {isLoading ? (
+          <div 
+            className="flex-1 flex items-center justify-center"
+            style={{ backgroundColor: colors['bg-primary'] }}
+          >
+            <LoadingSpinner size="large" />
+          </div>
+        ) : (
+          <>
+            {/* Sidebar with header and list of workspaces */}
+            {user && user.email && activeWorkspace && (
+              <Sidebar
+                workspaces={workspaces}
+                userEmail={user.email}
+                activeWorkspace={activeWorkspace}
+                setActiveWorkspace={updateActiveWorkspace}
+                onCreateFolder={openCreateFolder}
+                onEditFolder={openEditFolder}
+                onCreateSubfolder={openCreateSubFolder}
+                onDeleteFolder={openDeleteFolder}
+                onSelectFolder={onSelectFolderSidebar}
+                onSelectFolderView={onSelectFolderView}
+                onOpenUserSettings={openUserSettings}
+                user={user}
+                onOpenHelpCenter={openHelpCenter}
+                selectedFolder={selectedFolder}
+                onLogout={handleLogout}
+                isSettingsView={isSettingsView}
+                setIsSettingsView={setIsSettingsView}
+                setWorkspaces={setWorkspaces}
+                setActiveTab={setActiveTab}
+              />
+            )}
+
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Page header */}
+              <header
+                style={{
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-secondary'],
+                }}
+                className="min-h-[73px] flex justify-between items-center px-4 relative border-b"
               >
-                <UserInfo user={user} isActive={dropdownVisible} />
-                {dropdownVisible && (
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setDropdownVisible(false)}
+                <SearchBar
+                  searchTerm={searchTerm}
+                  onSearchChange={handleSearchChange}
+                />
+                <div className="flex items-center gap-4">
+                  <ButtonNormal
+                    variant="primary"
+                    size="small"
+                    leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
+                    onClick={openCreateFlow}
+                    data-testid="new-flow-button"
                   >
+                    New Flow
+                  </ButtonNormal>
+                  {/* Divider */}
+                  <div
+                    style={{ borderColor: colors['border-secondary'] }}
+                    className="h-[25px] border-r justify-center items-center"
+                  />
+                  <div className="relative">
                     <div
-                      className="absolute top-[68px] right-3.5"
-                      onClick={(e) => e.stopPropagation()}
+                      className="relative cursor-pointer"
+                      onClick={handleUserInfoClick}
                     >
-                      <UserDropdown
-                        user={user}
-                        onOpenUserSettings={openUserSettings}
-                        onOpenHelpCenter={openHelpCenter}
-                        onClose={() => setDropdownVisible(false)}
-                      />
+                      <UserInfo user={user} isActive={dropdownVisible} />
+                      {dropdownVisible && (
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setDropdownVisible(false)}
+                        >
+                          <div
+                            className="absolute top-[68px] right-3.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <UserDropdown
+                              user={user}
+                              onOpenUserSettings={openUserSettings}
+                              onOpenHelpCenter={openHelpCenter}
+                              onClose={() => setDropdownVisible(false)}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+                </div>
+              </header>
+
+              {/* Main content */}
+              <main
+                style={{ backgroundColor: colors['bg-secondary'] }}
+                className="flex-1 w-full h-[100%]"
+              >
+                {isSettingsView ? (
+                  <div className="h-full">
+                    <SettingsPage
+                      user={user}
+                      onClose={() => setIsSettingsView(false)}
+                      workspace={activeWorkspace || undefined}
+                      onWorkspaceUpdate={onWorkspaceUpdate}
+                      onWorkspaceDelete={onWorkspaceDelete}
+                      initialTab={activeTab}
+                    />
+                  </div>
+                ) : (
+                  activeWorkspace && (
+                    <Canvas
+                      workspace={activeWorkspace}
+                      selectedFolder={selectedFolder}
+                      searchTerm={searchTerm}
+                      onSelectWorkflow={handleSelectWorkflow}
+                      openCreateFlow={openCreateFlow}
+                      onDeleteWorkflow={openDeleteFlow}
+                      onEditWorkflow={openEditFlow}
+                      onDuplicateWorkflow={handleDuplicateWorkflow}
+                      onMoveWorkflow={openMoveFlow}
+                      currentView={currentView}
+                      onViewChange={setCurrentView}
+                      onStatusChange={handleStatusChange}
+                    />
+                  )
                 )}
-              </div>
+              </main>
             </div>
-          </div>
-        </header>
+          </>
+        )}
+      </Suspense>
 
-        {/* Main content */}
-        <main
-          style={{ backgroundColor: colors['bg-secondary'] }}
-          className="flex-1 w-full h-[100%]"
-        >
-          {isSettingsView ? (
-            <div className="h-full">
-              <SettingsPage
-                user={user}
-                onClose={() => setIsSettingsView(false)}
-                workspace={activeWorkspace || undefined}
-                onWorkspaceUpdate={onWorkspaceUpdate}
-                onWorkspaceDelete={onWorkspaceDelete}
-                initialTab={activeTab}
-              />
-            </div>
-          ) : (
-            activeWorkspace && (
-              <Canvas
-                workspace={activeWorkspace}
-                selectedFolder={selectedFolder}
-                searchTerm={searchTerm}
-                onSelectWorkflow={handleSelectWorkflow}
-                openCreateFlow={openCreateFlow}
-                onDeleteWorkflow={openDeleteFlow}
-                onEditWorkflow={openEditFlow}
-                onDuplicateWorkflow={handleDuplicateWorkflow}
-                onMoveWorkflow={openMoveFlow}
-                currentView={currentView}
-                onViewChange={setCurrentView}
-                onStatusChange={handleStatusChange}
-              />
-            )
-          )}
-        </main>
-      </div>
-
-      {/* Modal for user settings */}
+      {/* Modals */}
       {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
           <UserSettingsDynamic
