@@ -4,90 +4,58 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onboarding_step } from '@prisma/client';
+import LoadingSpinner from './LoadingSpinner';
 
 type OnboardingResponse = {
   onboardingStep: onboarding_step;
   completed: boolean;
 };
 
+const PUBLIC_PATHS = [
+  '/login',
+  '/signup',
+  '/auth/callback',
+  '/auth/confirm',
+  '/reset-password-request',
+  '/reset-password'
+] as const;
+
 export default function AuthCheck({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const isPublicPath = PUBLIC_PATHS.some((path: string) =>
+    pathname.startsWith(path)
+  );
 
   useEffect(() => {
     const checkAuth = async () => {
-      setIsLoading(true);
-
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+        // Batch all checks together
+        const [authResponse, onboardingResponse] = await Promise.all([
+          supabase.auth.getUser(),
+          fetch('/api/auth/check-onboarding')
+        ]);
 
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = authResponse;
 
-        const publicPaths = [
-          '/login',
-          '/signup',
-          '/auth/callback',
-          '/auth/confirm',
-          '/reset-password-request',
-          '/reset-password'
-        ];
-        const isPublicPath = publicPaths.some((path) =>
-          pathname.startsWith(path)
-        );
-
-        // If user is not authenticated and trying to access protected route
-        if ((!user || error) && !isPublicPath) {
-          router.push('/login');
+        // Handle no user case
+        if (!user || authError) {
+          if (!isPublicPath) {
+            router.push('/login');
+          }
+          setIsLoading(false);
           return;
         }
 
-        // If user is authenticated and trying to access public route
-        if (user && isPublicPath) {
-          const response = await fetch('/api/auth/check-onboarding');
-          
-          if (!response.ok) {
-            console.error('Error checking onboarding status');
-            router.push('/dashboard');
-            return;
-          }
-
-          const data = (await response.json()) as OnboardingResponse;
-
-          if (data.onboardingStep && !data.completed) {
-            const onboardingSteps: Record<onboarding_step, string> = {
-              'PERSONAL_INFO': '/onboarding/personal-info',
-              'PROFESSIONAL_INFO': '/onboarding/professional-info',
-              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-              'COMPLETED': '/onboarding/completed',
-              'INVITED_USER': '/onboarding/invited-user'
-            };
-
-            const currentStep = onboardingSteps[data.onboardingStep];
-            router.push(currentStep);
-          } else {
-            router.push('/dashboard');
-          }
-          return;
-        }
-
-        // If user is authenticated and accessing protected route
-        if (user && !isPublicPath) {
-          const response = await fetch('/api/auth/check-onboarding');
-
-          if (!response.ok) {
-            console.error('Error checking onboarding status');
-            setIsLoading(false);
-            return;
-          }
-
-          const data = (await response.json()) as OnboardingResponse;
+        // Handle onboarding check
+        if (onboardingResponse.ok) {
+          const data = (await onboardingResponse.json()) as OnboardingResponse;
 
           if (data.onboardingStep && !data.completed) {
             const onboardingSteps: Record<onboarding_step, string> = {
@@ -100,9 +68,11 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
             const currentStep = onboardingSteps[data.onboardingStep];
 
-            if (!pathname.startsWith(currentStep)) {
+            if (isPublicPath || !pathname.startsWith(currentStep)) {
               router.push(currentStep);
             }
+          } else if (isPublicPath) {
+            router.push('/dashboard');
           }
         }
       } catch (error) {
@@ -116,11 +86,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
   }, [pathname, router]);
 
   if (isLoading && pathname !== '/login' && !pathname.startsWith('/auth/')) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen size="large" />;
   }
 
   return <>{children}</>;
