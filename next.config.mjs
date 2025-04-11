@@ -41,18 +41,11 @@ const nextConfig = {
         ],
       },
       {
-        source: '/:path*', // Match all other paths except the embed path
-        has: [
-          {
-            type: 'header',
-            key: 'referer',
-            value: '(?!/app/shared/.*?/embed).*',
-          },
-        ],
+        source: '/:path((?!app/shared/.*?/embed).*)*', // Match all paths except the embed path
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY', // Prevent embedding
+            value: 'SAMEORIGIN', // Prevent embedding
           },
           {
             key: 'Content-Security-Policy',
