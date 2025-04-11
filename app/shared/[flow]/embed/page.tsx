@@ -563,107 +563,99 @@ export default function SharePage({
 
   return (
     <div
-      className="min-h-screen"
+      className="h-screen w-screen"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      <ProcessCanvas className="w-full overflow-hidden">
-        <div className="h-full flex items-center justify-center">
-          <div
-            className="rounded-lg border w-full max-w-3xl mx-6"
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
-            }}
-          >
-            <div className="p-8 flex flex-col">
-              {currentStep === -1 ? (
-                <>
-                  <div
-                    style={{
-                      height: '472px',
-                      backgroundColor: colors['bg-primary'],
-                    }}
-                    className="flex items-center justify-center"
+      <div className="h-full flex items-center justify-center">
+        <div
+          className={cn('rounded-lg border w-full mx-0', 'h-full')}
+          style={{
+            backgroundColor: colors['bg-primary'],
+            borderColor: colors['border-secondary'],
+          }}
+        >
+          <div className="p-8 flex flex-col">
+            {currentStep === -1 ? (
+              <>
+                <div className="flex-1 flex items-center justify-center">
+                  {processCardData && (
+                    <ProcessCard {...processCardData} isEmbed={true} />
+                  )}
+                </div>
+                <div className="flex items-center justify-end">
+                  <ButtonNormal
+                    variant="primary"
+                    size="small"
+                    onClick={() => handleStepNavigation('next')}
+                    trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                   >
-                    {processCardData && (
-                      <div className="w-full flex justify-center">
-                        <ProcessCard {...processCardData} />
-                      </div>
+                    Get Started
+                  </ButtonNormal>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-full w-full flex">
+                  <div className="w-full h-full flex flex-col">
+                    {currentStep === PathsToDisplayBlocks.length ? (
+                      <HorizontalLastStep
+                        onCopyLink={handleCopyLink}
+                        onRestart={handleRestart}
+                        isEmbed={true}
+                      />
+                    ) : PathsToDisplayBlocks[currentStep]?.type === 'DELAY' ? (
+                      <HorizontalDelay
+                        block={PathsToDisplayBlocks[currentStep]}
+                        isEmbed={true}
+                      />
+                    ) : (
+                      <HorizontalStep
+                        block={PathsToDisplayBlocks[currentStep]}
+                        selectedOptionIds={selectedOptions}
+                        onOptionSelect={handleOptionSelect}
+                        isFirstStep={currentStep === 0}
+                        isEmbed={true}
+                      />
                     )}
                   </div>
-                  <div className="flex items-center justify-end mt-8">
+                </div>
+
+                <div className="flex items-center justify-end mt-8">
+                  <div className="flex items-center gap-2">
+                    <ButtonNormal
+                      variant="secondary"
+                      size="small"
+                      onClick={() => handleStepNavigation('prev')}
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                    >
+                      Previous step
+                    </ButtonNormal>
                     <ButtonNormal
                       variant="primary"
                       size="small"
                       onClick={() => handleStepNavigation('next')}
+                      disabled={
+                        currentStep === PathsToDisplayBlocks.length ||
+                        (PathsToDisplayBlocks[currentStep]?.child_paths
+                          ?.length > 0 &&
+                          !selectedOptions.some(
+                            ([_, blockId]) =>
+                              blockId === PathsToDisplayBlocks[currentStep].id
+                          ))
+                      }
                       trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
                     >
-                      Get Started
+                      {currentStep === PathsToDisplayBlocks.length - 1
+                        ? 'Complete'
+                        : 'Next step'}
                     </ButtonNormal>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="h-[472px] flex">
-                    <div className="w-full flex flex-col">
-                      {currentStep === PathsToDisplayBlocks.length ? (
-                        <HorizontalLastStep
-                          onCopyLink={handleCopyLink}
-                          onRestart={handleRestart}
-                        />
-                      ) : PathsToDisplayBlocks[currentStep]?.type ===
-                        'DELAY' ? (
-                        <HorizontalDelay
-                          block={PathsToDisplayBlocks[currentStep]}
-                        />
-                      ) : (
-                        <HorizontalStep
-                          block={PathsToDisplayBlocks[currentStep]}
-                          selectedOptionIds={selectedOptions}
-                          onOptionSelect={handleOptionSelect}
-                          isFirstStep={currentStep === 0}
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end mt-8">
-                    <div className="flex items-center gap-2">
-                      <ButtonNormal
-                        variant="secondary"
-                        size="small"
-                        onClick={() => handleStepNavigation('prev')}
-                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                      >
-                        Previous step
-                      </ButtonNormal>
-                      <ButtonNormal
-                        variant="primary"
-                        size="small"
-                        onClick={() => handleStepNavigation('next')}
-                        disabled={
-                          currentStep === PathsToDisplayBlocks.length ||
-                          (PathsToDisplayBlocks[currentStep]?.child_paths
-                            ?.length > 0 &&
-                            !selectedOptions.some(
-                              ([_, blockId]) =>
-                                blockId === PathsToDisplayBlocks[currentStep].id
-                            ))
-                        }
-                        trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
-                      >
-                        {currentStep === PathsToDisplayBlocks.length - 1
-                          ? 'Complete'
-                          : 'Next step'}
-                      </ButtonNormal>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </ProcessCanvas>
+      </div>
     </div>
   );
 }

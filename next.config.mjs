@@ -28,15 +28,28 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/app/shared/:flow/embed', // dynamic route match
+        source: '/app/shared/:flow/embed', // Allow embedding for this specific path
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'ALLOWALL', // or just omit this header
+            value: 'ALLOWALL',
           },
           {
             key: 'Content-Security-Policy',
-            value: 'frame-ancestors *', // allow embedding from anywhere (or restrict to Notion domains)
+            value: 'frame-ancestors *',
+          },
+        ],
+      },
+      {
+        source: '/:path*', // Match all other paths
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY', // Prevent embedding
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'none'", // Prevent embedding via CSP
           },
         ],
       },
