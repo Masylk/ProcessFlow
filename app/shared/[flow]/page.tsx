@@ -161,7 +161,8 @@ export default function SharedPage({
         } = await supabase.auth.getUser();
 
         if (!authUser || authError) {
-          window.location.href = '/login';
+          setUser(null);
+          // window.location.href = '/login';
           return;
         }
 
@@ -992,7 +993,7 @@ export default function SharedPage({
       className="min-h-screen flex"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      {user && workspace && workflowData && (
+      {workspace && workflowData && (
         <>
           {viewMode === 'vertical' && (
             <Sidebar
@@ -1021,7 +1022,7 @@ export default function SharedPage({
             </div>
 
             {/* User Settings Modal */}
-            {userSettingsVisible && (
+            {/* {userSettingsVisible && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <UserSettingsDynamic
                   user={user}
@@ -1036,14 +1037,14 @@ export default function SharedPage({
                   updateNewPassword={setNewPassword}
                 />
               </div>
-            )}
+            )} */}
 
             {/* Help Center Modal */}
-            {helpCenterVisible && (
+            {/* {helpCenterVisible && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
               </div>
-            )}
+            )} */}
 
             {/* Link Copied Alert */}
             {showLinkCopiedAlert && (
