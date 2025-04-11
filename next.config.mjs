@@ -41,7 +41,14 @@ const nextConfig = {
         ],
       },
       {
-        source: '/:path*', // Match all other paths
+        source: '/:path*', // Match all other paths except the embed path
+        has: [
+          {
+            type: 'header',
+            key: 'referer',
+            value: '(?!/app/shared/.*?/embed).*',
+          },
+        ],
         headers: [
           {
             key: 'X-Frame-Options',
