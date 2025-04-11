@@ -5,7 +5,11 @@ import { BaseStepProps } from './BaseStep';
 import Image from 'next/image';
 import { DelayType } from '../../../types';
 
-export default function HorizontalDelay({ block }: BaseStepProps) {
+interface HorizontalDelayProps extends BaseStepProps {
+  isEmbed?: boolean;
+}
+
+export default function HorizontalDelay({ block, isEmbed = false }: HorizontalDelayProps) {
   const colors = useColors();
 
   const getDelayText = () => {
@@ -53,111 +57,166 @@ export default function HorizontalDelay({ block }: BaseStepProps) {
 
   if (block.delay_type === DelayType.FIXED_DURATION) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
+      <div className={cn(
+        "flex flex-col gap-4",
+        isEmbed && "h-[772px] flex items-center justify-center"
+      )}>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                "rounded-[6px] border shadow-sm flex items-center justify-center",
+                isEmbed ? "w-16 h-16" : "w-12 h-12"
+              )}
+              style={{
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-secondary'],
+              }}
+            >
+              <Image
+                src={getDelayIcon()}
+                alt="Delay"
+                width={isEmbed ? 32 : 24}
+                height={isEmbed ? 32 : 24}
+              />
+            </div>
+            <span
+              className={cn(
+                "font-semibold",
+                isEmbed ? "text-2xl" : "text-base"
+              )}
+              style={{ color: colors['text-primary'] }}
+            >
+              {getDelayTitle()}
+            </span>
+          </div>
+
           <div
-            className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
-            }}
+            className={cn(
+              "flex items-center gap-2 p-3 rounded-lg bg-opacity-5",
+              isEmbed && "p-4"
+            )}
+            style={{ backgroundColor: colors['bg-secondary'] }}
           >
             <Image
-              src={getDelayIcon()}
-              alt="Delay"
-              width={24}
-              height={24}
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
+              alt="Info"
+              width={isEmbed ? 24 : 20}
+              height={isEmbed ? 24 : 20}
             />
+            <span 
+              className={cn(
+                isEmbed ? "text-lg" : "text-sm"
+              )} 
+              style={{ color: colors['text-secondary'] }}
+            >
+              Flow paused for {getDelayText()}
+            </span>
           </div>
-          <span
-            className="text-base font-semibold"
-            style={{ color: colors['text-primary'] }}
-          >
-            {getDelayTitle()}
-          </span>
-        </div>
-
-        <div
-          className="flex items-center gap-2 p-3 rounded-lg bg-opacity-5"
-          style={{ backgroundColor: colors['bg-secondary'] }}
-        >
-          <Image
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
-            alt="Info"
-            width={20}
-            height={20}
-          />
-          <span className="text-sm" style={{ color: colors['text-secondary'] }}>
-            Flow paused for {getDelayText()}
-          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
-            }}
-          >
-            <Image
-              src={getDelayIcon()}
-              alt="Delay"
-              width={24}
-              height={24}
-            />
-          </div>
-          <span
-            className="text-base font-semibold"
-            style={{ color: colors['text-primary'] }}
-          >
-            {getDelayTitle()}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm" style={{ color: colors['text-secondary'] }}>
-            Waiting for:
-          </span>
-          <span className="text-sm" style={{ color: colors['text-primary'] }}>
-            {getDelayText()}
-          </span>
-        </div>
-
-        {block.delay_seconds && (
-          <div className="flex items-center gap-2">
-            <Image
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
-              alt="Clock"
-              width={16}
-              height={16}
-            />
-            <span className="text-sm" style={{ color: colors['text-secondary'] }}>
-              Expires after {expirationText()}
+    <div className={cn(
+      "flex flex-col gap-4",
+      isEmbed && "h-[772px] flex items-center justify-center"
+    )}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                "rounded-[6px] border shadow-sm flex items-center justify-center",
+                isEmbed ? "w-16 h-16" : "w-12 h-12"
+              )}
+              style={{
+                backgroundColor: colors['bg-primary'],
+                borderColor: colors['border-secondary'],
+              }}
+            >
+              <Image
+                src={getDelayIcon()}
+                alt="Delay"
+                width={isEmbed ? 32 : 24}
+                height={isEmbed ? 32 : 24}
+              />
+            </div>
+            <span
+              className={cn(
+                "font-semibold",
+                isEmbed ? "text-2xl" : "text-base"
+              )}
+              style={{ color: colors['text-primary'] }}
+            >
+              {getDelayTitle()}
             </span>
           </div>
-        )}
-      </div>
 
-      <div
-        className="flex items-center gap-2 p-3 rounded-lg bg-opacity-5"
-        style={{ backgroundColor: colors['bg-secondary'] }}
-      >
-        <Image
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
-          alt="Info"
-          width={20}
-          height={20}
-        />
-        <span className="text-sm" style={{ color: colors['text-secondary'] }}>
-          {block.delay_seconds ? "Flow paused until event occurs or time expires" : "Flow paused until event occurs"}
-        </span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span 
+                className={cn(
+                  isEmbed ? "text-lg" : "text-sm"
+                )} 
+                style={{ color: colors['text-secondary'] }}
+              >
+                Waiting for:
+              </span>
+              <span 
+                className={cn(
+                  isEmbed ? "text-lg" : "text-sm"
+                )} 
+                style={{ color: colors['text-primary'] }}
+              >
+                {getDelayText()}
+              </span>
+            </div>
+
+            {block.delay_seconds && (
+              <div className="flex items-center gap-2">
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
+                  alt="Clock"
+                  width={isEmbed ? 20 : 16}
+                  height={isEmbed ? 20 : 16}
+                />
+                <span 
+                  className={cn(
+                    isEmbed ? "text-lg" : "text-sm"
+                  )} 
+                  style={{ color: colors['text-secondary'] }}
+                >
+                  Expires after {expirationText()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "flex items-center gap-2 p-3 rounded-lg bg-opacity-5",
+            isEmbed && "p-4"
+          )}
+          style={{ backgroundColor: colors['bg-secondary'] }}
+        >
+          <Image
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
+            alt="Info"
+            width={isEmbed ? 24 : 20}
+            height={isEmbed ? 24 : 20}
+          />
+          <span 
+            className={cn(
+              isEmbed ? "text-lg" : "text-sm"
+            )} 
+            style={{ color: colors['text-secondary'] }}
+          >
+            {block.delay_seconds ? "Flow paused until event occurs or time expires" : "Flow paused until event occurs"}
+          </span>
+        </div>
       </div>
     </div>
   );

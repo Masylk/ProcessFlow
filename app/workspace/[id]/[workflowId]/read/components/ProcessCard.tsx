@@ -2,6 +2,7 @@
 
 import { useColors } from '@/app/theme/hooks';
 import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 interface Integration {
   name: string;
@@ -22,6 +23,7 @@ interface ProcessCardProps {
   integrations: Integration[];
   author?: Author;
   lastUpdate: string;
+  isEmbed?: boolean;
 }
 
 export default function ProcessCard({
@@ -30,6 +32,7 @@ export default function ProcessCard({
   integrations,
   author,
   lastUpdate,
+  isEmbed = false,
 }: ProcessCardProps) {
   const colors = useColors();
   const [showPopover, setShowPopover] = useState(false);
@@ -89,33 +92,58 @@ export default function ProcessCard({
       style={{
         borderColor: colors['border-secondary'],
       }}
-      className="w-[636px] rounded-xl flex flex-col transition-all duration-200"
+      className={cn(
+        'rounded-xl flex flex-col transition-all duration-200',
+        isEmbed
+          ? 'w-full h-[805px] flex items-center justify-center'
+          : 'w-[636px]'
+      )}
     >
-      <div className="flex gap-6">
-        {/* Large Icon */}
+      <div
+        className={cn(
+          'flex gap-6',
+          isEmbed && 'flex-row items-start max-w-3xl'
+        )}
+      >
+        {/* Large Icon - keep original size */}
         <div
           style={{
             backgroundColor: colors['bg-secondary'],
           }}
           className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
         >
-          <img src={icon} alt={workflow.name} className="w-10 h-10" />
+          <img
+            src={icon}
+            alt={workflow.name}
+            className="w-10 h-10 object-contain"
+          />
         </div>
 
         {/* Content Container */}
-        <div className="flex flex-col gap-4 flex-1">
+        <div
+          className={cn(
+            'flex flex-col gap-4 flex-1',
+            isEmbed && 'items-start text-left'
+          )}
+        >
           {/* Title and Description */}
           <div className="flex flex-col gap-1">
             <h3
               style={{ color: colors['text-primary'] }}
-              className="text-xl font-semibold leading-[30px]"
+              className={cn(
+                'font-semibold leading-[30px]',
+                isEmbed ? 'text-3xl' : 'text-xl'
+              )}
             >
               {workflow.name}
             </h3>
             {workflow.description && (
               <p
                 style={{ color: colors['text-quaternary'] }}
-                className="text-md"
+                className={cn(
+                  'max-w-2xl',
+                  isEmbed ? 'text-lg mt-2' : 'text-md'
+                )}
               >
                 {workflow.description}
               </p>
@@ -123,11 +151,16 @@ export default function ProcessCard({
           </div>
 
           {/* Integration Badges */}
-          <div className="flex flex-wrap gap-2 items-center">
+          <div
+            className={cn(
+              'flex flex-wrap gap-2',
+              isEmbed ? 'justify-start mt-4' : 'items-center'
+            )}
+          >
             {visibleIntegrations.map((integration, index) => (
               <IntegrationBadge key={index} integration={integration} />
             ))}
-            
+
             {hasHiddenIntegrations && (
               <div
                 className="relative"
@@ -169,17 +202,28 @@ export default function ProcessCard({
           </div>
 
           {/* Footer: Author and Last Update */}
-          <div className="flex items-center gap-4">
+          <div
+            className={cn(
+              'flex items-center gap-4',
+              isEmbed && 'mt-4 flex-row'
+            )}
+          >
             {author && (
               <div className="flex items-center gap-2">
                 <img
                   src={author.avatar}
                   alt={author.name}
-                  className="w-5 h-5 rounded-full"
+                  className={cn(
+                    'rounded-full',
+                    isEmbed ? 'w-8 h-8' : 'w-5 h-5'
+                  )}
                 />
                 <span
                   style={{ color: colors['text-secondary'] }}
-                  className="text-sm font-medium"
+                  className={cn(
+                    'font-medium',
+                    isEmbed ? 'text-base' : 'text-sm'
+                  )}
                 >
                   {author.name}
                 </span>
@@ -188,7 +232,7 @@ export default function ProcessCard({
             <div className="flex items-center gap-2">
               <span
                 style={{ color: colors['text-quaternary'] }}
-                className="text-sm"
+                className={cn(isEmbed ? 'text-base' : 'text-sm')}
               >
                 Last update: {lastUpdate}
               </span>

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface HorizontalStepProps extends BaseStepProps {
   isFirstStep?: boolean;
+  isEmbed?: boolean;
 }
 
 export default function HorizontalStep({
@@ -16,6 +17,7 @@ export default function HorizontalStep({
   selectedOptionIds,
   onOptionSelect,
   isFirstStep = false,
+  isEmbed = false,
 }: HorizontalStepProps) {
   const colors = useColors();
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
@@ -80,7 +82,8 @@ export default function HorizontalStep({
   return (
     <div
       className={cn(
-        'grid h-[472px]',
+        'grid',
+        isEmbed ? 'h-[772px]' : 'h-[472px]',
         !block.image && (!block.child_paths || block.child_paths.length === 0)
           ? 'items-center justify-center'
           : 'grid-rows-[auto_1fr]'
@@ -162,7 +165,13 @@ export default function HorizontalStep({
             {hasBothImageAndOptions ? (
               <div className="flex flex-col h-full">
                 {/* Fixed height scrollable container for image */}
-                <div className="h-[160px] flex-shrink-0 overflow-hidden rounded-lg mb-4">
+                <div
+                  className={cn(
+                    'overflow-hidden rounded-lg mb-4',
+                    isEmbed ? 'h-[450px]' : 'h-[160px]',
+                    'flex-shrink-0'
+                  )}
+                >
                   {signedImageUrl ? (
                     <img
                       src={signedImageUrl}
@@ -291,16 +300,21 @@ export default function HorizontalStep({
               <div className="flex flex-col gap-6 overflow-y-auto h-full">
                 {/* Regular Image Section (when no options) */}
                 {block.image && (
-                  <div className="rounded-lg overflow-hidden">
+                  <div
+                    className={cn(
+                      'rounded-lg overflow-hidden',
+                      isEmbed ? 'h-[500px]' : 'h-[350px]'
+                    )}
+                  >
                     {signedImageUrl ? (
                       <img
                         src={signedImageUrl}
                         alt="Step visualization"
-                        className="w-full h-[350px] object-cover"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div
-                        className="w-full h-[350px] flex items-center justify-center"
+                        className="w-full h-full flex items-center justify-center"
                         style={{ backgroundColor: colors['bg-secondary'] }}
                       >
                         <div
