@@ -29,49 +29,69 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const isPublicPath = PUBLIC_PATHS.some((path: string) =>
-    pathname.startsWith(path)
-  );
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Batch all checks together
-        const [authResponse, onboardingResponse] = await Promise.all([
-          supabase.auth.getUser(),
-          fetch('/api/auth/check-onboarding')
-        ]);
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-        const { data: { user }, error: authError } = authResponse;
+        const sharePaths = [
+          '/shared',
+          '/step-icons',
+          '/apps',
+          '/assets',
+          '.png',
+          '.svg',
+          '/unauthorized',
+          '/monitoring',
+        ];
 
-        // Handle no user case
-        if (!user || authError) {
-          if (!isPublicPath) {
-            router.push('/login');
-          }
-          setIsLoading(false);
+        const isPublicPath = PUBLIC_PATHS.some((path) =>
+          pathname.startsWith(path)
+        );
+
+        const isSharePath = sharePaths.some((path) => pathname.includes(path));
+
+        // Redirect to login if not authenticated and not on public/share path
+        if ((!user || error) && !isPublicPath && !isSharePath) {
+          console.log('Redirecting to login: ', pathname);
+          router.push('/login');
           return;
         }
 
-        // Handle onboarding check
-        if (onboardingResponse.ok) {
-          const data = (await onboardingResponse.json()) as OnboardingResponse;
+        // Check onboarding status if user is authenticated
+        if (user) {
+          const response = await fetch('/api/auth/check-onboarding');
+
+          if (!response.ok) {
+            console.error('Error checking onboarding status');
+            if (isPublicPath) {
+              router.push('/dashboard');
+            }
+            return;
+          }
+
+          const data = (await response.json()) as OnboardingResponse;
 
           if (data.onboardingStep && !data.completed) {
             const onboardingSteps: Record<onboarding_step, string> = {
-              'PERSONAL_INFO': '/onboarding/personal-info',
-              'PROFESSIONAL_INFO': '/onboarding/professional-info',
-              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-              'COMPLETED': '/onboarding/completed',
-              'INVITED_USER': '/onboarding/invited-user'
+              PERSONAL_INFO: '/onboarding/personal-info',
+              PROFESSIONAL_INFO: '/onboarding/professional-info',
+              WORKSPACE_SETUP: '/onboarding/workspace-setup',
+              COMPLETED: '/onboarding/completed',
+              INVITED_USER: '/onboarding/invited-user',
             };
 
             const currentStep = onboardingSteps[data.onboardingStep];
 
+            // Redirect to appropriate onboarding step if on public path or wrong step
             if (isPublicPath || !pathname.startsWith(currentStep)) {
               router.push(currentStep);
             }
           } else if (isPublicPath) {
+            // Redirect completed users away from public paths
             router.push('/dashboard');
           }
         }
@@ -83,7 +103,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, [pathname, router]);
+  }, [pathname, router, supabase.auth]);
 
   if (isLoading && pathname !== '/login' && !pathname.startsWith('/auth/')) {
     return <LoadingSpinner fullScreen size="large" />;

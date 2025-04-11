@@ -9,6 +9,7 @@ export async function authMiddleware(request: NextRequest) {
   const { data: { user }, error } = await supabase.auth.getUser();
   
   if (error || !user) {
+    console.log('User not authenticated:', error);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
