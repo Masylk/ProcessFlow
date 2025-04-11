@@ -13,6 +13,17 @@ const authRoutes = [
   '/set-new-password'
 ];
 
+const shareRoutes = [
+  '/shared',
+  '/step-icons',
+  '/apps',
+  '/assets',
+  '.png',
+  '.svg',
+  '/unauthorized',
+  '/monitoring',
+];
+
 export async function middleware(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -22,6 +33,7 @@ export async function middleware(request: NextRequest) {
     
     // Check if current route is an auth route
     const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+    const isShareRoute = shareRoutes.some(route => pathname.includes(route));
 
     // Skip middleware for static and API routes
     if (
@@ -68,7 +80,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // If not authenticated and trying to access protected routes
-    if (!isAuthRoute) {
+    if (!isAuthRoute && !isShareRoute) {
+      console.log('Redirecting to login: ', pathname);
       const redirectUrl = new URL('/login', request.url);
       redirectUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(redirectUrl);

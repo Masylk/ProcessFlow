@@ -59,6 +59,36 @@ export interface Path {
   parent_blocks: PathParentBlock[];  // Assuming a PathParentBlock interface exists
 }
 
+export interface WorkflowData {
+  id: string;
+  name: string;
+  is_public: boolean;
+  public_access_id: string;
+  workspace_id: string;
+  workspace: {
+    id: string;
+    name: string;
+  };
+  category: {
+    id: string;
+    name: string;
+  };
+  icon?: string;
+  description?: string;
+  author?: {
+    full_name: string;
+    avatar_url?: string;
+  };
+  folder?: {
+    id: string;
+    name: string;
+    parent?: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
 export enum DelayType {
   FIXED_DURATION = 'FIXED_DURATION',
   WAIT_FOR_EVENT = 'WAIT_FOR_EVENT'

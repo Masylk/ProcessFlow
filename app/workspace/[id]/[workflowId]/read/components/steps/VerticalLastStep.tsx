@@ -5,10 +5,11 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import { motion } from 'framer-motion';
 import { BaseStepProps } from './BaseStep';
 
-interface VerticalLastStepProps extends Pick<BaseStepProps, 'onCopyLink'> {
+interface VerticalLastStepProps {
   icon: string;
   onRestart: () => void;
   className?: string;
+  onCopyLink: () => void;
 }
 
 export default function VerticalLastStep({
@@ -107,9 +108,7 @@ export default function VerticalLastStep({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.4 }}
-          >
-          
-          </motion.div>
+          ></motion.div>
         </div>
       </motion.div>
     </div>

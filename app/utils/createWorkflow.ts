@@ -20,6 +20,17 @@ export async function createWorkflow({
   icon,
 }: CreateWorkflowParams): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
+    // Validate name before making the request
+    if (name.includes('-')) {
+      return {
+        workflow: null,
+        error: {
+          title: 'Invalid Character',
+          description: 'Workflow name cannot contain hyphens (-)'
+        }
+      };
+    }
+
     const response = await fetch('/api/workspaces/workflows', {
       method: 'POST',
       headers: {
