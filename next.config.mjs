@@ -28,24 +28,11 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/app/shared/:flow/embed', // Allow embedding for this specific path
+        source: '/:path*', // Match all other paths
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'ALLOWALL',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: 'frame-ancestors *',
-          },
-        ],
-      },
-      {
-        source: '/:path((?!app/shared/.*?/embed).*)*', // Match all paths except the embed path
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN', // Prevent embedding
+            value: 'DENY', // Prevent embedding
           },
           {
             key: 'Content-Security-Policy',

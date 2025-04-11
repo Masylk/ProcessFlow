@@ -25,6 +25,15 @@ const shareRoutes = [
 ];
 
 export async function middleware(request: NextRequest) {
+  // Add embed headers if needed
+  if (request.nextUrl.pathname.startsWith('/shared/') && request.nextUrl.pathname.endsWith('/embed')) {
+    console.log('Adding embed headers');
+    const response = NextResponse.next();
+    response.headers.set('X-Frame-Options', 'ALLOWALL');
+    response.headers.set('Content-Security-Policy', 'frame-ancestors *');
+    return response;
+  }
+
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
