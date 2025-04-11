@@ -16,7 +16,8 @@ interface ShareModalProps {
     workflowId?: string;
   };
   is_public?: boolean;
-  onToggleAccess: () => void;
+  onToggleAccess?: () => void;
+  shareUrl?: string;
 }
 
 export default function ShareModal({
@@ -27,6 +28,7 @@ export default function ShareModal({
   params,
   is_public = false,
   onToggleAccess,
+  shareUrl,
 }: ShareModalProps) {
   const colors = useColors();
   const [activeTab, setActiveTab] = useState('share');
@@ -131,7 +133,11 @@ export default function ShareModal({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareableLink + '/share');
+      if (!shareUrl) {
+        await navigator.clipboard.writeText(shareableLink);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+      }
       setShowToast(true);
     } catch (err) {
       console.error('Failed to copy link: ', err);
@@ -139,11 +145,11 @@ export default function ShareModal({
   };
 
   const handleCopyEmbedSnippet = () => {
-    if (!params) {
+    if (!shareUrl) {
       return;
     }
     const embedCode = `<iframe
-    src="${window.location.origin}/workspace/${params.id}/${params.workflowId}/read/share"
+    src="${shareUrl}/embed"
     width="100%"
     height="600px"
     style="border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 8px;"
@@ -233,11 +239,12 @@ export default function ShareModal({
           <div className="flex justify-between items-center w-full">
             {activeTab === 'share' && (
               <>
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => onToggleAccess()}
-                  >
+                <div className="flex justify-between w-full gap-4">
+                  {onToggleAccess && (
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => onToggleAccess()}
+                    >
                     <div
                       className={`w-8 h-4 rounded-full transition-colors duration-200 ${
                         is_public ? 'bg-brand-solid' : 'bg-tertiary'
@@ -259,8 +266,9 @@ export default function ShareModal({
                       style={{ color: colors['text-primary'] }}
                     >
                       {is_public ? 'Public' : 'Private'}
-                    </span>
-                  </div>
+                      </span>
+                    </div>
+                  )}
                   <ButtonNormal
                     variant="primary"
                     size="small"

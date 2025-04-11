@@ -31,6 +31,7 @@ interface HeaderProps {
   };
   is_public?: boolean;
   onToggleAccess: () => void;
+  shareUrl: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -42,6 +43,7 @@ const Header: React.FC<HeaderProps> = ({
   params,
   is_public = false,
   onToggleAccess,
+  shareUrl,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -235,6 +237,7 @@ const Header: React.FC<HeaderProps> = ({
         params={params}
         is_public={is_public}
         onToggleAccess={onToggleAccess}
+        shareUrl={shareUrl}
       />
     </HeaderHeightContext.Provider>
   );

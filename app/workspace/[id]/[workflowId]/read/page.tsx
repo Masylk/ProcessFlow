@@ -27,6 +27,10 @@ import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
 import VerticalDelay from './components/steps/VerticalDelay';
 import HorizontalDelay from './components/steps/HorizontalDelay';
+import {
+  createAndCopyShareLink,
+  createShareLink,
+} from '../utils/createShareLink';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
@@ -109,7 +113,7 @@ export default function ExamplePage() {
   const [generatedPathIds] = useState<Set<number>>(new Set());
   const [generatedBlockIds] = useState<Set<number>>(new Set());
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
-  // const [workflow, setWorkflow] = useState<WorkflowData | null>(null);
+  const [shareUrl, setShareUrl] = useState<string>('');
 
   // Add sourceBlockPairs as a component-level variable
   const sourceBlockPairs: SourceBlockPair[] = [];
@@ -631,6 +635,17 @@ export default function ExamplePage() {
 
         items.push({ label: workflowData.name });
         setBreadcrumbItems(items);
+
+        // Generate share URL when we have workflow data
+        if (workflowData) {
+          const url = createShareLink(
+            workflowData.name,
+            workflowData.public_access_id
+          );
+          if (url) {
+            setShareUrl(url);
+          }
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -871,19 +886,13 @@ export default function ExamplePage() {
 
   const handleCopyLink = () => {
     if (!workflowData) {
-      console.log('no workflow', workflowData);
       return;
     }
-    console.log('workflow copy link', workflowData);
-    // Format the workflow name (replace spaces with underscores)
-    const formattedName = workflowData.name.replace(/\s+/g, '-');
-
-    // Create the share URL
-    const shareUrl = `${window.location.origin}/shared/${formattedName}--pf-${workflowData.public_access_id}`;
-
-    // Copy to clipboard
-    navigator.clipboard.writeText(shareUrl);
-    setShowLinkCopiedAlert(true);
+    const shareUrl = createAndCopyShareLink(
+      workflowData.name,
+      workflowData.public_access_id
+    );
+    if (shareUrl) setShowLinkCopiedAlert(true);
 
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
@@ -1010,6 +1019,7 @@ export default function ExamplePage() {
                 }
                 is_public={workflowData?.is_public}
                 onToggleAccess={toggleWorkflowAccess}
+                shareUrl={shareUrl}
               />
               <div className="absolute right-4 top-20 flex items-center gap-2">
                 <ViewModeSwitch mode={viewMode} onModeChange={setViewMode} />
