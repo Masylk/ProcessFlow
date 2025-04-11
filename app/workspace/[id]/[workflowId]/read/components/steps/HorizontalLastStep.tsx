@@ -3,7 +3,8 @@ import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { BaseStepProps } from './BaseStep';
 
-interface HorizontalLastStepProps extends Pick<BaseStepProps, 'onCopyLink'> {
+interface HorizontalLastStepProps {
+  onCopyLink: () => void;
   onRestart: () => void;
 }
 

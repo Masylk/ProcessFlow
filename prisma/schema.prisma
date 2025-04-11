@@ -205,7 +205,7 @@ model workflow {
   workspace_id     Int
   team_tags        String[]
   folder_id        Int?
-  is_public        Boolean            @default(false)
+  is_public        Boolean            @default(true)
   public_access_id String?            @unique
   is_template      Boolean            @default(false)
   status           workflow_status    @default(DRAFT)

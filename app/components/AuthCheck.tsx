@@ -36,14 +36,28 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           '/auth/callback',
           '/auth/confirm',
           '/reset-password-request',
-          '/reset-password'
+          '/reset-password',
         ];
+
+        const sharePaths = [
+          '/shared',
+          '/step-icons',
+          '/apps',
+          '/assets',
+          '.png',
+          '.svg',
+          '/unauthorized',
+          '/monitoring',
+        ];
+
         const isPublicPath = publicPaths.some((path) =>
           pathname.startsWith(path)
         );
 
-        // If user is not authenticated and trying to access protected route
-        if ((!user || error) && !isPublicPath) {
+        const isSharePath = sharePaths.some((path) => pathname.includes(path));
+
+        if ((!user || error) && !isPublicPath && !isSharePath) {
+          console.log('Redirecting to login: ', pathname);
           router.push('/login');
           return;
         }
@@ -51,7 +65,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
         // If user is authenticated and trying to access public route
         if (user && isPublicPath) {
           const response = await fetch('/api/auth/check-onboarding');
-          
+
           if (!response.ok) {
             console.error('Error checking onboarding status');
             router.push('/dashboard');
@@ -62,11 +76,11 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
           if (data.onboardingStep && !data.completed) {
             const onboardingSteps: Record<onboarding_step, string> = {
-              'PERSONAL_INFO': '/onboarding/personal-info',
-              'PROFESSIONAL_INFO': '/onboarding/professional-info',
-              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-              'COMPLETED': '/onboarding/completed',
-              'INVITED_USER': '/onboarding/invited-user'
+              PERSONAL_INFO: '/onboarding/personal-info',
+              PROFESSIONAL_INFO: '/onboarding/professional-info',
+              WORKSPACE_SETUP: '/onboarding/workspace-setup',
+              COMPLETED: '/onboarding/completed',
+              INVITED_USER: '/onboarding/invited-user',
             };
 
             const currentStep = onboardingSteps[data.onboardingStep];
@@ -91,11 +105,11 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
           if (data.onboardingStep && !data.completed) {
             const onboardingSteps: Record<onboarding_step, string> = {
-              'PERSONAL_INFO': '/onboarding/personal-info',
-              'PROFESSIONAL_INFO': '/onboarding/professional-info',
-              'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-              'COMPLETED': '/onboarding/completed',
-              'INVITED_USER': '/onboarding/invited-user'
+              PERSONAL_INFO: '/onboarding/personal-info',
+              PROFESSIONAL_INFO: '/onboarding/professional-info',
+              WORKSPACE_SETUP: '/onboarding/workspace-setup',
+              COMPLETED: '/onboarding/completed',
+              INVITED_USER: '/onboarding/invited-user',
             };
 
             const currentStep = onboardingSteps[data.onboardingStep];

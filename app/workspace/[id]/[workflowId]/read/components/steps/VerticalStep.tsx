@@ -16,7 +16,6 @@ export default function VerticalStep({
   defaultExpanded = true,
   onToggle,
   children,
-  onCopyLink,
   stepRef,
   selectedOptionIds,
   onOptionSelect,
@@ -228,9 +227,7 @@ export default function VerticalStep({
             </motion.div>
             <div className="flex items-center gap-2 min-w-0">
               <span
-                className={cn(
-                  'text-left text-base font-semibold'
-                )}
+                className={cn('text-left text-base font-semibold')}
                 style={{
                   color: colors['text-primary'],
                 }}

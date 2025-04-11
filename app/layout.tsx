@@ -14,6 +14,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 // Server-side environment check
 function checkServerEnvironment() {
+  return;
   if (process.env.NODE_ENV !== 'production') {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {

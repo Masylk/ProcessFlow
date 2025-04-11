@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getActiveUser } from '@/lib/auth';
 import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
+import { generatePublicAccessId } from '../../workflows/utils';
 
 /**
  * @swagger
@@ -226,6 +227,29 @@ export async function POST(req: NextRequest) {
       author_id,
     } = await req.json();
 
+    // Validate required fields
+    if (!name || !workspace_id) {
+      return NextResponse.json(
+        { error: 'Name and workspace_id are required' },
+        { status: 400 }
+      );
+    }
+
+    // Check for forbidden characters
+    if (name.includes('-')) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid workflow name',
+          title: 'Invalid Character',
+          description: 'Workflow name cannot contain hyphens (-)'
+        },
+        { status: 400 }
+      );
+    }
+
+    // Clean whitespaces in name
+    const cleanedName = name.trim().replace(/\s+/g, ' ');
+
     // Get workspace with subscription info and workflow count
     const workspace = await prisma.workspace.findUnique({
       where: { id: Number(workspace_id) },
@@ -272,17 +296,71 @@ export async function POST(req: NextRequest) {
       );
     }
 
-
     console.log('Creating workflow with author_id:', author_id, typeof author_id);
-    // Create the workflow with author
-    const newWorkflow = await prisma.workflow.create({
+    // Create the workflow with cleaned name
+    const workflow = await prisma.workflow.create({
       data: {
-        name,
+        name: cleanedName,
         description,
-        workspace_id: Number(workspace_id),
-        folder_id: folder_id ? Number(folder_id) : null,
+        workspace_id,
+        folder_id,
+        is_public: true,
         team_tags,
         author_id: author_id ? Number(author_id) : null,
+        public_access_id: await generatePublicAccessId(cleanedName, 0, workspace_id),
+      },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // If we need to update the public_access_id with the actual workflow ID
+    const updatedPublicId = await generatePublicAccessId(
+      workflow.name,
+      workflow.id,
+      workflow.workspace_id
+    );
+
+    // Update the workflow with the final public_access_id
+    const updatedWorkflow = await prisma.workflow.update({
+      where: { id: workflow.id },
+      data: { public_access_id: updatedPublicId },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -317,7 +395,7 @@ export async function POST(req: NextRequest) {
       console.error('Error checking workflow limit for email:', emailError);
     }
 
-    return NextResponse.json(newWorkflow, { status: 201 });
+    return NextResponse.json(updatedWorkflow, { status: 201 });
   } catch (error: any) {
     console.error('Error adding workflow:', error);
     return NextResponse.json(
