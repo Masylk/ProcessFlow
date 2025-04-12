@@ -100,7 +100,11 @@ export default function ProcessCard({
           }}
           className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
         >
-          <img src={icon} alt={workflow.name} className="w-10 h-10 object-contain" />
+          <img
+            src={icon}
+            alt={workflow.name}
+            className="w-10 h-10 object-contain"
+          />
         </div>
 
         {/* Content Container */}
@@ -170,7 +174,11 @@ export default function ProcessCard({
           <div className="flex items-center gap-4 flex-row">
             {author && (
               <div className="flex items-center gap-2">
-                <img src={author.avatar} alt={author.name} className="rounded-full w-8 h-8" />
+                <img
+                  src={author.avatar}
+                  alt={author.name}
+                  className="rounded-full w-8 h-8"
+                />
                 <span className="font-medium text-sm">{author.name}</span>
               </div>
             )}
