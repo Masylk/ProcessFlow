@@ -3,13 +3,12 @@
 import React, { useState, useEffect, useMemo, use } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useColors } from '@/app/theme/hooks';
-import ProcessCard from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCard';
+import ProcessCard from './components/ProcessCard';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
-import ProcessCanvas from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCanvas';
-import HorizontalLastStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalLastStep';
-import HorizontalStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalStep';
-import HorizontalDelay from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalDelay';
+import HorizontalLastStep from './components/HorizontalLastStep';
+import HorizontalStep from './components/HorizontalStep';
+import HorizontalDelay from './components/HorizontalDelay';
 import { usePathsStore } from '@/app/workspace/[id]/[workflowId]/read/store/pathsStore';
 import {
   Block,
@@ -563,7 +562,7 @@ export default function SharePage({
 
   return (
     <div
-      className="h-screen w-screen"
+      className="h-[100vh] w-[100vw]"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
       <div className="h-full flex items-center justify-center">
@@ -574,15 +573,13 @@ export default function SharePage({
             borderColor: colors['border-secondary'],
           }}
         >
-          <div className="p-8 flex flex-col">
+          <div className="p-4 h-full w-full flex flex-col">
             {currentStep === -1 ? (
               <>
-                <div className="flex-1 flex items-center justify-center">
-                  {processCardData && (
-                    <ProcessCard {...processCardData} isEmbed={true} />
-                  )}
+                <div className="h-[92%]">
+                  {processCardData && <ProcessCard {...processCardData} />}
                 </div>
-                <div className="flex items-center justify-end">
+                <div className="h-[8%] flex items-center justify-end">
                   <ButtonNormal
                     variant="primary"
                     size="small"
@@ -595,18 +592,17 @@ export default function SharePage({
               </>
             ) : (
               <>
-                <div className="h-full w-full flex">
-                  <div className="w-full h-full flex flex-col">
+                {/* Main content area - 92% height */}
+                <div className="h-[92%] w-full">
+                  <div className="w-full h-full">
                     {currentStep === PathsToDisplayBlocks.length ? (
                       <HorizontalLastStep
                         onCopyLink={handleCopyLink}
                         onRestart={handleRestart}
-                        isEmbed={true}
                       />
                     ) : PathsToDisplayBlocks[currentStep]?.type === 'DELAY' ? (
                       <HorizontalDelay
                         block={PathsToDisplayBlocks[currentStep]}
-                        isEmbed={true}
                       />
                     ) : (
                       <HorizontalStep
@@ -614,13 +610,16 @@ export default function SharePage({
                         selectedOptionIds={selectedOptions}
                         onOptionSelect={handleOptionSelect}
                         isFirstStep={currentStep === 0}
-                        isEmbed={true}
                       />
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end mt-8">
+                {/* Spacer */}
+                <div className="h-[2%] shrink-0" />
+
+                {/* Navigation buttons - 6% height */}
+                <div className="h-[6%] flex items-center justify-end">
                   <div className="flex items-center gap-2">
                     <ButtonNormal
                       variant="secondary"

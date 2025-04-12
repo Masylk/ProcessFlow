@@ -7,23 +7,16 @@ import { cn } from '@/lib/utils';
 interface HorizontalLastStepProps {
   onCopyLink: () => void;
   onRestart: () => void;
-  isEmbed?: boolean;
 }
 
 export default function HorizontalLastStep({
   onCopyLink,
   onRestart,
-  isEmbed = false,
 }: HorizontalLastStepProps) {
   const colors = useColors();
 
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-4',
-        isEmbed ? 'h-[772px]' : 'h-full'
-      )}
-    >
+    <div className="flex flex-col items-center justify-center gap-4 h-full">
       <div
         className="flex-shrink-0 w-12 h-12 rounded-md flex items-center justify-center border"
         style={{

@@ -90,40 +90,38 @@ export default function ProcessCard({
       style={{
         borderColor: colors['border-secondary'],
       }}
-      className="rounded-xl flex flex-col transition-all duration-200 w-[636px]"
+      className="h-full w-full flex items-center justify-center"
     >
-      <div className="flex gap-6">
-        {/* Large Icon - keep original size */}
+      <div className="flex gap-4 flex-row items-start max-w-3xl">
+        {/* Large Icon */}
         <div
           style={{
             backgroundColor: colors['bg-secondary'],
           }}
           className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
         >
-          <img
-            src={icon}
-            alt={workflow.name}
-            className="w-10 h-10 object-contain"
-          />
+          <img src={icon} alt={workflow.name} className="w-10 h-10 object-contain" />
         </div>
 
         {/* Content Container */}
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col gap-3 flex-1 items-start text-left">
           {/* Title and Description */}
           <div className="flex flex-col gap-1">
             <h3
               style={{ color: colors['text-primary'] }}
-              className="font-semibold leading-[30px] text-xl"
+              className="font-semibold text-2xl leading-tight"
             >
               {workflow.name}
             </h3>
             {workflow.description && (
-              <p className="max-w-2xl text-md">{workflow.description}</p>
+              <p className="max-w-2xl text-base text-quaternary">
+                {workflow.description}
+              </p>
             )}
           </div>
 
           {/* Integration Badges */}
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-2 justify-start">
             {visibleIntegrations.map((integration, index) => (
               <IntegrationBadge key={index} integration={integration} />
             ))}
@@ -168,22 +166,16 @@ export default function ProcessCard({
             )}
           </div>
 
-          {/* Footer: Author and Last Update */}
-          <div className="flex items-center gap-4">
+          {/* Footer */}
+          <div className="flex items-center gap-4 flex-row">
             {author && (
               <div className="flex items-center gap-2">
-                <img
-                  src={author.avatar}
-                  alt={author.name}
-                  className="rounded-full w-5 h-5"
-                />
+                <img src={author.avatar} alt={author.name} className="rounded-full w-8 h-8" />
                 <span className="font-medium text-sm">{author.name}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-quaternary">
-                Last update: {lastUpdate}
-              </span>
+              <span className="text-sm">Last update: {lastUpdate}</span>
             </div>
           </div>
         </div>
