@@ -59,47 +59,49 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
 
   if (block.delay_type === DelayType.FIXED_DURATION) {
     return (
-      <div className="flex flex-col gap-4 h-[772px] flex items-center justify-center">
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-4">
-            <div
-              className={cn(
-                'rounded-[6px] border shadow-sm flex items-center justify-center',
-                'w-16 h-16'
-              )}
-              style={{
-                backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'],
-              }}
-            >
-              <Image src={getDelayIcon()} alt="Delay" width={32} height={32} />
-            </div>
-            <span
-              className={cn('font-semibold', 'text-2xl')}
-              style={{ color: colors['text-primary'] }}
-            >
-              {getDelayTitle()}
-            </span>
+      <div className="h-full flex items-center justify-center">
+        <div className="flex flex-col items-center text-center gap-6 max-w-2xl">
+          {/* Icon */}
+          <div
+            className="w-[5vw] h-[5vw] max-w-[72px] max-h-[72px] rounded-xl flex items-center justify-center"
+            style={{
+              backgroundColor: colors['bg-secondary'],
+            }}
+          >
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock.svg`}
+              alt="Delay"
+              className="w-[2.5vw] h-[2.5vw] max-w-[36px] max-h-[36px]"
+            />
           </div>
 
-          <div
-            className={cn(
-              'flex items-center gap-2 p-3 rounded-lg bg-opacity-5'
+          {/* Title */}
+          <h3 className="text-[2.5vw] max-text-[36px] font-semibold">
+            {block.title || 'Delay'}
+          </h3>
+
+          {/* Description */}
+          <div className="flex flex-col items-center gap-2">
+            {block.delay_seconds ? (
+              <>
+                <p className="text-[2vw] max-text-[24px] font-medium">
+                  {block.delay_seconds} seconds
+                </p>
+                <span
+                  className="text-[1.8vw] max-text-[20px]"
+                  style={{ color: colors['text-secondary'] }}
+                >
+                  Flow paused until event occurs or time expires
+                </span>
+              </>
+            ) : (
+              <span
+                className="text-[1.8vw] max-text-[20px]"
+                style={{ color: colors['text-secondary'] }}
+              >
+                Flow paused until event occurs
+              </span>
             )}
-            style={{ backgroundColor: colors['bg-secondary'] }}
-          >
-            <Image
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
-              alt="Info"
-              width={24}
-              height={24}
-            />
-            <span
-              className={cn('text-sm')}
-              style={{ color: colors['text-secondary'] }}
-            >
-              Flow paused for {getDelayText()}
-            </span>
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 h-[772px] flex items-center justify-center">
+    <div className="flex flex-col gap-4 h-full flex items-center justify-center">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
