@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 
 interface HorizontalStepProps extends BaseStepProps {
   isFirstStep?: boolean;
-  isEmbed?: boolean;
 }
 
 export default function HorizontalStep({
@@ -17,7 +16,6 @@ export default function HorizontalStep({
   selectedOptionIds,
   onOptionSelect,
   isFirstStep = false,
-  isEmbed = false,
 }: HorizontalStepProps) {
   const colors = useColors();
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
@@ -83,7 +81,7 @@ export default function HorizontalStep({
     <div
       className={cn(
         'grid',
-        isEmbed ? 'h-[772px]' : 'h-[472px]',
+        'h-[472px]',
         !block.image && (!block.child_paths || block.child_paths.length === 0)
           ? 'items-center justify-center'
           : 'grid-rows-[auto_1fr]'
@@ -168,7 +166,7 @@ export default function HorizontalStep({
                 <div
                   className={cn(
                     'overflow-hidden rounded-lg mb-4',
-                    isEmbed ? 'h-[450px]' : 'h-[160px]',
+                    'h-[160px]',
                     'flex-shrink-0'
                   )}
                 >
@@ -301,10 +299,7 @@ export default function HorizontalStep({
                 {/* Regular Image Section (when no options) */}
                 {block.image && (
                   <div
-                    className={cn(
-                      'rounded-lg overflow-hidden',
-                      isEmbed ? 'h-[500px]' : 'h-[350px]'
-                    )}
+                    className={cn('rounded-lg overflow-hidden', 'h-[350px]')}
                   >
                     {signedImageUrl ? (
                       <img
