@@ -1,9 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
-import { BaseStepProps } from './BaseStep';
+import { BaseStepProps } from '@/app/workspace/[id]/[workflowId]/read/components/steps/BaseStep';
 import Image from 'next/image';
-import { DelayType } from '../../../types';
+import { DelayType } from '@/app/workspace/[id]/[workflowId]/types';
 
 interface HorizontalDelayProps extends BaseStepProps {}
 
@@ -59,23 +59,23 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
 
   if (block.delay_type === DelayType.FIXED_DURATION) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 h-[772px] flex items-center justify-center">
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div
               className={cn(
                 'rounded-[6px] border shadow-sm flex items-center justify-center',
-                'w-12 h-12'
+                'w-16 h-16'
               )}
               style={{
                 backgroundColor: colors['bg-primary'],
                 borderColor: colors['border-secondary'],
               }}
             >
-              <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
+              <Image src={getDelayIcon()} alt="Delay" width={32} height={32} />
             </div>
             <span
-              className={cn('font-semibold', 'text-base')}
+              className={cn('font-semibold', 'text-2xl')}
               style={{ color: colors['text-primary'] }}
             >
               {getDelayTitle()}
@@ -91,8 +91,8 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
             <Image
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
               alt="Info"
-              width={20}
-              height={20}
+              width={24}
+              height={24}
             />
             <span
               className={cn('text-sm')}
@@ -107,24 +107,24 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 h-[772px] flex items-center justify-center">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
             <div
               className={cn(
                 'rounded-[6px] border shadow-sm flex items-center justify-center',
-                'w-12 h-12'
+                'w-16 h-16'
               )}
               style={{
                 backgroundColor: colors['bg-primary'],
                 borderColor: colors['border-secondary'],
               }}
             >
-              <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
+              <Image src={getDelayIcon()} alt="Delay" width={32} height={32} />
             </div>
             <span
-              className={cn('font-semibold', 'text-base')}
+              className={cn('font-semibold', 'text-2xl')}
               style={{ color: colors['text-primary'] }}
             >
               {getDelayTitle()}
@@ -152,8 +152,8 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
                   alt="Clock"
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                 />
                 <span
                   className={cn('text-sm')}
@@ -173,8 +173,8 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
           <Image
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
             alt="Info"
-            width={20}
-            height={20}
+            width={24}
+            height={24}
           />
           <span
             className={cn('text-sm')}
