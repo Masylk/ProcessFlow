@@ -148,15 +148,8 @@ export default function ShareModal({
     if (!shareUrl) {
       return;
     }
-    const embedCode = `<iframe
-    src="${shareUrl}/embed"
-    width="100%"
-    height="600px"
-    style="border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 8px;"
-    title="ProcessFlow Embed"
-  ></iframe>`;
 
-    navigator.clipboard.writeText(embedCode);
+    navigator.clipboard.writeText(shareUrl + '/embed');
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -245,27 +238,27 @@ export default function ShareModal({
                       className="flex items-center gap-2 cursor-pointer"
                       onClick={() => onToggleAccess()}
                     >
-                    <div
-                      className={`w-8 h-4 rounded-full transition-colors duration-200 ${
-                        is_public ? 'bg-brand-solid' : 'bg-tertiary'
-                      }`}
-                      style={{
-                        backgroundColor: is_public
-                          ? colors['bg-brand-solid']
-                          : colors['bg-tertiary'],
-                      }}
-                    >
                       <div
-                        className={`w-3 h-3 rounded-full bg-white transform transition-transform duration-200 mt-0.5 ${
-                          is_public ? 'translate-x-4' : 'translate-x-1'
+                        className={`w-8 h-4 rounded-full transition-colors duration-200 ${
+                          is_public ? 'bg-brand-solid' : 'bg-tertiary'
                         }`}
-                      />
-                    </div>
-                    <span
-                      className="text-sm font-medium"
-                      style={{ color: colors['text-primary'] }}
-                    >
-                      {is_public ? 'Public' : 'Private'}
+                        style={{
+                          backgroundColor: is_public
+                            ? colors['bg-brand-solid']
+                            : colors['bg-tertiary'],
+                        }}
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-full bg-white transform transition-transform duration-200 mt-0.5 ${
+                            is_public ? 'translate-x-4' : 'translate-x-1'
+                          }`}
+                        />
+                      </div>
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        {is_public ? 'Public' : 'Private'}
                       </span>
                     </div>
                   )}
@@ -288,7 +281,7 @@ export default function ShareModal({
                 onClick={handleCopyEmbedSnippet}
                 className="w-full"
               >
-                Copy Embed Snippet
+                Copy Embed Link
               </ButtonNormal>
             )}
           </div>
