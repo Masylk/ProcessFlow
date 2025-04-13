@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense, useCallback, useMemo } from 'react';
+import {
+  useEffect,
+  useState,
+  useRef,
+  Suspense,
+  useCallback,
+  useMemo,
+} from 'react';
 import UserInfo from './components/UserInfo';
 import SearchBar from './components/SearchBar';
 import UserDropdown from './components/UserDropdown';
@@ -133,7 +140,7 @@ export default function Page() {
   // Memoize the filtered workspaces based on search term
   const filteredWorkspaces = useMemo(() => {
     if (!activeWorkspace?.workflows) return [];
-    return activeWorkspace.workflows.filter(workflow =>
+    return activeWorkspace.workflows.filter((workflow) =>
       workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [activeWorkspace?.workflows, searchTerm]);
@@ -147,9 +154,12 @@ export default function Page() {
   );
 
   // Memoize handlers that are passed to child components
-  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedSearchHandler(event.target.value);
-  }, [debouncedSearchHandler]);
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      debouncedSearchHandler(event.target.value);
+    },
+    [debouncedSearchHandler]
+  );
 
   const onSelectFolderSidebar = useCallback((folder?: Folder) => {
     setSidebarSelectedFolder(folder);
@@ -162,18 +172,18 @@ export default function Page() {
   // Optimize fetchWorkspaces with caching
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const cacheKey = `workspaces-${user?.id}`;
-      const cachedData = sessionStorage.getItem(cacheKey);
-      
-      if (cachedData) {
-        const { data, timestamp } = JSON.parse(cachedData);
-        const isCacheValid = Date.now() - timestamp < 5 * 60 * 1000; // 5 minutes cache
-        
-        if (isCacheValid) {
-          setWorkspaces(data);
-          return;
-        }
-      }
+      // const cacheKey = `workspaces-${user?.id}`;
+      // const cachedData = sessionStorage.getItem(cacheKey);
+
+      // if (cachedData) {
+      //   const { data, timestamp } = JSON.parse(cachedData);
+      //   const isCacheValid = Date.now() - timestamp < 5 * 60 * 1000; // 5 minutes cache
+
+      //   if (isCacheValid) {
+      //     setWorkspaces(data);
+      //     return;
+      //   }
+      // }
 
       const response = await fetch(`/api/workspaces/${user?.id}`);
       const data = await response.json();
@@ -185,10 +195,13 @@ export default function Page() {
 
       if (Array.isArray(data)) {
         setWorkspaces(data);
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          data,
-          timestamp: Date.now()
-        }));
+        // sessionStorage.setItem(
+        //   cacheKey,
+        //   JSON.stringify({
+        //     data,
+        //     timestamp: Date.now(),
+        //   })
+        // );
       } else {
         console.error('Unexpected data format:', data);
       }
@@ -200,7 +213,10 @@ export default function Page() {
   // Optimize user data fetching
   const fetchUser = useCallback(async () => {
     try {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (!authUser || authError) {
         window.location.href = '/login';
@@ -230,46 +246,52 @@ export default function Page() {
   }, [user, fetchWorkspaces]);
 
   // Optimize workspace update handler
-  const updateActiveWorkspace = useCallback(async (workspace: Workspace) => {
-    if (!user) return;
-    
-    try {
-      setActiveWorkspace(workspace);
-      
-      const updateRes = await fetch('/api/user/update', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: user.id,
-          active_workspace_id: workspace.id,
-        }),
-      });
+  const updateActiveWorkspace = useCallback(
+    async (workspace: Workspace) => {
+      if (!user) return;
 
-      if (!updateRes.ok) {
-        throw new Error('Failed to update active workspace');
-      }
+      try {
+        setActiveWorkspace(workspace);
 
-      const updatedUser = await updateRes.json();
-      setUser(updatedUser);
-      
-      // Update cache
-      const cacheKey = `workspaces-${user.id}`;
-      const cachedData = sessionStorage.getItem(cacheKey);
-      if (cachedData) {
-        const { data } = JSON.parse(cachedData);
-        const updatedWorkspaces = data.map((ws: Workspace) =>
-          ws.id === workspace.id ? workspace : ws
-        );
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          data: updatedWorkspaces,
-          timestamp: Date.now()
-        }));
+        const updateRes = await fetch('/api/user/update', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: user.id,
+            active_workspace_id: workspace.id,
+          }),
+        });
+
+        if (!updateRes.ok) {
+          throw new Error('Failed to update active workspace');
+        }
+
+        const updatedUser = await updateRes.json();
+        setUser(updatedUser);
+
+        // Update cache
+        // const cacheKey = `workspaces-${user.id}`;
+        // const cachedData = sessionStorage.getItem(cacheKey);
+        // if (cachedData) {
+        //   const { data } = JSON.parse(cachedData);
+        //   const updatedWorkspaces = data.map((ws: Workspace) =>
+        //     ws.id === workspace.id ? workspace : ws
+        //   );
+        //   sessionStorage.setItem(
+        //     cacheKey,
+        //     JSON.stringify({
+        //       data: updatedWorkspaces,
+        //       timestamp: Date.now(),
+        //     })
+        //   );
+        // }
+      } catch (error) {
+        console.error('Error updating active workspace:', error);
+        toast.error('Failed to update workspace');
       }
-    } catch (error) {
-      console.error('Error updating active workspace:', error);
-      toast.error('Failed to update workspace');
-    }
-  }, [user]);
+    },
+    [user]
+  );
 
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
@@ -929,27 +951,31 @@ export default function Page() {
     }
   }, [searchParams, activeWorkspace]); // Change dependency to activeWorkspace
 
-  const handleStatusChange = async (workflow: Workflow, newStatus: WorkflowStatus) => {
+  const handleStatusChange = async (
+    workflow: Workflow,
+    newStatus: WorkflowStatus
+  ) => {
     try {
       await updateWorkflow(workflow.id, {
         ...workflow,
-        status: newStatus
+        status: newStatus,
       });
-      
+
       // Update the workflow in the active workspace
       if (activeWorkspace) {
-        const updatedWorkflows = activeWorkspace.workflows.map(w => 
+        const updatedWorkflows = activeWorkspace.workflows.map((w) =>
           w.id === workflow.id ? { ...w, status: newStatus } : w
         );
         setActiveWorkspace({
           ...activeWorkspace,
-          workflows: updatedWorkflows
+          workflows: updatedWorkflows,
         });
       }
     } catch (error) {
       console.error('Error updating workflow status:', error);
       toast.error('Failed to update workflow status', {
-        description: 'Please try again or contact support if the issue persists.'
+        description:
+          'Please try again or contact support if the issue persists.',
       });
     }
   };
@@ -1131,7 +1157,9 @@ export default function Page() {
             });
             if (updateRes.ok) {
               const updatedUser = await updateRes.json();
-              if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+              if (
+                updatedUser.active_workspace_id !== user.active_workspace_id
+              ) {
                 setUser(updatedUser);
               }
             } else {
@@ -1165,7 +1193,9 @@ export default function Page() {
               });
               if (updateRes.ok) {
                 const updatedUser = await updateRes.json();
-                if (updatedUser.active_workspace_id !== user.active_workspace_id) {
+                if (
+                  updatedUser.active_workspace_id !== user.active_workspace_id
+                ) {
                   setUser(updatedUser);
                 }
               } else {
@@ -1184,7 +1214,10 @@ export default function Page() {
   const handleUpdatePassword = async () => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
-      console.error('Erreur lors de la mise à jour du mot de passe:', error.message);
+      console.error(
+        'Erreur lors de la mise à jour du mot de passe:',
+        error.message
+      );
       alert('Erreur lors de la mise à jour du mot de passe : ' + error.message);
       return;
     }
@@ -1208,16 +1241,18 @@ export default function Page() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      <Suspense fallback={
-        <div 
-          className="flex-1 flex items-center justify-center"
-          style={{ backgroundColor: colors['bg-primary'] }}
-        >
-          <LoadingSpinner size="large" />
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div
+            className="flex-1 flex items-center justify-center"
+            style={{ backgroundColor: colors['bg-primary'] }}
+          >
+            <LoadingSpinner size="large" />
+          </div>
+        }
+      >
         {isLoading ? (
-          <div 
+          <div
             className="flex-1 flex items-center justify-center"
             style={{ backgroundColor: colors['bg-primary'] }}
           >
