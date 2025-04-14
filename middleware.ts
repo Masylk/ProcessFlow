@@ -89,7 +89,6 @@ export async function middleware(request: NextRequest) {
 
     // If not authenticated and trying to access protected routes
     if (!isAuthRoute && !isShareRoute) {
-      console.log('Redirecting to login: ', pathname);
       const redirectUrl = new URL('/login', request.url);
       redirectUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(redirectUrl);

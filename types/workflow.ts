@@ -13,6 +13,7 @@ export interface Workflow {
   workspaceId: number;
   workspace: Workspace;
   blocks: Block[];
+  public_access_id: string;
   history: Action[];
   folder_id?: number;
   last_opened?: Date;
