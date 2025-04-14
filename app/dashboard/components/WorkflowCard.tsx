@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation'; // Import the useRouter hook
 import { Workspace } from '@/types/workspace';
 import DynamicIcon from '../../../utils/DynamicIcon';
 import { useColors } from '@/app/theme/hooks';
+import {
+  createEditLink,
+  createReadLink,
+} from '@/app/[slug]/[flow]/utils/createLinks';
 
 interface StatusStyle {
   bg: string;
@@ -57,58 +61,72 @@ export default function WorkflowCard({
   const statusButtonRef = useRef<HTMLDivElement | null>(null);
   const actionsButtonRef = useRef<HTMLDivElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const [statusMenuPosition, setStatusMenuPosition] = useState<'top' | 'bottom'>('bottom');
-  const [actionsMenuPosition, setActionsMenuPosition] = useState<'top' | 'bottom'>('bottom');
+  const [statusMenuPosition, setStatusMenuPosition] = useState<
+    'top' | 'bottom'
+  >('bottom');
+  const [actionsMenuPosition, setActionsMenuPosition] = useState<
+    'top' | 'bottom'
+  >('bottom');
   const router = useRouter();
 
   const formatLastEdited = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const STATUS_STYLES: Record<WorkflowStatus, StatusStyle> = {
-    'ACTIVE': {
+    ACTIVE: {
       bg: colors['utility-success-100'],
       border: colors['utility-success-200'],
       text: colors['utility-success-700'],
-      label: 'Active'
+      label: 'Active',
     },
-    'DRAFT': {
+    DRAFT: {
       bg: colors['utility-gray-50'],
       border: colors['utility-gray-200'],
       text: colors['utility-gray-700'],
-      label: 'Draft'
+      label: 'Draft',
     },
-    'IN_REVIEW': {
+    IN_REVIEW: {
       bg: colors['utility-purple-100'],
       border: colors['utility-purple-200'],
       text: colors['utility-purple-700'],
-      label: 'In review'
+      label: 'In review',
     },
-    'NEEDS_UPDATE': {
+    NEEDS_UPDATE: {
       bg: colors['utility-warning-100'],
       border: colors['utility-warning-200'],
       text: colors['utility-warning-700'],
-      label: 'Needs update'
+      label: 'Needs update',
     },
-    'ARCHIVED': {
+    ARCHIVED: {
       bg: colors['utility-error-50'],
       border: colors['utility-error-200'],
       text: colors['utility-error-700'],
-      label: 'Archived'
-    }
+      label: 'Archived',
+    },
   };
 
   const handleWorkflowClick = (workflowId: number) => {
-    router.push(`/workspace/${workspace.id}/${workflowId}/reactflow`);
+    const editLink = createEditLink(
+      workflow.name,
+      workflow.id.toString(),
+      workspace.name
+    );
+    router.push(editLink);
   };
 
   const navigateToEditMode = (workflowId: number) => {
-    router.push(`/workspace/${workspace.id}/${workflowId}/read`);
+    const readLink = createReadLink(
+      workflow.name,
+      workflow.id.toString(),
+      workspace.name
+    );
+    router.push(readLink);
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -173,11 +191,16 @@ export default function WorkflowCard({
     <div
       ref={cardRef}
       onClick={() => handleWorkflowClick(workflow.id)}
-      style={{
-        backgroundColor: colors['bg-primary'],
-        borderColor: isHovered || isMenuOpen ? colors['border-primary'] : colors['border-secondary'],
-        '--hover-bg': colors['bg-quaternary'],
-      } as React.CSSProperties}
+      style={
+        {
+          backgroundColor: colors['bg-primary'],
+          borderColor:
+            isHovered || isMenuOpen
+              ? colors['border-primary']
+              : colors['border-secondary'],
+          '--hover-bg': colors['bg-quaternary'],
+        } as React.CSSProperties
+      }
       className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -187,9 +210,11 @@ export default function WorkflowCard({
         <div className="flex items-center gap-2">
           {/* Star Button */}
           <div
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
             onClick={(e) => {
               e.stopPropagation();
@@ -205,9 +230,11 @@ export default function WorkflowCard({
 
           {/* Link Button */}
           <div
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
           >
             <img
@@ -221,9 +248,11 @@ export default function WorkflowCard({
           <div
             ref={actionsButtonRef}
             data-menu-button
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
             onClick={handleMenuClick}
           >
@@ -244,14 +273,17 @@ export default function WorkflowCard({
           <div className="mb-3">
             <div className="flex items-center justify-center w-8 h-8">
               {workflow.icon ? (
-                <DynamicIcon 
-                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`} 
-                  size={32} 
-                  color="inherit" 
+                <DynamicIcon
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
+                  size={32}
+                  color="inherit"
                 />
               ) : (
                 <img
-                  src={workspace.icon_url || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                  src={
+                    workspace.icon_url ||
+                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`
+                  }
                   alt={`${workspace.name} Icon`}
                   className="w-8 h-8"
                 />
@@ -261,20 +293,22 @@ export default function WorkflowCard({
 
           {/* Title and Description */}
           <div className="space-y-1">
-            <h3 
-              style={{ color: colors['text-primary'] }} 
+            <h3
+              style={{ color: colors['text-primary'] }}
               className="font-medium text-md line-clamp-2 break-words overflow-hidden"
               title={workflow.name}
             >
               {workflow.name}
             </h3>
-            
           </div>
         </div>
 
         {/* Bottom Section */}
         <div className="mt-auto">
-          <div style={{ borderColor: colors['border-secondary'] }} className="border-t w-full" />
+          <div
+            style={{ borderColor: colors['border-secondary'] }}
+            className="border-t w-full"
+          />
           <div className="px-4 py-3 flex items-center justify-between">
             <div
               className="relative"
@@ -299,10 +333,9 @@ export default function WorkflowCard({
                   style={{
                     backgroundColor: colors['bg-secondary'],
                     borderColor: colors['border-primary'],
-                    ...(statusMenuPosition === 'top' 
+                    ...(statusMenuPosition === 'top'
                       ? { bottom: 'calc(100% + 4px)' }
-                      : { top: 'calc(100% + 4px)' }
-                    ),
+                      : { top: 'calc(100% + 4px)' }),
                   }}
                   className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
                 >
@@ -318,20 +351,22 @@ export default function WorkflowCard({
                         }}
                       >
                         <div
-                          style={{
-                            '--hover-bg': colors['bg-quaternary']
-                          } as React.CSSProperties}
+                          style={
+                            {
+                              '--hover-bg': colors['bg-quaternary'],
+                            } as React.CSSProperties
+                          }
                           className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                         >
-                          <div 
+                          <div
                             style={{ color: colors['text-primary'] }}
                             className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-2"
                           >
-                            <div 
-                              style={{ 
+                            <div
+                              style={{
                                 backgroundColor: style.bg,
-                                borderColor: style.border
-                              }} 
+                                borderColor: style.border,
+                              }}
                               className="w-2 h-2 rounded-full border"
                             ></div>
                             {style.label}
@@ -351,7 +386,10 @@ export default function WorkflowCard({
               )}
             </div>
 
-            <span style={{ color: colors['text-tertiary'] }} className="text-xs truncate ml-4">
+            <span
+              style={{ color: colors['text-tertiary'] }}
+              className="text-xs truncate ml-4"
+            >
               Last update: {formatLastEdited(workflow.updated_at)}
             </span>
           </div>
@@ -371,7 +409,7 @@ export default function WorkflowCard({
             right: '4px',
           }}
           className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           {menuItems.map((item, index) =>
             item === 'separator' ? (
@@ -402,9 +440,11 @@ export default function WorkflowCard({
                 }}
               >
                 <div
-                  style={{
-                    '--hover-bg': colors['bg-quaternary'],
-                  } as React.CSSProperties}
+                  style={
+                    {
+                      '--hover-bg': colors['bg-quaternary'],
+                    } as React.CSSProperties
+                  }
                   className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">

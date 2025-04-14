@@ -155,7 +155,7 @@ export async function GET(
               description: 'Start of the workflow',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Begin',
+              step_details: '',
             }
           });
           blocks.unshift({ ...newBeginBlock, child_paths: [] });
@@ -205,7 +205,7 @@ export async function GET(
               description: 'Last block in the workflow',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Last',
+              step_details: '',
             }
           });
           blocks.push({ ...newEndBlock, child_paths: [] });
@@ -282,7 +282,7 @@ export async function GET(
             description: 'Start of the workflow',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'Begin',
+            step_details: '',
           }
         });
 
@@ -308,7 +308,7 @@ export async function GET(
             description: 'End of the workflow',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'End',
+            step_details: '',
           }
         });
 
