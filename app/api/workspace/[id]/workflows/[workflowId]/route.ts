@@ -104,6 +104,7 @@ export async function GET(
         workspace_id: workspace_id,
       },
       include: {
+        workspace: true,
         folder: {
           include: {
             parent: true
