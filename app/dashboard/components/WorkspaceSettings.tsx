@@ -8,7 +8,7 @@ import Modal from '@/app/components/Modal';
 
 interface WorkspaceSettingsProps {
   workspace: Workspace;
-  onUpdate: (updates: Partial<Workspace>) => Promise<void>;
+  onUpdate: (updates: Partial<Workspace>) => Promise<boolean>;
   onDelete?: (workspaceId: number) => Promise<void>;
 }
 
@@ -80,12 +80,10 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
     setSaveSuccess(false);
     
     try {
-      // Prepare updates object with the current form values
       const updates: Partial<Workspace> = {
         name,
       };
 
-      // If we have a new logo file, upload it first
       if (logoFile) {
         setIsUploadingLogo(true);
         try {
@@ -118,75 +116,34 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           };
           
           // Call onUpdate to ensure the parent component knows about the change
-          await onUpdate({
+          const success = await onUpdate({
             icon_url: url
           });
+          if (!success) return;
         } catch (error) {
           console.error('Error uploading logo:', error);
           throw error;
         } finally {
           setIsUploadingLogo(false);
         }
-      } else if (logoPreview && logoPreview !== workspace.icon_url) {
-        // If we have a preview but no file (e.g., from drag and drop), it might be a data URL
-        // In this case, we need to convert it to a file and upload it
-        setIsUploadingLogo(true);
-        try {
-          // Convert data URL to file
-          const res = await fetch(logoPreview);
-          const blob = await res.blob();
-          const file = new File([blob], 'workspace-logo.png', { type: 'image/png' });
-          
-          // Create a FormData object to upload the file
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('workspaceId', workspace.id.toString());
-          
-          // Upload the logo file
-          const uploadResponse = await fetch('/api/upload/workspace-logo', {
-            method: 'POST',
-            body: formData,
-          });
-          
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            throw new Error(errorData.error || 'Failed to upload logo');
-          }
-          
-          // Get the URL of the uploaded file and update the logo preview
-          const { url } = await uploadResponse.json();
-          setLogoPreview(url);
-          
-          // We need to update workspace in the parent component
-          // Since the API directly updates the database, we need to sync the state 
-          // with the updated data to ensure immediate UI updates
-          await onUpdate({
-            icon_url: url
-          });
-        } catch (error) {
-          console.error('Error converting and uploading logo:', error);
-        } finally {
-          setIsUploadingLogo(false);
-        }
       } else if (logoPreview === null && workspace.icon_url) {
-        // If logoPreview is null but workspace had an icon_url, it means the user removed the logo
         updates.icon_url = null as unknown as string;
       }
 
-      // Only call onUpdate for name changes if the name has changed
-      // or if we're removing the logo (which we already included in updates)
       if (updates.name !== workspace.name || (logoPreview === null && workspace.icon_url)) {
-        await onUpdate(updates);
+        const success = await onUpdate(updates);
+        setSaveSuccess(success);
+        
+        if (success) {
+          // Reset success message after a delay
+          setTimeout(() => {
+            setSaveSuccess(false);
+          }, 3000);
+        }
       }
-      
-      setSaveSuccess(true);
-      
-      // Reset success message after a delay
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 3000);
     } catch (error) {
       console.error('Error saving workspace settings:', error);
+      setSaveSuccess(false);
     } finally {
       setIsSaving(false);
     }

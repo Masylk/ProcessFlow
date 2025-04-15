@@ -1,4 +1,5 @@
 import { Workflow } from '@/types/workflow'; // Update the path to match your project structure
+import { checkWorkflowName } from './checkNames';
 
 interface CreateWorkflowParams {
   name: string;
@@ -20,14 +21,12 @@ export async function createWorkflow({
   icon,
 }: CreateWorkflowParams): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
-    // Validate name before making the request
-    if (name.includes('-')) {
+    // Validate name using the new utility function
+    const nameError = checkWorkflowName(name);
+    if (nameError) {
       return {
         workflow: null,
-        error: {
-          title: 'Invalid Character',
-          description: 'Workflow name cannot contain hyphens (-)'
-        }
+        error: nameError
       };
     }
 

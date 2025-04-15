@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { debounce } from 'lodash';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
+import { checkFolderName, checkWorkspaceName } from './utils/checkNames';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('./dashboard/components/HelpCenterModal'),
@@ -55,9 +56,12 @@ const HelpCenterModalDynamic = dynamic(
   }
 );
 
-const UserSettingsDynamic = dynamic(() => import('./dashboard/components/UserSettings'), {
-  ssr: false,
-});
+const UserSettingsDynamic = dynamic(
+  () => import('./dashboard/components/UserSettings'),
+  {
+    ssr: false,
+  }
+);
 
 export default function Page() {
   const { currentTheme } = useTheme();
@@ -396,22 +400,27 @@ export default function Page() {
     description: string,
     folder?: Folder | null,
     icon?: string | null
-  ) => {
+  ): Promise<{
+    workflow: Workflow | null;
+    error?: { title: string; description: string };
+  }> => {
     try {
-      const updatedWorkflow = await updateWorkflow(id, {
+      const result = await updateWorkflow(id, {
         name,
         description,
         folder_id: folder?.id,
         icon: icon ?? undefined,
       });
 
-      if (updatedWorkflow) {
-        console.log('Workflow updated successfully:', updatedWorkflow);
+      if (result.error) {
+        return result;
+      }
 
+      if (result.workflow) {
         // Update the activeWorkspace state
         if (activeWorkspace) {
           const updatedWorkflows = activeWorkspace.workflows.map((workflow) =>
-            workflow.id === updatedWorkflow.id ? updatedWorkflow : workflow
+            workflow.id === result.workflow?.id ? result.workflow : workflow
           );
 
           setActiveWorkspace({
@@ -419,14 +428,18 @@ export default function Page() {
             workflows: updatedWorkflows,
           });
         }
-      } else {
-        console.error('Failed to update workflow.');
       }
 
-      return updatedWorkflow;
+      return result;
     } catch (error) {
       console.error('Error updating workflow:', error);
-      return null;
+      return {
+        workflow: null,
+        error: {
+          title: 'Error Updating Workflow',
+          description: 'An unexpected error occurred',
+        },
+      };
     }
   };
 
@@ -640,9 +653,14 @@ export default function Page() {
     });
   }, []);
 
-  const onWorkspaceUpdate = async (updates: Partial<Workspace>) => {
-    if (!activeWorkspace) return;
+  const onWorkspaceUpdate = async (updates: Partial<Workspace>): Promise<boolean> => {
+    if (!activeWorkspace) return false;
 
+    const nameError = checkWorkspaceName(updates.name || '');
+    if (nameError) {
+      toast.error(nameError.title + ' ' + nameError.description);
+      return false;
+    }
     try {
       const response = await fetch(`/api/workspace/${activeWorkspace.id}`, {
         method: 'PATCH',
@@ -665,9 +683,11 @@ export default function Page() {
           w.id === updatedWorkspace.id ? updatedWorkspace : w
         )
       );
+      
+      return true;
     } catch (error) {
       console.error('Error updating workspace:', error);
-      throw error;
+      return false;
     }
   };
 
@@ -989,6 +1009,13 @@ export default function Page() {
   ) => {
     if (!activeWorkspace) return;
 
+    const nameError = checkFolderName(name);
+    if (nameError) {
+      toast.error(nameError.title, {
+        description: nameError.description,
+      });
+      return;
+    }
     try {
       const res = await fetch('/api/workspaces/folders', {
         method: 'POST',
@@ -1077,6 +1104,13 @@ export default function Page() {
   ) => {
     if (!activeWorkspace || !editingFolder) return;
 
+    const nameError = checkFolderName(folderName);
+    if (nameError) {
+      toast.error(nameError.title, {
+        description: nameError.description,
+      });
+      return;
+    }
     try {
       const response = await fetch(
         `/api/workspaces/folders/${editingFolder.id}`,
