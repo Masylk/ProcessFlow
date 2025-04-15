@@ -322,7 +322,7 @@ export default function WorkspaceDropdownMenu({
               </button>
               <button
                 onClick={onClose}
-                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
               >
                 <div
                   style={

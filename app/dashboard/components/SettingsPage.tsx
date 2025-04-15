@@ -37,9 +37,26 @@ export default function SettingsPage({
 }: SettingsPageProps) {
   const colors = useColors();
   const { currentTheme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState(
-    initialTab || (workspace && onWorkspaceUpdate ? 'Workspace' : 'Team')
-  );
+  const tabs = ['Workspace', 'Plan', 'Billing', 'Appearance'];
+  const defaultTab = 'Workspace';
+  
+  // Force defaultTab to always be 'Workspace' regardless of initialTab
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  
+  // Log and ensure activeTab is set to a valid value on mount
+  useEffect(() => {
+    console.log('SettingsPage mounting with initialTab:', initialTab, 'activeTab:', activeTab);
+    // Always reset to default tab on mount to ensure we have a valid tab selected
+    setActiveTab(defaultTab);
+    
+    // Apply initialTab after a short delay if it's valid
+    if (initialTab && tabs.includes(initialTab)) {
+      setTimeout(() => {
+        setActiveTab(initialTab);
+      }, 0);
+    }
+  }, []);
+
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
   );
@@ -327,6 +344,19 @@ export default function SettingsPage({
     }
   }, []);
 
+  // Ensure activeTab is always valid
+  useEffect(() => {
+    if (!tabs.includes(activeTab)) {
+      setActiveTab(defaultTab);
+    }
+  }, [activeTab]); 
+  
+  useEffect(() => {
+    if (initialTab && tabs.includes(initialTab)) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   const handleDowngradeClick = () => {
     setShowDowngradeConfirmation(true);
   };
@@ -453,8 +483,6 @@ export default function SettingsPage({
     // Simply update the UI state without changing subscription
     setBillingPeriod(period);
   };
-
-  const tabs = ['Workspace', 'Plan', 'Billing', 'Appearance'];
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -1105,7 +1133,7 @@ export default function SettingsPage({
                   </h3>
                   <div className="flex flex-col gap-4">
                     {/* Personal Info */}
-                    <BillingInfoForm workspaceId={workspace?.id || 0} />
+                    <BillingInfoForm workspaceId={workspace?.id || 0} isFreePlan={currentPlan === 'free'} />
                   </div>
                 </div>
               </div>
