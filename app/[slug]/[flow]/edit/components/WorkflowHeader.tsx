@@ -128,33 +128,49 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
           {grandParentFolder && (
             <>
               <span
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
+                className="text-sm font-['Inter'] px-2 py-1 rounded-md"
+                style={{ 
+                  color: colors['breadcrumb-inactive-fg'],
+                  fontWeight: 500
+                }}
               >
                 {grandParentFolder}
               </span>
-              <span
-                className="text-sm"
-                style={{ color: colors['text-quaternary'] }}
+              <div 
+                className="w-5 h-5 flex items-center justify-center"
+                style={{ color: colors['breadcrumb-separator'] }}
               >
-                /
-              </span>
+                <img 
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slash-divider.svg`}
+                  alt="/"
+                  width="16"
+                  height="16"
+                />
+              </div>
             </>
           )}
           {parentFolder && (
             <>
               <span
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
+                className="text-sm font-['Inter'] px-2 py-1 rounded-md"
+                style={{ 
+                  color: colors['breadcrumb-inactive-fg'],
+                  fontWeight: 500
+                }}
               >
                 {parentFolder}
               </span>
-              <span
-                className="text-sm"
-                style={{ color: colors['text-quaternary'] }}
+              <div 
+                className="w-5 h-5 flex items-center justify-center"
+                style={{ color: colors['breadcrumb-separator'] }}
               >
-                /
-              </span>
+                <img 
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slash-divider.svg`}
+                  alt="/"
+                  width="16"
+                  height="16"
+                />
+              </div>
             </>
           )}
           {isEditing ? (
@@ -174,17 +190,18 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
             />
           ) : (
             <span
-              className="text-sm cursor-pointer px-2 py-1 rounded"
+              className="text-sm font-['Inter'] px-2 py-1 rounded-md cursor-pointer"
               style={{
-                color: colors['text-primary'],
-                backgroundColor: colors['bg-tertiary'],
+                color: colors['breadcrumb-active-fg'],
+                backgroundColor: colors['breadcrumb-active-bg'],
+                fontWeight: 600
               }}
               onClick={() => setIsEditing(true)}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+                e.currentTarget.style.opacity = "0.75";
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-tertiary'];
+                e.currentTarget.style.opacity = "1";
               }}
             >
               {workflowTitle || 'Untitled Workflow'}

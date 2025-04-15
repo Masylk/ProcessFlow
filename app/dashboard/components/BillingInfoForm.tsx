@@ -8,6 +8,7 @@ import useSWR from 'swr';
 
 interface BillingInfoFormProps {
   workspaceId: number;
+  isFreePlan: boolean;
 }
 
 interface BillingInfo {
@@ -50,7 +51,7 @@ const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-export default function BillingInfoForm({ workspaceId }: BillingInfoFormProps) {
+export default function BillingInfoForm({ workspaceId, isFreePlan }: BillingInfoFormProps) {
   const colors = useColors();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -133,16 +134,18 @@ export default function BillingInfoForm({ workspaceId }: BillingInfoFormProps) {
       }}
       className="w-full rounded-xl border relative"
     >
-      <div className="absolute top-4 right-4">
-        <ButtonNormal
-          onClick={handleEditClick}
-          variant="secondary"
-          size="small"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Loading...' : 'Edit Billing Details'}
-        </ButtonNormal>
-      </div>
+      {!isFreePlan && (
+        <div className="absolute top-4 right-4">
+          <ButtonNormal
+            onClick={handleEditClick}
+            variant="secondary"
+            size="small"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Loading...' : 'Edit Billing Details'}
+          </ButtonNormal>
+        </div>
+      )}
 
       <div className="p-6 flex flex-col gap-6">
         {/* Billing Address Section */}
