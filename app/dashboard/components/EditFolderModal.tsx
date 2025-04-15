@@ -7,6 +7,8 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
+import { checkFolderName } from '@/app/utils/checkNames';
+import { toast } from 'sonner';
 
 interface EditFolderModalProps {
   onClose: () => void;
@@ -34,16 +36,27 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
 
   const saveChanges = async (name: string) => {
     if (!name.trim()) return;
-    
+
+    const nameError = checkFolderName(name);
+    if (nameError) {
+      toast.error(nameError.title, {
+        description: nameError.description,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (iconUrl) await onEdit(name, iconUrl);
       else if (emote) await onEdit(name, undefined, emote);
       else await onEdit(name);
-      
+
       onClose();
     } catch (error) {
       console.error('Error editing folder:', error);
+      toast.error('Error Saving Folder', {
+        description: 'An unexpected error occurred while saving the folder.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +114,7 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       <div className="flex flex-col gap-4">
         {/* Input Field */}
         <div>
-          <label 
+          <label
             className="block text-sm font-semibold mb-2"
             style={{ color: colors['text-primary'] }}
           >

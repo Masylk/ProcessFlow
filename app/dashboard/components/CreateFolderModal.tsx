@@ -6,6 +6,8 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
+import { checkFolderName } from '@/app/utils/checkNames';
+import { toast } from 'sonner';
 
 interface CreateFolderModalProps {
   onClose: () => void;
@@ -28,7 +30,15 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
-    
+
+    const nameError = checkFolderName(folderName);
+    if (nameError) {
+      toast.error(nameError.title, {
+        description: nameError.description,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (iconUrl) await onCreate(folderName, iconUrl);
@@ -36,8 +46,10 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       else await onCreate(folderName);
       onClose();
     } catch (error) {
-      console.error("Error creating folder:", error);
-      // Handle error if needed
+      console.error('Error creating folder:', error);
+      toast.error('Error Creating Folder', {
+        description: 'An unexpected error occurred while creating the folder.',
+      });
     } finally {
       setIsSubmitting(false);
     }

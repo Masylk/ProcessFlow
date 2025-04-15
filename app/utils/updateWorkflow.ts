@@ -1,10 +1,22 @@
 import { Workflow } from '@/types/workflow';
+import { checkWorkflowName } from './checkNames';
 
 export async function updateWorkflow(
   id: number,
   updateData: Partial<Workflow>
-): Promise<Workflow | null> {
+): Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }> {
   try {
+    // Check name if it's being updated
+    if (updateData.name) {
+      const nameError = checkWorkflowName(updateData.name);
+      if (nameError) {
+        return {
+          workflow: null,
+          error: nameError
+        };
+      }
+    }
+
     const response = await fetch(`/api/workspaces/workflows`, {
       method: 'PUT',
       headers: {
@@ -15,18 +27,25 @@ export async function updateWorkflow(
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error(
-        'Failed to update workflow:',
-        errorData.error || 'Unknown error'
-      );
-      return null; // Update unsuccessful
+      return {
+        workflow: null,
+        error: {
+          title: 'Error Updating Workflow',
+          description: errorData.error || 'Failed to update workflow'
+        }
+      };
     }
 
     const updatedWorkflow: Workflow = await response.json();
-    console.log('Workflow updated successfully:', updatedWorkflow);
-    return updatedWorkflow; // Return the updated workflow
+    return { workflow: updatedWorkflow };
   } catch (error) {
     console.error('Error calling update workflow API:', error);
-    return null; // Update unsuccessful
+    return {
+      workflow: null,
+      error: {
+        title: 'Error Updating Workflow',
+        description: 'An unexpected error occurred'
+      }
+    };
   }
 }

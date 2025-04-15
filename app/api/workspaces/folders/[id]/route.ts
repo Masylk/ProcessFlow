@@ -1,6 +1,7 @@
 // app/api/workspaces/folders/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
  * DELETE /api/workspaces/folders/:id
@@ -193,11 +194,22 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
     }
 
+    // Validate folder name if it's being updated
+    if (name) {
+      const nameError = checkFolderName(name);
+      if (nameError) {
+        return NextResponse.json({ 
+          error: 'Invalid folder name',
+          ...nameError 
+        }, { status: 400 });
+      }
+    }
+
     // Ensure icon_url and emote are explicitly set to null if undefined
     const updateData: Record<string, any> = {
       name,
-      icon_url: icon_url ?? null, // If undefined, set to null
-      emote: emote ?? null, // If undefined, set to null
+      icon_url: icon_url ?? null,
+      emote: emote ?? null,
       team_tags,
       parent_id,
     };

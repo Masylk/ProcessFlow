@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -69,6 +70,14 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!formData.name) {
       return NextResponse.json({ error: 'Workspace name is required' }, { status: 400 });
+    }
+    
+    const nameError = checkWorkspaceName(formData.name);
+    if (nameError) {
+      return NextResponse.json({ 
+        error: 'Invalid workspace name',
+        ...nameError 
+      }, { status: 400 });
     }
 
     // Create a workspace

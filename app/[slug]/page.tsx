@@ -51,7 +51,7 @@ export default async function WorkspaceSlugPage(props: PageProps) {
   }
 
   // Build the target URL
-  const baseUrl = '/dashboard';
+  const baseUrl = '/';
   const workspaceParam = `workspace=${workspace.id}`;
 
   // Only add checkout param if it's from Stripe
