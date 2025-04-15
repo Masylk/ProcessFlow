@@ -511,8 +511,9 @@ export default function SharePage({
   const processCardData = workflowData
     ? {
         icon:
-          workflowData.icon ||
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
+          workflowData.icon && workflowData.icon.trim() !== ''
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.icon}`
+            : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/processflow_logo.png`,
         workflow: {
           name: workflowData.name,
           description: workflowData.description,
@@ -573,32 +574,36 @@ export default function SharePage({
             borderColor: colors['border-secondary'],
           }}
         >
-          <div className="p-4 h-full w-full flex flex-col">
-            {currentStep === -1 ? (
-              <>
-                <div className="h-[92%]">
-                  {processCardData && <ProcessCard {...processCardData} />}
-                </div>
-                <div className="h-[8%] flex items-center justify-end">
-                  <ButtonNormal
-                    variant="primary"
-                    size="small"
-                    onClick={() => handleStepNavigation('next')}
-                    trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
-                  >
-                    Get Started
-                  </ButtonNormal>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Main content area - 92% height */}
-                <div className="h-[92%] w-full">
-                  <div className="w-full h-full">
+          {/* Main container with fixed header and bottom bar */}
+          <div className="h-full w-full flex flex-col">
+            {/* Content area - fills available space */}
+            <div className="flex-1 p-4 flex flex-col min-h-0">
+              {currentStep === -1 ? (
+                <>
+                  {/* ProcessCard view */}
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    {processCardData && <ProcessCard {...processCardData} />}
+                  </div>
+                  <div className="h-16 flex-shrink-0 flex items-center justify-end">
+                    <ButtonNormal
+                      variant="primary"
+                      size="small"
+                      onClick={() => handleStepNavigation('next')}
+                      trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
+                    >
+                      Get Started
+                    </ButtonNormal>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Main content area - fills available space */}
+                  <div className="flex-1 min-h-0 overflow-hidden">
                     {currentStep === PathsToDisplayBlocks.length ? (
                       <HorizontalLastStep
                         onCopyLink={handleCopyLink}
                         onRestart={handleRestart}
+                        onPreviousStep={() => handleStepNavigation('prev')}
                       />
                     ) : PathsToDisplayBlocks[currentStep]?.type === 'DELAY' ? (
                       <HorizontalDelay
@@ -613,45 +618,73 @@ export default function SharePage({
                       />
                     )}
                   </div>
-                </div>
 
-                {/* Spacer */}
-                <div className="h-[2%] shrink-0" />
-
-                {/* Navigation buttons - 6% height */}
-                <div className="h-[6%] flex items-center justify-end">
-                  <div className="flex items-center gap-2">
-                    <ButtonNormal
-                      variant="secondary"
-                      size="small"
-                      onClick={() => handleStepNavigation('prev')}
-                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-                    >
-                      Previous step
-                    </ButtonNormal>
-                    <ButtonNormal
-                      variant="primary"
-                      size="small"
-                      onClick={() => handleStepNavigation('next')}
-                      disabled={
-                        currentStep === PathsToDisplayBlocks.length ||
-                        (PathsToDisplayBlocks[currentStep]?.child_paths
-                          ?.length > 0 &&
-                          !selectedOptions.some(
-                            ([_, blockId]) =>
-                              blockId === PathsToDisplayBlocks[currentStep].id
-                          ))
-                      }
-                      trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
-                    >
-                      {currentStep === PathsToDisplayBlocks.length - 1
-                        ? 'Complete'
-                        : 'Next step'}
-                    </ButtonNormal>
+                  {/* Navigation buttons - fixed height */}
+                  <div className="h-16 flex-shrink-0 flex items-center justify-end">
+                    <div className="flex items-center gap-2">
+                      <ButtonNormal
+                        variant="secondary"
+                        size="small"
+                        onClick={() => handleStepNavigation('prev')}
+                        leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                      >
+                        Previous step
+                      </ButtonNormal>
+                      {currentStep !== PathsToDisplayBlocks.length && (
+                        <ButtonNormal
+                          variant="primary"
+                          size="small"
+                          onClick={() => handleStepNavigation('next')}
+                          disabled={
+                            currentStep === PathsToDisplayBlocks.length ||
+                            (PathsToDisplayBlocks[currentStep]?.child_paths
+                              ?.length > 0 &&
+                              !selectedOptions.some(
+                                ([_, blockId]) =>
+                                  blockId === PathsToDisplayBlocks[currentStep].id
+                              ))
+                          }
+                          trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
+                        >
+                          {currentStep === PathsToDisplayBlocks.length - 1
+                            ? 'Complete'
+                            : 'Next step'}
+                        </ButtonNormal>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
+
+            {/* Bottom bar - fixed height */}
+            <div className="h-12 flex-shrink-0 flex justify-between items-center px-[17.5px] py-[2.9px] border-t" style={{ backgroundColor: colors['bg-tertiary'], borderColor: colors['border-secondary'] }}>
+              <div className="flex items-center gap-[8.7px]">
+                <span className="text-[10.2px] leading-[1.43] font-normal" style={{ color: colors['text-secondary'] }}>
+                  Made with
+                </span>
+                <button
+                  onClick={() => window.open('https://process-flow.io', '_blank')}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
+                    alt="ProcessFlow Logo"
+                    className="h-[20px]"
+                  />
+                </button>
+              </div>
+              <button 
+                className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                onClick={() => window.open(window.location.href, '_blank')}
+              >
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
+                  alt="External Link"
+                  className="w-[14.5px] h-[14.5px]"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
