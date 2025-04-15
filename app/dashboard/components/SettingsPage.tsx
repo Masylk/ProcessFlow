@@ -40,21 +40,14 @@ export default function SettingsPage({
   const tabs = ['Workspace', 'Plan', 'Billing', 'Appearance'];
   const defaultTab = 'Workspace';
   
-  // Force defaultTab to always be 'Workspace' regardless of initialTab
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  // Initialize activeTab based on initialTab or defaultTab
+  const [activeTab, setActiveTab] = useState(
+    initialTab && tabs.includes(initialTab) ? initialTab : defaultTab
+  );
   
   // Log and ensure activeTab is set to a valid value on mount
   useEffect(() => {
     console.log('SettingsPage mounting with initialTab:', initialTab, 'activeTab:', activeTab);
-    // Always reset to default tab on mount to ensure we have a valid tab selected
-    setActiveTab(defaultTab);
-    
-    // Apply initialTab after a short delay if it's valid
-    if (initialTab && tabs.includes(initialTab)) {
-      setTimeout(() => {
-        setActiveTab(initialTab);
-      }, 0);
-    }
   }, []);
 
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
