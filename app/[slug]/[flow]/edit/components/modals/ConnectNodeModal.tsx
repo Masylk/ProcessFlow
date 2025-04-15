@@ -38,8 +38,11 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const [blurTimeout, setBlurTimeout] = useState<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLDivElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom');
+  const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>(
+    'bottom'
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Helper function for consistent view options
   const getFitViewOptions = (nodes: Node[]) => ({
@@ -139,7 +142,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Element)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Element)
+      ) {
         setIsInputFocused(false);
       }
     };
@@ -147,7 +153,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     if (isInputFocused) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -160,7 +166,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
       const spaceBelow = window.innerHeight - inputRect.bottom;
       const spaceAbove = inputRect.top;
       const requiredSpace = 240; // max-height of dropdown
-      
+
       if (spaceBelow < requiredSpace && spaceAbove > spaceBelow) {
         setDropdownPosition('top');
       } else {
@@ -190,11 +196,21 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selectedNodeId && label.trim()) {
-      setPreviewEdge(null);
-      onPreviewUpdate?.(null);
-      onConfirm(selectedNodeId, label);
+      try {
+        setError(null);
+        setIsLoading(true);
+        await onConfirm(selectedNodeId, label);
+        setPreviewEdge(null);
+        onPreviewUpdate?.(null);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'An unexpected error occurred'
+        );
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -257,7 +273,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     // Show loading state briefly for better feedback
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 300);
-    
+
     // If there's a value and the dropdown isn't visible, show it
     if (!isInputFocused) {
       setIsInputFocused(true);
@@ -291,22 +307,24 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
       {/* Modal - keep high z-index */}
       <div
         className="fixed bottom-8 right-8 w-[600px] rounded-xl shadow-lg z-50 border"
-        style={{ 
+        style={{
           backgroundColor: colors['bg-primary'],
-          borderColor: colors['border-secondary']
+          borderColor: colors['border-secondary'],
         }}
         onClick={handleModalClick}
       >
         {/* Header */}
-        <div className="flex items-center gap-4 px-6 pt-6 pb-6 border-b"
-          style={{ borderColor: colors['border-secondary'] }}>
+        <div
+          className="flex items-center gap-4 px-6 pt-6 pb-6 border-b"
+          style={{ borderColor: colors['border-secondary'] }}
+        >
           {step === 1 ? (
-            <div 
+            <div
               className="w-12 h-12 p-3 rounded-[10px] flex items-center justify-center"
-              style={{ 
+              style={{
                 backgroundColor: colors['bg-secondary'],
                 borderColor: colors['border-light'],
-                boxShadow: colors['shadow-sm'] 
+                boxShadow: colors['shadow-sm'],
               }}
             >
               <img
@@ -325,7 +343,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
               Back
             </ButtonNormal>
           )}
-          <h2 className="text-lg font-medium" style={{ color: colors['text-primary'] }}>
+          <h2
+            className="text-lg font-medium"
+            style={{ color: colors['text-primary'] }}
+          >
             {step === 1 ? 'Create a path to a node' : ''}
           </h2>
         </div>
@@ -334,7 +355,12 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         <div className="p-6">
           {step === 1 ? (
             <div className="flex flex-col gap-4">
-              <div className="text-sm" style={{ color: colors['text-secondary'] }}>Select Node</div>
+              <div
+                className="text-sm"
+                style={{ color: colors['text-secondary'] }}
+              >
+                Select Node
+              </div>
 
               {/* Two Column Layout */}
               <div className="flex justify-end">
@@ -361,33 +387,51 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                   {/* Nodes Column */}
                   <div className="w-[450px] flex flex-col gap-6">
                     {/* Source Block */}
-                    <div 
+                    <div
                       className="w-full p-4 rounded-lg"
-                      style={{ 
+                      style={{
                         backgroundColor: colors['bg-secondary'],
                         borderColor: colors['border-light'],
-                        border: `1px solid ${colors['border-light']}` 
+                        border: `1px solid ${colors['border-light']}`,
                       }}
                     >
-                      <div className="text-sm mb-2" style={{ color: colors['text-secondary'] }}>Node 1</div>
-                      <div className="text-xs mb-1" style={{ color: colors['text-tertiary'] }}>#STEP</div>
-                      <div className="text-sm font-medium" style={{ color: colors['text-primary'] }}>
+                      <div
+                        className="text-sm mb-2"
+                        style={{ color: colors['text-secondary'] }}
+                      >
+                        Node 1
+                      </div>
+                      <div
+                        className="text-xs mb-1"
+                        style={{ color: colors['text-tertiary'] }}
+                      >
+                        #STEP
+                      </div>
+                      <div
+                        className="text-sm font-medium"
+                        style={{ color: colors['text-primary'] }}
+                      >
                         {sourceNode.data.label as string}
                       </div>
                     </div>
 
                     {/* Target Block */}
                     {selectedNodeId ? (
-                      <div 
+                      <div
                         className="w-full p-4 rounded-lg"
-                        style={{ 
+                        style={{
                           backgroundColor: colors['bg-secondary'],
                           borderColor: colors['border-light'],
-                          border: `1px solid ${colors['border-light']}` 
+                          border: `1px solid ${colors['border-light']}`,
                         }}
                       >
                         <div className="flex justify-between items-start mb-2">
-                          <div className="text-sm" style={{ color: colors['text-secondary'] }}>Node 2</div>
+                          <div
+                            className="text-sm"
+                            style={{ color: colors['text-secondary'] }}
+                          >
+                            Node 2
+                          </div>
                           <button
                             onClick={() => {
                               clearSelection();
@@ -410,23 +454,36 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                             </svg>
                           </button>
                         </div>
-                        <div className="text-xs mb-1" style={{ color: colors['text-tertiary'] }}>#STEP</div>
-                        <div className="text-sm font-medium" style={{ color: colors['text-primary'] }}>
+                        <div
+                          className="text-xs mb-1"
+                          style={{ color: colors['text-tertiary'] }}
+                        >
+                          #STEP
+                        </div>
+                        <div
+                          className="text-sm font-medium"
+                          style={{ color: colors['text-primary'] }}
+                        >
                           {getNode(selectedNodeId)?.data.label as string}
                         </div>
                       </div>
                     ) : (
-                      <div 
+                      <div
                         className="w-full p-4 rounded-lg"
-                        style={{ 
+                        style={{
                           backgroundColor: colors['bg-secondary'],
                           borderColor: colors['border-light'],
-                          border: `1px solid ${colors['border-light']}` 
+                          border: `1px solid ${colors['border-light']}`,
                         }}
                       >
-                        <div className="text-sm mb-2" style={{ color: colors['text-secondary'] }}>Node 2</div>
+                        <div
+                          className="text-sm mb-2"
+                          style={{ color: colors['text-secondary'] }}
+                        >
+                          Node 2
+                        </div>
                         <div className="relative" ref={dropdownRef}>
-                          <div 
+                          <div
                             className="cursor-pointer"
                             onClick={() => setIsInputFocused(true)}
                             ref={inputRef}
@@ -440,9 +497,13 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                             />
                           </div>
 
-                          <div 
+                          <div
                             className="flex items-center gap-2 absolute right-2 top-2.5 z-50 cursor-pointer transition-transform duration-200"
-                            style={{ transform: isInputFocused ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                            style={{
+                              transform: isInputFocused
+                                ? 'rotate(180deg)'
+                                : 'rotate(0deg)',
+                            }}
                             onClick={() => setIsInputFocused(!isInputFocused)}
                           >
                             <svg
@@ -462,13 +523,13 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
 
                           {/* Search list with improved UX */}
                           {isInputFocused && (
-                            <div 
+                            <div
                               className={`absolute left-0 right-0 rounded-lg shadow-lg max-h-[240px] overflow-y-auto z-10 transition-all duration-200 ease-in-out border py-1 ${
-                                dropdownPosition === 'top' 
-                                  ? 'bottom-[calc(100%_+_5px)]' 
+                                dropdownPosition === 'top'
+                                  ? 'bottom-[calc(100%_+_5px)]'
                                   : 'top-[calc(100%_+_5px)]'
                               }`}
-                              style={{ 
+                              style={{
                                 backgroundColor: colors['bg-secondary'],
                                 borderColor: colors['border-secondary'],
                                 animation: 'fadeIn 0.2s ease-out',
@@ -476,10 +537,17 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                             >
                               {isLoading ? (
                                 <div className="p-4 text-sm text-center flex items-center justify-center">
-                                  <div className="w-5 h-5 border-2 rounded-full border-t-transparent animate-spin mr-2"
-                                    style={{ borderColor: `${colors['accent-primary']} transparent ${colors['accent-primary']} ${colors['accent-primary']}` }}
+                                  <div
+                                    className="w-5 h-5 border-2 rounded-full border-t-transparent animate-spin mr-2"
+                                    style={{
+                                      borderColor: `${colors['accent-primary']} transparent ${colors['accent-primary']} ${colors['accent-primary']}`,
+                                    }}
                                   ></div>
-                                  <span style={{ color: colors['text-secondary'] }}>Searching...</span>
+                                  <span
+                                    style={{ color: colors['text-secondary'] }}
+                                  >
+                                    Searching...
+                                  </span>
                                 </div>
                               ) : filteredNodes.length > 0 ? (
                                 filteredNodes.map((node) => (
@@ -490,31 +558,40 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                       handleNodeClick(node.id);
                                     }}
                                     className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
-                                    style={{ 
+                                    style={{
                                       color: colors['text-primary'],
-                                      backgroundColor: selectedNodeId === node.id ? `${colors['accent-primary']}15` : 'transparent',
+                                      backgroundColor:
+                                        selectedNodeId === node.id
+                                          ? `${colors['accent-primary']}15`
+                                          : 'transparent',
                                     }}
                                     onMouseOver={(e) => {
                                       if (selectedNodeId !== node.id) {
-                                        const innerDiv = e.currentTarget.querySelector('div');
+                                        const innerDiv =
+                                          e.currentTarget.querySelector('div');
                                         if (innerDiv) {
-                                          innerDiv.style.backgroundColor = colors['bg-tertiary'];
+                                          innerDiv.style.backgroundColor =
+                                            colors['bg-tertiary'];
                                         }
                                       }
                                     }}
                                     onMouseOut={(e) => {
                                       if (selectedNodeId !== node.id) {
-                                        const innerDiv = e.currentTarget.querySelector('div');
+                                        const innerDiv =
+                                          e.currentTarget.querySelector('div');
                                         if (innerDiv) {
-                                          innerDiv.style.backgroundColor = 'transparent';
+                                          innerDiv.style.backgroundColor =
+                                            'transparent';
                                         }
                                       }
                                     }}
                                   >
                                     <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
                                       <div className="w-5 h-5 flex-shrink-0">
-                                        <img 
-                                          src={getNodeTypeIcon(node.data.type as string)} 
+                                        <img
+                                          src={getNodeTypeIcon(
+                                            node.data.type as string
+                                          )}
                                           alt={`${node.data.type} icon`}
                                           className="w-full h-full object-contain"
                                         />
@@ -524,8 +601,18 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                       </div>
                                       {selectedNodeId === node.id && (
                                         <div className="ml-auto">
-                                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke={colors['accent-primary']}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                          <svg
+                                            className="w-4 h-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke={colors['accent-primary']}
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M5 13l4 4L19 7"
+                                            />
                                           </svg>
                                         </div>
                                       )}
@@ -533,58 +620,88 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                   </button>
                                 ))
                               ) : searchTerm ? (
-                                <div 
+                                <div
                                   className="p-6 text-sm text-center flex flex-col items-center justify-center gap-2"
                                   style={{ color: colors['text-tertiary'] }}
                                 >
-                                  <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke={colors['text-tertiary']}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                  <svg
+                                    className="w-6 h-6 mb-1"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke={colors['text-tertiary']}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={1.5}
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
                                   </svg>
                                   <span>No matching nodes found</span>
-                                  <span className="text-xs opacity-80">Try a different search term</span>
+                                  <span className="text-xs opacity-80">
+                                    Try a different search term
+                                  </span>
                                 </div>
                               ) : (
                                 <div className="p-4 text-sm">
-                                  {availableNodes.filter(node => node.data.type === 'STEP').slice(0, 5).map((node) => (
-                                    <button
-                                      key={node.id}
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        handleNodeClick(node.id);
-                                      }}
-                                      className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
-                                      style={{ 
-                                        color: colors['text-primary']
-                                      }}
-                                      onMouseOver={(e) => {
-                                        const innerDiv = e.currentTarget.querySelector('div');
-                                        if (innerDiv) {
-                                          innerDiv.style.backgroundColor = colors['bg-tertiary'];
-                                        }
-                                      }}
-                                      onMouseOut={(e) => {
-                                        const innerDiv = e.currentTarget.querySelector('div');
-                                        if (innerDiv) {
-                                          innerDiv.style.backgroundColor = 'transparent';
-                                        }
-                                      }}
+                                  {availableNodes
+                                    .filter((node) => node.data.type === 'STEP')
+                                    .slice(0, 5)
+                                    .map((node) => (
+                                      <button
+                                        key={node.id}
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          handleNodeClick(node.id);
+                                        }}
+                                        className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
+                                        style={{
+                                          color: colors['text-primary'],
+                                        }}
+                                        onMouseOver={(e) => {
+                                          const innerDiv =
+                                            e.currentTarget.querySelector(
+                                              'div'
+                                            );
+                                          if (innerDiv) {
+                                            innerDiv.style.backgroundColor =
+                                              colors['bg-tertiary'];
+                                          }
+                                        }}
+                                        onMouseOut={(e) => {
+                                          const innerDiv =
+                                            e.currentTarget.querySelector(
+                                              'div'
+                                            );
+                                          if (innerDiv) {
+                                            innerDiv.style.backgroundColor =
+                                              'transparent';
+                                          }
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
+                                          <div className="w-5 h-5 flex-shrink-0">
+                                            <img
+                                              src={getNodeTypeIcon(
+                                                node.data.type as string
+                                              )}
+                                              alt={`${node.data.type} icon`}
+                                              className="w-full h-full object-contain"
+                                            />
+                                          </div>
+                                          <div className="text-sm font-medium">
+                                            {node.data.label as string}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  {availableNodes.filter(
+                                    (node) => node.data.type === 'STEP'
+                                  ).length > 5 && (
+                                    <div
+                                      className="px-4 py-2 text-xs text-center"
+                                      style={{ color: colors['text-tertiary'] }}
                                     >
-                                      <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
-                                        <div className="w-5 h-5 flex-shrink-0">
-                                          <img 
-                                            src={getNodeTypeIcon(node.data.type as string)} 
-                                            alt={`${node.data.type} icon`}
-                                            className="w-full h-full object-contain"
-                                          />
-                                        </div>
-                                        <div className="text-sm font-medium">
-                                          {node.data.label as string}
-                                        </div>
-                                      </div>
-                                    </button>
-                                  ))}
-                                  {availableNodes.filter(node => node.data.type === 'STEP').length > 5 && (
-                                    <div className="px-4 py-2 text-xs text-center" style={{ color: colors['text-tertiary'] }}>
                                       Type to search more nodes
                                     </div>
                                   )}
@@ -601,47 +718,89 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="text-sm" style={{ color: colors['text-secondary'] }}>
+              <div
+                className="text-sm"
+                style={{ color: colors['text-secondary'] }}
+              >
                 Add a label to that path
               </div>
               <div className="flex flex-col gap-6">
-                
-                
-                  <div id="connection-label-input">
-                    <InputField
-                      value={label}
-                      onChange={(value) => setLabel(value)}
-                      placeholder="Enter a label for this connection"
-                    />
-                  </div>
+                <div id="connection-label-input">
+                  <InputField
+                    value={label}
+                    onChange={(value) => setLabel(value)}
+                    placeholder="Enter a label for this connection"
+                  />
                 </div>
               </div>
-            
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="flex flex-col gap-4">
+              {error && (
+                <div
+                  className="p-4 rounded-lg flex items-center gap-3 text-sm"
+                  style={{
+                    backgroundColor: `${colors['error-primary']}15`,
+                    color: colors['error-primary'],
+                    border: `1px solid ${colors['error-primary']}25`,
+                  }}
+                >
+                  <svg
+                    className="w-5 h-5 flex-shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span style={{ color: colors['error-primary'] }}>
+                    {error}
+                  </span>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
         {/* Actions */}
-        <div 
+        <div
           className="flex justify-end gap-3 p-6 border-t"
-          style={{ 
-            borderColor: colors['border-secondary'] 
-          }}
+          style={{ borderColor: colors['border-secondary'] }}
         >
           <div className="flex gap-2">
             <ButtonNormal
               variant="tertiary"
               onClick={handleClose}
               size="small"
+              disabled={isLoading}
             >
               Cancel
             </ButtonNormal>
             <ButtonNormal
               variant="primary"
               onClick={step === 1 ? handleNext : handleConfirm}
-              disabled={step === 1 ? !selectedNodeId : !label.trim()}
+              disabled={
+                step === 1 ? !selectedNodeId : !label.trim() || isLoading
+              }
               size="small"
             >
-              {step === 1 ? 'Next' : 'Create connection'}
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Creating...</span>
+                </div>
+              ) : step === 1 ? (
+                'Next'
+              ) : (
+                'Create connection'
+              )}
             </ButtonNormal>
           </div>
         </div>
@@ -651,9 +810,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
 
   if (typeof window === 'undefined') return null;
   return createPortal(
-    <ThemeProvider>
-      {modalContent}
-    </ThemeProvider>,
+    <ThemeProvider>{modalContent}</ThemeProvider>,
     document.body
   );
 };

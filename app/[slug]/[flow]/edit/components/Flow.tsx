@@ -376,7 +376,6 @@ export function Flow({
         delay_seconds: delayOptions?.seconds,
       };
 
-
       await onBlockAdd(
         blockData,
         dropdownDatas.path.id,
@@ -479,7 +478,8 @@ export function Flow({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create connection');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create connection');
         }
 
         // Close modal
@@ -489,12 +489,14 @@ export function Flow({
         const strokeLinesResponse = await fetch(
           `/api/stroke-lines?workflow_id=${parseInt(workflowId)}`
         );
-        if (strokeLinesResponse.ok) {
-          const strokeLines = await strokeLinesResponse.json();
-          setStrokeLines(strokeLines);
+        if (!strokeLinesResponse.ok) {
+          throw new Error('Failed to fetch updated connections');
         }
+        const strokeLines = await strokeLinesResponse.json();
+        setStrokeLines(strokeLines);
       } catch (error) {
-        console.error('Error creating connection:', error);
+        // Re-throw the error to be handled by the modal
+        throw error;
       }
     },
     [nodes, connectData, setShowConnectModal, setStrokeLines]
