@@ -105,6 +105,14 @@ export function Flow({
 }: FlowProps) {
   const colors = useColors();
   const { paths, setPaths } = usePathsStore();
+  // Reset paths store on mount and unmount
+  useEffect(() => {
+    setPaths([]);
+    return () => {
+      setPaths([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();

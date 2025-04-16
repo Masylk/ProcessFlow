@@ -15,6 +15,14 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // If no blocks found, just return success
+    if (blocks.length === 0) {
+      return NextResponse.json({ success: true });
+    }
+
+    // All blocks have the same path_id
+    const pathId = blocks[0].path_id;
+
     // Delete images from storage if they exist
     const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
     if (bucketName) {
@@ -39,6 +47,20 @@ export async function POST(req: NextRequest) {
         }
       }
     });
+
+    // Reorder positions for the affected path
+    const remainingBlocks = await prisma.block.findMany({
+      where: { path_id: pathId },
+      orderBy: { position: 'asc' },
+      select: { id: true }
+    });
+
+    for (let i = 0; i < remainingBlocks.length; i++) {
+      await prisma.block.update({
+        where: { id: remainingBlocks[i].id },
+        data: { position: i }
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -60,8 +60,11 @@ function CustomSmoothStepEdge({
 
   const handleDeleteBlocks = async () => {
     try {
+      console.log('handleDeleteBlocks');
+      console.log('data.path', data.path);
       // Get all blocks after this position except the last one
       const path = allPaths.find((p) => p.id === data.path.id);
+      console.log('path', path);
       if (!path) return;
       console.log('allPaths', allPaths);
 
@@ -70,16 +73,22 @@ function CustomSmoothStepEdge({
         return;
       }
       console.log('sourceBlock and targetBlock are defined');
+      console.log('sourceBlock', sourceBlock);
+      console.log('targetBlock', targetBlock);
       const position = Math.ceil(
         (sourceBlock.position + targetBlock.position) / 2
       );
+      console.log('position', position);
       const blocksToDelete = path.blocks
         .filter(
           (b) => b.position >= position && b.position < path.blocks.length - 1
         )
         .map((b) => b.id);
 
-      if (blocksToDelete.length === 0) return;
+      if (blocksToDelete.length === 0) {
+        console.log('No blocks to delete');
+        return;
+      }
 
       const response = await fetch('/api/blocks/delete-multiple', {
         method: 'POST',
@@ -148,43 +157,53 @@ function CustomSmoothStepEdge({
           requiredExtensions="http://www.w3.org/1999/xhtml"
         >
           <div className="flex items-center justify-center w-full h-full">
-            <div 
-              style={{ 
+            <div
+              style={{
                 backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary']
+                borderColor: colors['border-secondary'],
               }}
               className="flex rounded-lg overflow-hidden border"
             >
               <button
                 onClick={handleEdgeClick}
-                style={{ 
-                  '--hover-bg': colors['bg-secondary'],
-                  borderRight: `1px solid ${colors['border-secondary']}`
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--hover-bg': colors['bg-secondary'],
+                    borderRight: `1px solid ${colors['border-secondary']}`,
+                  } as React.CSSProperties
+                }
                 className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
               >
-                <img 
-                  src={assets.icons['plus'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`} 
-                  alt="Add" 
+                <img
+                  src={
+                    assets.icons['plus'] ||
+                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`
+                  }
+                  alt="Add"
                   style={{ stroke: colors['icon-secondary'] }}
-                  className="w-3 h-3" 
+                  className="w-3 h-3"
                 />
               </button>
               <button
-                style={{ 
-                  '--hover-bg': colors['bg-secondary']
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--hover-bg': colors['bg-secondary'],
+                  } as React.CSSProperties
+                }
                 className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteModal(true);
                 }}
               >
-                <img 
-                  src={assets.icons['trash'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`} 
-                  alt="Delete" 
+                <img
+                  src={
+                    assets.icons['trash'] ||
+                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`
+                  }
+                  alt="Delete"
                   style={{ stroke: colors['icon-secondary'] }}
-                  className="w-3 h-3" 
+                  className="w-3 h-3"
                 />
               </button>
             </div>

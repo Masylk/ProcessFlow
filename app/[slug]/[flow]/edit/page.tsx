@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
+import { useEffect } from 'react';
+import { usePathsStore } from './store/pathsStore';
 
 interface PageParams {
   flow: string;
