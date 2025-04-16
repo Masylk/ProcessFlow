@@ -1,6 +1,7 @@
 import { BaseEdge, EdgeProps, getSmoothStepPath } from '@xyflow/react';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
+import { BasicEdge } from './BasicEdge';
 
 function SmoothStepCustomParent({
   sourceX,
@@ -11,6 +12,10 @@ function SmoothStepCustomParent({
   targetPosition,
   style = {},
   markerEnd,
+  id,
+  source,
+  target,
+  data,
 }: EdgeProps) {
   const [edgePath] = getSmoothStepPath({
     sourceX,
@@ -25,18 +30,29 @@ function SmoothStepCustomParent({
   const isEditMode = useEditModeStore((state) => state.isEditMode);
 
   return (
-    <BaseEdge
-      path={edgePath}
-      markerEnd={markerEnd}
-      style={{
-        ...style,
-        strokeWidth: 2,
-        stroke: '#b1b1b7',
-      }}
-      className={`${
-        isConnectMode || isEditMode ? 'opacity-40' : ''
-      }`}
-    />
+    <BasicEdge
+      id={id}
+      source={source}
+      target={target}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      data={data}
+    >
+      <path
+        d={edgePath}
+        markerEnd={markerEnd}
+        style={{
+          strokeWidth: 2,
+          stroke: '#b1b1b7',
+        }}
+        className={`${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
+      />
+    </BasicEdge>
   );
 }
 

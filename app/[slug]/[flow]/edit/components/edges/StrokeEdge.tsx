@@ -22,6 +22,8 @@ import DeleteStrokeEdgeModal from '../modals/DeleteStrokeEdgeModal';
 import styles from './StrokeEdge.module.css';
 import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
+import { BasicEdge } from './BasicEdge';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -71,6 +73,8 @@ const snapToGrid = (point: Point, gridSize = 20) => {
 
 function StrokeEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -100,6 +104,7 @@ function StrokeEdge({
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const { allStrokeLinesVisible } = useStrokeLinesStore();
+  const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -442,20 +447,13 @@ function StrokeEdge({
 
   useEffect(() => {
     const loadControlPoints = async () => {
-      if (data && data.preview) {
-        console.log('dont load control points');
-        return;
-      }
+      // if (data && data.preview) {
+      //   console.log('dont load control points');
+      //   return;
+      // }
       console.log('data', data);
       try {
-        const strokeLineId = id.replace('stroke-edge-', '');
-        const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to load stroke line data');
-        }
-
-        const strokeLine = await response.json();
+        let strokeLine = null;
         const source = getConnectionPoint(
           sourceX,
           sourceY,
@@ -468,8 +466,18 @@ function StrokeEdge({
           targetPosition,
           false
         );
+        const strokeLineId = id.replace('stroke-edge-', '');
+        if (data && !data.preview) {
+          const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
 
+          if (!response.ok) {
+            throw new Error('Failed to load stroke line data');
+          }
+
+          strokeLine = await response.json();
+        }
         if (
+          strokeLine &&
           strokeLine.control_points &&
           Array.isArray(strokeLine.control_points) &&
           strokeLine.control_points.length > 0
@@ -513,10 +521,12 @@ function StrokeEdge({
             setControlPoints(initialPoints);
 
             // Save initial points to database
-            await updateStrokeLineControlPoints(
-              parseInt(strokeLineId),
-              initialPoints
-            );
+            if (data && !data.preview) {
+              await updateStrokeLineControlPoints(
+                parseInt(strokeLineId),
+                initialPoints
+              );
+            }
           } else {
             const midX = source.x + (target.x - source.x) / 2;
             const midY = source.y + (target.y - source.y) / 2;
@@ -533,10 +543,12 @@ function StrokeEdge({
             setControlPoints(initialPoints);
 
             // Save initial points to database
-            await updateStrokeLineControlPoints(
-              parseInt(strokeLineId),
-              initialPoints
-            );
+            if (data && !data.preview) {
+              await updateStrokeLineControlPoints(
+                parseInt(strokeLineId),
+                initialPoints
+              );
+            }
           }
         }
       } catch (error) {
@@ -567,7 +579,9 @@ function StrokeEdge({
         // Save fallback points to database
         try {
           const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
-          await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
+          if (data && !data.preview) {
+            await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
+          }
         } catch (saveError) {
           console.error('Error saving fallback control points:', saveError);
         }
@@ -590,19 +604,23 @@ function StrokeEdge({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (controlPoints.length > 0) {
-        saveControlPoints();
+        if (data && !data.preview) {
+          saveControlPoints();
+        }
       }
     }, 500); // Debounce for 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [controlPoints, saveControlPoints]);
+  }, [controlPoints, saveControlPoints, data]);
 
   const handleControlPointDragEnd = useCallback(() => {
     setIsDragging(false);
     setActivePointIndex(null);
     // Save immediately after drag ends
-    saveControlPoints();
-  }, [saveControlPoints]);
+    if (data && !data.preview) {
+      saveControlPoints();
+    }
+  }, [saveControlPoints, data]);
 
   // Add back the drag event listeners
   useEffect(() => {
@@ -711,7 +729,19 @@ function StrokeEdge({
   );
 
   return (
-    <>
+    <BasicEdge
+      id={id}
+      source={source}
+      target={target}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      data={data}
+    >
       <defs>
         <marker
           id={markerId}
@@ -774,6 +804,7 @@ function StrokeEdge({
         allStrokeLinesVisible &&
         data?.isVisible !== false &&
         (isHoveringEdge || isDragging) &&
+        !isModalOpen &&
         controlPoints.map((point, index) => (
           <EdgeLabelRenderer key={`control-${index}`}>
             <div
@@ -811,6 +842,7 @@ function StrokeEdge({
       {/* Edge Controls Container */}
       {showLabel &&
         !isHoveringControlPoint &&
+        !isModalOpen &&
         allStrokeLinesVisible &&
         data?.isVisible !== false && (
           <EdgeLabelRenderer>
@@ -853,6 +885,7 @@ function StrokeEdge({
                   className="w-5 h-5 rounded-full bg-[#FF69A3] hover:bg-[#ff4d93] flex items-center justify-center transition-colors duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (isModalOpen) return;
                     setShowDeleteModal(true);
                   }}
                 >
@@ -910,7 +943,7 @@ function StrokeEdge({
           }
         `}
       </style>
-    </>
+    </BasicEdge>
   );
 }
 

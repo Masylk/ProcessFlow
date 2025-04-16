@@ -57,6 +57,7 @@ import { useColors } from '@/app/theme/hooks';
 import FixedDelayNode from './nodes/FixedDelayNode';
 import EventDelayNode from './nodes/EventDelayNode';
 import { useStrokeLinesStore } from '../store/strokeLinesStore';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -105,6 +106,14 @@ export function Flow({
 }: FlowProps) {
   const colors = useColors();
   const { paths, setPaths } = usePathsStore();
+  // Reset paths store on mount and unmount
+  useEffect(() => {
+    setPaths([]);
+    return () => {
+      setPaths([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();
@@ -129,6 +138,7 @@ export function Flow({
     zoom: 1,
   });
   const { setEditMode } = useEditModeStore();
+  const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -626,6 +636,7 @@ export function Flow({
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
         onNodeClick={(event, node) => {
+          if (isModalOpen) return;
           event.preventDefault();
           event.stopPropagation();
           if (node.data.type !== 'STEP') return;

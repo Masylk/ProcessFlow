@@ -15,7 +15,11 @@ interface WorkspaceSettingsProps {
 // Maximum file size (1MB)
 const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
-export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: WorkspaceSettingsProps) {
+export default function WorkspaceSettings({
+  workspace,
+  onUpdate,
+  onDelete,
+}: WorkspaceSettingsProps) {
   const colors = useColors();
   const [name, setName] = useState(workspace.name || '');
   const [url, setUrl] = useState('');
@@ -23,7 +27,9 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
   const [reportsEnabled, setReportsEnabled] = useState(true);
   const [emailsEnabled, setEmailsEnabled] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(workspace.icon_url || null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    workspace.icon_url || null
+  );
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -40,7 +46,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
-      
+
       setUrlPlaceholder(suggestedUrl);
     } else {
       setUrlPlaceholder('');
@@ -58,7 +64,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
         if (e.target) e.target.value = '';
         return;
       }
-      
+
       setError(''); // Clear any previous errors
       setLogoFile(file);
       const reader = new FileReader();
@@ -75,10 +81,10 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
 
   const handleSave = async () => {
     if (isSaving) return;
-    
+
     setIsSaving(true);
     setSaveSuccess(false);
-    
+
     try {
       const updates: Partial<Workspace> = {
         name,
@@ -91,33 +97,33 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           const formData = new FormData();
           formData.append('file', logoFile);
           formData.append('workspaceId', workspace.id.toString());
-          
+
           // Upload the logo file
           const uploadResponse = await fetch('/api/upload/workspace-logo', {
             method: 'POST',
             body: formData,
           });
-          
+
           if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json();
             throw new Error(errorData.error || 'Failed to upload logo');
           }
-          
+
           // Get the URL of the uploaded file and update the logo preview
           const { url } = await uploadResponse.json();
           setLogoPreview(url);
-          
+
           // We need to update workspace in the parent component
           // Since the API directly updates the database, we need to sync the state
           // with the updated data to ensure immediate UI updates
           const updatedWorkspace = {
             ...workspace,
-            icon_url: url
+            icon_url: url,
           };
-          
+
           // Call onUpdate to ensure the parent component knows about the change
           const success = await onUpdate({
-            icon_url: url
+            icon_url: url,
           });
           if (!success) return;
         } catch (error) {
@@ -130,10 +136,13 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
         updates.icon_url = null as unknown as string;
       }
 
-      if (updates.name !== workspace.name || (logoPreview === null && workspace.icon_url)) {
+      if (
+        updates.name !== workspace.name ||
+        (logoPreview === null && workspace.icon_url)
+      ) {
         const success = await onUpdate(updates);
         setSaveSuccess(success);
-        
+
         if (success) {
           // Reset success message after a delay
           setTimeout(() => {
@@ -160,7 +169,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
 
   const handleDeleteWorkspace = async () => {
     if (!onDelete || deleteConfirmText !== workspace.name) return;
-    
+
     setIsDeleting(true);
     try {
       await onDelete(workspace.id);
@@ -174,7 +183,8 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
 
   const copyWorkspaceName = () => {
     try {
-      navigator.clipboard.writeText(workspace.name)
+      navigator.clipboard
+        .writeText(workspace.name)
         .then(() => {
           // Show success message
           setCopySuccess(true);
@@ -183,7 +193,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
             setCopySuccess(false);
           }, 2000);
         })
-        .catch(err => {
+        .catch((err) => {
           console.error('Failed to copy workspace name: ', err);
         });
     } catch (error) {
@@ -197,24 +207,18 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
       <div className="flex flex-col gap-5">
         <div className="flex justify-between items-start gap-4">
           <div className="flex flex-col gap-1">
-            <h2 
+            <h2
               style={{ color: colors['text-primary'] }}
               className="text-[18px] font-semibold"
             >
               Company profile
             </h2>
-            <p 
-              style={{ color: colors['text-tertiary'] }}
-              className="text-sm"
-            >
+            <p style={{ color: colors['text-tertiary'] }} className="text-sm">
               Update your company photo and details here.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <ButtonNormal
-              variant="secondary"
-              size="small"
-            >
+            <ButtonNormal variant="secondary" size="small">
               Cancel
             </ButtonNormal>
             <ButtonNormal
@@ -228,13 +232,15 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                   <div className="animate-spin rounded-full h-3 w-3 border-2 border-t-transparent border-r-transparent"></div>
                   <span>Saving...</span>
                 </div>
-              ) : 'Save'}
+              ) : (
+                'Save'
+              )}
             </ButtonNormal>
           </div>
         </div>
-        <div 
+        <div
           style={{ backgroundColor: colors['border-secondary'] }}
-          className="h-px" 
+          className="h-px"
         />
       </div>
 
@@ -244,7 +250,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
         <div className="flex gap-8">
           <div className="flex-1">
             <div className="flex items-center gap-0.5">
-              <span 
+              <span
                 style={{ color: colors['text-primary'] }}
                 className="text-sm font-semibold"
               >
@@ -252,10 +258,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
               </span>
               <span style={{ color: colors['text-brand-tertiary'] }}>*</span>
             </div>
-            <p 
-              style={{ color: colors['text-tertiary'] }}
-              className="text-sm"
-            >
+            <p style={{ color: colors['text-tertiary'] }} className="text-sm">
               This will be used to identify your workspace in the URL.
             </p>
           </div>
@@ -267,11 +270,11 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
               placeholder="Enter workspace name"
             />
             <div className="flex">
-              <span 
-                style={{ 
+              <span
+                style={{
                   backgroundColor: colors['bg-secondary'],
                   borderColor: colors['border-secondary'],
-                  color: colors['text-primary']
+                  color: colors['text-primary'],
                 }}
                 className="px-3.5 py-2.5 border border-r-0 rounded-l-lg"
               >
@@ -282,10 +285,10 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 placeholder={urlPlaceholder}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                style={{ 
+                style={{
                   borderColor: colors['border-secondary'],
                   color: colors['text-primary'],
-                  backgroundColor: colors['bg-primary']
+                  backgroundColor: colors['bg-primary'],
                 }}
                 className="flex-1 px-3.5 py-2.5 border rounded-r-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4e6bd7]"
               />
@@ -293,9 +296,9 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           </div>
         </div>
 
-        <div 
+        <div
           style={{ backgroundColor: colors['border-secondary'] }}
-          className="h-px hidden" 
+          className="h-px hidden"
         />
 
         {/* Company Logo Section */}
@@ -303,26 +306,27 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           <div className="flex-1">
             <div className="flex flex-col gap-1">
               <div className="flex items-center">
-                <span 
+                <span
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-semibold"
                 >
                   Company logo
                 </span>
-                <span 
+                <span
                   style={{ color: colors['text-brand-tertiary'] }}
                   className="ml-0.5"
                 >
                   *
                 </span>
               </div>
-              <span 
+              <span
                 className="text-sm font-normal"
                 style={{ color: colors['text-tertiary'] }}
               >
-                Update your company logo and then choose where you want it to display.
+                Update your company logo and then choose where you want it to
+                display.
               </span>
-              <p 
+              <p
                 style={{ color: colors['text-tertiary'] }}
                 className="text-xs mt-1"
               >
@@ -331,18 +335,21 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
             </div>
           </div>
           <div className="flex-1 flex items-center gap-4">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
               accept="image/svg+xml,image/png,image/jpeg,image/gif"
               className="hidden"
             />
-            <div className="relative group cursor-pointer" onClick={handleLogoClick}>
+            <div
+              className="relative group cursor-pointer"
+              onClick={handleLogoClick}
+            >
               {logoPreview ? (
                 <div className="relative">
-                  <div 
-                    style={{ 
+                  <div
+                    style={{
                       backgroundImage: `url(${logoPreview})`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
@@ -367,14 +374,16 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 </div>
               ) : (
                 <div className="relative">
-                  <div 
-                    style={{ 
+                  <div
+                    style={{
                       backgroundColor: colors['bg-brand'],
-                      color: colors['text-brand']
+                      color: colors['text-brand'],
                     }}
                     className="w-20 h-20 rounded-lg flex items-center justify-center font-semibold text-xl"
                   >
-                    {workspace.name ? workspace.name.charAt(0).toUpperCase() : 'U'}
+                    {workspace.name
+                      ? workspace.name.charAt(0).toUpperCase()
+                      : 'U'}
                   </div>
                   {/* Edit overlay on hover */}
                   <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
@@ -389,14 +398,10 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 </div>
               )}
             </div>
-            
+
             <div className="flex flex-col gap-2">
-              {error && (
-                <div className="text-red-500 text-xs">
-                  {error}
-                </div>
-              )}
-              
+              {error && <div className="text-red-500 text-xs">{error}</div>}
+
               <div className="flex items-center gap-3">
                 {logoPreview && (
                   <ButtonNormal
@@ -414,8 +419,16 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 )}
                 {isUploadingLogo && (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-t-transparent border-r-transparent" style={{ borderColor: colors['text-brand'] }}></div>
-                    <span className="ml-2 text-sm" style={{ color: colors['text-secondary'] }}>Uploading...</span>
+                    <div
+                      className="animate-spin rounded-full h-5 w-5 border-2 border-t-transparent border-r-transparent"
+                      style={{ borderColor: colors['text-brand'] }}
+                    ></div>
+                    <span
+                      className="ml-2 text-sm"
+                      style={{ color: colors['text-secondary'] }}
+                    >
+                      Uploading...
+                    </span>
                   </div>
                 )}
               </div>
@@ -423,25 +436,22 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           </div>
         </div>
 
-        <div 
+        <div
           style={{ backgroundColor: colors['border-secondary'] }}
-          className="h-px hidden" 
+          className="h-px hidden"
         />
 
         {/* Branding Section */}
         <div className="hidden gap-8">
           <div className="flex-1 flex flex-col gap-3">
             <div className="flex flex-col">
-              <span 
+              <span
                 style={{ color: colors['text-primary'] }}
                 className="text-sm font-semibold"
               >
                 Branding
               </span>
-              <p 
-                style={{ color: colors['text-tertiary'] }}
-                className="text-sm"
-              >
+              <p style={{ color: colors['text-tertiary'] }} className="text-sm">
                 Add your logo to reports and emails.
               </p>
             </div>
@@ -455,13 +465,13 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 className="mt-1"
               />
               <div>
-                <p 
+                <p
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-medium"
                 >
                   Reports
                 </p>
-                <p 
+                <p
                   style={{ color: colors['text-tertiary'] }}
                   className="text-sm"
                 >
@@ -477,13 +487,13 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 className="mt-1"
               />
               <div>
-                <p 
+                <p
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-medium"
                 >
                   Emails
                 </p>
-                <p 
+                <p
                   style={{ color: colors['text-tertiary'] }}
                   className="text-sm"
                 >
@@ -494,28 +504,28 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
           </div>
         </div>
 
-        <div 
+        <div
           style={{ backgroundColor: colors['border-secondary'] }}
-          className="h-px hidden" 
+          className="h-px hidden"
         />
 
         {/* Danger Zone Section */}
         <div className="flex flex-col gap-6 mt-6">
-          <div 
+          <div
             style={{ backgroundColor: colors['border-secondary'] }}
-            className="h-px" 
+            className="h-px"
           />
 
           <div className="flex gap-8">
             <div className="flex-1 flex flex-col gap-3">
               <div className="flex flex-col">
-                <span 
+                <span
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-semibold"
                 >
                   Danger zone
                 </span>
-                <p 
+                <p
                   style={{ color: colors['text-tertiary'] }}
                   className="text-sm"
                 >
@@ -538,11 +548,19 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
 
       {/* Buttons at the bottom */}
       <div className="flex justify-end gap-3 mt-8">
-        
         {saveSuccess && (
           <div className="flex items-center text-green-600">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-1"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>Changes saved</span>
           </div>
@@ -582,15 +600,28 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
         >
           <div className="flex flex-col gap-4">
             <p style={{ color: colors['text-secondary'] }} className="text-sm">
-              This action cannot be undone. This will permanently delete the workspace <span style={{ fontWeight: 'bold', userSelect: 'all' }}>{workspace.name}</span> and all of its data, including all workflows, folders, and settings.
+              This action cannot be undone. This will permanently delete the
+              workspace{' '}
+              <span style={{ fontWeight: 'bold', userSelect: 'all' }}>
+                {workspace.name}
+              </span>{' '}
+              and all of its data, including all workflows, folders, and
+              settings.
             </p>
-            <div style={{ color: colors['text-secondary'] }} className="text-sm mb-2">
-              <p>Please type <span style={{ fontWeight: 'bold' }}>{workspace.name}</span> to confirm.</p>
+            <div
+              style={{ color: colors['text-secondary'] }}
+              className="text-sm mb-2"
+            >
+              <p>
+                Please type{' '}
+                <span style={{ fontWeight: 'bold' }}>{workspace.name}</span> to
+                confirm.
+              </p>
               <div className="flex items-center gap-2 mt-1">
-                <button 
+                <button
                   onClick={copyWorkspaceName}
-                  style={{ 
-                    color: colors['primary'], 
+                  style={{
+                    color: colors['primary'],
                     cursor: 'pointer',
                     fontSize: '12px',
                     display: 'flex',
@@ -598,26 +629,53 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                     gap: '4px',
                     background: 'none',
                     border: 'none',
-                    padding: 0
+                    padding: 0,
                   }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="9"
+                      y="9"
+                      width="13"
+                      height="13"
+                      rx="2"
+                      ry="2"
+                    ></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
                   Copy workspace name
                 </button>
                 {copySuccess && (
-                  <span 
-                    style={{ 
+                  <span
+                    style={{
                       color: '#10B981', // Green color for success
                       fontSize: '12px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '2px'
+                      gap: '2px',
                     }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                     Copied!
@@ -625,7 +683,7 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 )}
               </div>
             </div>
-            
+
             {/* Custom input field to match the style in ConfirmDeleteModal */}
             <div className="mt-1">
               <input
@@ -634,10 +692,10 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg shadow-sm border text-sm"
-                style={{ 
+                style={{
                   borderColor: colors['border-secondary'],
                   backgroundColor: colors['bg-primary'],
-                  color: colors['text-primary']
+                  color: colors['text-primary'],
                 }}
               />
             </div>
@@ -646,4 +704,4 @@ export default function WorkspaceSettings({ workspace, onUpdate, onDelete }: Wor
       )}
     </div>
   );
-} 
+}

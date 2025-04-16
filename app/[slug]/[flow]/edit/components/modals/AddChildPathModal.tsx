@@ -35,10 +35,13 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
   // Get theme variables for direct application
   const themeVars = useMemo(() => {
     const theme = themeRegistry.get(currentTheme);
-    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    }, {});
+    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        acc[`--${key}`] = value;
+        return acc;
+      },
+      {}
+    );
   }, [currentTheme]);
 
   // Check if any path name is empty
@@ -68,11 +71,7 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
         width="w-[600px]"
         actions={
           <div className="flex justify-end gap-2 w-full">
-            <ButtonNormal
-              variant="tertiary"
-              size="small"
-              onClick={onClose}
-            >
+            <ButtonNormal variant="tertiary" size="small" onClick={onClose}>
               Cancel
             </ButtonNormal>
             <ButtonNormal
@@ -86,13 +85,19 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
           </div>
         }
       >
-        <div className="flex flex-col gap-6 pb-4" style={{ color: colors['text-primary'] }}>
+        <div
+          className="flex flex-col gap-6 pb-4"
+          style={{ color: colors['text-primary'] }}
+        >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto">
               {pathNames.map((name, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex flex-col gap-1 flex-grow">
-                    <label className="text-sm" style={{ color: colors['text-secondary'] }}>
+                    <label
+                      className="text-sm"
+                      style={{ color: colors['text-secondary'] }}
+                    >
                       Path n°{index + 1}
                     </label>
                     <InputField
@@ -136,4 +141,4 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
   return createPortal(modalContent, document.body);
 };
 
-export default AddChildPathModal; 
+export default AddChildPathModal;

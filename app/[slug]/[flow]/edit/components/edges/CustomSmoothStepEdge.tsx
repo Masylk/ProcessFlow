@@ -7,6 +7,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import DeleteBlocksModal from '../modals/DeleteBlocksModal';
 import { usePathsStore } from '../../store/pathsStore';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
+import { BasicEdge } from './BasicEdge';
 
 function CustomSmoothStepEdge({
   id,
@@ -117,7 +118,19 @@ function CustomSmoothStepEdge({
   };
 
   return (
-    <>
+    <BasicEdge
+      id={id}
+      source={source}
+      target={target}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      data={data}
+    >
       <path
         id={id}
         className={`react-flow__edge-path ${
@@ -148,43 +161,53 @@ function CustomSmoothStepEdge({
           requiredExtensions="http://www.w3.org/1999/xhtml"
         >
           <div className="flex items-center justify-center w-full h-full">
-            <div 
-              style={{ 
+            <div
+              style={{
                 backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary']
+                borderColor: colors['border-secondary'],
               }}
               className="flex rounded-lg overflow-hidden border"
             >
               <button
                 onClick={handleEdgeClick}
-                style={{ 
-                  '--hover-bg': colors['bg-secondary'],
-                  borderRight: `1px solid ${colors['border-secondary']}`
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--hover-bg': colors['bg-secondary'],
+                    borderRight: `1px solid ${colors['border-secondary']}`,
+                  } as React.CSSProperties
+                }
                 className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
               >
-                <img 
-                  src={assets.icons['plus'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`} 
-                  alt="Add" 
+                <img
+                  src={
+                    assets.icons['plus'] ||
+                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`
+                  }
+                  alt="Add"
                   style={{ stroke: colors['icon-secondary'] }}
-                  className="w-3 h-3" 
+                  className="w-3 h-3"
                 />
               </button>
               <button
-                style={{ 
-                  '--hover-bg': colors['bg-secondary']
-                } as React.CSSProperties}
+                style={
+                  {
+                    '--hover-bg': colors['bg-secondary'],
+                  } as React.CSSProperties
+                }
                 className="flex items-center justify-center p-2 hover:bg-[var(--hover-bg)]"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteModal(true);
                 }}
               >
-                <img 
-                  src={assets.icons['trash'] || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`} 
-                  alt="Delete" 
+                <img
+                  src={
+                    assets.icons['trash'] ||
+                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`
+                  }
+                  alt="Delete"
                   style={{ stroke: colors['icon-secondary'] }}
-                  className="w-3 h-3" 
+                  className="w-3 h-3"
                 />
               </button>
             </div>
@@ -197,7 +220,7 @@ function CustomSmoothStepEdge({
           onConfirm={handleDeleteBlocks}
         />
       )}
-    </>
+    </BasicEdge>
   );
 }
 

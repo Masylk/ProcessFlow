@@ -653,7 +653,9 @@ export default function Page() {
     });
   }, []);
 
-  const onWorkspaceUpdate = async (updates: Partial<Workspace>): Promise<boolean> => {
+  const onWorkspaceUpdate = async (
+    updates: Partial<Workspace>
+  ): Promise<boolean> => {
     if (!activeWorkspace) return false;
 
     const nameError = checkWorkspaceName(updates.name || '');
@@ -683,7 +685,7 @@ export default function Page() {
           w.id === updatedWorkspace.id ? updatedWorkspace : w
         )
       );
-      
+
       return true;
     } catch (error) {
       console.error('Error updating workspace:', error);
