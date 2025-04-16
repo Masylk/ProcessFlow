@@ -442,20 +442,13 @@ function StrokeEdge({
 
   useEffect(() => {
     const loadControlPoints = async () => {
-      if (data && data.preview) {
-        console.log('dont load control points');
-        return;
-      }
+      // if (data && data.preview) {
+      //   console.log('dont load control points');
+      //   return;
+      // }
       console.log('data', data);
       try {
-        const strokeLineId = id.replace('stroke-edge-', '');
-        const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to load stroke line data');
-        }
-
-        const strokeLine = await response.json();
+        let strokeLine = null;
         const source = getConnectionPoint(
           sourceX,
           sourceY,
@@ -468,8 +461,18 @@ function StrokeEdge({
           targetPosition,
           false
         );
+        const strokeLineId = id.replace('stroke-edge-', '');
+        if (data && !data.preview) {
+          const response = await fetch(`/api/stroke-lines?id=${strokeLineId}`);
 
+          if (!response.ok) {
+            throw new Error('Failed to load stroke line data');
+          }
+
+          strokeLine = await response.json();
+        }
         if (
+          strokeLine &&
           strokeLine.control_points &&
           Array.isArray(strokeLine.control_points) &&
           strokeLine.control_points.length > 0
@@ -513,10 +516,12 @@ function StrokeEdge({
             setControlPoints(initialPoints);
 
             // Save initial points to database
-            await updateStrokeLineControlPoints(
-              parseInt(strokeLineId),
-              initialPoints
-            );
+            if (data && !data.preview) {
+              await updateStrokeLineControlPoints(
+                parseInt(strokeLineId),
+                initialPoints
+              );
+            }
           } else {
             const midX = source.x + (target.x - source.x) / 2;
             const midY = source.y + (target.y - source.y) / 2;
@@ -533,10 +538,12 @@ function StrokeEdge({
             setControlPoints(initialPoints);
 
             // Save initial points to database
-            await updateStrokeLineControlPoints(
-              parseInt(strokeLineId),
-              initialPoints
-            );
+            if (data && !data.preview) {
+              await updateStrokeLineControlPoints(
+                parseInt(strokeLineId),
+                initialPoints
+              );
+            }
           }
         }
       } catch (error) {
@@ -567,7 +574,9 @@ function StrokeEdge({
         // Save fallback points to database
         try {
           const strokeLineId = parseInt(id.replace('stroke-edge-', ''));
-          await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
+          if (data && !data.preview) {
+            await updateStrokeLineControlPoints(strokeLineId, fallbackPoints);
+          }
         } catch (saveError) {
           console.error('Error saving fallback control points:', saveError);
         }
@@ -590,19 +599,23 @@ function StrokeEdge({
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (controlPoints.length > 0) {
-        saveControlPoints();
+        if (data && !data.preview) {
+          saveControlPoints();
+        }
       }
     }, 500); // Debounce for 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [controlPoints, saveControlPoints]);
+  }, [controlPoints, saveControlPoints, data]);
 
   const handleControlPointDragEnd = useCallback(() => {
     setIsDragging(false);
     setActivePointIndex(null);
     // Save immediately after drag ends
-    saveControlPoints();
-  }, [saveControlPoints]);
+    if (data && !data.preview) {
+      saveControlPoints();
+    }
+  }, [saveControlPoints, data]);
 
   // Add back the drag event listeners
   useEffect(() => {
