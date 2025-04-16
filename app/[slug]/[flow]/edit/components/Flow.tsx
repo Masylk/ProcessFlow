@@ -21,7 +21,7 @@ import {
 import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './nodes/CustomNode';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
-import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
+import AddBlockDropdownMenu from './AddBlockDropdownMenu';
 import {
   NodeData,
   EdgeData,
