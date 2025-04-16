@@ -8,6 +8,7 @@ import TextAreaInput from '@/app/components/TextAreaInput';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '@/app/components/IconUpload';
 import IconModifier from './IconModifier';
+import { toast } from 'sonner';
 
 interface EditFlowModalProps {
   onClose: () => void;
@@ -17,7 +18,7 @@ interface EditFlowModalProps {
     description: string,
     folder: Folder | null | undefined,
     icon: string | null
-  ) => Promise<Workflow | null>;
+  ) => Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }>;
   selectedWorkflow: Workflow;
 }
 
@@ -37,16 +38,29 @@ export default function EditFlowModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onConfirm(
+      const result = await onConfirm(
         selectedWorkflow.id,
         processName,
         flowDescription,
         undefined,
         flowIcon
       );
-      onClose();
+
+      if (result.error) {
+        toast.error(result.error.title, {
+          description: result.error.description,
+        });
+        return;
+      }
+
+      if (result.workflow) {
+        onClose();
+      }
     } catch (error) {
       console.error('Error saving flow:', error);
+      toast.error('Error Saving Flow', {
+        description: 'An unexpected error occurred while saving the flow.',
+      });
     } finally {
       setIsSaving(false);
     }

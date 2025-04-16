@@ -318,7 +318,7 @@ export default function UserSettings({
 
       <div 
         style={{ backgroundColor: colors['bg-primary'] }}
-        className="w-[628px] h-fit rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
+        className="w-[628px] max-h-[90vh] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -349,16 +349,16 @@ export default function UserSettings({
         </div>
 
         {/* Body */}
-        <div className="self-stretch justify-start items-center inline-flex">
-          <div className="grow shrink basis-0 p-6 flex-col justify-start items-start gap-5 inline-flex">
+        <div className="self-stretch overflow-y-auto flex-1 w-full">
+          <div className="w-full p-6 flex-col justify-start items-start gap-5 inline-flex">
             
             {/* Main settings form */}
-            <div className="self-stretch h-min flex-col justify-start items-start gap-6 flex">
-              <div className="self-stretch h-[579px] p-1 flex-col justify-start items-start gap-5 flex pr-4 overflow-auto">
+            <div className="w-full flex-col justify-start items-start gap-6 flex">
+              <div className="w-full flex-col justify-start items-start gap-5 flex pr-4">
                 {/* Photo & Name section */}
-                <div className="self-stretch h-[216px] flex-col justify-start items-start gap-4 flex">
+                <div className="w-full flex-col justify-start items-start gap-4 flex">
                   {/* Photo label */}
-                  <div className="self-stretch h-10 flex-col justify-start items-start flex">
+                  <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
                       <div 
                         style={{ color: colors['text-primary'] }}
@@ -375,7 +375,7 @@ export default function UserSettings({
                     </div>
                   </div>
                   {/* Photo controls */}
-                  <div className="self-stretch justify-start items-center gap-4 inline-flex">
+                  <div className="w-full justify-start items-center gap-4 inline-flex">
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -424,8 +424,8 @@ export default function UserSettings({
                     </ButtonDestructive>
                   </div>
                   {/* Name section */}
-                  <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
-                    <div className="self-stretch h-5 flex-col justify-start items-start flex">
+                  <div className="w-full flex-col justify-start items-start gap-4 flex">
+                    <div className="w-full flex-col justify-start items-start flex">
                       <div className="inline-flex gap-0.5">
                         <div 
                           style={{ color: colors['text-primary'] }}
@@ -435,7 +435,7 @@ export default function UserSettings({
                         </div>
                       </div>
                     </div>
-                    <div className="self-stretch justify-start items-center gap-4 inline-flex">
+                    <div className="w-full justify-start items-center gap-4 inline-flex">
                       <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
                         <InputField
                           type="default"
@@ -458,11 +458,11 @@ export default function UserSettings({
                  {/* Divider */}
                  <div 
                    style={{ borderColor: colors['border-secondary'] }}
-                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                   className="w-full border-b flex-col justify-start items-start flex" 
                  />
                 {/* Email section */}
-                <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
-                  <div className="self-stretch h-5 flex-col justify-start items-start flex">
+                <div className="w-full flex-col justify-start items-start gap-4 flex">
+                  <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
                       <div 
                         style={{ color: colors['text-primary'] }}
@@ -472,10 +472,10 @@ export default function UserSettings({
                       </div>
                     </div>
                   </div>
-                  <div className="self-stretch justify-start items-center gap-4 inline-flex">
+                  <div className="w-full justify-start items-center gap-4 inline-flex">
                     <div className="grow shrink basis-0 flex-col justify-start items-start gap-1.5 inline-flex">
-                      <div className="self-stretch h-10 flex-col justify-start items-start gap-1.5 flex">
-                        <div className="relative self-stretch">
+                      <div className="w-full h-10 flex-col justify-start items-start gap-1.5 flex">
+                        <div className="relative w-full">
                           <InputField
                             type="default"
                             value={newEmail}
@@ -501,16 +501,16 @@ export default function UserSettings({
                  {/* Divider */}
                  <div 
                    style={{ borderColor: colors['border-secondary'] }}
-                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                   className="w-full border-b flex-col justify-start items-start flex" 
                  />
                 {/* Password section */}
 
                 {!showPasswordForm ? (
                   // When the form is hidden, show the change password button.
-                  <div className="self-stretch flex flex-col gap-4">
+                  <div className="w-full flex flex-col gap-4">
                     {/* Header and Change Password Button */}
-                    <div className="self-stretch flex flex-col gap-4">
-                      <div className="self-stretch h-5 flex items-center">
+                    <div className="w-full flex flex-col gap-4">
+                      <div className="w-full flex items-center">
                         <div className="inline-flex gap-0.5">
                           <div 
                             style={{ color: colors['text-primary'] }}
@@ -643,12 +643,12 @@ export default function UserSettings({
                  {/* Divider */}
                  <div 
                    style={{ borderColor: colors['border-secondary'] }}
-                   className="self-stretch border-b flex-col justify-start items-start flex" 
+                   className="w-full border-b flex-col justify-start items-start flex" 
                  />
 
                 {/* Account Security section */}
-                <div className="self-stretch h-20 flex-col justify-start items-start gap-4 flex">
-                  <div className="self-stretch h-5 flex-col justify-start items-start flex">
+                <div className="w-full flex-col justify-start items-start gap-4 flex">
+                  <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
                       <div 
                         style={{ color: colors['text-primary'] }}
@@ -682,11 +682,11 @@ export default function UserSettings({
               {/* Divider */}
               <div 
                 style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch border-b flex-col justify-start items-start flex" 
+                className="w-full border-b flex-col justify-start items-start flex" 
               />
               {/* Footer buttons */}
-              <div className="self-stretch h-fit flex-col justify-start items-center gap-5 flex">
-                <div className="self-stretch flex justify-end items-center gap-5">
+              <div className="w-full flex-col justify-start items-center gap-5 flex">
+                <div className="w-full flex justify-end items-center gap-5">
                   <div className="grow shrink basis-0 h-10 flex justify-end items-center gap-3">
                     <ButtonNormal
                       variant="secondary"

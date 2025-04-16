@@ -6,6 +6,7 @@ import { sendReactEmail } from '@/lib/email';
 import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { scheduleFollowUpEmail, scheduleTestEmail } from '@/lib/scheduledEmails';
 import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackRequestEmail';
+import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -279,6 +280,14 @@ export async function POST(request: Request) {
         break;
 
       case 'WORKSPACE_SETUP':
+
+      const nameError = checkWorkspaceName(formData.workspace_name);
+      if (nameError) {
+        return NextResponse.json({ 
+          error: 'Invalid workspace name',
+          ...nameError 
+        }, { status: 400 });
+      }
         // Create workspace
         const workspace = await prisma.workspace.create({
           data: {

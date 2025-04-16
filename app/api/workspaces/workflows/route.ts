@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { getActiveUser } from '@/lib/auth';
 import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
 import { generatePublicAccessId } from '../../workflows/utils';
+import { checkWorkflowName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
@@ -235,18 +236,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check for forbidden characters
-    if (name.includes('-')) {
+    // Use the checkWorkflowName utility
+    const nameError = checkWorkflowName(name);
+    if (nameError) {
       return NextResponse.json(
         { 
           error: 'Invalid workflow name',
-          title: 'Invalid Character',
-          description: 'Workflow name cannot contain hyphens (-)'
+          ...nameError
         },
         { status: 400 }
       );
     }
 
+    // Remove the old validation since it's now handled by checkWorkflowName
     // Clean whitespaces in name
     const cleanedName = name.trim().replace(/\s+/g, ' ');
 
@@ -424,12 +426,26 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Add name validation if name is being updated
+    if (name) {
+      const nameError = checkWorkflowName(name);
+      if (nameError) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid workflow name',
+            ...nameError
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const updatedWorkflow = await prisma.workflow.update({
       where: {
         id: Number(id),
       },
       data: {
-        ...(name && { name }),
+        ...(name && { name: name.trim().replace(/\s+/g, ' ') }), // Clean whitespace if name is provided
         ...(description && { description }),
         ...(folder_id !== null && {
           folder_id: folder_id ? Number(folder_id) : null,

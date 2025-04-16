@@ -1033,7 +1033,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
               size="medium"
               leadingIcon={starIconUrl}
               onClick={() => handleTabSwitch('stars')}
-              className="transition-all duration-200"
+              className="transition-all duration-200 hidden"
               style={{
                 backgroundColor: showStars
                   ? colors['bg-secondary']

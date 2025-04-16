@@ -21,7 +21,7 @@ import {
 import { createElkLayout } from '../utils/elkLayout';
 import CustomNode from './nodes/CustomNode';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
-import AddBlockDropdownMenu from '@/app/workspace/[id]/[workflowId]/reactflow/components/AddBlockDropdownMenu';
+import AddBlockDropdownMenu from './AddBlockDropdownMenu';
 import {
   NodeData,
   EdgeData,
@@ -57,6 +57,7 @@ import { useColors } from '@/app/theme/hooks';
 import FixedDelayNode from './nodes/FixedDelayNode';
 import EventDelayNode from './nodes/EventDelayNode';
 import { useStrokeLinesStore } from '../store/strokeLinesStore';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -105,6 +106,14 @@ export function Flow({
 }: FlowProps) {
   const colors = useColors();
   const { paths, setPaths } = usePathsStore();
+  // Reset paths store on mount and unmount
+  useEffect(() => {
+    setPaths([]);
+    return () => {
+      setPaths([]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const { fitView, setCenter, getNode, getNodes, setViewport } = useReactFlow();
@@ -129,6 +138,7 @@ export function Flow({
     zoom: 1,
   });
   const { setEditMode } = useEditModeStore();
+  const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
 
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
@@ -376,7 +386,6 @@ export function Flow({
         delay_seconds: delayOptions?.seconds,
       };
 
-
       await onBlockAdd(
         blockData,
         dropdownDatas.path.id,
@@ -479,7 +488,8 @@ export function Flow({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create connection');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create connection');
         }
 
         // Close modal
@@ -489,12 +499,14 @@ export function Flow({
         const strokeLinesResponse = await fetch(
           `/api/stroke-lines?workflow_id=${parseInt(workflowId)}`
         );
-        if (strokeLinesResponse.ok) {
-          const strokeLines = await strokeLinesResponse.json();
-          setStrokeLines(strokeLines);
+        if (!strokeLinesResponse.ok) {
+          throw new Error('Failed to fetch updated connections');
         }
+        const strokeLines = await strokeLinesResponse.json();
+        setStrokeLines(strokeLines);
       } catch (error) {
-        console.error('Error creating connection:', error);
+        // Re-throw the error to be handled by the modal
+        throw error;
       }
     },
     [nodes, connectData, setShowConnectModal, setStrokeLines]
@@ -624,6 +636,7 @@ export function Flow({
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
         onNodeClick={(event, node) => {
+          if (isModalOpen) return;
           event.preventDefault();
           event.stopPropagation();
           if (node.data.type !== 'STEP') return;

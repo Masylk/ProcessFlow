@@ -18,6 +18,7 @@ interface ShareModalProps {
   is_public?: boolean;
   onToggleAccess?: () => void;
   shareUrl?: string;
+  workspaceLogo?: string;
 }
 
 export default function ShareModal({
@@ -29,6 +30,7 @@ export default function ShareModal({
   is_public = false,
   onToggleAccess,
   shareUrl,
+  workspaceLogo,
 }: ShareModalProps) {
   const colors = useColors();
   const [activeTab, setActiveTab] = useState('share');
@@ -277,7 +279,7 @@ export default function ShareModal({
               <ButtonNormal
                 variant="primary"
                 size="small"
-                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/code-snippet-02.svg`}
+                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02-white.svg`}
                 onClick={handleCopyEmbedSnippet}
                 className="w-full"
               >
@@ -787,11 +789,21 @@ export default function ShareModal({
                   <div className="flex flex-col items-center gap-[29px]">
                     <div className="flex flex-col items-center gap-[14.5px]">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center relative">
+                        <div className="flex items-center justify-center relative [&[data-fallback]]:before:content-[attr(data-fallback)] [&[data-fallback]]:before:text-lg [&[data-fallback]]:before:font-medium" style={{ color: colors['text-primary'] }}>
                           <img
-                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
-                            alt="ProcessFlow Icon"
+                            src={workspaceLogo || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
+                            alt="Workspace Logo"
                             className="w-[150px]"
+                            onError={(e) => {
+                              // If workspace logo fails, try the fallback logo
+                              if (workspaceLogo && e.currentTarget.src !== `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`) {
+                                e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`;
+                              } else {
+                                // If fallback also fails, show a text fallback
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.setAttribute('data-fallback', 'ProcessFlow');
+                              }
+                            }}
                           />
                         </div>
                       </div>
@@ -851,12 +863,25 @@ export default function ShareModal({
                       Made with
                     </span>
                     <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
-                      alt="ProcessFlow Logo"
+                      src={workspaceLogo || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
+                      alt="Workspace Logo"
                       className="h-[20px]"
+                      onError={(e) => {
+                        // If workspace logo fails, try the fallback logo
+                        if (workspaceLogo && e.currentTarget.src !== `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`) {
+                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`;
+                        } else {
+                          // If fallback also fails, show a text fallback
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement?.setAttribute('data-fallback', 'ProcessFlow');
+                        }
+                      }}
                     />
                   </div>
-                  <button className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]">
+                  <button 
+                    className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                    onClick={() => window.open('https://process-flow.io', '_blank')}
+                  >
                     <img
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
                       alt="External Link"

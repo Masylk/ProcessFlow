@@ -1,6 +1,7 @@
 // app/api/workspace/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the path to your Prisma client
+import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
@@ -221,6 +222,13 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const updates = await req.json();
 
+    const nameError = checkWorkspaceName(updates.name);
+    if (nameError) {
+      return NextResponse.json({ 
+        error: 'Invalid workspace name',
+        ...nameError 
+      }, { status: 400 });
+    }
     // Check if workspace exists
     const existingWorkspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },

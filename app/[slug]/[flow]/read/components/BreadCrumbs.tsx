@@ -52,21 +52,12 @@ const BreadCrumbs: React.FC<BreadCrumbsProps> = ({ items, className }) => {
                 className="w-5 h-5 flex items-center justify-center"
                 style={{ color: colors['breadcrumb-separator'] }}
               >
-                <svg
+                <img 
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/slash-divider.svg`}
+                  alt="/"
                   width="16"
                   height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6 12L10 8L6 4"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                />
               </div>
             )}
           </React.Fragment>

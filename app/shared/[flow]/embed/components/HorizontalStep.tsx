@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import { BaseStepProps } from '@/app/workspace/[id]/[workflowId]/read/components/steps/BaseStep';
 import DynamicIcon from '@/utils/DynamicIcon';
@@ -11,6 +11,19 @@ interface HorizontalStepProps extends BaseStepProps {
   isFirstStep?: boolean;
 }
 
+// Add a style tag to hide scrollbars globally
+const HideScrollbarStyles = () => (
+  <style jsx global>{`
+    .hide-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;  /* Chrome, Safari and Opera */
+    }
+  `}</style>
+);
+
 export default function HorizontalStep({
   block,
   selectedOptionIds,
@@ -19,11 +32,148 @@ export default function HorizontalStep({
 }: HorizontalStepProps) {
   const colors = useColors();
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<number | null>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const [scrollTop, setScrollTop] = useState<number>(0);
+  const [windowWidth, setWindowWidth] = useState<number>(0);
+  const [windowHeight, setWindowHeight] = useState<number>(0);
+  const [imageLoaded, setImageLoaded] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
+  const [imageDimensions, setImageDimensions] = useState<{width: number; height: number} | null>(null);
 
   // Add null check for block
   if (!block) {
     return null;
   }
+
+  // Update window size
+  useEffect(() => {
+    const updateWindowDimensions = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
+
+    // Initialize
+    updateWindowDimensions();
+
+    // Add event listener
+    window.addEventListener('resize', updateWindowDimensions);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', updateWindowDimensions);
+    };
+  }, []);
+
+  // Update scrollbar thumb size based on content and window size
+  useEffect(() => {
+    const updateScrollThumb = () => {
+      if (contentRef.current && containerRef.current) {
+        const contentScrollHeight = contentRef.current.scrollHeight;
+        const containerClientHeight = containerRef.current.clientHeight;
+        
+        setContentHeight(contentScrollHeight);
+        setContainerHeight(containerClientHeight);
+        
+        // If content is taller than container, calculate ratio for thumb
+        if (contentScrollHeight > containerClientHeight) {
+          // Adjust thumb size based on both content ratio and container height
+          const ratio = containerClientHeight / contentScrollHeight;
+          
+          // Scale thumb minimum size based on viewport height 
+          // (smaller screens get smaller minimum thumb size)
+          const minThumbSize = Math.max(20, Math.min(30, window.innerHeight * 0.04));
+          
+          const thumbHeight = Math.max(minThumbSize, containerClientHeight * ratio);
+          setScrollbarThumbHeight(thumbHeight);
+        } else {
+          setScrollbarThumbHeight(null); // Hide scrollbar when not needed
+        }
+      }
+    };
+
+    updateScrollThumb();
+    
+    // Set up resize observer to detect content changes
+    const resizeObserver = new ResizeObserver(updateScrollThumb);
+    if (contentRef.current) {
+      resizeObserver.observe(contentRef.current);
+    }
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [block, signedImageUrl, windowWidth, windowHeight, imageLoaded]); // Update when content, window size, or image loaded status changes
+
+  // Handle image load event to get dimensions
+  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    setImageDimensions({
+      width: img.naturalWidth,
+      height: img.naturalHeight
+    });
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  // Handle image error
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(false);
+  };
+
+  // Add scroll event listener to track scroll position
+  useEffect(() => {
+    const contentElement = contentRef.current;
+    
+    const handleScroll = () => {
+      if (contentElement) {
+        setScrollTop(contentElement.scrollTop);
+      }
+    };
+    
+    if (contentElement) {
+      contentElement.addEventListener('scroll', handleScroll);
+    }
+    
+    return () => {
+      if (contentElement) {
+        contentElement.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  // Custom scrollbar click handler
+  const handleScrollbarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (contentRef.current) {
+      const track = e.currentTarget;
+      const trackRect = track.getBoundingClientRect();
+      const clickPosition = e.clientY - trackRect.top;
+      const percentage = clickPosition / trackRect.height;
+      
+      const scrollPosition = percentage * (contentHeight - containerHeight);
+      contentRef.current.scrollTop = scrollPosition;
+    }
+  };
+
+  // Calculate appropriate scrollbar width based on viewport
+  const getScrollbarWidth = () => {
+    if (windowWidth <= 640) {
+      return 3; // 3px on small screens (mobile)
+    } else if (windowWidth <= 1024) {
+      return 4; // 4px on medium screens (tablet)
+    } else {
+      return 6; // 6px on large screens (desktop)
+    }
+  };
+
+  const scrollbarWidth = getScrollbarWidth();
 
   const getIconPath = (block: Block) => {
     if (block.type === 'PATH') {
@@ -55,6 +205,8 @@ export default function HorizontalStep({
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (block.image) {
+        setImageLoaded(false);
+        setImageError(false);
         try {
           const response = await fetch(
             `/api/get-signed-url?path=${block.image}`
@@ -63,9 +215,12 @@ export default function HorizontalStep({
 
           if (response.ok && data.signedUrl) {
             setSignedImageUrl(data.signedUrl);
+          } else {
+            setImageError(true);
           }
         } catch (error) {
           console.error('Error fetching signed URL:', error);
+          setImageError(true);
         }
       }
     };
@@ -77,115 +232,155 @@ export default function HorizontalStep({
   const hasBothImageAndOptions =
     block.image && block.child_paths && block.child_paths.length > 0;
 
+  // Check if there's only description (no image or options)
+  const hasOnlyDescription = 
+    !block.image && (!block.child_paths || block.child_paths.length === 0);
+
+  // Calculate if scrollbar should be visible
+  const showScrollbar = contentHeight > containerHeight;
+  
+  // Calculate thumb position
+  const thumbPosition = contentHeight <= containerHeight 
+    ? 0 
+    : (scrollTop / (contentHeight - containerHeight)) * (containerHeight - (scrollbarThumbHeight || 0));
+
+  // Determine appropriate padding based on screen size
+  const getResponsivePadding = () => {
+    if (windowWidth <= 640) {
+      return 'px-3 pt-3'; // Less padding on small screens
+    } else if (windowWidth <= 1024) {
+      return 'px-4 pt-4'; // Medium padding on medium screens
+    } else {
+      return 'px-5 pt-5'; // More padding on large screens
+    }
+  };
+
+  // Determine optimal display mode for image based on its dimensions
+  const getImageDisplayMode = () => {
+    if (!imageDimensions) return "object-contain";
+    
+    const aspectRatio = imageDimensions.width / imageDimensions.height;
+    
+    // For very wide images (panoramas)
+    if (aspectRatio > 2.5) {
+      return "object-contain";
+    }
+    
+    // For very tall images
+    if (aspectRatio < 0.5) {
+      return "object-contain";
+    }
+    
+    // Default to contain to show full image
+    return "object-contain";
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Show header-only layout if no content */}
-      {!block.image &&
-      (!block.child_paths || block.child_paths.length === 0) ? (
-        <div className="h-full flex items-center justify-center">
-          <div className="flex flex-col items-center text-center gap-4 max-w-2xl">
-            {/* App Icon */}
-            <div
-              className="flex-shrink-0 w-[4vw] h-[4vw] max-w-[48px] max-h-[48px] rounded-[6px] border shadow-sm flex items-center justify-center"
-              style={{
-                backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'],
-              }}
-            >
-              <img
-                src={getIconPath(block)}
-                alt="Step Icon"
-                className="w-[2vw] h-[2vw] max-w-[24px] max-h-[24px]"
-              />
-            </div>
-
-            {/* Title and Description */}
-            <div className="flex flex-col items-center">
-              <div className="text-[2.5vw] max-text-[30px] font-semibold mb-2">
-                <span>{getDisplayTitle(block)}</span>
-              </div>
-              <p className="text-[2vw] max-text-[24px] text-quaternary">
-                {block.step_details ||
-                  block.description ||
-                  `Details for ${getDisplayTitle(block)}`}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Regular header + content layout */}
-          <div className="h-[20%] flex flex-col justify-center shrink-0">
-            {/* Step Header */}
-            <div className="flex items-center gap-4 mb-2">
-              {/* App Icon */}
-              <div
-                className="flex-shrink-0 w-[4vw] h-[4vw] min-w-[24px] min-h-[24px] max-w-[48px] max-h-[48px] rounded-[6px] border shadow-sm flex items-center justify-center"
-                style={{
-                  backgroundColor: colors['bg-primary'],
-                  borderColor: colors['border-secondary'],
-                }}
-              >
-                <img
-                  src={getIconPath(block)}
-                  alt="Step Icon"
-                  className="w-[2vw] h-[2vw] min-w-[12px] min-h-[12px] max-w-[24px] max-h-[24px]"
-                />
-              </div>
-              {/* Step Title */}
-              <div className="flex-1">
-                <div className="text-[2.5vw] min-text-[24px] max-text-[30px] font-semibold">
-                  <span>{getDisplayTitle(block)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Description with line clamp */}
-            <p className="text-[2vw] min-text-[24px] max-text-[24px] text-quaternary line-clamp-2">
-              {block.step_details ||
-                block.description ||
-                `Details for ${getDisplayTitle(block)}`}
-            </p>
-          </div>
-
-          {/* Spacer - fixed height */}
-          <div className="h-[0.2%] shrink-0" />
-
-          {/* Content section - remaining height */}
-          <div className="flex-1 min-h-0">
-            {hasBothImageAndOptions ? (
-              <div className="h-full flex flex-col">
-                {/* Image section - fixed proportion */}
-                <div className="h-[55%] rounded-lg overflow-hidden mb-3">
-                  {signedImageUrl ? (
+    <>
+      <HideScrollbarStyles />
+      <div ref={containerRef} className="h-full w-full overflow-hidden relative">
+        {/* Content Container - Main scrollable area */}
+        <div 
+          ref={contentRef}
+          className={`h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`}
+        >
+          <div className="pb-16"> {/* Extra padding wrapper to ensure bottom content is visible */}
+            {/* Fixed Header Section */}
+            <div className="mb-4 sm:mb-5 md:mb-6">
+              {/* Step Header */}
+              <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
+                {/* App Icon */}
+                <div
+                  className="flex-shrink-0 w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                  style={{
+                    backgroundColor: colors['bg-primary'],
+                    borderColor: colors['border-secondary'],
+                  }}
+                >
+                  <div className="flex items-center justify-center">
                     <img
-                      src={signedImageUrl}
-                      alt="Step visualization"
-                      className="w-full h-full min-w-[10px] min-h-[10px] object-cover"
+                      src={getIconPath(block)}
+                      alt="Step Icon"
+                      className="w-5 h-5 sm:w-6 sm:h-6"
+                      onError={(e) => {
+                        e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                      }}
                     />
-                  ) : (
-                    <div className="w-full h-full min-w-[10px] min-h-[10px] flex items-center justify-center bg-secondary">
-                      <div className="w-8 h-8 rounded-full bg-tertiary" />
-                    </div>
-                  )}
+                  </div>
                 </div>
+                {/* Step Title */}
+                <div className="flex-1">
+                  <div
+                    className="flex items-center text-sm sm:text-base font-semibold"
+                    style={{ color: colors['text-primary'] }}
+                  >
+                    <span>{getDisplayTitle(block)}</span>
+                  </div>
+                </div>
+              </div>
 
-                {/* Options section - remaining height */}
-                <div className="flex-1 min-h-0 flex flex-col">
-                  <p className="text-[2vw] min-text-[14px] max-text-[18px] font-medium mb-2">
-                    Select an option
-                  </p>
-                  <div className="flex-1 overflow-y-auto">
+              {/* Description */}
+              <div className="relative">
+                <p
+                  className="text-sm sm:text-base"
+                  style={{ color: colors['text-quaternary'] }}
+                >
+                  {block.step_details ||
+                    block.description ||
+                    `Details for ${getDisplayTitle(block)}`}
+                </p>
+              </div>
+            </div>
+
+            {/* Content Section - Adapts to content type */}
+            {!hasOnlyDescription && (
+              <div className="space-y-4 sm:space-y-5 md:space-y-6">
+                {/* Image Section */}
+                {block.image && (
+                  <div 
+                    className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c]"
+                  >
+                    {signedImageUrl && !imageError ? (
+                      <img
+                        src={signedImageUrl}
+                        alt="Step visualization"
+                        className={`w-full ${getImageDisplayMode()}`}
+                        onLoad={handleImageLoad}
+                        onError={handleImageError}
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-32 sm:h-36 md:h-40 flex items-center justify-center"
+                        style={{ backgroundColor: colors['bg-secondary'] }}
+                      >
+                        <div
+                          className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full"
+                          style={{ backgroundColor: colors['bg-tertiary'] }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Options Section */}
+                {block.child_paths && block.child_paths.length > 0 && (
+                  <div className="w-full">
+                    <p
+                      className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 md:mb-4"
+                      style={{ color: colors['text-primary'] }}
+                    >
+                      Select an option
+                    </p>
                     <div className="space-y-2">
-                      {block.child_paths?.map((option, index) => (
+                      {block.child_paths.map((option, index) => (
                         <div key={option.path.id} className="overflow-hidden">
                           <motion.button
                             onClick={() =>
                               onOptionSelect?.(option.path.id, block.id, false)
                             }
                             className={cn(
-                              'w-full p-[1.5vw] min-p-4 max-p-6 rounded-lg border transition-all duration-200',
-                              'flex items-center gap-4 text-left hover:bg-secondary active:bg-secondary',
+                              'w-full p-3 sm:p-4 rounded-lg border transition-all duration-200',
+                              'flex items-center gap-2 sm:gap-3 text-left hover:bg-secondary active:bg-secondary',
                               selectedOptionIds?.some(
                                 ([pathId, blockId]) =>
                                   pathId === option.path.id &&
@@ -213,7 +408,7 @@ export default function HorizontalStep({
                             }}
                           >
                             <div
-                              className="w-[1.5vw] h-[1.5vw] min-w-[20px] min-h-[20px] max-w-[24px] max-h-[24px] rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                              className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
                               style={{
                                 borderColor: selectedOptionIds?.some(
                                   ([pathId, blockId]) =>
@@ -238,7 +433,7 @@ export default function HorizontalStep({
                                     blockId === block.id
                                 ) && (
                                   <motion.div
-                                    className="w-[0.75vw] h-[0.75vw] min-w-[8px] min-h-[8px] max-w-[12px] max-h-[12px] bg-white rounded-full"
+                                    className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     exit={{ scale: 0 }}
@@ -247,8 +442,11 @@ export default function HorizontalStep({
                                 )}
                               </AnimatePresence>
                             </div>
-                            <div className="flex flex-col gap-1">
-                              <p className="font-normal text-[1.7vw] min-text-[14px] max-text-[16px]">
+                            <div className="flex flex-col gap-0.5 sm:gap-1">
+                              <p
+                                className="font-normal text-xs sm:text-sm"
+                                style={{ color: colors['text-primary'] }}
+                              >
                                 {option.path.name}
                               </p>
                             </div>
@@ -257,124 +455,36 @@ export default function HorizontalStep({
                       ))}
                     </div>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col">
-                {block.image ? (
-                  // Single image - takes full height
-                  <div className="h-full rounded-lg overflow-hidden">
-                    {signedImageUrl ? (
-                      <img
-                        src={signedImageUrl}
-                        alt="Step visualization"
-                        className="w-full h-full min-w-[10px] min-h-[10px] object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full min-w-[10px] min-h-[10px] flex items-center justify-center bg-secondary">
-                        <div className="w-8 h-8 rounded-full bg-tertiary" />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  // Options only - takes full height
-                  <div className="h-full flex flex-col">
-                    <p className="text-[1.7vw] min-text-[14px] max-text-[180px] font-medium mb-2">
-                      Select an option
-                    </p>
-                    <div className="flex-1 overflow-y-auto">
-                      <div className="space-y-2">
-                        {block.child_paths?.map((option, index) => (
-                          <div key={option.path.id} className="overflow-hidden">
-                            <motion.button
-                              onClick={() =>
-                                onOptionSelect?.(
-                                  option.path.id,
-                                  block.id,
-                                  false
-                                )
-                              }
-                              className={cn(
-                                'w-full p-[1.5vw] min-p-4 max-p-6 rounded-lg border transition-all duration-200',
-                                'flex items-center gap-4 text-left hover:bg-secondary active:bg-secondary',
-                                selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                ) && 'border-brand'
-                              )}
-                              initial={{ opacity: 0.4 }}
-                              animate={{
-                                opacity: 1,
-                                transition: {
-                                  duration: 0.2,
-                                  ease: 'easeOut',
-                                  delay: index * 0.05,
-                                },
-                              }}
-                              style={{
-                                backgroundColor: colors['bg-primary'],
-                                borderColor: selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                )
-                                  ? colors['border-brand']
-                                  : colors['border-secondary'],
-                              }}
-                            >
-                              <div
-                                className="w-[1.5vw] h-[1.5vw] min-w-[20px] min-h-[20px] max-w-[24px] max-h-[24px] rounded-full border-2 flex-shrink-0 flex items-center justify-center"
-                                style={{
-                                  borderColor: selectedOptionIds?.some(
-                                    ([pathId, blockId]) =>
-                                      pathId === option.path.id &&
-                                      blockId === block.id
-                                  )
-                                    ? colors['border-brand']
-                                    : colors['border-secondary'],
-                                  backgroundColor: selectedOptionIds?.some(
-                                    ([pathId, blockId]) =>
-                                      pathId === option.path.id &&
-                                      blockId === block.id
-                                  )
-                                    ? colors['bg-brand-solid']
-                                    : 'transparent',
-                                }}
-                              >
-                                <AnimatePresence>
-                                  {selectedOptionIds?.some(
-                                    ([pathId, blockId]) =>
-                                      pathId === option.path.id &&
-                                      blockId === block.id
-                                  ) && (
-                                    <motion.div
-                                      className="w-[0.75vw] h-[0.75vw] min-w-[8px] min-h-[8px] max-w-[12px] max-h-[12px] bg-white rounded-full"
-                                      initial={{ scale: 0 }}
-                                      animate={{ scale: 1 }}
-                                      exit={{ scale: 0 }}
-                                      transition={{ duration: 0.2 }}
-                                    />
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                              <div className="flex flex-col gap-[1.5vw] min-gap-[16px] max-gap-[24px]">
-                                <p className="font-normal text-[1.7vw] min-text-[24px] max-text-[40px]">
-                                  {option.path.name}
-                                </p>
-                              </div>
-                            </motion.button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 )}
               </div>
             )}
           </div>
-        </>
-      )}
-    </div>
+        </div>
+
+        {/* Custom scrollbar - responsive width and position */}
+        {showScrollbar && (
+          <div 
+            className={`absolute top-4 bottom-4 rounded-full cursor-pointer`}
+            style={{ 
+              right: windowWidth <= 640 ? '2px' : '4px',
+              width: `${scrollbarWidth}px`,
+              backgroundColor: 'rgba(0,0,0,0.05)' 
+            }}
+            onClick={handleScrollbarClick}
+          >
+            <div 
+              className="absolute rounded-full transition-all duration-100"
+              style={{
+                width: `${scrollbarWidth}px`,
+                backgroundColor: colors['border-secondary'],
+                height: `${scrollbarThumbHeight}px`,
+                top: `${thumbPosition}px`,
+                opacity: 0.8
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </>
   );
 }

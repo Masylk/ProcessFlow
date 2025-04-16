@@ -1,6 +1,7 @@
 // app/api/workspaces/folders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
@@ -79,6 +80,15 @@ import prisma from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   try {
     const { name, workspace_id, team_tags, icon_url, emote } = await req.json();
+
+    // Validate folder name
+    const nameError = checkFolderName(name);
+    if (nameError) {
+      return NextResponse.json({ 
+        error: 'Invalid folder name',
+        ...nameError 
+      }, { status: 400 });
+    }
 
     // Create a new folder with no parent (top-level)
     const newFolder = await prisma.folder.create({

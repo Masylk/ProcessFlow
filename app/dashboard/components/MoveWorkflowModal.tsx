@@ -4,10 +4,16 @@ import { Workflow } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
+import { toast } from 'sonner';
 
 interface MoveWorkflowModalProps {
   onClose: () => void;
-  onConfirm: (folder: Folder | null) => Promise<Workflow | null>;
+  onConfirm: (
+    folder: Folder | null
+  ) => Promise<{
+    workflow: Workflow | null;
+    error?: { title: string; description: string };
+  }>;
   activeWorkspace: Workspace;
   selectedWorkflow: Workflow;
 }
@@ -26,6 +32,7 @@ export default function MoveWorkflowModal({
   const [targetFolder, setTargetFolder] = useState<Folder | null | undefined>(
     undefined
   );
+  const [isMoving, setIsMoving] = useState(false);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -94,34 +101,61 @@ export default function MoveWorkflowModal({
     setTargetFolder(folder);
   };
 
+  const handleMove = async () => {
+    if (targetFolder === undefined) return;
+
+    setIsMoving(true);
+    try {
+      const result = await onConfirm(targetFolder);
+
+      if (result.error) {
+        toast.error(result.error.title, {
+          description: result.error.description,
+        });
+        return;
+      }
+
+      if (result.workflow) {
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error moving flow:', error);
+      toast.error('Error Moving Flow', {
+        description: 'An unexpected error occurred while moving the flow.',
+      });
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center z-50 w-full"
       onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0">
-        <div 
+        <div
           style={{ backgroundColor: colors['bg-overlay'] }}
-          className="absolute inset-0 opacity-70" 
+          className="absolute inset-0 opacity-70"
         />
       </div>
 
       {/* Modal content */}
-      <div 
+      <div
         className="relative z-10 w-[400px] h-[515px] rounded-xl shadow-md flex flex-col justify-center items-center overflow-hidden"
         style={{ backgroundColor: colors['bg-primary'] }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-[400px] h-[24px] relative" />
         <div className="self-stretch h-[136px] flex flex-col justify-center items-start px-6">
-          <div 
+          <div
             className="w-12 h-12 p-3 rounded-[10px] shadow-sm flex justify-center items-center overflow-hidden"
-            style={{ 
+            style={{
               backgroundColor: colors['bg-secondary'],
               borderWidth: '1px',
               borderStyle: 'solid',
-              borderColor: colors['border-secondary']
+              borderColor: colors['border-secondary'],
             }}
           >
             <img
@@ -131,7 +165,7 @@ export default function MoveWorkflowModal({
             />
           </div>
           <div className="self-stretch h-7 flex flex-col justify-start items-start gap-1 mb-4 mt-4">
-            <div 
+            <div
               className="text-lg font-semibold"
               style={{ color: colors['text-primary'] }}
             >
@@ -148,17 +182,22 @@ export default function MoveWorkflowModal({
             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
           />
         </div>
-        <div 
+        <div
           className="self-stretch h-px mb-4"
           style={{ backgroundColor: colors['border-secondary'] }}
         />
         <div className="self-stretch h-[194px] px-3 flex flex-col gap-1 overflow-y-auto">
           <div
             className="self-stretch px-1.5 py-px inline-flex items-center transition-colors duration-200 rounded-[6px] cursor-pointer"
-            style={{ 
-              backgroundColor: targetFolder === null ? colors['bg-quaternary'] : 'transparent',
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+            style={
+              {
+                backgroundColor:
+                  targetFolder === null
+                    ? colors['bg-quaternary']
+                    : 'transparent',
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             onClick={() => handleFolderClick(null)}
           >
             <div className="grow h-[60px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
@@ -168,7 +207,7 @@ export default function MoveWorkflowModal({
                 className="w-4 h-4 relative"
                 style={{ top: '-10px', left: '0px' }}
               />
-              <div 
+              <div
                 className="text-sm font-medium"
                 style={{ color: colors['text-primary'] }}
               >
@@ -195,19 +234,18 @@ export default function MoveWorkflowModal({
               size="small"
               onClick={onClose}
               className="flex-1"
+              disabled={isMoving}
             >
               Cancel
             </ButtonNormal>
             <ButtonNormal
               variant="primary"
               size="small"
-              onClick={async () => {
-                if (targetFolder !== undefined) {
-                  await onConfirm(targetFolder);
-                  onClose();
-                }
-              }}
+              onClick={handleMove}
               className="flex-1"
+              disabled={targetFolder === undefined || isMoving}
+              isLoading={isMoving}
+              loadingText="Moving..."
             >
               Move
             </ButtonNormal>
@@ -249,10 +287,14 @@ function FolderList({
           <div key={folder.id} className="flex flex-col ml-4">
             <div
               className="self-stretch px-1.5 py-px inline-flex items-center transition-colors duration-200 rounded-[6px] cursor-pointer"
-              style={{ 
-                backgroundColor: isSelected ? colors['bg-quaternary'] : 'transparent',
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
+              style={
+                {
+                  backgroundColor: isSelected
+                    ? colors['bg-quaternary']
+                    : 'transparent',
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
               onClick={() => {
                 toggleFolder(folder.id);
                 handleFolderClick(folder);
@@ -273,13 +315,13 @@ function FolderList({
                 />
                 <div className="grow h-[42px] flex items-start gap-2">
                   <div className="grow flex flex-col justify-center items-start gap-1">
-                    <div 
+                    <div
                       className="text-sm font-medium"
                       style={{ color: colors['text-primary'] }}
                     >
                       {folder.name}
                     </div>
-                    <div 
+                    <div
                       className="text-xs font-normal"
                       style={{ color: colors['text-secondary'] }}
                     >

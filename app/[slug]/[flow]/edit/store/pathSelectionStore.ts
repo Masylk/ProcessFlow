@@ -19,7 +19,11 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
   selectedPaths: [],
   selectedEndBlocks: [],
   parentBlockId: null,
-  workflowId: parseInt(window.location.pathname.split('/')[3]), // Get from URL
+  workflowId: (() => {
+    // Match --pf-<number> in the URL
+    const match = window.location.pathname.match(/--pf-(\d+)/);
+    return match ? parseInt(match[1], 10) : NaN;
+  })(),
   mergeMode: false,
   updateMode: false,
   setSelectedPaths: (paths) => set({ selectedPaths: paths }),
