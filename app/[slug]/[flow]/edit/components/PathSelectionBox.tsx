@@ -28,7 +28,7 @@ export function PathSelectionBox() {
         workflow_id: workflowId,
         parent_blocks: selectedEndBlocks,
       };
-
+      console.log('payload', payload);
       await fetch('/api/paths/merge', {
         method: 'POST',
         headers: {
@@ -70,7 +70,8 @@ export function PathSelectionBox() {
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[400px] flex items-center justify-between gap-2 px-2 py-2 rounded-lg shadow-lg border bg-gray-900 dark:bg-white border-gray-700 dark:border-gray-200">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-300 dark:text-gray-600">
-          {selectedPaths.length} node{selectedPaths.length > 1 ? 's' : ''} selected
+          {selectedPaths.length} node{selectedPaths.length > 1 ? 's' : ''}{' '}
+          selected
         </span>
         <button
           onClick={handleClose}
