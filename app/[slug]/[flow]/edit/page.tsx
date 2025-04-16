@@ -2,8 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
-import { useEffect } from 'react';
-import { usePathsStore } from './store/pathsStore';
+import { Metadata } from 'next';
 
 interface PageParams {
   flow: string;
@@ -21,6 +20,34 @@ interface Workflow {
   team_tags: string[];
   updated_at: string;
   created_at: string;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<PageParams>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  
+  // Decode the flow parameter
+  const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
+  if (!workflowName || !workflowId) {
+    return { title: 'ProcessFlow' };
+  }
+
+  // Get workflow data from API
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflows/${workflowId}`
+  );
+
+  if (!response.ok) {
+    return { title: 'ProcessFlow' };
+  }
+
+  const workflow: Workflow = await response.json();
+  return {
+    title: `${workflow.name} | ProcessFlow`,
+  };
 }
 
 export default async function ReactFlowPage({
@@ -52,7 +79,6 @@ export default async function ReactFlowPage({
   }
 
   const workflow: Workflow = await response.json();
-
 
   return (
     <ReactFlowPageClient

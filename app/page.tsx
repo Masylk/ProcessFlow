@@ -1275,6 +1275,18 @@ export default function Page() {
     setIsDeleteAvatar(false);
   };
 
+  // Add this effect to ensure activeTab is set correctly when settings view opens
+  useEffect(() => {
+    // When settings view is opened, ensure activeTab is set to a valid value
+    if (isSettingsView) {
+      // Check if activeTab is a valid tab name
+      const validTabs = ['Workspace', 'Plan', 'Billing', 'Appearance'];
+      if (!validTabs.includes(activeTab)) {
+        setActiveTab('Workspace');
+      }
+    }
+  }, [isSettingsView, activeTab]);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Suspense
