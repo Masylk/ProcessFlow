@@ -78,9 +78,8 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   // Check if title is truncated
   const checkTitleTruncation = () => {
     if (titleRef.current) {
-      const isTrancated = titleRef.current.scrollWidth > titleRef.current.clientWidth;
-      setIsTitleTruncated(isTrancated);
-      console.log(`Title "${data.path?.name}" truncation check: scrollWidth=${titleRef.current.scrollWidth}, clientWidth=${titleRef.current.clientWidth}, isTruncated=${isTrancated}`);
+      const isTruncated = titleRef.current.scrollWidth > titleRef.current.clientWidth;
+      setIsTitleTruncated(isTruncated);
     }
   };
 
