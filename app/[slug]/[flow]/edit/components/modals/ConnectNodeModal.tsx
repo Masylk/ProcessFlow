@@ -9,6 +9,7 @@ import { useModalStore } from '../../store/modalStore';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { ThemeProvider } from '@/app/context/ThemeContext';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -43,6 +44,12 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const setIsModalOpen = useIsModalOpenStore((state) => state.setIsModalOpen);
+
+  useEffect(() => {
+    setIsModalOpen(true);
+    return () => setIsModalOpen(false);
+  }, [setIsModalOpen]);
 
   // Helper function for consistent view options
   const getFitViewOptions = (nodes: Node[]) => ({
@@ -300,10 +307,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     <>
       {/* <PreviewEdgePortal edge={previewEdge} /> */}
       {/* Semi-transparent overlay */}
-      <div
+      {/* <div
         className="fixed inset-0 bg-black bg-opacity-0 z-40"
         onClick={handleClose}
-      />
+      /> */}
       {/* Modal - keep high z-index */}
       <div
         className="fixed bottom-8 right-8 w-[600px] rounded-xl shadow-lg z-50 border"

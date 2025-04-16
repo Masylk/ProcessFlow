@@ -6,6 +6,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import { usePathsStore } from '../../store/pathsStore';
 import { useColors } from '@/app/theme/hooks';
 import DeletePathModal from '../modals/DeletePathModal';
+import { BasicNode } from './BasicNode';
 
 // Simple tooltip component
 type TooltipProps = {
@@ -17,24 +18,25 @@ type TooltipProps = {
 const Tooltip = ({ content, children, show }: TooltipProps) => {
   const colors = useColors();
   const zoom = useStore((state) => state.transform?.[2] ?? 1);
-  
+
   if (!show) return <>{children}</>;
-  
+
   return (
     <div className="relative">
       <div
         className="absolute left-0 right-0 w-full text-center bottom-full z-50"
         style={{
           transform: `scale(${1 / zoom})`,
-          transformOrigin: 'center bottom'
+          transformOrigin: 'center bottom',
         }}
       >
-        <div 
+        <div
           className="inline-block py-1 px-1.5 rounded-lg text-xs whitespace-normal max-w-full mx-auto flex flex-col items-center bg-opacity-100"
           style={{
             backgroundColor: colors['bg-primary-solid'],
             color: colors['text-white'],
-            boxShadow: '0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)',
+            boxShadow:
+              '0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)',
             maxWidth: '200px',
             fontSize: '12px',
             fontWeight: 500,
@@ -42,7 +44,7 @@ const Tooltip = ({ content, children, show }: TooltipProps) => {
           }}
         >
           <div className="px-1">{content}</div>
-          <div 
+          <div
             className="w-0 h-0 absolute -bottom-1"
             style={{
               borderLeft: '6px solid transparent',
@@ -57,7 +59,8 @@ const Tooltip = ({ content, children, show }: TooltipProps) => {
   );
 };
 
-function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
+function BeginNode(props: NodeProps & { data: NodeData }) {
+  const { id, data, selected } = props;
   const [isEditing, setIsEditing] = useState(false);
   const [pathName, setPathName] = useState(data.path?.name || '');
   const [isHovered, setIsHovered] = useState(false);
@@ -70,7 +73,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
   const setAllPaths = usePathsStore((state) => state.setPaths);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const colors = useColors();
-  
+
   const handlePathNameUpdate = async () => {
     try {
       const response = await fetch(`/api/paths/${data.path?.id}`, {
@@ -146,9 +149,9 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
 
   const hasMultipleParentBlocks =
     data.path?.parent_blocks && data.path?.parent_blocks.length > 1;
-  
+
   return (
-    <>
+    <BasicNode {...props}>
       {hasMultipleParentBlocks ? (
         <div className="transition-opacity duration-300">
           <Handle
@@ -225,10 +228,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
                 placeholder="Enter path name"
               />
             ) : (
-              <Tooltip 
-                content={data.path?.name || 'Path'} 
-                show={showTooltip}
-              >
+              <Tooltip content={data.path?.name || 'Path'} show={showTooltip}>
                 <div
                   className="font-medium truncate text-center w-full cursor-default"
                   style={{ color: colors['text-brand-primary'] }}
@@ -318,7 +318,7 @@ function BeginNode({ id, data, selected }: NodeProps & { data: NodeData }) {
           pathName={data.path?.name || 'this path'}
         />
       )}
-    </>
+    </BasicNode>
   );
 }
 

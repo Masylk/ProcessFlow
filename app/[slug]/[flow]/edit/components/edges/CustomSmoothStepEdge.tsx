@@ -7,6 +7,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import DeleteBlocksModal from '../modals/DeleteBlocksModal';
 import { usePathsStore } from '../../store/pathsStore';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
+import { BasicEdge } from './BasicEdge';
 
 function CustomSmoothStepEdge({
   id,
@@ -60,11 +61,8 @@ function CustomSmoothStepEdge({
 
   const handleDeleteBlocks = async () => {
     try {
-      console.log('handleDeleteBlocks');
-      console.log('data.path', data.path);
       // Get all blocks after this position except the last one
       const path = allPaths.find((p) => p.id === data.path.id);
-      console.log('path', path);
       if (!path) return;
       console.log('allPaths', allPaths);
 
@@ -73,22 +71,16 @@ function CustomSmoothStepEdge({
         return;
       }
       console.log('sourceBlock and targetBlock are defined');
-      console.log('sourceBlock', sourceBlock);
-      console.log('targetBlock', targetBlock);
       const position = Math.ceil(
         (sourceBlock.position + targetBlock.position) / 2
       );
-      console.log('position', position);
       const blocksToDelete = path.blocks
         .filter(
           (b) => b.position >= position && b.position < path.blocks.length - 1
         )
         .map((b) => b.id);
 
-      if (blocksToDelete.length === 0) {
-        console.log('No blocks to delete');
-        return;
-      }
+      if (blocksToDelete.length === 0) return;
 
       const response = await fetch('/api/blocks/delete-multiple', {
         method: 'POST',
@@ -126,7 +118,19 @@ function CustomSmoothStepEdge({
   };
 
   return (
-    <>
+    <BasicEdge
+      id={id}
+      source={source}
+      target={target}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      data={data}
+    >
       <path
         id={id}
         className={`react-flow__edge-path ${
@@ -216,7 +220,7 @@ function CustomSmoothStepEdge({
           onConfirm={handleDeleteBlocks}
         />
       )}
-    </>
+    </BasicEdge>
   );
 }
 

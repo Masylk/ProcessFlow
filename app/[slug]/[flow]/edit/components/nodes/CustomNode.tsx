@@ -23,6 +23,8 @@ import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
 import styles from './CustomNode.module.css';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
+import { BasicNode } from './BasicNode';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 interface CustomNodeProps extends NodeProps {
   data: NodeData & {
@@ -31,13 +33,13 @@ interface CustomNodeProps extends NodeProps {
   };
 }
 
-function CustomNode({ id, data, selected }: CustomNodeProps) {
+function CustomNode(props: NodeProps & { data: NodeData }) {
+  const { id, data, selected, ...rest } = props;
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const colors = useColors();
   const { allStrokeLinesVisible } = useStrokeLinesStore();
-  
 
   const {
     getNodes,
@@ -96,6 +98,8 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   const { isEditMode, selectedNodeId, setEditMode } = useEditModeStore();
 
   const setCopiedBlock = useClipboardStore((state) => state.setCopiedBlock);
+
+  const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
 
   // Add useEffect to fetch signed URL when blockData.image changes
   useEffect(() => {
@@ -389,10 +393,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           onClick={handleConnectClick}
           className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="w-[170px] grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -403,7 +409,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="w-4 h-4"
                 />
               </div>
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -427,10 +433,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             }}
             className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
           >
-            <div 
-              style={{
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
+            <div
+              style={
+                {
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
               className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
             >
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -441,7 +449,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                     className="w-4 h-4"
                   />
                 </div>
-                <div 
+                <div
                   style={{ color: colors['text-primary'] }}
                   className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                 >
@@ -457,10 +465,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             onClick={handleUpdateModeActivation}
             className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
           >
-            <div 
-              style={{
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
+            <div
+              style={
+                {
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
               className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
             >
               <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -471,7 +481,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                     className="w-4 h-4"
                   />
                 </div>
-                <div 
+                <div
                   style={{ color: colors['text-primary'] }}
                   className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                 >
@@ -486,10 +496,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           onClick={handleDuplicate}
           className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -500,7 +512,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="w-4 h-4"
                 />
               </div>
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -510,16 +522,16 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
         </div>
 
-        
-
         <div
           onClick={handleCopy}
           className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -530,7 +542,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="w-4 h-4"
                 />
               </div>
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -544,10 +556,12 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           onClick={handleCopyLink}
           className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -558,7 +572,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="w-4 h-4"
                 />
               </div>
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -568,19 +582,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
         </div>
 
-        <div 
+        <div
           style={{ borderColor: colors['border-secondary'] }}
-          className="self-stretch h-px border-b my-1" 
+          className="self-stretch h-px border-b my-1"
         />
 
         <div
           onClick={handleDelete}
           className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
@@ -591,7 +607,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   className="w-4 h-4"
                 />
               </div>
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -621,14 +637,14 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   // Modify the toggleStrokeLines function
   const toggleStrokeLines = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // Prevent toggling individual stroke lines when global setting is off
     if (!allStrokeLinesVisible) {
       // Optional: You could show a tooltip or notification here explaining why
       // the toggle is disabled, but for now we'll just return early
       return;
     }
-    
+
     const blockId = parseInt(id.replace('block-', ''));
     const newVisibility = !data.strokeLinesVisible;
     data.updateStrokeLineVisibility?.(blockId, newVisibility);
@@ -657,15 +673,22 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   // Modify the click handler to include zooming
   const handleNodeClick = (e: React.MouseEvent) => {
+    console.log('isModalOpen', isModalOpen);
+    if (isModalOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     e.stopPropagation();
-    
+
     // Just show the sidebar and zoom - the border styling depends on showSidebar
     setShowSidebar(true);
-    
+
     // Update edit mode for other components to be aware
     const blockId = id.replace('block-', '');
     setEditMode(true, blockId);
-    
+
+    console.log('zoomToNode');
     // Zoom to node
     zoomToNode();
   };
@@ -678,11 +701,13 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
 
   // Add this effect to automatically open the sidebar when the node is selected via edit mode
   useEffect(() => {
+    if (isModalOpen) {
+      return;
+    }
     // Check if the current node is the selected node in edit mode
     if (isEditMode && selectedNodeId && `block-${selectedNodeId}` === id) {
       // Automatically open the sidebar
       setShowSidebar(true);
-      
       // Only zoom to node if we're not handling a newly created node
       // (The Flow component already handles zooming for new nodes)
       if (viewportInitialized) {
@@ -692,7 +717,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
   }, [isEditMode, selectedNodeId, id, zoomToNode, viewportInitialized]);
 
   return (
-    <>
+    <BasicNode {...props}>
       {/* Vertical Toggle Switch Container */}
       {getEdges().some(
         (edge) => edge.source === id && edge.type === 'strokeEdge'
@@ -722,16 +747,21 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 width: '12px',
                 height: '20px',
                 borderRadius: '6px',
-                backgroundColor: allStrokeLinesVisible && data.strokeLinesVisible
-                  ? '#FF69A3'
-                  : colors['bg-quaternary'],
+                backgroundColor:
+                  allStrokeLinesVisible && data.strokeLinesVisible
+                    ? '#FF69A3'
+                    : colors['bg-quaternary'],
                 transition: 'background-color 0.2s',
                 position: 'relative',
                 opacity: allStrokeLinesVisible ? 1 : 0.5,
               }}
-              title={allStrokeLinesVisible 
-                ? (data.strokeLinesVisible ? "Hide connecting lines" : "Show connecting lines") 
-                : "Global connecting lines are disabled in Settings"}
+              title={
+                allStrokeLinesVisible
+                  ? data.strokeLinesVisible
+                    ? 'Hide connecting lines'
+                    : 'Show connecting lines'
+                  : 'Global connecting lines are disabled in Settings'
+              }
             >
               <div
                 style={{
@@ -741,7 +771,10 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   backgroundColor: colors['bg-primary'],
                   position: 'absolute',
                   left: '1px',
-                  top: allStrokeLinesVisible && data.strokeLinesVisible ? '1px' : '9px',
+                  top:
+                    allStrokeLinesVisible && data.strokeLinesVisible
+                      ? '1px'
+                      : '9px',
                   transition: 'top 0.2s',
                   boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
                 }}
@@ -767,7 +800,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           backgroundColor: isHighlighted ? '#EAF4FE' : colors['bg-primary'],
           borderWidth: '2px',
           borderStyle: 'solid',
-          borderColor: showSidebar ? colors['border-brand_alt'] : colors['border-secondary']
+          borderColor: showSidebar
+            ? colors['border-brand_alt']
+            : colors['border-secondary'],
         }}
       >
         <Handle
@@ -843,7 +878,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
         <div className="p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{
                   border: `1px solid ${colors['border-secondary']}`,
@@ -863,7 +898,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   />
                 )}
               </div>
-              <h3 
+              <h3
                 className="text-sm font-medium"
                 style={{ color: colors['fg-primary'] }}
               >
@@ -873,9 +908,9 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
             <button
               onClick={handleDropdownToggle}
               className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-              style={{ 
+              style={{
                 color: colors['fg-tertiary'],
-                backgroundColor: 'transparent'
+                backgroundColor: 'transparent',
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = colors['bg-secondary'];
@@ -893,7 +928,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           </div>
 
           {blockData.description && (
-            <p 
+            <p
               className="text-xs mt-1 line-clamp-2"
               style={{ color: colors['fg-tertiary'] }}
             >
@@ -921,7 +956,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 borderWidth: '1px',
                 borderStyle: 'solid',
                 borderColor: colors['border-secondary'],
-                color: colors['fg-tertiary']
+                color: colors['fg-tertiary'],
               }}
             >
               {blockData.average_time} min
@@ -943,16 +978,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                   )
                 }
                 className={`${styles.checkbox}`}
-                style={{ 
-                  borderColor: colors['border-primary'],
-                  '--bg-brand-primary': colors['bg-brand-solid'],
-                  '--border-brand': colors['border-brand'],
-                  '--bg-secondary': colors['bg-primary']
-                } as React.CSSProperties}
+                style={
+                  {
+                    borderColor: colors['border-primary'],
+                    '--bg-brand-primary': colors['bg-brand-solid'],
+                    '--border-brand': colors['border-brand'],
+                    '--bg-secondary': colors['bg-primary'],
+                  } as React.CSSProperties
+                }
                 onClick={(e) => e.stopPropagation()}
               />
               <span className="text-sm text-gray-300 dark:text-gray-600">
-                {selectedPaths.includes(data.path?.id ?? -1) ? 'Selected' : 'Not selected'}
+                {selectedPaths.includes(data.path?.id ?? -1)
+                  ? 'Selected'
+                  : 'Not selected'}
               </span>
             </div>
           </div>
@@ -966,16 +1005,20 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
                 checked={selectedEndBlocks.includes(endBlockId)}
                 onChange={() => toggleEndBlockSelection(endBlockId)}
                 className={`${styles.checkbox} ${styles.updateCheckbox}`}
-                style={{ 
-                  borderColor: colors['border-primary'],
-                  '--bg-brand-primary': colors['bg-brand-solid'],
-                  '--border-brand': colors['border-brand'],
-                  '--bg-secondary': colors['bg-primary']
-                } as React.CSSProperties}
+                style={
+                  {
+                    borderColor: colors['border-primary'],
+                    '--bg-brand-primary': colors['bg-brand-solid'],
+                    '--border-brand': colors['border-brand'],
+                    '--bg-secondary': colors['bg-primary'],
+                  } as React.CSSProperties
+                }
                 onClick={(e) => e.stopPropagation()}
               />
               <span className="text-sm text-gray-300 dark:text-gray-600">
-                {selectedEndBlocks.includes(endBlockId) ? 'Selected' : 'Not selected'}
+                {selectedEndBlocks.includes(endBlockId)
+                  ? 'Selected'
+                  : 'Not selected'}
               </span>
             </div>
           </div>
@@ -994,7 +1037,7 @@ function CustomNode({ id, data, selected }: CustomNodeProps) {
           onUpdate={handleBlockUpdate}
         />
       )}
-    </>
+    </BasicNode>
   );
 }
 

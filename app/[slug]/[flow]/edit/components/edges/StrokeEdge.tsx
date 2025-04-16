@@ -22,6 +22,8 @@ import DeleteStrokeEdgeModal from '../modals/DeleteStrokeEdgeModal';
 import styles from './StrokeEdge.module.css';
 import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
+import { BasicEdge } from './BasicEdge';
+import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -71,6 +73,8 @@ const snapToGrid = (point: Point, gridSize = 20) => {
 
 function StrokeEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -100,6 +104,7 @@ function StrokeEdge({
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const { allStrokeLinesVisible } = useStrokeLinesStore();
+  const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -724,7 +729,19 @@ function StrokeEdge({
   );
 
   return (
-    <>
+    <BasicEdge
+      id={id}
+      source={source}
+      target={target}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      data={data}
+    >
       <defs>
         <marker
           id={markerId}
@@ -787,6 +804,7 @@ function StrokeEdge({
         allStrokeLinesVisible &&
         data?.isVisible !== false &&
         (isHoveringEdge || isDragging) &&
+        !isModalOpen &&
         controlPoints.map((point, index) => (
           <EdgeLabelRenderer key={`control-${index}`}>
             <div
@@ -824,6 +842,7 @@ function StrokeEdge({
       {/* Edge Controls Container */}
       {showLabel &&
         !isHoveringControlPoint &&
+        !isModalOpen &&
         allStrokeLinesVisible &&
         data?.isVisible !== false && (
           <EdgeLabelRenderer>
@@ -866,6 +885,7 @@ function StrokeEdge({
                   className="w-5 h-5 rounded-full bg-[#FF69A3] hover:bg-[#ff4d93] flex items-center justify-center transition-colors duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (isModalOpen) return;
                     setShowDeleteModal(true);
                   }}
                 >
@@ -923,7 +943,7 @@ function StrokeEdge({
           }
         `}
       </style>
-    </>
+    </BasicEdge>
   );
 }
 
