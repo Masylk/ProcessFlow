@@ -26,6 +26,11 @@ export default function VerticalStep({
   const colors = useColors();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+  const [isImageFullscreen, setIsImageFullscreen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const paths = usePathsStore((state) => state.paths);
 
@@ -53,6 +58,70 @@ export default function VerticalStep({
 
     fetchSignedUrl();
   }, [block.image]);
+
+  // Reset zoom level and position when fullscreen changes
+  useEffect(() => {
+    if (!isImageFullscreen) {
+      setZoomLevel(1);
+      setDragPosition({ x: 0, y: 0 });
+    }
+  }, [isImageFullscreen]);
+
+  // Handle wheel event for zooming
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (!isImageFullscreen) return;
+      
+      e.preventDefault();
+      
+      // Zoom in or out based on scroll direction
+      if (e.deltaY < 0) {
+        // Zoom in (scroll up)
+        setZoomLevel(prev => Math.min(prev + 0.1, 5));
+      } else {
+        // Zoom out (scroll down)
+        setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+      }
+    };
+
+    const container = imageContainerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [isImageFullscreen, imageContainerRef]);
+
+  // Handle ESC key to close fullscreen
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isImageFullscreen) {
+        setIsImageFullscreen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+    return () => {
+      window.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isImageFullscreen]);
+
+  // Prevent body scrolling when fullscreen is active
+  useEffect(() => {
+    if (isImageFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isImageFullscreen]);
 
   const handleToggle = () => {
     // Only toggle if there's an image to show
@@ -116,6 +185,52 @@ export default function VerticalStep({
         });
       }
     }
+  };
+
+  const toggleFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsImageFullscreen(!isImageFullscreen);
+  };
+
+  const zoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel(prev => Math.min(prev + 0.1, 5));
+  };
+
+  const zoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
+  };
+
+  const resetZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoomLevel(1);
+    setDragPosition({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoomLevel <= 1) return;
+    
+    setDragPosition(prev => ({
+      x: prev.x + e.movementX,
+      y: prev.y + e.movementY
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    resetZoom();
   };
 
   const handleOptionSelect = (
@@ -308,7 +423,11 @@ export default function VerticalStep({
               }}
               style={{ transform: 'translateZ(0)' }}
             >
-              <div className="mb-4 rounded-lg overflow-hidden">
+              <div 
+                className="mb-4 rounded-lg overflow-hidden cursor-zoom-in"
+                onClick={toggleFullscreen}
+                aria-label="View image fullscreen"
+              >
                 <img
                   src={signedImageUrl}
                   alt="Block Media"
@@ -448,6 +567,101 @@ export default function VerticalStep({
           transition={{ duration: 0.3 }}
           style={{ backgroundColor: colors['border-secondary'], originY: 0 }}
         />
+      )}
+
+      {/* Enhanced Fullscreen Image Viewer */}
+      {isImageFullscreen && signedImageUrl && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
+          onClick={() => setIsImageFullscreen(false)}
+          style={{ backdropFilter: 'blur(4px)' }}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 cursor-pointer hover:bg-black/70 transition-colors"
+            onClick={() => setIsImageFullscreen(false)}
+            aria-label="Close fullscreen view"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Help tooltip */}
+          <div className="absolute top-4 left-4 z-10 text-white font-normal text-sm bg-black/50 px-3 py-2 rounded-md">
+            <span className="hidden sm:inline">
+              Use mouse wheel to zoom • Double-click to reset • {Math.round(zoomLevel * 100)}%
+            </span>
+            <span className="sm:hidden">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+          </div>
+
+          {/* Zoom controls */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/50 p-2 rounded-lg z-10">
+            <button
+              onClick={zoomOut}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom out"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              onClick={resetZoom}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Reset zoom"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 15L21 21M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              onClick={zoomIn}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom in"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Image container with drag functionality */}
+          <div 
+            ref={imageContainerRef}
+            className={cn(
+              "relative w-[90vw] h-[90vh] flex items-center justify-center overflow-hidden",
+              zoomLevel > 1 ? "cursor-grab" : "",
+              isDragging && zoomLevel > 1 ? "cursor-grabbing" : ""
+            )}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onDoubleClick={handleDoubleClick}
+          >
+            <div 
+              className="transition-all duration-200 ease-out"
+              style={{ 
+                transform: `scale(${zoomLevel}) translate(${dragPosition.x}px, ${dragPosition.y}px)`,
+                transformOrigin: 'center center',
+              }}
+            >
+              <img
+                src={signedImageUrl}
+                alt="Block Media Fullscreen"
+                className="max-h-full max-w-full object-contain"
+                style={{ 
+                  pointerEvents: 'none',
+                }}
+                draggable="false"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

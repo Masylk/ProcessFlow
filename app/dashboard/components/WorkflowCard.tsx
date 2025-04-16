@@ -235,7 +235,7 @@ export default function WorkflowCard({
                 '--hover-bg': colors['bg-quaternary'],
               } as React.CSSProperties
             }
-            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}

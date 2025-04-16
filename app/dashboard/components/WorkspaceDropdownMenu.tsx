@@ -290,13 +290,13 @@ export default function WorkspaceDropdownMenu({
 
               <div
                 style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch h-px border-b my-1"
+                className="self-stretch h-px hidden border-b my-1"
               />
 
               {/* Create/Join Options */}
               <button
                 onClick={handleOpenCreateWorkspaceModal}
-                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
               >
                 <div
                   style={
