@@ -6,7 +6,7 @@ import { createChildPaths } from '../../utils/createChildPaths';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useColors } from '@/app/theme/hooks';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 
 function PathNode(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
@@ -105,7 +105,7 @@ function PathNode(props: NodeProps & { data: NodeData }) {
   };
 
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       <div
         className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-40' : 'hover:opacity-80'}`}
       >
@@ -171,7 +171,7 @@ function PathNode(props: NodeProps & { data: NodeData }) {
           />
         )}
       </div>
-    </BasicNode>
+    </BasicBlock>
   );
 }
 

@@ -4,7 +4,7 @@ import { NodeData } from '../../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useColors } from '@/app/theme/hooks';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 
 function LastNode(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
@@ -20,7 +20,7 @@ function LastNode(props: NodeProps & { data: NodeData }) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       <div
         className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
       >
@@ -43,7 +43,7 @@ function LastNode(props: NodeProps & { data: NodeData }) {
           style={{
             background: colors['bg-primary'],
             borderColor: colors['button-primary-bg'],
-            color: colors['button-primary-bg']
+            color: colors['button-primary-bg'],
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.background = colors['bg-primary_hover'];
@@ -72,7 +72,7 @@ function LastNode(props: NodeProps & { data: NodeData }) {
           }}
         />
       </div>
-    </BasicNode>
+    </BasicBlock>
   );
 }
 
