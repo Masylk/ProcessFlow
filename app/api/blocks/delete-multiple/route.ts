@@ -48,19 +48,20 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // Reorder positions for the affected path
-    const remainingBlocks = await prisma.block.findMany({
-      where: { path_id: pathId },
-      orderBy: { position: 'asc' },
-      select: { id: true }
-    });
+    // Decrement positions of blocks with position > maxDeletedPosition
+    const deletedPositions = blocks.map(b => b.position);
+    const maxDeletedPosition = Math.max(...deletedPositions);
+    const numDeleted = blocks.length;
 
-    for (let i = 0; i < remainingBlocks.length; i++) {
-      await prisma.block.update({
-        where: { id: remainingBlocks[i].id },
-        data: { position: i }
-      });
-    }
+    await prisma.block.updateMany({
+      where: {
+        path_id: pathId,
+        position: { gt: maxDeletedPosition }
+      },
+      data: {
+        position: { decrement: numDeleted }
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

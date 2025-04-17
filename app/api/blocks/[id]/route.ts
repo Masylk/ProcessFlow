@@ -275,8 +275,10 @@ export async function DELETE(req: NextRequest) {
       }
     };
 
-    // Save workflow_id before deleting
+    // Save workflow_id and position before deleting
     const workflowId = block.workflow_id;
+    const pathId = block.path_id;
+    const deletedPosition = block.position;
 
     // Delete only the image file from Supabase storage
     await deleteFile(imageUrl);
@@ -286,19 +288,17 @@ export async function DELETE(req: NextRequest) {
       where: { id: block_id },
     });
 
-    // Reorder positions for the affected workflow
-    const remainingBlocks = await prisma.block.findMany({
-      where: { workflow_id: workflowId },
-      orderBy: { position: 'asc' },
-      select: { id: true }
+    // Decrement positions of blocks with position > deletedPosition
+    await prisma.block.updateMany({
+      where: {
+        workflow_id: workflowId,
+        path_id: pathId,
+        position: { gt: deletedPosition }
+      },
+      data: {
+        position: { decrement: 1 }
+      }
     });
-
-    for (let i = 0; i < remainingBlocks.length; i++) {
-      await prisma.block.update({
-        where: { id: remainingBlocks[i].id },
-        data: { position: i }
-      });
-    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

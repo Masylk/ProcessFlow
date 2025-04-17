@@ -28,7 +28,7 @@ export async function generateMetadata({
   params: Promise<PageParams>;
 }): Promise<Metadata> {
   const resolvedParams = await params;
-  
+
   // Decode the flow parameter
   const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
   if (!workflowName || !workflowId) {
@@ -60,7 +60,7 @@ export default async function ReactFlowPage({
   // Decode the flow parameter
   const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
   if (!workflowName || !workflowId) {
-    redirect('/dashboard'); // Redirect to dashboard if parameters are invalid
+    redirect('/'); // Redirect to root if parameters are invalid
   }
 
   // Get workflow data from API using path parameter
@@ -74,7 +74,7 @@ export default async function ReactFlowPage({
     if (response.status === 401) {
       redirect('/login');
     } else {
-      redirect('/dashboard');
+      redirect('/');
     }
   }
 
