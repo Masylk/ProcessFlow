@@ -137,21 +137,8 @@ export async function GET(
 
       // Function to fix block positions in a path
       const fixPathBlockPositions = async (path: any) => {
-        // Sort blocks by current position
-        const blocks = [...path.blocks].sort((a, b) => a.position - b.position);
+        const blocks = [...path.blocks];
         let needsUpdate = false;
-
-        // Always update positions to be consecutive
-        for (let i = 0; i < blocks.length; i++) {
-          if (blocks[i].position !== i) {
-            needsUpdate = true;
-            await prisma.block.update({
-              where: { id: blocks[i].id },
-              data: { position: i }
-            });
-            blocks[i].position = i;
-          }
-        }
 
         // Find BEGIN and end-type blocks
         const beginBlock = blocks.find(b => b.type === 'BEGIN');
