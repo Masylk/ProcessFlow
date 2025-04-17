@@ -159,16 +159,27 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = await prisma.$transaction(async (prisma) => {
+      // Find the current max position in the path
+      const maxBlock = await prisma.block.findFirst({
+        where: { path_id },
+        orderBy: { position: 'desc' },
+        select: { position: true }
+      });
+      const maxPosition = maxBlock ? maxBlock.position : 0;
+
+      // Clamp the requested position (do not allow appending to the end)
+      const cappedPosition = Math.max(1, Math.min(position, maxPosition));
+
       // Update positions of existing blocks
       await prisma.block.updateMany({
-        where: { workflow_id, path_id, position: { gte: position } },
+        where: { workflow_id, path_id, position: { gte: cappedPosition } },
         data: { position: { increment: 1 } },
       });
 
       // Create the new block
       const blockData = {
         type,
-        position,
+        position: cappedPosition,
         icon,
         description,
         image: imageUrl || null,

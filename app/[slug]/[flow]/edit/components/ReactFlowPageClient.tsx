@@ -26,6 +26,7 @@ export function ReactFlowPageClient({
   >();
   const [workspace, setWorkspace] = useState<Workspace | undefined>();
   const setPaths = usePathsStore((state) => state.setPaths);
+  const paths = usePathsStore((state) => state.paths);
   const [newBlockId, setNewBlockId] = useState<number | null>(null);
 
   const searchParams = useSearchParams();
@@ -41,10 +42,17 @@ export function ReactFlowPageClient({
       return;
     }
 
+    // Find the blocks array for the given path_id
+    const path = paths.find((p) => p.id === path_id);
+    const blocksLength = path?.blocks?.length ?? 0;
+    // Cap position to (blocksLength - 1), but not less than 0
+    const cap = Math.max(1, blocksLength - 1);
+    const cappedPosition = Math.min(position, cap);
+
     // Prepare the block data
     const data = {
       type: blockData.type,
-      position: position,
+      position: cappedPosition,
       workflow_id: parseInt(workflowId),
       path_id: path_id,
       step_details: blockData.type === 'STEP' ? 'New Step' : undefined,
