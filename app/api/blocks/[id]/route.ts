@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { deleteOneBlock } from '../../utils/blocks/deleteOne';
 
 /**
  * @swagger
@@ -229,91 +230,11 @@ export async function DELETE(req: NextRequest) {
 
   const block_id = Number(id);
 
-  try {
-    // Fetch the block to check if it exists and get its image
-    const block = await prisma.block.findUnique({
-      where: { id: block_id },
-      include: {
-        child_paths: true
-      }
-    });
+  const { error, status } = await deleteOneBlock(block_id);
 
-    if (!block) {
-      return NextResponse.json({ error: 'Block not found' }, { status: 404 });
-    }
-
-    const imageUrl = block.image;
-
-    // Prepare for file deletion from Supabase storage
-    const deleteFile = async (fileUrl: string | null) => {
-      if (fileUrl) {
-        const filePath = fileUrl.replace(
-          'https://your-project.supabase.co/storage/v1/object/public/',
-          ''
-        );
-
-        // Check if the bucket name is defined
-        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-        if (!bucketName) {
-          console.error(
-            'Bucket name is not defined in the environment variables.'
-          );
-          return;
-        }
-
-        const { error } = await supabase.storage
-          .from(bucketName) // Use the environment variable for the bucket name
-          .remove([filePath]);
-
-        if (error) {
-          console.error(`Failed to delete file: ${fileUrl}`, error);
-        } else {
-          console.log(`File deleted successfully: ${fileUrl}`);
-        }
-      } else {
-        console.log('no file url to delete');
-      }
-    };
-
-    // Save workflow_id and position before deleting
-    const workflowId = block.workflow_id;
-    const pathId = block.path_id;
-    const deletedPosition = block.position;
-
-    // Delete only the image file from Supabase storage
-    await deleteFile(imageUrl);
-
-    // Delete the block (cascade will handle related records)
-    await prisma.block.delete({
-      where: { id: block_id },
-    });
-
-    // Decrement positions of blocks with position > deletedPosition
-    await prisma.block.updateMany({
-      where: {
-        workflow_id: workflowId,
-        path_id: pathId,
-        position: { gt: deletedPosition }
-      },
-      data: {
-        position: { decrement: 1 }
-      }
-    });
-
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Failed to delete block:', error.message);
-      return NextResponse.json(
-        { error: `Failed to delete block: ${error.message}` },
-        { status: 500 }
-      );
-    } else {
-      console.error('Failed to delete block:', error);
-      return NextResponse.json(
-        { error: 'Failed to delete block: unknown error' },
-        { status: 500 }
-      );
-    }
+  if (error) {
+    return NextResponse.json({ error }, { status });
   }
+
+  return new NextResponse(null, { status: 204 });
 }

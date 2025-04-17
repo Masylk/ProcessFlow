@@ -44,6 +44,9 @@ export async function POST(req: NextRequest) {
       where: {
         id: {
           in: blockIds
+        },
+        type: {
+          in: ['STEP', 'DELAY']
         }
       }
     });
