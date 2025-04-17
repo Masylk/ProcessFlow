@@ -56,6 +56,22 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     },
   ];
 
+  // Find the last block in the current path
+  const lastBlock = dropdownDatas.path.blocks.length
+    ? dropdownDatas.path.blocks[dropdownDatas.path.blocks.length - 1]
+    : undefined;
+
+  // Check if last block has exactly one child_path
+  const lastBlockHasExactlyOneChildPath =
+    lastBlock &&
+    Array.isArray(lastBlock.child_paths) &&
+    lastBlock.child_paths.length === 1;
+
+  // Filter menu items: remove "Condition" if last block has exactly one child_path
+  const filteredMenuItems = lastBlockHasExactlyOneChildPath
+    ? menuItems.filter((item) => item.type !== 'PATH')
+    : menuItems;
+
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
@@ -171,7 +187,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                 style={{ backgroundColor: colors['border-secondary'] }}
               />
 
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <div
                   key={item.type}
                   className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"

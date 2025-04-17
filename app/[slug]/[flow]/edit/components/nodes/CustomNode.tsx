@@ -23,7 +23,7 @@ import { useClipboardStore } from '../../store/clipboardStore';
 import { useColors } from '@/app/theme/hooks';
 import styles from './CustomNode.module.css';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 interface CustomNodeProps extends NodeProps {
@@ -717,7 +717,7 @@ function CustomNode(props: NodeProps & { data: NodeData }) {
   }, [isEditMode, selectedNodeId, id, zoomToNode, viewportInitialized]);
 
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       {/* Vertical Toggle Switch Container */}
       {getEdges().some(
         (edge) => edge.source === id && edge.type === 'strokeEdge'
@@ -1037,7 +1037,7 @@ function CustomNode(props: NodeProps & { data: NodeData }) {
           onUpdate={handleBlockUpdate}
         />
       )}
-    </BasicNode>
+    </BasicBlock>
   );
 }
 

@@ -21,7 +21,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const elkNodes = nodes.map((node) => ({
     id: node.id,
     width: node.type === 'begin' ? 
-            (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 200) :
+            (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 0 ? 200 : 350)) :
             node.type === 'last' ? 32 :
             node.type === 'path' ? 32 :
             node.type === 'end' ? 290 :

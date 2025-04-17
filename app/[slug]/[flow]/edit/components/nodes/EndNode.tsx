@@ -6,7 +6,7 @@ import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { useColors } from '@/app/theme/hooks';
 import DynamicIcon from '@/utils/DynamicIcon';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 
 function EndNode(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
@@ -42,7 +42,7 @@ function EndNode(props: NodeProps & { data: NodeData }) {
   };
 
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       <div
         className={`transition-opacity duration-300 relative ${isConnectMode || isEditMode ? 'opacity-40' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
@@ -129,7 +129,7 @@ function EndNode(props: NodeProps & { data: NodeData }) {
           />
         </div>
       </div>
-    </BasicNode>
+    </BasicBlock>
   );
 }
 

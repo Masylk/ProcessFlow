@@ -1,7 +1,7 @@
 import React from 'react';
 import { NodeProps } from '@xyflow/react';
 import { NodeData } from '../../../types';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 
 interface InvisibleNodeProps extends NodeProps {
   data: NodeData;
@@ -10,9 +10,9 @@ interface InvisibleNodeProps extends NodeProps {
 
 function InvisibleNode(props: NodeProps & { data: NodeData }) {
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       <div className="w-full h-[120px] pointer-events-none" />
-    </BasicNode>
+    </BasicBlock>
   );
 }
 

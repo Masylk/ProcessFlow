@@ -3,7 +3,7 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
-import { BasicNode } from './BasicNode';
+import { BasicBlock } from './BasicBlock';
 
 interface MergeNodeProps extends NodeProps {
   data: NodeData;
@@ -15,7 +15,7 @@ function MergeNode(props: NodeProps & { data: NodeData }) {
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   return (
-    <BasicNode {...props}>
+    <BasicBlock {...props}>
       <div
         className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-50' : 'opacity-100'}`}
       >
@@ -43,7 +43,7 @@ function MergeNode(props: NodeProps & { data: NodeData }) {
           }}
         />
       </div>
-    </BasicNode>
+    </BasicBlock>
   );
 }
 
