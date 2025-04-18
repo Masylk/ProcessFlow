@@ -333,6 +333,55 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // --- NEW LOGIC: Create a path and default blocks for the new workflow ---
+    // Create a new path affiliated with this workflow
+    const newPath = await prisma.path.create({
+      data: {
+        name: 'First Path',
+        workflow_id: workflow.id,
+      }
+    });
+
+    // Create BEGIN block
+    await prisma.block.create({
+      data: {
+        type: 'BEGIN',
+        position: 0,
+        icon: '/step-icons/default-icons/begin.svg',
+        description: 'Start of the workflow',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: '',
+      }
+    });
+
+    // Create default STEP block
+    await prisma.block.create({
+      data: {
+        type: 'STEP',
+        position: 1,
+        icon: '/step-icons/default-icons/container.svg',
+        description: 'This is a default block',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: 'Default step details',
+      }
+    });
+
+    // Create END block
+    await prisma.block.create({
+      data: {
+        type: 'LAST',
+        position: 2,
+        icon: '/step-icons/default-icons/end.svg',
+        description: 'End of the workflow',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: '',
+      }
+    });
+    // --- END NEW LOGIC ---
+
     // If we need to update the public_access_id with the actual workflow ID
     const updatedPublicId = await generatePublicAccessId(
       workflow.name,

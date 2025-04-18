@@ -19,7 +19,7 @@ import {
   useStore,
 } from '@xyflow/react';
 import { createElkLayout } from '../utils/elkLayout';
-import CustomNode from './nodes/CustomNode';
+import CustomBlock from './blocks/CustomBlock';
 import CustomSmoothStepEdge from './edges/CustomSmoothStepEdge';
 import AddBlockDropdownMenu from './AddBlockDropdownMenu';
 import {
@@ -32,12 +32,12 @@ import {
 } from '../../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
-import BeginNode from './nodes/BeginNode';
-import EndNode from './nodes/EndNode';
+import BeginBlock from './blocks/BeginBlock';
+import EndBlock from './blocks/EndBlock';
 import SmoothStepCustomParent from './edges/SmoothStepCustomParent';
 import { BlockEndType } from '@/types/block';
-import LastNode from './nodes/LastNode';
-import PathNode from './nodes/PathNode';
+import LastBlock from './blocks/LastBlock';
+import PathBlock from './blocks/PathBlock';
 import { useModalStore } from '../store/modalStore';
 import CreateParallelPathModal from './modals/CreateParallelPathModal';
 import { createParallelPaths } from '../utils/createParallelPaths';
@@ -45,32 +45,32 @@ import StrokeEdge from './edges/StrokeEdge';
 import ConnectNodeModal from './modals/ConnectNodeModal';
 import { useConnectModeStore } from '../store/connectModeStore';
 import { PathSelectionBox } from './PathSelectionBox';
-import MergeNode from './nodes/MergeNode';
+import MergeBlock from './blocks/MergeBlock';
 import { usePathsStore } from '../store/pathsStore';
 import { UpdatePathSelectionBox } from './UpdatePathSelectionBox';
-import InvisibleNode from './nodes/InvisibleNode';
+import InvisibleBlock from './blocks/InvisibleBlock';
 import { useEditModeStore } from '../store/editModeStore';
 import { useSearchParams } from 'next/navigation';
 import ZoomBar from './ZoomBar';
 import { Sidebar } from './Sidebar';
 import { useColors } from '@/app/theme/hooks';
-import FixedDelayNode from './nodes/FixedDelayNode';
-import EventDelayNode from './nodes/EventDelayNode';
+import FixedDelayBlock from './blocks/FixedDelayBlock';
+import EventDelayBlock from './blocks/EventDelayBlock';
 import { useStrokeLinesStore } from '../store/strokeLinesStore';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 
 type StrokeLineVisibility = [number, boolean];
 
 const nodeTypes = {
-  custom: CustomNode,
-  begin: BeginNode,
-  end: EndNode,
-  last: LastNode,
-  path: PathNode,
-  merge: MergeNode,
-  invisible: InvisibleNode,
-  fixedDelay: FixedDelayNode,
-  eventDelay: EventDelayNode,
+  custom: CustomBlock,
+  begin: BeginBlock,
+  end: EndBlock,
+  last: LastBlock,
+  path: PathBlock,
+  merge: MergeBlock,
+  invisible: InvisibleBlock,
+  fixedDelay: FixedDelayBlock,
+  eventDelay: EventDelayBlock,
 } as const;
 
 const edgeTypes = {
@@ -644,7 +644,7 @@ export function Flow({
           const blockId = node.id.replace('block-', '');
           // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
-          // Don't set ReactFlow selection state as CustomNode handles this differently
+          // Don't set ReactFlow selection state as CustomBlock handles this differently
 
           // Find the node and zoom to it
           setViewport(

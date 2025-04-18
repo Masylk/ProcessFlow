@@ -137,7 +137,7 @@ export interface PathParentBlock {
 }
 
 // Add this interface if you're using custom node types
-export interface CustomNode extends Node {
+export interface CustomBlock extends Node {
   parentId?: string;
   expandParent?: boolean;
 }

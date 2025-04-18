@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useColors } from '@/app/theme/hooks';
-import { BaseStepProps } from '@/app/workspace/[id]/[workflowId]/read/components/steps/BaseStep';
+import { BaseStepProps } from '@/app/[slug]/[flow]/read/components/steps/BaseStep';
 import DynamicIcon from '@/utils/DynamicIcon';
-import { Block } from '@/app/workspace/[id]/[workflowId]/types';
+import { Block } from '@/app/[slug]/[flow]/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 // ... other imports

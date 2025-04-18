@@ -1,9 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
-import { BaseStepProps } from '@/app/workspace/[id]/[workflowId]/read/components/steps/BaseStep';
+import { BaseStepProps } from '@/app/[slug]/[flow]/read/components/steps/BaseStep';
 import Image from 'next/image';
-import { DelayType } from '@/app/workspace/[id]/[workflowId]/types';
+import { DelayType } from '@/app/[slug]/[flow]/types';
 
 interface HorizontalDelayProps extends BaseStepProps {}
 
