@@ -8,6 +8,7 @@ import WorkflowHeader from './WorkflowHeader';
 import { useSearchParams } from 'next/navigation';
 import { usePathsStore } from '../store/pathsStore';
 import { Workspace } from '@/types/workspace';
+import { toast } from 'sonner';
 
 interface ReactFlowPageClientProps {
   workspaceId: string;
@@ -62,7 +63,7 @@ export function ReactFlowPageClient({
           : blockData.type === 'DELAY'
             ? '/step-icons/default-icons/delay.svg'
             : '/step-icons/default-icons/path.svg',
-      description: `New ${blockData.type.toLowerCase()} block`,
+      description: '',
       delay_type: blockData.delay_type,
       delay_event: blockData.delay_event,
       delay_seconds: blockData.delay_seconds,

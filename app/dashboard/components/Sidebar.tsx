@@ -464,23 +464,6 @@ export default function Sidebar({
                     >
                       Free plan
                     </span>
-                    <button
-                      onClick={() => {
-                        /* Add dismiss handler */
-                      }}
-                      className="w-5 h-5 overflow-hidden opacity-70 hover:opacity-100 absolute top-3 right-3"
-                    >
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
-                        alt="Close"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                        style={{
-                          filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}`,
-                        }}
-                      />
-                    </button>
                   </div>
                   <span
                     style={{ color: colors['text-secondary'] }}

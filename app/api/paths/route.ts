@@ -31,16 +31,16 @@ export async function POST(req: NextRequest) {
           path_id: path.id,
           step_details: 'Begin',
           icon: '/step-icons/default-icons/begin.svg',
-          description: 'Start of the workflow',
+          description: '',
         },
         {
           type: 'STEP',
           position: 1,
           workflow_id,
           path_id: path.id,
-          step_details: 'Default step details',
+          step_details: '',
           icon: '/step-icons/default-icons/container.svg',
-          description: 'This is a default block',
+          description: '',
         },
         {
           type: 'LAST',
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           path_id: path.id,
           step_details: 'End',
           icon: '/step-icons/default-icons/end.svg',
-          description: 'End of the workflow',
+          description: '',
         },
       ],
     });

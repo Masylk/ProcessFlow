@@ -225,10 +225,10 @@ export async function POST(req: NextRequest) {
                 type: 'STEP',
                 position: 0,
                 icon: '/step-icons/default-icons/container.svg',
-                description: 'This is a default block',
+                description: '',
                 workflow: { connect: { id: workflow_id } },
                 path: { connect: { id: path.id } },
-                step_details: 'Default step details'
+                step_details: ''
               }
             });
 

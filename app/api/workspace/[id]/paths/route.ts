@@ -71,7 +71,7 @@ import { BlockEndType } from '@/types/block';
  *                                   example: 15
  *                                 step_details:
  *                                   type: string
- *                                   example: "Default step details"
+ *                                   example: ""
  *       400:
  *         description: Missing workflow_id or invalid workspaceId
  *         content:
@@ -152,7 +152,7 @@ export async function GET(
               type: 'BEGIN',
               position: 0,
               icon: '/step-icons/default-icons/begin.svg',
-              description: 'Start of the workflow',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
               step_details: '',
@@ -202,7 +202,7 @@ export async function GET(
               type: BlockEndType.LAST,
               position: blocks.length,
               icon: '/step-icons/default-icons/end.svg',
-              description: 'Last block in the workflow',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
               step_details: '',
@@ -219,10 +219,10 @@ export async function GET(
               type: 'STEP',
               position: 1,
               icon: '/step-icons/default-icons/container.svg',
-              description: 'This is a default block',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Default step details',
+              step_details: '',
             }
           });
           blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
@@ -279,7 +279,7 @@ export async function GET(
             type: 'BEGIN',
             position: 0,
             icon: '/step-icons/default-icons/begin.svg',
-            description: 'Start of the workflow',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
             step_details: '',
@@ -292,10 +292,10 @@ export async function GET(
             type: 'STEP',
             position: 1,
             icon: '/step-icons/default-icons/container.svg',
-            description: 'This is a default block',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'Default step details',
+            step_details: '',
           }
         });
 
@@ -305,7 +305,7 @@ export async function GET(
             type: 'LAST',
             position: 2,
             icon: '/step-icons/default-icons/end.svg',
-            description: 'End of the workflow',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
             step_details: '',
