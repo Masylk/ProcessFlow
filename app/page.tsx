@@ -352,6 +352,7 @@ export default function Page() {
         description,
         workspaceId: activeWorkspace.id,
         icon,
+        authorId: user.id,
       });
 
       if (result.error) {

@@ -18,7 +18,10 @@ interface EditFlowModalProps {
     description: string,
     folder: Folder | null | undefined,
     icon: string | null
-  ) => Promise<{ workflow: Workflow | null; error?: { title: string; description: string } }>;
+  ) => Promise<{
+    workflow: Workflow | null;
+    error?: { title: string; description: string };
+  }>;
   selectedWorkflow: Workflow;
 }
 
@@ -189,7 +192,7 @@ export default function EditFlowModal({
                 loadingText="Saving changes..."
                 onClick={handleSave}
                 className="flex-1"
-                disabled={!processName.trim()}
+                disabled={!processName.trim() || isSaving}
               >
                 Save changes
               </ButtonNormal>

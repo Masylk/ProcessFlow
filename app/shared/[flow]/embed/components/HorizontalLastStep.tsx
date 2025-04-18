@@ -1,8 +1,6 @@
 import React from 'react';
 import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
-import { BaseStepProps } from '@/app/workspace/[id]/[workflowId]/read/components/steps/BaseStep';
-import { cn } from '@/lib/utils';
 
 interface HorizontalLastStepProps {
   onCopyLink: () => void;

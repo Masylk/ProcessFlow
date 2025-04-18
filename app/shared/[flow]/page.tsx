@@ -5,30 +5,30 @@ import { useParams } from 'next/navigation';
 import { User } from '@/types/user';
 import { createClient } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
-import Sidebar from '@/app/workspace/[id]/[workflowId]/read/components/Sidebar';
+import Sidebar from '@/app/[slug]/[flow]/read/components/Sidebar';
 import { Workspace, Folder } from '@/types/workspace';
 import { useColors } from '@/app/theme/hooks';
-import ProcessCard from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCard';
-import ViewModeSwitch from '@/app/workspace/[id]/[workflowId]/read/components/ViewModeSwitch';
-import VerticalStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalStep';
-import HorizontalLastStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalLastStep';
+import ProcessCard from '@/app/[slug]/[flow]/read/components/ProcessCard';
+import ViewModeSwitch from '@/app/[slug]/[flow]/read/components/ViewModeSwitch';
+import VerticalStep from '@/app/[slug]/[flow]/read/components/steps/VerticalStep';
+import HorizontalLastStep from '@/app/[slug]/[flow]/read/components/steps/HorizontalLastStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
 import Alert from '@/app/components/Alert';
-import { usePathsStore } from '@/app/workspace/[id]/[workflowId]/read/store/pathsStore';
-import ProcessCanvas from '@/app/workspace/[id]/[workflowId]/read/components/ProcessCanvas';
-import VerticalLastStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalLastStep';
-import HorizontalStep from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalStep';
+import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
+import ProcessCanvas from '@/app/[slug]/[flow]/read/components/ProcessCanvas';
+import VerticalLastStep from '@/app/[slug]/[flow]/read/components/steps/VerticalLastStep';
+import HorizontalStep from '@/app/[slug]/[flow]/read/components/steps/HorizontalStep';
 import {
   Block,
   Path,
   PathParentBlock,
   WorkflowData,
-} from '@/app/workspace/[id]/[workflowId]/types';
+} from '@/app/[slug]/[flow]/types';
 import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
-import VerticalDelay from '@/app/workspace/[id]/[workflowId]/read/components/steps/VerticalDelay';
-import HorizontalDelay from '@/app/workspace/[id]/[workflowId]/read/components/steps/HorizontalDelay';
+import VerticalDelay from '@/app/[slug]/[flow]/read/components/steps/VerticalDelay';
+import HorizontalDelay from '@/app/[slug]/[flow]/read/components/steps/HorizontalDelay';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),

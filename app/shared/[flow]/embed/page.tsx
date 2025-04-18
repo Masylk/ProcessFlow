@@ -9,12 +9,12 @@ import { cn } from '@/lib/utils';
 import HorizontalLastStep from './components/HorizontalLastStep';
 import HorizontalStep from './components/HorizontalStep';
 import HorizontalDelay from './components/HorizontalDelay';
-import { usePathsStore } from '@/app/workspace/[id]/[workflowId]/read/store/pathsStore';
+import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
 import {
   Block,
   Path,
   WorkflowData,
-} from '@/app/workspace/[id]/[workflowId]/types';
+} from '@/app/[slug]/[flow]/types';
 
 // Modify the type for source block pairs
 type SourceBlockPair = {

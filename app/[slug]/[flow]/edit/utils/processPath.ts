@@ -80,19 +80,19 @@ export function processPath(
   path.blocks.forEach((block, index) => {
     // If this is a merge node and there's a path length difference, add invisible nodes BEFORE the merge node
     if (block.type === BlockEndType.MERGE && longestSiblingPath > pathLength) {
-      const numInvisibleNodes = longestSiblingPath - pathLength;
+      const numInvisibleBlocks = longestSiblingPath - pathLength;
       
       let previousNodeId = index > 0 ? `block-${path.blocks[index - 1].id}` : '';
       
-      for (let i = 0; i < numInvisibleNodes; i++) {
-        const invisibleNodeId = `invisible-${block.id}-${i}`;
-        const invisibleNode = {
-          id: invisibleNodeId,
+      for (let i = 0; i < numInvisibleBlocks; i++) {
+        const InvisibleBlockId = `invisible-${block.id}-${i}`;
+        const InvisibleBlock = {
+          id: InvisibleBlockId,
           type: 'invisible',
           position: { x: 0, y: 0 },
           data: {
             label: '',
-            position: block.position - numInvisibleNodes + i,
+            position: block.position - numInvisibleBlocks + i,
             type: 'invisible',
             pathId: block.path_id,
             path: path,
@@ -100,24 +100,24 @@ export function processPath(
         };
         
         // Insert invisible node before the merge node
-        nodes.splice(nodes.length - 1, 0, invisibleNode);
+        nodes.splice(nodes.length - 1, 0, InvisibleBlock);
 
         // Connect nodes
         edges.push({
-          id: `edge-${previousNodeId}-${invisibleNodeId}`,
+          id: `edge-${previousNodeId}-${InvisibleBlockId}`,
           source: previousNodeId,
-          target: invisibleNodeId,
+          target: InvisibleBlockId,
           type: 'smoothstepCustom',
           sourceHandle: 'bottom',
           targetHandle: 'top',
           style: { stroke: '#b1b1b7', opacity: 0 },
         });
 
-        previousNodeId = invisibleNodeId;
+        previousNodeId = InvisibleBlockId;
       }
 
       // Connect last invisible node to merge node
-      if (numInvisibleNodes > 0) {
+      if (numInvisibleBlocks > 0) {
         edges.push({
           id: `edge-${previousNodeId}-block-${block.id}`,
           source: previousNodeId,
