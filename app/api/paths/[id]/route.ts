@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
+import { deleteOnePath } from '@/app/api/utils/paths/deleteOne';
 
 export async function GET(req: NextRequest) {
   try {
@@ -121,21 +122,16 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    // Delete the path and all related data in a transaction
-    await prisma.$transaction([
-      // Delete path_parent_block relationships
-      prisma.path_parent_block.deleteMany({
-        where: { path_id: pathId },
-      }),
-      // Delete all blocks in the path
-      prisma.block.deleteMany({
-        where: { path_id: pathId },
-      }),
-      // Delete the path itself
-      prisma.path.delete({
-        where: { id: pathId },
-      }),
-    ]);
+    // Use the new deleteOnePath logic
+    try {
+      await deleteOnePath(pathId);
+    } catch (err: any) {
+      console.log('error: ', err.message);
+      return NextResponse.json(
+        { error: err.message || 'Failed to delete path' },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

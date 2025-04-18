@@ -691,6 +691,7 @@ export function Flow({
         <MiniMap
           nodeColor={colors['fg-brand-primary']}
           maskColor={`${colors['bg-primary']}80`}
+          style={{ bottom: 90 }}
         />
       </ReactFlow>
       <PathSelectionBox />

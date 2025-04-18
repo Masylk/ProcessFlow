@@ -7,6 +7,7 @@ import { usePathsStore } from '../../store/pathsStore';
 import { useColors } from '@/app/theme/hooks';
 import DeletePathModal from '../modals/DeletePathModal';
 import { BasicBlock } from './BasicBlock';
+import { toast } from 'sonner';
 
 // Simple tooltip component
 type TooltipProps = {
@@ -151,31 +152,6 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
     } else if (e.key === 'Escape') {
       setIsEditing(false);
       setPathName(data.path?.name || '');
-    }
-  };
-
-  const handleDeletePath = async () => {
-    try {
-      const response = await fetch(`/api/paths/${data.path?.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete path');
-      }
-
-      // Fetch updated paths
-      const pathsResponse = await fetch(
-        `/api/workspace/${data.path?.workflow_id}/paths?workflow_id=${data.path?.workflow_id}`
-      );
-
-      if (pathsResponse.ok) {
-        const pathsData = await pathsResponse.json();
-        setAllPaths(pathsData.paths);
-        data.onPathsUpdate?.(pathsData.paths);
-      }
-    } catch (error) {
-      console.error('Error deleting path:', error);
     }
   };
 
@@ -465,9 +441,28 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
 
       {showDeleteModal && (
         <DeletePathModal
-          onClose={() => setShowDeleteModal(false)}
-          onConfirm={handleDeletePath}
+          onClose={() => {
+            setShowDeleteModal(false);
+          }}
+          onConfirm={(success: boolean, errorMessage?: string) => {
+            setShowDeleteModal(false);
+            if (success) {
+              toast.success('Path deleted');
+            } else {
+              toast.error(errorMessage || 'Failed to delete path');
+            }
+          }}
           pathName={data.path?.name || 'this path'}
+          pathId={
+            data.path?.id !== undefined ? String(data.path.id) : undefined
+          }
+          workflowId={
+            data.path?.workflow_id !== undefined
+              ? String(data.path.workflow_id)
+              : undefined
+          }
+          setAllPaths={setAllPaths}
+          onPathsUpdate={data.onPathsUpdate}
         />
       )}
     </BasicBlock>

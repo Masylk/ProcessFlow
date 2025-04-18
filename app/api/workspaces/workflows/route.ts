@@ -348,7 +348,7 @@ export async function POST(req: NextRequest) {
         type: 'BEGIN',
         position: 0,
         icon: '/step-icons/default-icons/begin.svg',
-        description: 'Start of the workflow',
+        description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
         step_details: '',
@@ -361,10 +361,10 @@ export async function POST(req: NextRequest) {
         type: 'STEP',
         position: 1,
         icon: '/step-icons/default-icons/container.svg',
-        description: 'This is a default block',
+        description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
-        step_details: 'Default step details',
+        step_details: '',
       }
     });
 
@@ -374,7 +374,7 @@ export async function POST(req: NextRequest) {
         type: 'LAST',
         position: 2,
         icon: '/step-icons/default-icons/end.svg',
-        description: 'End of the workflow',
+        description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
         step_details: '',

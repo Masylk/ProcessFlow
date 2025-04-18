@@ -78,7 +78,7 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
               variant="primary"
               size="small"
               onClick={() => onConfirm(pathNames)}
-              disabled={hasEmptyPath || pathNames.length === 0}
+              disabled={hasEmptyPath || pathNames.length <= 1}
             >
               {existingPaths.length > 0 ? 'Update paths' : 'Create paths'}
             </ButtonNormal>
