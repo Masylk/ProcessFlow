@@ -1147,6 +1147,9 @@ export default function Page() {
       if (sidebarSelectedFolder?.id === updatedFolder.id) {
         setSidebarSelectedFolder(updatedFolder);
       }
+      if (selectedFolder?.id === updatedFolder.id) {
+        setSelectedFolder(updatedFolder);
+      }
 
       setEditingFolder(undefined);
     } catch (error) {

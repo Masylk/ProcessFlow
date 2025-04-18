@@ -51,14 +51,18 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
           (_, index) => index >= pathNames.length
         );
 
-        // Delete removed paths
-        await Promise.all(
-          pathsToDelete.map(async (path) => {
-            await fetch(`/api/paths/${path.id}`, {
-              method: 'DELETE',
-            });
-          })
-        );
+        if (existingPaths.length - pathsToDelete.length > 1) {
+          // Delete removed paths
+          await Promise.all(
+            pathsToDelete.map(async (path) => {
+              await fetch(`/api/paths/${path.id}`, {
+                method: 'DELETE',
+              });
+            })
+          );
+        } else {
+          console.log('there would be only one path left');
+        }
 
         // Update remaining paths
         await Promise.all(

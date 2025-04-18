@@ -151,12 +151,12 @@ export default function HelpCenterModal({
                   Reach out to us
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘S
-              </div>
+              </div> */}
             </div>
           </a>
 
@@ -192,12 +192,12 @@ export default function HelpCenterModal({
                   Take a look at our roadmap
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘D
-              </div>
+              </div> */}
             </div>
           </a>
 
@@ -234,12 +234,12 @@ export default function HelpCenterModal({
                   Join our Slack community
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘X
-              </div>
+              </div> */}
             </div>
           </a>
 
@@ -275,12 +275,12 @@ export default function HelpCenterModal({
                   Tutorial
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘T
-              </div>
+              </div> */}
             </div>
           </a>
         </div>

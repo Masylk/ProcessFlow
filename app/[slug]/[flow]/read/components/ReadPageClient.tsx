@@ -27,7 +27,10 @@ import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
 import VerticalDelay from './steps/VerticalDelay';
 import HorizontalDelay from './steps/HorizontalDelay';
-import { createAndCopyShareLink, createShareLink } from '../../utils/createLinks';
+import {
+  createAndCopyShareLink,
+  createShareLink,
+} from '../../utils/createLinks';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),
