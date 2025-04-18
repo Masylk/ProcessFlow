@@ -27,11 +27,14 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
   const colors = useColors();
+  const [isSaving, setIsSaving] = useState(false);
 
   const createFolder = (name: string) => {
+    setIsSaving(true);
     if (iconUrl) onCreate(name, parentId, iconUrl);
     else if (emote) onCreate(name, parentId, undefined, emote);
     else onCreate(name, parentId);
+    setIsSaving(false);
     onClose();
   };
 
@@ -49,30 +52,30 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0">
-        <div 
+        <div
           style={{ backgroundColor: colors['bg-overlay'] }}
-          className="absolute inset-0 opacity-70" 
+          className="absolute inset-0 opacity-70"
         />
       </div>
 
-      <div 
+      <div
         className="rounded-xl shadow-lg w-[400px] p-6 flex flex-col relative z-10"
         style={{ backgroundColor: colors['bg-primary'] }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex flex-col items-start gap-1">
-          <div 
+          <div
             className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
-            style={{ 
+            style={{
               backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary']
+              borderColor: colors['border-secondary'],
             }}
           >
             <img
@@ -81,13 +84,13 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
               className="w-12 h-12"
             />
           </div>
-          <h2 
+          <h2
             className="text-lg font-semibold"
             style={{ color: colors['text-primary'] }}
           >
             Create a Subfolder
           </h2>
-          <div 
+          <div
             className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0"
             style={{ color: colors['text-secondary'] }}
           >
@@ -107,7 +110,10 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 
         {/* Input Field */}
         <div className="mt-4">
-          <label className="block text-sm font-semibold" style={{ color: colors['text-primary'] }}>
+          <label
+            className="block text-sm font-semibold"
+            style={{ color: colors['text-primary'] }}
+          >
             Folder name<span style={{ color: colors['text-accent'] }}>*</span>
           </label>
           <div className="mt-2 flex items-center gap-2">
@@ -139,7 +145,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
             variant="primary"
             size="small"
             onClick={() => createFolder(folderName)}
-            disabled={!folderName.trim()}
+            disabled={!folderName.trim() || isSaving}
             className="flex-1"
           >
             Create

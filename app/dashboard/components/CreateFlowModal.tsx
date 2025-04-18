@@ -243,7 +243,7 @@ export default function CreateFlowModal({
                 className="grow shrink basis-0"
                 isLoading={isSaving}
                 loadingText="Creating..."
-                disabled={!flowName.trim()}
+                disabled={!flowName.trim() || isSaving}
               >
                 Create Flow
               </ButtonNormal>
