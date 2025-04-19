@@ -71,7 +71,7 @@ import { BlockEndType } from '@/types/block';
  *                                   example: 15
  *                                 step_details:
  *                                   type: string
- *                                   example: "Default step details"
+ *                                   example: ""
  *       400:
  *         description: Missing workflow_id or invalid workspaceId
  *         content:
@@ -152,10 +152,10 @@ export async function GET(
               type: 'BEGIN',
               position: 0,
               icon: '/step-icons/default-icons/begin.svg',
-              description: 'Start of the workflow',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Begin',
+              step_details: '',
             }
           });
           blocks.unshift({ ...newBeginBlock, child_paths: [] });
@@ -170,13 +170,29 @@ export async function GET(
 
         // Check if end-type block exists and has child paths
         if (endTypeBlock) {
-          if (endTypeBlock.child_paths?.length > 0 && endTypeBlock.type !== BlockEndType.PATH) {
+          if (endTypeBlock.child_paths?.length > 1) {
             needsUpdate = true;
             await prisma.block.update({
               where: { id: endTypeBlock.id },
               data: { type: BlockEndType.PATH }
             });
             endTypeBlock.type = BlockEndType.PATH;
+          } else if (endTypeBlock.child_paths?.length === 1) {
+            needsUpdate = true;
+            await prisma.block.update({
+              where: { id: endTypeBlock.id },
+              data: { type: BlockEndType.MERGE }
+            });
+            endTypeBlock.type = BlockEndType.MERGE;
+          } else if (endTypeBlock.child_paths?.length === 0 && 
+                    endTypeBlock.type !== BlockEndType.LAST && 
+                    endTypeBlock.type !== BlockEndType.END) {
+            needsUpdate = true;
+            await prisma.block.update({
+              where: { id: endTypeBlock.id },
+              data: { type: BlockEndType.LAST }
+            });
+            endTypeBlock.type = BlockEndType.LAST;
           }
         } else {
           // Create default end-type block if none exists
@@ -186,10 +202,10 @@ export async function GET(
               type: BlockEndType.LAST,
               position: blocks.length,
               icon: '/step-icons/default-icons/end.svg',
-              description: 'Last block in the workflow',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Last',
+              step_details: '',
             }
           });
           blocks.push({ ...newEndBlock, child_paths: [] });
@@ -203,10 +219,10 @@ export async function GET(
               type: 'STEP',
               position: 1,
               icon: '/step-icons/default-icons/container.svg',
-              description: 'This is a default block',
+              description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: 'Default step details',
+              step_details: '',
             }
           });
           blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
@@ -263,10 +279,10 @@ export async function GET(
             type: 'BEGIN',
             position: 0,
             icon: '/step-icons/default-icons/begin.svg',
-            description: 'Start of the workflow',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'Begin',
+            step_details: '',
           }
         });
 
@@ -276,10 +292,10 @@ export async function GET(
             type: 'STEP',
             position: 1,
             icon: '/step-icons/default-icons/container.svg',
-            description: 'This is a default block',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'Default step details',
+            step_details: '',
           }
         });
 
@@ -289,10 +305,10 @@ export async function GET(
             type: 'LAST',
             position: 2,
             icon: '/step-icons/default-icons/end.svg',
-            description: 'End of the workflow',
+            description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: 'End',
+            step_details: '',
           }
         });
 

@@ -128,12 +128,31 @@ export type ButtonTokens = {
   'button-loading-spinner': string;
 };
 
+export type IconTokens = {
+  'icon-default': string;
+  'icon-default-hover': string;
+  'icon-primary': string;
+  'icon-primary-hover': string;
+  'icon-secondary': string;
+  'icon-secondary-hover': string;
+  'icon-tertiary': string;
+  'icon-tertiary-hover': string;
+  'icon-success': string;
+  'icon-success-hover': string;
+  'icon-warning': string; 
+  'icon-warning-hover': string;
+  'icon-error': string;
+  'icon-error-hover': string;
+  'icon-info': string;
+  'icon-info-hover': string;
+};
+
 export type CSSVariables = {
-  [K in keyof (ButtonTokens & InputTokens & BreadcrumbTokens) as `--${K}`]: string;
+  [K in keyof (ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens) as `--${K}`]: string;
 };
 
 export type ThemeTokens = {
-  colors: ColorToken & ButtonTokens & InputTokens & BreadcrumbTokens;
+  colors: ColorToken & ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens;
   typography: Record<string, TypographyToken>;
   spacing: SpacingToken;
   borderRadius: Record<string, string>;
@@ -157,5 +176,5 @@ export type ThemeContextType = {
   currentTheme: ThemeMode;
   themes: Record<string, Theme>;
   setTheme: (mode: ThemeMode) => void;
-  getCssVariable: (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens)) => string;
+  getCssVariable: (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens)) => string;
 }; 

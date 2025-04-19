@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useColors } from '@/app/theme/hooks';
+import { ThemeProvider } from '@/app/context/ThemeContext';
 
 export interface ModalProps {
   /**
@@ -121,13 +123,13 @@ const Modal: React.FC<ModalProps> = ({
     );
   };
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 z-50"
+      className="fixed inset-0 flex items-center justify-center p-8 z-[9999]"
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0">
+      <div className="fixed inset-0">
         <div 
           style={{ backgroundColor: colors['bg-overlay'] }}
           className="absolute inset-0 opacity-70" 
@@ -145,7 +147,7 @@ const Modal: React.FC<ModalProps> = ({
           {renderIcon()}
           <div className="flex flex-col gap-1">
             <h2 
-              className="text-lg font-semibold"
+              className="text-lg font-medium"
               style={{ color: colors['text-primary'] }}
             >
               {title}
@@ -177,6 +179,14 @@ const Modal: React.FC<ModalProps> = ({
         )}
       </div>
     </div>
+  );
+
+  // Use createPortal with ThemeProvider to ensure theme context is available
+  return createPortal(
+    <ThemeProvider>
+      {modalContent}
+    </ThemeProvider>,
+    document.body
   );
 };
 

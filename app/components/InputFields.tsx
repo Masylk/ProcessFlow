@@ -180,8 +180,11 @@ interface InputFieldProps {
   
   helpIcon?: boolean;
   onChange?: (value: string) => void;
+  onBlur?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   disabled?: boolean;
   errorMessage?: string;
+  setError?: (message: string) => void;
   iconUrl?: string; // URL for the leading icon
   iconColor?: string; // Tailwind color class for the icon
   dropdownOptions?: string[];
@@ -259,8 +262,11 @@ const InputField: React.FC<InputFieldProps> = ({
   hintText = "",
   helpIcon = false,
   onChange,
+  onBlur,
+  onKeyDown,
   disabled = false,
   errorMessage = "",
+  setError,
   iconUrl = "",
   iconColor = "currentColor",
   dropdownOptions,
@@ -275,6 +281,10 @@ const InputField: React.FC<InputFieldProps> = ({
   const handleBlur = () => setIsFocused(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear any existing error when user starts typing
+    if (setError && errorMessage) {
+      setError('');
+    }
     if (onChange) {
       onChange(e.target.value);
     }
@@ -363,14 +373,17 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",
@@ -471,9 +484,13 @@ const InputField: React.FC<InputFieldProps> = ({
                   placeholder={type === "leading-text" ? "www.example.com" : placeholder}
                   value={value}
                   onChange={handleChange}
+                  onBlur={(e) => {
+                    handleBlur();
+                    onBlur?.();
+                  }}
+                  onKeyDown={(e) => onKeyDown?.(e)}
                   disabled={disabled}
                   onFocus={handleFocus}
-                  onBlur={handleBlur}
                   style={{
                     ...inputStyle,
                     width: '100%',
@@ -494,94 +511,62 @@ const InputField: React.FC<InputFieldProps> = ({
 
       case "trailing-dropdown":
         return (
-          <div style={DEFAULT_CONTAINER_STYLE}>
+          <div style={{
+            display: 'flex',
+            width: '100%',
+            alignItems: 'center',
+          }}>
+            <input
+              type="text"
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
+              onKeyDown={(e) => onKeyDown?.(e)}
+              disabled={disabled}
+              onFocus={handleFocus}
+              style={{
+                ...inputStyle,
+                flex: 1,
+                fontSize: 16,
+                lineHeight: "24px",
+                outline: "none",
+                border: "none",
+                background: 'transparent',
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+              }}
+            />
+            {destructive && <ErrorIcon tooltipText={errorMessage} />}
+            {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
+            
             <div style={{
               display: 'flex',
-              width: '100%',
-              height: 40,
-              borderRadius: 6,
-              overflow: 'visible',
+              alignItems: 'center',
+              marginLeft: 8,
             }}>
-              <div style={{
-                ...focusStyles,
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                flex: 1,
-                zIndex: 1,
+              <span style={{
+                color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                fontSize: 16,
+                fontFamily: 'Inter',
+                fontWeight: 600,
+                lineHeight: '24px',
+                marginRight: 8,
               }}>
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  value={value}
-                  onChange={handleChange}
-                  disabled={disabled}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                  style={{
-                    ...inputStyle,
-                    width: '100%',
-                    flex: 1,
-                    fontSize: 16,
-                    lineHeight: "24px",
-                    outline: "none",
-                    border: "none",
-                    background: 'transparent'
-                  }}
-                />
-                {destructive && <ErrorIcon tooltipText={errorMessage} />}
-                {helpIcon && !destructive && <HelpIcon destructive={destructive} tooltipText={tooltipText} />}
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
-                borderTop: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderBottom: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderRight: `1px solid ${getCssVariable(getInputToken('normal', 'border', destructive, disabled))}`,
-                borderLeft: '0px solid transparent',
-                borderTopRightRadius: 6,
-                borderBottomRightRadius: 6,
-                position: 'relative',
-                minWidth: 80,
-                zIndex: 0,
-              }}>
-                <select
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: 16,
-                    color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
-                    cursor: 'pointer',
-                    appearance: 'none',
-                    fontFamily: 'Inter',
-                    lineHeight: '24px',
-                    paddingRight: 20,
-                  }}
-                  disabled={disabled}
-                >
-                  {dropdownOptions?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  )) || <option value="Option 1">Option 1</option>}
-                </select>
-                <div style={{ 
-                  position: 'absolute',
-                  right: 12,
-                  pointerEvents: 'none'
-                }}>
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path 
-                      d="M5 7.5L10 12.5L15 7.5" 
-                      stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))} 
-                      strokeWidth="1.66667" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+                {dropdownOptions && dropdownOptions.length > 0 ? dropdownOptions[0] : 'can view'}
+              </span>
+              <div>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path 
+                    d="M5 7.5L10 12.5L15 7.5" 
+                    stroke={getCssVariable(getInputToken('normal', 'fg', destructive, disabled))}
+                    strokeWidth="1.6667" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
           </div>
@@ -683,22 +668,8 @@ const InputField: React.FC<InputFieldProps> = ({
               <input
                 type="text"
                 placeholder={value ? "" : placeholder}
-                disabled={disabled}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                style={{
-                  ...inputStyle,
-                  width: '100%',
-                  flex: 1,
-                  fontSize: 16,
-                  lineHeight: "24px",
-                  outline: "none",
-                  border: "none",
-                  background: 'transparent',
-                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
-                  minWidth: '20px', // Ensure there's always space to type
-                }}
                 onKeyDown={(e) => {
+                  onKeyDown?.(e);
                   if (e.key === "Enter" || e.key === ",") {
                     e.preventDefault();
                     const tagValue = e.currentTarget.value.trim();
@@ -716,6 +687,24 @@ const InputField: React.FC<InputFieldProps> = ({
                       onChange?.(tags.join(","));
                     }
                   }
+                }}
+                disabled={disabled}
+                onFocus={handleFocus}
+                onBlur={(e) => {
+                  handleBlur();
+                  onBlur?.();
+                }}
+                style={{
+                  ...inputStyle,
+                  width: '100%',
+                  flex: 1,
+                  fontSize: 16,
+                  lineHeight: "24px",
+                  outline: "none",
+                  border: "none",
+                  background: 'transparent',
+                  color: getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+                  minWidth: '20px', // Ensure there's always space to type
                 }}
               />
             </div>
@@ -747,9 +736,13 @@ const InputField: React.FC<InputFieldProps> = ({
                   placeholder={placeholder}
                   value={value}
                   onChange={handleChange}
+                  onBlur={(e) => {
+                    handleBlur();
+                    onBlur?.();
+                  }}
+                  onKeyDown={(e) => onKeyDown?.(e)}
                   disabled={disabled}
                   onFocus={handleFocus}
-                  onBlur={handleBlur}
                   style={{
                     ...inputStyle,
                     width: '100%',
@@ -827,14 +820,17 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',
-                minWidth: 0,
-                flex: '1 1 auto',
+                flex: 1,
                 fontSize: 16,
                 lineHeight: "24px",
                 outline: "none",
@@ -884,9 +880,13 @@ const InputField: React.FC<InputFieldProps> = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              onBlur={(e) => {
+                handleBlur();
+                onBlur?.();
+              }}
+              onKeyDown={(e) => onKeyDown?.(e)}
               disabled={disabled}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               style={{
                 ...inputStyle,
                 width: '100%',

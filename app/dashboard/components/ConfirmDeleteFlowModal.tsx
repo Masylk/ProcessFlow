@@ -2,6 +2,7 @@
 
 import { Workflow } from '@/types/workflow';
 import { createDeleteConfirmationModal } from '@/app/utils/modalPatterns';
+import { useState } from 'react';
 
 interface ConfirmDeleteModalProps {
   onClose: () => void;
@@ -14,16 +15,20 @@ export default function ConfirmDeleteFlowModal({
   onDelete,
   selectedWorkflow,
 }: ConfirmDeleteModalProps) {
+  const [isLoading, setIsLoading] = useState(false);
   // Use the pattern function to create the modal
   return createDeleteConfirmationModal({
     title: 'Confirm delete',
-    message: 'Are you sure you want to delete this Flow? This action cannot be undone.',
+    message:
+      'Are you sure you want to delete this Flow? This action cannot be undone.',
     itemType: 'flow',
     onDelete: async () => {
-      console.log('deleting: ' + selectedWorkflow.name);
+      setIsLoading(true);
       await onDelete(selectedWorkflow.id);
+      setIsLoading(false);
       onClose();
     },
-    onClose: onClose
+    onClose: onClose,
+    isLoading: isLoading,
   });
 }

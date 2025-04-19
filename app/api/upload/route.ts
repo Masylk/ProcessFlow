@@ -81,7 +81,8 @@ export async function POST(req: NextRequest) {
   const fileData = new Uint8Array(buffer); // Convert to Uint8Array
 
   // Generate a unique file name and specify the folder
-  const fileName = `${uuidv4()}-${file.name}`;
+  const sanitizedFileName = file.name.replace(/\s+/g, '_'); // Replace spaces with underscores
+  const fileName = `${uuidv4()}-${sanitizedFileName}`;
   const filePath = `uploads/${fileName}`; // Upload inside the "uploads" folder
 
   // Retrieve bucket name from environment variable

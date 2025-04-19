@@ -77,7 +77,7 @@ export default function ProfessionalInfo() {
                 cookie += `; max-age=${options.maxAge}`;
               }
               if (options.domain) {
-                cookie += `; domain=${options.domain}`;
+                cookie += `; domain=.process-flow.io`;
               }
               document.cookie = cookie;
             },
@@ -131,7 +131,7 @@ export default function ProfessionalInfo() {
 
       try {
         // Try to update the onboarding step but don't block navigation if it fails
-        await fetch('/api/onboarding/update', {
+        await fetch('/api/onboarding/email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ export default function ProfessionalInfo() {
     setError("");
 
     try {
-      const response = await fetch('/api/onboarding/update', {
+      const response = await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ export default function ProfessionalInfo() {
     
     try {
       // Try to update the onboarding step first
-      await fetch('/api/onboarding/update', {
+      await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

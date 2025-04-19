@@ -1,16 +1,19 @@
 // components/HelpCenterModal.tsx
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
+import { restartTutorial } from '@/app/utils/tutorial';
 import { useColors } from '@/app/theme/hooks';
 
 interface HelpCenterModalProps {
   onClose: () => void;
   user: User;
+  setShowTutorial?: (show: boolean) => void;
 }
 
 export default function HelpCenterModal({
   onClose,
   user,
+  setShowTutorial
 }: HelpCenterModalProps) {
   const colors = useColors();
 
@@ -18,6 +21,28 @@ export default function HelpCenterModal({
     e.preventDefault();
     if (user) {
       await redirectToRoadmap(user);
+    }
+  };
+
+  const handleRestartTutorial = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      // Clean up any remaining styles from previous tutorial run
+      const foldersSection = document.querySelector('[data-testid="folders-section"]');
+      if (foldersSection && foldersSection instanceof HTMLElement) {
+        foldersSection.style.backgroundColor = '';
+      }
+      
+      const success = await restartTutorial(user);
+      if (success) {
+        // Close the modal
+        onClose();
+        
+        // Show the tutorial directly instead of refreshing the page
+        if (setShowTutorial) {
+          setShowTutorial(true);
+        }
+      }
     }
   };
 
@@ -126,12 +151,12 @@ export default function HelpCenterModal({
                   Reach out to us
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘S
-              </div>
+              </div> */}
             </div>
           </a>
 
@@ -167,12 +192,12 @@ export default function HelpCenterModal({
                   Take a look at our roadmap
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘D
-              </div>
+              </div> */}
             </div>
           </a>
 
@@ -209,12 +234,53 @@ export default function HelpCenterModal({
                   Join our Slack community
                 </div>
               </div>
-              <div 
+              {/* <div 
                 className="text-xs font-normal leading-[18px]"
                 style={{ color: colors['text-secondary'] }}
               >
                 ⌘X
+              </div> */}
+            </div>
+          </a>
+
+          {/* Restart Tutorial */}
+          <a
+            href="#"
+            onClick={handleRestartTutorial}
+            className="self-stretch px-1.5 py-px flex items-center rounded-lg transition-colors duration-200"
+            style={{ 
+              '--hover-bg': colors['bg-quaternary'],
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <div className="flex-grow h-[38px] px-2.5 py-[9px] rounded-md flex items-center gap-3 overflow-hidden">
+              <div className="flex-grow flex items-center gap-2">
+                {/* Tutorial Icon */}
+                <div className="w-4 h-4 relative overflow-hidden">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/file-heart-02.svg`}
+                    alt="Tutorial Icon"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div 
+                  className="text-sm font-medium leading-tight"
+                  style={{ color: colors['text-secondary'] }}
+                >
+                  Tutorial
+                </div>
               </div>
+              {/* <div 
+                className="text-xs font-normal leading-[18px]"
+                style={{ color: colors['text-secondary'] }}
+              >
+                ⌘T
+              </div> */}
             </div>
           </a>
         </div>

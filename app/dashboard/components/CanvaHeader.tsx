@@ -1,6 +1,5 @@
 import { Folder } from '@/types/workspace';
 import ButtonNormal from '../../components/ButtonNormal';
-import ViewSwitch from '../../components/ViewSwitch';
 import { useColors } from '@/app/theme/hooks';
 
 interface CanvaHeaderProps {
@@ -71,10 +70,7 @@ export default function CanvaHeader({
         </div>
       </div>
       <div className="hidden justify-end items-center gap-2">
-        <ViewSwitch 
-          currentView={currentView} 
-          onViewChange={onViewChange} 
-        />
+       
         {/* Import Process Button */}
         <ButtonNormal
           variant="secondary"

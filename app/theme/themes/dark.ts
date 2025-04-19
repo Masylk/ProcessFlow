@@ -180,6 +180,24 @@ export const darkTheme: Theme = {
       // Loading spinner
       'button-loading-spinner': getThemeColor('Base/White'),
 
+      // Icon colors
+      'icon-default': getThemeColor('Gray (dark mode)/400'),
+      'icon-default-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-primary': getThemeColor('Gray (dark mode)/300'),
+      'icon-primary-hover': getThemeColor('Gray (dark mode)/100'),
+      'icon-secondary': getThemeColor('Gray (dark mode)/400'),
+      'icon-secondary-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-tertiary': getThemeColor('Gray (dark mode)/400'),
+      'icon-tertiary-hover': getThemeColor('Gray (dark mode)/200'),
+      'icon-success': getThemeColor('Success/400'),
+      'icon-success-hover': getThemeColor('Success/300'),
+      'icon-warning': getThemeColor('Warning/400'), 
+      'icon-warning-hover': getThemeColor('Warning/300'),
+      'icon-error': getThemeColor('Error/400'),
+      'icon-error-hover': getThemeColor('Error/300'),
+      'icon-info': getThemeColor('Brand/400'),
+      'icon-info-hover': getThemeColor('Brand/300'),
+
       // Input field tokens
       // Default input
       'input-bg': getThemeColor('Gray (dark mode)/950'),
@@ -279,6 +297,16 @@ export const darkTheme: Theme = {
       'utility-success-500': getThemeColor('Success/500'),
       'utility-success-600': getThemeColor('Success/400'),
       'utility-success-700': getThemeColor('Success/300'),
+
+      // Purple
+      'utility-purple-50': getThemeColor('Purple/950'),
+      'utility-purple-100': getThemeColor('Purple/900'),
+      'utility-purple-200': getThemeColor('Purple/800'),
+      'utility-purple-300': getThemeColor('Purple/700'),
+      'utility-purple-400': getThemeColor('Purple/600'),
+      'utility-purple-500': getThemeColor('Purple/500'),
+      'utility-purple-600': getThemeColor('Purple/400'),
+      'utility-purple-700': getThemeColor('Purple/300'),
 
       // Alpha colors
       'alpha-white-10': 'rgba(12, 17, 29, 0.10)',

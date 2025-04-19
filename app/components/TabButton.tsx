@@ -20,6 +20,7 @@ interface TabButtonProps {
   onDeleteFolder?: (folder: Folder) => Promise<void>;
   onSelectFolder?: (folder?: Folder) => void;
   emote?: string;
+  inSortableContext?: boolean;
 }
 
 export const TabButton: React.FC<TabButtonProps> = ({
@@ -37,6 +38,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
   onDeleteFolder,
   onSelectFolder,
   emote,
+  inSortableContext,
 }) => {
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
   return (
     <>
       <style>{hoverStyles}</style>
-      <div className="relative group">
+      <div className={`relative group ${inSortableContext ? '' : 'drag-handle'}`}>
         <div
           id={buttonId}
           role="button"

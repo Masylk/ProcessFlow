@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+enum DelayType {
+  FIXED_DURATION = 'FIXED_DURATION',
+  WAIT_FOR_EVENT = 'WAIT_FOR_EVENT'
+}
 /**
  * @swagger
  * /api/blocks:
@@ -37,6 +41,14 @@ import { Prisma } from '@prisma/client';
  *                 type: integer
  *                 nullable: true
  *                 description: Delay time in seconds (only for DELAY blocks).
+ *               delay_type:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Delay type for DELAY blocks.
+ *               delay_event:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Delay event for DELAY blocks.
  *               description:
  *                 type: string
  *                 nullable: true
@@ -82,6 +94,8 @@ export async function POST(req: NextRequest) {
     position,
     icon,
     delay_seconds,
+    delay_type,
+    delay_event,
     description,
     workflow_id,
     path_id,
@@ -105,28 +119,67 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (type === 'DELAY' && (delay_seconds === undefined || delay_seconds < 0)) {
-    return NextResponse.json(
-      {
-        error:
-          'A valid delay value (non-negative number) is required for DELAY blocks.',
-      },
-      { status: 400 }
-    );
+  if (type === 'DELAY') {
+    if (!delay_type) {
+      return NextResponse.json(
+        { error: 'Delay type is required for DELAY blocks.' },
+        { status: 400 }
+      );
+    }
+    if (
+      delay_type === DelayType.FIXED_DURATION &&
+      (delay_seconds === undefined || delay_seconds < 0)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'A valid delay value (non-negative number) is required for fixed duration delays.',
+        },
+        { status: 400 }
+      );
+    }
+    if (delay_type === DelayType.WAIT_FOR_EVENT && !delay_event) {
+      return NextResponse.json(
+        { error: 'Event name is required for event-based delays.' },
+        { status: 400 }
+      );
+    }
+    // For event-based delays, seconds is optional but must be non-negative if provided
+    if (
+      delay_type === DelayType.WAIT_FOR_EVENT &&
+      delay_seconds !== undefined &&
+      delay_seconds < 0
+    ) {
+      return NextResponse.json(
+        { error: 'If provided, expiration time must be non-negative.' },
+        { status: 400 }
+      );
+    }
   }
 
   try {
     const result = await prisma.$transaction(async (prisma) => {
+      // Find the current max position in the path
+      const maxBlock = await prisma.block.findFirst({
+        where: { path_id },
+        orderBy: { position: 'desc' },
+        select: { position: true }
+      });
+      const maxPosition = maxBlock ? maxBlock.position : 0;
+
+      // Clamp the requested position (do not allow appending to the end)
+      const cappedPosition = Math.max(1, Math.min(position, maxPosition));
+
       // Update positions of existing blocks
       await prisma.block.updateMany({
-        where: { workflow_id, path_id, position: { gte: position } },
+        where: { workflow_id, path_id, position: { gte: cappedPosition } },
         data: { position: { increment: 1 } },
       });
 
       // Create the new block
       const blockData = {
         type,
-        position,
+        position: cappedPosition,
         icon,
         description,
         image: imageUrl || null,
@@ -135,6 +188,8 @@ export async function POST(req: NextRequest) {
         click_position: click_position || null,
         step_details: type === 'STEP' ? step_details : null,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
+        delay_type: type === 'DELAY' ? (delay_type as DelayType) : null,
+        delay_event: type === 'DELAY' ? delay_event : null,
       };
 
       const newBlock = await prisma.block.create({
@@ -170,10 +225,10 @@ export async function POST(req: NextRequest) {
                 type: 'STEP',
                 position: 0,
                 icon: '/step-icons/default-icons/container.svg',
-                description: 'This is a default block',
+                description: '',
                 workflow: { connect: { id: workflow_id } },
                 path: { connect: { id: path.id } },
-                step_details: 'Default step details'
+                step_details: ''
               }
             });
 

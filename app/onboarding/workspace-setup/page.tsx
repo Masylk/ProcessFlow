@@ -1,36 +1,38 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useRouter } from 'next/navigation';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
+import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 export default function WorkspaceSetup() {
-  const [workspaceName, setWorkspaceName] = useState("");
-  const [workspaceURL, setWorkspaceURL] = useState("");
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [workspaceURL, setWorkspaceURL] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [urlError, setUrlError] = useState("");
+  const [error, setError] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [showWorkspaceNameError, setShowWorkspaceNameError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const colors = useColors();
-  
+
   // Prevent unnecessary re-renders with stable references
   const urlInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Load saved workspace data on component mount
   useEffect(() => {
     const savedData = localStorage.getItem('workspaceSetupData');
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData.workspaceName) setWorkspaceName(parsedData.workspaceName);
+        if (parsedData.workspaceName)
+          setWorkspaceName(parsedData.workspaceName);
         if (parsedData.workspaceURL) setWorkspaceURL(parsedData.workspaceURL);
         if (parsedData.logo) setLogo(parsedData.logo);
       } catch (e) {
@@ -38,40 +40,49 @@ export default function WorkspaceSetup() {
       }
     }
   }, []);
-  
+
   // Save workspace data when fields change
   useEffect(() => {
     if (workspaceName || workspaceURL || logo) {
-      localStorage.setItem('workspaceSetupData', JSON.stringify({
-        workspaceName,
-        workspaceURL,
-        logo
-      }));
+      localStorage.setItem(
+        'workspaceSetupData',
+        JSON.stringify({
+          workspaceName,
+          workspaceURL,
+          logo,
+        })
+      );
     }
   }, [workspaceName, workspaceURL, logo]);
 
   // Stable callback functions to prevent re-renders
-  const handleInputChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<string>>
-  ) => {
-    setter(e.target.value);
-  }, []);
+  const handleInputChange = useCallback(
+    (
+      e: React.ChangeEvent<HTMLInputElement>,
+      setter: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+      setter(e.target.value);
+    },
+    []
+  );
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      
-      // Convert the file to a base64 string for proper storage and API transmission
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setLogo(base64String);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, []);
+  const handleFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setLogoFile(file);
+
+        // Convert the file to a base64 string for proper storage and API transmission
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setLogo(base64String);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    []
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -82,7 +93,7 @@ export default function WorkspaceSetup() {
     const file = e.dataTransfer.files?.[0];
     if (file) {
       setLogoFile(file);
-      
+
       // Convert the file to a base64 string for proper storage and API transmission
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -98,42 +109,46 @@ export default function WorkspaceSetup() {
   }, []);
 
   // Simplified URL change handler with stabilized functions
-  const handleURLChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    // Get value directly from the DOM element
-    const value = e.target.value;
-    setWorkspaceURL(value);
-    
-    // Check for invalid characters
-    const hasInvalidChars = /[^a-zA-Z0-9-]/.test(value);
-    
-    if (hasInvalidChars && value !== '') {
-      setUrlError("Only letters, numbers, and hyphens (-) are allowed");
-    } else {
-      setUrlError("");
-      if (error === "Please fix the URL format before continuing") {
-        setError("");
+  const handleURLChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Get value directly from the DOM element
+      const value = e.target.value;
+      setWorkspaceURL(value);
+
+      // Check for invalid characters
+      const hasInvalidChars = /[^a-zA-Z0-9-]/.test(value);
+
+      if (hasInvalidChars && value !== '') {
+        setUrlError('Only letters, numbers, and hyphens (-) are allowed');
+      } else {
+        setUrlError('');
+        if (error === 'Please fix the URL format before continuing') {
+          setError('');
+        }
       }
-    }
-  }, [error]);
+    },
+    [error]
+  );
 
   // Stable focus/blur handlers
   const handleFocus = useCallback(() => {
     setIsFocused(true);
   }, []);
-  
+
   const handleBlur = useCallback(() => {
     setIsFocused(false);
   }, []);
 
   // Only update URL from workspace name initially
   useEffect(() => {
-    const sanitizedName = workspaceName.toLowerCase()
+    const sanitizedName = workspaceName
+      .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/_/g, '-')
       .replace(/[^a-zA-Z0-9-]/g, '');
-    
+
     setWorkspaceURL(sanitizedName);
-    setUrlError("");
+    setUrlError('');
   }, [workspaceName]);
 
   // Check if form is valid - stable reference
@@ -147,20 +162,26 @@ export default function WorkspaceSetup() {
   const handleSubmit = async () => {
     if (!workspaceName || !isFormValid()) {
       if (!workspaceName) {
-        setError("Workspace name is required");
+        setError('Workspace name is required');
         setShowWorkspaceNameError(true);
       }
       if (urlError) {
-        setError("Please fix the URL format before continuing");
+        setError('Please fix the URL format before continuing');
       }
       return;
     }
 
+    const nameError = checkWorkspaceName(workspaceName);
+    if (nameError) {
+      setError(nameError.title + ' : ' + nameError.description);
+      return;
+    }
+
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
-      const response = await fetch('/api/onboarding/update', {
+      const response = await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,11 +190,16 @@ export default function WorkspaceSetup() {
           step: 'WORKSPACE_SETUP',
           data: {
             workspace_name: workspaceName,
-            workspace_url: workspaceURL || workspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, ''),
+            workspace_url:
+              workspaceURL ||
+              workspaceName
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-zA-Z0-9-]/g, ''),
             workspace_icon_url: logo || null,
-            onboarding_step: 'COMPLETED'
-          }
-        })
+            onboarding_step: 'COMPLETED',
+          },
+        }),
       });
 
       if (response.ok) {
@@ -181,15 +207,17 @@ export default function WorkspaceSetup() {
         localStorage.removeItem('personalInfoData');
         localStorage.removeItem('professionalInfoData');
         localStorage.removeItem('workspaceSetupData');
-        
+
         router.push('/dashboard');
       } else {
         const data = await response.json();
-        setError(data.error || "An error occurred while creating your workspace");
+        setError(
+          data.error || 'An error occurred while creating your workspace'
+        );
       }
     } catch (error) {
       console.error('Error creating workspace:', error);
-      setError("A connection error occurred");
+      setError('A connection error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -199,12 +227,12 @@ export default function WorkspaceSetup() {
 
   // Manual back button handler
   const handleBackClick = useCallback(async () => {
-    console.log("Back button clicked, setting isNavigatingBack to true");
+    console.log('Back button clicked, setting isNavigatingBack to true');
     setIsNavigatingBack(true);
-    
+
     try {
-      console.log("Attempting to update onboarding step via API");
-      await fetch('/api/onboarding/update', {
+      console.log('Attempting to update onboarding step via API');
+      await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -214,16 +242,22 @@ export default function WorkspaceSetup() {
           data: {
             onboarding_step: 'PROFESSIONAL_INFO',
             is_navigating_back: true,
-            skip_workspace_creation: true
-          }
-        })
-      }).catch(err => {
-        console.warn('Error updating onboarding step, but continuing navigation:', err);
+            skip_workspace_creation: true,
+          },
+        }),
+      }).catch((err) => {
+        console.warn(
+          'Error updating onboarding step, but continuing navigation:',
+          err
+        );
       });
-      
+
       window.location.href = '/onboarding/professional-info';
     } catch (error) {
-      console.warn('Error during back navigation, but continuing to previous step:', error);
+      console.warn(
+        'Error during back navigation, but continuing to previous step:',
+        error
+      );
       window.location.href = '/onboarding/professional-info';
     } finally {
       setIsNavigatingBack(false);
@@ -240,7 +274,7 @@ export default function WorkspaceSetup() {
       setIsNavigatingBack(true);
 
       try {
-        await fetch('/api/onboarding/update', {
+        await fetch('/api/onboarding/email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -250,16 +284,22 @@ export default function WorkspaceSetup() {
             data: {
               onboarding_step: 'PROFESSIONAL_INFO',
               is_navigating_back: true,
-              skip_workspace_creation: true
-            }
-          })
-        }).catch(err => {
-          console.warn('Error updating onboarding step, but continuing navigation:', err);
+              skip_workspace_creation: true,
+            },
+          }),
+        }).catch((err) => {
+          console.warn(
+            'Error updating onboarding step, but continuing navigation:',
+            err
+          );
         });
-        
+
         window.location.href = '/onboarding/professional-info';
       } catch (error) {
-        console.warn('Error during back navigation, but continuing to previous step:', error);
+        console.warn(
+          'Error during back navigation, but continuing to previous step:',
+          error
+        );
         window.location.href = '/onboarding/professional-info';
       }
     };
@@ -273,7 +313,7 @@ export default function WorkspaceSetup() {
   }, [isNavigatingBack]);
 
   return (
-    <div 
+    <div
       className="w-full min-h-screen flex justify-center items-center px-4 py-6"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
@@ -322,13 +362,13 @@ export default function WorkspaceSetup() {
         {/* Form container - Responsive */}
         <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex-col justify-start items-start gap-4 sm:gap-6 inline-flex">
           <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
-            <div 
+            <div
               className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose"
               style={{ color: colors['text-primary'] }}
             >
               Welcome to ProcessFlow!
             </div>
-            <div 
+            <div
               className="self-stretch text-center text-sm sm:text-base font-normal font-['Inter'] leading-normal"
               style={{ color: colors['text-secondary'] }}
             >
@@ -351,17 +391,22 @@ export default function WorkspaceSetup() {
               placeholder="Processflow"
               value={workspaceName}
               onChange={(value) => {
-                handleInputChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>, setWorkspaceName);
-                if (error) setError("");
+                handleInputChange(
+                  { target: { value } } as React.ChangeEvent<HTMLInputElement>,
+                  setWorkspaceName
+                );
+                if (error) setError('');
               }}
               disabled={isLoading}
               destructive={!!error && !workspaceName}
-              errorMessage={error && !workspaceName ? "Workspace name is required" : ""}
+              errorMessage={
+                error && !workspaceName ? 'Workspace name is required' : ''
+              }
             />
 
             {/* Workspace URL Input - with validation */}
             <div className="w-full flex-col justify-start items-start gap-1.5 flex">
-              <div 
+              <div
                 className="text-sm font-medium font-['Inter'] leading-tight"
                 style={{ color: colors['text-primary'] }}
               >
@@ -369,15 +414,19 @@ export default function WorkspaceSetup() {
               </div>
               <div
                 className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
-                style={{ 
+                style={{
                   backgroundColor: colors['bg-primary'],
-                  borderColor: urlError ? 'rgb(239, 68, 68)' : (isFocused ? colors['border-accent'] : colors['border-secondary']),
-                  boxShadow: isFocused ? `0 0 0 4px ${colors['ring-accent']}` : undefined
+                  borderColor: urlError
+                    ? 'rgb(239, 68, 68)'
+                    : isFocused
+                      ? colors['border-accent']
+                      : colors['border-secondary'],
+                  boxShadow: isFocused
+                    ? `0 0 0 4px ${colors['ring-accent']}`
+                    : undefined,
                 }}
               >
-                <div 
-                  className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg"
-                >
+                <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
                   <span
                     className="text-base"
                     style={{ color: colors['text-secondary'] }}
@@ -393,27 +442,31 @@ export default function WorkspaceSetup() {
                   onBlur={handleBlur}
                   onChange={handleURLChange}
                   placeholder={
-                    workspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '') ||
-                    'processflow'
+                    workspaceName
+                      .toLowerCase()
+                      .replace(/\s+/g, '-')
+                      .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
                   }
                   className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
-                  style={{ 
+                  style={{
                     backgroundColor: colors['bg-primary'],
-                    borderLeftColor: isFocused ? colors['border-accent'] : colors['border-secondary'],
-                    color: workspaceURL ? colors['text-primary'] : colors['text-secondary']
+                    borderLeftColor: isFocused
+                      ? colors['border-accent']
+                      : colors['border-secondary'],
+                    color: workspaceURL
+                      ? colors['text-primary']
+                      : colors['text-secondary'],
                   }}
                 />
               </div>
               {urlError && (
-                <div className="text-red-500 text-xs mt-1">
-                  {urlError}
-                </div>
+                <div className="text-red-500 text-xs mt-1">{urlError}</div>
               )}
             </div>
 
             {/* Workspace Logo Upload - Made responsive */}
             <div className="self-stretch flex-col justify-start items-start gap-2 flex">
-              <div 
+              <div
                 className="w-40 text-sm font-medium font-['Inter'] leading-tight"
                 style={{ color: colors['text-primary'] }}
               >
@@ -424,9 +477,9 @@ export default function WorkspaceSetup() {
                 <label
                   htmlFor="logo-upload"
                   className="w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full border cursor-pointer"
-                  style={{ 
+                  style={{
                     backgroundColor: colors['bg-secondary'],
-                    borderColor: colors['border-secondary']
+                    borderColor: colors['border-secondary'],
                   }}
                 >
                   {logo ? (
@@ -459,31 +512,29 @@ export default function WorkspaceSetup() {
                   onDrop={handleDrop}
                   onClick={handleFileInputClick}
                 >
-                  <div 
+                  <div
                     className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl border hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1"
-                    style={{ 
+                    style={{
                       backgroundColor: colors['bg-primary'],
-                      borderColor: colors['border-secondary']
+                      borderColor: colors['border-secondary'],
                     }}
                   >
                     <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1 sm:gap-3">
                       <div className="w-full flex flex-col justify-center items-center">
                         <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
                           <div className="flex justify-center items-center gap-1 overflow-hidden">
-                            <div 
-                              className="font-semibold font-['Inter'] leading-tight text-[#4761c4]"
-                            >
+                            <div className="font-semibold font-['Inter'] leading-tight text-[#4761c4]">
                               Click to upload
                             </div>
                           </div>
-                          <div 
+                          <div
                             className="font-normal font-['Inter'] leading-tight"
                             style={{ color: colors['text-secondary'] }}
                           >
                             or drag and drop
                           </div>
                         </div>
-                        <div 
+                        <div
                           className="w-full text-center text-xs font-normal font-['Inter'] leading-[18px]"
                           style={{ color: colors['text-secondary'] }}
                         >
@@ -518,11 +569,11 @@ export default function WorkspaceSetup() {
               trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
               className="text-sm sm:text-base"
             >
-              {isLoading ? "Loading..." : "Continue"}
+              {isLoading ? 'Loading...' : 'Continue'}
             </ButtonNormal>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}

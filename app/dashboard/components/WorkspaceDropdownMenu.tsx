@@ -50,9 +50,13 @@ export default function WorkspaceDropdownMenu({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       // If clicking outside both the main dropdown and submenu
-      const clickedOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(event.target as Node);
-      const clickedOutsideSubmenu = submenuRef.current && !submenuRef.current.contains(event.target as Node);
-      
+      const clickedOutsideDropdown =
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node);
+      const clickedOutsideSubmenu =
+        submenuRef.current &&
+        !submenuRef.current.contains(event.target as Node);
+
       // If there's no submenu visible, only check the main dropdown
       // If submenu is visible, check both
       if (isWorkspaceListVisible) {
@@ -95,11 +99,11 @@ export default function WorkspaceDropdownMenu({
 
   return (
     <>
-      <div 
+      <div
         ref={dropdownRef}
         style={{
           backgroundColor: colors['bg-secondary'],
-          borderColor: colors['border-primary']
+          borderColor: colors['border-primary'],
         }}
         className="w-fit py-1 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border flex flex-col justify-start items-start overflow-visible"
       >
@@ -109,10 +113,12 @@ export default function WorkspaceDropdownMenu({
           onMouseEnter={() => setIsWorkspaceListVisible(false)}
           className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="flex items-center gap-2">
@@ -120,7 +126,7 @@ export default function WorkspaceDropdownMenu({
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/settings-icon.svg`}
                 className="w-4 h-4"
               />
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="text-sm font-normal font-['Inter'] leading-tight"
               >
@@ -131,14 +137,14 @@ export default function WorkspaceDropdownMenu({
         </button>
 
         {/* Separator */}
-        <div 
+        <div
           style={{ borderColor: colors['border-secondary'] }}
-          className="self-stretch h-px border-b my-1 hidden" 
+          className="self-stretch h-px border-b my-1 hidden"
         />
 
         {/* Switch Workspace Option */}
         <div className="group relative w-full flex">
-          <button 
+          <button
             className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
             onMouseEnter={() => setIsWorkspaceListVisible(true)}
             onClick={(e) => {
@@ -146,10 +152,12 @@ export default function WorkspaceDropdownMenu({
               setIsWorkspaceListVisible(!isWorkspaceListVisible);
             }}
           >
-            <div 
-              style={{
-                '--hover-bg': colors['bg-quaternary']
-              } as React.CSSProperties}
+            <div
+              style={
+                {
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
               className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden gap-9"
             >
               <div className="flex items-center gap-2">
@@ -157,7 +165,7 @@ export default function WorkspaceDropdownMenu({
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/switch-horizontal-01.svg`}
                   className="w-4 h-4"
                 />
-                <div 
+                <div
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-normal font-['Inter'] leading-tight"
                 >
@@ -173,17 +181,17 @@ export default function WorkspaceDropdownMenu({
 
           {/* Workspace List Submenu */}
           {isWorkspaceListVisible && (
-            <div 
+            <div
               ref={submenuRef}
               style={{
                 backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-primary']
+                borderColor: colors['border-primary'],
               }}
               className="absolute left-full top-[-7px] w-[264px] rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border"
             >
               {/* Email Header */}
               <div className="px-1.5 py-px">
-                <div 
+                <div
                   style={{ color: colors['text-tertiary'] }}
                   className="px-2.5 py-[9px] text-sm font-normal cursor-default"
                 >
@@ -191,9 +199,9 @@ export default function WorkspaceDropdownMenu({
                 </div>
               </div>
 
-              <div 
+              <div
                 style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch h-px border-b my-1" 
+                className="self-stretch h-px border-b my-1"
               />
 
               {/* Workspace List */}
@@ -205,16 +213,16 @@ export default function WorkspaceDropdownMenu({
                       try {
                         // First, update the active workspace
                         await setActiveWorkspace(workspace);
-                        
+
                         // Close the dropdown menu
                         onClose();
-                        
+
                         // Small delay to ensure state updates are processed
                         setTimeout(() => {
                           // Force a refresh of the entire page's data without a full reload
                           // This will cause all components to re-render with the new data
                           router.refresh();
-                          
+
                           // If we're in settings view, we need to ensure the settings components
                           // get the updated workspace data by forcing them to re-render
                           // This is handled via the router.refresh() which will cause
@@ -226,22 +234,25 @@ export default function WorkspaceDropdownMenu({
                     }}
                     className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
                   >
-                    <div 
-                      style={{
-                        '--hover-bg': colors['bg-quaternary']
-                      } as React.CSSProperties}
+                    <div
+                      style={
+                        {
+                          '--hover-bg': colors['bg-quaternary'],
+                        } as React.CSSProperties
+                      }
                       className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                     >
                       <div className="flex items-center gap-2">
                         {workspace.icon_url ? (
-                          <img 
-                            src={workspace.icon_url} 
+                          <img
+                            src={workspace.icon_url}
                             alt={workspace.name}
                             className="w-6 h-6 rounded-lg object-cover"
                             onError={(e) => {
                               // If image fails to load, fallback to the default letter display
                               e.currentTarget.style.display = 'none';
-                              const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                              const sibling = e.currentTarget
+                                .nextElementSibling as HTMLElement;
                               if (sibling) {
                                 sibling.style.display = 'flex';
                               }
@@ -250,14 +261,15 @@ export default function WorkspaceDropdownMenu({
                         ) : null}
                         <div
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-normal"
-                          style={{ 
-                            backgroundColor: workspace.background_colour || '#4299E1',
-                            display: workspace.icon_url ? 'none' : 'flex'
+                          style={{
+                            backgroundColor:
+                              workspace.background_colour || '#4299E1',
+                            display: workspace.icon_url ? 'none' : 'flex',
                           }}
                         >
                           {workspace.name.charAt(0).toUpperCase()}
                         </div>
-                        <div 
+                        <div
                           style={{ color: colors['text-primary'] }}
                           className="text-sm font-normal"
                         >
@@ -276,20 +288,22 @@ export default function WorkspaceDropdownMenu({
                 ))}
               </div>
 
-              <div 
+              <div
                 style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch h-px border-b my-1" 
+                className="self-stretch h-px hidden border-b my-1"
               />
 
               {/* Create/Join Options */}
-              <button 
+              <button
                 onClick={handleOpenCreateWorkspaceModal}
-                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
               >
-                <div 
-                  style={{
-                    '--hover-bg': colors['bg-quaternary']
-                  } as React.CSSProperties}
+                <div
+                  style={
+                    {
+                      '--hover-bg': colors['bg-quaternary'],
+                    } as React.CSSProperties
+                  }
                   className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="flex items-center gap-2">
@@ -297,7 +311,7 @@ export default function WorkspaceDropdownMenu({
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
                       className="w-4 h-4"
                     />
-                    <div 
+                    <div
                       style={{ color: colors['text-primary'] }}
                       className="text-sm font-normal"
                     >
@@ -306,14 +320,16 @@ export default function WorkspaceDropdownMenu({
                   </div>
                 </div>
               </button>
-              <button 
+              <button
                 onClick={onClose}
-                className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
               >
-                <div 
-                  style={{
-                    '--hover-bg': colors['bg-quaternary']
-                  } as React.CSSProperties}
+                <div
+                  style={
+                    {
+                      '--hover-bg': colors['bg-quaternary'],
+                    } as React.CSSProperties
+                  }
                   className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                 >
                   <div className="flex items-center gap-2">
@@ -321,7 +337,7 @@ export default function WorkspaceDropdownMenu({
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
                       className="w-4 h-4"
                     />
-                    <div 
+                    <div
                       style={{ color: colors['text-primary'] }}
                       className="text-sm font-normal"
                     >
@@ -333,11 +349,11 @@ export default function WorkspaceDropdownMenu({
             </div>
           )}
         </div>
-        
+
         {/* Separator */}
-        <div 
+        <div
           style={{ borderColor: colors['border-secondary'] }}
-          className="self-stretch h-px border-b my-1" 
+          className="self-stretch h-px border-b my-1"
         />
 
         {/* Log out Option */}
@@ -346,10 +362,12 @@ export default function WorkspaceDropdownMenu({
           onMouseEnter={() => setIsWorkspaceListVisible(false)}
           className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
-          <div 
-            style={{
-              '--hover-bg': colors['bg-quaternary']
-            } as React.CSSProperties}
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
             className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
           >
             <div className="flex items-center gap-2">
@@ -357,7 +375,7 @@ export default function WorkspaceDropdownMenu({
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/log-out-icon.svg`}
                 className="w-4 h-4"
               />
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="text-sm font-normal font-['Inter'] leading-tight"
               >

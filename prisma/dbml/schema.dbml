@@ -31,6 +31,9 @@ Table user {
   active_workspace workspace
   workspaces user_workspace [not null]
   created_versions workflow_version [not null]
+  scheduled_emails scheduled_emails [not null]
+  workflows workflow [not null]
+  ai_conversations ai_conversations [not null]
 }
 
 Table workspace {
@@ -58,6 +61,7 @@ Table workspace {
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
   workflow_templates workflow_template [not null]
+  ai_embeddings ai_embeddings [not null]
 }
 
 Table workspace_billing_infos {
@@ -139,6 +143,7 @@ Table folder {
   emote String
   team_tags String[] [not null]
   path String
+  position Int [not null, default: 0]
   parent folder
   subfolders folder [not null]
   workspace workspace [not null]
@@ -151,6 +156,7 @@ Table workflow {
   updated_at DateTime [default: `now()`, not null]
   last_opened DateTime
   name String [not null]
+  icon String
   description String [not null]
   workspace_id Int [not null]
   team_tags String[] [not null]
@@ -169,6 +175,9 @@ Table workflow {
   template workflow_template
   workspace workspace [not null]
   versions workflow_version [not null]
+  author user
+  author_id Int
+  ai_conversations ai_conversations [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -211,6 +220,7 @@ Table block {
   icon String
   description String
   image String
+  original_image String
   image_description String
   average_time String
   task_type task_type
@@ -295,9 +305,54 @@ Table stroke_line {
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
   is_loop Boolean [not null, default: false]
+  control_points Json
   source_block block [not null]
   target_block block [not null]
   workflow workflow [not null]
+}
+
+Table scheduled_emails {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  user_id Int [not null]
+  email_type String [not null]
+  scheduled_for DateTime [not null]
+  status email_status [not null, default: 'PENDING']
+  sent Boolean [not null, default: false]
+  sent_at DateTime
+  metadata Json
+  error String
+  retry_count Int [not null, default: 0]
+  user user [not null]
+
+  indexes {
+    (user_id, email_type) [unique]
+  }
+}
+
+Table ai_conversations {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  user_id Int [not null]
+  workflow_id Int
+  conversation_id String [unique, not null]
+  messages Json [not null]
+  user user [not null]
+  workflow workflow
+}
+
+Table ai_embeddings {
+  id Int [pk, increment]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [default: `now()`, not null]
+  content_type String [not null]
+  content_id String [not null]
+  content_text String [not null]
+  embedding_id String [not null]
+  workspace_id Int [not null]
+  workspace workspace [not null]
 }
 
 Enum onboarding_step {
@@ -347,8 +402,18 @@ Enum delay_type {
 
 Enum workflow_status {
   DRAFT
-  PUBLISHED
+  ACTIVE
+  IN_REVIEW
+  NEEDS_UPDATE
   ARCHIVED
+}
+
+Enum email_status {
+  PENDING
+  CANCELLED
+  PAUSED
+  SENT
+  FAILED
 }
 
 Ref: user.active_workspace_id > workspace.id
@@ -376,6 +441,8 @@ Ref: workflow.folder_id > folder.id
 Ref: workflow.template_id > workflow_template.id
 
 Ref: workflow.workspace_id > workspace.id
+
+Ref: workflow.author_id > user.id
 
 Ref: path.workflow_id > workflow.id
 
@@ -406,3 +473,11 @@ Ref: stroke_line.source_block_id > block.id [delete: Cascade]
 Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
+
+Ref: scheduled_emails.user_id > user.id [delete: Cascade]
+
+Ref: ai_conversations.user_id > user.id
+
+Ref: ai_conversations.workflow_id > workflow.id
+
+Ref: ai_embeddings.workspace_id > workspace.id

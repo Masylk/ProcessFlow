@@ -5,41 +5,61 @@ import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
-import WelcomeEmail from '../emails/WelcomeEmail';
+import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { Prisma } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import posthog from 'posthog-js';
+import React from 'react';
+import { cookies } from 'next/headers';
 
 export async function login(formData: FormData) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  const credentials = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  };
-
-  const { data, error } = await supabase.auth.signInWithPassword(credentials);
-
-  if (error) {
-    console.error('Login error:', error);
-    return { error: error.message };
-  }
-
-  const user = data?.user;
-  if (!user) {
-    return { error: 'No user returned from signInWithPassword' };
-  }
-
-  // Check if email is confirmed
-  if (!user.email_confirmed_at) {
-    return { 
-      needsEmailConfirmation: true,
-      email: user.email,
-      message: 'Please confirm your email before logging in. Check your inbox for the confirmation link.'
+    const credentials = {
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
     };
-  }
 
-  return { id: user.id, email: user.email };
+    const { data, error } = await supabase.auth.signInWithPassword(credentials);
+
+    if (error) {
+      console.error('Login error:', error);
+      return { error: error.message };
+    }
+
+    const user = data?.user;
+    if (!user) {
+      return { error: 'No user returned from signInWithPassword' };
+    }
+
+    // Check if email is confirmed
+    if (!user.email_confirmed_at) {
+      return { 
+        needsEmailConfirmation: true,
+        email: user.email,
+        message: 'Please confirm your email before logging in. Check your inbox for the confirmation link.'
+      };
+    }
+
+    // Set the auth cookie
+    const cookieStore = await cookies();
+    const session = data.session;
+    if (session) {
+      cookieStore.set('session', session.access_token, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+    }
+
+    return { id: user.id, email: user.email };
+  } catch (err) {
+    console.error('Unexpected error during login:', err);
+    return { error: 'An unexpected error occurred during login' };
+  }
 }
 
 export async function signup(formData: FormData) {

@@ -56,7 +56,7 @@ export default function PersonalInfo() {
       setIsNavigatingBack(true);
 
       try {
-        const response = await fetch('/api/onboarding/update', {
+        const response = await fetch('/api/onboarding/email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function PersonalInfo() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/onboarding/update', {
+      const response = await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

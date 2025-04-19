@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="orbGradient" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
+      <stop offset="0%" stop-color="#4a8cff" />
+      <stop offset="85%" stop-color="#0037da" />
+      <stop offset="100%" stop-color="#0028d9" />
+    </radialGradient>
+    
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    
+    <filter id="innerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Main orb -->
+  <circle cx="50" cy="50" r="40" fill="url(#orbGradient)" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite" />
+  </circle>
+  
+  <!-- Inner glow that pulses -->
+  <circle id="innerGlow" cx="50" cy="50" r="30" fill="rgba(100, 180, 255, 0.4)" filter="url(#innerGlow)">
+    <animate attributeName="r" values="28;32;28" dur="2s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.6;0.9;0.6" dur="2s" repeatCount="indefinite" />
+  </circle>
+  
+  <!-- Highlight -->
+  <ellipse cx="35" cy="35" rx="15" ry="15" fill="rgba(255, 255, 255, 0.2)" />
+  
+  <!-- Particles -->
+  <g id="particles">
+    <circle cx="60" cy="25" r="1.5" fill="rgba(255, 255, 255, 0.8)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="75" cy="45" r="1" fill="rgba(255, 255, 255, 0.6)">
+      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="65" cy="70" r="1.2" fill="rgba(255, 255, 255, 0.7)">
+      <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.7s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="35" cy="75" r="0.8" fill="rgba(255, 255, 255, 0.5)">
+      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="3.2s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="25" cy="45" r="1" fill="rgba(255, 255, 255, 0.6)">
+      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.8s" repeatCount="indefinite" />
+    </circle>
+    
+    <!-- Rotate the particles group -->
+    <animateTransform 
+      attributeName="transform" 
+      type="rotate" 
+      from="0 50 50" 
+      to="360 50 50" 
+      dur="8s" 
+      repeatCount="indefinite" />
+  </g>
+</svg>

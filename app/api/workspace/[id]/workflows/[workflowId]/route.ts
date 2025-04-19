@@ -103,6 +103,14 @@ export async function GET(
         id: workflow_id,
         workspace_id: workspace_id,
       },
+      include: {
+        workspace: true,
+        folder: {
+          include: {
+            parent: true
+          }
+        }
+      }
     });
 
     if (!workflow) {

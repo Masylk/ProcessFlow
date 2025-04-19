@@ -1,6 +1,12 @@
 // app/api/workspaces/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { getActiveUser } from '@/lib/auth';
+import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
+import { generatePublicAccessId } from '../../workflows/utils';
+import { checkWorkflowName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
@@ -102,6 +108,12 @@ import prisma from '@/lib/prisma';
  *                 items:
  *                   type: string
  *                 example: ["teamA"]
+ *               icon:
+ *                 type: string
+ *                 example: "https://example.com/icon.png"
+ *               status:
+ *                 type: string
+ *                 example: "active"
  *     responses:
  *       200:
  *         description: Workflow updated successfully
@@ -209,24 +221,232 @@ export async function POST(req: NextRequest) {
   try {
     const {
       name,
-      description, // Added field for description
+      description,
       workspace_id,
-      folder_id = null, // Optional field for folder association
-      team_tags = [], // Optional field for team tags
+      folder_id = null,
+      team_tags = [],
+      author_id,
     } = await req.json();
 
-    // Create the workflow
-    const newWorkflow = await prisma.workflow.create({
-      data: {
-        name,
-        description, // Include description in the workflow creation
-        workspace_id: Number(workspace_id),
-        folder_id: folder_id ? Number(folder_id) : null,
-        team_tags,
+    // Validate required fields
+    if (!name || !workspace_id) {
+      return NextResponse.json(
+        { error: 'Name and workspace_id are required' },
+        { status: 400 }
+      );
+    }
+
+    // Use the checkWorkflowName utility
+    const nameError = checkWorkflowName(name);
+    if (nameError) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid workflow name',
+          ...nameError
+        },
+        { status: 400 }
+      );
+    }
+
+    // Remove the old validation since it's now handled by checkWorkflowName
+    // Clean whitespaces in name
+    const cleanedName = name.trim().replace(/\s+/g, ' ');
+
+    // Get workspace with subscription info and workflow count
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: Number(workspace_id) },
+      include: {
+        subscription: true,
+        workflows: {
+          select: { id: true },
+        },
       },
     });
 
-    return NextResponse.json(newWorkflow, { status: 201 });
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'Workspace not found' },
+        { status: 404 }
+      );
+    }
+
+    // Log workspace details for debugging
+    console.log('Workspace details:', {
+      id: workspace.id,
+      subscription: workspace.subscription,
+      workflowCount: workspace.workflows.length,
+      isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
+    });
+
+    // Check if workspace is on free plan and has reached the limit
+    const isFreePlan = !workspace.subscription || workspace.subscription.plan_type === 'FREE';
+    const hasReachedLimit = workspace.workflows.length >= 5;
+
+    if (isFreePlan && hasReachedLimit) {
+      console.log('Blocking workflow creation: Free plan limit reached', {
+        isFreePlan,
+        workflowCount: workspace.workflows.length,
+      });
+      return NextResponse.json(
+        {
+          error: 'Free plan is limited to 5 workflows',
+          title: 'Workflow Limit Reached',
+          description: 'Your free plan is limited to 5 workflows. Upgrade to create more workflows.',
+          status: 403
+        },
+        { status: 403 }
+      );
+    }
+
+    console.log('Creating workflow with author_id:', author_id, typeof author_id);
+    // Create the workflow with cleaned name
+    const workflow = await prisma.workflow.create({
+      data: {
+        name: cleanedName,
+        description,
+        workspace_id,
+        folder_id,
+        is_public: true,
+        team_tags,
+        author_id: author_id ? Number(author_id) : null,
+        public_access_id: await generatePublicAccessId(cleanedName, 0, workspace_id),
+      },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // --- NEW LOGIC: Create a path and default blocks for the new workflow ---
+    // Create a new path affiliated with this workflow
+    const newPath = await prisma.path.create({
+      data: {
+        name: 'First Path',
+        workflow_id: workflow.id,
+      }
+    });
+
+    // Create BEGIN block
+    await prisma.block.create({
+      data: {
+        type: 'BEGIN',
+        position: 0,
+        icon: '/step-icons/default-icons/begin.svg',
+        description: '',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: '',
+      }
+    });
+
+    // Create default STEP block
+    await prisma.block.create({
+      data: {
+        type: 'STEP',
+        position: 1,
+        icon: '/step-icons/default-icons/container.svg',
+        description: '',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: '',
+      }
+    });
+
+    // Create END block
+    await prisma.block.create({
+      data: {
+        type: 'LAST',
+        position: 2,
+        icon: '/step-icons/default-icons/end.svg',
+        description: '',
+        workflow: { connect: { id: workflow.id } },
+        path: { connect: { id: newPath.id } },
+        step_details: '',
+      }
+    });
+    // --- END NEW LOGIC ---
+
+    // If we need to update the public_access_id with the actual workflow ID
+    const updatedPublicId = await generatePublicAccessId(
+      workflow.name,
+      workflow.id,
+      workflow.workspace_id
+    );
+
+    // Update the workflow with the final public_access_id
+    const updatedWorkflow = await prisma.workflow.update({
+      where: { id: workflow.id },
+      data: { public_access_id: updatedPublicId },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Check if we should send a process limit reached email
+    // We only want to send this when they've EXACTLY reached the limit (5 workflows)
+    try {
+      // After creating the workflow, get the current count
+      const currentCount = await prisma.workflow.count({
+        where: { workspace_id: Number(workspace_id) }
+      });
+      
+      // Get the user ID from the workspace members
+      const workspaceUsers = await prisma.user_workspace.findMany({
+        where: { workspace_id: Number(workspace_id) },
+        select: {
+          user_id: true,
+          role: true,
+        },
+        orderBy: { role: 'asc' }, // This should put admins first
+      });
+      
+      if (workspaceUsers.length > 0) {
+        const userId = workspaceUsers[0].user_id;
+        
+        // Only send the email if they've exactly reached the limit (5) and are on the free plan
+        if (isFreePlan && currentCount === 5) {
+          await checkAndScheduleProcessLimitEmail(userId);
+        }
+      }
+    } catch (emailError) {
+      // Just log the error, but don't block the workflow creation
+      console.error('Error checking workflow limit for email:', emailError);
+    }
+
+    return NextResponse.json(updatedWorkflow, { status: 201 });
   } catch (error: any) {
     console.error('Error adding workflow:', error);
     return NextResponse.json(
@@ -239,14 +459,15 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const {
-      id, // ID of the workflow to update
+      id,
       name,
-      description, // Optional field for description
-      folder_id = null, // Optional field for folder association
-      team_tags = [], // Optional field for team tags
+      description,
+      folder_id = null,
+      team_tags = [],
+      icon = null,
+      status = null,
     } = await req.json();
 
-    // Ensure the `id` is provided
     if (!id) {
       return NextResponse.json(
         { error: 'Workflow ID is required' },
@@ -254,18 +475,33 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Update the workflow
+    // Add name validation if name is being updated
+    if (name) {
+      const nameError = checkWorkflowName(name);
+      if (nameError) {
+        return NextResponse.json(
+          { 
+            error: 'Invalid workflow name',
+            ...nameError
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const updatedWorkflow = await prisma.workflow.update({
       where: {
-        id: Number(id), // Ensure the ID is a number
+        id: Number(id),
       },
       data: {
-        ...(name && { name }), // Update name if provided
-        ...(description && { description }), // Update description if provided
+        ...(name && { name: name.trim().replace(/\s+/g, ' ') }), // Clean whitespace if name is provided
+        ...(description && { description }),
         ...(folder_id !== null && {
           folder_id: folder_id ? Number(folder_id) : null,
-        }), // Update folder_id if provided
-        ...(team_tags && { team_tags }), // Update team_tags if provided
+        }),
+        ...(team_tags && { team_tags }),
+        ...(icon !== undefined && { icon }),
+        ...(status && { status }),
       },
     });
 

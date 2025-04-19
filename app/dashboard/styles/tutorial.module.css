@@ -17,6 +17,12 @@
   cursor: pointer;
 }
 
+/* Add pointer-events auto to elements with data-tutorial-active attribute */
+.highlight[data-tutorial-active="true"] {
+  pointer-events: auto;
+  z-index: 52;
+}
+
 .highlight::after {
   content: '';
   position: absolute;
@@ -34,6 +40,14 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
+}
+
+.darkFolderHighlight {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.lightFolderHighlight {
+  background-color: rgba(255, 255, 255, 1) !important;
 }
 
 .highlightWorkspace::after {

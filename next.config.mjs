@@ -4,6 +4,14 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig = {
   env: {
     APP_ENV: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+    // Explicitly include Stripe environment variables
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_MONTHLY_PRICE_ID:
+      process.env.NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_MONTHLY_PRICE_ID,
+    NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_ANNUAL_PRICE_ID:
+      process.env.NEXT_PUBLIC_STRIPE_EARLY_ADOPTER_ANNUAL_PRICE_ID,
   },
   // Add visual indicator for staging environment
   publicRuntimeConfig: {
@@ -11,6 +19,28 @@ const nextConfig = {
   },
   compiler: {
     styledComponents: true,
+  },
+  webpack: (config, { isServer }) => {
+    // Ignore the swagger-jsdoc warning
+    config.ignoreWarnings = [{ module: /swagger-jsdoc/ }];
+    return config;
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*', // Match all other paths
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY', // Prevent embedding
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'none'", // Prevent embedding via CSP
+          },
+        ],
+      },
+    ];
   },
 };
 

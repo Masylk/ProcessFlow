@@ -41,7 +41,9 @@ model user {
   active_workspace        workspace?         @relation("active_workspace", fields: [active_workspace_id], references: [id])
   workspaces              user_workspace[]
   created_versions        workflow_version[] @relation("created_by")
-
+  scheduled_emails        scheduled_email[]
+  workflows        workflow[]           @relation("author")
+  ai_conversations        ai_conversation[]
   @@index([active_workspace_id])
   @@index([email])
   @@index([auth_id])
@@ -74,6 +76,7 @@ model workspace {
   user_workspaces    user_workspace[]
   workflows          workflow[]
   workflow_templates workflow_template[]
+  ai_embeddings      ai_embedding[]
 
   @@index([stripe_customer_id])
   @@index([subscription_id])
@@ -179,6 +182,7 @@ model folder {
   emote        String?
   team_tags    String[]
   path         String?
+  position     Int        @default(0)
   parent       folder?    @relation("folder_hierarchy", fields: [parent_id], references: [id])
   subfolders   folder[]   @relation("folder_hierarchy")
   workspace    workspace  @relation(fields: [workspace_id], references: [id])
@@ -196,11 +200,12 @@ model workflow {
   updated_at       DateTime           @default(now()) @updatedAt
   last_opened      DateTime?
   name             String
+  icon             String?
   description      String
   workspace_id     Int
   team_tags        String[]
   folder_id        Int?
-  is_public        Boolean            @default(false)
+  is_public        Boolean            @default(true)
   public_access_id String?            @unique
   is_template      Boolean            @default(false)
   status           workflow_status    @default(DRAFT)
@@ -214,6 +219,9 @@ model workflow {
   template         workflow_template? @relation(fields: [template_id], references: [id])
   workspace        workspace          @relation(fields: [workspace_id], references: [id])
   versions         workflow_version[]
+  author           user?              @relation("author", fields: [author_id], references: [id])
+  author_id        Int?
+  ai_conversations ai_conversation[]
 
   @@unique([name, workspace_id])
   @@index([workspace_id])
@@ -259,6 +267,7 @@ model block {
   icon                String?
   description         String?
   image               String?
+  original_image      String?
   image_description   String?
   average_time        String?
   task_type           task_type?
@@ -362,6 +371,7 @@ model stroke_line {
   created_at      DateTime @default(now())
   updated_at      DateTime @default(now()) @updatedAt
   is_loop         Boolean  @default(false)
+  control_points  Json?    // Array of {x: number, y: number}
   source_block    block    @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
   target_block    block    @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)
   workflow        workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
@@ -370,6 +380,61 @@ model stroke_line {
   @@index([target_block_id])
   @@index([workflow_id])
   @@map("stroke_line")
+}
+
+model scheduled_email {
+  id            Int                @id @default(autoincrement())
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @default(now()) @updatedAt
+  user_id       Int
+  email_type    String
+  scheduled_for DateTime
+  status        email_status       @default(PENDING)
+  sent          Boolean            @default(false)
+  sent_at       DateTime?
+  metadata      Json?
+  error         String?
+  retry_count   Int                @default(0)
+  user          user               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, email_type], name: "unique_pending_email_per_user_type", map: "unique_pending_email_per_user_type_where")
+  @@index([user_id])
+  @@index([scheduled_for])
+  @@index([status])
+  @@index([sent])
+  @@map("scheduled_emails")
+}
+
+model ai_conversation {
+  id             Int      @id @default(autoincrement())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+  user_id        Int
+  workflow_id    Int?
+  conversation_id String  @unique // Consider if this needs to be globally unique or unique per user/workspace
+  messages       Json     // Store conversation history as a JSON array [{role: "user", content: "..."}, ...]
+  user           user     @relation(fields: [user_id], references: [id])
+  workflow       workflow? @relation(fields: [workflow_id], references: [id])
+
+  @@index([user_id])
+  @@index([workflow_id])
+  @@map("ai_conversations")
+}
+
+model ai_embedding {
+  id             Int      @id @default(autoincrement())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now()) @updatedAt
+  content_type   String   // e.g., "workflow", "block", "documentation" - consider adding a comment
+  content_id     String   // ID of the original content (e.g., workflow.id, block.id) - consider adding a comment
+  content_text   String   // The text that was embedded - consider @db.Text if it can be very long
+  embedding_id   String   // The ID in the vector database
+  workspace_id   Int
+  workspace      workspace @relation(fields: [workspace_id], references: [id])
+
+  @@index([workspace_id])
+  @@index([content_type, content_id])
+  @@map("ai_embeddings")
 }
 
 enum onboarding_step {
@@ -419,6 +484,16 @@ enum delay_type {
 
 enum workflow_status {
   DRAFT
-  PUBLISHED
+  ACTIVE
+  IN_REVIEW
+  NEEDS_UPDATE
   ARCHIVED
+}
+
+enum email_status {
+  PENDING
+  CANCELLED
+  PAUSED
+  SENT
+  FAILED
 }

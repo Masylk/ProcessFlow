@@ -85,12 +85,12 @@ export const lightTheme: Theme = {
       'bg-primary-solid': getThemeColor('Gray (light mode)/950'),
       'bg-secondary': getThemeColor('Gray (light mode)/50'),
       'bg-secondary_alt': getThemeColor('Gray (light mode)/50'),
-      'bg-secondary_hover': getThemeColor('Gray (light mode)/100'),
+      'bg-secondary_hover': getThemeColor('Gray (light mode)/200'),
       'bg-secondary_subtle': getThemeColor('Gray (light mode)/25'),
       'bg-secondary-solid': getThemeColor('Gray (light mode)/600'),
       'bg-tertiary': getThemeColor('Gray (light mode)/100'),
       'bg-quaternary': getThemeColor('Gray (light mode)/200'),
-      'bg-active': getThemeColor('Gray (light mode)/100'),
+      'bg-active': getThemeColor('Gray (light mode)/200'),
       'bg-disabled': getThemeColor('Gray (light mode)/100'),
       'bg-disabled_subtle': getThemeColor('Gray (light mode)/50'),
       'bg-overlay': getThemeColor('Gray (light mode)/950'),
@@ -123,7 +123,7 @@ export const lightTheme: Theme = {
       'button-secondary-bg': getThemeColor('Base/White'),
       'button-secondary-fg': getThemeColor('Gray (light mode)/700'),
       'button-secondary-border': getThemeColor('Gray (light mode)/300'),
-      'button-secondary-bg-hover': getThemeColor('Gray (light mode)/50'),
+      'button-secondary-bg-hover': getThemeColor('Gray (light mode)/100'),
       'button-secondary-fg-hover': getThemeColor('Gray (light mode)/800'),
       'button-secondary-border-hover': getThemeColor('Gray (light mode)/300'),
       
@@ -139,7 +139,7 @@ export const lightTheme: Theme = {
       'button-tertiary-bg': 'transparent',
       'button-tertiary-fg': getThemeColor('Gray (light mode)/700'),
       'button-tertiary-border': 'transparent',
-      'button-tertiary-bg-hover': getThemeColor('Gray (light mode)/50'),
+      'button-tertiary-bg-hover': getThemeColor('Gray (light mode)/100'),
       'button-tertiary-fg-hover': getThemeColor('Gray (light mode)/800'),
       'button-tertiary-border-hover': 'transparent',
       
@@ -178,6 +178,24 @@ export const lightTheme: Theme = {
       
       // Loading spinner
       'button-loading-spinner': getThemeColor('Base/White'),
+
+      // Icon colors
+      'icon-default': getThemeColor('Gray (light mode)/600'),
+      'icon-default-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-primary': getThemeColor('Gray (light mode)/700'),
+      'icon-primary-hover': getThemeColor('Gray (light mode)/900'),
+      'icon-secondary': getThemeColor('Gray (light mode)/600'),
+      'icon-secondary-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-tertiary': getThemeColor('Gray (light mode)/600'),
+      'icon-tertiary-hover': getThemeColor('Gray (light mode)/800'),
+      'icon-success': getThemeColor('Success/600'),
+      'icon-success-hover': getThemeColor('Success/700'),
+      'icon-warning': getThemeColor('Warning/600'), 
+      'icon-warning-hover': getThemeColor('Warning/700'),
+      'icon-error': getThemeColor('Error/600'),
+      'icon-error-hover': getThemeColor('Error/700'),
+      'icon-info': getThemeColor('Brand/600'),
+      'icon-info-hover': getThemeColor('Brand/700'),
 
       // Input field tokens
       // Default input
@@ -334,6 +352,10 @@ export const lightTheme: Theme = {
 
       // Purple
       'utility-purple-50': getThemeColor('Purple/50'),
+      'utility-purple-100': getThemeColor('Purple/100'),
+      'utility-purple-200': getThemeColor('Purple/200'),
+      'utility-purple-300': getThemeColor('Purple/300'),
+      'utility-purple-400': getThemeColor('Purple/400'),
       'utility-purple-500': getThemeColor('Purple/500'),
       'utility-purple-600': getThemeColor('Purple/600'),
       'utility-purple-700': getThemeColor('Purple/700'),
