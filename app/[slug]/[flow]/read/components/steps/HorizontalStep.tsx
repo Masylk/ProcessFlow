@@ -146,12 +146,10 @@ export default function HorizontalStep({
             }
           >
             <p
-              className="text-base"
+              className="text-base whitespace-pre-line"
               style={{ color: colors['text-quaternary'] }}
             >
-              {block.step_details ||
-                block.description ||
-                `Details for ${getDisplayTitle(block)}`}
+              {block.step_details || block.description || ''}
             </p>
           </div>
         </div>

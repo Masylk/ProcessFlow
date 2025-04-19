@@ -113,7 +113,7 @@ export default function VerticalDelay({
                 width={20}
                 height={20}
               />
-              <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+              <span className="text-sm whitespace-pre-line" style={{ color: colors['text-secondary'] }}>
                 Flow paused for {getDelayText()}
               </span>
             </div>
@@ -191,7 +191,7 @@ export default function VerticalDelay({
               <span className="text-sm" style={{ color: colors['text-secondary'] }}>
                 Waiting for:
               </span>
-              <span className="text-sm" style={{ color: colors['text-primary'] }}>
+              <span className="text-sm whitespace-pre-line" style={{ color: colors['text-primary'] }}>
                 {block.delay_event}
               </span>
             </div>
@@ -221,7 +221,7 @@ export default function VerticalDelay({
               width={20}
               height={20}
             />
-            <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+            <span className="text-sm whitespace-pre-line" style={{ color: colors['text-secondary'] }}>
               {block.delay_seconds ? "Flow paused until event occurs or time expires" : "Flow paused until event occurs"}
             </span>
           </div>

@@ -95,7 +95,7 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
               height={20}
             />
             <span
-              className={cn('text-sm')}
+              className={cn('text-sm whitespace-pre-line')}
               style={{ color: colors['text-secondary'] }}
             >
               Flow paused for {getDelayText()}
@@ -140,7 +140,7 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
                 Waiting for:
               </span>
               <span
-                className={cn('text-sm')}
+                className={cn('text-sm whitespace-pre-line')}
                 style={{ color: colors['text-primary'] }}
               >
                 {getDelayText()}
