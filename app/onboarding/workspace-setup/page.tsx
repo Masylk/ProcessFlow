@@ -232,7 +232,7 @@ export default function WorkspaceSetup() {
 
     try {
       console.log('Attempting to update onboarding step via API');
-      await fetch('/api/onboarding/email', {
+      await fetch('/api/onboarding/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

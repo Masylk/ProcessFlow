@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../../types';
-import AddChildPathModal from '../modals/UpdatePathModal';
+import AddChildPathModal from '../modals/AddChildPathModal';
 import { createChildPaths } from '../../utils/createChildPaths';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
