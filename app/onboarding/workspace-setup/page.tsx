@@ -181,7 +181,7 @@ export default function WorkspaceSetup() {
     setError('');
 
     try {
-      const response = await fetch('/api/onboarding/update', {
+      const response = await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ export default function WorkspaceSetup() {
       setIsNavigatingBack(true);
 
       try {
-        await fetch('/api/onboarding/update', {
+        await fetch('/api/onboarding/email', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

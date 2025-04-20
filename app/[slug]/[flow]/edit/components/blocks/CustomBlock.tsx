@@ -929,7 +929,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
           {blockData.description && (
             <p
-              className="text-xs mt-1 line-clamp-2"
+              className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
               style={{ color: colors['fg-tertiary'] }}
             >
               {blockData.description}

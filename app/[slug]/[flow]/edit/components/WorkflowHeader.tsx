@@ -1,6 +1,5 @@
 'use client';
 
-import ButtonCTA from '@/app/components/ButtonCTA';
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import AvatarGroup from '@/app/components/AvatarGroup';

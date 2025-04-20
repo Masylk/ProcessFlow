@@ -378,14 +378,12 @@ export default function VerticalStep({
               <p
                 ref={descriptionRef}
                 className={cn(
-                  'text-sm transition-all duration-200 break-words min-h-[1.5rem]',
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
                   !isExpanded && 'line-clamp-2'
                 )}
                 style={{ color: colors['text-quaternary'] }}
               >
-                {block.step_details ||
-                  block.description ||
-                  `Details for ${getDisplayTitle(block)}`}
+                {block.step_details || block.description || ''}
               </p>
             </div>
           ) : (
@@ -395,12 +393,12 @@ export default function VerticalStep({
               <p
                 ref={descriptionRef}
                 className={cn(
-                  'text-sm transition-all duration-200 break-words min-h-[1.5rem]',
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
                   !isExpanded && 'line-clamp-2'
                 )}
                 style={{ color: colors['text-quaternary'] }}
               >
-                {`Details for ${getDisplayTitle(block)}`}
+                {''}
               </p>
             </div>
           )}

@@ -102,6 +102,7 @@ export async function PATCH(req: NextRequest) {
       step_details,
     } = await req.json();
 
+    console.log('description', description);
     const existingBlock = await prisma.block.findUnique({
       where: { id: block_id },
       select: { 

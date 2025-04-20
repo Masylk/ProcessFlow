@@ -15,11 +15,11 @@ interface HorizontalStepProps extends BaseStepProps {
 const HideScrollbarStyles = () => (
   <style jsx global>{`
     .hide-scrollbar {
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;  /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
     }
     .hide-scrollbar::-webkit-scrollbar {
-      display: none;  /* Chrome, Safari and Opera */
+      display: none; /* Chrome, Safari and Opera */
     }
   `}</style>
 );
@@ -34,7 +34,9 @@ export default function HorizontalStep({
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<number | null>(null);
+  const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<
+    number | null
+  >(null);
   const [contentHeight, setContentHeight] = useState<number>(0);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [scrollTop, setScrollTop] = useState<number>(0);
@@ -42,7 +44,10 @@ export default function HorizontalStep({
   const [windowHeight, setWindowHeight] = useState<number>(0);
   const [imageLoaded, setImageLoaded] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
-  const [imageDimensions, setImageDimensions] = useState<{width: number; height: number} | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   // Add null check for block
   if (!block) {
@@ -61,7 +66,7 @@ export default function HorizontalStep({
 
     // Add event listener
     window.addEventListener('resize', updateWindowDimensions);
-    
+
     // Clean up
     return () => {
       window.removeEventListener('resize', updateWindowDimensions);
@@ -74,20 +79,26 @@ export default function HorizontalStep({
       if (contentRef.current && containerRef.current) {
         const contentScrollHeight = contentRef.current.scrollHeight;
         const containerClientHeight = containerRef.current.clientHeight;
-        
+
         setContentHeight(contentScrollHeight);
         setContainerHeight(containerClientHeight);
-        
+
         // If content is taller than container, calculate ratio for thumb
         if (contentScrollHeight > containerClientHeight) {
           // Adjust thumb size based on both content ratio and container height
           const ratio = containerClientHeight / contentScrollHeight;
-          
-          // Scale thumb minimum size based on viewport height 
+
+          // Scale thumb minimum size based on viewport height
           // (smaller screens get smaller minimum thumb size)
-          const minThumbSize = Math.max(20, Math.min(30, window.innerHeight * 0.04));
-          
-          const thumbHeight = Math.max(minThumbSize, containerClientHeight * ratio);
+          const minThumbSize = Math.max(
+            20,
+            Math.min(30, window.innerHeight * 0.04)
+          );
+
+          const thumbHeight = Math.max(
+            minThumbSize,
+            containerClientHeight * ratio
+          );
           setScrollbarThumbHeight(thumbHeight);
         } else {
           setScrollbarThumbHeight(null); // Hide scrollbar when not needed
@@ -96,7 +107,7 @@ export default function HorizontalStep({
     };
 
     updateScrollThumb();
-    
+
     // Set up resize observer to detect content changes
     const resizeObserver = new ResizeObserver(updateScrollThumb);
     if (contentRef.current) {
@@ -116,7 +127,7 @@ export default function HorizontalStep({
     const img = event.currentTarget;
     setImageDimensions({
       width: img.naturalWidth,
-      height: img.naturalHeight
+      height: img.naturalHeight,
     });
     setImageLoaded(true);
     setImageError(false);
@@ -131,17 +142,17 @@ export default function HorizontalStep({
   // Add scroll event listener to track scroll position
   useEffect(() => {
     const contentElement = contentRef.current;
-    
+
     const handleScroll = () => {
       if (contentElement) {
         setScrollTop(contentElement.scrollTop);
       }
     };
-    
+
     if (contentElement) {
       contentElement.addEventListener('scroll', handleScroll);
     }
-    
+
     return () => {
       if (contentElement) {
         contentElement.removeEventListener('scroll', handleScroll);
@@ -156,7 +167,7 @@ export default function HorizontalStep({
       const trackRect = track.getBoundingClientRect();
       const clickPosition = e.clientY - trackRect.top;
       const percentage = clickPosition / trackRect.height;
-      
+
       const scrollPosition = percentage * (contentHeight - containerHeight);
       contentRef.current.scrollTop = scrollPosition;
     }
@@ -233,16 +244,18 @@ export default function HorizontalStep({
     block.image && block.child_paths && block.child_paths.length > 0;
 
   // Check if there's only description (no image or options)
-  const hasOnlyDescription = 
+  const hasOnlyDescription =
     !block.image && (!block.child_paths || block.child_paths.length === 0);
 
   // Calculate if scrollbar should be visible
   const showScrollbar = contentHeight > containerHeight;
-  
+
   // Calculate thumb position
-  const thumbPosition = contentHeight <= containerHeight 
-    ? 0 
-    : (scrollTop / (contentHeight - containerHeight)) * (containerHeight - (scrollbarThumbHeight || 0));
+  const thumbPosition =
+    contentHeight <= containerHeight
+      ? 0
+      : (scrollTop / (contentHeight - containerHeight)) *
+        (containerHeight - (scrollbarThumbHeight || 0));
 
   // Determine appropriate padding based on screen size
   const getResponsivePadding = () => {
@@ -257,34 +270,39 @@ export default function HorizontalStep({
 
   // Determine optimal display mode for image based on its dimensions
   const getImageDisplayMode = () => {
-    if (!imageDimensions) return "object-contain";
-    
+    if (!imageDimensions) return 'object-contain';
+
     const aspectRatio = imageDimensions.width / imageDimensions.height;
-    
+
     // For very wide images (panoramas)
     if (aspectRatio > 2.5) {
-      return "object-contain";
+      return 'object-contain';
     }
-    
+
     // For very tall images
     if (aspectRatio < 0.5) {
-      return "object-contain";
+      return 'object-contain';
     }
-    
+
     // Default to contain to show full image
-    return "object-contain";
+    return 'object-contain';
   };
 
   return (
     <>
       <HideScrollbarStyles />
-      <div ref={containerRef} className="h-full w-full overflow-hidden relative">
+      <div
+        ref={containerRef}
+        className="h-full w-full overflow-hidden relative"
+      >
         {/* Content Container - Main scrollable area */}
-        <div 
+        <div
           ref={contentRef}
           className={`h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`}
         >
-          <div className="pb-16"> {/* Extra padding wrapper to ensure bottom content is visible */}
+          <div className="pb-16">
+            {' '}
+            {/* Extra padding wrapper to ensure bottom content is visible */}
             {/* Fixed Header Section */}
             <div className="mb-4 sm:mb-5 md:mb-6">
               {/* Step Header */}
@@ -325,21 +343,16 @@ export default function HorizontalStep({
                   className="text-sm sm:text-base"
                   style={{ color: colors['text-quaternary'] }}
                 >
-                  {block.step_details ||
-                    block.description ||
-                    `Details for ${getDisplayTitle(block)}`}
+                  {block.step_details || block.description || ''}
                 </p>
               </div>
             </div>
-
             {/* Content Section - Adapts to content type */}
             {!hasOnlyDescription && (
               <div className="space-y-4 sm:space-y-5 md:space-y-6">
                 {/* Image Section */}
                 {block.image && (
-                  <div 
-                    className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c]"
-                  >
+                  <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c]">
                     {signedImageUrl && !imageError ? (
                       <img
                         src={signedImageUrl}
@@ -463,23 +476,23 @@ export default function HorizontalStep({
 
         {/* Custom scrollbar - responsive width and position */}
         {showScrollbar && (
-          <div 
+          <div
             className={`absolute top-4 bottom-4 rounded-full cursor-pointer`}
-            style={{ 
+            style={{
               right: windowWidth <= 640 ? '2px' : '4px',
               width: `${scrollbarWidth}px`,
-              backgroundColor: 'rgba(0,0,0,0.05)' 
+              backgroundColor: 'rgba(0,0,0,0.05)',
             }}
             onClick={handleScrollbarClick}
           >
-            <div 
+            <div
               className="absolute rounded-full transition-all duration-100"
               style={{
                 width: `${scrollbarWidth}px`,
                 backgroundColor: colors['border-secondary'],
                 height: `${scrollbarThumbHeight}px`,
                 top: `${thumbPosition}px`,
-                opacity: 0.8
+                opacity: 0.8,
               }}
             />
           </div>

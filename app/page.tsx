@@ -789,7 +789,7 @@ export default function Page() {
   // Add this near your other useEffect hooks
   useEffect(() => {
     // Only redirect if we have a workspace with a slug and we're on the dashboard page
-    if (activeWorkspace?.slug && window.location.pathname === '/dashboard') {
+    if (activeWorkspace?.slug && window.location.pathname === '/') {
       // Get current URL search params
       const currentSearchParams = new URLSearchParams(window.location.search);
 
