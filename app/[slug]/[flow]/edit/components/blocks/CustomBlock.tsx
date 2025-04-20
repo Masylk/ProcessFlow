@@ -68,6 +68,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   const {
     isUpdateMode,
     setUpdateMode,
+    mergePathId,
     setMergePathId,
     setSelectedEndBlocks,
     setOriginalEndBlocks,
@@ -100,6 +101,24 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   const setCopiedBlock = useClipboardStore((state) => state.setCopiedBlock);
 
   const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
+
+  // Find the merge block in the current path
+  const mergeBlock = useMemo(
+    () => data.path?.blocks.find((block) => block.type === 'MERGE'),
+    [data.path?.blocks]
+  );
+
+  // Determine if merging to the same child
+  const isMergingToSameChild = useMemo(() => {
+    // If the merge block exists and has child_paths
+    const childPaths = mergeBlock?.child_paths;
+    if (childPaths && childPaths.length > 0 && mergePathId) {
+      // Compare the first child_path id with the trigger path id
+      return childPaths[0].path_id === mergePathId;
+    }
+    // If no child_paths, or no triggerPath, default to true (or false, depending on your logic)
+    return true;
+  }, [mergeBlock, mergePathId]);
 
   // Add useEffect to fetch signed URL when blockData.image changes
   useEffect(() => {
@@ -569,7 +588,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   // Modify the showUpdateCheckbox logic
   const showUpdateCheckbox = useMemo(() => {
     return (
-      isUpdateMode && data.path?.parent_blocks?.[0]?.block_id === triggerPathId
+      isUpdateMode &&
+      data.path?.parent_blocks?.[0]?.block_id === triggerPathId &&
+      isMergingToSameChild
     );
   }, [isUpdateMode, data.path?.parent_blocks, triggerPathId]);
 
