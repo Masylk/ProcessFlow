@@ -1,15 +1,15 @@
-// app/api/workspaces/folders/[id]/route.ts
+// app/api/workspace/folders/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
- * DELETE /api/workspaces/folders/:id
+ * DELETE /api/workspace/folders/:id
  * Deletes a folder by ID
  */
 /**
  * @swagger
- * /api/workspaces/folders/{id}:
+ * /api/workspace/folders/{id}:
  *   delete:
  *     summary: Delete a folder by ID
  *     description: Deletes a folder with the specified ID.
@@ -171,11 +171,11 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
 }
 
 /**
- * PATCH /api/workspaces/folders/:id
+ * PATCH /api/workspace/folders/:id
  * Updates a folder by ID
  */
 /**
- * PATCH /api/workspaces/folders/:id
+ * PATCH /api/workspace/folders/:id
  * Updates a folder by ID
  */
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {

@@ -341,14 +341,16 @@ export default function VerticalStep({
               />
             </motion.div>
             <div className="flex items-center gap-2 min-w-0">
-              <span
-                className={cn('text-left text-base font-semibold')}
-                style={{
-                  color: colors['text-primary'],
-                }}
-              >
-                {getDisplayTitle(block)}
-              </span>
+              {block.type !== 'PATH' && (
+                <span
+                  className={cn('text-left text-base font-semibold')}
+                  style={{
+                    color: colors['text-primary'],
+                  }}
+                >
+                  {getDisplayTitle(block)}
+                </span>
+              )}
             </div>
             {block.image && (
               <motion.div

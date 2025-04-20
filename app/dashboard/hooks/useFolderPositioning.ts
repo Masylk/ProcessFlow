@@ -29,7 +29,7 @@ export function useFolderPositioning(
         ));
       }
 
-      const response = await fetch('/api/workspaces/folders/update-position', {
+      const response = await fetch('/api/workspace/folders/update-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

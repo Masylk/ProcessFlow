@@ -39,7 +39,7 @@ export async function generateMetadata({
 
   // Get workflow data from API
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflows/${workflowId}`
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
   );
 
   if (!response.ok) {
@@ -62,7 +62,7 @@ export default async function ReadPage(props: PageProps) {
 
   // Get workflow data from API using path parameter
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflows/${workflowId}`
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
   );
 
   if (!response.ok) {

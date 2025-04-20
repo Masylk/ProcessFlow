@@ -103,8 +103,6 @@ export default function ReadPageClient() {
   const [userSettingsVisible, setUserSettingsVisible] =
     useState<boolean>(false);
   const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
-  const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [newPassword, setNewPassword] = useState<string>('');
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -633,7 +631,7 @@ export default function ReadPageClient() {
           return;
         }
 
-        const workflowResponse = await fetch(`/api/workflows/${workflowId}`);
+        const workflowResponse = await fetch(`/api/workflow/${workflowId}`);
         const workflowData = await workflowResponse.json();
         setWorkflowData(workflowData);
 
@@ -734,7 +732,6 @@ export default function ReadPageClient() {
   };
 
   const closeUserSettings = () => {
-    setFileToUpload(null);
     setUserSettingsVisible(false);
     setPasswordChanged(false);
   };
@@ -1056,11 +1053,7 @@ export default function ReadPageClient() {
                   user={user}
                   onClose={closeUserSettings}
                   onUserUpdate={updateUser}
-                  selectedFile={fileToUpload}
-                  isDeleteAvatar={isDeleteAvatar}
-                  onDeleteAvatar={() => setIsDeleteAvatar(true)}
                   passwordChanged={passwordChanged}
-                  openImageUpload={() => {}}
                   openDeleteAccount={() => {}}
                   updateNewPassword={setNewPassword}
                 />

@@ -1,6 +1,6 @@
 export async function deleteWorkflow(workflowId: number): Promise<boolean> {
   try {
-    const response = await fetch('/api/workspaces/workflows', {
+    const response = await fetch('/api/workspace/workflows', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -332,7 +332,9 @@ export default function HorizontalStep({
                     className="flex items-center text-sm sm:text-base font-semibold"
                     style={{ color: colors['text-primary'] }}
                   >
-                    <span>{getDisplayTitle(block)}</span>
+                    {block.type !== 'PATH' && (
+                      <span>{getDisplayTitle(block)}</span>
+                    )}
                   </div>
                 </div>
               </div>

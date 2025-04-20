@@ -17,7 +17,7 @@ export async function updateWorkflow(
       }
     }
 
-    const response = await fetch(`/api/workspaces/workflows`, {
+    const response = await fetch(`/api/workspace/workflows`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -5,6 +5,7 @@ import InputField from '../../components/InputFields';
 import ButtonDestructive from '@/app/components/ButtonDestructive';
 import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
+import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 interface WorkspaceSettingsProps {
   workspace: Workspace;
@@ -38,6 +39,7 @@ export default function WorkspaceSettings({
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState('');
+  const [nameError, setNameError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,12 +84,22 @@ export default function WorkspaceSettings({
   const handleSave = async () => {
     if (isSaving) return;
 
+    // Validate workspace name using utility function
+    const nameCheck = checkWorkspaceName(name);
+    if (nameCheck) {
+      setNameError(nameCheck.description);
+      return;
+    } else {
+      setNameError('');
+    }
+
     setIsSaving(true);
     setSaveSuccess(false);
 
     try {
       const updates: Partial<Workspace> = {
         name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
       };
 
       if (logoFile) {
@@ -269,6 +281,9 @@ export default function WorkspaceSettings({
               onChange={setName}
               placeholder="Enter workspace name"
             />
+            {nameError && (
+              <div className="text-red-500 text-xs mt-1">{nameError}</div>
+            )}
             <div className="flex">
               <span
                 style={{
@@ -284,13 +299,14 @@ export default function WorkspaceSettings({
                 type="text"
                 placeholder={urlPlaceholder}
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                readOnly
                 style={{
                   borderColor: colors['border-secondary'],
                   color: colors['text-primary'],
                   backgroundColor: colors['bg-primary'],
                 }}
-                className="flex-1 px-3.5 py-2.5 border rounded-r-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4e6bd7]"
+                className="flex-1 px-3.5 py-2.5 border rounded-r-lg shadow-sm focus:outline-none cursor-default bg-gray-50"
+                tabIndex={-1}
               />
             </div>
           </div>

@@ -1,10 +1,10 @@
-// app/api/workspaces/[user_id]/route.ts
+// app/api/workspace/[user_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
  * @swagger
- * /api/workspaces/{user_id}:
+ * /api/workspace/{user_id}:
  *   get:
  *     summary: Retrieve all workspaces for a user
  *     description: Fetches the workspaces associated with a specific user, including related folders and workflows. If no workspaces are found, a default workspace named "My Workspace" is created.
@@ -82,6 +82,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
 
   try {
     // Fetch user's workspaces with all necessary relations
+    console.time('prisma.user_workspace.findMany');
     const userWorkspaces = await prisma.user_workspace.findMany({
       where: {
         user_id: userId,
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
         },
       },
     });
+    console.timeEnd('prisma.user_workspace.findMany');
 
     // Extract workspaces from the user_workspaces relation
     const workspaces = userWorkspaces.map(uw => uw.workspace);
@@ -118,6 +120,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
       const defaultBackgroundColor = '#4299E1';
 
       // Create the default workspace and include folders (which will be empty)
+      console.time('prisma.workspace.create');
       const newWorkspace = await prisma.workspace.create({
         data: {
           name: 'My Workspace',
@@ -151,14 +154,17 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
           subscription: true,
         },
       });
+      console.timeEnd('prisma.workspace.create');
 
       // Mettre à jour l'active_workspace_id de l'utilisateur
+      console.time('prisma.user.update');
       await prisma.user.update({
         where: { id: userId },
         data: {
           active_workspace_id: newWorkspace.id,
         },
       });
+      console.timeEnd('prisma.user.update');
 
       return NextResponse.json([newWorkspace]);
     }
