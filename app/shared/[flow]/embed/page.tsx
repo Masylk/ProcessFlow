@@ -10,11 +10,7 @@ import HorizontalLastStep from './components/HorizontalLastStep';
 import HorizontalStep from './components/HorizontalStep';
 import HorizontalDelay from './components/HorizontalDelay';
 import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
-import {
-  Block,
-  Path,
-  WorkflowData,
-} from '@/app/[slug]/[flow]/types';
+import { Block, Path, WorkflowData } from '@/app/[slug]/[flow]/types';
 
 // Modify the type for source block pairs
 type SourceBlockPair = {
@@ -336,7 +332,7 @@ export default function SharePage({
     const fetchData = async () => {
       try {
         const workflowResponse = await fetch(
-          `/api/workflows/public?name=${encodeURIComponent(decodedWorkflowName)}&public_access_id=${encodeURIComponent(publicAccessId)}`
+          `/api/workflow/public?name=${encodeURIComponent(decodedWorkflowName)}&public_access_id=${encodeURIComponent(publicAccessId)}`
         );
         const workflowData = await workflowResponse.json();
 
@@ -641,7 +637,8 @@ export default function SharePage({
                               ?.length > 0 &&
                               !selectedOptions.some(
                                 ([_, blockId]) =>
-                                  blockId === PathsToDisplayBlocks[currentStep].id
+                                  blockId ===
+                                  PathsToDisplayBlocks[currentStep].id
                               ))
                           }
                           trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-right.svg`}
@@ -658,13 +655,24 @@ export default function SharePage({
             </div>
 
             {/* Bottom bar - fixed height */}
-            <div className="h-12 flex-shrink-0 flex justify-between items-center px-[17.5px] py-[2.9px] border-t" style={{ backgroundColor: colors['bg-tertiary'], borderColor: colors['border-secondary'] }}>
+            <div
+              className="h-12 flex-shrink-0 flex justify-between items-center px-[17.5px] py-[2.9px] border-t"
+              style={{
+                backgroundColor: colors['bg-tertiary'],
+                borderColor: colors['border-secondary'],
+              }}
+            >
               <div className="flex items-center gap-[8.7px]">
-                <span className="text-[10.2px] leading-[1.43] font-normal" style={{ color: colors['text-secondary'] }}>
+                <span
+                  className="text-[10.2px] leading-[1.43] font-normal"
+                  style={{ color: colors['text-secondary'] }}
+                >
                   Made with
                 </span>
                 <button
-                  onClick={() => window.open('https://process-flow.io', '_blank')}
+                  onClick={() =>
+                    window.open('https://process-flow.io', '_blank')
+                  }
                   className="hover:opacity-80 transition-opacity"
                 >
                   <img
@@ -674,7 +682,7 @@ export default function SharePage({
                   />
                 </button>
               </div>
-              <button 
+              <button
                 className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
                 onClick={() => window.open(window.location.href, '_blank')}
               >

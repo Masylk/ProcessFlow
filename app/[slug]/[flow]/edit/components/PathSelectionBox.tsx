@@ -4,15 +4,15 @@ import { usePathSelectionStore } from '../store/pathSelectionStore';
 import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 
-export function PathSelectionBox() {
-  const {
-    selectedPaths,
-    selectedEndBlocks,
-    workflowId,
-    reset,
-    mergeMode,
-    setMergeMode,
-  } = usePathSelectionStore();
+export function PathSelectionBox({
+  workspaceId,
+  workflowId,
+}: {
+  workspaceId: string;
+  workflowId: string;
+}) {
+  const { selectedPaths, selectedEndBlocks, reset, mergeMode, setMergeMode } =
+    usePathSelectionStore();
   const colors = useColors();
   const [isMerging, setIsMerging] = useState(false);
 
@@ -25,7 +25,7 @@ export function PathSelectionBox() {
     try {
       const payload = {
         name: 'Merge',
-        workflow_id: workflowId,
+        workflow_id: parseInt(workflowId),
         parent_blocks: selectedEndBlocks,
       };
       console.log('payload', payload);
@@ -39,7 +39,7 @@ export function PathSelectionBox() {
 
       // Fetch updated paths after merge
       const pathsResponse = await fetch(
-        `/api/workspace/${workflowId}/paths?workflow_id=${workflowId}`
+        `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
       );
 
       if (pathsResponse.ok) {

@@ -90,8 +90,7 @@ export default function Page() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null
   );
-  const [isDeleteAvatar, setIsDeleteAvatar] = useState<boolean>(false);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  // const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null
@@ -189,7 +188,7 @@ export default function Page() {
       //   }
       // }
 
-      const response = await fetch(`/api/workspaces/${user?.id}`);
+      const response = await fetch(`/api/user_workspace/${user?.id}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -299,7 +298,7 @@ export default function Page() {
 
   const addWorkspace = async (workspaceName: string) => {
     if (!user) return;
-    const response = await fetch('/api/workspaces', {
+    const response = await fetch('/api/user_workspace', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -474,7 +473,7 @@ export default function Page() {
   };
 
   const closeUserSettings = () => {
-    setFileToUpload(null);
+    // setFileToUpload(null);
     setUserSettingsVisible(false);
     setPasswordChanged(false);
   };
@@ -537,7 +536,7 @@ export default function Page() {
 
     try {
       const response = await fetch(
-        `/api/workspaces/folders/${selectedFolder.id}`,
+        `/api/workspace/folders/${selectedFolder.id}`,
         {
           method: 'DELETE',
         }
@@ -1020,7 +1019,7 @@ export default function Page() {
       return;
     }
     try {
-      const res = await fetch('/api/workspaces/folders', {
+      const res = await fetch('/api/workspace/folders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1063,7 +1062,7 @@ export default function Page() {
     if (!activeWorkspace) return;
 
     try {
-      const res = await fetch('/api/workspaces/subfolders', {
+      const res = await fetch('/api/workspace/subfolders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1116,7 +1115,7 @@ export default function Page() {
     }
     try {
       const response = await fetch(
-        `/api/workspaces/folders/${editingFolder.id}`,
+        `/api/workspace/folders/${editingFolder.id}`,
         {
           method: 'PATCH',
           headers: {
@@ -1268,15 +1267,6 @@ export default function Page() {
 
   const handleCancelPasswordChange = () => {
     setNewPassword('');
-  };
-
-  // Restore avatar handlers
-  const setDeleteAvatar = () => {
-    setIsDeleteAvatar(true);
-  };
-
-  const unsetDeleteAvatar = () => {
-    setIsDeleteAvatar(false);
   };
 
   // Add this effect to ensure activeTab is set correctly when settings view opens
@@ -1441,13 +1431,10 @@ export default function Page() {
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
-            openImageUpload={openUploadImage}
             openDeleteAccount={openDeleteAccount}
             onClose={closeUserSettings}
             onUserUpdate={updateUser}
-            selectedFile={fileToUpload}
-            isDeleteAvatar={isDeleteAvatar}
-            onDeleteAvatar={setDeleteAvatar}
+            // selectedFile={fileToUpload}
           />
         </div>
       )}
@@ -1556,8 +1543,7 @@ export default function Page() {
         <UploadImageModal
           onClose={closeUploadImage}
           onSave={(file: File) => {
-            unsetDeleteAvatar();
-            setFileToUpload(file);
+            // setFileToUpload(file);
           }}
         />
       )}

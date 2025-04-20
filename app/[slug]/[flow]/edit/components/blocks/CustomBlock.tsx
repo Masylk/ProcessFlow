@@ -335,31 +335,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     setTriggerPathId(parentBlockId); // Set the triggering node's parent block ID
   };
 
-  const handleDuplicate = async (e: React.MouseEvent) => {
-    try {
-      e.stopPropagation();
-      setShowDropdown(false);
-      const response = await fetch(
-        `/api/blocks/${id.replace('block-', '')}/duplicate`,
-        {
-          method: 'POST',
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to duplicate block');
-
-      const result = await response.json();
-
-      // Update paths with the new data
-      setAllPaths(result.paths);
-      data.onPathsUpdate?.(result.paths);
-
-      setShowDropdown(false);
-    } catch (error) {
-      console.error('Error duplicating block:', error);
-    }
-  };
-
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCopiedBlock(blockData);
@@ -491,36 +466,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             </div>
           </div>
         )}
-
-        <div
-          onClick={handleDuplicate}
-          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
-        >
-          <div
-            style={
-              {
-                '--hover-bg': colors['bg-quaternary'],
-              } as React.CSSProperties
-            }
-            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
-          >
-            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
-              <div className="w-4 h-4 relative overflow-hidden">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
-                  alt="Duplicate"
-                  className="w-4 h-4"
-                />
-              </div>
-              <div
-                style={{ color: colors['text-primary'] }}
-                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
-              >
-                Duplicate block
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div
           onClick={handleCopy}

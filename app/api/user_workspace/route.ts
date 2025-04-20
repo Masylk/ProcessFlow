@@ -1,10 +1,10 @@
-// app/api/workspaces/route.ts
+// app/api/workspace/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
  * @swagger
- * /api/workspaces:
+ * /api/user_workspace:
  *   get:
  *     summary: Get all workspaces
  *     description: Fetches all workspaces along with their associated users.

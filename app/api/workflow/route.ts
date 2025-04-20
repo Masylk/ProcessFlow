@@ -1,10 +1,9 @@
-// app/api/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
  * @swagger
- * /api/workflows:
+ * /api/workflow:
  *   post:
  *     summary: Create a new workflow
  *     description: Creates a new workflow within a specified workspace.
@@ -148,4 +147,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+} 
