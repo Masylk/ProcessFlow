@@ -56,7 +56,7 @@ export function ReactFlowPageClient({
       position: cappedPosition,
       workflow_id: parseInt(workflowId),
       path_id: path_id,
-      step_details: blockData.type === 'STEP' ? 'New Step' : undefined,
+      step_details: blockData.type === 'STEP' ? '' : undefined,
       icon:
         blockData.type === 'STEP'
           ? '/step-icons/default-icons/container.svg'
@@ -86,6 +86,7 @@ export function ReactFlowPageClient({
       const newBlock = await response.json();
       setNewBlockId(newBlock.id);
 
+      setPaths(paths);
       // Refresh paths data
       const pathsResponse = await fetch(
         `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`

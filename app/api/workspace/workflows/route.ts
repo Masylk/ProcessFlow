@@ -1,16 +1,16 @@
-// app/api/workspaces/workflows/route.ts
+// app/api/workspace/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getActiveUser } from '@/lib/auth';
 import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
-import { generatePublicAccessId } from '../../workflows/utils';
+import { generatePublicAccessId } from '../../workflow/utils';
 import { checkWorkflowName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
- * /api/workspaces/workflows:
+ * /api/workspace/workflows:
  *   post:
  *     summary: Create a new workflow
  *     description: Creates a new workflow within a workspace, optionally inside a folder.

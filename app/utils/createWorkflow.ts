@@ -30,7 +30,7 @@ export async function createWorkflow({
       };
     }
 
-    const response = await fetch('/api/workspaces/workflows', {
+    const response = await fetch('/api/workspace/workflows', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

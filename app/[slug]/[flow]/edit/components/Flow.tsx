@@ -694,7 +694,7 @@ export function Flow({
           style={{ bottom: 90 }}
         />
       </ReactFlow>
-      <PathSelectionBox />
+      <PathSelectionBox workspaceId={workspaceId} workflowId={workflowId} />
       <UpdatePathSelectionBox
         workspaceId={workspaceId}
         workflowId={workflowId}

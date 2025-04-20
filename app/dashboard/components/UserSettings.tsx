@@ -12,14 +12,10 @@ import { useColors } from '@/app/theme/hooks';
 interface UserSettingsProps {
   user: User;
   onClose: () => void;
-  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;  
+  updateNewPassword: React.Dispatch<React.SetStateAction<string>>;
   passwordChanged: boolean;
-  openImageUpload: () => void;
   openDeleteAccount: () => void;
   onUserUpdate?: (updatedUser: User) => void;
-  selectedFile: File | null;
-  isDeleteAvatar: boolean;
-  onDeleteAvatar: () => void;
 }
 
 export default function UserSettings({
@@ -27,15 +23,18 @@ export default function UserSettings({
   onClose,
   updateNewPassword,
   passwordChanged,
-  openImageUpload,
   openDeleteAccount,
   onUserUpdate,
-  selectedFile,
-  isDeleteAvatar,
-  onDeleteAvatar,
 }: UserSettingsProps) {
   const colors = useColors();
   const supabase = createClient();
+
+  // Local state for avatar deletion
+  const [isDeleteAvatar, setIsDeleteAvatar] = useState(false);
+
+  // Add local state for preview file and preview URL
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -55,7 +54,6 @@ export default function UserSettings({
 
   // Local state for file upload and preview.
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Local state for editable fields.
   const [firstName, setFirstName] = useState<string>(user.first_name);
@@ -84,73 +82,37 @@ export default function UserSettings({
     setNewEmail(user.email);
   }, [user]);
 
-  useEffect(() => {
-    if (selectedFile) {
-      const objectURL = URL.createObjectURL(selectedFile);
-      setPreviewUrl(objectURL);
-    }
-  }, [selectedFile]);
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      try {
-        // Create a preview URL for immediate visual feedback
-        const objectURL = URL.createObjectURL(file);
-        setPreviewUrl(objectURL);
+      // Set isDeleteAvatar to false when a new file is selected
+      setIsDeleteAvatar(false);
 
-        // Create FormData and upload the file
-        const formData = new FormData();
-        formData.append('file', file);
+      // Set preview file and preview URL
+      setPreviewFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
 
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error('Failed to upload image');
-        }
-
-        const uploadData = await uploadRes.json();
-        
-        if (uploadData.filePath) {
-          // Update the user record with the new avatar URL
-          const updateRes = await fetch('/api/user/update', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: user.id,
-              avatar_url: uploadData.filePath,
-              first_name: firstName,
-              last_name: lastName,
-              full_name: `${firstName} ${lastName}`,
-              delete_avatar: false,
-            }),
-          });
-
-          if (updateRes.ok) {
-            const updatedUser = await updateRes.json();
-            if (onUserUpdate) {
-              onUserUpdate(updatedUser);
-            }
-          } else {
-            throw new Error('Failed to update user profile');
-          }
-        }
-      } catch (error) {
-        console.error('Error updating profile picture:', error);
-        // Reset preview on error
-        setPreviewUrl(null);
-      }
-      // Reset the input value to allow selecting the same file again
-      event.target.value = '';
+      // Log file details
+      console.log('Selected file:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+      });
     }
+    // Reset the input value to allow selecting the same file again
+    event.target.value = '';
   };
+
+  // Clean up the preview URL when the component unmounts or when a new file is selected
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Simple email validation.
   const validateEmail = (email: string): boolean => {
@@ -184,10 +146,10 @@ export default function UserSettings({
       let newAvatarUrl = user.avatar_url; // Default to current avatar.
 
       // If a new file was selected, perform the upload.
-      if (selectedFile && !isDeleteAvatar) {
+      if (previewFile && !isDeleteAvatar) {
         try {
           const formData = new FormData();
-          formData.append('file', selectedFile);
+          formData.append('file', previewFile);
 
           const uploadRes = await fetch('/api/upload', {
             method: 'POST',
@@ -258,7 +220,7 @@ export default function UserSettings({
     setOldPasswordError('');
     setNewPasswordError('');
     setConfirmPasswordError('');
-    
+
     // Check that new password is at least 6 characters
     if (newPassword.length < 6) {
       setNewPasswordError('The new password must be at least 6 characters.');
@@ -281,7 +243,7 @@ export default function UserSettings({
 
       const { error } = await supabase.auth.signInWithPassword(data);
       if (error) {
-        setOldPasswordError("The old password is incorrect.");
+        setOldPasswordError('The old password is incorrect.');
         return;
       }
 
@@ -294,29 +256,20 @@ export default function UserSettings({
     }
   };
 
-  // Clean up the preview URL when the component unmounts.
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center p-8"
       onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0">
-        <div 
+        <div
           style={{ backgroundColor: colors['bg-overlay'] }}
-          className="absolute inset-0 opacity-70" 
+          className="absolute inset-0 opacity-70"
         />
       </div>
 
-      <div 
+      <div
         style={{ backgroundColor: colors['bg-primary'] }}
         className="w-[628px] max-h-[90vh] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start inline-flex overflow-hidden relative z-10"
         onClick={(e) => e.stopPropagation()}
@@ -324,7 +277,7 @@ export default function UserSettings({
         {/* Header */}
         <div className="self-stretch h-[92px] flex-col justify-start items-center flex">
           <div className="self-stretch px-6 pt-6 justify-start items-center gap-4 inline-flex">
-            <div 
+            <div
               style={{ backgroundColor: colors['bg-tertiary'] }}
               className="w-12 h-12 p-3 rounded-full justify-center items-center flex overflow-hidden"
             >
@@ -337,7 +290,7 @@ export default function UserSettings({
               </div>
             </div>
             <div className="w-[432px] flex-col justify-start items-start gap-1 inline-flex">
-              <div 
+              <div
                 style={{ color: colors['text-primary'] }}
                 className="self-stretch text-lg font-semibold font-['Inter'] leading-7"
               >
@@ -351,7 +304,6 @@ export default function UserSettings({
         {/* Body */}
         <div className="self-stretch overflow-y-auto flex-1 w-full">
           <div className="w-full p-6 flex-col justify-start items-start gap-5 inline-flex">
-            
             {/* Main settings form */}
             <div className="w-full flex-col justify-start items-start gap-6 flex">
               <div className="w-full flex-col justify-start items-start gap-5 flex pr-4">
@@ -360,14 +312,14 @@ export default function UserSettings({
                   {/* Photo label */}
                   <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div 
+                      <div
                         style={{ color: colors['text-primary'] }}
                         className="text-sm font-semibold font-['Inter'] leading-tight"
                       >
                         Your photo
                       </div>
                     </div>
-                    <div 
+                    <div
                       style={{ color: colors['text-secondary'] }}
                       className="self-stretch text-sm font-normal font-['Inter'] leading-tight"
                     >
@@ -383,11 +335,11 @@ export default function UserSettings({
                       accept="image/*"
                       className="hidden"
                     />
-                    <div 
+                    <div
                       className="w-16 h-16 rounded-full justify-center items-center flex relative group cursor-pointer"
-                      onClick={handleImageClick}
+                      onClick={() => fileInputRef.current?.click()}
                     >
-                      <div 
+                      <div
                         style={{ borderColor: colors['border-secondary'] }}
                         className="w-16 h-16 relative rounded-full border"
                       >
@@ -396,8 +348,8 @@ export default function UserSettings({
                             isDeleteAvatar
                               ? defaultAvatar
                               : previewUrl
-                              ? previewUrl
-                              : avatarSrc
+                                ? previewUrl
+                                : avatarSrc
                           }
                           alt="User Avatar"
                           className="w-16 h-16 rounded-full object-cover"
@@ -418,7 +370,7 @@ export default function UserSettings({
                       variant="tertiary"
                       size="small"
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-icon.svg`}
-                      onClick={() => onDeleteAvatar()}
+                      onClick={() => setIsDeleteAvatar(true)}
                     >
                       Delete
                     </ButtonDestructive>
@@ -427,7 +379,7 @@ export default function UserSettings({
                   <div className="w-full flex-col justify-start items-start gap-4 flex">
                     <div className="w-full flex-col justify-start items-start flex">
                       <div className="inline-flex gap-0.5">
-                        <div 
+                        <div
                           style={{ color: colors['text-primary'] }}
                           className="text-sm font-semibold font-['Inter'] leading-tight"
                         >
@@ -455,16 +407,16 @@ export default function UserSettings({
                     </div>
                   </div>
                 </div>
-                 {/* Divider */}
-                 <div 
-                   style={{ borderColor: colors['border-secondary'] }}
-                   className="w-full border-b flex-col justify-start items-start flex" 
-                 />
+                {/* Divider */}
+                <div
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="w-full border-b flex-col justify-start items-start flex"
+                />
                 {/* Email section */}
                 <div className="w-full flex-col justify-start items-start gap-4 flex">
                   <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div 
+                      <div
                         style={{ color: colors['text-primary'] }}
                         className="text-sm font-semibold font-['Inter'] leading-tight"
                       >
@@ -498,11 +450,11 @@ export default function UserSettings({
                     </ButtonNormal>
                   </div>
                 </div>
-                 {/* Divider */}
-                 <div 
-                   style={{ borderColor: colors['border-secondary'] }}
-                   className="w-full border-b flex-col justify-start items-start flex" 
-                 />
+                {/* Divider */}
+                <div
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="w-full border-b flex-col justify-start items-start flex"
+                />
                 {/* Password section */}
 
                 {!showPasswordForm ? (
@@ -512,7 +464,7 @@ export default function UserSettings({
                     <div className="w-full flex flex-col gap-4">
                       <div className="w-full flex items-center">
                         <div className="inline-flex gap-0.5">
-                          <div 
+                          <div
                             style={{ color: colors['text-primary'] }}
                             className="text-sm font-semibold font-['Inter'] leading-tight"
                           >
@@ -533,7 +485,7 @@ export default function UserSettings({
                     {/* Confirmation Message - displayed when passwordChanged is true */}
                     {passwordChanged && (
                       <div className="h-[52px] py-0 rounded-xl flex items-center gap-4 mt-0">
-                        <div 
+                        <div
                           style={{ backgroundColor: colors['bg-success'] }}
                           className="w-5 h-5 rounded-full overflow-hidden"
                         >
@@ -544,7 +496,7 @@ export default function UserSettings({
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <div 
+                          <div
                             style={{ color: colors['text-primary'] }}
                             className="text-sm font-semibold font-['Inter'] leading-tight"
                           >
@@ -557,7 +509,7 @@ export default function UserSettings({
                 ) : (
                   // When the form is displayed, show the full password change section.
                   <div className="flex flex-col w-96 gap-4 rounded-lg">
-                    <div 
+                    <div
                       style={{ color: colors['text-primary'] }}
                       className="text-sm font-semibold font-['Inter'] leading-tight"
                     >
@@ -566,7 +518,7 @@ export default function UserSettings({
                     <div className="flex flex-col gap-4">
                       {/* Old password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label 
+                        <label
                           style={{ color: colors['text-primary'] }}
                           className="text-sm font-medium font-['Inter'] leading-tight"
                         >
@@ -584,7 +536,7 @@ export default function UserSettings({
 
                       {/* New password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label 
+                        <label
                           style={{ color: colors['text-primary'] }}
                           className="text-sm font-medium font-['Inter'] leading-tight"
                         >
@@ -602,7 +554,7 @@ export default function UserSettings({
 
                       {/* Confirm new password field */}
                       <div className="flex flex-col gap-1.5">
-                        <label 
+                        <label
                           style={{ color: colors['text-primary'] }}
                           className="text-sm font-medium font-['Inter'] leading-tight"
                         >
@@ -640,17 +592,17 @@ export default function UserSettings({
                   </div>
                 )}
 
-                 {/* Divider */}
-                 <div 
-                   style={{ borderColor: colors['border-secondary'] }}
-                   className="w-full border-b flex-col justify-start items-start flex" 
-                 />
+                {/* Divider */}
+                <div
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="w-full border-b flex-col justify-start items-start flex"
+                />
 
                 {/* Account Security section */}
                 <div className="w-full flex-col justify-start items-start gap-4 flex">
                   <div className="w-full flex-col justify-start items-start flex">
                     <div className="inline-flex gap-0.5">
-                      <div 
+                      <div
                         style={{ color: colors['text-primary'] }}
                         className="text-sm font-semibold font-['Inter'] leading-tight"
                       >
@@ -677,12 +629,11 @@ export default function UserSettings({
                     </ButtonDestructive>
                   </div>
                 </div>
-                 
               </div>
               {/* Divider */}
-              <div 
+              <div
                 style={{ borderColor: colors['border-secondary'] }}
-                className="w-full border-b flex-col justify-start items-start flex" 
+                className="w-full border-b flex-col justify-start items-start flex"
               />
               {/* Footer buttons */}
               <div className="w-full flex-col justify-start items-center gap-5 flex">

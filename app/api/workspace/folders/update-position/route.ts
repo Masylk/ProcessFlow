@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 
 /**
  * @swagger
- * /api/workspaces/folders/update-position:
+ * /api/workspace/folders/update-position:
  *   post:
  *     summary: Update folder position and/or parent
  *     description: Updates a folder's position and/or changes its parent

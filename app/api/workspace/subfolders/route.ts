@@ -1,14 +1,13 @@
-// app/api/workspaces/folders/route.ts
+// app/api/workspace/subfolders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
  * @swagger
- * /api/workspaces/folders:
+ * /api/workspace/subfolders:
  *   post:
- *     summary: Create a new folder
- *     description: Creates a new folder within a workspace. The folder will be created at the top-level (no parent).
+ *     summary: Create a new subfolder within a workspace
+ *     description: Creates a new subfolder within a workspace, optionally inside a parent folder.
  *     tags:
  *       - Workspace
  *     requestBody:
@@ -20,24 +19,27 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *             properties:
  *               name:
  *                 type: string
- *                 example: "New Folder"
+ *                 example: "New Subfolder"
  *               workspace_id:
  *                 type: integer
  *                 example: 1
+ *               parent_id:
+ *                 type: integer
+ *                 example: 2
  *               team_tags:
  *                 type: array
  *                 items:
  *                   type: string
- *                 example: ["tag1", "tag2"]
+ *                 example: ["teamA", "teamB"]
  *               icon_url:
  *                 type: string
- *                 example: "/path/to/icon.svg"
+ *                 example: "https://example.com/icon.png"
  *               emote:
  *                 type: string
- *                 example: ":smile:"
+ *                 example: "😊"
  *     responses:
  *       201:
- *         description: Folder created successfully
+ *         description: Subfolder created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -48,24 +50,24 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *                   example: 1
  *                 name:
  *                   type: string
- *                   example: "New Folder"
+ *                   example: "New Subfolder"
  *                 workspace_id:
  *                   type: integer
  *                   example: 1
+ *                 parent_id:
+ *                   type: integer
+ *                   example: 2
  *                 team_tags:
  *                   type: array
  *                   items:
  *                     type: string
- *                   example: ["tag1", "tag2"]
+ *                   example: ["teamA", "teamB"]
  *                 icon_url:
  *                   type: string
- *                   example: "/path/to/icon.svg"
+ *                   example: "https://example.com/icon.png"
  *                 emote:
  *                   type: string
- *                   example: ":smile:"
- *                 parent_id:
- *                   type: integer
- *                   example: null
+ *                   example: "😊"
  *       500:
  *         description: Internal server error
  *         content:
@@ -75,38 +77,30 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "Failed to add folder"
+ *                   example: "Failed to add subfolder"
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, workspace_id, team_tags, icon_url, emote } = await req.json();
+    const { name, workspace_id, parent_id, team_tags, icon_url, emote } =
+      await req.json();
 
-    // Validate folder name
-    const nameError = checkFolderName(name);
-    if (nameError) {
-      return NextResponse.json({ 
-        error: 'Invalid folder name',
-        ...nameError 
-      }, { status: 400 });
-    }
-
-    // Create a new folder with no parent (top-level)
-    const newFolder = await prisma.folder.create({
+    // Create a new subfolder with the specified parent folder
+    const newSubfolder = await prisma.folder.create({
       data: {
         name,
         workspace_id: Number(workspace_id),
         team_tags: team_tags || [],
         icon_url: icon_url,
         emote: emote,
-        parent_id: null,
+        parent_id: parent_id ? Number(parent_id) : null,
       },
     });
 
-    return NextResponse.json(newFolder, { status: 201 });
+    return NextResponse.json(newSubfolder, { status: 201 });
   } catch (error) {
-    console.error('Error adding folder:', error);
+    console.error('Error adding subfolder:', error);
     return NextResponse.json(
-      { error: 'Failed to add folder' },
+      { error: 'Failed to add subfolder' },
       { status: 500 }
     );
   }
