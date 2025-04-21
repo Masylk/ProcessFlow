@@ -135,7 +135,7 @@ export async function GET(
     }
 
     // Log the request data
-    console.log('Fetching paths for:', { workspaceId, parsedworkflow_id });
+   
 
     // Fetch or create paths with blocks for the given workflow_id
     const result = await prisma.$transaction(

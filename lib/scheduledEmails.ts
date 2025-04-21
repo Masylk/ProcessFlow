@@ -63,7 +63,7 @@ export async function scheduleEmail({
       },
     });
     
-    console.log(`Email scheduled: ${scheduledEmail.id} for user ${userId} at ${scheduledFor}`);
+    
     return { success: true, scheduledEmailId: scheduledEmail.id };
   } catch (error) {
     console.error('Error scheduling email:', error);

@@ -15,7 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (event.type === "checkout.session.completed") {
-    console.log("Subscription successful!", event);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Subscription successful!", event);
+    }
   }
 
   res.status(200).json({ received: true });

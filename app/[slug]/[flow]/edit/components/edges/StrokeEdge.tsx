@@ -447,11 +447,8 @@ function StrokeEdge({
 
   useEffect(() => {
     const loadControlPoints = async () => {
-      // if (data && data.preview) {
-      //   console.log('dont load control points');
-      //   return;
-      // }
-      console.log('data', data);
+      
+     
       try {
         let strokeLine = null;
         const source = getConnectionPoint(

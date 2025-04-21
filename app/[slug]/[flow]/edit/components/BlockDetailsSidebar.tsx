@@ -148,7 +148,7 @@ export default function BlockDetailsSidebar({
         />
 
         {/* Container for the buttons to be aligned to the far right */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 hidden gap-2">
           {/* Link Button */}
           <ButtonNormal
             onClick={handleCopyLink}

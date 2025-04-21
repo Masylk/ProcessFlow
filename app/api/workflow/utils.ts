@@ -29,6 +29,6 @@ export async function generatePublicAccessId(
     return generatePublicAccessId(workflowName, workflowId, workspaceId);
   }
 
-  console.log('Generated public access ID:', publicId);
+  
   return publicId;
 } 

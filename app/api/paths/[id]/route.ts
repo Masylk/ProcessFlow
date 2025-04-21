@@ -126,7 +126,6 @@ export async function DELETE(req: NextRequest) {
     try {
       await deleteOnePath(pathId);
     } catch (err: any) {
-      console.log('error: ', err.message);
       return NextResponse.json(
         { error: err.message || 'Failed to delete path' },
         { status: 409 }

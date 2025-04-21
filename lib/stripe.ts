@@ -15,12 +15,16 @@ function getStripeKey() {
     console.error('- STRIPE_API_KEY');
     console.error('- STRIPE_KEY');
     console.error('Check your .env file and make sure Next.js is loading it correctly.');
-    console.log('Current environment:', process.env.NODE_ENV);
-    console.log('Available environment variables:', 
-      Object.keys(process.env)
-        .filter(key => !key.includes('SECRET') && !key.includes('KEY'))
-        .join(', ')
-    );
+    
+    // Only log environment details in non-production environments
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Current environment:', process.env.NODE_ENV);
+      console.log('Available environment variables:', 
+        Object.keys(process.env)
+          .filter(key => !key.includes('SECRET') && !key.includes('KEY'))
+          .join(', ')
+      );
+    }
     
     // In development, return a placeholder that will fail gracefully
     if (process.env.NODE_ENV === 'development') {
@@ -86,7 +90,10 @@ export async function createStripeCheckoutSession({
     environment: process.env.NODE_ENV || 'development',
   };
   
-  console.log('Creating checkout session with metadata:', enrichedMetadata);
+  // Only log metadata in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Creating checkout session with metadata:', enrichedMetadata);
+  }
   
   try {
     return await stripe.checkout.sessions.create({

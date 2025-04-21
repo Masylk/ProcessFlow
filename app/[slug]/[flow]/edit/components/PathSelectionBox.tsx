@@ -28,7 +28,6 @@ export function PathSelectionBox({
         workflow_id: parseInt(workflowId),
         parent_blocks: selectedEndBlocks,
       };
-      console.log('payload', payload);
       await fetch('/api/paths/merge', {
         method: 'POST',
         headers: {

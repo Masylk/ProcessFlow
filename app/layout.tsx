@@ -70,18 +70,6 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <Script
-          src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://uicdn.toast.com/tui.code-snippet/latest/tui-code-snippet.min.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.js"
-          strategy="afterInteractive"
-        />
-        <Script
           src="//js.hs-scripts.com/47874121.js"
           strategy="afterInteractive"
           id="hs-script-loader"
@@ -91,14 +79,6 @@ export default function RootLayout({
         <link 
           rel="stylesheet" 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
-        />
-        <link 
-          rel="stylesheet" 
-          href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css"
-        />
-        <link 
-          rel="stylesheet" 
-          href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.min.css"
         />
 
       </body>

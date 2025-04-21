@@ -53,12 +53,6 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
         parentBlockId: currentParentId || parentBlockId
       });
     }
-    
-    // Fix: Log the current state, not a modified version
-    console.log('Selected Paths:', selectedPaths.includes(pathId) ? 
-      selectedPaths.filter(id => id !== pathId) : 
-      [...selectedPaths, pathId]);
-    console.log('Parent Block ID:', parentBlockId);
   },
   reset: () => set({ 
     selectedPaths: [], 
