@@ -23,6 +23,7 @@ export interface NodeData {
   pathId?: number | null;
   pathName?: string;
   pathHasChildren?: boolean;
+  workspaceId?: string;
   handleAddBlockOnEdge?: (
     position: number,
     path: Path,
@@ -34,6 +35,7 @@ export interface NodeData {
 export interface EdgeData {
   blocks: Block[];
   path: Path;
+  workspaceId: string;
   onPathsUpdate?: (paths: Path[]) => void;
   handleAddBlockOnEdge: (
     position: number,

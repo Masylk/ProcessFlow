@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, useStore } from '@xyflow/react';
-import { NodeData } from '../../../types';
+import { Block, NodeData, Path, PathParentBlock } from '../../../types';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
 import { usePathsStore } from '../../store/pathsStore';
@@ -129,11 +129,49 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
       const updatedPath = await response.json();
 
       // Update the path in allPaths while preserving existing data
-      const updatedPaths = allPaths.map((path) =>
+      let updatedPaths = allPaths.map((path) =>
         path.id === updatedPath.id
           ? { ...path, ...updatedPath } // Merge the update with existing data
           : path
       );
+
+      // Use the merged path from updatedPaths for further updates
+      const mergedUpdatedPath = updatedPaths.find(
+        (p) => p.id === updatedPath.id
+      );
+
+      // If mergedUpdatedPath has parent_blocks, update their child_path name
+      if (mergedUpdatedPath && Array.isArray(mergedUpdatedPath.parent_blocks)) {
+        mergedUpdatedPath.parent_blocks.forEach(
+          (parentBlock: { block_id: number; path_id: number }) => {
+            updatedPaths = updatedPaths.map((path: Path) => ({
+              ...path,
+              blocks: path.blocks.map((block: Block) => {
+                if (
+                  block.id === parentBlock.block_id &&
+                  Array.isArray(block.child_paths)
+                ) {
+                  return {
+                    ...block,
+                    child_paths: block.child_paths.map((cp: PathParentBlock) =>
+                      cp.path_id === mergedUpdatedPath.id
+                        ? {
+                            ...cp,
+                            path: {
+                              ...cp.path,
+                              name: mergedUpdatedPath.name,
+                            },
+                          }
+                        : cp
+                    ),
+                  };
+                }
+                return block;
+              }),
+            }));
+          }
+        );
+      }
 
       // Update global state
       setAllPaths(updatedPaths);

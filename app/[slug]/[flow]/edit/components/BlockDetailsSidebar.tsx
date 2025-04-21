@@ -67,7 +67,9 @@ export default function BlockDetailsSidebar({
     }
   };
 
-  const handleAverageTimeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleAverageTimeKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === 'Enter') {
       onUpdate({ average_time: averageTime });
       setIsEditingAverageTime(false);
@@ -99,10 +101,12 @@ export default function BlockDetailsSidebar({
   };
 
   const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleDescriptionUpdate();
-    } else if (e.key === 'Escape') {
+    // if (e.key === 'Enter' && !e.shiftKey) {
+    //   e.preventDefault();
+    //   handleDescriptionUpdate();
+    // }
+    //  else
+    if (e.key === 'Escape') {
       setDescription(block.description || '');
       setIsEditingDescription(false);
     }
@@ -234,13 +238,19 @@ export default function BlockDetailsSidebar({
                   >
                     Average Time
                   </div>
-                  <div className="flex items-center gap-2" style={{ width: '140px' }}>
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ width: '140px' }}
+                  >
                     <InputField
                       type="default"
                       size="small"
                       value={averageTime}
                       onChange={(value) => {
-                        if ((value === '' || /^\d+$/.test(value)) && value.length <= 12) {
+                        if (
+                          (value === '' || /^\d+$/.test(value)) &&
+                          value.length <= 12
+                        ) {
                           setAverageTime(value);
                         }
                       }}
@@ -251,7 +261,12 @@ export default function BlockDetailsSidebar({
                       onKeyDown={handleAverageTimeKeyDown}
                       placeholder="Enter time"
                     />
-                    <span className="text-sm" style={{ color: colors['text-secondary'] }}>min</span>
+                    <span
+                      className="text-sm"
+                      style={{ color: colors['text-secondary'] }}
+                    >
+                      min
+                    </span>
                   </div>
                 </div>
 
