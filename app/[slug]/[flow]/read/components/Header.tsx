@@ -151,7 +151,6 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleSendMessage = (message: string) => {
     // In a real app, this would send the message to your backend
-    console.log('Sending message:', message);
   };
 
   const openShareModal = () => {

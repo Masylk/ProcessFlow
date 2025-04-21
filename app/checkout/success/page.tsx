@@ -135,7 +135,9 @@ async function handleSubscriptionActivated(sessionId: string, workspaceId: strin
           if (!response.ok) {
             console.error('Failed to send subscription activated email:', await response.text());
           } else {
-            console.log('Successfully sent subscription activated email');
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Successfully sent subscription activated email');
+            }
           }
         }
       }

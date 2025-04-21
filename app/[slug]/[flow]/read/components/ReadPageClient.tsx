@@ -425,7 +425,9 @@ export default function ReadPageClient() {
                 .find((b) => b.id === pair.originalId);
 
               if (originalBlock?.child_paths) {
-                console.log('originalBlock', originalBlock);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.log('originalBlock', originalBlock);
+                }
                 pair.copies.forEach((copyBlock) => {
                   const existingPathIds = new Set(
                     copyBlock.child_paths?.map((cp) => cp.path_id) || []
@@ -572,10 +574,14 @@ export default function ReadPageClient() {
     };
 
     if (sourceBlockId < 0) {
-      console.log('sourceBlockId', sourceBlockId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('sourceBlockId', sourceBlockId);
+      }
     }
     if (block.id === sourceBlockId) {
-      console.log('pushing the copy ofsourceBlockId', sourceBlockId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('pushing the copy ofsourceBlockId', sourceBlockId);
+      }
       const pair = sourceBlockPairs.find((p) => p.originalId === sourceBlockId);
       if (pair) {
         pair.copies.push(newBlock);

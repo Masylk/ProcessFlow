@@ -64,7 +64,9 @@ function LoginContent() {
         }
 
         if (response?.needsEmailConfirmation) {
-          console.log('Email needs confirmation:', response.email);
+          if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
+            console.log('Email needs confirmation:', response.email);
+          }
           setEmailConfirmationAlert(response.message);
           return;
         }
@@ -131,12 +133,18 @@ function LoginContent() {
       });
 
       if (error) {
-        console.error('Erreur authentification Google:', error.message);
+        if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
+          console.error('Erreur authentification Google:', error.message);
+        }
       } else {
-        console.log('Redirection OAuth initiée:', data);
+        if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
+          console.log('Redirection OAuth initiée:', data);
+        }
       }
     } catch (error) {
-      console.error('Erreur inattendue:', error);
+      if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
+        console.error('Erreur inattendue:', error);
+      }
     }
   };
 

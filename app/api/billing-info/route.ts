@@ -12,6 +12,26 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-02-24.acacia',
 });
 
+// Helper function to determine if we should log
+const shouldLog = () => {
+  const env = process.env.NODE_ENV;
+  return env !== 'production';
+};
+
+// Helper function for conditional logging
+const conditionalLog = (...args: any[]) => {
+  if (shouldLog()) {
+    console.log(...args);
+  }
+};
+
+// Helper function for conditional error logging
+const conditionalErrorLog = (...args: any[]) => {
+  if (shouldLog()) {
+    console.error(...args);
+  }
+};
+
 interface BillingInfoRequest {
   workspaceId: number;
   billing_email: string;
@@ -170,7 +190,7 @@ export async function GET(req: Request) {
       });
 
     } catch (stripeError) {
-      console.error('Error fetching Stripe customer details:', stripeError);
+      conditionalErrorLog('Error fetching Stripe customer details:', stripeError);
       // If there's an error with Stripe, return the local billing info if available
       if (workspace.billing_infos) {
         const addressParts = workspace.billing_infos.billing_address.split('\n');
@@ -189,7 +209,7 @@ export async function GET(req: Request) {
       throw stripeError;
     }
   } catch (error) {
-    console.error('Error in billing-info endpoint:', error);
+    conditionalErrorLog('Error in billing-info endpoint:', error);
     return NextResponse.json(
       { error: 'Failed to fetch billing information' },
       { status: 500 }
@@ -265,7 +285,7 @@ export async function POST(request: Request) {
     // If we have a Stripe customer ID, update their billing information in Stripe
     if (workspace.stripe_customer_id) {
       try {
-        console.log('Updating Stripe customer:', workspace.stripe_customer_id, {
+        conditionalLog('Updating Stripe customer:', workspace.stripe_customer_id, {
           email: billing_email,
           address: {
             line1: address_line1,
@@ -290,20 +310,20 @@ export async function POST(request: Request) {
           },
         });
 
-        console.log('Stripe customer update response:', updatedCustomer);
+        conditionalLog('Stripe customer update response:', updatedCustomer);
 
         // Handle VAT number for EU countries
         if (vat_number) {
-          console.log('Updating VAT number for customer:', workspace.stripe_customer_id);
+          conditionalLog('Updating VAT number for customer:', workspace.stripe_customer_id);
           
           // First, list existing tax IDs
           const existingTaxIds = await stripe.customers.listTaxIds(workspace.stripe_customer_id);
-          console.log('Existing tax IDs:', existingTaxIds.data);
+          conditionalLog('Existing tax IDs:', existingTaxIds.data);
           
           // Delete existing EU VAT tax IDs
           for (const taxId of existingTaxIds.data) {
             if (taxId.type === 'eu_vat') {
-              console.log('Deleting existing VAT ID:', taxId.id);
+              conditionalLog('Deleting existing VAT ID:', taxId.id);
               await stripe.customers.deleteTaxId(workspace.stripe_customer_id, taxId.id);
             }
           }
@@ -313,12 +333,12 @@ export async function POST(request: Request) {
             type: 'eu_vat',
             value: vat_number,
           });
-          console.log('Created new tax ID:', newTaxId);
+          conditionalLog('Created new tax ID:', newTaxId);
         }
 
         stripeUpdateStatus.success = true;
       } catch (stripeError) {
-        console.error('Error updating Stripe customer:', {
+        conditionalErrorLog('Error updating Stripe customer:', {
           error: stripeError,
           customerId: workspace.stripe_customer_id,
           requestData: {
@@ -370,7 +390,7 @@ export async function POST(request: Request) {
       stripeUpdate: stripeUpdateStatus
     });
   } catch (error) {
-    console.error('Error updating billing info:', error);
+    conditionalErrorLog('Error updating billing info:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

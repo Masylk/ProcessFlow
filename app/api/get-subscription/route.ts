@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log('Fetching subscription for user:', userId);
+    
     
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,10 +29,9 @@ export async function GET(request: Request) {
       .eq('user_id', userId)
       .single();
 
-    console.log('Workspace query result:', { workspace, workspaceError });
+  
 
     if (workspaceError || !workspace) {
-      console.log('No workspace found for user:', userId);
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }
 

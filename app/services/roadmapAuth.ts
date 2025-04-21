@@ -3,7 +3,7 @@ import { User } from '@/types/user';
 
 export async function generateRoadmapToken(user: User) {
   try {
-    console.log('Generating token for user:', user);
+   
     const userData = {
       user_email: user.email,
       app_user_id: user.auth_id,

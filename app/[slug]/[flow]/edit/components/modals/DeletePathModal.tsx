@@ -63,7 +63,6 @@ export default function DeletePathModal({
       if (typeof error === 'object' && error && 'message' in error) {
         message = (error as { message: string }).message;
       }
-      console.log('message', message);
       onConfirm(false, message); // Failure, pass error message
       onClose();
     }

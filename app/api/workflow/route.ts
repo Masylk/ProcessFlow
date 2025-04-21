@@ -100,23 +100,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Log workspace details for debugging
-    console.log('Workspace details:', {
-      id: workspace.id,
-      subscription: workspace.subscription,
-      workflowCount: workspace.workflows.length,
-      isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
-    });
-
     // Check if workspace is on free plan and has reached the limit
     const isFreePlan = !workspace.subscription || workspace.subscription.plan_type === 'FREE';
     const hasReachedLimit = workspace.workflows.length >= 5;
 
     if (isFreePlan && hasReachedLimit) {
-      console.log('Blocking workflow creation: Free plan limit reached', {
-        isFreePlan,
-        workflowCount: workspace.workflows.length,
-      });
       return NextResponse.json(
         {
           error: 'Free plan is limited to 5 workflows',
@@ -141,7 +129,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newWorkflow);
   } catch (error) {
-    console.error('Error creating workflow:', error);
     return NextResponse.json(
       { error: 'Failed to create workflow' },
       { status: 500 }

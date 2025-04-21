@@ -17,7 +17,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const isEndTypeNode = (type: string | undefined) => 
     type && Object.values(BlockEndType).map(t => t.toLowerCase()).includes(type);
 
-  console.log(nodes.map((node) => (node.data as NodeData)?.path?.parent_blocks?.length))
+
   const elkNodes = nodes.map((node) => ({
     id: node.id,
     width: node.type === 'begin' ? 

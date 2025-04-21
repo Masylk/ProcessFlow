@@ -5,8 +5,12 @@ interface User {
   id: string;
 }
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 export async function workspaceProtection(request: NextRequest, user: User) {
-  console.log('workspace protection middleware');
+  if (isDevelopment) {
+    console.log('workspace protection middleware');
+  }
   
   // Handle workspace routes with more robust URL parsing
   if (request.url.includes('/workspace/')) {
@@ -27,19 +31,25 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         return NextResponse.next();
       }
 
-      console.log('workspaceId', workspaceId);
+      if (isDevelopment) {
+        console.log('workspaceId', workspaceId);
+      }
       
       try {
         // First check if workspace exists
         const workspaceRes = await fetch(`${request.nextUrl.origin}/api/workspace/${workspaceId}`);
         
         if (!workspaceRes.ok) {
-          console.log('not found');
+          if (isDevelopment) {
+            console.log('not found');
+          }
           return NextResponse.rewrite(new URL('/not-found', request.url));
         }
         
         const workspace = await workspaceRes.json();
-        console.log('workspace query result:', workspace);
+        if (isDevelopment) {
+          console.log('workspace query result:', workspace);
+        }
 
         // Then check if user has access to this workspace
         const userWorkspaceRes = await fetch(
@@ -47,18 +57,26 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         );
 
         if (!userWorkspaceRes.ok) {
-          console.log('unauthorized');
+          if (isDevelopment) {
+            console.log('unauthorized');
+          }
           return NextResponse.redirect(new URL('/unauthorized', request.url));
         }
 
         const userWorkspace = await userWorkspaceRes.json();
-        console.log('userWorkspace query result:', userWorkspace);
+        if (isDevelopment) {
+          console.log('userWorkspace query result:', userWorkspace);
+        }
       } catch (error) {
-        console.error('Error in workspace protection:', error);
+        if (isDevelopment) {
+          console.error('Error in workspace protection:', error);
+        }
         return NextResponse.redirect(new URL('/error', request.url));
       }
     } catch (parseError) {
-      console.error('Error parsing URL in workspace protection:', parseError);
+      if (isDevelopment) {
+        console.error('Error parsing URL in workspace protection:', parseError);
+      }
       return NextResponse.redirect(new URL('/error', request.url));
     }
   }
@@ -86,7 +104,6 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         const workflowRes = await fetch(`${request.nextUrl.origin}/api/workflows/${workflowId}`);
         
         if (!workflowRes.ok) {
-          console.log('not found');
           return NextResponse.rewrite(new URL('/not-found', request.url));
         }
 
@@ -98,18 +115,23 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         );
 
         if (!userWorkspaceRes.ok) {
-          console.log('unauthorized');
           return NextResponse.redirect(new URL('/unauthorized', request.url));
         }
 
         const userWorkspace = await userWorkspaceRes.json();
-        console.log('userWorkspace query result:', userWorkspace);
+        if (isDevelopment) {
+          console.log('userWorkspace query result:', userWorkspace);
+        }
       } catch (error) {
-        console.error('Error in workflow protection:', error);
+        if (isDevelopment) {
+          console.error('Error in workflow protection:', error);
+        }
         return NextResponse.redirect(new URL('/error', request.url));
       }
     } catch (parseError) {
-      console.error('Error parsing URL in workflow protection:', parseError);
+      if (isDevelopment) {
+        console.error('Error parsing URL in workflow protection:', parseError);
+      }
       return NextResponse.redirect(new URL('/error', request.url));
     }
   }

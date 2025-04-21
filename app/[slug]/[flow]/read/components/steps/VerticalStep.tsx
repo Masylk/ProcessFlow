@@ -427,11 +427,12 @@ export default function VerticalStep({
                 className="mb-4 rounded-lg overflow-hidden cursor-zoom-in"
                 onClick={toggleFullscreen}
                 aria-label="View image fullscreen"
+                style={{ backgroundColor: colors['bg-secondary'] }}
               >
                 <img
                   src={signedImageUrl}
                   alt="Block Media"
-                  className="w-full h-[500px] object-cover"
+                  className="w-full h-[500px] object-contain"
                 />
               </div>
             </motion.div>

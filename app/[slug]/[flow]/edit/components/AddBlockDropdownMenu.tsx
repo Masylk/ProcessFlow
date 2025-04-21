@@ -75,7 +75,6 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
-        console.log('dropdownData selected', dropdownDatas);
         setModalData({
           path: dropdownDatas.path,
           position: dropdownDatas.position,

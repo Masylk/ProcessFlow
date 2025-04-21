@@ -21,6 +21,7 @@ import { User } from '@/types/user';
 import { useEditModeStore } from '../store/editModeStore';
 import Cookies from 'js-cookie';
 import ChatContainer from '@/components/chat/ChatContainer';
+import { CustomTooltip } from '@/app/components/CustomTooltip';
 
 interface SidebarProps {
   workspaceId: string;
@@ -35,24 +36,64 @@ interface FavoriteBlock {
   pathName: string;
 }
 
-const PulsingCircle = ({ color }: { color: string }) => {
-  return (
-    <div className="absolute -top-2 -right-2 z-50 flex items-center justify-center pointer-events-none">
-      {/* Pulsing background for emphasis */}
-      <div
-        className="absolute w-5 h-5 rounded-full animate-ping opacity-75"
-        style={{ backgroundColor: color }}
-      />
-      {/* Solid dot in the center */}
-      <div
-        className="w-4 h-4 rounded-full"
-        style={{
-          backgroundColor: color,
-          boxShadow: `0 0 10px 3px ${color}`,
-        }}
-      />
-    </div>
-  );
+// Update the useIsTextTruncated hook
+const useIsTextTruncated = () => {
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const checkTruncation = () => {
+      if (textRef.current) {
+        const { scrollWidth, clientWidth } = textRef.current;
+        setIsTruncated(scrollWidth > clientWidth);
+      }
+    };
+
+    checkTruncation();
+    window.addEventListener('resize', checkTruncation);
+    return () => window.removeEventListener('resize', checkTruncation);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (isTruncated && textRef.current) {
+      const rect = textRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.right + 8,
+        y: rect.top,  // Align with the top of the element
+      });
+      setShowTooltip(true);
+    }
+  }, [isTruncated]);
+
+  const handleMouseLeave = useCallback(() => {
+    setShowTooltip(false);
+  }, []);
+
+  return {
+    textRef,
+    isTruncated,
+    showTooltip,
+    tooltipPosition,
+    handleMouseEnter,
+    handleMouseLeave,
+  };
+};
+
+// Add this helper function at the top level of the file, after the imports
+const formatDuration = (seconds?: number): string => {
+  if (!seconds) return 'Not set';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+
+  return parts.length > 0 ? parts.join(' ') : '0m';
 };
 
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
@@ -674,62 +715,91 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
         {/* BEGIN blocks */}
         {path.blocks
           .filter((block) => block.type === 'BEGIN')
-          .map((block) => (
-            <div
-              key={block.id}
-              className="w-full cursor-pointer transition-all duration-200"
-              style={{
-                backgroundColor: isBlockSelected(block.id)
-                  ? colors['brand-utility-600']
-                  : 'transparent',
-              }}
-              onClick={() => handleBlockClick(block.id)}
-              onMouseOver={(e) => {
-                if (!isBlockSelected(block.id)) {
-                  e.currentTarget.style.backgroundColor =
-                    colors['bg-secondary'];
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isBlockSelected(block.id)) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
+          .map((block) => {
+            const {
+              textRef,
+              isTruncated,
+              showTooltip,
+              tooltipPosition,
+              handleMouseEnter,
+              handleMouseLeave,
+            } = useIsTextTruncated();
+            return (
               <div
-                className="flex items-center gap-2 h-8 px-4 w-full"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePathVisibility(path.id, e);
+                key={block.id}
+                className="w-full cursor-pointer transition-all duration-200"
+                style={{
+                  backgroundColor: isBlockSelected(block.id)
+                    ? colors['brand-utility-600']
+                    : 'transparent',
+                }}
+                onClick={() => handleBlockClick(block.id)}
+                onMouseOver={(e) => {
+                  if (!isBlockSelected(block.id)) {
+                    e.currentTarget.style.backgroundColor =
+                      colors['bg-secondary'];
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isBlockSelected(block.id)) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
                 }}
               >
-                <DynamicIcon
-                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                    isPathCollapsed ? 'chevron-right' : 'chevron-down'
-                  }.svg`}
-                  size={16}
-                  variant="tertiary"
-                  className="flex-shrink-0"
-                />
-                <DynamicIcon
-                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
-                  size={20}
-                  variant="tertiary"
-                  className="flex-shrink-0"
-                />
-                <span
-                  className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
-                  style={{
-                    color: isBlockSelected(block.id)
-                      ? colors['text-primary']
-                      : colors['text-primary'],
+                <div
+                  className="flex items-center gap-2 h-8 px-4 w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePathVisibility(path.id, e);
                   }}
                 >
-                  {path.name}
-                </span>
+                  <DynamicIcon
+                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                      isPathCollapsed ? 'chevron-right' : 'chevron-down'
+                    }.svg`}
+                    size={16}
+                    variant="tertiary"
+                    className="flex-shrink-0"
+                  />
+                  <DynamicIcon
+                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`}
+                    size={20}
+                    variant="tertiary"
+                    className="flex-shrink-0"
+                  />
+                  <span
+                    ref={textRef}
+                    className="text-sm whitespace-nowrap overflow-hidden text-ellipsis font-medium flex-1"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    style={{
+                      color: isBlockSelected(block.id)
+                        ? colors['text-primary']
+                        : colors['text-primary'],
+                    }}
+                  >
+                    {path.name}
+                  </span>
+                  {isTruncated && (
+                    <div
+                      style={{
+                        position: 'fixed',
+                        left: `${tooltipPosition.x}px`,
+                        top: `${tooltipPosition.y}px`,
+                        transform: 'none',
+                      }}
+                      className="pointer-events-none"
+                    >
+                      <CustomTooltip
+                        text={path.name}
+                        show={showTooltip}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
         {/* Other blocks */}
         {!isPathCollapsed && (
@@ -784,6 +854,14 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                   const hasChildPaths =
                     block.child_paths && block.child_paths.length > 0;
 
+                  const {
+                    textRef,
+                    isTruncated,
+                    showTooltip,
+                    tooltipPosition,
+                    handleMouseEnter,
+                    handleMouseLeave,
+                  } = useIsTextTruncated();
                   return (
                     <div
                       key={block.id}
@@ -864,8 +942,23 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                             />
                           </>
                         )}
+                        {block.type === 'DELAY' && (
+                          <DynamicIcon
+                            url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                              block.delay_type === 'WAIT_FOR_EVENT'
+                                ? 'calendar-clock-1.svg'
+                                : 'clock-stopwatch-1.svg'
+                            }`}
+                            size={20}
+                            color="inherit"
+                            className="flex-shrink-0"
+                          />
+                        )}
                         <span
-                          className="text-sm whitespace-nowrap overflow-hidden font-medium flex-1"
+                          ref={textRef}
+                          className="text-sm whitespace-nowrap overflow-hidden text-ellipsis font-medium flex-1"
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
                           style={{
                             color: isBlockSelected(block.id)
                               ? currentTheme === 'light'
@@ -874,21 +967,28 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                               : colors['text-primary'],
                           }}
                         >
-                          {block.title ||
-                            block.step_details ||
-                            `Block ${block.id}`}
+                          {block.type === 'DELAY' 
+                            ? block.delay_type === 'WAIT_FOR_EVENT'
+                              ? `Wait for Event: ${block.delay_event || 'Not set'}`
+                              : `Duration Delay: ${formatDuration(block.delay_seconds || undefined)}`
+                            : block.title || block.step_details || `Block ${block.id}`}
                         </span>
-                        <ButtonNormal
-                          variant="tertiary"
-                          iconOnly
-                          size="small"
-                          leadingIcon={starIconUrl}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(block, path.name);
-                          }}
-                          className={`opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity ${isFavorite(block.id) ? '!opacity-100' : ''}`}
-                        />
+                        {isTruncated && (
+                          <div
+                            style={{
+                              position: 'fixed',
+                              left: `${tooltipPosition.x}px`,
+                              top: `${tooltipPosition.y}px`,
+                              transform: 'none',
+                            }}
+                            className="pointer-events-none"
+                          >
+                            <CustomTooltip
+                              text={block.title || block.step_details || `Block ${block.id}`}
+                              show={showTooltip}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

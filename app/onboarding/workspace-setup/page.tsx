@@ -227,11 +227,9 @@ export default function WorkspaceSetup() {
 
   // Manual back button handler
   const handleBackClick = useCallback(async () => {
-    console.log('Back button clicked, setting isNavigatingBack to true');
     setIsNavigatingBack(true);
 
     try {
-      console.log('Attempting to update onboarding step via API');
       await fetch('/api/onboarding/update', {
         method: 'POST',
         headers: {

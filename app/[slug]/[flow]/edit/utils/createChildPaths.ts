@@ -17,7 +17,7 @@ export async function createChildPaths(
   parentPath: Path
 ): Promise<CreateChildPathsResponse> {
   try {
-    console.log('pathNames', pathNames);
+  
     // Create minimal paths
     const createdPaths = await Promise.all(
       pathNames.map(async (name) => {
@@ -43,7 +43,7 @@ export async function createChildPaths(
       }),
     });
 
-    console.log('createdPaths', createdPaths);
+
     // Fetch updated paths data
     const pathsResponse = await fetch(
       `/api/workspace/${workflowId}/paths?workflow_id=${workflowId}`
