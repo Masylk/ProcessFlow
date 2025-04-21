@@ -81,7 +81,7 @@ import prisma from '@/lib/prisma';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, workspace_id, parent_id, team_tags, icon_url, emote } =
+    const { name, workspace_id, parent_id, team_tags, icon_url, emote, position } =
       await req.json();
 
     // Create a new subfolder with the specified parent folder
@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
         icon_url: icon_url,
         emote: emote,
         parent_id: parent_id ? Number(parent_id) : null,
+        position: position ? Number(position) : 0,
       },
     });
 
