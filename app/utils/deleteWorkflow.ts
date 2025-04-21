@@ -17,7 +17,7 @@ export async function deleteWorkflow(workflowId: number): Promise<boolean> {
       return false; // Deletion unsuccessful
     }
 
-    console.log('Workflow deleted successfully');
+   
     return true; // Deletion successful
   } catch (error) {
     console.error('Error calling delete workflow API:', error);

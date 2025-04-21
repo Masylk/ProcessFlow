@@ -13,9 +13,6 @@ export async function POST(req: NextRequest) {
     const body: MergePathRequest = await req.json();
     const { name, workflow_id, parent_blocks } = body;
 
-    console.log('name', name);
-    console.log('workflow_id', workflow_id);
-    console.log('parent_blocks', parent_blocks);
     // Validate input
     if (!name || !workflow_id || !parent_blocks.length) {
       return NextResponse.json(

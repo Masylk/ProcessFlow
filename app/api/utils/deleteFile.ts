@@ -22,7 +22,5 @@ export async function deleteFile(fileUrl: string | null) {
 
   if (error) {
     console.error(`Failed to delete file: ${fileUrl}`, error);
-  } else {
-    console.log(`File deleted successfully: ${fileUrl}`);
   }
 } 

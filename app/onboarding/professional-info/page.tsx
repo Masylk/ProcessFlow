@@ -59,7 +59,7 @@ export default function ProfessionalInfo() {
   // Check if user is Google authenticated on component mount
   useEffect(() => {
     const checkAuthProvider = async () => {
-      console.log("Checking auth provider...");
+     
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -92,7 +92,7 @@ export default function ProfessionalInfo() {
         // Utiliser getUser() au lieu de getSession() pour plus de sécurité
         const { data: { user }, error } = await supabase.auth.getUser();
         
-        console.log("Auth check result:", { user, error });
+     
         
         if (error) {
           console.error('Error checking auth provider:', error);
@@ -102,13 +102,13 @@ export default function ProfessionalInfo() {
         
         // If no user or no metadata, default to false
         if (!user || !user.app_metadata) {
-          console.log("No user data or metadata found, setting isGoogleAuth to false");
+        
           setIsGoogleAuth(false);
           return;
         }
         
         const isGoogle = user.app_metadata.provider === 'google';
-        console.log("Auth provider:", user.app_metadata.provider, "isGoogle:", isGoogle);
+      
         setIsGoogleAuth(isGoogle);
       } catch (error) {
         console.error('Error in auth check:', error);
@@ -243,10 +243,6 @@ export default function ProfessionalInfo() {
     }
   }, [router]);
 
-  // Add a useEffect for debugging
-  useEffect(() => {
-    console.log("isGoogleAuth value:", isGoogleAuth);
-  }, [isGoogleAuth]);
 
   return (
     <div 

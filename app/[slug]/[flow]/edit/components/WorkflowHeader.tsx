@@ -224,14 +224,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
               />
             )}
 
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/share-06.svg`}
-              onClick={openShareModal}
-            >
-              Share
-            </ButtonNormal>
+            
           </div>
         </div>
       </div>

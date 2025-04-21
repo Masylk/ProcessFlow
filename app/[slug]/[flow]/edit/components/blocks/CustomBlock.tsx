@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Handle,
   Position,
@@ -25,6 +25,7 @@ import styles from './CustomBlock.module.css';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
+import { CustomTooltip } from '@/app/components/CustomTooltip';
 
 interface CustomBlockProps extends NodeProps {
   data: NodeData & {
@@ -199,7 +200,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       if (!response.ok) throw new Error('Failed to update block');
 
       const updatedBlock = await response.json();
-      console.log('updatedBlock', updatedBlock);
+
 
       // Preserve existing image if not explicitly updated
       setBlockData((prev) => ({
@@ -639,7 +640,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
   // Modify the click handler to include zooming
   const handleNodeClick = (e: React.MouseEvent) => {
-    console.log('isModalOpen', isModalOpen);
     if (isModalOpen) {
       e.preventDefault();
       e.stopPropagation();
@@ -654,7 +654,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     const blockId = id.replace('block-', '');
     setEditMode(true, blockId);
 
-    console.log('zoomToNode');
+
     // Zoom to node
     zoomToNode();
   };
@@ -682,6 +682,50 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     }
   }, [isEditMode, selectedNodeId, id, zoomToNode, viewportInitialized]);
 
+  // Add the useTooltip hook
+  const useTooltip = () => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState<number | null>(null);
+    const elementRef = useRef<HTMLDivElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseEnter = useCallback(() => {
+      setShowTooltip(true);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+      setShowTooltip(false);
+      setTooltipPosition(null);
+    }, []);
+
+    useEffect(() => {
+      if (showTooltip && tooltipRef.current && elementRef.current) {
+        const toggleRect = elementRef.current.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const gap = 12; // gap between toggle and tooltip
+        setTooltipPosition(-(tooltipRect.width + gap));
+      }
+    }, [showTooltip]);
+
+    return {
+      elementRef,
+      tooltipRef,
+      showTooltip,
+      tooltipPosition,
+      handleMouseEnter,
+      handleMouseLeave,
+    };
+  };
+
+  const {
+    elementRef,
+    tooltipRef,
+    showTooltip,
+    tooltipPosition,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useTooltip();
+
   return (
     <BasicBlock {...props}>
       {/* Vertical Toggle Switch Container */}
@@ -707,6 +751,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             }}
           >
             <div
+              ref={elementRef}
               onClick={toggleStrokeLines}
               className={`${allStrokeLinesVisible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               style={{
@@ -721,13 +766,8 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 position: 'relative',
                 opacity: allStrokeLinesVisible ? 1 : 0.5,
               }}
-              title={
-                allStrokeLinesVisible
-                  ? data.strokeLinesVisible
-                    ? 'Hide connecting lines'
-                    : 'Show connecting lines'
-                  : 'Global connecting lines are disabled in Settings'
-              }
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
               <div
                 style={{
@@ -748,6 +788,33 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             </div>
           </div>
         )}
+
+      {/* Tooltip */}
+      {showTooltip && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'absolute',
+            left: '-210px', // Position it further to the left of the toggle button
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 1000,
+            pointerEvents: 'none',
+          }}
+        >
+          <CustomTooltip
+            text={
+              allStrokeLinesVisible
+                ? data.strokeLinesVisible
+                  ? 'Hide connecting lines'
+                  : 'Show connecting lines'
+                : 'Global connecting lines are disabled in Settings'
+            }
+            show={true}
+            direction="left"
+          />
+        </div>
+      )}
 
       <div
         className={`relative rounded-xl
@@ -904,11 +971,14 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
           {/* Image with signed URL */}
           {signedImageUrl && (
-            <div className="rounded-md overflow-hidden h-[267px] w-full">
+            <div 
+              className="rounded-md overflow-hidden h-[267px] w-full"
+              style={{ backgroundColor: colors['bg-secondary'] }}
+            >
               <img
                 src={signedImageUrl}
                 alt="Block Media"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           )}

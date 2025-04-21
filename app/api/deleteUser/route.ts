@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     await prisma.user.delete({ where: { id: user.id } });
 
     // Delete the user from Supabase Auth using the admin client
-    console.log(`Deleting user from Supabase Auth ID=${userId}`);
+  
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (error) {

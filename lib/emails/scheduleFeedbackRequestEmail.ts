@@ -26,7 +26,7 @@ export async function scheduleFeedbackRequestEmail(userId: number) {
     });
 
     if (existingScheduledEmail) {
-      console.log(`Feedback request email already scheduled for user ${userId}, skipping duplicate`);
+     
       return { success: true, scheduledEmailId: existingScheduledEmail.id };
     }
 
@@ -47,7 +47,7 @@ export async function scheduleFeedbackRequestEmail(userId: number) {
       return { success: false, error: result.error };
     }
 
-    console.log(`Feedback request email scheduled for user ${userId} in 7 days`);
+   
     return { success: true, scheduledEmailId: result.scheduledEmailId };
   } catch (error) {
     console.error('Error scheduling feedback request email:', error);

@@ -45,7 +45,9 @@ export default function ResetPasswordRequestPage() {
       });
 
       const data = await response.json();
-      console.log('API Response:', data);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('API Response:', data);
+      }
 
       if (response.ok) {
         setIsEmailSent(true);
@@ -53,7 +55,9 @@ export default function ResetPasswordRequestPage() {
         // Extract wait time from error message using regex
         const waitTimeMatch = data.error?.match(/after (\d+) seconds/);
         const waitTimeValue = waitTimeMatch ? parseInt(waitTimeMatch[1], 10) : null;
-        console.log('Extracted wait time:', waitTimeValue);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Extracted wait time:', waitTimeValue);
+        }
         setWaitTime(waitTimeValue);
         setShowAlert(true);
         setWarningAlertTime(Date.now());
@@ -75,13 +79,17 @@ export default function ResetPasswordRequestPage() {
       });
 
       const data = await response.json();
-      console.log('Resend API Response:', data);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Resend API Response:', data);
+      }
 
       if (response.status === 400) {
         // Extract wait time from error message using regex
         const waitTimeMatch = data.error?.match(/after (\d+) seconds/);
         const waitTimeValue = waitTimeMatch ? parseInt(waitTimeMatch[1], 10) : null;
-        console.log('Extracted wait time:', waitTimeValue);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Extracted wait time:', waitTimeValue);
+        }
         setWaitTime(waitTimeValue);
         setShowAlert(true);
         setWarningAlertTime(Date.now());

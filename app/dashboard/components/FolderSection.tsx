@@ -69,8 +69,7 @@ export default function FolderSection({
     }
 
     return () => {
-      console.log('selectedfolder is : ' + selectedFolder);
-
+   
       document.removeEventListener('mousedown', handleClickOutside);
 
       if (scrollableContainer) {
@@ -102,7 +101,6 @@ export default function FolderSection({
       onSelectFolder(undefined);
       setDropdownPosition(null);
     } else {
-      console.log('selecting a dropdown');
       onSelectFolder(folder);
       const rect = (e.target as HTMLElement).getBoundingClientRect();
       setDropdownPosition({

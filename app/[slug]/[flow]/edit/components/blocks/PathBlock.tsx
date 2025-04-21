@@ -60,8 +60,6 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
               });
             })
           );
-        } else {
-          console.log('there would be only one path left');
         }
 
         // Update remaining paths

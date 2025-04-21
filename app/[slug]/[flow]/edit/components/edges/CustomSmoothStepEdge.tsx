@@ -9,6 +9,9 @@ import { usePathsStore } from '../../store/pathsStore';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
 import { BasicEdge } from './BasicEdge';
 
+// Helper function to check if we're in non-production environment
+const isNonProduction = () => process.env.NODE_ENV !== 'production';
+
 function CustomSmoothStepEdge({
   id,
   source,
@@ -64,13 +67,19 @@ function CustomSmoothStepEdge({
       // Get all blocks after this position except the last one
       const path = allPaths.find((p) => p.id === data.path.id);
       if (!path) return;
-      console.log('allPaths', allPaths);
+      if (isNonProduction()) {
+        console.log('allPaths', allPaths);
+      }
 
       if (!sourceBlock || !targetBlock) {
-        console.log('sourceBlock or targetBlock is undefined');
+        if (isNonProduction()) {
+          console.log('sourceBlock or targetBlock is undefined');
+        }
         return;
       }
-      console.log('sourceBlock and targetBlock are defined');
+      if (isNonProduction()) {
+        console.log('sourceBlock and targetBlock are defined');
+      }
       const position = Math.ceil(
         (sourceBlock.position + targetBlock.position) / 2
       );

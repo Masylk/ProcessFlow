@@ -1,6 +1,22 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import dynamic from 'next/dynamic';
+import 'tui-image-editor/dist/tui-image-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+
+// Dynamically import the ImageEditor component with no SSR
+const ImageEditor = dynamic(
+  () => import('@toast-ui/react-image-editor'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center w-full h-full bg-gray-100/50">
+        <div className="text-lg">Loading editor...</div>
+      </div>
+    )
+  }
+);
 
 interface ImageEditorProps {
   imageUrl: string;
@@ -8,41 +24,40 @@ interface ImageEditorProps {
   onSave: (editedImageUrl: string) => void;
 }
 
-declare global {
-  interface Window {
-    tui: {
-      ImageEditor: new (
-        container: HTMLElement,
-        options: any
-      ) => {
-        destroy(): void;
-        getImageData(): {
-          url: string;
-        };
-      };
-    };
-  }
-}
-
-export default function ImageEditor({
+export default function ImageEditorModal({
   imageUrl,
   onClose,
   onSave,
 }: ImageEditorProps) {
   const colors = useColors();
   const editorRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
 
   // Add effect to prevent body scrolling when editor is open
   useEffect(() => {
-    // Store the original overflow style
     const originalStyle = window.getComputedStyle(document.body).overflow;
-    // Prevent scrolling on the body
     document.body.style.overflow = 'hidden';
-
-    // Restore original overflow style when component unmounts
     return () => {
       document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
+  // Effect to handle editor initialization
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (editorRef.current?.getInstance()) {
+        try {
+          editorRef.current.getInstance().destroy();
+        } catch (err) {
+          console.error('Error destroying editor:', err);
+        }
+      }
     };
   }, []);
 
@@ -67,43 +82,19 @@ export default function ImageEditor({
     }
   };
 
-  useEffect(() => {
-    if (containerRef.current && window.tui) {
-      const options = {
-        includeUI: {
-          loadImage: {
-            path: imageUrl,
-            name: 'Image',
-          },
-          theme: {
-            'common.backgroundColor': colors['bg-primary'],
-            'common.border': `1px solid ${colors['border-primary']}`,
-            'common.color': colors['text-primary'],
-          },
-          menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
-          initMenu: 'filter',
-          menuBarPosition: 'bottom',
-          uiSize: {
-            width: '100%',
-            height: '100%',
-          },
-        },
-        cssMaxWidth: 1000,
-        cssMaxHeight: 700,
-      };
-
-      editorRef.current = new window.tui.ImageEditor(
-        containerRef.current,
-        options
-      );
-    }
-
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
+  const handleSave = async () => {
+    if (editorRef.current?.getInstance()) {
+      try {
+        const instance = editorRef.current.getInstance();
+        const dataUrl = instance.toDataURL();
+        const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
+        await uploadFile(imageFile);
+        onClose();
+      } catch (err) {
+        console.error('Error saving image:', err);
       }
-    };
-  }, [imageUrl, colors]);
+    }
+  };
 
   const dataURLtoFile = (dataurl: string, filename: string): File => {
     const arr = dataurl.split(',');
@@ -117,15 +108,6 @@ export default function ImageEditor({
     }
 
     return new File([u8arr], filename, { type: mime });
-  };
-
-  const handleSave = async () => {
-    if (editorRef.current) {
-      const dataUrl = editorRef.current.toDataURL();
-      const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
-      await uploadFile(imageFile);
-      onClose();
-    }
   };
 
   return (
@@ -156,11 +138,37 @@ export default function ImageEditor({
         </div>
 
         {/* Editor Container */}
-        <div
-          ref={containerRef}
-          className="flex-1 rounded-lg overflow-hidden"
-          style={{ minHeight: '500px' }}
-        />
+        <div className="flex-1 rounded-lg overflow-hidden">
+          {isReady && (
+            <ImageEditor
+              ref={editorRef}
+              includeUI={{
+                loadImage: {
+                  path: imageUrl,
+                  name: 'Image',
+                },
+                theme: {
+                  'common.backgroundColor': colors['bg-primary'],
+                  'common.border': `1px solid ${colors['border-primary']}`,
+                  'common.color': colors['text-primary'],
+                },
+                menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
+                initMenu: 'filter',
+                menuBarPosition: 'bottom',
+                uiSize: {
+                  width: '100%',
+                  height: '100%',
+                },
+              }}
+              cssMaxHeight={700}
+              cssMaxWidth={1000}
+              selectionStyle={{
+                cornerSize: 20,
+                rotatingPointOffset: 70,
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
