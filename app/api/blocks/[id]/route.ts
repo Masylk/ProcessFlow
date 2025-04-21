@@ -102,7 +102,7 @@ export async function PATCH(req: NextRequest) {
       step_details,
     } = await req.json();
 
-    console.log('description', description);
+    
     const existingBlock = await prisma.block.findUnique({
       where: { id: block_id },
       select: { 
@@ -139,8 +139,6 @@ export async function PATCH(req: NextRequest) {
 
         if (error) {
           console.error(`Failed to delete file: ${fileUrl}`, error);
-        } else {
-          console.log(`File deleted successfully: ${fileUrl}`);
         }
       }
     };
@@ -149,7 +147,6 @@ export async function PATCH(req: NextRequest) {
     if (existingImageUrl && 
         existingImageUrl !== image && 
         existingImageUrl !== original_image) {
-      console.log('deleting image', existingImageUrl);
       await deleteFile(existingImageUrl);
     }
 

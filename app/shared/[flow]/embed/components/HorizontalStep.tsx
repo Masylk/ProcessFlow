@@ -54,6 +54,14 @@ export default function HorizontalStep({
     return null;
   }
 
+  // Reset scroll position when block changes
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+      setScrollTop(0);
+    }
+  }, [block.id]); // Use block.id to ensure we only reset on actual block changes
+
   // Update window size
   useEffect(() => {
     const updateWindowDimensions = () => {

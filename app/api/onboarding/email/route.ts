@@ -39,7 +39,7 @@ async function scheduleOnboardingFollowUpEmail(userId: number): Promise<EmailSch
       return { success: false, error: result.error };
     }
     
-    console.log(`Follow-up email scheduled for user ${userId}`);
+   
     return { success: true };
   } catch (error) {
     console.error('Error scheduling follow-up email:', error);
@@ -65,7 +65,7 @@ async function scheduleEmail(
     // that a cron job would pick up and process
     
     // For now, we'll just simulate success
-    console.log(`Email of type ${emailType} scheduled for user ${userId} at ${scheduledDate}`);
+    
     
     return { success: true };
   } catch (error) {
@@ -107,7 +107,7 @@ async function sendWelcomeEmailToUser(email: string, firstName: string): Promise
       return { success: false, error: result.error };
     }
 
-    console.log(`Welcome email sent to ${email}`);
+  
     return { success: true };
   } catch (error) {
     console.error('Error sending welcome email:', error);

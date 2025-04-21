@@ -313,7 +313,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
       /> */}
       {/* Modal - keep high z-index */}
       <div
-        className="fixed bottom-8 right-8 w-[600px] rounded-xl shadow-lg z-50 border"
+        className="fixed bottom-20 right-8 w-[600px] rounded-xl shadow-lg z-50 border"
         style={{
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-secondary'],

@@ -41,7 +41,6 @@ export default function UserSettings({
     if (error) {
       console.error('Error logging out:', error.message);
     } else {
-      console.log('Successfully logged out');
       window.location.href = '/login';
     }
   };
@@ -94,12 +93,14 @@ export default function UserSettings({
       setPreviewUrl(objectUrl);
 
       // Log file details
-      console.log('Selected file:', {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Selected file:', {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+        });
+      }
     }
     // Reset the input value to allow selecting the same file again
     event.target.value = '';
@@ -189,7 +190,6 @@ export default function UserSettings({
         if (onUserUpdate) {
           onUserUpdate(updatedUser);
         }
-        console.log('User updated successfully');
       } else {
         console.error('Failed to update user information');
       }

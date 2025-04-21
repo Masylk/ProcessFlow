@@ -56,7 +56,6 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
         // Redirect to login if not authenticated and not on public/share path
         if ((!user || error) && !isPublicPath && !isSharePath) {
-          console.log('Redirecting to login: ', pathname);
           router.push('/login');
           return;
         }

@@ -213,7 +213,9 @@ export default function SharedPage({
         );
         const pathsData = await response.json();
 
-        console.log('pathsData', pathsData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('pathsData', pathsData);
+        }
         if (pathsData.paths) {
           const newPaths = [...pathsData.paths];
 
@@ -418,7 +420,9 @@ export default function SharedPage({
                 .find((b) => b.id === pair.originalId);
 
               if (originalBlock?.child_paths) {
-                console.log('originalBlock', originalBlock);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.log('originalBlock', originalBlock);
+                }
                 pair.copies.forEach((copyBlock) => {
                   const existingPathIds = new Set(
                     copyBlock.child_paths?.map((cp) => cp.path_id) || []
@@ -565,10 +569,14 @@ export default function SharedPage({
     };
 
     if (sourceBlockId < 0) {
-      console.log('sourceBlockId', sourceBlockId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('sourceBlockId', sourceBlockId);
+      }
     }
     if (block.id === sourceBlockId) {
-      console.log('pushing the copy ofsourceBlockId', sourceBlockId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('pushing the copy ofsourceBlockId', sourceBlockId);
+      }
       const pair = sourceBlockPairs.find((p) => p.originalId === sourceBlockId);
       if (pair) {
         pair.copies.push(newBlock);
@@ -641,7 +649,7 @@ export default function SharedPage({
         }
 
         const workflowData = await workflowResponse.json();
-        console.log('workflowData', workflowData);
+       
         setWorkflowData(workflowData);
 
         // Create breadcrumbs from workflow data

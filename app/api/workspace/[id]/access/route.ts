@@ -12,7 +12,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const authId = searchParams.get('userId'); // This is actually the auth_id
-    console.log('authId', authId);
+   
 
     if (!authId) {
       return new NextResponse(null, { status: 400 });
@@ -26,7 +26,7 @@ export async function GET(
     });
 
     if (!user) {
-      console.log('User not found with auth_id:', authId);
+     
       return new NextResponse(null, { status: 404 });
     }
 
@@ -42,11 +42,11 @@ export async function GET(
     });
 
     if (!userWorkspace) {
-      console.log('No workspace access for user:', user.id);
+    
       return new NextResponse(null, { status: 403 });
     }
 
-    console.log('userWorkspace query result:', userWorkspace);
+  
     return NextResponse.json(userWorkspace);
   } catch (error) {
     console.error('Error checking workspace access:', error);

@@ -300,7 +300,9 @@ export async function POST(req: Request) {
             if (activeUsers.length > 0) {
               // Send the subscription activated email to each active user
               for (const user of activeUsers) {
-                console.log(`Sending subscription activated email to user ${user.id} (${user.email})`);
+                if (process.env.NODE_ENV !== 'production') {
+                  console.log(`Sending subscription activated email to user ${user.id} (${user.email})`);
+                }
                 
                 try {
                   const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/subscription-activated`, {
@@ -316,17 +318,17 @@ export async function POST(req: Request) {
                   
                   if (!response.ok) {
                     console.error(`Failed to send subscription activated email to ${user.email}:`, await response.text());
-                  } else {
+                  } else if (process.env.NODE_ENV !== 'production') {
                     console.log(`Successfully sent subscription activated email to ${user.email}`);
                   }
                 } catch (error) {
                   console.error(`Error sending subscription activated email to ${user.email}:`, error);
                 }
               }
-            } else {
+            } else if (process.env.NODE_ENV !== 'production') {
               console.log(`No active users found for workspace ${workspace.id}`);
             }
-          } else {
+          } else if (process.env.NODE_ENV !== 'production') {
             console.log(`No workspace found for Stripe customer ${subscription.customer}`);
           }
         }

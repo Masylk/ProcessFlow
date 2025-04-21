@@ -85,7 +85,7 @@ export async function sendEmail({ to, subject, emailHtml, sender = 'noreply', fr
       disableUrlAccess: false,
     });
 
-    console.log(`Email sent: ${info.messageId}`);
+
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending email:', error);
@@ -151,8 +151,7 @@ export async function sendReactEmail<T extends object>({
     // Render the React component to HTML
     const emailHtml = await render(React.createElement(Component, enhancedProps as unknown as T));
     
-    // Log a sample of the rendered HTML for debugging
-    console.log('Rendered email HTML sample:', emailHtml.substring(0, 200) + '...');
+   
     
     // Send the email
     return sendEmail({ to, subject, emailHtml, sender, from });

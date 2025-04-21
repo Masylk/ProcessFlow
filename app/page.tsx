@@ -454,10 +454,6 @@ export default function Page() {
           (workflow) => workflow.id !== workflowId
         ),
       });
-
-      console.log('Workflow deleted and state updated');
-    } else {
-      console.log('Failed to delete workflow');
     }
   };
 
@@ -612,7 +608,6 @@ export default function Page() {
   };
 
   const handleSelectWorkflow = (workflow: Workflow | null) => {
-    if (workflow) console.log('select workflow: ' + workflow?.name);
     setSelectedWorkflow(workflow);
   };
 
@@ -626,7 +621,6 @@ export default function Page() {
     if (error) {
       console.error('Error logging out:', error.message);
     } else {
-      console.log('Successfully logged out');
       window.location.href = '/login';
     }
   };
@@ -795,7 +789,7 @@ export default function Page() {
       // Create new URL with workspace slug and preserve existing search params
       const newUrl = `/${activeWorkspace.slug}${currentSearchParams.toString() ? '?' + currentSearchParams.toString() : ''}`;
 
-      console.log('newUrl: ' + newUrl);
+
       // Update URL to the workspace slug without refreshing the page
       window.history.replaceState({}, '', newUrl);
     }
@@ -1168,7 +1162,6 @@ export default function Page() {
   useEffect(() => {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
-        console.log('getting avatar url : ' + user.avatar_url);
         user.avatar_signed_url = user.avatar_url;
       }
     };

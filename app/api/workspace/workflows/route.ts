@@ -271,22 +271,26 @@ export async function POST(req: NextRequest) {
     }
 
     // Log workspace details for debugging
-    console.log('Workspace details:', {
-      id: workspace.id,
-      subscription: workspace.subscription,
-      workflowCount: workspace.workflows.length,
-      isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Workspace details:', {
+        id: workspace.id,
+        subscription: workspace.subscription,
+        workflowCount: workspace.workflows.length,
+        isFreePlan: !workspace.subscription || workspace.subscription.plan_type === 'FREE',
+      });
+    }
 
     // Check if workspace is on free plan and has reached the limit
     const isFreePlan = !workspace.subscription || workspace.subscription.plan_type === 'FREE';
     const hasReachedLimit = workspace.workflows.length >= 5;
 
     if (isFreePlan && hasReachedLimit) {
-      console.log('Blocking workflow creation: Free plan limit reached', {
-        isFreePlan,
-        workflowCount: workspace.workflows.length,
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Blocking workflow creation: Free plan limit reached', {
+          isFreePlan,
+          workflowCount: workspace.workflows.length,
+        });
+      }
       return NextResponse.json(
         {
           error: 'Free plan is limited to 5 workflows',
@@ -298,7 +302,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log('Creating workflow with author_id:', author_id, typeof author_id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Creating workflow with author_id:', author_id, typeof author_id);
+    }
     // Create the workflow with cleaned name
     const workflow = await prisma.workflow.create({
       data: {

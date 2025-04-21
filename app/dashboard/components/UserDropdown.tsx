@@ -6,6 +6,13 @@ import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
 import { useColors } from '@/app/theme/hooks';
 
+// Helper function for environment-based logging
+const devLog = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(...args);
+  }
+};
+
 interface UserDropdownProps {
   user: User | null;
   onOpenUserSettings: () => void;
@@ -28,7 +35,7 @@ export default function UserDropdown({
     if (error) {
       console.error('Error logging out:', error.message);
     } else {
-      console.log('Successfully logged out');
+      devLog('Successfully logged out');
       window.location.href = '/login';
     }
   };
@@ -37,11 +44,11 @@ export default function UserDropdown({
     try {
       // Get authenticated user
       const { data: { user: authUser }, error } = await supabase.auth.getUser();
-      console.log('Authenticated user:', authUser);
-      console.log('User prop:', user);
+      devLog('Authenticated user:', authUser);
+      devLog('User prop:', user);
 
       if (authUser && user) {
-        console.log('User data being sent to roadmap:', {
+        devLog('User data being sent to roadmap:', {
           email: user.email,
           id: user.id,
           first_name: user.first_name,

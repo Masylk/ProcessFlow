@@ -54,7 +54,6 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
 
   // Check if there are blocks after the specified position
   const hasBlocksAfterPosition = (position: number) => {
-    console.log('check path blocks', path.blocks);
     return path.blocks.some(
       (block) =>
         block.position > position ||

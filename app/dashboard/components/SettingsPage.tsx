@@ -45,10 +45,7 @@ export default function SettingsPage({
     initialTab && tabs.includes(initialTab) ? initialTab : defaultTab
   );
   
-  // Log and ensure activeTab is set to a valid value on mount
-  useEffect(() => {
-    console.log('SettingsPage mounting with initialTab:', initialTab, 'activeTab:', activeTab);
-  }, []);
+ 
 
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'

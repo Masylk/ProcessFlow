@@ -23,11 +23,15 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         capture_pageview: false,
       });
     } else if (isCheckoutPath) {
-      console.log('PostHog disabled for checkout flow to prevent conflicts');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('PostHog disabled for checkout flow to prevent conflicts');
+      }
     } else {
-      console.warn(
-        'PostHog is not initialized due to missing environment variables.'
-      );
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(
+          'PostHog is not initialized due to missing environment variables.'
+        );
+      }
     }
   }, [isCheckoutPath]);
 

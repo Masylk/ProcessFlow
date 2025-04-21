@@ -82,7 +82,9 @@ export default function SignupPage() {
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     
-    console.log("Starting signup process");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Starting signup process");
+    }
     
     // Clear any existing notifications first
     setShowEmailNotification(false);
@@ -108,18 +110,24 @@ export default function SignupPage() {
     // Validate password
     if (password.length < 8) {
       setPasswordError("Password must be at least 8 characters");
-      console.log("Password too short, signup blocked");
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Password too short, signup blocked");
+      }
       return;
     }
 
     // Final check for email existence before signup
-    console.log("Performing final email check before signup");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Performing final email check before signup");
+    }
     setIsLoading(true);
     try {
       const emailCheck = await checkEmailExists(email);
       
       if (emailCheck.error) {
-        console.error("Error checking email before signup:", emailCheck.error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error("Error checking email before signup:", emailCheck.error);
+        }
         // Continue with signup attempt even if check fails
       } else if (emailCheck.exists) {
         setEmailError("This email is already registered. Please use a different email or try logging in.");
@@ -134,14 +142,20 @@ export default function SignupPage() {
         formData.append('email', email);
         formData.append('password', password);
         
-        console.log("Submitting signup request with email:", email);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Submitting signup request with email:", email);
+        }
         const newUser = await signup(formData);
-        console.log("Signup response:", newUser);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Signup response:", newUser);
+        }
         setIsLoading(false);
         
         // Check if there's an error
         if ('error' in newUser) {
-          console.error('Signup error detected:', newUser.error);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Signup error detected:', newUser.error);
+          }
           
           if (typeof newUser.error === 'string') {
             if (newUser.error.includes("already exists") || 
@@ -165,7 +179,9 @@ export default function SignupPage() {
 
         // Explicit check to ensure we don't proceed if there was an error
         if (globalError || emailError) {
-          console.log("Preventing notification due to errors:", { globalError, emailError });
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("Preventing notification due to errors:", { globalError, emailError });
+          }
           return;
         }
 
@@ -189,14 +205,18 @@ export default function SignupPage() {
             // Redirect to login page with email confirmation
             router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
           } catch (error) {
-            console.error('Error during analytics tracking:', error);
+            if (process.env.NODE_ENV !== 'production') {
+              console.error('Error during analytics tracking:', error);
+            }
             // Still redirect even if analytics fails
             router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
           }
         }
       }
     } catch (error) {
-      console.error('Unexpected error during signup:', error);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Unexpected error during signup:', error);
+      }
       setIsLoading(false);
       setGlobalError("An unexpected error occurred. Please try again later.");
     }
@@ -244,12 +264,18 @@ export default function SignupPage() {
       });
 
       if (error) {
-        console.error('Erreur authentification Google:', error.message);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Erreur authentification Google:', error.message);
+        }
       } else {
-        console.log('Redirection OAuth initiée:', data);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Redirection OAuth initiée:', data);
+        }
       }
     } catch (error) {
-      console.error('Erreur inattendue:', error);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Erreur inattendue:', error);
+      }
     }
   };
 
