@@ -197,6 +197,7 @@ export default function Page() {
       }
 
       if (Array.isArray(data)) {
+        console.log('WOrkspaces data', data);
         setWorkspaces(data);
         // sessionStorage.setItem(
         //   cacheKey,
@@ -535,6 +536,13 @@ export default function Page() {
         `/api/workspace/folders/${selectedFolder.id}`,
         {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            parent_id: selectedFolder.parent_id,
+            workspace_id: selectedFolder.workspace_id,
+          }),
         }
       );
 
@@ -789,7 +797,6 @@ export default function Page() {
       // Create new URL with workspace slug and preserve existing search params
       const newUrl = `/${activeWorkspace.slug}${currentSearchParams.toString() ? '?' + currentSearchParams.toString() : ''}`;
 
-
       // Update URL to the workspace slug without refreshing the page
       window.history.replaceState({}, '', newUrl);
     }
@@ -1024,6 +1031,7 @@ export default function Page() {
           team_tags: [],
           icon_url,
           emote,
+          position: activeWorkspace.folders.length,
         }),
       });
 
@@ -1068,6 +1076,7 @@ export default function Page() {
           team_tags: [],
           icon_url,
           emote,
+          position: activeWorkspace.folders.length,
         }),
       });
 

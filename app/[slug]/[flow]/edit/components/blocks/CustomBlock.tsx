@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   Handle,
   Position,
@@ -201,7 +207,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
       const updatedBlock = await response.json();
 
-
       // Preserve existing image if not explicitly updated
       setBlockData((prev) => ({
         ...prev,
@@ -331,7 +336,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
   // Condition for showing merge-related UI
   const canShowMergeUI =
-    isLastStepInPath &&
     parentHasMultipleChildPaths &&
     !data.pathHasChildren &&
     (parentBlockId === null || pathParentBlockId === parentBlockId);
@@ -677,7 +681,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     const blockId = id.replace('block-', '');
     setEditMode(true, blockId);
 
-
     // Zoom to node
     zoomToNode();
   };
@@ -994,7 +997,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
           {/* Image with signed URL */}
           {signedImageUrl && (
-            <div 
+            <div
               className="rounded-md overflow-hidden h-[267px] w-full"
               style={{ backgroundColor: colors['bg-secondary'] }}
             >
