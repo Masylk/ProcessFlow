@@ -1099,7 +1099,8 @@ export default function ReadPageClient() {
                               .filter(
                                 (block) =>
                                   block.type !== 'BEGIN' &&
-                                  block.type !== 'LAST'
+                                  block.type !== 'LAST' &&
+                                  block.type !== 'END'
                               )
                               .map((block, index, filteredBlocks) => {
                                 return (

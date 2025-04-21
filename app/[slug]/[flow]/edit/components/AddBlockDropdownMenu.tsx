@@ -299,7 +299,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
                         <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clipboard-paste.svg`}
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/copy-icon.svg`}
                           alt="Paste"
                           className="w-4 h-4"
                         />

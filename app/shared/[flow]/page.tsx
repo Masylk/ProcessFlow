@@ -1078,7 +1078,8 @@ export default function SharedPage({
                               .filter(
                                 (block) =>
                                   block.type !== 'BEGIN' &&
-                                  block.type !== 'LAST'
+                                  block.type !== 'LAST' &&
+                                  block.type !== 'END'
                               )
                               .map((block, index, filteredBlocks) => {
                                 return (
