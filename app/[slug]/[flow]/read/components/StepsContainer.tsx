@@ -28,10 +28,42 @@ export default function StepsContainer({
 
   // Helper function to get icon path for a block
   const getIconPath = (block: any) => {
+    if (block.type === 'DELAY') {
+      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+        block.delay_type === 'WAIT_FOR_EVENT'
+          ? 'calendar-clock-1.svg'
+          : 'clock-stopwatch-1.svg'
+      }`;
+    }
     if (block.icon) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
     }
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+  };
+
+  // Helper function to format duration
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds) return 'Not set';
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+
+    return parts.length > 0 ? parts.join(' ') : '0m';
+  };
+
+  // Helper function to get block display text
+  const getBlockDisplayText = (block: any) => {
+    if (block.type === 'DELAY') {
+      return block.delay_type === 'WAIT_FOR_EVENT'
+        ? `Wait for Event: ${block.delay_event || 'Not set'}`
+        : `Duration Delay: ${formatDuration(block.delay_seconds)}`;
+    }
+    return block.title || block.step_details || `Block ${block.id}`;
   };
 
   return (
@@ -92,7 +124,7 @@ export default function StepsContainer({
               '--hover-bg': colors['bg-secondary'],
             } as React.CSSProperties}
             role="link"
-            aria-label={`Navigate to ${block.title || block.step_details} section`}
+            aria-label={`Navigate to ${getBlockDisplayText(block)} section`}
           >
             <img
               src={getIconPath(block)}
@@ -113,9 +145,7 @@ export default function StepsContainer({
                   : colors['text-secondary'],
               }}
             >
-              {block.title ||
-                block.step_details ||
-                `Block`}
+              {getBlockDisplayText(block)}
             </span>
           </button>
         ))}

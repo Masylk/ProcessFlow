@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, use } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useColors } from '@/app/theme/hooks';
+import { useColors, useTheme } from '@/app/theme/hooks';
 import ProcessCard from './components/ProcessCard';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,7 @@ export default function SharePage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { currentTheme, setTheme } = useTheme();
   const colors = useColors();
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [selectedOptions, setSelectedOptions] = useState<[number, number][]>(
@@ -357,6 +358,25 @@ export default function SharePage({
     setCopyPaths(paths);
   }, [paths]);
 
+  // Initialize theme from URL
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const urlTheme = url.searchParams.get('theme') as 'light' | 'dark';
+    if (urlTheme && ['light', 'dark'].includes(urlTheme)) {
+      setTheme(urlTheme);
+    }
+  }, [setTheme]);
+
+  const toggleEmbedTheme = () => {
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set('theme', newTheme);
+    window.history.replaceState({}, '', url.toString());
+  };
+
   const handleOptionSelect = (optionId: number, blockId: number) => {
     if (
       selectedOptions.some(
@@ -552,6 +572,13 @@ export default function SharePage({
       }
     : null;
 
+  // Update openEmbedLink to use embedTheme
+  const openEmbedLink = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('theme', currentTheme);
+    window.open(url.toString(), '_blank');
+  };
+
   // Return null while checking public status
   if (!workflowData) {
     return null;
@@ -559,7 +586,7 @@ export default function SharePage({
 
   return (
     <div
-      className="h-[100vh] w-[100vw]"
+      className="h-[100vh] w-[100vw] transition-colors duration-200"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
       <div className="h-full flex items-center justify-center">
@@ -682,16 +709,29 @@ export default function SharePage({
                   />
                 </button>
               </div>
-              <button
-                className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
-                onClick={() => window.open(window.location.href, '_blank')}
-              >
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
-                  alt="External Link"
-                  className="w-[14.5px] h-[14.5px]"
-                />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                  onClick={toggleEmbedTheme}
+                  title={`Switch to ${currentTheme === 'light' ? 'dark' : 'light'} theme`}
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'moon' : 'sun'}.svg`}
+                    alt={currentTheme === 'light' ? 'Dark theme' : 'Light theme'}
+                    className="w-[14.5px] h-[14.5px]"
+                  />
+                </button>
+                <button
+                  className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.08)]"
+                  onClick={openEmbedLink}
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
+                    alt="External Link"
+                    className="w-[14.5px] h-[14.5px]"
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

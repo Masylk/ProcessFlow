@@ -1,37 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Alert from '@/app/components/Alert';
+import { toast } from 'sonner';
 
 export default function ResetPasswordRequestPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
-  const [showResendAlert, setShowResendAlert] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [waitTime, setWaitTime] = useState<number | null>(null);
-  const [warningAlertTime, setWarningAlertTime] = useState<number>(0);
-  const [successAlertTime, setSuccessAlertTime] = useState<number>(0);
 
-  // Auto-close alerts after 15 seconds
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    if (showAlert || showResendAlert) {
-      timeoutId = setTimeout(() => {
-        if (showAlert) {
-          setShowAlert(false);
-          setWaitTime(null);
-          setWarningAlertTime(0);
-        }
-        if (showResendAlert) {
-          setShowResendAlert(false);
-          setSuccessAlertTime(0);
-        }
-      }, 15000);
+  const formatWaitTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds} seconds`;
     }
-    return () => clearTimeout(timeoutId);
-  }, [showAlert, showResendAlert]);
+    const minutes = Math.ceil(seconds / 60);
+    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,11 +44,19 @@ export default function ResetPasswordRequestPage() {
           console.log('Extracted wait time:', waitTimeValue);
         }
         setWaitTime(waitTimeValue);
-        setShowAlert(true);
-        setWarningAlertTime(Date.now());
+        toast.error('Password Reset Request Failed', {
+          description: waitTimeValue 
+            ? `Please wait ${formatWaitTime(waitTimeValue)} before requesting another password reset.`
+            : "Please wait a few minutes before requesting another password reset.",
+          duration: 7000,
+        });
       }
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Request Failed', {
+        description: 'An unexpected error occurred. Please try again later.',
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -91,62 +84,31 @@ export default function ResetPasswordRequestPage() {
           console.log('Extracted wait time:', waitTimeValue);
         }
         setWaitTime(waitTimeValue);
-        setShowAlert(true);
-        setWarningAlertTime(Date.now());
+        toast.error('Password Reset Request Failed', {
+          description: waitTimeValue 
+            ? `Please wait ${formatWaitTime(waitTimeValue)} before requesting another password reset.`
+            : "Please wait a few minutes before requesting another password reset.",
+          duration: 7000,
+        });
       } else if (response.ok) {
-        setShowResendAlert(true);
-        setSuccessAlertTime(Date.now());
+        toast.success('Email Sent', {
+          description: 'A new password reset email has been sent to your inbox.',
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Resend Error:', error);
+      toast.error('Request Failed', {
+        description: 'An unexpected error occurred. Please try again later.',
+        duration: 5000,
+      });
     } finally {
       setIsResending(false);
     }
   };
 
-  const formatWaitTime = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds} seconds`;
-    }
-    const minutes = Math.ceil(seconds / 60);
-    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
-  };
-
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex items-center justify-center p-4">
-      {showAlert && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2">
-          <Alert
-            variant="warning"
-            title="Password Reset Request"
-            message={waitTime 
-              ? `Please wait ${formatWaitTime(waitTime)} before requesting another password reset.`
-              : "Please wait a few minutes before requesting another password reset."
-            }
-            onClose={() => {
-              setShowAlert(false);
-              setWaitTime(null);
-              setWarningAlertTime(0);
-            }}
-            zIndex={warningAlertTime}
-          />
-        </div>
-      )}
-      {showResendAlert && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2">
-          <Alert
-            variant="success"
-            title="Email Sent"
-            message="A new password reset email has been sent to your inbox."
-            onClose={() => {
-              setShowResendAlert(false);
-              setSuccessAlertTime(0);
-            }}
-            zIndex={successAlertTime}
-          />
-        </div>
-      )}
-      {/* Outer gray parent container */}
       <div className="w-full max-w-[420px] p-2 sm:p-3 bg-gray-50 rounded-3xl border border-[#e4e7ec] flex flex-col justify-center items-center gap-2">
         {/* Inner white card */}
         <div className="relative w-full px-4 sm:px-6 py-6 sm:py-8 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-4 sm:gap-6 overflow-hidden">

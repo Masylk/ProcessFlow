@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { toast } from 'sonner';
 
 export default function Home() {
   const router = useRouter();
@@ -9,17 +10,22 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
   // Handle form submission: check if passwords match and update password
   const handlePasswordReset = async () => {
     if (!password || !confirmPassword) {
-      setMessage('Please fill in both password fields.');
+      toast.error('Missing Fields', {
+        description: 'Please fill in both password fields.',
+        duration: 5000,
+      });
       return;
     }
     
     if (password !== confirmPassword) {
-      setMessage('Passwords do not match!');
+      toast.error('Password Mismatch', {
+        description: 'Passwords do not match!',
+        duration: 5000,
+      });
       return;
     }
 
@@ -33,7 +39,10 @@ export default function Home() {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        setMessage('Failed to reset password. ' + error.message);
+        toast.error('Password Reset Failed', {
+          description: error.message,
+          duration: 5000,
+        });
       } else {
         // Call the API to clear the cookie
         const res = await fetch('/api/clear-password-reset-cookie', {
@@ -41,14 +50,24 @@ export default function Home() {
         });
 
         if (res.ok) {
+          toast.success('Password Reset Successful', {
+            description: 'Your password has been successfully reset. You will be redirected to the login page.',
+            duration: 7000,
+          });
           // Redirect to home page
           router.push('/');
         } else {
-          setMessage('Password reset succeeded, but failed to clear the cookie.');
+          toast.error('Cookie Cleanup Failed', {
+            description: 'Password reset succeeded, but failed to clear the cookie. You may need to clear your browser cookies manually.',
+            duration: 7000,
+          });
         }
       }
     } catch (error) {
-      setMessage('An unexpected error occurred. Please try again.');
+      toast.error('Password Reset Failed', {
+        description: 'An unexpected error occurred. Please try again.',
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -174,11 +193,6 @@ export default function Home() {
 
           {/* Password form fields */}
           <div className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
-            {message && (
-              <div className="w-full text-center text-sm text-red-600 font-medium">
-                {message}
-              </div>
-            )}
             <div className="flex flex-col items-start gap-5 w-full">
               {/* New Password field */}
               <div className="flex flex-col items-start gap-1.5 w-full">
