@@ -79,7 +79,7 @@ import { checkFolderName } from '@/app/utils/checkNames';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, workspace_id, team_tags, icon_url, emote } = await req.json();
+    const { name, workspace_id, team_tags, icon_url, emote, position } = await req.json();
 
     // Validate folder name
     const nameError = checkFolderName(name);
@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
         icon_url: icon_url,
         emote: emote,
         parent_id: null,
+        position: position ? Number(position) : 0,
       },
     });
 

@@ -8,6 +8,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import ButtonDestructive from '@/app/components/ButtonDestructive';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
+import { toast } from 'sonner';
 
 interface UserSettingsProps {
   user: User;
@@ -124,20 +125,26 @@ export default function UserSettings({
   const handleChangeEmail = async () => {
     if (newEmail === user.email) return; // Nothing to change.
     if (!validateEmail(newEmail)) {
-      alert('Veuillez entrer une adresse email valide.');
+      toast.error('Invalid Email', {
+        description: 'Please enter a valid email address.',
+        duration: 5000,
+      });
       return;
     }
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     if (error) {
-      console.error("Erreur lors de la mise à jour de l'email:", error.message);
-      alert("Erreur lors de la mise à jour de l'email : " + error.message);
+      console.error("Error updating email:", error.message);
+      toast.error('Failed to Update Email', {
+        description: error.message,
+        duration: 5000,
+      });
       return;
     }
-    alert('Adresse email mise à jour avec succès via Supabase.');
-    // Optionally update the parent component.
-    if (onUserUpdate) {
-      onUserUpdate({ ...user, email: newEmail });
-    }
+    toast.success('Confirmation Email Sent', {
+      description: 'Please check your new email inbox and click the confirmation link to complete the email change.',
+      duration: 7000,
+    });
+    // Note: We don't update the parent component here anymore since the email isn't actually changed yet
   };
 
   // Save changes: upload new avatar (if selected) and update the user record (excluding email).
@@ -336,7 +343,7 @@ export default function UserSettings({
                       className="hidden"
                     />
                     <div
-                      className="w-16 h-16 rounded-full justify-center items-center flex relative group cursor-pointer"
+                      className="w-16 h-16 rounded-full justify-center overflow-hidden items-center flex relative group cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <div

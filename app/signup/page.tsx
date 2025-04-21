@@ -59,7 +59,6 @@ export default function SignupPage() {
       
       if (result.exists) {
         setEmailError("This email is already registered. Please use a different email or try logging in.");
-        setGlobalError("This email is already registered. Please use a different email or try logging in.");
       }
     } catch (error) {
       console.error("Failed to check email:", error);
@@ -131,7 +130,6 @@ export default function SignupPage() {
         // Continue with signup attempt even if check fails
       } else if (emailCheck.exists) {
         setEmailError("This email is already registered. Please use a different email or try logging in.");
-        setGlobalError("This email is already registered. Please use a different email or try logging in.");
         setIsLoading(false);
         return; // Stop here if email exists
       }
@@ -164,14 +162,11 @@ export default function SignupPage() {
                 newUser.error.includes("taken") ||
                 newUser.error.toLowerCase().includes("email already")) {
               setEmailError("This email is already registered. Please use a different email or try logging in.");
-              setGlobalError("This email is already registered. Please use a different email or try logging in.");
             } else {
               setEmailError(newUser.error || "An error occurred during signup. Please try again.");
-              setGlobalError(newUser.error || "An error occurred during signup. Please try again.");
             }
           } else {
             setEmailError("An error occurred during signup. Please try again.");
-            setGlobalError("An error occurred during signup. Please try again.");
           }
           // Don't show email notification on error
           return;
@@ -201,16 +196,15 @@ export default function SignupPage() {
             posthog.capture('signup', {
               email: newUser.email,
             });
-            
-            // Redirect to login page with email confirmation
-            router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
           } catch (error) {
             if (process.env.NODE_ENV !== 'production') {
               console.error('Error during analytics tracking:', error);
             }
-            // Still redirect even if analytics fails
-            router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
+            // Continue with redirect even if analytics fails
           }
+          
+          // Single redirect after analytics (success or fail)
+          router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
         }
       }
     } catch (error) {

@@ -138,11 +138,17 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *                   type: string
  *                   example: "Internal server error"
  */
-export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   const folderId = Number(params.id);
 
   try {
+    // Parse body for parent_id and workspace_id
+    const { parent_id, workspace_id } = await req.json();
+
     // Check if folder exists
     const folder = await prisma.folder.findUnique({
       where: { id: folderId },
@@ -155,6 +161,18 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     // Delete folder
     await prisma.folder.delete({
       where: { id: folderId },
+    });
+
+    // Update positions of siblings with higher position
+    await prisma.folder.updateMany({
+      where: {
+        workspace_id: Number(workspace_id),
+        parent_id: parent_id === null ? null : Number(parent_id),
+        position: { gt: folder.position },
+      },
+      data: {
+        position: { decrement: 1 },
+      },
     });
 
     return NextResponse.json(
