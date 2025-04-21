@@ -258,11 +258,34 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     e.stopPropagation();
     if (!showDropdown) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const newPosition = {
-        x: rect.right - 170, // 144px is dropdown width
-        y: rect.bottom + 4, // 4px offset
-      };
-      setDropdownPosition(newPosition);
+      const dropdownWidth = 170; // px
+      const dropdownHeight = 280; // px, estimate or measure your dropdown height
+      const offset = 4; // px
+
+      let x = rect.right - 30;
+      // Default: show below
+      let y = rect.bottom + offset;
+
+      // Clamp to right edge
+      if (x + dropdownWidth > window.innerWidth - 8) {
+        x = window.innerWidth - dropdownWidth - 8;
+      }
+      // Clamp to left edge
+      if (x < 8) {
+        x = 8;
+      }
+
+      // If not enough space below, flip above
+      if (y + dropdownHeight > window.innerHeight - 8) {
+        // Try to show above the trigger
+        y = rect.top - dropdownHeight / 1.5 - offset;
+        // If still offscreen, clamp to top
+        if (y < 8) y = window.innerHeight - dropdownHeight - 8;
+        // If dropdown is taller than viewport, stick to top
+        if (y < 8) y = 8;
+      }
+
+      setDropdownPosition({ x, y });
     }
     setShowDropdown(!showDropdown);
   };

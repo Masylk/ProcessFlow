@@ -6,14 +6,14 @@ import InputField from '@/app/components/InputFields';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
 
-interface AddChildPathModalProps {
+interface UpdatePathModalProps {
   onClose: () => void;
   onConfirm: (pathNames: string[]) => void;
   existingPathsCount: number;
   existingPaths?: string[];
 }
 
-const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
+const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   onClose,
   onConfirm,
   existingPathsCount = 0,
@@ -141,4 +141,4 @@ const AddChildPathModal: React.FC<AddChildPathModalProps> = ({
   return createPortal(modalContent, document.body);
 };
 
-export default AddChildPathModal;
+export default UpdatePathModal;
