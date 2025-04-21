@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { NodeData } from '../../../types';
-import AddChildPathModal from '../modals/AddChildPathModal';
+import UpdatePathModal from '../modals/UpdatePathModal';
 import { createChildPaths } from '../../utils/createChildPaths';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
@@ -165,7 +165,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
         </div>
 
         {showModal && (
-          <AddChildPathModal
+          <UpdatePathModal
             onClose={() => setShowModal(false)}
             onConfirm={handleCreateChildPaths}
             existingPathsCount={existingPathsCount}

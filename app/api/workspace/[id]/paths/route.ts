@@ -212,21 +212,21 @@ export async function GET(
         }
 
         // Create default STEP block if there are no blocks between BEGIN and end-type block
-        if (blocks.length === 2) { // Only BEGIN and end-type blocks exist
-          needsUpdate = true;
-          const newStepBlock = await prisma.block.create({
-            data: {
-              type: 'STEP',
-              position: 1,
-              icon: '/step-icons/default-icons/container.svg',
-              description: '',
-              workflow: { connect: { id: path.workflow_id } },
-              path: { connect: { id: path.id } },
-              step_details: '',
-            }
-          });
-          blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
-        }
+        // if (blocks.length === 2) { // Only BEGIN and end-type blocks exist
+        //   needsUpdate = true;
+        //   const newStepBlock = await prisma.block.create({
+        //     data: {
+        //       type: 'STEP',
+        //       position: 1,
+        //       icon: '/step-icons/default-icons/container.svg',
+        //       description: '',
+        //       workflow: { connect: { id: path.workflow_id } },
+        //       path: { connect: { id: path.id } },
+        //       step_details: '',
+        //     }
+        //   });
+        //   blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
+        // }
 
         if (needsUpdate) {
           // Update positions for all blocks
@@ -279,19 +279,6 @@ export async function GET(
             type: 'BEGIN',
             position: 0,
             icon: '/step-icons/default-icons/begin.svg',
-            description: '',
-            workflow: { connect: { id: parsedworkflow_id } },
-            path: { connect: { id: newPath.id } },
-            step_details: '',
-          }
-        });
-
-        // Create default block
-        await prisma.block.create({
-          data: {
-            type: 'STEP',
-            position: 1,
-            icon: '/step-icons/default-icons/container.svg',
             description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },

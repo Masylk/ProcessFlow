@@ -257,6 +257,7 @@ export function Flow({
         const edges: Edge[] = [];
 
         processPath(
+          workspaceId,
           firstPath,
           nodes,
           edges,

@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
+import { deleteManyPaths } from '@/app/api/utils/paths/deleteMany';
 
 export async function POST(req: NextRequest) {
   try {
     const { blockIds } = await req.json();
 
-    // Get blocks to handle image deletion
+    // Get blocks to handle image deletion and child_paths
     const blocks = await prisma.block.findMany({
       where: {
         id: {
           in: blockIds
+        }
+      },
+      select: {
+        id: true,
+        type: true,
+        path_id: true,
+        image: true,
+        position: true,
+        child_paths: {
+          select: { path_id: true }
         }
       }
     });
@@ -39,7 +50,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Delete the blocks
+    // Handle PATH blocks: delete their child paths and convert to LAST
+    for (const block of blocks) {
+      if (block.type === 'PATH') {
+        const childPathIds = block.child_paths.map(cp => cp.path_id);
+        if (childPathIds.length > 0) {
+          await deleteManyPaths(childPathIds);
+        }
+        // Convert block to LAST
+        await prisma.block.update({
+          where: { id: block.id },
+          data: { type: 'LAST' }
+        });
+      }
+    }
+
+    // Delete only STEP and DELAY blocks
     await prisma.block.deleteMany({
       where: {
         id: {

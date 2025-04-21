@@ -67,9 +67,6 @@ function CustomSmoothStepEdge({
       // Get all blocks after this position except the last one
       const path = allPaths.find((p) => p.id === data.path.id);
       if (!path) return;
-      if (isNonProduction()) {
-        console.log('allPaths', allPaths);
-      }
 
       if (!sourceBlock || !targetBlock) {
         if (isNonProduction()) {
@@ -83,14 +80,14 @@ function CustomSmoothStepEdge({
       const position = Math.ceil(
         (sourceBlock.position + targetBlock.position) / 2
       );
+      console.log('position', position);
       const blocksToDelete = path.blocks
-        .filter(
-          (b) => b.position >= position && b.position < path.blocks.length - 1
-        )
+        .filter((b) => b.position >= position)
         .map((b) => b.id);
 
       if (blocksToDelete.length === 0) return;
 
+      console.log('blocksToDelete', blocksToDelete);
       const response = await fetch('/api/blocks/delete-multiple', {
         method: 'POST',
         headers: {
@@ -105,22 +102,26 @@ function CustomSmoothStepEdge({
         throw new Error('Failed to delete blocks');
       }
 
+      const pathsResponse = await fetch(
+        `/api/workspace/${data.workspaceId}/paths?workflow_id=${data.path.workflow_id}`
+      );
+      const updatedPathsData = await pathsResponse.json();
       // Update positions of remaining blocks
-      const updatedPaths = allPaths.map((p) => {
-        if (p.id === data.path.id) {
-          const updatedBlocks = p.blocks
-            .filter((b) => !blocksToDelete.includes(b.id))
-            .map((b, index) => ({
-              ...b,
-              position: index,
-            }));
-          return { ...p, blocks: updatedBlocks };
-        }
-        return p;
-      });
+      // const updatedPaths = allPaths.map((p) => {
+      //   if (p.id === data.path.id) {
+      //     const updatedBlocks = p.blocks
+      //       .filter((b) => !blocksToDelete.includes(b.id))
+      //       .map((b, index) => ({
+      //         ...b,
+      //         position: index,
+      //       }));
+      //     return { ...p, blocks: updatedBlocks };
+      //   }
+      //   return p;
+      // });
 
-      setAllPaths(updatedPaths);
-      data.onPathsUpdate?.(updatedPaths);
+      setAllPaths(updatedPathsData.paths);
+      data.onPathsUpdate?.(updatedPathsData.paths);
     } catch (error) {
       console.error('Error deleting blocks:', error);
     }
