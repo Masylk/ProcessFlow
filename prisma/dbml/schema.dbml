@@ -161,7 +161,7 @@ Table workflow {
   workspace_id Int [not null]
   team_tags String[] [not null]
   folder_id Int
-  is_public Boolean [not null, default: false]
+  is_public Boolean [not null, default: true]
   public_access_id String [unique]
   is_template Boolean [not null, default: false]
   status workflow_status [not null, default: 'DRAFT']
