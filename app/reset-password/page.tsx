@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { toast } from 'sonner';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if user has valid reset token on mount
@@ -30,8 +30,19 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!password || !confirmPassword) {
+      toast.error('Missing Fields', {
+        description: 'Please fill in both password fields.',
+        duration: 5000,
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
-      setMessage('Passwords do not match.');
+      toast.error('Password Mismatch', {
+        description: 'Passwords do not match.',
+        duration: 5000,
+      });
       return;
     }
 
@@ -48,9 +59,15 @@ export default function ResetPasswordPage() {
 
       if (error) {
         if (error.message.includes('same')) {
-          setMessage('Your new password must be different from your previous password.');
+          toast.error('Invalid Password', {
+            description: 'Your new password must be different from your previous password.',
+            duration: 5000,
+          });
         } else {
-          setMessage('Failed to reset password. ' + error.message);
+          toast.error('Password Reset Failed', {
+            description: error.message,
+            duration: 5000,
+          });
         }
       } else {
         // Clear any auth session that might have been created
@@ -61,11 +78,20 @@ export default function ResetPasswordPage() {
           method: 'POST',
         });
         
+        // Show success message and redirect
+        toast.success('Password Reset Successful', {
+          description: 'Your password has been successfully reset. You can now log in with your new password.',
+          duration: 7000,
+        });
+        
         // Redirect to login with success message
         router.push('/login?message=password-reset-success');
       }
     } catch (error) {
-      setMessage('An unexpected error occurred. Please try again.');
+      toast.error('Password Reset Failed', {
+        description: 'An unexpected error occurred. Please try again.',
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -191,11 +217,6 @@ export default function ResetPasswordPage() {
 
           {/* Password form fields */}
           <form onSubmit={handleSubmit} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
-            {message && (
-              <div className="w-full text-center text-sm text-red-600 font-medium">
-                {message}
-              </div>
-            )}
             <div className="flex flex-col items-start gap-5 w-full">
               {/* New Password field */}
               <div className="flex flex-col items-start gap-1.5 w-full">

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal';
 import ButtonNormal from './ButtonNormal';
 import InputField from './InputFields';
-import { useColors } from '../theme/hooks';
+import { useColors, useTheme } from '../theme/hooks';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -33,6 +33,8 @@ export default function ShareModal({
   workspaceLogo,
 }: ShareModalProps) {
   const colors = useColors();
+  const { currentTheme, setTheme } = useTheme();
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [activeTab, setActiveTab] = useState('share');
   const [inputValue, setInputValue] = useState('');
   const [selectedPermission, setSelectedPermission] = useState('can view');
@@ -146,12 +148,18 @@ export default function ShareModal({
     }
   };
 
+  const togglePreviewTheme = () => {
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
+  };
+
   const handleCopyEmbedSnippet = () => {
     if (!shareUrl) {
       return;
     }
 
-    navigator.clipboard.writeText(shareUrl + '/embed');
+    const url = new URL(shareUrl + '/embed');
+    url.searchParams.set('theme', currentTheme);
+    navigator.clipboard.writeText(url.toString());
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -778,7 +786,7 @@ export default function ShareModal({
           <div className="w-full">
             <div className="w-full">
               <div
-                className="w-full rounded-lg border overflow-hidden"
+                className="w-full rounded-lg border overflow-hidden transition-colors duration-200"
                 style={{
                   backgroundColor: colors['bg-secondary'],
                   borderColor: colors['border-secondary'],
@@ -849,7 +857,7 @@ export default function ShareModal({
 
                 {/* Footer */}
                 <div
-                  className="flex justify-between items-center px-[17.5px] py-[2.9px] border-t"
+                  className="flex justify-between items-center px-[17.5px] py-[2.9px] border-t transition-colors duration-200"
                   style={{
                     backgroundColor: colors['bg-tertiary'],
                     borderColor: colors['border-secondary'],
@@ -878,16 +886,29 @@ export default function ShareModal({
                       }}
                     />
                   </div>
-                  <button 
-                    className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
-                    onClick={() => window.open('https://process-flow.io', '_blank')}
-                  >
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
-                      alt="External Link"
-                      className="w-[14.5px] h-[14.5px]"
-                    />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                      onClick={togglePreviewTheme}
+                      title={`Switch to ${currentTheme === 'light' ? 'dark' : 'light'} theme`}
+                    >
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'moon' : 'sun'}.svg`}
+                        alt={currentTheme === 'light' ? 'Dark theme' : 'Light theme'}
+                        className="w-[14.5px] h-[14.5px]"
+                      />
+                    </button>
+                    <button
+                      className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                      onClick={handleCopyEmbedSnippet}
+                    >
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
+                        alt="External Link"
+                        className="w-[14.5px] h-[14.5px]"
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

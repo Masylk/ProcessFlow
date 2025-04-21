@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
@@ -8,25 +8,29 @@ import { login } from './actions';
 import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { toast } from 'sonner';
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [emailConfirmationAlert, setEmailConfirmationAlert] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const notificationShown = useRef(false);
 
   // Get URL parameters for signup confirmation
   useEffect(() => {
     const signupEmail = searchParams.get('email');
     const isSignupSuccess = searchParams.get('signup') === 'success';
     
-    if (signupEmail && isSignupSuccess) {
+    if (signupEmail && isSignupSuccess && !notificationShown.current) {
       setEmail(signupEmail); // Pre-fill the email field
+      toast.success('Confirm your email', {
+        description: 'A confirmation email has been sent. Please check your inbox.',
+        duration: 7000,
+      });
+      notificationShown.current = true;
     }
   }, [searchParams]);
 
@@ -38,12 +42,12 @@ function LoginContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(""); // Clear previous errors
-    setEmailConfirmationAlert(""); // Clear previous alerts
-    setEmailError(""); // Clear previous email errors
     
     if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
+      toast.error('Invalid Email', {
+        description: 'Please enter a valid email address',
+        duration: 5000,
+      });
       return;
     }
     
@@ -59,15 +63,21 @@ function LoginContent() {
         
         if (response?.error) {
           console.error('Login error:', response.error);
-          setError(response.error);
+          toast.error('Login Failed', {
+            description: response.error,
+            duration: 5000,
+          });
           return;
         }
 
         if (response?.needsEmailConfirmation) {
-          if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production') {
             console.log('Email needs confirmation:', response.email);
           }
-          setEmailConfirmationAlert(response.message);
+          toast.info('Email Confirmation Required', {
+            description: response.message,
+            duration: 7000,
+          });
           return;
         }
 
@@ -84,7 +94,10 @@ function LoginContent() {
         }
       } catch (err) {
         console.error('Unexpected error during login:', err);
-        setError('An unexpected error occurred. Please try again.');
+        toast.error('Login Failed', {
+          description: 'An unexpected error occurred. Please try again.',
+          duration: 5000,
+        });
       } finally {
         setIsLoading(false);
       }
@@ -150,27 +163,6 @@ function LoginContent() {
 
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex flex-col items-center justify-center py-6 px-4 sm:px-6">
-      {/* Signup success notification */}
-      {searchParams.get('signup') === 'success' && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto bg-blue-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>A confirmation email has been sent. Please check your inbox.</p>
-        </div>
-      )}
-
-      {/* Email confirmation alert */}
-      {emailConfirmationAlert && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto bg-yellow-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>{emailConfirmationAlert}</p>
-        </div>
-      )}
-
-      {/* Error notification */}
-      {error && (
-        <div className="fixed top-4 right-4 left-4 sm:left-auto bg-red-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg z-50">
-          <p>{error}</p>
-        </div>
-      )}
-      
       <div className="w-full max-w-[420px] p-3 bg-gray-50 rounded-3xl border border-[#e4e7ec] flex flex-col justify-center items-center gap-2">
         <div className="relative w-full h-fit px-4 sm:px-6 py-8 sm:py-10 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-6 sm:gap-8 overflow-hidden">
           {/* Corner dots */}
@@ -212,7 +204,7 @@ function LoginContent() {
                 <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Email
                 </label>
-                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${emailError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
+                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
                     alt="Mail Icon"
@@ -226,16 +218,9 @@ function LoginContent() {
                     onChange={(e) => {
                       const newEmail = e.target.value;
                       setEmail(newEmail);
-                      // Clear error if email becomes valid
-                      if (emailError && validateEmail(newEmail)) {
-                        setEmailError('');
-                      }
                     }}
                   />
                 </div>
-                {emailError && (
-                  <span className="text-red-500 text-sm mt-1">{emailError}</span>
-                )}
               </div>
 
               {/* Password field */}

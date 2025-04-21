@@ -224,7 +224,8 @@ export default function WorkflowCard({
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${isStarFilled ? 'star-filled.svg' : 'star-01.svg'}`}
               alt="Star Icon"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+              draggable="false"
             />
           </div>
 
@@ -240,7 +241,8 @@ export default function WorkflowCard({
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
               alt="Link Icon"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+              draggable="false"
             />
           </div>
 
@@ -259,7 +261,8 @@ export default function WorkflowCard({
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
               alt="Menu"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity"
+              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+              draggable="false"
             />
           </div>
         </div>
@@ -277,6 +280,7 @@ export default function WorkflowCard({
                   url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
                   size={32}
                   color="inherit"
+                  className="select-none"
                 />
               ) : (
                 <img
@@ -285,7 +289,8 @@ export default function WorkflowCard({
                     `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`
                   }
                   alt={`${workspace.name} Icon`}
-                  className="w-8 h-8"
+                  className="w-8 h-8 select-none"
+                  draggable="false"
                 />
               )}
             </div>
@@ -375,7 +380,8 @@ export default function WorkflowCard({
                             <img
                               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
                               alt="Selected"
-                              className="w-4 h-4 opacity-70 ml-auto"
+                              className="w-4 h-4 opacity-70 ml-auto select-none"
+                              draggable="false"
                             />
                           )}
                         </div>
@@ -452,7 +458,8 @@ export default function WorkflowCard({
                       <img
                         src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
                         alt={`${item.label} Icon`}
-                        className="w-4 h-4"
+                        className="w-4 h-4 select-none"
+                        draggable="false"
                       />
                     </div>
                     <div
