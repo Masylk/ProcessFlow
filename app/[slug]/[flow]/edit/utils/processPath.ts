@@ -56,6 +56,7 @@ const sortChildPaths = (childPaths: { path: { id: number } }[], allPaths: Path[]
 
 // Recursive function to process paths into nodes and edges
 export function processPath(
+  workspaceId: string,
   path: Path,
   nodes: Node[],
   edges: Edge[],
@@ -72,7 +73,6 @@ export function processPath(
   hasSiblings: boolean = false,
   longestSiblingPath: number = 0,
 ): void {
-  
   if (visitedPaths.has(path.id.toString())) return; // Avoid infinite loops
   visitedPaths.add(path.id.toString());
 
@@ -161,6 +161,7 @@ export function processPath(
         y: 0
       },
       data: {
+        workspaceId,
         label: block.title || block.step_details || 'Block',
         position: block.position,
         type: block.type,
@@ -197,6 +198,7 @@ export function processPath(
         targetHandle: 'top',
         style: { stroke: '#b1b1b7' },
         data: {
+          workspaceId,
           blocks: path.blocks,
           handleAddBlockOnEdge,
           onPathsUpdate: handlePathsUpdate,
@@ -242,6 +244,7 @@ export function processPath(
       }
       if (fullChildPath) {
         processPath(
+          workspaceId,
           fullChildPath,
           nodes,
           edges,
