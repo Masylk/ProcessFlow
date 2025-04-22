@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useColors } from '@/app/theme/hooks';
 
 const TABS = ['Apps', 'Icons'];
+const BRANDFETCH_TIMEOUT = 10000; // 10 seconds timeout
 
 interface Entity {
   basicUrl: string;
@@ -14,6 +15,7 @@ interface IconSelectorProps {
 
 // Popular brands mapping
 const BRAND_TO_DOMAIN: { [brand: string]: string } = {
+  ProcessFlow: 'process-flow.io',
   Google: 'google.com',
   Facebook: 'facebook.com',
   Twitter: 'twitter.com',
@@ -43,10 +45,11 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('Apps');
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
-  // Add state for Logo.dev preview loading
-  const [logoDevLoading, setLogoDevLoading] = useState(false);
-  const [logoDevLoaded, setLogoDevLoaded] = useState(false);
-  const [logoDevError, setLogoDevError] = useState(false);
+  
+  // Add state for BrandFetch preview loading
+  const [brandFetchLoading, setBrandFetchLoading] = useState(false);
+  const [brandFetchUrl, setBrandFetchUrl] = useState<string | null>(null);
+  const [brandFetchError, setBrandFetchError] = useState(false);
 
   useEffect(() => {
     const fetchIcons = async () => {
@@ -74,6 +77,47 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
 
     fetchIcons();
   }, []);
+
+  // Update effect for BrandFetch search
+  useEffect(() => {
+    const fetchBrandIcon = async () => {
+      if (!searchTerm || applist.some(app => app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase()))) {
+        setBrandFetchUrl(null);
+        return;
+      }
+
+      setBrandFetchLoading(true);
+      setBrandFetchError(false);
+      setBrandFetchUrl(null);
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), BRANDFETCH_TIMEOUT);
+
+        const response = await fetch(`/api/logo-search?q=${encodeURIComponent(searchTerm)}`, {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) throw new Error('Failed to fetch brand icon');
+        const data = await response.json();
+        
+        if (data.icon) {
+          setBrandFetchUrl(data.icon);
+        } else {
+          setBrandFetchError(true);
+        }
+      } catch (error) {
+        setBrandFetchError(true);
+      } finally {
+        setBrandFetchLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchBrandIcon, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, applist]);
 
   return (
     <div 
@@ -199,36 +243,40 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
                   />
                 </button>
               ))}
-            {/* Logo.dev integration in Apps tab */}
+            {/* BrandFetch integration in Apps tab */}
             {searchTerm && applist.filter((app) =>
                 app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
               ).length === 0 && (
                 <button
-                  className="w-10 h-10 rounded-md flex items-center justify-center border-2 border-dashed transition-colors duration-200 relative"
+                  className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
                   style={{
-                    borderColor: colors['border-brand_alt'],
-                    backgroundColor: hoveredButton === 'apps-logo-dev' ? colors['bg-quaternary'] : 'transparent',
+                    backgroundColor: hoveredButton === 'apps-brandfetch' ? colors['bg-quaternary'] : 'transparent',
                   }}
-                  onClick={() => onSelect(`https://img.logo.dev/${searchTerm}?token=pk_GET-5Hu0QUWA8eKBOj8RjQ`)}
-                  onMouseEnter={() => setHoveredButton('apps-logo-dev')}
+                  onClick={() => brandFetchUrl && onSelect(brandFetchUrl)}
+                  onMouseEnter={() => setHoveredButton('apps-brandfetch')}
                   onMouseLeave={() => setHoveredButton(null)}
-                  title={`Logo.dev: ${searchTerm}`}
+                  disabled={!brandFetchUrl || brandFetchError}
                 >
-                  {/* Spinner or image */}
-                  {!logoDevLoaded && (
-                    <svg className="animate-spin w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
+                  {brandFetchLoading && (
+                    <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
                   )}
-                  <img
-                    src={`https://img.logo.dev/${searchTerm}?token=pk_GET-5Hu0QUWA8eKBOj8RjQ`}
-                    alt={`Logo for ${searchTerm}`}
-                    className={`w-6 h-6 object-contain ${logoDevLoaded ? '' : 'hidden'}`}
-                    onLoad={() => { setLogoDevLoaded(true); setLogoDevLoading(false); setLogoDevError(false); }}
-                    onError={() => { setLogoDevLoaded(false); setLogoDevLoading(false); setLogoDevError(true); }}
-                    onLoadStart={() => { setLogoDevLoading(true); setLogoDevLoaded(false); setLogoDevError(false); }}
-                  />
+                  {brandFetchUrl && !brandFetchLoading && (
+                    <img
+                      src={brandFetchUrl}
+                      alt={`Logo for ${searchTerm}`}
+                      className="w-6 h-6 object-contain"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      onError={() => setBrandFetchError(true)}
+                    />
+                  )}
+                  {brandFetchError && !brandFetchLoading && (
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors['text-error'] }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  )}
                 </button>
             )}
           </div>

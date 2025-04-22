@@ -51,9 +51,12 @@ export default function IconModifier({
       >
         {initialIcon ? (
           <img
-            src={initialIcon.startsWith('https://img.logo.dev/') ? initialIcon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
+            src={initialIcon.startsWith('https://cdn.brandfetch.io/') 
+              ? initialIcon 
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
             alt="Selected Icon"
             className="w-6 h-6"
+            referrerPolicy="strict-origin-when-cross-origin"
           />
         ) : emote ? (
           <div className="w-6 h-6 flex items-center justify-center">

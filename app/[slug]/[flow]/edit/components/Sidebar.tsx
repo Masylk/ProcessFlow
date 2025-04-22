@@ -933,7 +933,9 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                             <DynamicIcon
                               url={
                                 block.icon
-                                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
+                                  ? block.icon.startsWith('https://cdn.brandfetch.io/') 
+                                    ? block.icon 
+                                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
                                   : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
                               }
                               size={20}
