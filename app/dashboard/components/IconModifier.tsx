@@ -51,7 +51,7 @@ export default function IconModifier({
       >
         {initialIcon ? (
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
+            src={initialIcon.startsWith('https://img.logo.dev/') ? initialIcon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
             alt="Selected Icon"
             className="w-6 h-6"
           />
@@ -72,7 +72,7 @@ export default function IconModifier({
 
       {/* Backdrop */}
       {showSelector && (
-        <div className="fixed inset-0" style={{ zIndex: 40 }}>
+        <div className="fixed inset-0 z-50">
           <div 
             style={{ backgroundColor: colors['bg-overlay'] }}
             className="absolute inset-0 opacity-70" 
@@ -83,7 +83,7 @@ export default function IconModifier({
 
       {/* Icon Selector */}
       {showSelector && (
-        <div className="absolute top-12 left-0" style={{ zIndex: 50 }}>
+        <div className="absolute top-12 left-0 z-50">
           <IconSelector 
             onSelect={handleIconSelect} 
             allowEmoji={allowEmoji}

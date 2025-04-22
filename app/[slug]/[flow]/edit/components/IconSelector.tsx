@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useColors } from '@/app/theme/hooks';
 
-const TABS = ['Icons', 'Apps'];
+const TABS = ['Apps', 'Icons'];
 
 interface Entity {
   basicUrl: string;
@@ -12,13 +12,41 @@ interface IconSelectorProps {
   onSelect: (icon?: string) => void;
 }
 
+// Popular brands mapping
+const BRAND_TO_DOMAIN: { [brand: string]: string } = {
+  Google: 'google.com',
+  Facebook: 'facebook.com',
+  Twitter: 'twitter.com',
+  Instagram: 'instagram.com',
+  LinkedIn: 'linkedin.com',
+  Microsoft: 'microsoft.com',
+  Apple: 'apple.com',
+  Amazon: 'amazon.com',
+  Netflix: 'netflix.com',
+  Spotify: 'spotify.com',
+  Uber: 'uber.com',
+  Airbnb: 'airbnb.com',
+  Slack: 'slack.com',
+  Dropbox: 'dropbox.com',
+  Zoom: 'zoom.us',
+  Pinterest: 'pinterest.com',
+  Reddit: 'reddit.com',
+  Salesforce: 'salesforce.com',
+  Shopify: 'shopify.com',
+  Adobe: 'adobe.com',
+};
+
 export default function IconSelector({ onSelect }: IconSelectorProps) {
   const colors = useColors();
   const [applist, setAppList] = useState<Entity[]>([]);
   const [iconlist, setIconList] = useState<Entity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('Icons');
+  const [activeTab, setActiveTab] = useState<string>('Apps');
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  // Add state for Logo.dev preview loading
+  const [logoDevLoading, setLogoDevLoading] = useState(false);
+  const [logoDevLoaded, setLogoDevLoaded] = useState(false);
+  const [logoDevError, setLogoDevError] = useState(false);
 
   useEffect(() => {
     const fetchIcons = async () => {
@@ -96,7 +124,7 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
 
       {/* Search Bar */}
       <div 
-        className="self-stretch px-4 py-3 flex items-center gap-2"
+        className="self-stretch px-4 py-3 flex flex-col gap-2"
         style={{ 
           backgroundColor: colors['bg-primary'],
           borderBottomWidth: '1px',
@@ -104,19 +132,39 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
           borderBottomColor: colors['border-primary']
         }}
       >
-        <img
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-lg-icon.svg`}
-          alt="Search icon"
-          className="w-4 h-4"
-        />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search..."
-          className="flex-grow text-sm bg-transparent focus:outline-none placeholder:text-secondary"
-          style={{ color: colors['text-primary'] }}
-        />
+        <div className="flex items-center gap-2">
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-lg-icon.svg`}
+            alt="Search icon"
+            className="w-4 h-4"
+          />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search..."
+            className="flex-grow text-sm bg-transparent focus:outline-none placeholder:text-secondary"
+            style={{ color: colors['text-primary'] }}
+          />
+        </div>
+        {activeTab === 'Apps' && (
+          <div
+            className="flex items-start gap-2 mt-1 px-3 py-2 rounded-md text-xs"
+            style={{
+              backgroundColor: colors['bg-quaternary'],
+              color: colors['text-secondary'],
+              borderLeft: `3px solid ${colors['border-brand_alt']}`,
+            }}
+          >
+            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+            </svg>
+            <span>
+              You can search for any company logo by typing a domain (e.g., <span className="font-semibold">google.com</span>) or brand name. If not found, we'll fetch it.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -151,6 +199,38 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
                   />
                 </button>
               ))}
+            {/* Logo.dev integration in Apps tab */}
+            {searchTerm && applist.filter((app) =>
+                app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <button
+                  className="w-10 h-10 rounded-md flex items-center justify-center border-2 border-dashed transition-colors duration-200 relative"
+                  style={{
+                    borderColor: colors['border-brand_alt'],
+                    backgroundColor: hoveredButton === 'apps-logo-dev' ? colors['bg-quaternary'] : 'transparent',
+                  }}
+                  onClick={() => onSelect(`https://img.logo.dev/${searchTerm}?token=pk_GET-5Hu0QUWA8eKBOj8RjQ`)}
+                  onMouseEnter={() => setHoveredButton('apps-logo-dev')}
+                  onMouseLeave={() => setHoveredButton(null)}
+                  title={`Logo.dev: ${searchTerm}`}
+                >
+                  {/* Spinner or image */}
+                  {!logoDevLoaded && (
+                    <svg className="animate-spin w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  )}
+                  <img
+                    src={`https://img.logo.dev/${searchTerm}?token=pk_GET-5Hu0QUWA8eKBOj8RjQ`}
+                    alt={`Logo for ${searchTerm}`}
+                    className={`w-6 h-6 object-contain ${logoDevLoaded ? '' : 'hidden'}`}
+                    onLoad={() => { setLogoDevLoaded(true); setLogoDevLoading(false); setLogoDevError(false); }}
+                    onError={() => { setLogoDevLoaded(false); setLogoDevLoading(false); setLogoDevError(true); }}
+                    onLoadStart={() => { setLogoDevLoading(true); setLogoDevLoaded(false); setLogoDevError(false); }}
+                  />
+                </button>
+            )}
           </div>
         )}
 

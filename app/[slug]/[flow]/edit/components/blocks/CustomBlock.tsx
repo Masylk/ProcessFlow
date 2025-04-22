@@ -187,6 +187,10 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   // Add the update method to handle all block updates
   const handleBlockUpdate = async (updatedData: Partial<Block>) => {
     try {
+      // Ensure icon reset is explicit
+      if ('icon' in updatedData && updatedData.icon === undefined) {
+        updatedData.icon = null;
+      }
       if (updatedData.image === undefined) {
         updatedData.image = blockData.image;
       }
@@ -206,8 +210,8 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       setBlockData((prev) => ({
         ...prev,
         ...updatedBlock,
-        image:
-          updatedData.image !== undefined ? updatedBlock.image : prev.image,
+        image: updatedData.image !== undefined ? updatedBlock.image : prev.image,
+        icon: updatedData.icon !== undefined ? updatedBlock.icon : prev.icon,
       }));
 
       if (updatedData.title !== undefined) {
@@ -942,13 +946,13 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
               >
                 {blockData.icon ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                    src={blockData.icon.startsWith('https://img.logo.dev/') ? blockData.icon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
                     alt="Block Icon"
                     className="w-6 h-6"
                   />
                 ) : (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
                     alt="Default Icon"
                     className="w-6 h-6"
                   />
