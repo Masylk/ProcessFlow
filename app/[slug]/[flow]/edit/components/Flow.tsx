@@ -617,7 +617,7 @@ export function Flow({
 
   return (
     <div
-      className={`flex-1 w-full h-full relative ${
+      className={`fixed inset-0 flex-1 w-full h-screen overflow-hidden ${
         isEditMode || isConnectMode ? '' : ''
       }`}
       style={{
@@ -641,13 +641,9 @@ export function Flow({
           event.preventDefault();
           event.stopPropagation();
           if (node.data.type !== 'STEP') return;
-          // Extract the block ID from the node ID (remove "block-" prefix)
           const blockId = node.id.replace('block-', '');
-          // Set edit mode to true and update the selected node ID
           setEditMode(true, blockId);
-          // Don't set ReactFlow selection state as CustomBlock handles this differently
 
-          // Find the node and zoom to it
           setViewport(
             {
               x: -(node.position.x - window.innerWidth / 2 + 400),
@@ -658,7 +654,6 @@ export function Flow({
           );
         }}
         onPaneClick={() => {
-          // Only clear edit mode, don't touch ReactFlow selection state
           setEditMode(false, null);
         }}
         fitView={true}
@@ -669,7 +664,7 @@ export function Flow({
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
-        preventScrolling={false}
+        preventScrolling={true}
         proOptions={{ hideAttribution: true }}
         snapToGrid={true}
         snapGrid={[15, 15]}
@@ -681,7 +676,7 @@ export function Flow({
           maxZoom: 1,
           includeHiddenNodes: true,
         }}
-        className={`transition-all duration-300 ${
+        className={`w-full h-full ${
           isConnectMode ? 'connect-mode' : ''
         }`}
         style={{
