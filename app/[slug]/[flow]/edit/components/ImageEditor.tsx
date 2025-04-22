@@ -5,8 +5,35 @@ import dynamic from 'next/dynamic';
 import 'tui-image-editor/dist/tui-image-editor.css';
 import 'tui-color-picker/dist/tui-color-picker.css';
 
+// Error boundary component to catch editor errors
+class ImageEditorErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center w-full h-full">
+          <div className="text-lg">Something went wrong with the editor. Please try again.</div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Dynamically import the ImageEditor component with no SSR
-const ImageEditor = dynamic(
+const TuiImageEditor = dynamic(
   () => import('@toast-ui/react-image-editor'),
   { 
     ssr: false,
@@ -31,35 +58,102 @@ export default function ImageEditorModal({
 }: ImageEditorProps) {
   const colors = useColors();
   const editorRef = useRef<any>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDestroying, setIsDestroying] = useState(false);
+  const instanceRef = useRef<any>(null);
+  const originalOverflowRef = useRef<string>('');
 
-  // Add effect to prevent body scrolling when editor is open
+  // Handle body overflow
   useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    // Store the original overflow value
+    originalOverflowRef.current = window.getComputedStyle(document.body).overflow;
+    // Set overflow to hidden
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalStyle;
+
+    const cleanup = () => {
+      // Use a small delay to ensure proper cleanup
+      setTimeout(() => {
+        document.body.style.overflow = originalOverflowRef.current;
+      }, 0);
     };
+
+    return cleanup;
   }, []);
 
-  // Effect to handle editor initialization
+  // Handle editor initialization and cleanup
   useEffect(() => {
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      setIsReady(true);
+    const checkInstance = () => {
+      try {
+        if (editorRef.current?.getInstance) {
+          const instance = editorRef.current.getInstance();
+          if (instance) {
+            instanceRef.current = instance;
+            setIsLoading(false);
+            return true;
+          }
+        }
+        return false;
+      } catch (err) {
+        console.error('Error getting editor instance:', err);
+        return false;
+      }
+    };
+
+    const initializeInterval = setInterval(() => {
+      if (checkInstance()) {
+        clearInterval(initializeInterval);
+      }
     }, 100);
 
     return () => {
-      clearTimeout(timer);
-      if (editorRef.current?.getInstance()) {
+      clearInterval(initializeInterval);
+      if (instanceRef.current) {
         try {
-          editorRef.current.getInstance().destroy();
-        } catch (err) {
-          console.error('Error destroying editor:', err);
+          const drawingModes = ['CROPPER', 'FREE_DRAWING', 'LINE_DRAWING', 'TEXT', 'SHAPE'];
+          drawingModes.forEach(mode => {
+            try {
+              if (instanceRef.current.getDrawingMode() === mode) {
+                instanceRef.current.stopDrawingMode();
+              }
+            } catch (e) {
+              // Ignore errors during cleanup
+            }
+          });
+        } catch (e) {
+          // Ignore errors during cleanup
         }
+        instanceRef.current = null;
       }
     };
   }, []);
+
+  const handleClose = () => {
+    setIsDestroying(true);
+    onClose();
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!instanceRef.current) {
+        throw new Error('Editor instance not available');
+      }
+
+      const dataUrl = instanceRef.current.toDataURL();
+      if (!dataUrl) {
+        throw new Error('Failed to get image data');
+      }
+
+      const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
+      await uploadFile(imageFile);
+      
+      setIsDestroying(true);
+      onClose();
+    } catch (err) {
+      console.error('Error saving image:', err);
+      setError('Failed to save image');
+    }
+  };
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -79,20 +173,7 @@ export default function ImageEditorModal({
       onSave(data.filePath);
     } catch (error) {
       console.error('Error uploading file:', error);
-    }
-  };
-
-  const handleSave = async () => {
-    if (editorRef.current?.getInstance()) {
-      try {
-        const instance = editorRef.current.getInstance();
-        const dataUrl = instance.toDataURL();
-        const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
-        await uploadFile(imageFile);
-        onClose();
-      } catch (err) {
-        console.error('Error saving image:', err);
-      }
+      setError('Failed to upload file');
     }
   };
 
@@ -111,16 +192,27 @@ export default function ImageEditorModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-hidden"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+    <div 
+      className="fixed inset-0 z-[1000] isolate overflow-hidden"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
     >
       <div
-        className="relative w-[90vw] h-[90vh] rounded-xl p-6 flex flex-col overflow-hidden"
-        style={{ backgroundColor: colors['bg-primary'] }}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 flex flex-col"
+        style={{ 
+          backgroundColor: colors['bg-primary'],
+          width: '90vw',
+          height: '90vh',
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2
             className="text-lg font-semibold"
             style={{ color: colors['text-primary'] }}
@@ -128,45 +220,60 @@ export default function ImageEditorModal({
             Edit Image
           </h2>
           <div className="flex gap-2">
-            <ButtonNormal onClick={onClose} size="small" variant="secondary">
+            <ButtonNormal 
+              onClick={handleClose} 
+              size="small" 
+              variant="secondary"
+              disabled={isLoading || isDestroying}
+            >
               Cancel
             </ButtonNormal>
-            <ButtonNormal onClick={handleSave} size="small" variant="primary">
+            <ButtonNormal 
+              onClick={handleSave} 
+              size="small" 
+              variant="primary"
+              disabled={isLoading || isDestroying || !!error}
+            >
               Save
             </ButtonNormal>
           </div>
         </div>
 
-        {/* Editor Container */}
-        <div className="flex-1 rounded-lg overflow-hidden">
-          {isReady && (
-            <ImageEditor
-              ref={editorRef}
-              includeUI={{
-                loadImage: {
-                  path: imageUrl,
-                  name: 'Image',
-                },
-                theme: {
-                  'common.backgroundColor': colors['bg-primary'],
-                  'common.border': `1px solid ${colors['border-primary']}`,
-                  'common.color': colors['text-primary'],
-                },
-                menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
-                initMenu: 'filter',
-                menuBarPosition: 'bottom',
-                uiSize: {
-                  width: '100%',
-                  height: '100%',
-                },
-              }}
-              cssMaxHeight={700}
-              cssMaxWidth={1000}
-              selectionStyle={{
-                cornerSize: 20,
-                rotatingPointOffset: 70,
-              }}
-            />
+        <div className="flex-1 min-h-0 rounded-lg overflow-hidden">
+          {error ? (
+            <div className="flex items-center justify-center w-full h-full">
+              <div className="text-red-500">{error}</div>
+            </div>
+          ) : (
+            <ImageEditorErrorBoundary>
+              <TuiImageEditor
+                ref={editorRef}
+                includeUI={{
+                  loadImage: {
+                    path: imageUrl,
+                    name: 'Image',
+                  },
+                  theme: {
+                    'common.backgroundColor': colors['bg-primary'],
+                    'common.border': `1px solid ${colors['border-primary']}`,
+                    'common.color': colors['text-primary'],
+                  },
+                  menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
+                  initMenu: 'filter',
+                  menuBarPosition: 'bottom',
+                  uiSize: {
+                    width: '100%',
+                    height: '100%',
+                  },
+                }}
+                cssMaxHeight={700}
+                cssMaxWidth={1000}
+                selectionStyle={{
+                  cornerSize: 20,
+                  rotatingPointOffset: 70,
+                }}
+              />
+            </ImageEditorErrorBoundary>
           )}
         </div>
       </div>
