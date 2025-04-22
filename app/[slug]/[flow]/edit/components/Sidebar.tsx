@@ -61,7 +61,7 @@ const useIsTextTruncated = () => {
       const rect = textRef.current.getBoundingClientRect();
       setTooltipPosition({
         x: rect.right + 8,
-        y: rect.top,  // Align with the top of the element
+        y: rect.top, // Align with the top of the element
       });
       setShowTooltip(true);
     }
@@ -94,6 +94,168 @@ const formatDuration = (seconds?: number): string => {
   if (minutes > 0) parts.push(`${minutes}m`);
 
   return parts.length > 0 ? parts.join(' ') : '0m';
+};
+
+// Add this new component above Sidebar
+interface SidebarBlockRowProps {
+  block: any;
+  isSelected: boolean;
+  onClick: () => void;
+  onMouseOver: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseOut: (e: React.MouseEvent<HTMLDivElement>) => void;
+  level: number;
+  hasChildPaths: boolean;
+  isPathCollapsed: boolean;
+  colors: ReturnType<typeof useColors>;
+  currentTheme: string;
+  path: Path;
+  togglePathVisibility: (pathId: number, event: React.MouseEvent) => void;
+  formatDuration: (seconds?: number) => string;
+}
+
+const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
+  block,
+  isSelected,
+  onClick,
+  onMouseOver,
+  onMouseOut,
+  level,
+  hasChildPaths,
+  isPathCollapsed,
+  colors,
+  currentTheme,
+  path,
+  togglePathVisibility,
+  formatDuration,
+}) => {
+  const {
+    textRef,
+    isTruncated,
+    showTooltip,
+    tooltipPosition,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useIsTextTruncated();
+
+  return (
+    <div
+      key={block.id}
+      className="w-full cursor-pointer transition-all duration-200"
+      style={{
+        backgroundColor: isSelected
+          ? colors['brand-utility-600']
+          : 'transparent',
+      }}
+      onClick={onClick}
+      onMouseOver={onMouseOver}
+      onMouseOut={onMouseOut}
+    >
+      <div
+        className="flex items-center gap-2 h-8 w-full relative"
+        style={{
+          paddingLeft: level > 0 ? '40px' : '16px',
+          paddingRight: '16px',
+        }}
+      >
+        {level > 0 && !hasChildPaths && (
+          <>
+            <div
+              className="absolute left-6 top-0 bottom-0 w-px"
+              style={{
+                backgroundColor: colors['border-secondary'],
+              }}
+            />
+            <div
+              className="absolute left-6 w-4 h-px"
+              style={{
+                backgroundColor: colors['border-secondary'],
+                top: '50%',
+              }}
+            />
+          </>
+        )}
+        {block.type === 'STEP' && (
+          <>
+            {hasChildPaths && (
+              <div
+                className="cursor-pointer"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  togglePathVisibility(path.id, e);
+                }}
+              >
+                <DynamicIcon
+                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                    isPathCollapsed ? 'chevron-right' : 'chevron-down'
+                  }.svg`}
+                  size={16}
+                  variant="tertiary"
+                  className="flex-shrink-0"
+                />
+              </div>
+            )}
+            <DynamicIcon
+              url={
+                block.icon
+                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
+                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+              }
+              size={20}
+              color="inherit"
+              className="flex-shrink-0"
+            />
+          </>
+        )}
+        {block.type === 'DELAY' && (
+          <DynamicIcon
+            url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+              block.delay_type === 'WAIT_FOR_EVENT'
+                ? 'calendar-clock-1.svg'
+                : 'clock-stopwatch-1.svg'
+            }`}
+            size={20}
+            color="inherit"
+            className="flex-shrink-0"
+          />
+        )}
+        <span
+          ref={textRef}
+          className="text-sm whitespace-nowrap overflow-hidden text-ellipsis font-medium flex-1"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            color: isSelected
+              ? currentTheme === 'light'
+                ? colors['text-primary']
+                : colors['text-white']
+              : colors['text-primary'],
+          }}
+        >
+          {block.type === 'DELAY'
+            ? block.delay_type === 'WAIT_FOR_EVENT'
+              ? `Wait for Event: ${block.delay_event || 'Not set'}`
+              : `Duration Delay: ${formatDuration(block.delay_seconds || undefined)}`
+            : block.title || block.step_details || `Block ${block.id}`}
+        </span>
+        {isTruncated && (
+          <div
+            style={{
+              position: 'fixed',
+              left: `${tooltipPosition.x}px`,
+              top: `${tooltipPosition.y}px`,
+              transform: 'none',
+            }}
+            className="pointer-events-none"
+          >
+            <CustomTooltip
+              text={block.title || block.step_details || `Block ${block.id}`}
+              show={showTooltip}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
@@ -790,10 +952,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                       }}
                       className="pointer-events-none"
                     >
-                      <CustomTooltip
-                        text={path.name}
-                        show={showTooltip}
-                      />
+                      <CustomTooltip text={path.name} show={showTooltip} />
                     </div>
                   )}
                 </div>
@@ -854,23 +1013,11 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                   const hasChildPaths =
                     block.child_paths && block.child_paths.length > 0;
 
-                  const {
-                    textRef,
-                    isTruncated,
-                    showTooltip,
-                    tooltipPosition,
-                    handleMouseEnter,
-                    handleMouseLeave,
-                  } = useIsTextTruncated();
                   return (
-                    <div
+                    <SidebarBlockRow
                       key={block.id}
-                      className="w-full cursor-pointer transition-all duration-200"
-                      style={{
-                        backgroundColor: isBlockSelected(block.id)
-                          ? colors['brand-utility-600']
-                          : 'transparent',
-                      }}
+                      block={block}
+                      isSelected={isBlockSelected(block.id)}
                       onClick={() => handleBlockClick(block.id)}
                       onMouseOver={(e) => {
                         if (!isBlockSelected(block.id)) {
@@ -883,114 +1030,15 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }
                       }}
-                    >
-                      <div
-                        className="flex items-center gap-2 h-8 w-full relative"
-                        style={{
-                          paddingLeft: level > 0 ? '40px' : '16px',
-                          paddingRight: '16px',
-                        }}
-                      >
-                        {level > 0 && !hasChildPaths && (
-                          <>
-                            <div
-                              className="absolute left-6 top-0 bottom-0 w-px"
-                              style={{
-                                backgroundColor: colors['border-secondary'],
-                              }}
-                            />
-                            <div
-                              className="absolute left-6 w-4 h-px"
-                              style={{
-                                backgroundColor: colors['border-secondary'],
-                                top: '50%',
-                              }}
-                            />
-                          </>
-                        )}
-                        {block.type === 'STEP' && (
-                          <>
-                            {hasChildPaths && (
-                              <div
-                                className="cursor-pointer"
-                                onClick={(e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  togglePathVisibility(path.id, e);
-                                }}
-                              >
-                                <DynamicIcon
-                                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                                    isPathCollapsed
-                                      ? 'chevron-right'
-                                      : 'chevron-down'
-                                  }.svg`}
-                                  size={16}
-                                  variant="tertiary"
-                                  className="flex-shrink-0"
-                                />
-                              </div>
-                            )}
-                            <DynamicIcon
-                              url={
-                                block.icon
-                                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
-                                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-                              }
-                              size={20}
-                              color="inherit"
-                              className="flex-shrink-0"
-                            />
-                          </>
-                        )}
-                        {block.type === 'DELAY' && (
-                          <DynamicIcon
-                            url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                              block.delay_type === 'WAIT_FOR_EVENT'
-                                ? 'calendar-clock-1.svg'
-                                : 'clock-stopwatch-1.svg'
-                            }`}
-                            size={20}
-                            color="inherit"
-                            className="flex-shrink-0"
-                          />
-                        )}
-                        <span
-                          ref={textRef}
-                          className="text-sm whitespace-nowrap overflow-hidden text-ellipsis font-medium flex-1"
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                          style={{
-                            color: isBlockSelected(block.id)
-                              ? currentTheme === 'light'
-                                ? colors['text-primary']
-                                : colors['text-white']
-                              : colors['text-primary'],
-                          }}
-                        >
-                          {block.type === 'DELAY' 
-                            ? block.delay_type === 'WAIT_FOR_EVENT'
-                              ? `Wait for Event: ${block.delay_event || 'Not set'}`
-                              : `Duration Delay: ${formatDuration(block.delay_seconds || undefined)}`
-                            : block.title || block.step_details || `Block ${block.id}`}
-                        </span>
-                        {isTruncated && (
-                          <div
-                            style={{
-                              position: 'fixed',
-                              left: `${tooltipPosition.x}px`,
-                              top: `${tooltipPosition.y}px`,
-                              transform: 'none',
-                            }}
-                            className="pointer-events-none"
-                          >
-                            <CustomTooltip
-                              text={block.title || block.step_details || `Block ${block.id}`}
-                              show={showTooltip}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                      level={level}
+                      hasChildPaths={!!hasChildPaths}
+                      isPathCollapsed={isPathCollapsed}
+                      colors={colors}
+                      currentTheme={currentTheme}
+                      path={path}
+                      togglePathVisibility={togglePathVisibility}
+                      formatDuration={formatDuration}
+                    />
                   );
                 })}
             </div>
