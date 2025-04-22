@@ -116,17 +116,17 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
             <div
               className={cn(
                 'rounded-[6px] border shadow-sm flex items-center justify-center',
-                'w-16 h-16'
+                'w-12 h-12'
               )}
               style={{
                 backgroundColor: colors['bg-primary'],
                 borderColor: colors['border-secondary'],
               }}
             >
-              <Image src={getDelayIcon()} alt="Delay" width={32} height={32} />
+              <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
             </div>
             <span
-              className={cn('font-semibold', 'text-2xl')}
+              className={cn('font-semibold', 'text-base')}
               style={{ color: colors['text-primary'] }}
             >
               {getDelayTitle()}

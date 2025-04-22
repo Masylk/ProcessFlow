@@ -301,65 +301,81 @@ export default function HorizontalStep({
       <HideScrollbarStyles />
       <div
         ref={containerRef}
-        className="h-full w-full overflow-hidden relative"
+        className={cn(
+          'h-full w-full overflow-hidden relative',
+          (block.type === 'PATH' || !block.image) &&
+            'flex flex-col items-center justify-center'
+        )}
       >
         {/* Content Container - Main scrollable area */}
         <div
           ref={contentRef}
-          className={`h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`}
+          className={cn(
+            `h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`,
+            (block.type === 'PATH' || !block.image) &&
+              'flex flex-col items-center justify-center'
+          )}
         >
-          <div className="pb-16">
+          <div
+            className={cn(
+              'pb-16',
+              (block.type === 'PATH' || !block.image) &&
+                'w-full pb-0 flex flex-col items-center justify-center'
+            )}
+          >
             {' '}
             {/* Extra padding wrapper to ensure bottom content is visible */}
             {/* Fixed Header Section */}
             <div className="mb-4 sm:mb-5 md:mb-6">
               {/* Step Header */}
-              <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
-                {/* App Icon */}
-                <div
-                  className="flex-shrink-0 w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-                  style={{
-                    backgroundColor: colors['bg-primary'],
-                    borderColor: colors['border-secondary'],
-                  }}
-                >
-                  <div className="flex items-center justify-center">
-                    <img
-                      src={getIconPath(block)}
-                      alt="Step Icon"
-                      className="w-5 h-5 sm:w-6 sm:h-6"
-                      onError={(e) => {
-                        e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                      }}
-                    />
-                  </div>
-                </div>
-                {/* Step Title */}
-                <div className="flex-1">
+              {block.type !== 'PATH' && (
+                <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
+                  {/* App Icon */}
                   <div
-                    className="flex items-center text-sm sm:text-base font-semibold"
-                    style={{ color: colors['text-primary'] }}
+                    className="flex-shrink-0 w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                    style={{
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: colors['border-secondary'],
+                    }}
                   >
-                    {block.type !== 'PATH' && (
+                    <div className="flex items-center justify-center">
+                      <img
+                        src={getIconPath(block)}
+                        alt="Step Icon"
+                        className="w-5 h-5 sm:w-6 sm:h-6"
+                        onError={(e) => {
+                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {/* Step Title */}
+                  <div className="flex-1">
+                    <div
+                      className="flex items-center text-sm sm:text-base font-semibold"
+                      style={{ color: colors['text-primary'] }}
+                    >
                       <span>{getDisplayTitle(block)}</span>
-                    )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Description */}
-              <div className="relative">
-                <p
-                  className="text-sm sm:text-base"
-                  style={{ color: colors['text-quaternary'] }}
-                >
-                  {block.step_details || block.description || ''}
-                </p>
-              </div>
+              {block.type !== 'PATH' && (
+                <div className="relative">
+                  <p
+                    className="text-sm sm:text-base whitespace-pre-line"
+                    style={{ color: colors['text-quaternary'] }}
+                  >
+                    {block.step_details || block.description || ''}
+                  </p>
+                </div>
+              )}
             </div>
             {/* Content Section - Adapts to content type */}
             {!hasOnlyDescription && (
-              <div className="space-y-4 sm:space-y-5 md:space-y-6">
+              <div className="h-full w-full space-y-4 sm:space-y-5 md:space-y-6 flex flex-col items-center justify-center">
                 {/* Image Section */}
                 {block.image && (
                   <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c]">
@@ -389,12 +405,12 @@ export default function HorizontalStep({
                 {block.child_paths && block.child_paths.length > 0 && (
                   <div className="w-full">
                     <p
-                      className="text-xs sm:text-sm font-medium mb-2 sm:mb-3 md:mb-4"
+                      className="w-full text-xs sm:text-sm font-medium mb-2 sm:mb-3 md:mb-4"
                       style={{ color: colors['text-primary'] }}
                     >
                       Select an option
                     </p>
-                    <div className="space-y-2">
+                    <div className="w-full space-y-2">
                       {block.child_paths.map((option, index) => (
                         <div key={option.path.id} className="overflow-hidden">
                           <motion.button
