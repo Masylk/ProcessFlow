@@ -2,6 +2,7 @@ import { Block } from '../../types';
 import React, { useEffect, useState } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import ImageEditor from './ImageEditor';
+import { useColors } from '@/app/theme/hooks';
 
 interface BlockMediaVisualizerProps {
   block: Block;
@@ -16,6 +17,7 @@ export default function BlockMediaVisualizer({
 }: BlockMediaVisualizerProps) {
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const colors = useColors();
 
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -77,9 +79,9 @@ export default function BlockMediaVisualizer({
 
   return (
     <>
-      <div className="relative w-full h-[267px]">
+      <div className="relative w-full h-[267px] rounded-xl overflow-hidden" style={{ backgroundColor: colors['bg-secondary'] }}>
         <img
-          className="w-full h-full object-cover rounded-xl"
+          className="w-full h-full object-contain rounded-xl"
           src={signedImageUrl}
           alt={altText}
         />

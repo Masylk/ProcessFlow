@@ -276,12 +276,12 @@ export default function WorkflowCard({
           <div className="mb-3">
             <div className="flex items-center justify-center w-8 h-8">
               {workflow.icon ? (
-                workflow.icon.startsWith('https://img.logo.dev/') ? (
+                workflow.icon.startsWith('https://cdn.brandfetch.io/') ? (
                   <img
                     src={workflow.icon}
-                    alt="Workflow Icon"
-                    className="w-8 h-8 select-none"
-                    draggable="false"
+                    alt={workflow.name}
+                    className="w-6 h-auto object-contain"
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 ) : (
                   <DynamicIcon
@@ -293,11 +293,8 @@ export default function WorkflowCard({
                 )
               ) : (
                 <img
-                  src={
-                    workspace.icon_url ||
-                    `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`
-                  }
-                  alt={`${workspace.name} Icon`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                  alt="Default Icon"
                   className="w-8 h-8 select-none"
                   draggable="false"
                 />

@@ -126,14 +126,23 @@ export default function StepsContainer({
             role="link"
             aria-label={`Navigate to ${getBlockDisplayText(block)} section`}
           >
-            <img
-              src={getIconPath(block)}
-              alt="Step Icon"
-              className="w-4 h-4"
-              onError={(e) => {
-                e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-              }}
-            />
+            {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+              <img
+                src={block.icon}
+                alt="Step Icon"
+                className="w-4 h-4"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            ) : (
+              <img
+                src={getIconPath(block)}
+                alt="Step Icon"
+                className="w-4 h-4"
+                onError={(e) => {
+                  e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                }}
+              />
+            )}
             <span
               className={cn(
                 'text-left text-sm truncate flex-1',

@@ -336,12 +336,24 @@ export default function VerticalStep({
                   borderColor: colors['border-secondary'],
                 }}
               >
+                {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                 <img
-                  src={getIconPath(block)}
-                  alt={getDisplayTitle(block)}
+                  src={block.icon}
+                  alt="Step Icon"
                   className="w-6 h-6"
+                  referrerPolicy="strict-origin-when-cross-origin"
                 />
-              </motion.div>
+              ) : (
+                <img
+                    src={getIconPath(block)}
+                    alt={getDisplayTitle(block)}
+                    className="w-6 h-6"
+                    onError={(e) => {
+                    e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                  }}
+                />
+                )}
+            </motion.div>
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn('text-left text-base font-semibold')}
