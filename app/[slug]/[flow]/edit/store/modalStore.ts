@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Path } from '../../types';
-import { Node } from 'reactflow';
+import { Node } from '@xyflow/react';
 
 interface ModalStore {
   showConnectModal: boolean;

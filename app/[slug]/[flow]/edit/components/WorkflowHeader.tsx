@@ -59,7 +59,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
   }, [workflowId]);
 
   const navigateToFirstSegment = () => {
-    router.push('/dashboard');
+    router.push('/');
   };
 
   const handleTitleUpdate = async () => {
