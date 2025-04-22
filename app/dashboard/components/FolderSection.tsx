@@ -89,9 +89,9 @@ export default function FolderSection({
     activeWorkspace.folders.forEach(folder => {
       if (folder.icon_url) {
         console.log(`Folder ${folder.id} icon:`, folder.icon_url);
-        console.log(`Is Logo.dev URL:`, folder.icon_url.startsWith('https://img.logo.dev/'));
+        console.log(`Is BrandFetch URL:`, folder.icon_url.startsWith('https://cdn.brandfetch.io/'));
         
-        if (folder.icon_url.startsWith('https://img.logo.dev/')) {
+        if (folder.icon_url.startsWith('https://cdn.brandfetch.io/')) {
           fetch(folder.icon_url)
             .then(response => {
               console.log(`Fetch status for ${folder.id}:`, response.status);
@@ -183,6 +183,13 @@ export default function FolderSection({
     }
   };
 
+  const getIconUrl = (folder: any) => {
+    if (folder.icon_url.startsWith('https://cdn.brandfetch.io/')) {
+      return folder.icon_url;
+    }
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`;
+  };
+
   const renderFolder = (folder: Folder, level: number = 0) => {
     const subfolders = activeWorkspace.folders.filter(
       (f) => f.parent_id === folder.id
@@ -228,29 +235,23 @@ export default function FolderSection({
           {/* Folder Icon/Emote - Hide on hover if has subfolders */}
           <div className={`w-4 h-4 ${subfolders.length > 0 ? 'group-hover:hidden' : ''} flex items-center justify-center`}>
             {folder.icon_url ? (
-              <img
-                src={folder.icon_url.startsWith('https://img.logo.dev/') 
-                  ? folder.icon_url 
+              <DynamicIcon
+                url={folder.icon_url.startsWith('https://cdn.brandfetch.io/')
+                  ? folder.icon_url
                   : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
-                alt="Folder Icon"
                 className="w-4 h-4 object-contain"
-                onLoad={() => console.log(`Image loaded for folder ${folder.id}`)}
-                onError={(e) => {
-                  console.error(`Image error for folder ${folder.id}:`, folder.icon_url);
-                  if (folder.icon_url?.startsWith('https://img.logo.dev/')) {
-                    (e.target as HTMLImageElement).src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                  }
-                }}
+                size={16}
+                referrerPolicy="strict-origin-when-cross-origin"
               />
             ) : folder.emote ? (
               <div className="w-4 h-4 flex items-center justify-center leading-none">
                 {folder.emote}
               </div>
             ) : (
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
-                alt="Folder Icon"
+              <DynamicIcon
+                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
                 className="w-4 h-4 object-contain"
+                size={16}
               />
             )}
             

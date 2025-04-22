@@ -46,9 +46,12 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
       >
         {block.icon ? (
           <img
-            src={block.icon.startsWith('https://img.logo.dev/') ? block.icon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
+            src={block.icon.startsWith('https://cdn.brandfetch.io/') 
+              ? block.icon 
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
             alt="Selected Icon"
-            className="w-6 h-6"
+            className="w-6 h-auto object-contain"
+            referrerPolicy="strict-origin-when-cross-origin"
           />
         ) : (
           <div className="w-6 h-6 flex justify-center items-center">

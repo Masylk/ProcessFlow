@@ -29,6 +29,7 @@ interface DynamicIconProps {
   variant?: IconVariant;
   className?: string;
   isHovered?: boolean; // Accept hover state from parent
+  referrerPolicy?: React.HTMLAttributeReferrerPolicy;
 }
 
 // Icon component that fetches and caches SVGs dynamically
@@ -39,9 +40,24 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({
   variant = 'default',
   className = '',
   isHovered = false,
+  referrerPolicy,
 }) => {
   const [svgContent, setSvgContent] = React.useState<string | null>(null);
   const { getCssVariable } = useTheme();
+  
+  // If BrandFetch or PNG, render <img> directly
+  if (url.startsWith('https://cdn.brandfetch.io/') || url.toLowerCase().endsWith('.png')) {
+    return (
+      <img
+        src={url}
+        alt="Icon"
+        className={className}
+        width={size}
+        height={size}
+        referrerPolicy={referrerPolicy || "strict-origin-when-cross-origin"}
+      />
+    );
+  }
   
   // Get color based on variant type - for button-related variants, use button tokens
   const getColorForVariant = (variant: IconVariant, isHover: boolean): string => {

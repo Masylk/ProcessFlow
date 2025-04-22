@@ -948,11 +948,20 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 }}
               >
                 {blockData.icon ? (
-                  <img
-                    src={blockData.icon.startsWith('https://img.logo.dev/') ? blockData.icon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                    alt="Block Icon"
-                    className="w-6 h-6"
-                  />
+                  blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                    <img
+                      src={blockData.icon}
+                      alt="Block Icon"
+                      className="w-6 h-6"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : (
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                      alt="Block Icon"
+                      className="w-6 h-6"
+                    />
+                  )
                 ) : (
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}

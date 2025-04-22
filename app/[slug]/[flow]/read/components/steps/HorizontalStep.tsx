@@ -260,7 +260,7 @@ export default function HorizontalStep({
           <div
             className={cn(
               'w-full',
-              (block.type === 'PATH' || !block.image) && 'w-full'
+              (block.type === 'PATH' || (!block.image && !block.child_paths)) && 'w-full'
                 ? 'pb-0 flex flex-col items-center justify-center'
                 : 'pb-16'
             )}
@@ -279,15 +279,24 @@ export default function HorizontalStep({
                     }}
                   >
                     <div className="flex items-center justify-center">
+                      {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                       <img
-                        src={getIconPath(block)}
+                        src={block.icon}
                         alt="Step Icon"
                         className="w-6 h-6"
-                        onError={(e) => {
-                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                        }}
+                        referrerPolicy="strict-origin-when-cross-origin"
                       />
-                    </div>
+                    ) : (
+                      <img
+                          src={getIconPath(block)}
+                          alt="Step Icon"
+                          className="w-6 h-6"
+                          onError={(e) => {
+                            e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                          }}
+                        />
+                      )}
+                  </div>
                   </div>
                   {/* Step Title */}
                   <div className="flex-1">
