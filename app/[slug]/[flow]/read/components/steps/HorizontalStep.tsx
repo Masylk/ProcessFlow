@@ -36,7 +36,9 @@ export default function HorizontalStep({
   const [imageError, setImageError] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<number | null>(null);
+  const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<
+    number | null
+  >(null);
   const [contentHeight, setContentHeight] = useState<number>(0);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [scrollTop, setScrollTop] = useState<number>(0);
@@ -86,8 +88,14 @@ export default function HorizontalStep({
         // If content is taller than container, calculate ratio for thumb
         if (contentScrollHeight > containerClientHeight) {
           const ratio = containerClientHeight / contentScrollHeight;
-          const minThumbSize = Math.max(20, Math.min(30, containerClientHeight * 0.1));
-          const thumbHeight = Math.max(minThumbSize, containerClientHeight * ratio);
+          const minThumbSize = Math.max(
+            20,
+            Math.min(30, containerClientHeight * 0.1)
+          );
+          const thumbHeight = Math.max(
+            minThumbSize,
+            containerClientHeight * ratio
+          );
           setScrollbarThumbHeight(thumbHeight);
         } else {
           setScrollbarThumbHeight(null); // Hide scrollbar when not needed
@@ -232,58 +240,83 @@ export default function HorizontalStep({
   return (
     <>
       <HideScrollbarStyles />
-      <div ref={containerRef} className="h-[472px] w-full overflow-hidden relative">
+      <div
+        ref={containerRef}
+        className={cn(
+          'h-[472px] w-full',
+          (block.type === 'PATH' || !block.image) &&
+            'flex flex-col items-center justify-center'
+        )}
+      >
         {/* Content Container - Main scrollable area */}
-        <div ref={contentRef} className="h-full w-full overflow-y-auto hide-scrollbar px-5 pt-5">
-          <div className="pb-16">
+        <div
+          ref={contentRef}
+          className={cn(
+            'h-full w-full overflow-y-auto px-5 pt-5',
+            (block.type === 'PATH' || !block.image) &&
+              'flex flex-col items-center justify-center'
+          )}
+        >
+          <div
+            className={cn(
+              'w-full',
+              (block.type === 'PATH' || !block.image) && 'w-full'
+                ? 'pb-0 flex flex-col items-center justify-center'
+                : 'pb-16'
+            )}
+          >
             {/* Fixed Header Section */}
             <div className="mb-6">
               {/* Step Header */}
-              <div className="flex items-center gap-4 mb-4">
-                {/* App Icon */}
-                <div
-                  className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-                  style={{
-                    backgroundColor: colors['bg-primary'],
-                    borderColor: colors['border-secondary'],
-                  }}
-                >
-                  <div className="flex items-center justify-center">
-                    <img
-                      src={getIconPath(block)}
-                      alt="Step Icon"
-                      className="w-6 h-6"
-                      onError={(e) => {
-                        e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                      }}
-                    />
-                  </div>
-                </div>
-                {/* Step Title */}
-                <div className="flex-1">
+              {block.type !== 'PATH' && (
+                <div className="flex items-center gap-4 mb-4">
+                  {/* App Icon */}
                   <div
-                    className="flex items-center text-base font-semibold"
-                    style={{ color: colors['text-primary'] }}
+                    className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                    style={{
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: colors['border-secondary'],
+                    }}
                   >
-                    {block.type !== 'PATH' && <span>{getDisplayTitle(block)}</span>}
+                    <div className="flex items-center justify-center">
+                      <img
+                        src={getIconPath(block)}
+                        alt="Step Icon"
+                        className="w-6 h-6"
+                        onError={(e) => {
+                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {/* Step Title */}
+                  <div className="flex-1">
+                    <div
+                      className="flex items-center text-base font-semibold"
+                      style={{ color: colors['text-primary'] }}
+                    >
+                      <span>{getDisplayTitle(block)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Description */}
-              <div className="relative">
-                <p
-                  className="text-base whitespace-pre-line"
-                  style={{ color: colors['text-quaternary'] }}
-                >
-                  {block.step_details || block.description || ''}
-                </p>
-              </div>
+              {block.type !== 'PATH' && (
+                <div className="relative">
+                  <p
+                    className="text-base whitespace-pre-line"
+                    style={{ color: colors['text-quaternary'] }}
+                  >
+                    {block.step_details || block.description || ''}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Content Section - Adapts to content type */}
             {!hasOnlyDescription && (
-              <div className="space-y-6">
+              <div className="space-y-6 w-full">
                 {/* Image Section */}
                 {block.image && (
                   <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c]">
