@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Workspace, Folder } from '@/types/workspace';
 import FolderDropdown from './FolderDropdown';
 import { useColors } from '@/app/theme/hooks';
+import DynamicIcon from '../../../utils/DynamicIcon';
 
 interface FolderSectionProps {
   activeWorkspace: Workspace;
@@ -36,6 +37,8 @@ export default function FolderSection({
   } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
+  const [logoCache, setLogoCache] = useState<Record<string, string>>({});
+  const [debugInfo, setDebugInfo] = useState<Record<number, string>>({});
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,6 +82,43 @@ export default function FolderSection({
       }
     };
   }, [selectedFolder]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    
+    activeWorkspace.folders.forEach(folder => {
+      if (folder.icon_url) {
+        console.log(`Folder ${folder.id} icon:`, folder.icon_url);
+        console.log(`Is Logo.dev URL:`, folder.icon_url.startsWith('https://img.logo.dev/'));
+        
+        if (folder.icon_url.startsWith('https://img.logo.dev/')) {
+          fetch(folder.icon_url)
+            .then(response => {
+              console.log(`Fetch status for ${folder.id}:`, response.status);
+              setDebugInfo(prev => ({
+                ...prev,
+                [folder.id]: `Fetch status: ${response.status}`
+              }));
+              return response.blob();
+            })
+            .then(blob => {
+              console.log(`Blob type for ${folder.id}:`, blob.type);
+              setDebugInfo(prev => ({
+                ...prev,
+                [folder.id]: `${prev[folder.id]} | Blob type: ${blob.type}`
+              }));
+            })
+            .catch(error => {
+              console.error(`Fetch error for ${folder.id}:`, error);
+              setDebugInfo(prev => ({
+                ...prev,
+                [folder.id]: `Error: ${error.message}`
+              }));
+            });
+        }
+      }
+    });
+  }, [activeWorkspace.folders]);
 
   const toggleFolder = (folderId: number) => {
     setExpandedFolders((prev) => {
@@ -128,6 +168,21 @@ export default function FolderSection({
     setDropdownPosition(null);
   };
 
+  // Function to get logo URL through our API
+  const getLogoUrl = async (domain: string) => {
+    try {
+      const response = await fetch(`/api/logo-search?q=${encodeURIComponent(domain)}`);
+      const data = await response.json();
+      if (response.ok && data.logos?.[0]?.url) {
+        return data.logos[0].url;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching logo:', error);
+      return null;
+    }
+  };
+
   const renderFolder = (folder: Folder, level: number = 0) => {
     const subfolders = activeWorkspace.folders.filter(
       (f) => f.parent_id === folder.id
@@ -174,9 +229,18 @@ export default function FolderSection({
           <div className={`w-4 h-4 ${subfolders.length > 0 ? 'group-hover:hidden' : ''} flex items-center justify-center`}>
             {folder.icon_url ? (
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
+                src={folder.icon_url.startsWith('https://img.logo.dev/') 
+                  ? folder.icon_url 
+                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
                 alt="Folder Icon"
-                className="w-4 h-4"
+                className="w-4 h-4 object-contain"
+                onLoad={() => console.log(`Image loaded for folder ${folder.id}`)}
+                onError={(e) => {
+                  console.error(`Image error for folder ${folder.id}:`, folder.icon_url);
+                  if (folder.icon_url?.startsWith('https://img.logo.dev/')) {
+                    (e.target as HTMLImageElement).src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                  }
+                }}
               />
             ) : folder.emote ? (
               <div className="w-4 h-4 flex items-center justify-center leading-none">
@@ -186,8 +250,15 @@ export default function FolderSection({
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
                 alt="Folder Icon"
-                className="w-4 h-4"
+                className="w-4 h-4 object-contain"
               />
+            )}
+            
+            {/* Debug info */}
+            {debugInfo[folder.id] && (
+              <div className="absolute top-0 left-full ml-2 text-xs p-1 bg-red-100 text-red-800 rounded whitespace-nowrap z-50">
+                {debugInfo[folder.id]}
+              </div>
             )}
           </div>
 

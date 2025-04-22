@@ -46,17 +46,14 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
       >
         {block.icon ? (
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
+            src={block.icon.startsWith('https://img.logo.dev/') ? block.icon : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
             alt="Selected Icon"
             className="w-6 h-6"
           />
         ) : (
           <div className="w-6 h-6 flex justify-center items-center">
             <img
-              src={
-                themeAssets.icons?.['folder'] ||
-                `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-              }
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
               alt="Default Icon"
               className="w-6 h-6"
             />
@@ -67,7 +64,7 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
       {/* Backdrop */}
       {showSelector && (
         <div
-          className="fixed inset-0"
+          className="fixed inset-0 z-50"
           style={{
             backgroundColor: colors['bg-overlay'],
             opacity: 0.5,

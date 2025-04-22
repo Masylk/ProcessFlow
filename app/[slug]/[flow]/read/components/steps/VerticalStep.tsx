@@ -317,7 +317,8 @@ export default function VerticalStep({
         <button
           onClick={handleToggle}
           className={cn(
-            'w-full flex flex-col p-6',
+            'w-full flex flex-col',
+            block.type === 'PATH' ? 'p-2' : 'p-6',
             'transition-colors duration-200 ease-in-out',
             block.image ? 'cursor-pointer' : 'cursor-default'
           )}
@@ -326,22 +327,22 @@ export default function VerticalStep({
           }}
         >
           {/* Header with Icon and Title */}
-          <div className="flex items-center gap-4 flex-1 min-w-0 mb-3">
-            <motion.div
-              className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-              style={{
-                backgroundColor: colors['bg-primary'],
-                borderColor: colors['border-secondary'],
-              }}
-            >
-              <img
-                src={getIconPath(block)}
-                alt={getDisplayTitle(block)}
-                className="w-6 h-6"
-              />
-            </motion.div>
-            <div className="flex items-center gap-2 min-w-0">
-              {block.type !== 'PATH' && (
+          {block.type !== 'PATH' && (
+            <div className="flex items-center gap-4 flex-1 min-w-0 mb-3">
+              <motion.div
+                className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                style={{
+                  backgroundColor: colors['bg-primary'],
+                  borderColor: colors['border-secondary'],
+                }}
+              >
+                <img
+                  src={getIconPath(block)}
+                  alt={getDisplayTitle(block)}
+                  className="w-6 h-6"
+                />
+              </motion.div>
+              <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn('text-left text-base font-semibold')}
                   style={{
@@ -350,60 +351,57 @@ export default function VerticalStep({
                 >
                   {getDisplayTitle(block)}
                 </span>
+              </div>
+              {block.image && (
+                <motion.div
+                  className="flex-shrink-0 ml-auto"
+                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
+                    alt="Toggle content"
+                    width={24}
+                    height={24}
+                    className="transition-transform duration-200"
+                    style={{
+                      filter: 'none',
+                    }}
+                  />
+                </motion.div>
               )}
             </div>
-            {block.image && (
-              <motion.div
-                className="flex-shrink-0 ml-auto"
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-down.svg`}
-                  alt="Toggle content"
-                  width={24}
-                  height={24}
-                  className="transition-transform duration-200"
-                  style={{
-                    filter: 'none',
-                  }}
-                />
-              </motion.div>
-            )}
-          </div>
+          )}
 
           {/* Description section - always displayed below icon and title */}
-          {block.step_details || block.description ? (
-            <div className="text-left w-full">
-              {' '}
-              {/* Added padding to align with title */}
-              <p
-                ref={descriptionRef}
-                className={cn(
-                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
-                  !isExpanded && 'line-clamp-2'
-                )}
-                style={{ color: colors['text-quaternary'] }}
-              >
-                {block.step_details || block.description || ''}
-              </p>
-            </div>
-          ) : (
-            <div className="text-left w-full ">
-              {' '}
-              {/* Added padding to align with title */}
-              <p
-                ref={descriptionRef}
-                className={cn(
-                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
-                  !isExpanded && 'line-clamp-2'
-                )}
-                style={{ color: colors['text-quaternary'] }}
-              >
-                {''}
-              </p>
-            </div>
-          )}
+          {block.type !== 'PATH' &&
+            (block.step_details || block.description ? (
+              <div className="text-left w-full">
+                <p
+                  ref={descriptionRef}
+                  className={cn(
+                    'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
+                    !isExpanded && 'line-clamp-2'
+                  )}
+                  style={{ color: colors['text-quaternary'] }}
+                >
+                  {block.step_details || block.description || ''}
+                </p>
+              </div>
+            ) : (
+              <div className="text-left w-full ">
+                <p
+                  ref={descriptionRef}
+                  className={cn(
+                    'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
+                    !isExpanded && 'line-clamp-2'
+                  )}
+                  style={{ color: colors['text-quaternary'] }}
+                >
+                  {''}
+                </p>
+              </div>
+            ))}
         </button>
 
         <AnimatePresence>

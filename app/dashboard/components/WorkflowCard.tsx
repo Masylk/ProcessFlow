@@ -276,12 +276,21 @@ export default function WorkflowCard({
           <div className="mb-3">
             <div className="flex items-center justify-center w-8 h-8">
               {workflow.icon ? (
-                <DynamicIcon
-                  url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
-                  size={32}
-                  color="inherit"
-                  className="select-none"
-                />
+                workflow.icon.startsWith('https://img.logo.dev/') ? (
+                  <img
+                    src={workflow.icon}
+                    alt="Workflow Icon"
+                    className="w-8 h-8 select-none"
+                    draggable="false"
+                  />
+                ) : (
+                  <DynamicIcon
+                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
+                    size={32}
+                    color="inherit"
+                    className="select-none"
+                  />
+                )
               ) : (
                 <img
                   src={
