@@ -111,7 +111,7 @@ export default function WorkspaceDropdownMenu({
         <button
           onClick={handleSettingsClick}
           onMouseEnter={() => setIsWorkspaceListVisible(false)}
-          className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+          className="w-[200px] px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
         >
           <div
             style={
@@ -143,7 +143,7 @@ export default function WorkspaceDropdownMenu({
         />
 
         {/* Switch Workspace Option */}
-        <div className="group relative w-full flex">
+        <div className="group relative w-full hidden">
           <button
             className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
             onMouseEnter={() => setIsWorkspaceListVisible(true)}
