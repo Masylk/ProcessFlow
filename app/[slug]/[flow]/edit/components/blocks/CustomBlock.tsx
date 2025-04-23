@@ -977,26 +977,28 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 {blockData.title || 'Untitled Block'}
               </h3>
             </div>
-            <button
-              onClick={handleDropdownToggle}
-              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-              style={{
-                color: colors['fg-tertiary'],
-                backgroundColor: 'transparent',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                alt="Menu"
-                className="w-4 h-4"
-              />
-            </button>
+            {data.block.id >= 0 && (
+              <button
+                onClick={handleDropdownToggle}
+                className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+                style={{
+                  color: colors['fg-tertiary'],
+                  backgroundColor: 'transparent',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                  alt="Menu"
+                  className="w-4 h-4"
+                />
+              </button>
+            )}
           </div>
 
           {blockData.description && (

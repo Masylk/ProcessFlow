@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import { DropdownDatas, Path, DelayType } from '../../types';
+import { DropdownDatas, Path, DelayType, Block } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useClipboardStore } from '../store/clipboardStore';
 import { useModalStore } from '../store/modalStore';
@@ -95,6 +95,33 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const handlePasteBlock = async () => {
     if (!copiedBlock) return;
 
+    // 1. Create a fake block for optimistic UI
+    const fakeId = -Date.now();
+    const fakeBlock: Block = {
+      ...copiedBlock,
+      id: fakeId,
+      position: dropdownDatas.position,
+      path_id: dropdownDatas.path.id,
+      child_paths: [],
+      title: (copiedBlock.title || '') + ' (copy)',
+    };
+
+    // Optimistically add the fake block
+    onPathsUpdate((currentPaths) => {
+      return currentPaths.map((path) => {
+        if (path.id === dropdownDatas.path.id) {
+          const blocks = [...path.blocks];
+          blocks.splice(dropdownDatas.position, 0, fakeBlock);
+          const reindexedBlocks = blocks.map((block, idx) => ({
+            ...block,
+            position: idx,
+          }));
+          return { ...path, blocks: reindexedBlocks };
+        }
+        return path;
+      });
+    });
+
     try {
       const response = await fetch(`/api/blocks/${copiedBlock.id}/duplicate`, {
         method: 'POST',
@@ -110,9 +137,42 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
       if (!response.ok) throw new Error('Failed to paste block');
 
       const result = await response.json();
-      onPathsUpdate(result.paths);
-      onClose();
+      const newBlock = { ...result.block, child_paths: [] };
+
+      // Replace the fake block with the real one and reindex
+      onPathsUpdate((currentPaths) => {
+        return currentPaths.map((path) => {
+          if (path.id === dropdownDatas.path.id) {
+            // Remove the fake block
+            let blocks = path.blocks.filter(
+              (block) => block.id !== fakeId
+            );
+            // Insert the real block at the correct position
+            blocks.splice(dropdownDatas.position, 0, newBlock);
+            // Reindex positions
+            const reindexedBlocks = blocks.map((block, idx) => ({
+              ...block,
+              position: idx,
+            }));
+            return { ...path, blocks: reindexedBlocks };
+          }
+          return path;
+        });
+      });
     } catch (error) {
+      // Rollback: remove the fake block
+      onPathsUpdate((currentPaths) =>
+        currentPaths.map((path) =>
+          path.id === dropdownDatas.path.id
+            ? {
+                ...path,
+                blocks: path.blocks.filter(
+                  (block) => block.id !== fakeId
+                ),
+              }
+            : path
+        )
+      );
       console.error('Error pasting block:', error);
     }
   };

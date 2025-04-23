@@ -3,6 +3,70 @@ import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { Prisma } from '@prisma/client';
 
+/**
+ * @swagger
+ * /api/blocks/{id}/duplicate:
+ *   post:
+ *     summary: Duplicate a block
+ *     description: Duplicates a block by its ID, optionally at a new position or under a different path. Handles image duplication if the block has an image.
+ *     tags:
+ *       - Blocks
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the block to duplicate.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               position:
+ *                 type: integer
+ *                 description: The position to insert the duplicated block.
+ *               path_id:
+ *                 type: integer
+ *                 description: The path ID to assign the duplicated block to.
+ *     responses:
+ *       200:
+ *         description: Block duplicated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 block:
+ *                   $ref: '#/components/schemas/Block'
+ *                 paths:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Path'
+ *       404:
+ *         description: Original block not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Original block not found
+ *       500:
+ *         description: Failed to duplicate block
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to duplicate block
+ */
+
 export async function POST(req: NextRequest) {
   try {
     const id = req.nextUrl.pathname.split('/')[3];
@@ -14,6 +78,22 @@ export async function POST(req: NextRequest) {
     // Get the original block
     const originalBlock = await prisma.block.findUnique({
       where: { id: blockId },
+      select: {
+        id: true,
+        type: true,
+        position: true,
+        icon: true,
+        description: true,
+        image: true,
+        workflow_id: true,
+        path_id: true,
+        click_position: true,
+        step_details: true,
+        delay_seconds: true,
+        delay_event: true,
+        delay_type: true,
+        title: true,
+      }
     });
 
     if (!originalBlock) {
@@ -89,30 +169,30 @@ export async function POST(req: NextRequest) {
     });
 
     // Fetch all paths to return updated data
-    const paths = await prisma.path.findMany({
-      where: {
-        workflow_id: originalBlock.workflow_id,
-      },
-      include: {
-        blocks: {
-          orderBy: {
-            position: 'asc',
-          },
-          include: {
-            child_paths: {
-              include: {
-                path: true,
-              },
-            },
-          },
-        },
-        parent_blocks: true,
-      },
-    });
+    // const paths = await prisma.path.findMany({
+    //   where: {
+    //     workflow_id: originalBlock.workflow_id,
+    //   },
+    //   include: {
+    //     blocks: {
+    //       orderBy: {
+    //         position: 'asc',
+    //       },
+    //       include: {
+    //         child_paths: {
+    //           include: {
+    //             path: true,
+    //           },
+    //         },
+    //       },
+    //     },
+    //     parent_blocks: true,
+    //   },
+    // });
 
     return NextResponse.json({
       block: duplicatedBlock,
-      paths: paths,
+      // paths: paths,
     });
 
   } catch (error) {
