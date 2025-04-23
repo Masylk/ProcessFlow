@@ -132,8 +132,8 @@ export default function CheckoutButton({
   };
 
   const planMap: { [key: string]: 'free' | 'earlyAdopter' } = {
-    'price_1R0gMwAiIekpSP7WgmGUdlZF': 'earlyAdopter', // Monthly price
-    'price_1R14rXAiIekpSP7WxI9zoQIQ': 'earlyAdopter', // Annual price
+    'price_1R3uKPP37Y7Hw4JwKoY0yiMq': 'earlyAdopter', // Monthly price
+    'price_1R3uKPP37Y7Hw4JweazfX4vg': 'earlyAdopter', // Annual price
   };
 
   return (
