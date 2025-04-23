@@ -10,4 +10,7 @@ export const SHARED_ASSETS = {
   chevronRight: '/assets/shared_components/chevron-right-black.svg',
   dotsHorizontal: '/assets/shared_components/dots-horizontal-black.svg',
   folderBase: '/assets/shared_components/folder-icon-base.svg',
+  layers: '/assets/shared_components/layers-icon.svg',
+  plus: '/assets/shared_components/plus-icon.svg',
+  send: '/assets/shared_components/send-01.svg',
 } as const; 
