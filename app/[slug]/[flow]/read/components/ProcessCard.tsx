@@ -25,6 +25,12 @@ interface ProcessCardProps {
   lastUpdate: string;
 }
 
+// Utility to extract filename without extension from a path
+function getFilenameWithoutExtension(path: string): string {
+  const filename = path.split('/').pop() || path;
+  return filename.replace(/\.[^/.]+$/, '');
+}
+
 export default function ProcessCard({
   icon,
   workflow,
@@ -80,7 +86,7 @@ export default function ProcessCard({
         style={{ color: colors['text-secondary'] }}
         className="text-xs leading-none font-medium"
       >
-        {integration.name}
+        {integration.icon ? getFilenameWithoutExtension(integration.icon) : integration.name}
       </span>
     </div>
   );

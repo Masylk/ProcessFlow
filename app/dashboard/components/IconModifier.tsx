@@ -50,19 +50,14 @@ export default function IconModifier({
         onClick={() => setShowSelector(!showSelector)}
       >
         {initialIcon ? (
-          (console.log('initialIcon', initialIcon),
-          (
-            <img
-              src={
-                initialIcon.startsWith('https://cdn.brandfetch.io/')
-                  ? initialIcon
-                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`
-              }
-              alt="Selected Icon"
-              className="w-6 h-6"
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
-          ))
+          <img
+            src={initialIcon.startsWith('https://cdn.brandfetch.io/') 
+              ? initialIcon 
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
+            alt="Selected Icon"
+            className="w-6 h-6 select-none pointer-events-none"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
         ) : emote ? (
           <div className="w-6 h-6 flex items-center justify-center">
             {emote}
@@ -72,7 +67,7 @@ export default function IconModifier({
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
               alt="Default Icon"
-              className="w-6 h-6"
+              className="w-6 h-6 select-none pointer-events-none"
             />
           </div>
         )}

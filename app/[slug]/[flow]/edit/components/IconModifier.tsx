@@ -50,7 +50,7 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
               ? block.icon 
               : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
             alt="Selected Icon"
-            className="w-6 h-auto object-contain"
+            className="w-6 h-auto object-contain select-none pointer-events-none"
             referrerPolicy="strict-origin-when-cross-origin"
           />
         ) : (
@@ -58,7 +58,7 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
               alt="Default Icon"
-              className="w-6 h-6"
+              className="w-6 h-6 select-none pointer-events-none"
             />
           </div>
         )}
