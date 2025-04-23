@@ -6,14 +6,14 @@ interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
   emote?: string;
   onUpdate: (icon?: string, emote?: string) => void; // Callback when an icon is updated
-  allowEmoji?: boolean;  // Add this prop
+  allowEmoji?: boolean; // Add this prop
 }
 
 export default function IconModifier({
   initialIcon,
   onUpdate,
   emote,
-  allowEmoji = true  // Default to true
+  allowEmoji = true, // Default to true
 }: IconModifierProps) {
   const colors = useColors();
   const [showSelector, setShowSelector] = useState(false);
@@ -50,14 +50,19 @@ export default function IconModifier({
         onClick={() => setShowSelector(!showSelector)}
       >
         {initialIcon ? (
-          <img
-            src={initialIcon.startsWith('https://cdn.brandfetch.io/') 
-              ? initialIcon 
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`}
-            alt="Selected Icon"
-            className="w-6 h-6"
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
+          (console.log('initialIcon', initialIcon),
+          (
+            <img
+              src={
+                initialIcon.startsWith('https://cdn.brandfetch.io/')
+                  ? initialIcon
+                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`
+              }
+              alt="Selected Icon"
+              className="w-6 h-6"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          ))
         ) : emote ? (
           <div className="w-6 h-6 flex items-center justify-center">
             {emote}
@@ -76,9 +81,9 @@ export default function IconModifier({
       {/* Backdrop */}
       {showSelector && (
         <div className="fixed inset-0 z-50">
-          <div 
+          <div
             style={{ backgroundColor: colors['bg-overlay'] }}
-            className="absolute inset-0 opacity-70" 
+            className="absolute inset-0 opacity-70"
             onClick={handleOverlayClick}
           />
         </div>
@@ -87,10 +92,7 @@ export default function IconModifier({
       {/* Icon Selector */}
       {showSelector && (
         <div className="absolute top-12 left-0 z-50">
-          <IconSelector 
-            onSelect={handleIconSelect} 
-            allowEmoji={allowEmoji}
-          />
+          <IconSelector onSelect={handleIconSelect} allowEmoji={allowEmoji} />
         </div>
       )}
     </div>

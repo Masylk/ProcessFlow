@@ -40,7 +40,10 @@ export const TabButton: React.FC<TabButtonProps> = ({
   emote,
   inSortableContext,
 }) => {
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const colors = useColors();
   const buttonId = `tab-${Math.random().toString(36).substr(2, 9)}`;
@@ -72,7 +75,10 @@ export const TabButton: React.FC<TabButtonProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         onSelectFolder?.(undefined);
         setDropdownPosition(null);
       }
@@ -87,7 +93,14 @@ export const TabButton: React.FC<TabButtonProps> = ({
     };
   }, [dropdownPosition, onSelectFolder]);
 
-  const chevronIcon = isExpanded ? SHARED_ASSETS.chevronDown : SHARED_ASSETS.chevronRight;
+  useEffect(() => {
+    console.log('TabButton mount: folder', folder);
+    console.log('TabButton mount: icon', icon);
+  }, []);
+
+  const chevronIcon = isExpanded
+    ? SHARED_ASSETS.chevronDown
+    : SHARED_ASSETS.chevronRight;
 
   const buttonStyles = {
     backgroundColor: isActive ? colors['bg-secondary'] : 'transparent',
@@ -103,7 +116,9 @@ export const TabButton: React.FC<TabButtonProps> = ({
   return (
     <>
       <style>{hoverStyles}</style>
-      <div className={`relative group ${inSortableContext ? '' : 'drag-handle'}`}>
+      <div
+        className={`relative group ${inSortableContext ? '' : 'drag-handle'}`}
+      >
         <div
           id={buttonId}
           role="button"
@@ -141,19 +156,34 @@ export const TabButton: React.FC<TabButtonProps> = ({
             )}
 
             {/* Folder Icon */}
-            <div className={`w-4 h-4 flex-shrink-0 ${hasSubfolders ? 'group-hover:hidden' : ''} flex items-center justify-center`}>
+            <div
+              className={`w-4 h-4 flex-shrink-0 ${hasSubfolders ? 'group-hover:hidden' : ''} flex items-center justify-center`}
+            >
               {emote ? (
                 <div className="w-4 h-4 flex items-center justify-center leading-none">
                   {emote}
                 </div>
-              ) : icon ? (
-                <img src={icon} alt={label} className="w-4 h-4" />
+              ) : folder?.icon_url ? (
+                folder.icon_url.startsWith('https://cdn.brandfetch.io/') ? (
+                  <img
+                    src={folder.icon_url}
+                    alt={label}
+                    className="w-4 h-4 object-contain"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
+                    alt={label}
+                    className="w-4 h-4 object-contain"
+                  />
+                )
               ) : null}
             </div>
 
             {/* Label */}
             <div className="min-w-0 flex-1 overflow-hidden">
-              <span 
+              <span
                 style={{ color: colors['text-secondary'] }}
                 className="text-sm font-medium truncate block"
               >
@@ -168,7 +198,9 @@ export const TabButton: React.FC<TabButtonProps> = ({
               role="button"
               tabIndex={0}
               onClick={handleDropdownClick}
-              onKeyDown={(e) => e.key === 'Enter' && handleDropdownClick(e as any)}
+              onKeyDown={(e) =>
+                e.key === 'Enter' && handleDropdownClick(e as any)
+              }
               className={cn(
                 'w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto rounded-md',
                 'hover:bg-[var(--bg-secondary)] opacity-70 hover:opacity-100'
@@ -196,9 +228,15 @@ export const TabButton: React.FC<TabButtonProps> = ({
             className="fixed z-50 w-auto min-w-[200px] rounded-lg overflow-hidden border shadow-lg"
           >
             <FolderDropdown
-              onCreateSubfolder={() => handleDropdownAction(() => onCreateSubfolder?.(folder))}
-              onDeleteFolder={() => handleDropdownAction(async () => await onDeleteFolder?.(folder))}
-              onEditFolder={() => handleDropdownAction(() => onEditFolder?.(folder))}
+              onCreateSubfolder={() =>
+                handleDropdownAction(() => onCreateSubfolder?.(folder))
+              }
+              onDeleteFolder={() =>
+                handleDropdownAction(async () => await onDeleteFolder?.(folder))
+              }
+              onEditFolder={() =>
+                handleDropdownAction(() => onEditFolder?.(folder))
+              }
               parent={folder}
             />
           </div>

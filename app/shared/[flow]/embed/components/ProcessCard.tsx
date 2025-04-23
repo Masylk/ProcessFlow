@@ -118,7 +118,7 @@ export default function ProcessCard({
               {workflow.name}
             </h3>
             {workflow.description && (
-              <p 
+              <p
                 style={{ color: colors['text-quaternary'] }}
                 className="max-w-2xl text-base"
               >
@@ -178,11 +178,11 @@ export default function ProcessCard({
             {author && (
               <div className="flex items-center gap-2">
                 <img
-                  src={author.avatar}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${author.avatar}`}
                   alt={author.name}
                   className="rounded-full w-8 h-8"
                 />
-                <span 
+                <span
                   style={{ color: colors['text-secondary'] }}
                   className="font-medium text-sm"
                 >
@@ -191,7 +191,7 @@ export default function ProcessCard({
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span 
+              <span
                 style={{ color: colors['text-tertiary'] }}
                 className="text-sm"
               >

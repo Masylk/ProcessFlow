@@ -21,11 +21,19 @@ export default function CanvaHeader({
     if (selectedFolder?.icon_url) {
       // Display the icon_url if it exists
       return (
-        <img
-          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${selectedFolder.icon_url}`}
-          alt="Folder Icon"
-          className="w-6 h-6"
-        />
+        selectedFolder.icon_url.startsWith('https://cdn.brandfetch.io/') ? (  
+          <img
+            src={selectedFolder.icon_url}
+            alt="Folder Icon"
+            className="w-6 h-6"
+          />
+        ) : (
+          <img
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${selectedFolder.icon_url}`}
+            alt="Folder Icon"
+            className="w-6 h-6"
+          />
+        )
       );
     } else if (selectedFolder?.emote) {
       // Display the emote if icon_url does not exist
