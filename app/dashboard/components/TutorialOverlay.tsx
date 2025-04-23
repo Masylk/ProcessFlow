@@ -37,9 +37,9 @@ const tutorialSteps: TutorialStep[] = [
     arrowPosition: { right: '100%', top: '50%' },
   },
   {
-    title: 'Switch workspaces',
+    title: 'Manage your workspace',
     description:
-      'Easily switch between different workspaces to manage multiple projects.',
+      'Manage your workspace to edit your workspace name, logo, and billing.',
     position: { top: '80px', left: '20px' },
     arrowPosition: { right: '80%', bottom: '100%' },
   },
