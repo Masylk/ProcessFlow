@@ -160,6 +160,19 @@ export default function ReadPageClient() {
     }
   }, [pathsToDisplay]);
 
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('user', user);
+      }
+      if (user && user.avatar_url && !user.avatar_signed_url) {
+        user.avatar_signed_url = user.avatar_url;
+      }
+    };
+
+    fetchSignedUrl();
+  }, [user]);
+
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
