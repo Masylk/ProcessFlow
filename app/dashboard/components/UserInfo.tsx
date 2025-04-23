@@ -14,11 +14,13 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
   // Define the default avatar URL using environment variables.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
 
-  // Use user.avatar_url if it exists, otherwise fall back to the default avatar.
+  // Use user.avatar_signed_url if it exists, otherwise fall back to avatar_url, then default avatar.
   const avatarSrc =
     user && user.avatar_signed_url
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
-      : defaultAvatar;
+      : user && user.avatar_url
+        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
+        : defaultAvatar;
 
   return (
     <div
