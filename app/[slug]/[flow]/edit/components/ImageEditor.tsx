@@ -113,13 +113,21 @@ export default function ImageEditorModal({
           const drawingModes = ['CROPPER', 'FREE_DRAWING', 'LINE_DRAWING', 'TEXT', 'SHAPE'];
           drawingModes.forEach(mode => {
             try {
-              if (instanceRef.current.getDrawingMode() === mode) {
+              if (
+                instanceRef.current.getDrawingMode &&
+                instanceRef.current.getDrawingMode() === mode &&
+                instanceRef.current.stopDrawingMode
+              ) {
                 instanceRef.current.stopDrawingMode();
               }
             } catch (e) {
               // Ignore errors during cleanup
             }
           });
+          // Guard destroy
+          if (typeof instanceRef.current.destroy === 'function') {
+            instanceRef.current.destroy();
+          }
         } catch (e) {
           // Ignore errors during cleanup
         }
@@ -129,6 +137,7 @@ export default function ImageEditorModal({
   }, []);
 
   const handleClose = () => {
+    if (isLoading) return; // Prevent close while loading
     setIsDestroying(true);
     onClose();
   };
@@ -198,7 +207,7 @@ export default function ImageEditorModal({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) {
+        if (e.target === e.currentTarget && !isLoading) {
           handleClose();
         }
       }}
@@ -207,8 +216,8 @@ export default function ImageEditorModal({
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 flex flex-col"
         style={{ 
           backgroundColor: colors['bg-primary'],
-          width: '90vw',
-          height: '90vh',
+          width: '80vw',
+          height: '80vh',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -259,7 +268,6 @@ export default function ImageEditorModal({
                     'common.color': colors['text-primary'],
                   },
                   menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
-                  initMenu: 'filter',
                   menuBarPosition: 'bottom',
                   uiSize: {
                     width: '100%',
