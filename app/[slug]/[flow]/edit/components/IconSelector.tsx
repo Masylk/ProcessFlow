@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useColors } from '@/app/theme/hooks';
+import Tooltip from '@/app/components/Tooltip';
 
-const TABS = ['Apps', 'Icons'];
+const TABS = ['Apps', 'Icons', 'Upload'];
 const BRANDFETCH_TIMEOUT = 10000; // 10 seconds timeout
+const ACCEPTED_FILE_TYPES = 'image/png,image/jpeg,image/svg+xml';
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface Entity {
   basicUrl: string;
@@ -45,11 +48,56 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('Apps');
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
   
   // Add state for BrandFetch preview loading
   const [brandFetchLoading, setBrandFetchLoading] = useState(false);
   const [brandFetchUrl, setBrandFetchUrl] = useState<string | null>(null);
   const [brandFetchError, setBrandFetchError] = useState(false);
+  const [hoveredIcon, setHoveredIcon] = useState<{ name: string; type: string } | null>(null);
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (!file.type.match(ACCEPTED_FILE_TYPES.replace(/,/g, '|'))) {
+      setUploadError('Invalid file type. Please upload PNG, JPEG, or SVG files.');
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setUploadError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-icon', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload file');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      onSelect(data.data.iconUrl);
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadError(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [onSelect]);
 
   useEffect(() => {
     const fetchIcons = async () => {
@@ -173,14 +221,15 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
           backgroundColor: colors['bg-primary'],
           borderBottomWidth: '1px',
           borderBottomStyle: 'solid',
-          borderBottomColor: colors['border-primary']
+          borderBottomColor: colors['border-primary'],
+          display: activeTab === 'Upload' ? 'none' : 'flex'
         }}
       >
         <div className="flex items-center gap-2">
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-lg-icon.svg`}
             alt="Search icon"
-            className="w-4 h-4"
+            className="w-4 h-4 select-none pointer-events-none"
           />
           <input
             type="text"
@@ -226,20 +275,33 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
                 <button
                   key={index}
                   onClick={() => onSelect(app.basicUrl)}
-                  className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200"
+                  className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
                   style={{
                     backgroundColor:
                       hoveredButton === `app-${index}`
                         ? colors['bg-quaternary']
                         : 'transparent',
                   }}
-                  onMouseEnter={() => setHoveredButton(`app-${index}`)}
-                  onMouseLeave={() => setHoveredButton(null)}
+                  onMouseEnter={() => {
+                    setHoveredButton(`app-${index}`);
+                    setHoveredIcon({
+                      name: app.basicUrl.split('/').pop()?.split('.')[0] || '',
+                      type: 'App'
+                    });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredButton(null);
+                    setHoveredIcon(null);
+                  }}
                 >
                   <img
                     src={app.signedUrl}
                     alt={app.basicUrl}
-                    className="w-6 h-6 object-contain"
+                    className="w-6 h-6 object-contain select-none pointer-events-none"
+                  />
+                  <Tooltip 
+                    text={hoveredIcon?.name || ''} 
+                    visible={hoveredIcon?.type === 'App' && hoveredButton === `app-${index}`}
                   />
                 </button>
               ))}
@@ -267,7 +329,7 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
                     <img
                       src={brandFetchUrl}
                       alt={`Logo for ${searchTerm}`}
-                      className="w-6 h-6 object-contain"
+                      className="w-6 h-6 object-contain select-none pointer-events-none"
                       referrerPolicy="strict-origin-when-cross-origin"
                       onError={() => setBrandFetchError(true)}
                     />
@@ -292,23 +354,120 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
                 <button
                   key={index}
                   onClick={() => onSelect(icon.basicUrl)}
-                  className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200"
+                  className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
                   style={{
                     backgroundColor:
                       hoveredButton === `icon-${index}`
                         ? colors['bg-quaternary']
                         : 'transparent',
                   }}
-                  onMouseEnter={() => setHoveredButton(`icon-${index}`)}
-                  onMouseLeave={() => setHoveredButton(null)}
+                  onMouseEnter={() => {
+                    setHoveredButton(`icon-${index}`);
+                    setHoveredIcon({
+                      name: icon.basicUrl.split('/').pop()?.split('.')[0] || '',
+                      type: 'Icon'
+                    });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredButton(null);
+                    setHoveredIcon(null);
+                  }}
                 >
                   <img
                     src={icon.signedUrl}
                     alt={icon.basicUrl}
-                    className="w-6 h-6 object-contain"
+                    className="w-6 h-6 object-contain select-none pointer-events-none"
+                  />
+                  <Tooltip 
+                    text={hoveredIcon?.name || ''} 
+                    visible={hoveredIcon?.type === 'Icon' && hoveredButton === `icon-${index}`}
                   />
                 </button>
               ))}
+          </div>
+        )}
+
+        {activeTab === 'Upload' && (
+          <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
+            <div
+              className={`w-full p-5 border border-dashed rounded-lg flex flex-col items-center gap-3 transition-colors duration-200 cursor-pointer ${
+                isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-brand-secondary'
+              }`}
+              style={{ borderColor: colors['border-primary'] }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isUploading && e.dataTransfer.files?.[0]) {
+                  handleFileUpload(e.dataTransfer.files[0]);
+                }
+              }}
+              onClick={() => {
+                if (!isUploading) {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = ACCEPTED_FILE_TYPES;
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) handleFileUpload(file);
+                  };
+                  input.click();
+                }
+              }}
+            >
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  <span style={{ color: colors['text-secondary'] }}>Uploading...</span>
+                </div>
+              ) : (
+                <>
+                  <div 
+                    className="w-12 h-12 rounded-lg flex items-center justify-center"
+                    style={{
+                      backgroundColor: colors['bg-primary'],
+                      boxShadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.05), inset 0px -2px 0px 0px rgba(16, 24, 40, 0.05), inset 0px 0px 0px 1px rgba(16, 24, 40, 0.18)'
+                    }}
+                  >
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-cloud-02.svg`}
+                      alt="Upload icon"
+                      className="w-6 h-6 select-none pointer-events-none"
+                    />
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-semibold" style={{ color: colors['text-brand-secondary'] }}>
+                        Click to upload
+                      </span>
+                      <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+                        or drag and drop
+                      </span>
+                    </div>
+                    <p className="text-xs text-center" style={{ color: colors['text-secondary'] }}>
+                      SVG, PNG, JPG
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            {uploadError && (
+              <div 
+                className="text-sm px-4 py-2 rounded-md"
+                style={{ 
+                  backgroundColor: colors['bg-error'],
+                  color: colors['text-error']
+                }}
+              >
+                {uploadError}
+              </div>
+            )}
           </div>
         )}
       </div>
