@@ -171,6 +171,12 @@ export const TabButton: React.FC<TabButtonProps> = ({
                     className="w-4 h-4 object-contain"
                     referrerPolicy="strict-origin-when-cross-origin"
                   />
+                ) : folder.icon_url.startsWith('assets/shared_components/') ? (
+                  <img
+                    src={getAssetUrl(folder.icon_url)}
+                    alt={label}
+                    className="w-4 h-4 object-contain"
+                  />
                 ) : (
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
@@ -178,6 +184,18 @@ export const TabButton: React.FC<TabButtonProps> = ({
                     className="w-4 h-4 object-contain"
                   />
                 )
+              ) : isFolder ? (
+                <img
+                  src={getAssetUrl(SHARED_ASSETS.folderBase)}
+                  alt="Folder"
+                  className="w-4 h-4 object-contain"
+                />
+              ) : icon ? (
+                <img
+                  src={icon}
+                  alt={label}
+                  className="w-4 h-4 object-contain"
+                />
               ) : null}
             </div>
 
