@@ -19,9 +19,12 @@ function checkServerEnvironment() {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
       console.warn('⚠️ Server-side check: STRIPE_SECRET_KEY is missing!');
-      console.warn('Available env vars:', Object.keys(process.env)
-        .filter(key => !key.includes('SECRET') && !key.includes('KEY'))
-        .join(', '));
+      console.warn(
+        'Available env vars:',
+        Object.keys(process.env)
+          .filter((key) => !key.includes('SECRET') && !key.includes('KEY'))
+          .join(', ')
+      );
     } else {
       console.log('✅ STRIPE_SECRET_KEY is available on the server');
     }
@@ -47,8 +50,12 @@ export default function RootLayout({
       <head>
         {/* Google Font preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+
         {/* Favicons */}
         <link rel="icon" type="image/png" sizes="32x32" href="/32x32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/48x48.png" />
@@ -56,7 +63,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} overflow-hidden`}>
         <ThemeProvider>
           <PostHogProvider>
             <AuthCheck>{children}</AuthCheck>
@@ -76,11 +83,10 @@ export default function RootLayout({
         />
 
         {/* External CSS */}
-        <link 
-          rel="stylesheet" 
+        <link
+          rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
         />
-
       </body>
     </html>
   );
