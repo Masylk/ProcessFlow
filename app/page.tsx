@@ -197,7 +197,6 @@ export default function Page() {
       }
 
       if (Array.isArray(data)) {
-        console.log('WOrkspaces data', data);
         setWorkspaces(data);
         // sessionStorage.setItem(
         //   cacheKey,

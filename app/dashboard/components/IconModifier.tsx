@@ -6,14 +6,14 @@ interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
   emote?: string;
   onUpdate: (icon?: string, emote?: string) => void; // Callback when an icon is updated
-  allowEmoji?: boolean;  // Add this prop
+  allowEmoji?: boolean; // Add this prop
 }
 
 export default function IconModifier({
   initialIcon,
   onUpdate,
   emote,
-  allowEmoji = true  // Default to true
+  allowEmoji = true, // Default to true
 }: IconModifierProps) {
   const colors = useColors();
   const [showSelector, setShowSelector] = useState(false);
@@ -76,9 +76,9 @@ export default function IconModifier({
       {/* Backdrop */}
       {showSelector && (
         <div className="fixed inset-0 z-50">
-          <div 
+          <div
             style={{ backgroundColor: colors['bg-overlay'] }}
-            className="absolute inset-0 opacity-70" 
+            className="absolute inset-0 opacity-70"
             onClick={handleOverlayClick}
           />
         </div>
@@ -87,10 +87,7 @@ export default function IconModifier({
       {/* Icon Selector */}
       {showSelector && (
         <div className="absolute top-12 left-0 z-50">
-          <IconSelector 
-            onSelect={handleIconSelect} 
-            allowEmoji={allowEmoji}
-          />
+          <IconSelector onSelect={handleIconSelect} allowEmoji={allowEmoji} />
         </div>
       )}
     </div>
