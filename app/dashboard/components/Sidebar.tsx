@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import WorkspaceDropdownMenu from './WorkspaceDropdownMenu';
-import FolderSection from './FolderSection';
 import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import TabButton from '@/app/components/TabButton';
