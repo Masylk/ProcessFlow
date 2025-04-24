@@ -506,7 +506,12 @@ export default function SharePage({
     }
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!workflowData) return;
     
     const url = window.location.href;
@@ -523,14 +528,17 @@ export default function SharePage({
         // Fallback: Create a temporary textarea element
         const textArea = document.createElement('textarea');
         textArea.value = url;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
+        // Position off-screen without affecting scroll
+        textArea.style.position = 'absolute';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        textArea.style.zIndex = '-1';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '0';
         document.body.appendChild(textArea);
-        textArea.focus();
+        
+        // Select and copy without focusing
         textArea.select();
-
-        // Try the execCommand approach as fallback
         const successful = document.execCommand('copy');
         textArea.remove();
 
