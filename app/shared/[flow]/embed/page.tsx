@@ -509,18 +509,46 @@ export default function SharePage({
   const handleCopyLink = async () => {
     if (!workflowData) return;
     
+    const url = window.location.href;
+    
     try {
-      const url = window.location.href;
+      // Try the modern clipboard API first
       await navigator.clipboard.writeText(url);
       toast.success('Link Copied!', {
         description: 'Share link has been copied to your clipboard.',
         duration: 3000,
       });
     } catch (err) {
-      toast.error('Failed to Copy', {
-        description: 'Could not copy the link to your clipboard.',
-        duration: 3000,
-      });
+      try {
+        // Fallback: Create a temporary textarea element
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        // Try the execCommand approach as fallback
+        const successful = document.execCommand('copy');
+        textArea.remove();
+
+        if (successful) {
+          toast.success('Link Copied!', {
+            description: 'Share link has been copied to your clipboard.',
+            duration: 3000,
+          });
+        } else {
+          throw new Error('Fallback copy failed');
+        }
+      } catch (fallbackErr) {
+        // If both methods fail, show error with the URL
+        toast.error('Failed to Copy', {
+          description: 'Please copy this URL manually: ' + url,
+          duration: 5000,
+        });
+      }
     }
   };
 
