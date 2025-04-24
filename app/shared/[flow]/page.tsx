@@ -14,7 +14,7 @@ import VerticalStep from '@/app/[slug]/[flow]/read/components/steps/VerticalStep
 import HorizontalLastStep from '@/app/[slug]/[flow]/read/components/steps/HorizontalLastStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
-import Alert from '@/app/components/Alert';
+import { toast } from 'sonner';
 import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
 import ProcessCanvas from '@/app/[slug]/[flow]/read/components/ProcessCanvas';
 import VerticalLastStep from '@/app/[slug]/[flow]/read/components/steps/VerticalLastStep';
@@ -102,8 +102,7 @@ export default function SharedPage({
   );
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
-  const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
-    useState<boolean>(false);
+  const [showLinkCopiedAlert, setShowLinkCopiedAlert] = useState<boolean>(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
@@ -910,14 +909,20 @@ export default function SharedPage({
   };
 
   const handleCopyLink = () => {
-    // Copy the current URL to clipboard
-    navigator.clipboard.writeText(window.location.href);
-    setShowLinkCopiedAlert(true);
-
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-      setShowLinkCopiedAlert(false);
-    }, 5000);
+    if (!workflowData) return;
+    
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Link Copied!', {
+        description: 'Share link has been copied to your clipboard.',
+        duration: 3000,
+      });
+    }).catch(() => {
+      toast.error('Failed to Copy', {
+        description: 'Could not copy the link to your clipboard.',
+        duration: 3000,
+      });
+    });
   };
 
   // Function to handle step click from sidebar
@@ -1053,18 +1058,6 @@ export default function SharedPage({
                 <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
               </div>
             )} */}
-
-            {/* Link Copied Alert */}
-            {showLinkCopiedAlert && (
-              <div className="fixed bottom-4 right-4 z-50">
-                <Alert
-                  variant="success"
-                  title=""
-                  message="Step's link copied to your clipboard"
-                  onClose={() => setShowLinkCopiedAlert(false)}
-                />
-              </div>
-            )}
 
             {/* Main content */}
             <ProcessCanvas

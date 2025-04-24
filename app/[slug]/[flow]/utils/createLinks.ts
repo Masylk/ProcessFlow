@@ -19,11 +19,19 @@ export const createReadLink = (name: string, workflowId: string, slug: string) =
   return shareUrl;
 };
 
-export const createAndCopyShareLink = (name: string, public_access_id: string) => {
-  const shareUrl = createShareLink(name, public_access_id);
-  if (shareUrl) {
-    navigator.clipboard.writeText(shareUrl);
-    return true;
+export const createAndCopyShareLink = async (workflowId: number | string) => {
+  try {
+    const response = await fetch(`/api/workflow/${workflowId}`);
+    if (!response.ok) throw new Error('Failed to fetch workflow');
+    
+    const workflow = await response.json();
+    const shareUrl = createShareLink(workflow.name, workflow.public_access_id);
+    
+    if (!shareUrl) throw new Error('Could not create share link');
+    
+    await navigator.clipboard.writeText(shareUrl);
+    return shareUrl;
+  } catch (error) {
+    throw error;
   }
-  return false;
 };
