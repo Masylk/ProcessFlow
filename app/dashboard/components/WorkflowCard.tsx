@@ -9,7 +9,9 @@ import { useColors } from '@/app/theme/hooks';
 import {
   createEditLink,
   createReadLink,
+  createShareLink,
 } from '@/app/[slug]/[flow]/utils/createLinks';
+import { toast } from 'sonner';
 
 interface StatusStyle {
   bg: string;
@@ -129,6 +131,61 @@ export default function WorkflowCard({
     router.push(readLink);
   };
 
+  const handleCopyLink = async () => {
+    if (!workflow) return;
+    
+    try {
+      const url = createShareLink(workflow.name, workflow.public_access_id);
+      if (!url) throw new Error('Could not create share link');
+      
+      try {
+        // Try the modern clipboard API first
+        await navigator.clipboard.writeText(url);
+        toast.success('Link Copied!', {
+          description: 'Share link has been copied to your clipboard.',
+          duration: 3000,
+        });
+      } catch (err) {
+        try {
+          // Fallback: Create a temporary textarea element
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          // Try the execCommand approach as fallback
+          const successful = document.execCommand('copy');
+          textArea.remove();
+
+          if (successful) {
+            toast.success('Link Copied!', {
+              description: 'Share link has been copied to your clipboard.',
+              duration: 3000,
+            });
+          } else {
+            throw new Error('Fallback copy failed');
+          }
+        } catch (fallbackErr) {
+          // If both methods fail, show error with the URL
+          toast.error('Failed to Copy', {
+            description: 'Please copy this URL manually: ' + url,
+            duration: 5000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error creating share link:', error);
+      toast.error('Failed to Copy', {
+        description: 'Could not create the share link.',
+        duration: 3000,
+      });
+    }
+  };
+
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -236,7 +293,11 @@ export default function WorkflowCard({
                 '--hover-bg': colors['bg-quaternary'],
               } as React.CSSProperties
             }
-            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopyLink();
+            }}
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
