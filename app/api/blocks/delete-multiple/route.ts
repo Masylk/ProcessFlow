@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // All blocks have the same path_id
+    // Path ID of the first deleted block
     const pathId = blocks[0].path_id;
 
     // Delete images from storage if they exist

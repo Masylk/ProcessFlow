@@ -173,13 +173,6 @@ export async function PATCH(req: NextRequest) {
         delay_event: type === 'DELAY' ? delay_event : null,
         step_details: type === 'STEP' ? step_details : null,
       },
-      include: {
-        child_paths: {
-          include: {
-            path: true
-          }
-        }
-      }
     });
 
     return NextResponse.json(updatedBlock);

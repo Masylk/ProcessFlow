@@ -30,12 +30,14 @@ const getInputToken = (
 
 interface BlockDetailsSidebarProps {
   block: Block;
+  signedImageUrl?: string | null;
   onClose: () => void;
   onUpdate: (updatedData: Partial<Block>) => void;
 }
 
 export default function BlockDetailsSidebar({
   block,
+  signedImageUrl,
   onClose,
   onUpdate,
 }: BlockDetailsSidebarProps) {
@@ -428,6 +430,7 @@ export default function BlockDetailsSidebar({
                 <BlockMediaVisualizer
                   block={block}
                   altText="Block Media"
+                  signedImageUrl={signedImageUrl}
                   onUpdate={onUpdate}
                 />
               ) : (

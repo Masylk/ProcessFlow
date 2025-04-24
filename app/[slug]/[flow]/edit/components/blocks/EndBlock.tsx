@@ -7,6 +7,7 @@ import { useEditModeStore } from '../../store/editModeStore';
 import { useColors } from '@/app/theme/hooks';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { BasicBlock } from './BasicBlock';
+import { usePathsStore } from '../../store/pathsStore';
 
 function EndBlock(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
@@ -15,9 +16,27 @@ function EndBlock(props: NodeProps & { data: NodeData }) {
   const colors = useColors();
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteButtonHovered, setIsDeleteButtonHovered] = useState(false);
+  const setPaths = usePathsStore((state) => state.setPaths);
 
   const handleConvertToLast = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Optimistically update to LAST
+    setPaths((currentPaths) => {
+      const updatedPaths = currentPaths.map((path) =>
+        path.id === data.path?.id
+          ? {
+              ...path,
+              blocks: path.blocks.map((b) =>
+                b.id === data.block.id ? { ...b, type: BlockEndType.LAST } : b
+              ),
+            }
+          : path
+      );
+      if (typeof data.onPathsUpdate === 'function') {
+        data.onPathsUpdate(updatedPaths);
+      }
+      return updatedPaths;
+    });
     try {
       await fetch(`/api/blocks/${id.replace('block-', '')}`, {
         method: 'PATCH',
@@ -26,17 +45,24 @@ function EndBlock(props: NodeProps & { data: NodeData }) {
           type: BlockEndType.LAST,
         }),
       });
-
-      // Fetch updated paths data
-      const pathsResponse = await fetch(
-        `/api/workspace/${data.path?.workflow_id}/paths?workflow_id=${data.path?.workflow_id}`
-      );
-      if (pathsResponse.ok) {
-        const pathsData = await pathsResponse.json();
-        // Assuming onPathsUpdate is passed in data
-        data.onPathsUpdate?.(pathsData.paths);
-      }
     } catch (error) {
+      // Rollback to END if error
+      setPaths((currentPaths) => {
+        const rolledBackPaths = currentPaths.map((path) =>
+          path.id === data.path?.id
+            ? {
+                ...path,
+                blocks: path.blocks.map((b) =>
+                  b.id === data.block.id ? { ...b, type: BlockEndType.END } : b
+                ),
+              }
+            : path
+        );
+        if (typeof data.onPathsUpdate === 'function') {
+          data.onPathsUpdate(rolledBackPaths);
+        }
+        return rolledBackPaths;
+      });
       console.error('Error converting to LAST:', error);
     }
   };
