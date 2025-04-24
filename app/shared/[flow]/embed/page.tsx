@@ -11,6 +11,7 @@ import HorizontalStep from './components/HorizontalStep';
 import HorizontalDelay from './components/HorizontalDelay';
 import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
 import { Block, Path, WorkflowData } from '@/app/[slug]/[flow]/types';
+import { toast } from 'sonner';
 
 // Modify the type for source block pairs
 type SourceBlockPair = {
@@ -46,8 +47,6 @@ export default function SharePage({
   );
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
-  const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
-    useState<boolean>(false);
   const [generatedPathIds] = useState<Set<number>>(new Set());
   const [generatedBlockIds] = useState<Set<number>>(new Set());
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
@@ -507,12 +506,22 @@ export default function SharePage({
     }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setShowLinkCopiedAlert(true);
-    setTimeout(() => {
-      setShowLinkCopiedAlert(false);
-    }, 5000);
+  const handleCopyLink = async () => {
+    if (!workflowData) return;
+    
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      toast.success('Link Copied!', {
+        description: 'Share link has been copied to your clipboard.',
+        duration: 3000,
+      });
+    } catch (err) {
+      toast.error('Failed to Copy', {
+        description: 'Could not copy the link to your clipboard.',
+        duration: 3000,
+      });
+    }
   };
 
   const handleRestart = () => {

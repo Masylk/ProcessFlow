@@ -17,7 +17,7 @@ import VerticalStep from './steps/VerticalStep';
 import HorizontalLastStep from './steps/HorizontalLastStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { cn } from '@/lib/utils';
-import Alert from '@/app/components/Alert';
+import { toast } from 'sonner';
 import { usePathsStore } from '../store/pathsStore';
 import ProcessCanvas from './ProcessCanvas';
 import VerticalLastStep from './steps/VerticalLastStep';
@@ -112,8 +112,6 @@ export default function ReadPageClient() {
   );
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
-  const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
-    useState<boolean>(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
@@ -921,20 +919,23 @@ export default function ReadPageClient() {
     return ((currentStep + 1) / (PathsToDisplayBlocks.length + 1)) * 100;
   };
 
-  const handleCopyLink = () => {
-    if (!workflowData) {
-      return;
+  const handleCopyLink = async () => {
+    if (!workflowData?.id) return;
+    
+    try {
+      const url = await createAndCopyShareLink(workflowData.id);
+      setShareUrl(url);
+      toast.success('Link Copied!', {
+        description: 'Share link has been copied to your clipboard.',
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error copying link:', error);
+      toast.error('Failed to Copy', {
+        description: 'Could not copy the link to your clipboard.',
+        duration: 3000,
+      });
     }
-    const shareUrl = createAndCopyShareLink(
-      workflowData.name,
-      workflowData.public_access_id
-    );
-    if (shareUrl) setShowLinkCopiedAlert(true);
-
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-      setShowLinkCopiedAlert(false);
-    }, 5000);
   };
 
   // Function to handle step click from sidebar
@@ -1083,18 +1084,6 @@ export default function ReadPageClient() {
             {helpCenterVisible && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                 <HelpCenterModalDynamic onClose={closeHelpCenter} user={user} />
-              </div>
-            )}
-
-            {/* Link Copied Alert */}
-            {showLinkCopiedAlert && (
-              <div className="fixed bottom-4 right-4 z-50">
-                <Alert
-                  variant="success"
-                  title=""
-                  message="Step's link copied to your clipboard"
-                  onClose={() => setShowLinkCopiedAlert(false)}
-                />
               </div>
             )}
 
