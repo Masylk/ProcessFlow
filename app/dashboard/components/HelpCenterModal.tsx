@@ -247,7 +247,7 @@ export default function HelpCenterModal({
           <a
             href="#"
             onClick={handleRestartTutorial}
-            className="self-stretch px-1.5 py-px flex items-center rounded-lg transition-colors duration-200"
+            className="self-stretch px-1.5 py-px hidden items-center rounded-lg transition-colors duration-200"
             style={{ 
               '--hover-bg': colors['bg-quaternary'],
             } as React.CSSProperties}

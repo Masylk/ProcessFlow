@@ -1,4 +1,9 @@
 ---
+description: 
+globs: *.ts
+alwaysApply: false
+---
+---
 description: Backend Coding Standards
 globs: **/*.ts
 alwaysApply: false

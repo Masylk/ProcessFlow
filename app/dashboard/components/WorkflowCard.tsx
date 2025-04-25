@@ -9,7 +9,10 @@ import { useColors } from '@/app/theme/hooks';
 import {
   createEditLink,
   createReadLink,
+  createShareLink,
 } from '@/app/[slug]/[flow]/utils/createLinks';
+import { toast } from 'sonner';
+import ShareModal from '@/app/components/ShareModal';
 
 interface StatusStyle {
   bg: string;
@@ -22,6 +25,7 @@ type MenuItem = { label: string; icon: string } | 'separator';
 
 const menuItems: MenuItem[] = [
   { label: 'Open in read mode', icon: 'play.svg' },
+  { label: 'Share', icon: 'share-01.svg' },
   'separator',
   { label: 'Edit Flow info', icon: 'edit-05.svg' },
   { label: 'Duplicate', icon: 'duplicate-icon.svg' },
@@ -56,6 +60,7 @@ export default function WorkflowCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [isStarFilled, setIsStarFilled] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const statusMenuRef = useRef<HTMLDivElement | null>(null);
   const statusButtonRef = useRef<HTMLDivElement | null>(null);
@@ -68,6 +73,8 @@ export default function WorkflowCard({
     'top' | 'bottom'
   >('bottom');
   const router = useRouter();
+  const [isToggling, setIsToggling] = useState(false);
+  const [localIsPublic, setLocalIsPublic] = useState(workflow.is_public);
 
   const formatLastEdited = (dateString: string) => {
     const date = new Date(dateString);
@@ -129,6 +136,61 @@ export default function WorkflowCard({
     router.push(readLink);
   };
 
+  const handleCopyLink = async () => {
+    if (!workflow) return;
+    
+    try {
+      const url = createShareLink(workflow.name, workflow.public_access_id);
+      if (!url) throw new Error('Could not create share link');
+      
+      try {
+        // Try the modern clipboard API first
+        await navigator.clipboard.writeText(url);
+        toast.success('Link Copied!', {
+          description: 'Share link has been copied to your clipboard.',
+          duration: 3000,
+        });
+      } catch (err) {
+        try {
+          // Fallback: Create a temporary textarea element
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          // Try the execCommand approach as fallback
+          const successful = document.execCommand('copy');
+          textArea.remove();
+
+          if (successful) {
+            toast.success('Link Copied!', {
+              description: 'Share link has been copied to your clipboard.',
+              duration: 3000,
+            });
+          } else {
+            throw new Error('Fallback copy failed');
+          }
+        } catch (fallbackErr) {
+          // If both methods fail, show error with the URL
+          toast.error('Failed to Copy', {
+            description: 'Please copy this URL manually: ' + url,
+            duration: 5000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error creating share link:', error);
+      toast.error('Failed to Copy', {
+        description: 'Could not create the share link.',
+        duration: 3000,
+      });
+    }
+  };
+
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -187,300 +249,353 @@ export default function WorkflowCard({
 
   const currentStatus = STATUS_STYLES[workflow.status as WorkflowStatus];
 
-  return (
-    <div
-      ref={cardRef}
-      onClick={() => handleWorkflowClick(workflow.id)}
-      style={
-        {
-          backgroundColor: colors['bg-primary'],
-          borderColor:
-            isHovered || isMenuOpen
-              ? colors['border-primary']
-              : colors['border-secondary'],
-          '--hover-bg': colors['bg-quaternary'],
-        } as React.CSSProperties
+  const handleToggleAccess = async () => {
+    if (isToggling) return;
+    
+    try {
+      setIsToggling(true);
+      
+      // Optimistic update for immediate feedback
+      setLocalIsPublic(!localIsPublic);
+      
+      const response = await fetch(`/api/workflow/${workflow.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_public: !workflow.is_public,
+        }),
+      });
+
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        // Revert the optimistic update if the server request failed
+        setLocalIsPublic(workflow.is_public);
+        throw new Error(responseData.message || 'Failed to update workflow access');
       }
-      className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Menu Icons */}
-      <div className="absolute top-3 right-3 z-2">
-        <div className="flex items-center gap-2">
-          {/* Star Button */}
-          <div
-            style={
-              {
-                '--hover-bg': colors['bg-quaternary'],
-              } as React.CSSProperties
-            }
-            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsStarFilled(!isStarFilled);
-            }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${isStarFilled ? 'star-filled.svg' : 'star-01.svg'}`}
-              alt="Star Icon"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
-              draggable="false"
-            />
-          </div>
 
-          {/* Link Button */}
-          <div
-            style={
-              {
-                '--hover-bg': colors['bg-quaternary'],
-              } as React.CSSProperties
-            }
-            className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-02.svg`}
-              alt="Link Icon"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
-              draggable="false"
-            />
-          </div>
+      // Update with the actual server response data
+      const updatedWorkflow = {
+        ...workflow,
+        is_public: responseData.is_public,
+      };
+      onSelectWorkflow(updatedWorkflow);
 
-          {/* Menu Button */}
-          <div
-            ref={actionsButtonRef}
-            data-menu-button
-            style={
-              {
-                '--hover-bg': colors['bg-quaternary'],
-              } as React.CSSProperties
-            }
-            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
-            onClick={handleMenuClick}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
-              alt="Menu"
-              className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
-              draggable="false"
-            />
+      // Use the actual server response to determine the new state
+      const newState = responseData.is_public;
+      toast.success('Access updated', {
+        description: `Workflow is now ${newState ? 'public' : 'private'}`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error toggling workflow access:', error);
+      toast.error('Failed to update access', {
+        description: 'Could not update the workflow access settings.',
+        duration: 3000,
+      });
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  // Update localIsPublic when workflow.is_public changes
+  useEffect(() => {
+    setLocalIsPublic(workflow.is_public);
+  }, [workflow.is_public]);
+
+  return (
+    <>
+      <div
+        ref={cardRef}
+        onClick={() => handleWorkflowClick(workflow.id)}
+        style={
+          {
+            backgroundColor: colors['bg-primary'],
+            borderColor:
+              isHovered || isMenuOpen
+                ? colors['border-primary']
+                : colors['border-secondary'],
+            '--hover-bg': colors['bg-quaternary'],
+          } as React.CSSProperties
+        }
+        className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Menu Icons */}
+        <div className="absolute top-3 right-3 z-2">
+          <div className="flex items-center gap-2">
+            {/* Star Button */}
+            <div
+              style={
+                {
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
+              className="w-6 h-6 rounded hidden items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsStarFilled(!isStarFilled);
+              }}
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${isStarFilled ? 'star-filled.svg' : 'star-01.svg'}`}
+                alt="Star Icon"
+                className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+                draggable="false"
+              />
+            </div>
+
+            {/* Menu Button */}
+            <div
+              ref={actionsButtonRef}
+              data-menu-button
+              style={
+                {
+                  '--hover-bg': colors['bg-quaternary'],
+                } as React.CSSProperties
+              }
+              className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+              onClick={handleMenuClick}
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
+                alt="Menu"
+                className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+                draggable="false"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex flex-col h-full">
-        {/* Top Section */}
-        <div className="p-4 flex-1">
-          {/* Icon */}
-          <div className="mb-3">
-            <div className="flex items-center justify-center w-8 h-8">
-              {workflow.icon ? (
-                workflow.icon.startsWith('https://cdn.brandfetch.io/') ? (
-                  <img
-                    src={workflow.icon}
-                    alt={workflow.name}
-                    className="w-6 h-auto object-contain"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
+        {/* Main Content */}
+        <div className="flex flex-col h-full">
+          {/* Top Section */}
+          <div className="p-4 flex-1">
+            {/* Icon */}
+            <div className="mb-3">
+              <div className="flex items-center justify-center w-8 h-8">
+                {workflow.icon ? (
+                  workflow.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                    <img
+                      src={workflow.icon}
+                      alt={workflow.name}
+                      className="w-6 h-auto object-contain"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : (
+                    <DynamicIcon
+                      url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
+                      size={32}
+                      color="inherit"
+                      className="select-none"
+                    />
+                  )
                 ) : (
-                  <DynamicIcon
-                    url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflow.icon}`}
-                    size={32}
-                    color="inherit"
-                    className="select-none"
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                    alt="Default Icon"
+                    className="w-8 h-8 select-none"
+                    draggable="false"
                   />
-                )
-              ) : (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
-                  alt="Default Icon"
-                  className="w-8 h-8 select-none"
-                  draggable="false"
-                />
-              )}
+                )}
+              </div>
+            </div>
+
+            {/* Title and Description */}
+            <div className="space-y-1">
+              <h3
+                style={{ color: colors['text-primary'] }}
+                className="font-medium text-md line-clamp-2 break-words overflow-hidden"
+                title={workflow.name}
+              >
+                {workflow.name}
+              </h3>
             </div>
           </div>
 
-          {/* Title and Description */}
-          <div className="space-y-1">
-            <h3
-              style={{ color: colors['text-primary'] }}
-              className="font-medium text-md line-clamp-2 break-words overflow-hidden"
-              title={workflow.name}
-            >
-              {workflow.name}
-            </h3>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="mt-auto">
-          <div
-            style={{ borderColor: colors['border-secondary'] }}
-            className="border-t w-full"
-          />
-          <div className="px-4 py-3 flex items-center justify-between">
+          {/* Bottom Section */}
+          <div className="mt-auto">
             <div
-              className="relative"
-              ref={statusButtonRef}
-              onClick={handleStatusClick}
-            >
+              style={{ borderColor: colors['border-secondary'] }}
+              className="border-t w-full"
+            />
+            <div className="px-4 py-3 flex items-center justify-between">
               <div
-                style={{
-                  backgroundColor: currentStatus.bg,
-                  borderColor: currentStatus.border,
-                  color: currentStatus.text,
-                }}
-                className="px-2 py-0.5 text-xs rounded-full border cursor-pointer transition-colors duration-150"
+                className="relative"
+                ref={statusButtonRef}
+                onClick={handleStatusClick}
               >
-                {currentStatus.label}
-              </div>
-
-              {/* Status Dropdown Menu */}
-              {isStatusMenuOpen && (
                 <div
-                  ref={statusMenuRef}
                   style={{
-                    backgroundColor: colors['bg-secondary'],
-                    borderColor: colors['border-primary'],
-                    ...(statusMenuPosition === 'top'
-                      ? { bottom: 'calc(100% + 4px)' }
-                      : { top: 'calc(100% + 4px)' }),
+                    backgroundColor: currentStatus.bg,
+                    borderColor: currentStatus.border,
+                    color: currentStatus.text,
                   }}
-                  className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
+                  className="px-2 py-0.5 text-xs rounded-full border cursor-pointer transition-colors duration-150"
                 >
-                  <div className="flex flex-col">
-                    {Object.entries(STATUS_STYLES).map(([key, style]) => (
-                      <div
-                        key={key}
-                        className="self-stretch px-1.5 py-px flex items-center gap-3"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onStatusChange(workflow, key as WorkflowStatus);
-                          setIsStatusMenuOpen(false);
-                        }}
-                      >
+                  {currentStatus.label}
+                </div>
+
+                {/* Status Dropdown Menu */}
+                {isStatusMenuOpen && (
+                  <div
+                    ref={statusMenuRef}
+                    style={{
+                      backgroundColor: colors['bg-secondary'],
+                      borderColor: colors['border-primary'],
+                      ...(statusMenuPosition === 'top'
+                        ? { bottom: 'calc(100% + 4px)' }
+                        : { top: 'calc(100% + 4px)' }),
+                    }}
+                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
+                  >
+                    <div className="flex flex-col">
+                      {Object.entries(STATUS_STYLES).map(([key, style]) => (
                         <div
-                          style={
-                            {
-                              '--hover-bg': colors['bg-quaternary'],
-                            } as React.CSSProperties
-                          }
-                          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                          key={key}
+                          className="self-stretch px-1.5 py-px flex items-center gap-3"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onStatusChange(workflow, key as WorkflowStatus);
+                            setIsStatusMenuOpen(false);
+                          }}
                         >
                           <div
-                            style={{ color: colors['text-primary'] }}
-                            className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-2"
+                            style={
+                              {
+                                '--hover-bg': colors['bg-quaternary'],
+                              } as React.CSSProperties
+                            }
+                            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
                           >
                             <div
-                              style={{
-                                backgroundColor: style.bg,
-                                borderColor: style.border,
-                              }}
-                              className="w-2 h-2 rounded-full border"
-                            ></div>
-                            {style.label}
+                              style={{ color: colors['text-primary'] }}
+                              className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-2"
+                            >
+                              <div
+                                style={{
+                                  backgroundColor: style.bg,
+                                  borderColor: style.border,
+                                }}
+                                className="w-2 h-2 rounded-full border"
+                              ></div>
+                              {style.label}
+                            </div>
+                            {key === workflow.status && (
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
+                                alt="Selected"
+                                className="w-4 h-4 opacity-70 ml-auto select-none"
+                                draggable="false"
+                              />
+                            )}
                           </div>
-                          {key === workflow.status && (
-                            <img
-                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon2.svg`}
-                              alt="Selected"
-                              className="w-4 h-4 opacity-70 ml-auto select-none"
-                              draggable="false"
-                            />
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <span
-              style={{ color: colors['text-tertiary'] }}
-              className="text-xs truncate ml-4"
-            >
-              Last update: {formatLastEdited(workflow.updated_at)}
-            </span>
+              <span
+                style={{ color: colors['text-tertiary'] }}
+                className="text-xs truncate ml-4"
+              >
+                Last update: {formatLastEdited(workflow.updated_at)}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Menu Dropdown */}
-      {isMenuOpen && (
-        <div
-          ref={menuRef}
-          style={{
-            backgroundColor: colors['bg-secondary'],
-            borderColor: colors['border-primary'],
-            ...(actionsMenuPosition === 'top'
-              ? { bottom: 'calc(100% - 32px)' }
-              : { top: '32px' }),
-            right: '4px',
-          }}
-          className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {menuItems.map((item, index) =>
-            item === 'separator' ? (
-              <div
-                key={`sep-${index}`}
-                style={{ borderColor: colors['border-secondary'] }}
-                className="w-full border-b my-1"
-              />
-            ) : (
-              <div
-                key={index}
-                className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectWorkflow(workflow);
-                  if (item.label === 'Delete Flow') {
-                    onDeleteWorkflow(workflow);
-                  } else if (item.label === 'Move') {
-                    onMoveWorkflow(workflow);
-                  } else if (item.label === 'Edit Flow info') {
-                    onEditWorkflow(workflow);
-                  } else if (item.label === 'Open in read mode') {
-                    navigateToEditMode(workflow.id);
-                  } else if (item.label === 'Duplicate') {
-                    onDuplicateWorkflow(workflow);
-                  }
-                  setIsMenuOpen(false);
-                }}
-              >
+        {/* Menu Dropdown */}
+        {isMenuOpen && (
+          <div
+            ref={menuRef}
+            style={{
+              backgroundColor: colors['bg-secondary'],
+              borderColor: colors['border-primary'],
+              ...(actionsMenuPosition === 'top'
+                ? { bottom: 'calc(100% - 32px)' }
+                : { top: '32px' }),
+              right: '4px',
+            }}
+            className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {menuItems.map((item, index) =>
+              item === 'separator' ? (
                 <div
-                  style={
-                    {
-                      '--hover-bg': colors['bg-quaternary'],
-                    } as React.CSSProperties
-                  }
-                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  key={`sep-${index}`}
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="w-full border-b my-1"
+                />
+              ) : (
+                <div
+                  key={index}
+                  className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectWorkflow(workflow);
+                    if (item.label === 'Delete Flow') {
+                      onDeleteWorkflow(workflow);
+                    } else if (item.label === 'Move') {
+                      onMoveWorkflow(workflow);
+                    } else if (item.label === 'Edit Flow info') {
+                      onEditWorkflow(workflow);
+                    } else if (item.label === 'Open in read mode') {
+                      navigateToEditMode(workflow.id);
+                    } else if (item.label === 'Duplicate') {
+                      onDuplicateWorkflow(workflow);
+                    } else if (item.label === 'Share') {
+                      setIsShareModalOpen(true);
+                    }
+                    setIsMenuOpen(false);
+                  }}
                 >
-                  <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
-                    <div className="w-4 h-4 relative overflow-hidden">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
-                        alt={`${item.label} Icon`}
-                        className="w-4 h-4 select-none"
-                        draggable="false"
-                      />
-                    </div>
-                    <div
-                      style={{ color: colors['text-primary'] }}
-                      className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
-                    >
-                      {item.label}
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                      <div className="w-4 h-4 relative overflow-hidden">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
+                          alt={`${item.label} Icon`}
+                          className="w-4 h-4 select-none"
+                          draggable="false"
+                        />
+                      </div>
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                      >
+                        {item.label}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )
-          )}
-        </div>
-      )}
-    </div>
+              )
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        itemName={workflow.name}
+        shareableLink={createShareLink(workflow.name, workflow.public_access_id)}
+        is_public={localIsPublic}
+        onToggleAccess={handleToggleAccess}
+      />
+    </>
   );
 }

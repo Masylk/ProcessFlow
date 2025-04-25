@@ -1,0 +1,483 @@
+//// ------------------------------------------------------
+//// Documentation file for the schema.dbml file
+//// ------------------------------------------------------
+
+Table user {
+  id Int [pk, increment, note: 'Primary identifier for user']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  archived_at DateTime [note: 'Timestamp when user was archived (soft delete)']
+  auth_id String [unique, not null, note: 'Authentication identifier']
+  first_name String [not null, note: 'User\'s first name']
+  last_name String [not null, note: 'User\'s last name']
+  full_name String [not null, note: 'Complete name (first + last)']
+  email String [unique, not null, note: 'User\'s email address (unique)']
+  avatar_url String [note: 'URL to user\'s profile image']
+  active_workspace_id Int [note: 'ID of currently selected workspace']
+  hubspot_contact_id String [note: 'External Hubspot contact ID']
+  sentry_id String [note: 'Sentry user ID']
+  post_hog_id String [note: 'PostHog user ID']
+  phone String [note: 'User\'s contact phone number']
+  last_login_at DateTime [note: 'Date of last login']
+  onboarding_completed_at DateTime [note: 'Date of onboarding completion']
+  onboarding_step onboarding_step [default: 'PERSONAL_INFO', note: 'Current onboarding progress']
+  professional_role String [note: 'User\'s job title/role']
+  source String [note: 'How user found the platform']
+  temp_company_size String [note: 'Temporary field for company size, will be transfered to company_size in workspace table once it\'s created']
+  temp_industry String [note: 'Temporary field for industry, will be transfered to industry in workspace table once it\'s created']
+  tutorial_completed Boolean [not null, default: false, note: 'Whether first-time tutorial is done']
+  actions action [not null, note: 'User\'s actions history']
+  saved_searches saved_search [not null, note: 'User\'s saved search queries']
+  active_workspace workspace [note: 'Currently selected workspace']
+  workspaces user_workspace [not null, note: 'All workspaces user belongs to']
+  created_versions workflow_version [not null, note: 'Workflow versions created by user']
+  scheduled_emails scheduled_emails [not null, note: 'Emails scheduled for user']
+  workflows workflow [not null, note: 'Workflows created by user']
+  ai_conversations ai_conversations [not null, note: 'AI chat history for user']
+}
+
+Table workspace {
+  id Int [pk, increment, note: 'Primary identifier for workspace']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  archived_at DateTime [note: 'Date when workspace was archived']
+  name String [not null, note: 'Workspace name']
+  slug String [unique, note: 'URL-friendly identifier']
+  team_tags String[] [not null, note: 'Tags for workspace teams']
+  icon_url String [note: 'URL to workspace icon']
+  background_colour String [note: 'Workspace theme color']
+  linear_customer_id String [note: 'External Linear customer ID']
+  stripe_customer_id String [unique, note: 'Stripe payment customer ID']
+  hubspot_company_id String [note: 'External Hubspot company ID']
+  company_size String [note: 'Size category of company']
+  industry String [note: 'Company\'s industry sector']
+  subscription_id Int [unique, note: 'Reference to subscription plan']
+  subscription subscription [note: 'Subscription details']
+  billing_infos workspace_billing_infos [note: 'Billing information']
+  billings billing [not null, note: 'Billing history']
+  folders folder [not null, note: 'Workspace folders']
+  invitations invitation [not null, note: 'Pending user invitations']
+  active_users user [not null, note: 'Users with this as active workspace']
+  user_workspaces user_workspace [not null, note: 'User membership records']
+  workflows workflow [not null, note: 'Workflows in workspace']
+  workflow_templates workflow_template [not null, note: 'Custom workflow templates']
+  ai_embeddings ai_embeddings [not null, note: 'AI data embeddings']
+}
+
+Table workspace_billing_infos {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  billing_email String [not null, note: 'Email for invoices']
+  billing_address String [not null, note: 'Billing physical address']
+  tax_rate Decimal [not null, note: 'Applied tax percentage']
+  vat_number String [note: 'VAT/tax identification number']
+  workspace_id Int [unique, not null, note: 'Associated workspace']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Table subscription {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  canceled_at DateTime [note: 'When subscription was canceled']
+  workspace_id Int [unique, not null, note: 'Associated workspace']
+  stripe_subscription_id String [unique, not null, note: 'Stripe subscription reference']
+  trial_end_date DateTime [note: 'When free trial expires']
+  plan_type plan_type [not null, note: 'Subscription plan level']
+  quantity_seats Int [not null, note: 'Number of licensed users']
+  current_period_start DateTime [not null, note: 'Current billing cycle start']
+  current_period_end DateTime [not null, note: 'Current billing cycle end']
+  status subscription_status [not null, note: 'Subscription status']
+  workspace workspace [note: 'Workspace relationship']
+  billings billing [not null, note: 'Associated billing records']
+}
+
+Table billing {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  paid_at DateTime [note: 'When payment was received']
+  subscription_id Int [not null, note: 'Associated subscription']
+  stripe_invoice_id String [unique, not null, note: 'Stripe invoice reference']
+  amount_net Int [not null, note: 'Net amount in cents']
+  tax_amount Int [not null, note: 'Tax portion in cents']
+  amount_gross Int [not null, note: 'Total including tax in cents']
+  currency String [not null, note: 'Currency code (USD, EUR, etc.)']
+  invoice_date DateTime [not null, note: 'Date invoice was issued']
+  due_date DateTime [not null, note: 'Payment deadline']
+  workspace_id Int [not null, note: 'Associated workspace']
+  subscription subscription [not null, note: 'Subscription relationship']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Table user_workspace {
+  id Int [pk, increment, note: 'Primary identifier']
+  user_id Int [not null, note: 'User reference']
+  workspace_id Int [not null, note: 'Workspace reference']
+  role user_role [not null, default: 'ADMIN', note: 'User\'s permission level']
+  user user [not null, note: 'User relationship']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Table invitation {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  email String [not null, note: 'Invitee\'s email']
+  token String [unique, not null, note: 'Unique invitation token']
+  expires_at DateTime [not null, note: 'Invitation expiration']
+  used Boolean [not null, default: false, note: 'Whether invitation was accepted']
+  used_at DateTime [note: 'When invitation was accepted']
+  workspace_id Int [not null, note: 'Inviting workspace']
+  role user_role [not null, default: 'READER', note: 'Assigned permission level']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Table folder {
+  id Int [pk, increment, note: 'Primary identifier']
+  name String [not null, note: 'Folder name']
+  workspace_id Int [not null, note: 'Parent workspace']
+  parent_id Int [note: 'Parent folder (null for root)']
+  icon_url String [note: 'URL to folder icon']
+  emote String [note: 'Emoji identifier']
+  team_tags String[] [not null, note: 'Team ownership tags']
+  path String [note: 'Full path from root']
+  position Int [not null, default: 0, note: 'Display order position']
+  parent folder [note: 'Parent folder relationship']
+  subfolders folder [not null, note: 'Child folders']
+  workspace workspace [not null, note: 'Workspace relationship']
+  workflows workflow [not null, note: 'Contained workflows']
+}
+
+Table workflow {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation date']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update date']
+  last_opened DateTime [note: 'Last access date']
+  name String [not null, note: 'Workflow name']
+  icon String [note: 'Workflow icon']
+  description String [not null, note: 'Workflow description']
+  workspace_id Int [not null, note: 'Parent workspace']
+  team_tags String[] [not null, note: 'Team ownership tags']
+  folder_id Int [note: 'Parent folder']
+  is_public Boolean [not null, default: true, note: 'Visibility within workspace']
+  public_access_id String [unique, note: 'External sharing ID']
+  is_template Boolean [not null, default: false, note: 'Whether workflow is a template']
+  status workflow_status [not null, default: 'DRAFT', note: 'Current status']
+  template_id Int [note: 'Source template if created from template']
+  version_number Int [not null, default: 1, note: 'Current version number']
+  actions action [not null, note: 'Action history']
+  blocks block [not null, note: 'Workflow blocks']
+  paths path [not null, note: 'Workflow paths']
+  stroke_lines stroke_line [not null, note: 'Connecting lines']
+  folder folder [note: 'Parent folder relationship']
+  template workflow_template [note: 'Source template relationship']
+  workspace workspace [not null, note: 'Workspace relationship']
+  versions workflow_version [not null, note: 'Version history']
+  author user [note: 'Creator user']
+  author_id Int [note: 'Creator user ID']
+  ai_conversations ai_conversations [not null, note: 'AI conversation history']
+
+  indexes {
+    (name, workspace_id) [unique, note: 'Prevent duplicate names in workspace']
+  }
+}
+
+Table path {
+  id Int [pk, increment, note: 'Primary identifier']
+  name String [not null, note: 'Path name']
+  workflow_id Int [not null, note: 'Parent workflow']
+  blocks block [not null, note: 'Blocks in path']
+  workflow workflow [not null, note: 'Workflow relationship']
+  parent_blocks path_parent_block [not null, note: 'Blocks that can trigger this path']
+
+  Note: 'Collection of connected blocks forming a workflow path'
+}
+
+Table path_parent_block {
+  path_id Int [not null, note: 'Path reference']
+  block_id Int [not null, note: 'Block reference']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  block block [not null, note: 'Block relationship']
+  path path [not null, note: 'Path relationship']
+
+  indexes {
+    (path_id, block_id) [pk, note: 'Composite primary key']
+  }
+
+  Note: 'Junction table that allows paths to be triggered from multiple parent blocks'
+}
+
+Table block {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  last_modified DateTime [note: 'Content modification timestamp']
+  type block_type [not null, note: 'Block type']
+  position Int [not null, note: 'Display order in path']
+  title String [note: 'Block title']
+  icon String [note: 'Block icon']
+  description String [note: 'Block description']
+  image String [note: 'Block image URL']
+  original_image String [note: 'Original unprocessed image']
+  image_description String [note: 'Image alt text']
+  average_time String [note: 'Estimated completion time']
+  task_type task_type [note: 'Manual or automatic task']
+  workflow_id Int [not null, note: 'Parent workflow']
+  path_id Int [not null, note: 'Parent path']
+  click_position Json [note: 'UI position coordinates']
+  delay_seconds Int [note: 'Wait time for delay blocks']
+  step_details String [note: '?']
+  delay_event String [note: 'Event to wait for in delay blocks']
+  delay_type delay_type [note: 'Fixed or event-based delay']
+  actions action [not null, note: 'Action history']
+  path path [not null, note: 'Path relationship']
+  workflow workflow [not null, note: 'Workflow relationship']
+  child_paths path_parent_block [not null, note: 'Child paths triggered by this block']
+  source_stroke_lines stroke_line [not null, note: 'Lines starting from this block']
+  target_stroke_lines stroke_line [not null, note: 'Lines ending at this block']
+}
+
+Table action {
+  id Int [pk, increment, note: 'Primary identifier']
+  user_id Int [not null, note: 'User performing action']
+  type String [not null, note: 'Action type']
+  target_id Int [not null, note: 'Block being acted upon']
+  workflow_id Int [not null, note: 'Context workflow']
+  value Int [not null, note: '?']
+  created_at DateTime [default: `now()`, not null, note: 'Timestamp']
+  target block [not null, note: 'Target block relationship']
+  user user [not null, note: 'User relationship']
+  workflow workflow [not null, note: 'Workflow relationship']
+}
+
+Table workflow_version {
+  id Int [pk, increment, note: 'Primary identifier']
+  workflow_id Int [not null, note: 'Parent workflow']
+  version_number Int [not null, note: 'Sequential version number']
+  name String [not null, note: 'Version name']
+  description String [not null, note: 'Version description']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  created_by_id Int [not null, note: 'Creator user']
+  change_summary String [note: 'Summary of changes from previous version']
+  snapshot Json [not null, note: 'Complete workflow state snapshot']
+  created_by user [not null, note: 'Creator user relationship']
+  workflow workflow [not null, note: 'Workflow relationship']
+
+  indexes {
+    (workflow_id, version_number) [unique, note: 'Version numbers must be unique per workflow']
+  }
+}
+
+Table workflow_template {
+  id Int [pk, increment, note: 'Primary identifier']
+  name String [not null, note: 'Template name']
+  description String [not null, note: 'Template description']
+  workspace_id Int [not null, note: 'Parent workspace']
+  category String [not null, note: 'Template category']
+  tags String[] [not null, note: 'Search/filter tags']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  structure Json [not null, note: 'Template structure definition']
+  rating Float [note: 'Average user rating']
+  rating_count Int [not null, default: 0, note: 'Number of ratings']
+  workflows workflow [not null, note: 'Workflows created from template']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Table saved_search {
+  id Int [pk, increment, note: 'Primary identifier']
+  user_id Int [not null, note: 'User who saved search']
+  name String [not null, note: 'Search name']
+  query String [not null, note: 'Search query text']
+  filters Json [note: 'Additional filter parameters']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  user user [not null, note: 'User relationship']
+}
+
+Table stroke_line {
+  id Int [pk, increment, note: 'Primary identifier']
+  source_block_id Int [not null, note: 'Starting block']
+  target_block_id Int [not null, note: 'Ending block']
+  workflow_id Int [not null, note: 'Parent workflow']
+  label String [not null, note: 'Line label text']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  is_loop Boolean [not null, default: false, note: 'Whether line loops back']
+  control_points Json [note: 'Curve control points']
+  source_block block [not null, note: 'Source block relationship']
+  target_block block [not null, note: 'Target block relationship']
+  workflow workflow [not null, note: 'Workflow relationship']
+}
+
+Table scheduled_emails {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  user_id Int [not null, note: 'Recipient user']
+  email_type String [not null, note: 'Email template type']
+  scheduled_for DateTime [not null, note: 'Planned sending time']
+  status email_status [not null, default: 'PENDING', note: 'Current status']
+  sent Boolean [not null, default: false, note: 'Whether email was sent']
+  sent_at DateTime [note: 'When email was sent']
+  metadata Json [note: 'Additional email data']
+  error String [note: 'Error message if sending failed']
+  retry_count Int [not null, default: 0, note: 'Number of send attempts']
+  user user [not null, note: 'User relationship']
+
+  indexes {
+    (user_id, email_type) [unique, note: 'Only one pending email of each type per user']
+  }
+}
+
+Table ai_conversations {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  user_id Int [not null, note: 'User in conversation']
+  workflow_id Int [note: 'Related workflow if any']
+  conversation_id String [unique, not null, note: 'External conversation ID']
+  messages Json [not null, note: 'Message history']
+  user user [not null, note: 'User relationship']
+  workflow workflow [note: 'Workflow relationship']
+}
+
+Table ai_embeddings {
+  id Int [pk, increment, note: 'Primary identifier']
+  created_at DateTime [default: `now()`, not null, note: 'Creation timestamp']
+  updated_at DateTime [default: `now()`, not null, note: 'Last update timestamp']
+  content_type String [not null, note: 'Type of embedded content']
+  content_id String [not null, note: 'Original content ID']
+  content_text String [not null, note: 'Original text content']
+  embedding_id String [not null, note: 'External embedding ID']
+  workspace_id Int [not null, note: 'Workspace context']
+  workspace workspace [not null, note: 'Workspace relationship']
+}
+
+Enum onboarding_step {
+  PERSONAL_INFO [note: 'Basic user information collection']
+  PROFESSIONAL_INFO [note: 'Work-related information collection']
+  WORKSPACE_SETUP [note: 'Workspace configuration']
+  COMPLETED [note: 'Onboarding fully completed']
+  INVITED_USER [note: 'User joined via invitation']
+}
+
+Enum user_role {
+  ADMIN [note: 'Full workspace access and management']
+  EDITOR [note: 'Can create and edit workflows']
+  READER [note: 'View-only access']
+}
+
+Enum block_type {
+  DELAY [note: 'Waiting period']
+  STEP [note: 'Task or action']
+  PATH [note: 'Branching point']
+  BEGIN [note: 'Workflow start']
+  END [note: 'Workflow end']
+  LAST [note: 'Final path step']
+  MERGE [note: 'Path join point']
+}
+
+Enum subscription_status {
+  ACTIVE [note: 'Paid and current']
+  TRIALING [note: 'In trial period']
+  CANCELED [note: 'Subscription ended']
+}
+
+Enum plan_type {
+  FREE [note: 'Basic free tier']
+  EARLY_ADOPTER [note: 'Early access pricing tier']
+}
+
+Enum task_type {
+  MANUAL [note: 'Requires human action']
+  AUTOMATIC [note: 'System-automated']
+}
+
+Enum delay_type {
+  FIXED_DURATION [note: 'Wait for specific time']
+  WAIT_FOR_EVENT [note: 'Wait for trigger event']
+}
+
+Enum workflow_status {
+  DRAFT [note: 'In development']
+  ACTIVE [note: 'In use']
+  IN_REVIEW [note: 'Pending approval']
+  NEEDS_UPDATE [note: 'Requires changes']
+  ARCHIVED [note: 'No longer used']
+}
+
+Enum email_status {
+  PENDING [note: 'Awaiting sending']
+  CANCELLED [note: 'Manually cancelled']
+  PAUSED [note: 'Temporarily on hold']
+  SENT [note: 'Successfully delivered']
+  FAILED [note: 'Delivery failed']
+}
+
+Ref: user.active_workspace_id > workspace.id
+
+Ref: workspace.subscription_id - subscription.id
+
+Ref: workspace_billing_infos.workspace_id - workspace.id
+
+Ref: billing.subscription_id > subscription.id
+
+Ref: billing.workspace_id > workspace.id
+
+Ref: user_workspace.user_id > user.id
+
+Ref: user_workspace.workspace_id > workspace.id
+
+Ref: invitation.workspace_id > workspace.id
+
+Ref: folder.parent_id - folder.id
+
+Ref: folder.workspace_id > workspace.id
+
+Ref: workflow.folder_id > folder.id
+
+Ref: workflow.template_id > workflow_template.id
+
+Ref: workflow.workspace_id > workspace.id
+
+Ref: workflow.author_id > user.id
+
+Ref: path.workflow_id > workflow.id
+
+Ref: path_parent_block.block_id > block.id [delete: Cascade]
+
+Ref: path_parent_block.path_id > path.id [delete: Cascade]
+
+Ref: block.path_id > path.id [delete: Cascade]
+
+Ref: block.workflow_id > workflow.id [delete: Cascade]
+
+Ref: action.target_id > block.id
+
+Ref: action.user_id > user.id
+
+Ref: action.workflow_id > workflow.id
+
+Ref: workflow_version.created_by_id > user.id
+
+Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
+
+Ref: workflow_template.workspace_id > workspace.id
+
+Ref: saved_search.user_id > user.id
+
+Ref: stroke_line.source_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.target_block_id > block.id [delete: Cascade]
+
+Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
+
+Ref: scheduled_emails.user_id > user.id [delete: Cascade]
+
+Ref: ai_conversations.user_id > user.id
+
+Ref: ai_conversations.workflow_id > workflow.id
+
+Ref: ai_embeddings.workspace_id > workspace.id

@@ -5,6 +5,7 @@ import Modal from './Modal';
 import ButtonNormal from './ButtonNormal';
 import InputField from './InputFields';
 import { useColors, useTheme } from '../theme/hooks';
+import { toast } from 'sonner';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -142,9 +143,16 @@ export default function ShareModal({
       } else {
         await navigator.clipboard.writeText(shareUrl);
       }
-      setShowToast(true);
+      toast.success('Link Copied!', {
+        description: 'Share link has been copied to your clipboard.',
+        duration: 3000,
+      });
     } catch (err) {
       console.error('Failed to copy link: ', err);
+      toast.error('Failed to Copy', {
+        description: 'Could not copy the link to your clipboard.',
+        duration: 3000,
+      });
     }
   };
 
@@ -152,18 +160,24 @@ export default function ShareModal({
     setTheme(currentTheme === 'light' ? 'dark' : 'light');
   };
 
-  const handleCopyEmbedSnippet = () => {
-    if (!shareUrl) {
-      return;
-    }
+  const handleCopyEmbedSnippet = async () => {
+    if (!shareUrl) return;
 
-    const url = new URL(shareUrl + '/embed');
-    url.searchParams.set('theme', currentTheme);
-    navigator.clipboard.writeText(url.toString());
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 5000);
+    try {
+      const url = new URL(shareUrl + '/embed');
+      url.searchParams.set('theme', currentTheme);
+      await navigator.clipboard.writeText(url.toString());
+      toast.success('Embed Link Copied!', {
+        description: 'Embed link has been copied to your clipboard.',
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error('Failed to copy embed link: ', err);
+      toast.error('Failed to Copy', {
+        description: 'Could not copy the embed link to your clipboard.',
+        duration: 3000,
+      });
+    }
   };
 
   const validateEmail = (email: string) => {
@@ -177,19 +191,23 @@ export default function ShareModal({
 
     // Validate email
     if (!inputValue) {
-      setError('Please enter an email address');
+      toast.error('Missing Email', {
+        description: 'Please enter an email address.',
+        duration: 3000,
+      });
       return;
     }
 
     if (!validateEmail(inputValue)) {
-      setError('Please enter a valid email address');
+      toast.error('Invalid Email', {
+        description: 'Please enter a valid email address.',
+        duration: 3000,
+      });
       return;
     }
 
     setIsLoading(true);
     try {
-      // Here you would integrate with your email service to send the invitation
-      // This is a placeholder for the actual API call
       const response = await fetch('/api/share/invite', {
         method: 'POST',
         headers: {
@@ -211,7 +229,7 @@ export default function ShareModal({
       setPeopleWithAccess([
         ...peopleWithAccess,
         {
-          name: inputValue, // Using email as name until they accept
+          name: inputValue,
           permission: selectedPermission === 'can edit' ? 'Editor' : 'Reader',
         },
       ]);
@@ -220,10 +238,15 @@ export default function ShareModal({
       setInputValue('');
 
       // Show success toast
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      toast.success('Invitation Sent', {
+        description: 'The invitation has been sent successfully.',
+        duration: 3000,
+      });
     } catch (err) {
-      setError('Failed to send invitation. Please try again.');
+      toast.error('Failed to Send Invitation', {
+        description: 'An error occurred while sending the invitation. Please try again.',
+        duration: 3000,
+      });
       console.error('Error sending invitation:', err);
     } finally {
       setIsLoading(false);
@@ -915,35 +938,6 @@ export default function ShareModal({
           </div>
         )}
       </Modal>
-
-      {/* Toast Notification */}
-      {showToast && (
-        <div
-          className="fixed bottom-4 right-4 flex items-center bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg transition-opacity duration-300 z-50"
-          style={{
-            backgroundColor: colors['bg-accent'],
-            color: 'white',
-          }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="mr-2"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M7.5 10L9.16667 11.6667L12.5 8.33333M16.6667 10C16.6667 13.6819 13.6819 16.6667 10 16.6667C6.31811 16.6667 3.33334 13.6819 3.33334 10C3.33334 6.31811 6.31811 3.33334 10 3.33334C13.6819 3.33334 16.6667 6.31811 16.6667 10Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Link copied to clipboard
-        </div>
-      )}
     </>
   );
 }

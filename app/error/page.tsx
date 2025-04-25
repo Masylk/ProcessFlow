@@ -7,7 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 function ErrorMessage() {
   const searchParams = useSearchParams();
   const errorMessage =
-    searchParams.get('message') || 'Sorry, something went wrong';
+    searchParams?.get('message') || 'Sorry, something went wrong';
 
   return <p>{errorMessage}</p>;
 }

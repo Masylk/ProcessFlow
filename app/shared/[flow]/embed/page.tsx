@@ -11,6 +11,7 @@ import HorizontalStep from './components/HorizontalStep';
 import HorizontalDelay from './components/HorizontalDelay';
 import { usePathsStore } from '@/app/[slug]/[flow]/read/store/pathsStore';
 import { Block, Path, WorkflowData } from '@/app/[slug]/[flow]/types';
+import { toast } from 'sonner';
 
 // Modify the type for source block pairs
 type SourceBlockPair = {
@@ -46,8 +47,6 @@ export default function SharePage({
   );
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [workflowData, setWorkflowData] = useState<WorkflowData | null>(null);
-  const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
-    useState<boolean>(false);
   const [generatedPathIds] = useState<Set<number>>(new Set());
   const [generatedBlockIds] = useState<Set<number>>(new Set());
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
@@ -507,12 +506,58 @@ export default function SharePage({
     }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setShowLinkCopiedAlert(true);
-    setTimeout(() => {
-      setShowLinkCopiedAlert(false);
-    }, 5000);
+  const handleCopyLink = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (!workflowData) return;
+    
+    const url = window.location.href;
+    
+    try {
+      // Try the modern clipboard API first
+      await navigator.clipboard.writeText(url);
+      toast.success('Link Copied!', {
+        description: 'Share link has been copied to your clipboard.',
+        duration: 3000,
+      });
+    } catch (err) {
+      try {
+        // Fallback: Create a temporary textarea element
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        // Position off-screen without affecting scroll
+        textArea.style.position = 'absolute';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        textArea.style.zIndex = '-1';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '0';
+        document.body.appendChild(textArea);
+        
+        // Select and copy without focusing
+        textArea.select();
+        const successful = document.execCommand('copy');
+        textArea.remove();
+
+        if (successful) {
+          toast.success('Link Copied!', {
+            description: 'Share link has been copied to your clipboard.',
+            duration: 3000,
+          });
+        } else {
+          throw new Error('Fallback copy failed');
+        }
+      } catch (fallbackErr) {
+        // If both methods fail, show error with the URL
+        toast.error('Failed to Copy', {
+          description: 'Please copy this URL manually: ' + url,
+          duration: 5000,
+        });
+      }
+    }
   };
 
   const handleRestart = () => {
@@ -555,8 +600,9 @@ export default function SharePage({
         author: workflowData.author && {
           name: workflowData.author.full_name,
           avatar:
-            workflowData.author.avatar_url ||
-            `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+            workflowData.author.avatar_url && workflowData.author.avatar_url.trim() !== ''
+              ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.author.avatar_url}`
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
         },
         lastUpdate:
           paths

@@ -48,11 +48,13 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           '/monitoring',
         ];
 
-        const isPublicPath = PUBLIC_PATHS.some((path) =>
+        const isPublicPath = pathname ? PUBLIC_PATHS.some((path) =>
           pathname.startsWith(path)
-        );
+        ) : false;
 
-        const isSharePath = sharePaths.some((path) => pathname.includes(path));
+        const isSharePath = pathname ? sharePaths.some((path) =>
+          pathname.includes(path)
+        ) : false;
 
         // Redirect to login if not authenticated and not on public/share path
         if ((!user || error) && !isPublicPath && !isSharePath) {
@@ -86,7 +88,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
             const currentStep = onboardingSteps[data.onboardingStep];
 
             // Redirect to appropriate onboarding step if on public path or wrong step
-            if (isPublicPath || !pathname.startsWith(currentStep)) {
+            if (isPublicPath || (pathname && !pathname.startsWith(currentStep))) {
               router.push(currentStep);
             }
           } else if (isPublicPath) {
@@ -104,7 +106,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [pathname, router, supabase.auth]);
 
-  if (isLoading && pathname !== '/login' && !pathname.startsWith('/auth/')) {
+  if (isLoading && pathname !== '/login' && pathname && !pathname.startsWith('/auth/')) {
     return <LoadingSpinner fullScreen size="large" />;
   }
 

@@ -11,12 +11,50 @@ export async function PATCH(req: NextRequest) {
 
     const data = await req.json();
     
+    // Ensure is_public is a boolean if it's being updated
+    if ('is_public' in data && typeof data.is_public !== 'boolean') {
+      return NextResponse.json({ error: 'is_public must be a boolean' }, { status: 400 });
+    }
+
     const updatedWorkflow = await prisma.workflow.update({
       where: { id: parseInt(workflow_id) },
       data: {
         ...data,
         updated_at: new Date()
-      }
+      },
+      select: {
+        id: true,
+        name: true,
+        icon: true,
+        is_public: true,
+        public_access_id: true,
+        description: true,
+        workspace_id: true,
+        folder: {
+          select: {
+            id: true,
+            name: true,
+            parent: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        workspace: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        author: {
+          select: {
+            full_name: true,
+            avatar_url: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(updatedWorkflow);

@@ -24,6 +24,9 @@ const HideScrollbarStyles = () => (
   `}</style>
 );
 
+// Regular expression to match URLs
+const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
 export default function HorizontalStep({
   block,
   selectedOptionIds,
@@ -309,6 +312,41 @@ export default function HorizontalStep({
   const handleMouseUp = () => { setIsDragging(false); };
   const handleDoubleClick = (e: React.MouseEvent) => { e.stopPropagation(); resetZoom(); };
 
+  // Add this function to parse text into segments with links
+  const parseTextWithLinks = (text: string) => {
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = URL_REGEX.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: text.slice(lastIndex, match.index)
+        });
+      }
+      
+      // Add the link
+      parts.push({
+        type: 'link',
+        content: match[0]
+      });
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text after last link
+    if (lastIndex < text.length) {
+      parts.push({
+        type: 'text',
+        content: text.slice(lastIndex)
+      });
+    }
+    
+    return parts.length > 0 ? parts : [{ type: 'text', content: text }];
+  };
+
   return (
     <>
       <HideScrollbarStyles />
@@ -390,7 +428,26 @@ export default function HorizontalStep({
                     className="text-base whitespace-pre-line"
                     style={{ color: colors['text-quaternary'] }}
                   >
-                    {block.step_details || block.description || ''}
+                    {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
+                      segment.type === 'link' ? (
+                        <a
+                          key={index}
+                          href={segment.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(segment.content, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          {segment.content}
+                        </a>
+                      ) : (
+                        <span key={index}>{segment.content}</span>
+                      )
+                    ))}
                   </p>
                 </div>
               )}
