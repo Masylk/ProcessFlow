@@ -35,7 +35,7 @@ There are no technical limitations on workflow complexity, including number of c
 - **Merge Functionality** : The user can choose to merge two paths or more in one path.
 
 - **Delay :** The user can choose a predetermined duration or a custom duration. Then create a line that connects to a block with a slightly different design from other blocks.
-    - Delay block have 2 mode :
+    - Delay block has 2 modes:
         - “Fixed Duration” → Just select a duration. It’s a rigid duration obligated to respect.
                         
         - “Wait For Event” → Must also precise an event, it can be more flexible and have this utility : “Wait for the client respond in max 7 days”. So if the even happen before you can proceed.
