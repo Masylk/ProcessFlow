@@ -195,15 +195,36 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
   // Add the update method to handle all block updates
   const handleBlockUpdate = async (updatedData: Partial<Block>) => {
+    // Ensure icon reset is explicit
+    if ('icon' in updatedData && updatedData.icon === undefined) {
+      updatedData.icon = null;
+    }
+    if (updatedData.image === undefined) {
+      updatedData.image = blockData.image;
+    }
+    const blockId = parseInt(id.replace('block-', ''));
+
+    // Save previous block data for rollback
+    const previousBlock = allPaths
+      .flatMap((path) => path.blocks)
+      .find((block) => block.id === blockId);
+
+    // Optimistically update local state
+    setBlockData((prev) => ({
+      ...prev,
+      ...updatedData,
+    }));
+    // Optimistically update paths store
+    const optimisticPaths = allPaths.map((path) => ({
+      ...path,
+      blocks: path.blocks.map((block) =>
+        block.id === blockId ? { ...block, ...updatedData } : block
+      ),
+    }));
+    setAllPaths(optimisticPaths);
+    data.onPathsUpdate?.(optimisticPaths);
+
     try {
-      // Ensure icon reset is explicit
-      if ('icon' in updatedData && updatedData.icon === undefined) {
-        updatedData.icon = null;
-      }
-      if (updatedData.image === undefined) {
-        updatedData.image = blockData.image;
-      }
-      const blockId = parseInt(id.replace('block-', ''));
       const response = await fetch(`/api/blocks/${blockId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -218,7 +239,8 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       setBlockData((prev) => ({
         ...prev,
         ...updatedBlock,
-        image: updatedData.image !== undefined ? updatedBlock.image : prev.image,
+        image:
+          updatedData.image !== undefined ? updatedBlock.image : prev.image,
         icon: updatedData.icon !== undefined ? updatedBlock.icon : prev.icon,
       }));
 
@@ -241,6 +263,27 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
       return updatedBlock;
     } catch (error) {
+      // Rollback to previous block data
+      setBlockData((prev) => ({
+        ...prev,
+        ...previousBlock,
+      }));
+      setAllPaths((paths) =>
+        paths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...previousBlock } : block
+          ),
+        }))
+      );
+      data.onPathsUpdate?.(
+        allPaths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...previousBlock } : block
+          ),
+        }))
+      );
       console.error('Error updating block:', error);
       throw error;
     }
@@ -1009,26 +1052,29 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 {blockData.title || 'Untitled Block'}
               </h3>
             </div>
-            <button
-              onClick={handleDropdownToggle}
-              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-              style={{
-                color: colors['fg-tertiary'],
-                backgroundColor: 'transparent',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                alt="Menu"
-                className="w-4 h-4"
-              />
-            </button>
+            {data.block.id >= 0 && (
+              <button
+                onClick={handleDropdownToggle}
+                className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+                style={{
+                  color: colors['fg-tertiary'],
+                  backgroundColor: 'transparent',
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    colors['bg-secondary'];
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                  alt="Menu"
+                  className="w-4 h-4"
+                />
+              </button>
+            )}
           </div>
 
           {blockData.description && (
@@ -1156,6 +1202,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       {showSidebar && (
         <BlockDetailsSidebar
           block={blockData}
+          signedImageUrl={signedImageUrl}
           onClose={() => {
             setShowSidebar(false);
             // We don't need to change edit mode or selection state

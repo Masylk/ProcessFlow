@@ -22,4 +22,5 @@ export interface Workflow {
   status: WorkflowStatus;
   updated_at: string;
   created_at: string;
+  is_public: boolean;
 }

@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.prisma,**/*.tsx,**/*.ts
+alwaysApply: false
+---
+---
 description: Performance Optimization Standards
 globs: **/*.ts, **/*.tsx, **/*.prisma
 alwaysApply: false

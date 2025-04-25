@@ -1,3 +1,165 @@
+/**
+ * @swagger
+ * /api/billing-info:
+ *   get:
+ *     summary: Get billing information for a workspace
+ *     description: Returns billing information for a workspace if the user is authorized.
+ *     tags:
+ *       - Billing
+ *     parameters:
+ *       - in: query
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the workspace.
+ *     responses:
+ *       200:
+ *         description: Billing information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 billing_email:
+ *                   type: string
+ *                 billing_address:
+ *                   type: string
+ *                 address_line1:
+ *                   type: string
+ *                 address_line2:
+ *                   type: string
+ *                   nullable: true
+ *                 city:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                   nullable: true
+ *                 postal_code:
+ *                   type: string
+ *                 country_code:
+ *                   type: string
+ *                 tax_rate:
+ *                   type: number
+ *                 vat_number:
+ *                   type: string
+ *                   nullable: true
+ *                 payment_method:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     brand:
+ *                       type: string
+ *                     last4:
+ *                       type: string
+ *                     expiry_month:
+ *                       type: integer
+ *                     expiry_year:
+ *                       type: integer
+ *       400:
+ *         description: Missing or invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Unauthorized access to workspace
+ *       404:
+ *         description: Workspace not found
+ *       500:
+ *         description: Failed to fetch billing information
+ *   post:
+ *     summary: Create or update billing information for a workspace
+ *     description: Creates or updates billing information for a workspace if the user is an admin.
+ *     tags:
+ *       - Billing
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - workspaceId
+ *               - billing_email
+ *               - address_line1
+ *               - city
+ *               - postal_code
+ *               - country_code
+ *             properties:
+ *               workspaceId:
+ *                 type: integer
+ *               billing_email:
+ *                 type: string
+ *               billing_address:
+ *                 type: string
+ *               address_line1:
+ *                 type: string
+ *               address_line2:
+ *                 type: string
+ *                 nullable: true
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *                 nullable: true
+ *               postal_code:
+ *                 type: string
+ *               country_code:
+ *                 type: string
+ *               tax_rate:
+ *                 type: number
+ *               vat_number:
+ *                 type: string
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Billing information updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 billing_email:
+ *                   type: string
+ *                 billing_address:
+ *                   type: string
+ *                 tax_rate:
+ *                   type: number
+ *                 vat_number:
+ *                   type: string
+ *                   nullable: true
+ *                 address_line1:
+ *                   type: string
+ *                 address_line2:
+ *                   type: string
+ *                   nullable: true
+ *                 city:
+ *                   type: string
+ *                 state:
+ *                   type: string
+ *                   nullable: true
+ *                 postal_code:
+ *                   type: string
+ *                 country_code:
+ *                   type: string
+ *                 stripeUpdate:
+ *                   type: object
+ *                   properties:
+ *                     success:
+ *                       type: boolean
+ *                     error:
+ *                       type: string
+ *                       nullable: true
+ *       400:
+ *         description: Missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Unauthorized access to workspace
+ *       404:
+ *         description: Workspace or user not found
+ *       500:
+ *         description: Internal server error
+ */
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/lib/supabaseServerClient';
@@ -51,7 +213,7 @@ export async function GET(req: Request) {
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data: { session }, error: authError } = await supabase.auth.getSession();
 
     if (!session || authError) {
@@ -228,7 +390,8 @@ export async function POST(request: Request) {
     }
 
     const dbUser = await prisma.user.findUnique({
-      where: { auth_id: user.id }
+      where: { auth_id: user.id },
+      select: { id: true }
     });
 
     if (!dbUser) {
@@ -261,6 +424,7 @@ export async function POST(request: Request) {
         workspace_id: workspaceId,
         role: 'ADMIN',
       },
+      select: { id: true }
     });
 
     if (!userWorkspace) {

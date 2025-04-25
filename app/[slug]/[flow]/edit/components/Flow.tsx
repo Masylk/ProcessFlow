@@ -58,6 +58,7 @@ import FixedDelayBlock from './blocks/FixedDelayBlock';
 import EventDelayBlock from './blocks/EventDelayBlock';
 import { useStrokeLinesStore } from '../store/strokeLinesStore';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
+import { useLoadingStore } from '../store/loadingStore';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -139,7 +140,9 @@ export function Flow({
   });
   const { setEditMode } = useEditModeStore();
   const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
-
+  const setIsModalOpen = useIsModalOpenStore(
+    (state: any) => state.setIsModalOpen
+  );
   // Get viewport dimensions from ReactFlow store
   const viewportWidth = useStore((store) => store.width);
   const viewportHeight = useStore((store) => store.height);
@@ -310,7 +313,7 @@ export function Flow({
         setNodes(layoutedNodes);
 
         // Check for blockId in URL and set viewport accordingly
-        const blockId = searchParams.get('blockId');
+        const blockId = searchParams ? searchParams.get('blockId') : null;
         if (blockId) {
           const targetNode = layoutedNodes.find(
             (n) => n.id === `block-${blockId}`
@@ -412,19 +415,31 @@ export function Flow({
       setShowModal(false);
       if (modalData.path) {
         // Create parallel paths using the modal data
-        await createParallelPaths(modalData.path, modalData.position, {
-          paths_to_create: data.paths_to_create,
-          path_to_move: data.path_to_move,
-        });
-
-        // Fetch updated paths data
-        const pathsResponse = await fetch(
-          `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        setIsModalOpen(true);
+        const creationData: {
+          updatedPaths: Path[];
+          rollbackPaths: Path[];
+        } = await createParallelPaths(
+          paths,
+          modalData.path,
+          modalData.position,
+          {
+            paths_to_create: data.paths_to_create,
+            path_to_move: data.path_to_move,
+          },
+          setPaths
         );
-        if (pathsResponse.ok) {
-          const pathsData = await pathsResponse.json();
-          setPaths(pathsData.paths);
-        }
+        setIsModalOpen(false);
+        // setPaths(creationData.updatedPaths);
+        // console.log('HERE');
+        // Fetch updated paths data
+        // const pathsResponse = await fetch(
+        //   `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
+        // );
+        // if (pathsResponse.ok) {
+        //   const pathsData = await pathsResponse.json();
+        //   setPaths(pathsData.paths);
+        // }
       }
     } catch (error) {
       console.error('Error creating parallel paths:', error);
@@ -676,9 +691,7 @@ export function Flow({
           maxZoom: 1,
           includeHiddenNodes: true,
         }}
-        className={`w-full h-full ${
-          isConnectMode ? 'connect-mode' : ''
-        }`}
+        className={`w-full h-full ${isConnectMode ? 'connect-mode' : ''}`}
         style={{
           backgroundColor: colors['bg-secondary'],
         }}

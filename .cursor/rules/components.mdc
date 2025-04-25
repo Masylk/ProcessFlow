@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.tsx
+alwaysApply: false
+---
+---
 description: Component Development Standard
 globs: **/*.tsx
 alwaysApply: false

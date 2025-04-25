@@ -962,7 +962,7 @@ export default function Page() {
 
   // Add after your state declarations
   useEffect(() => {
-    const folderParam = searchParams.get('folder');
+    const folderParam = searchParams?.get('folder');
     if (folderParam) {
       const folderId = parseInt(folderParam);
       // Find the folder in the active workspace's folders

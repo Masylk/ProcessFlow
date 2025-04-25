@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.tsx
+alwaysApply: false
+---
+---
 description: Frontend Coding Standard
 globs: **/*.tsx
 alwaysApply: false

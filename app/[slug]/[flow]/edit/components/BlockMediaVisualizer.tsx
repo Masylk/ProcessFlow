@@ -7,55 +7,35 @@ import { useColors } from '@/app/theme/hooks';
 interface BlockMediaVisualizerProps {
   block: Block;
   altText: string;
+  signedImageUrl?: string | null;
   onUpdate: (updatedBlock: Partial<Block>) => void;
 }
 
 export default function BlockMediaVisualizer({
   block,
   altText,
+  signedImageUrl,
   onUpdate,
 }: BlockMediaVisualizerProps) {
-  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const colors = useColors();
 
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      if (block.image) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${block.image}`
-          );
-          const data = await response.json();
-
-          if (response.ok && data.signedUrl) {
-            setSignedImageUrl(data.signedUrl);
-          } else {
-            console.error('Error fetching signed URL:', data.error);
-          }
-        } catch (error) {
-          console.error('Error fetching signed URL:', error);
-        }
-      }
-    };
-
-    fetchSignedUrl();
-  }, [block.image]);
-
   const handleRemoveImage = async () => {
+    // Save previous image for rollback
+    const previousImage = block.image;
+    // Optimistically update UI
+    onUpdate({ image: '' });
     try {
-      // First delete the image
+      // Delete the image on the server
       const response = await fetch(`/api/blocks/${block.id}/image`, {
         method: 'DELETE',
       });
-
       if (!response.ok) {
         throw new Error('Failed to delete image');
       }
-
-      // Then update the block state
-      onUpdate({ image: '' });
     } catch (error) {
+      // Rollback if error
+      onUpdate({ image: previousImage });
       console.error('Error removing image:', error);
     }
   };
@@ -79,7 +59,10 @@ export default function BlockMediaVisualizer({
 
   return (
     <>
-      <div className="relative w-full h-[267px] rounded-xl overflow-hidden" style={{ backgroundColor: colors['bg-secondary'] }}>
+      <div
+        className="relative w-full h-[267px] rounded-xl overflow-hidden"
+        style={{ backgroundColor: colors['bg-secondary'] }}
+      >
         <img
           className="w-full h-full object-contain rounded-xl"
           src={signedImageUrl}

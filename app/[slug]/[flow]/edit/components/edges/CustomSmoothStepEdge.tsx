@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { EdgeProps, getSmoothStepPath } from '@xyflow/react';
-import { EdgeData } from '../../../types';
+import { EdgeData, Path, Block } from '../../../types';
 import { BlockEndType } from '@/types/block';
 import { useConnectModeStore } from '../../store/connectModeStore';
 import { useEditModeStore } from '../../store/editModeStore';
@@ -61,33 +61,134 @@ function CustomSmoothStepEdge({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
+  // Recursively collect all unique path IDs from a path and its descendants
+  function collectAllPathIds(
+    path: { id: number; blocks: any[] },
+    allPaths: { id: number; blocks: any[] }[]
+  ): Set<number> {
+    const visitedPathIds = new Set<number>();
+    const queue: number[] = [path.id];
+
+    while (queue.length > 0) {
+      const currentPathId = queue.pop()!;
+      if (visitedPathIds.has(currentPathId)) continue;
+      visitedPathIds.add(currentPathId);
+
+      // Find the path object by id
+      const currentPath: { id: number; blocks: Block[] } | undefined =
+        allPaths.find((p) => p.id === currentPathId);
+      if (!currentPath) continue;
+
+      for (const block of currentPath.blocks) {
+        if (Array.isArray(block.child_paths)) {
+          for (const child of block.child_paths) {
+            if (child.path_id && !visitedPathIds.has(child.path_id)) {
+              queue.push(child.path_id);
+            }
+          }
+        }
+      }
+    }
+
+    visitedPathIds.delete(path.id);
+    return visitedPathIds;
+  }
 
   const handleDeleteBlocks = async () => {
-    try {
-      // Get all blocks after this position except the last one
-      const path = allPaths.find((p) => p.id === data.path.id);
-      if (!path) return;
+    // Get all blocks after this position except the last one
+    const path = allPaths.find((p) => p.id === data.path.id);
+    if (!path) return;
 
-      if (!sourceBlock || !targetBlock) {
-        if (isNonProduction()) {
-          console.log('sourceBlock or targetBlock is undefined');
-        }
-        return;
-      }
+    if (!sourceBlock || !targetBlock) {
       if (isNonProduction()) {
-        console.log('sourceBlock and targetBlock are defined');
+        console.log('sourceBlock or targetBlock is undefined');
       }
-      const position = Math.ceil(
-        (sourceBlock.position + targetBlock.position) / 2
-      );
-      console.log('position', position);
-      const blocksToDelete = path.blocks
-        .filter((b) => b.position >= position)
-        .map((b) => b.id);
+      return;
+    }
+    if (isNonProduction()) {
+      console.log('sourceBlock and targetBlock are defined');
+    }
+    const position = Math.ceil(
+      (sourceBlock.position + targetBlock.position) / 2
+    );
+    const blocksToDelete = path.blocks
+      .filter((b) => b.position >= position)
+      .map((b) => b.id);
 
-      if (blocksToDelete.length === 0) return;
+    if (blocksToDelete.length === 0) return;
 
-      console.log('blocksToDelete', blocksToDelete);
+    // Recursively collect all descendant path IDs
+    const allPathIdsToDelete = collectAllPathIds(path, allPaths);
+
+    // Save previous state for rollback
+    const previousPaths = allPaths;
+
+    // Find the last block to delete by position
+    const blocksToDeleteSet = new Set(blocksToDelete);
+    const blocksToDeleteInPath = path.blocks.filter((b) =>
+      blocksToDeleteSet.has(b.id)
+    );
+    const lastBlockToDelete = blocksToDeleteInPath.length
+      ? blocksToDeleteInPath.reduce((prev, curr) =>
+          curr.position > prev.position ? curr : prev
+        )
+      : null;
+
+    // Check the last block to delete for special child path logic
+    let pathIdsToActuallyDelete = allPathIdsToDelete;
+    if (
+      lastBlockToDelete &&
+      Array.isArray(lastBlockToDelete.child_paths) &&
+      lastBlockToDelete.child_paths.length === 1
+    ) {
+      const childPathId = lastBlockToDelete.child_paths[0].path_id;
+      const childPath = allPaths.find((p) => p.id === childPathId);
+      if (
+        childPath &&
+        Array.isArray(childPath.parent_blocks) &&
+        childPath.parent_blocks.length > 1
+      ) {
+        // Don't delete this path
+        pathIdsToActuallyDelete = new Set();
+      }
+    }
+
+    // Optimistically update the store
+    const updatedPaths = allPaths
+      .filter((p) => !pathIdsToActuallyDelete.has(p.id)) // Remove descendant paths
+      .map((p) => {
+        if (p.id === path.id) {
+          // Remove blocks to delete and reindex positions
+          let remainingBlocks = p.blocks
+            .filter(
+              (b) =>
+                !(
+                  blocksToDelete.includes(b.id) &&
+                  (b.type === 'STEP' || b.type === 'DELAY')
+                )
+            )
+            .map((b, idx) => ({ ...b, position: idx }));
+          // Set the last block to type LAST if it exists in remainingBlocks and is not MERGE
+          if (lastBlockToDelete && lastBlockToDelete.type !== 'MERGE') {
+            const idx = remainingBlocks.findIndex(
+              (b) => b.id === lastBlockToDelete.id
+            );
+            if (idx !== -1) {
+              remainingBlocks[idx] = {
+                ...remainingBlocks[idx],
+                type: BlockEndType.LAST,
+                child_paths: [],
+              };
+            }
+          }
+          return { ...p, blocks: remainingBlocks };
+        }
+        return p;
+      });
+    setAllPaths(updatedPaths);
+    data.onPathsUpdate?.(updatedPaths);
+
+    try {
       const response = await fetch('/api/blocks/delete-multiple', {
         method: 'POST',
         headers: {
@@ -101,28 +202,11 @@ function CustomSmoothStepEdge({
       if (!response.ok) {
         throw new Error('Failed to delete blocks');
       }
-
-      const pathsResponse = await fetch(
-        `/api/workspace/${data.workspaceId}/paths?workflow_id=${data.path.workflow_id}`
-      );
-      const updatedPathsData = await pathsResponse.json();
-      // Update positions of remaining blocks
-      // const updatedPaths = allPaths.map((p) => {
-      //   if (p.id === data.path.id) {
-      //     const updatedBlocks = p.blocks
-      //       .filter((b) => !blocksToDelete.includes(b.id))
-      //       .map((b, index) => ({
-      //         ...b,
-      //         position: index,
-      //       }));
-      //     return { ...p, blocks: updatedBlocks };
-      //   }
-      //   return p;
-      // });
-
-      setAllPaths(updatedPathsData.paths);
-      data.onPathsUpdate?.(updatedPathsData.paths);
+      // Success: do nothing, optimistic update already applied
     } catch (error) {
+      // Rollback to previous state
+      setAllPaths(previousPaths);
+      data.onPathsUpdate?.(previousPaths);
       console.error('Error deleting blocks:', error);
     }
   };
