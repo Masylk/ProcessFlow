@@ -167,8 +167,9 @@ export async function POST(req: NextRequest) {
       });
       const maxPosition = maxBlock ? maxBlock.position : 0;
 
-      console.log('maxPosition', maxPosition);
-      // Clamp the requested position (do not allow appending to the end)
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('maxPosition', maxPosition);
+      }
       const cappedPosition = Math.max(1, Math.min(position, maxPosition));
 
       // Update positions of existing blocks
