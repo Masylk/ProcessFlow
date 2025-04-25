@@ -167,6 +167,7 @@ export async function POST(req: NextRequest) {
       });
       const maxPosition = maxBlock ? maxBlock.position : 0;
 
+      console.log('maxPosition', maxPosition);
       // Clamp the requested position (do not allow appending to the end)
       const cappedPosition = Math.max(1, Math.min(position, maxPosition));
 
@@ -202,42 +203,6 @@ export async function POST(req: NextRequest) {
           }
         }
       });
-
-      // If it's a PATH type block, create new paths and connect them
-      if (type === 'PATH' && path_options) {
-        const paths = await Promise.all(
-          path_options.map(async (option: string) => {
-            const path = await prisma.path.create({
-              data: {
-                name: option,
-                workflow: { connect: { id: workflow_id } },
-                parent_blocks: {
-                  create: {
-                    block_id: newBlock.id
-                  }
-                }
-              }
-            });
-
-            // Create default block in new path
-            await prisma.block.create({
-              data: {
-                type: 'STEP',
-                position: 0,
-                icon: '/step-icons/default-icons/container.svg',
-                description: '',
-                workflow: { connect: { id: workflow_id } },
-                path: { connect: { id: path.id } },
-                step_details: ''
-              }
-            });
-
-            return path;
-          })
-        );
-
-        return { ...newBlock, paths };
-      }
 
       return newBlock;
     });

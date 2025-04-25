@@ -72,6 +72,9 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     ? menuItems.filter((item) => item.type !== 'PATH')
     : menuItems;
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('dropdown position', dropdownDatas.position);
+  }
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {

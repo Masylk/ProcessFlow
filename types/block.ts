@@ -32,6 +32,7 @@ export interface Block {
 
 // Enum for Block types
 export enum BlockType {
+  BEGIN = 'BEGIN',
   DELAY = 'DELAY',
   STEP = 'STEP',
   PATH = 'PATH',

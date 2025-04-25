@@ -41,12 +41,13 @@ function updateCreatedPaths(
           path: currentPaths.find((p) => p.id === cpid) as Path,
           block: lastBlock,
         }));
+        lastBlock.type = BlockEndType.PATH;
       }
       // Rebuild blocks: [BEGIN, ...movedBlocks, LAST]
       const newBlocks = [
         ...(beginBlock ? [beginBlock] : []),
         ...movedBlocks,
-        ...(lastBlock ? [{ ...lastBlock, position: movedBlocks.length + 1, type: BlockEndType.PATH }] : []),
+        ...(lastBlock ? [{ ...lastBlock, position: movedBlocks.length + 1 }] : []),
       ];
 
       path_to_move = {
@@ -56,7 +57,6 @@ function updateCreatedPaths(
           ? updatedLastBlockFromBackend.child_paths.filter((cp: any) => cp.path_id === path.id)
           : [],
       };
-      console.log('path_to_move', path_to_move);
       return path_to_move;
     }
     // All other paths: just update parent_blocks as before
@@ -119,7 +119,7 @@ function createOptimisticPaths(
     const lastBlock: Block = {
       ...beginBlock,
       id: lastBlockId,
-      type: childPathIdsToMove.length > 0 ? BlockEndType.PATH : BlockEndType.LAST,
+      type: BlockEndType.LAST,
       position: 1, // will be updated below
       title: 'End',
     };
@@ -152,6 +152,7 @@ function createOptimisticPaths(
           path: currentPaths.find((p) => p.id === cpid) as Path,
           block: lastBlock,
         }));
+        lastBlock.type = BlockEndType.PATH;
       }
       // Set correct positions for begin and last
       path_to_move = {
@@ -258,13 +259,10 @@ export async function createParallelPaths(
       return { ...p, blocks: updatedBlocks };
     }
     else if (childPathIdsToMove.includes(p.id) && optimisticPathToMoveLastBlock) {
-      return { ...p, parent_blocks: [{
-        path_id: p.id,
-        block_id: optimisticPathToMoveLastBlock.id,
-        created_at: nowStr,
-        path: p,
-        block: optimisticPathToMoveLastBlock,
-      }] };
+      const parentBlock = optimisticPathToMoveLastBlock.child_paths.find(
+        (cp: PathParentBlock) => cp.path_id === p.id
+      );
+      return { ...p, parent_blocks: parentBlock ? [parentBlock] : [] };
     }
     return p;
   });
@@ -304,8 +302,9 @@ export async function createParallelPaths(
     }
 
     // 4. Move child paths to specified path
+    let updatedPathToMoveResponse = null;
     if (childPathIdsToMove.length > 0) {
-      await fetch('/api/paths/connect', {
+      const response = await fetch('/api/paths/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -313,6 +312,9 @@ export async function createParallelPaths(
           destination_path_id: createdPaths[path_to_move].id,
         }),
       });
+
+      updatedPathToMoveResponse = await response.json();
+      
     }
 
     // 5. Link all parallel paths to parente path's END block
@@ -333,7 +335,7 @@ export async function createParallelPaths(
     const updatedBlocksFromBackend = updatedParentPathJson.blocks;
     const updatedLastBlockFromBackend = updatedBlocksFromBackend[updatedBlocksFromBackend.length - 1];
     // Map real created paths, setting parent_blocks to lastBlock.child_paths (filtered by path id)
-    const { paths: updatedCreatedPaths, path_to_move: updatedPathToMove } = updateCreatedPaths(
+    const { paths: updatedCreatedPaths, path_to_move: updatedPath } = updateCreatedPaths(
       currentPaths,
       createdPaths,
       blocksToMove,
@@ -342,9 +344,14 @@ export async function createParallelPaths(
       childPathIdsToMove
     );
 
+    updatedCreatedPaths[path_to_move] = {...updatedCreatedPaths[path_to_move], ...updatedPathToMoveResponse};
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('updatedCreatedPaths', updatedCreatedPaths);
+    }
     // Remove only optimistic paths (do NOT remove parent_path)
 
-    const updatedPathToMoveLastBlock = updatedPathToMove?.blocks.find((b) => b.type === BlockEndType.PATH);
+    const updatedPathToMoveLastBlock : Block | undefined = updatedPathToMoveResponse?.blocks.find((b: Block) => b.type === BlockEndType.PATH);
     // Find the last block in both parent_path and updatedParentPathJson
 
     const blocksToMoveIds = new Set(blocksToMove.map(b => b.id));
@@ -371,17 +378,13 @@ export async function createParallelPaths(
       p => p.id !== parent_path.id
     ).map(p => {
       if (childPathIdsToMove.includes(p.id) && updatedPathToMoveLastBlock) {
-        return { ...p, parent_blocks: [{
-          path_id: p.id,
-          block_id: updatedPathToMoveLastBlock.id,
-          created_at: nowStr,
-          path: p,
-          block: updatedPathToMoveLastBlock,
-        }] };
+        const parentBlock = updatedPathToMoveLastBlock.child_paths.find(
+          (cp: PathParentBlock) => cp.path_id === p.id
+        );
+        return { ...p, parent_blocks: parentBlock ? [parentBlock] : [] };
       }
       return p;
     });
-    console.log('updatedParentPathCp', updatedParentPathCp);
     // Add real created paths and the updated parent path
     const newPaths = [
       ...filteredPaths,

@@ -56,6 +56,9 @@ export default function BlockDetailsSidebar({
 
   useEffect(() => {
     setEditMode(true, block.id.toString());
+    if (process.env.NODE_ENV === 'development') {
+      console.log('block', block);
+    }
     return () => setEditMode(false);
   }, [block.id, setEditMode]);
 

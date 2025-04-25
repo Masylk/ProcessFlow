@@ -75,7 +75,8 @@ function CustomSmoothStepEdge({
       visitedPathIds.add(currentPathId);
 
       // Find the path object by id
-      const currentPath: { id: number; blocks: Block[] } | undefined = allPaths.find((p) => p.id === currentPathId);
+      const currentPath: { id: number; blocks: Block[] } | undefined =
+        allPaths.find((p) => p.id === currentPathId);
       if (!currentPath) continue;
 
       for (const block of currentPath.blocks) {
@@ -176,6 +177,7 @@ function CustomSmoothStepEdge({
               remainingBlocks[idx] = {
                 ...remainingBlocks[idx],
                 type: BlockEndType.LAST,
+                child_paths: [],
               };
             }
           }
