@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.tsx,**/*.ts
+alwaysApply: false
+---
+---
 description: Security Standards and Best Practices
 globs: **/*.ts, **/*.tsx
 alwaysApply: false

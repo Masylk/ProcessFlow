@@ -21,8 +21,8 @@ function LoginContent() {
 
   // Get URL parameters for signup confirmation
   useEffect(() => {
-    const signupEmail = searchParams.get('email');
-    const isSignupSuccess = searchParams.get('signup') === 'success';
+    const signupEmail = searchParams?.get('email');
+    const isSignupSuccess = searchParams?.get('signup') === 'success';
     
     if (signupEmail && isSignupSuccess && !notificationShown.current) {
       setEmail(signupEmail); // Pre-fill the email field

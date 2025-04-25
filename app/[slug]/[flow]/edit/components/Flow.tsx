@@ -310,7 +310,7 @@ export function Flow({
         setNodes(layoutedNodes);
 
         // Check for blockId in URL and set viewport accordingly
-        const blockId = searchParams.get('blockId');
+        const blockId = searchParams ? searchParams.get('blockId') : null;
         if (blockId) {
           const targetNode = layoutedNodes.find(
             (n) => n.id === `block-${blockId}`

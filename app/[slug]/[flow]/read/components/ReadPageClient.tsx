@@ -144,7 +144,7 @@ export default function ReadPageClient() {
   }, [pathsToDisplay, selectedOptions, paths]);
 
   // Parse the flow parameter to get workflowId
-  const [workflowName, workflowId] = (params.flow as string).split('--pf-');
+  const [workflowName, workflowId] = (params?.flow as string).split('--pf-');
 
   // Initialize all steps as expanded when paths are loaded
   useEffect(() => {

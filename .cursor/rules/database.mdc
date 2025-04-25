@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.prisma
+alwaysApply: false
+---
+---
 description: Database Coding Standards
 globs: **/*.prisma
 alwaysApply: false

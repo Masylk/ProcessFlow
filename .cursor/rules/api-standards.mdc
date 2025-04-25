@@ -1,4 +1,9 @@
 ---
+description: Call this rules when you work with API
+globs: 
+alwaysApply: false
+---
+---
 description: API Development Standards and Best Practices
 globs: **/api/**/*.ts
 alwaysApply: false

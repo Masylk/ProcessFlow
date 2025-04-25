@@ -193,10 +193,10 @@ export default function SettingsPage({
 
   // Refetch when returning from checkout
   useEffect(() => {
-    const checkoutStatus = searchParams.get('checkout');
-    const message = searchParams.get('message');
-    const error = searchParams.get('error');
-    const action = searchParams.get('action');
+    const checkoutStatus = searchParams ? searchParams.get('checkout') : null;
+    const message = searchParams ? searchParams.get('message') : null;
+    const error = searchParams ? searchParams.get('error') : null;
+    const action = searchParams ? searchParams.get('action') : null;
 
     // Check for URL parameters or stored notification data
     const showNotification = () => {

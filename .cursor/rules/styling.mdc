@@ -1,4 +1,9 @@
 ---
+description: 
+globs: **/*.tsx,**/*.css
+alwaysApply: false
+---
+---
 description: Styling Standards and Best Practices
 globs: **/*.css, **/*.tsx
 alwaysApply: false
