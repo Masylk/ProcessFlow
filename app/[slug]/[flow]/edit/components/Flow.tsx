@@ -313,6 +313,7 @@ export function Flow({
         setNodes(layoutedNodes);
 
         // Check for blockId in URL and set viewport accordingly
+        
         const blockId = searchParams.get('blockId');
         if (blockId) {
           const targetNode = layoutedNodes.find(
@@ -430,8 +431,8 @@ export function Flow({
           setPaths
         );
         setIsModalOpen(false);
-        setPaths(creationData.updatedPaths);
-        console.log('HERE');
+        // setPaths(creationData.updatedPaths);
+        // console.log('HERE');
         // Fetch updated paths data
         // const pathsResponse = await fetch(
         //   `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
