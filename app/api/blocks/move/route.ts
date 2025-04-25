@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { BlockEndType } from '@/types/block';
+import { BlockEndType, BlockType } from '@/types/block';
 
 interface MoveBlocksRequest {
   block_ids: number[];
@@ -108,37 +108,29 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // First, shift existing blocks (except end-type blocks) to make space
-      const shiftsNeeded = block_ids.length;
-      if (shiftsNeeded > 0) {
+      // First, put the Begin block to position 0
         await tx.block.updateMany({
           where: {
             path_id: destination_path_id,
-            position: {
-              lte: positionBeforeEnd,
-              gte: positionBeforeEnd - shiftsNeeded + 1
-            },
             type: { 
-              notIn: Object.values(BlockEndType)
+              in: [BlockType.BEGIN]
             }
           },
           data: {
-            position: {
-              decrement: shiftsNeeded
-            }
+            position: 0
           }
         });
-      }
 
       // Update positions of moved blocks
-      const updates = block_ids.map((blockId, index) => 
-        tx.block.update({
+      const updates = block_ids.map((blockId, index) => {
+        console.log('index', index);
+        return tx.block.update({
           where: { id: blockId },
           data: { 
-            position: positionBeforeEnd - index 
+            position: index + 1
           }
-        })
-      );
+        });
+      });
 
       // Execute all position updates in parallel
       await Promise.all(updates);
@@ -147,10 +139,7 @@ export async function POST(req: NextRequest) {
       await tx.block.update({
         where: { id: endBlock.id },
         data: { 
-          position: Math.max(
-            ...destinationBlocks.map(b => b.position),
-            ...block_ids.map((_, i) => positionBeforeEnd - i)
-          ) + 1
+          position: block_ids.length + 1
         }
       });
 

@@ -3,6 +3,58 @@ import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { deleteManyPaths } from '@/app/api/utils/paths/deleteMany';
 
+/**
+ * @openapi
+ * /api/blocks/delete-multiple:
+ *   post:
+ *     summary: Delete multiple blocks by IDs
+ *     description: |
+ *       Deletes multiple blocks by their IDs. 
+ *       - If a block is of type `PATH`, its child paths are deleted and the block is converted to type `LAST`.
+ *       - If a block has an image, the image is deleted from Supabase storage.
+ *       - Only blocks of type `STEP` and `DELAY` are actually deleted from the database.
+ *       - After deletion, positions of subsequent blocks in the same path are decremented.
+ *     tags:
+ *       - Blocks
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - blockIds
+ *             properties:
+ *               blockIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of block IDs to delete
+ *           example:
+ *             blockIds: [1, 2, 3]
+ *     responses:
+ *       '200':
+ *         description: Blocks deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       '500':
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to delete blocks
+ */
+
 export async function POST(req: NextRequest) {
   try {
     const { blockIds } = await req.json();
@@ -31,7 +83,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // All blocks have the same path_id
+    // Path ID of the first deleted block
     const pathId = blocks[0].path_id;
 
     // Delete images from storage if they exist

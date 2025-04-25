@@ -30,12 +30,14 @@ const getInputToken = (
 
 interface BlockDetailsSidebarProps {
   block: Block;
+  signedImageUrl?: string | null;
   onClose: () => void;
   onUpdate: (updatedData: Partial<Block>) => void;
 }
 
 export default function BlockDetailsSidebar({
   block,
+  signedImageUrl,
   onClose,
   onUpdate,
 }: BlockDetailsSidebarProps) {
@@ -54,6 +56,9 @@ export default function BlockDetailsSidebar({
 
   useEffect(() => {
     setEditMode(true, block.id.toString());
+    if (process.env.NODE_ENV === 'development') {
+      console.log('block', block);
+    }
     return () => setEditMode(false);
   }, [block.id, setEditMode]);
 
@@ -428,6 +433,7 @@ export default function BlockDetailsSidebar({
                 <BlockMediaVisualizer
                   block={block}
                   altText="Block Media"
+                  signedImageUrl={signedImageUrl}
                   onUpdate={onUpdate}
                 />
               ) : (

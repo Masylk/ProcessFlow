@@ -84,17 +84,26 @@ export function ReactFlowPageClient({
 
       // Get the newly created block's ID from the response
       const newBlock = await response.json();
-      setNewBlockId(newBlock.id);
 
-      setPaths(paths);
-      // Refresh paths data
-      const pathsResponse = await fetch(
-        `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-      );
-      if (pathsResponse.ok) {
-        const pathsData = await pathsResponse.json();
-        setPaths(pathsData.paths);
-      }
+      // Update paths locally instead of refetching
+      setPaths((prevPaths) => {
+        return prevPaths.map((p) => {
+          if (p.id !== path_id) return p;
+          // Insert the new block at the correct position
+          const blocks = Array.isArray(p.blocks) ? [...p.blocks] : [];
+          const insertAt = Math.min(newBlock.position, blocks.length);
+          blocks.splice(insertAt, 0, newBlock);
+          // Update positions of all blocks after the inserted one
+          for (let i = insertAt + 1; i < blocks.length; i++) {
+            blocks[i] = {
+              ...blocks[i],
+              position: (blocks[i].position ?? i - 1) + 1,
+            };
+          }
+          return { ...p, blocks };
+        });
+      });
+      setNewBlockId(newBlock.id);
     } catch (error) {
       console.error('Error adding block:', error);
     }

@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { createParallelPaths } from '../utils/createParallelPaths';
-import { DropdownDatas, Path, DelayType } from '../../types';
+import { DropdownDatas, Path, DelayType, Block } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useClipboardStore } from '../store/clipboardStore';
 import { useModalStore } from '../store/modalStore';
@@ -72,6 +72,9 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     ? menuItems.filter((item) => item.type !== 'PATH')
     : menuItems;
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('dropdown position', dropdownDatas.position);
+  }
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
@@ -95,6 +98,34 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const handlePasteBlock = async () => {
     if (!copiedBlock) return;
 
+    onClose();
+    // 1. Create a fake block for optimistic UI
+    const fakeId = -Date.now();
+    const fakeBlock: Block = {
+      ...copiedBlock,
+      id: fakeId,
+      position: dropdownDatas.position,
+      path_id: dropdownDatas.path.id,
+      child_paths: [],
+      title: (copiedBlock.title || '') + ' (copy)',
+    };
+
+    // Optimistically add the fake block
+    onPathsUpdate((currentPaths) => {
+      return currentPaths.map((path) => {
+        if (path.id === dropdownDatas.path.id) {
+          const blocks = [...path.blocks];
+          blocks.splice(dropdownDatas.position, 0, fakeBlock);
+          const reindexedBlocks = blocks.map((block, idx) => ({
+            ...block,
+            position: idx,
+          }));
+          return { ...path, blocks: reindexedBlocks };
+        }
+        return path;
+      });
+    });
+
     try {
       const response = await fetch(`/api/blocks/${copiedBlock.id}/duplicate`, {
         method: 'POST',
@@ -110,9 +141,38 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
       if (!response.ok) throw new Error('Failed to paste block');
 
       const result = await response.json();
-      onPathsUpdate(result.paths);
-      onClose();
+      const newBlock = { ...result.block, child_paths: [] };
+
+      // Replace the fake block with the real one and reindex
+      onPathsUpdate((currentPaths) => {
+        return currentPaths.map((path) => {
+          if (path.id === dropdownDatas.path.id) {
+            // Remove the fake block
+            let blocks = path.blocks.filter((block) => block.id !== fakeId);
+            // Insert the real block at the correct position
+            blocks.splice(dropdownDatas.position, 0, newBlock);
+            // Reindex positions
+            const reindexedBlocks = blocks.map((block, idx) => ({
+              ...block,
+              position: idx,
+            }));
+            return { ...path, blocks: reindexedBlocks };
+          }
+          return path;
+        });
+      });
     } catch (error) {
+      // Rollback: remove the fake block
+      onPathsUpdate((currentPaths) =>
+        currentPaths.map((path) =>
+          path.id === dropdownDatas.path.id
+            ? {
+                ...path,
+                blocks: path.blocks.filter((block) => block.id !== fakeId),
+              }
+            : path
+        )
+      );
       console.error('Error pasting block:', error);
     }
   };
@@ -223,6 +283,27 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                 <div
                   className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
                   onClick={async () => {
+                    // Optimistically update to END
+                    onClose();
+                    let previousType: BlockEndType;
+                    onPathsUpdate((currentPaths) => {
+                      const updatedPaths = currentPaths.map((path) => {
+                        if (path.id === dropdownDatas.path.id) {
+                          return {
+                            ...path,
+                            blocks: path.blocks.map((b) => {
+                              if (b.id === block.id) {
+                                previousType = b.type as BlockEndType;
+                                return { ...b, type: BlockEndType.END };
+                              }
+                              return b;
+                            }),
+                          };
+                        }
+                        return path;
+                      });
+                      return updatedPaths;
+                    });
                     try {
                       await fetch(`/api/blocks/${block.id}`, {
                         method: 'PATCH',
@@ -231,26 +312,24 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                           type: BlockEndType.END,
                         }),
                       });
-
-                      // Update the block type in paths store
-                      onPathsUpdate((currentPaths) =>
-                        currentPaths.map((path) => {
+                    } catch (error) {
+                      // Rollback to previous type if error
+                      onPathsUpdate((currentPaths) => {
+                        const rolledBackPaths = currentPaths.map((path) => {
                           if (path.id === dropdownDatas.path.id) {
                             return {
                               ...path,
                               blocks: path.blocks.map((b) =>
                                 b.id === block.id
-                                  ? { ...b, type: BlockEndType.END }
+                                  ? { ...b, type: previousType }
                                   : b
                               ),
                             };
                           }
                           return path;
-                        })
-                      );
-
-                      onClose();
-                    } catch (error) {
+                        });
+                        return rolledBackPaths;
+                      });
                       console.error('Error converting block to END:', error);
                     }
                   }}
