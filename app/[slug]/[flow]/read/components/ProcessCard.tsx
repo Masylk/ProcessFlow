@@ -86,7 +86,9 @@ export default function ProcessCard({
         style={{ color: colors['text-secondary'] }}
         className="text-xs leading-none font-medium"
       >
-        {integration.icon ? getFilenameWithoutExtension(integration.icon) : integration.name}
+        {integration.icon
+          ? getFilenameWithoutExtension(integration.icon)
+          : integration.name}
       </span>
     </div>
   );
@@ -184,7 +186,7 @@ export default function ProcessCard({
             {author && (
               <div className="flex items-center gap-2">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${author.avatar}`}
+                  src={`${author.avatar}`}
                   alt={author.name}
                   className="rounded-full w-5 h-5"
                 />

@@ -600,8 +600,9 @@ export default function SharePage({
         author: workflowData.author && {
           name: workflowData.author.full_name,
           avatar:
-            workflowData.author.avatar_url ||
-            `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+            workflowData.author.avatar_url && workflowData.author.avatar_url.trim() !== ''
+              ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.author.avatar_url}`
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
         },
         lastUpdate:
           paths

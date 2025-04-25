@@ -1,4 +1,9 @@
 ---
+description: 
+globs: 
+alwaysApply: true
+---
+---
 description: General Guidelines
 globs: *
 alwaysApply: true

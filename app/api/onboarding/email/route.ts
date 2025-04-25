@@ -181,6 +181,48 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
   }
 }
 
+// Add a new function to create a temporary workspace and workflow
+async function createTempWorkspaceAndWorkflow(userId: number, firstName: string, lastName: string): Promise<{ workspaceId: number }> {
+  try {
+    // Create a temporary workspace for the user
+    const tempWorkspaceName = `${firstName}'s Workspace (Temp)`;
+    
+    const tempWorkspace = await prisma.workspace.create({
+      data: {
+        name: tempWorkspaceName,
+        team_tags: [],
+        user_workspaces: {
+          create: {
+            user_id: userId,
+            role: 'ADMIN'
+          }
+        }
+      }
+    });
+
+    // Start creating the default workflow in the background
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/onboarding/create-default-workflow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        workspaceId: tempWorkspace.id,
+        userId
+      }),
+    }).catch(error => {
+      console.error('Error initiating default workflow creation:', error);
+      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
+    });
+
+    return { workspaceId: tempWorkspace.id };
+  } catch (error) {
+    console.error('Error creating temp workspace and workflow:', error);
+    // Return a falsy value that will be handled by the caller
+    return { workspaceId: 0 };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -251,21 +293,30 @@ export async function POST(request: Request) {
     // Handle each onboarding step
     switch (step) {
       case 'PERSONAL_INFO':
+        // Create a temporary workspace and start workflow creation
+        const { workspaceId: tempWorkspaceId } = await createTempWorkspaceAndWorkflow(
+          dbUser.id, 
+          formData.first_name, 
+          formData.last_name
+        );
+
+        // Update user with personal info and temporary workspace ID
         await prisma.user.update({
           where: { id: dbUser.id },
           data: {
             ...formData,
-            onboarding_step: 'PROFESSIONAL_INFO'
+            onboarding_step: 'PROFESSIONAL_INFO',
           }
         });
 
-        // Update Supabase user metadata
+        // Store the temp workspace ID in Supabase user metadata
         await supabase.auth.updateUser({
           data: {
             onboarding_status: {
               current_step: 'professional-info',
               completed_at: null
-            }
+            },
+            temp_workspace_id: tempWorkspaceId || null
           }
         });
         break;
@@ -327,23 +378,66 @@ export async function POST(request: Request) {
             ...nameError 
           }, { status: 400 });
         }
-        // Create workspace
-        const workspace = await prisma.workspace.create({
-          data: {
-            name: formData.workspace_name,
-            slug: formData.workspace_url,
-            icon_url: formData.workspace_icon_url,
-            industry: dbUser.temp_industry || null,
-            company_size: dbUser.temp_company_size || null,
-            team_tags: [],
-            user_workspaces: {
-              create: {
-                user_id: dbUser.id,
-                role: 'ADMIN'
+
+        let workspace;
+        
+        // Check if we have a temporary workspace from the first step
+        // Get temp workspace ID from user metadata
+        const userMetadata = await supabase.auth.getUser();
+        const userTempWorkspaceId = userMetadata?.data?.user?.user_metadata?.temp_workspace_id;
+        
+        if (userTempWorkspaceId) {
+          // Update the temp workspace with the real information
+          workspace = await prisma.workspace.update({
+            where: { id: userTempWorkspaceId },
+            data: {
+              name: formData.workspace_name,
+              slug: formData.workspace_url,
+              icon_url: formData.workspace_icon_url,
+              industry: dbUser.temp_industry || null,
+              company_size: dbUser.temp_company_size || null,
+            }
+          });
+        } else {
+          // Create a new workspace if no temp workspace exists
+          workspace = await prisma.workspace.create({
+            data: {
+              name: formData.workspace_name,
+              slug: formData.workspace_url,
+              icon_url: formData.workspace_icon_url,
+              industry: dbUser.temp_industry || null,
+              company_size: dbUser.temp_company_size || null,
+              team_tags: [],
+              user_workspaces: {
+                create: {
+                  user_id: dbUser.id,
+                  role: 'ADMIN'
+                }
               }
             }
+          });
+          
+          // If no temp workspace was created, we need to create the workflow now
+          try {
+            const defaultWorkflowResponse = await fetch(new URL('/api/onboarding/create-default-workflow', request.url).toString(), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                workspaceId: workspace.id,
+                userId: dbUser.id
+              }),
+            });
+            
+            if (!defaultWorkflowResponse.ok) {
+              console.error('Failed to create default workflow:', await defaultWorkflowResponse.text());
+            }
+          } catch (workflowError) {
+            console.error('Error creating default workflow:', workflowError);
+            // Don't fail the onboarding process if workflow creation fails
           }
-        });
+        }
 
         // Update user with active workspace and complete onboarding
         await prisma.user.update({
@@ -353,17 +447,18 @@ export async function POST(request: Request) {
             onboarding_step: 'COMPLETED',
             onboarding_completed_at: new Date(),
             temp_industry: null,
-            temp_company_size: null
+            temp_company_size: null,
           }
         });
 
-        // Update Supabase user metadata
+        // Update Supabase user metadata and clear the temporary workspace ID
         await supabase.auth.updateUser({
           data: {
             onboarding_status: {
               current_step: 'completed',
               completed_at: new Date().toISOString()
-            }
+            },
+            temp_workspace_id: null // Clear temp workspace ID
           }
         });
 
@@ -420,7 +515,7 @@ export async function POST(request: Request) {
             response.warnings.additionalEmails = error;
           }
         }
-        
+
         return NextResponse.json(response);
 
       case 'INVITED_USER':
@@ -442,6 +537,29 @@ export async function POST(request: Request) {
             }
           }
         });
+        
+        // Create default workflow for invited users as well
+        if (dbUser.active_workspace_id) {
+          try {
+            const defaultWorkflowResponse = await fetch(new URL('/api/onboarding/create-default-workflow', request.url).toString(), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                workspaceId: dbUser.active_workspace_id,
+                userId: dbUser.id
+              }),
+            });
+            
+            if (!defaultWorkflowResponse.ok) {
+              console.error('Failed to create default workflow for invited user:', await defaultWorkflowResponse.text());
+            }
+          } catch (workflowError) {
+            console.error('Error creating default workflow for invited user:', workflowError);
+            // Don't fail the onboarding process if workflow creation fails
+          }
+        }
 
         // Schedule welcome and follow-up emails for invited users too
         const invitedEmailResult = await scheduleOnboardingEmails(dbUser.id, dbUser.first_name, dbUser.email);

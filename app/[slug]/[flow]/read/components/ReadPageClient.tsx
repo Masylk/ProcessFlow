@@ -144,7 +144,7 @@ export default function ReadPageClient() {
   }, [pathsToDisplay, selectedOptions, paths]);
 
   // Parse the flow parameter to get workflowId
-  const [workflowName, workflowId] = (params.flow as string).split('--pf-');
+  const [workflowName, workflowId] = (params?.flow as string).split('--pf-');
 
   // Initialize all steps as expanded when paths are loaded
   useEffect(() => {
@@ -726,7 +726,7 @@ export default function ReadPageClient() {
               workflowData.author.avatar_url &&
               workflowData.author.avatar_url !== null &&
               workflowData.author.avatar_url.trim() !== ''
-                ? workflowData.author.avatar_url
+                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.author.avatar_url}`
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
