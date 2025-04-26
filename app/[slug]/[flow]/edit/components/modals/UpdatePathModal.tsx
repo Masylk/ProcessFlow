@@ -5,13 +5,25 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
+import { remove } from 'lodash';
 
 interface UpdatePathModalProps {
   onClose: () => void;
-  onConfirm: (pathNames: string[]) => void;
+  onConfirm: (
+    pathsToUpdate: { index: number; name: string }[],
+    pathsToAdd: string[],
+    pathsToRemove: { index: number; name: string }[]
+  ) => void;
   existingPathsCount: number;
   existingPaths?: string[];
 }
+
+type PathRow = {
+  id: number;
+  name: string;
+  originalName?: string;
+  originalIndex?: number;
+};
 
 const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   onClose,
@@ -19,17 +31,34 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   existingPathsCount = 0,
   existingPaths = [],
 }) => {
-  const [pathNames, setPathNames] = useState<string[]>([]);
+  const [pathRows, setPathRows] = useState<PathRow[]>([]);
+  const [removedPaths, setRemovedPaths] = useState<PathRow[]>([]);
+
   const colors = useColors();
   const { currentTheme } = useTheme();
 
-  // Initialize pathNames with existing paths when the modal opens
+  // Initialize pathRows with existing paths when the modal opens
   useEffect(() => {
     if (existingPaths.length > 0) {
-      setPathNames([...existingPaths]);
+      // If you want to pass IDs, you need to pass them from the parent as well.
+      // For now, we assume only names, so we can't track updates/removes by ID.
+      // Let's assume the parent will pass an array of {id, name} instead of just names.
+      // For now, fallback to names only.
+      setPathRows(
+        existingPaths.map((name, idx) => ({
+          id: idx,
+          name,
+          originalName: name,
+          originalIndex: idx,
+        }))
+      );
     } else {
-      setPathNames(['Path n°1', 'Path n°2']);
+      setPathRows([
+        { id: 0, name: 'Path n°1' },
+        { id: 1, name: 'Path n°2' },
+      ]);
     }
+    setRemovedPaths([]);
   }, [existingPaths]);
 
   // Get theme variables for direct application
@@ -45,17 +74,77 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   }, [currentTheme]);
 
   // Check if any path name is empty
-  const hasEmptyPath = pathNames.some((name) => name.trim() === '');
+  const hasEmptyPath = pathRows.some((row) => row.name.trim() === '');
 
   const handleAddPath = () => {
-    const nextPathNumber = pathNames.length + 1;
-    setPathNames([...pathNames, `Path n°${nextPathNumber}`]);
+    const nextPathNumber = pathRows.length;
+    setPathRows([
+      ...pathRows,
+      { id: nextPathNumber, name: `Path n°${nextPathNumber + 1}` },
+    ]);
+    // No need to update removedPaths
   };
 
   const handleRemovePath = (index: number) => {
-    const newPathNames = [...pathNames];
-    newPathNames.splice(index, 1);
-    setPathNames(newPathNames);
+    setPathRows((prevRows) => {
+      const removed = prevRows[index];
+      const newRows = [...prevRows];
+      newRows.splice(index, 1);
+
+      if (removed.id !== undefined && removed.originalIndex !== undefined) {
+        setRemovedPaths((old) => {
+          // Only add if there is no existing pair with same index and name
+          if (!old.some((p) => p.id === index && p.name === removed.name)) {
+            return [
+              ...old,
+              { id: removed.originalIndex ?? 0, name: removed.name },
+            ];
+          }
+          return old;
+        });
+      }
+
+      return newRows;
+    });
+  };
+
+  const handleNameChange = (index: number, value: string) => {
+    setPathRows((prev) => {
+      const newRows = [...prev];
+      newRows[index] = { ...newRows[index], name: value };
+      return newRows;
+    });
+  };
+
+  const handleConfirm = () => {
+    // pathsToAdd: all rows without id
+    const pathsToAdd = pathRows.filter((row) => row.originalIndex === undefined).map((row) => row.name);
+
+    // pathsToRemove: all removed paths with id, deduplicated by (index, name)
+    const seen = new Set<string>();
+    const pathsToRemove = removedPaths
+      .map((row) => ({
+        index: row?.id ?? 0,
+        name: row.name,
+      }))
+      .filter((row) => {
+        const key = `${row.index}|${row.name}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+    // pathsToUpdate: all rows with id and name changed
+    const pathsToUpdate = pathRows
+      .filter(
+        (row) =>
+          row.id !== undefined &&
+          row.name !== row.originalName &&
+          row.originalIndex !== undefined
+      )
+      .map((row) => ({ index: row.id as number, name: row.name }));
+
+    onConfirm(pathsToUpdate, pathsToAdd, pathsToRemove);
   };
 
   const modalContent = (
@@ -77,8 +166,8 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
             <ButtonNormal
               variant="primary"
               size="small"
-              onClick={() => onConfirm(pathNames)}
-              disabled={hasEmptyPath || pathNames.length <= 1}
+              onClick={handleConfirm}
+              disabled={hasEmptyPath || pathRows.length <= 1}
             >
               {existingPaths.length > 0 ? 'Update paths' : 'Create paths'}
             </ButtonNormal>
@@ -91,7 +180,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
         >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto">
-              {pathNames.map((name, index) => (
+              {pathRows.map((row, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex flex-col gap-1 flex-grow">
                     <label
@@ -102,12 +191,8 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
                     </label>
                     <InputField
                       type="default"
-                      value={name}
-                      onChange={(value) => {
-                        const newNames = [...pathNames];
-                        newNames[index] = value;
-                        setPathNames(newNames);
-                      }}
+                      value={row.name}
+                      onChange={(value) => handleNameChange(index, value)}
                       placeholder={`This is your path n°${index + 1}`}
                     />
                   </div>

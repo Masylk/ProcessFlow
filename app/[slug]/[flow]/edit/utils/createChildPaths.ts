@@ -15,7 +15,7 @@ export async function createChildPaths(
   pathNames: string[],
   workflowId: number,
   parentPath: Path
-): Promise<CreateChildPathsResponse> {
+): Promise<void> {
   try {
   
     // Create minimal paths
@@ -44,17 +44,6 @@ export async function createChildPaths(
     });
 
 
-    // Fetch updated paths data
-    const pathsResponse = await fetch(
-      `/api/workspace/${workflowId}/paths?workflow_id=${workflowId}`
-    );
-    
-    if (!pathsResponse.ok) {
-      throw new Error('Failed to fetch updated paths');
-    }
-
-    const pathsData = await pathsResponse.json();
-    return { paths: pathsData.paths };
   } catch (error) {
     console.error('Error creating child paths:', error);
     throw error;
