@@ -8,7 +8,8 @@ export async function GET(request: Request) {
   // Allow requests from both the www and non-www versions of your domain
   const allowedOrigins = [
     'https://process-flow.io',
-    'https://www.process-flow.io'
+    'https://www.process-flow.io',
+    'https://processflow02.webflow.io/'
   ];
   
   // Set the appropriate CORS header based on the request origin
@@ -35,7 +36,8 @@ export async function OPTIONS(request: Request) {
   // Allow requests from both the www and non-www versions of your domain
   const allowedOrigins = [
     'https://process-flow.io',
-    'https://www.process-flow.io'
+    'https://www.process-flow.io',
+    'https://processflow02.webflow.io/'
   ];
   
   return NextResponse.json(

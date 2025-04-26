@@ -120,7 +120,7 @@ export default function ProcessCard({
             {workflow.description && (
               <p
                 style={{ color: colors['text-quaternary'] }}
-                className="max-w-2xl text-base"
+                className="max-w-2xl font-normaltext-sm"
               >
                 {workflow.description}
               </p>
