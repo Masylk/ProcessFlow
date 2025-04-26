@@ -128,6 +128,7 @@ export function ReactFlowPageClient({
         const pathsData = await pathsRes.json();
         setPaths(pathsData.paths);
 
+        console.log('pathsData', pathsData);
         // Fetch stroke lines
         const strokeLinesData = await getWorkflowStrokeLines(
           parseInt(workflowId)
