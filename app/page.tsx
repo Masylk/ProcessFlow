@@ -152,7 +152,7 @@ export default function Page() {
   const debouncedSearchHandler = useCallback(
     debounce((value: string) => {
       setSearchTerm(value);
-    }, 300),
+    }, 10),
     []
   );
 
