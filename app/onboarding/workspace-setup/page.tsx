@@ -7,6 +7,17 @@ import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 
+// Add a new LoadingScreen component
+const LoadingScreen = () => {
+  return (
+    <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex flex-col items-center justify-center">
+      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+      <h2 className="text-xl font-semibold mb-2">Setting up your workspace</h2>
+      <p className="text-gray-600">This may take a few moments...</p>
+    </div>
+  );
+};
+
 export default function WorkspaceSetup() {
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceURL, setWorkspaceURL] = useState('');
@@ -14,6 +25,7 @@ export default function WorkspaceSetup() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
   const [error, setError] = useState('');
   const [urlError, setUrlError] = useState('');
   const [showWorkspaceNameError, setShowWorkspaceNameError] = useState(false);
@@ -181,6 +193,9 @@ export default function WorkspaceSetup() {
     setError('');
 
     try {
+      // Show the loading screen specifically for workflow creation
+      setIsCreatingWorkflow(true);
+
       const response = await fetch('/api/onboarding/email', {
         method: 'POST',
         headers: {
@@ -211,15 +226,31 @@ export default function WorkspaceSetup() {
         router.push('/dashboard');
       } else {
         const data = await response.json();
-        setError(
-          data.error || 'An error occurred while creating your workspace'
-        );
+        
+        // If there's an error but it's related to the workflow creation
+        // we still want to redirect the user to the dashboard
+        if (data.warnings && data.warnings.workflowCreation) {
+          console.warn('Workflow creation had issues, but continuing to dashboard:', data.warnings);
+          
+          // Clear localStorage data
+          localStorage.removeItem('personalInfoData');
+          localStorage.removeItem('professionalInfoData');
+          localStorage.removeItem('workspaceSetupData');
+          
+          // Redirect to dashboard despite the workflow creation issue
+          router.push('/dashboard');
+        } else {
+          setError(
+            data.error || 'An error occurred while creating your workspace'
+          );
+        }
       }
     } catch (error) {
       console.error('Error creating workspace:', error);
       setError('A connection error occurred');
     } finally {
       setIsLoading(false);
+      setIsCreatingWorkflow(false);
     }
   };
 
@@ -315,6 +346,8 @@ export default function WorkspaceSetup() {
       className="w-full min-h-screen flex justify-center items-center px-4 py-6"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
+      {isCreatingWorkflow && <LoadingScreen />}
+      
       <div className="w-full max-w-[1280px] flex-col justify-center items-center gap-8 sm:gap-12 md:gap-[72px] inline-flex">
         {/* Logo Section - Responsive */}
         <div className="w-[180px] sm:w-[200px] md:w-[240px] justify-start items-start inline-flex">

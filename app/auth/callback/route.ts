@@ -11,6 +11,50 @@ const posthog = new PostHog(
   }
 );
 
+// Add a function to create a temporary workspace, similar to the one in email/route.ts
+async function createTempWorkspaceForGoogle(userId: number, firstName: string, lastName: string): Promise<number | null> {
+  try {
+    // Create a temporary workspace for the user
+    const tempWorkspaceName = `${firstName}'s Workspace (Temp)`;
+    
+    const tempWorkspace = await prisma.workspace.create({
+      data: {
+        name: tempWorkspaceName,
+        team_tags: [],
+        user_workspaces: {
+          create: {
+            user_id: userId,
+            role: 'ADMIN'
+          }
+        }
+      }
+    });
+
+    // Start creating the default workflow in the background
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    fetch(`${baseUrl}/api/onboarding/create-default-workflow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        workspaceId: tempWorkspace.id,
+        userId
+      }),
+    }).catch(error => {
+      console.error('Error initiating default workflow creation:', error);
+      Sentry.captureException(error);
+      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
+    });
+
+    return tempWorkspace.id;
+  } catch (error) {
+    console.error('Error creating temp workspace for Google user:', error);
+    Sentry.captureException(error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
@@ -131,21 +175,43 @@ export async function GET(request: NextRequest) {
         }
       } else {
         // Regular new user (not invited)
-        await prisma.user.create({
+        const isGoogleAuth = session.user.app_metadata?.provider === 'google';
+        
+        // Create user in the database
+        const newUser = await prisma.user.create({
           data: {
             auth_id: session.user.id,
             email: session.user.email || '',
             first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
             last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
             full_name: session.user.user_metadata?.full_name || '',
-            onboarding_step: session.user.app_metadata?.provider === 'google' 
+            onboarding_step: isGoogleAuth 
               ? 'PROFESSIONAL_INFO'  // Skip personal info for Google users since we have their data
               : 'PERSONAL_INFO',     // Start with personal info for email users
             avatar_url: session.user.user_metadata?.avatar_url,
           },
         });
         
-        redirectUrl = session.user.app_metadata?.provider === 'google'
+        // For Google users, also create a temporary workspace like we do in the PERSONAL_INFO step
+        let tempWorkspaceId = null;
+        if (isGoogleAuth && newUser) {
+          tempWorkspaceId = await createTempWorkspaceForGoogle(
+            newUser.id,
+            newUser.first_name || 'New',
+            newUser.last_name || 'User'
+          );
+          
+          // Store the temp workspace ID in Supabase user metadata
+          if (tempWorkspaceId) {
+            await supabase.auth.updateUser({
+              data: {
+                temp_workspace_id: tempWorkspaceId
+              }
+            });
+          }
+        }
+        
+        redirectUrl = isGoogleAuth
           ? '/onboarding/professional-info'
           : '/onboarding/personal-info';
       }
@@ -168,6 +234,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Top level error in callback:', error);
+    Sentry.captureException(error);
     return NextResponse.redirect(new URL('/login?error=callback', request.url));
   }
 } 
