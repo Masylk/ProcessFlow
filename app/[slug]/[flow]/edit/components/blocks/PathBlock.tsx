@@ -22,7 +22,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
 
   const existingPathsCount = pathBlock?.child_paths?.length || 0;
   // Get the names and IDs of existing child paths
-  const existingPaths =
+  const existingPaths: { id: number; name: string }[] =
     pathBlock?.child_paths?.map((cp) => ({
       id: cp.path.id,
       name: cp.path.name,
@@ -33,7 +33,17 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     setShowModal(true);
   };
 
-  const handleCreateChildPaths = async (pathNames: string[]) => {
+  /**
+   * Handles updating, adding, and removing child paths.
+   * @param pathsToUpdate Array of {id, name} for paths to update
+   * @param pathsToAdd Array of names for new paths to add
+   * @param pathsToRemove Array of {id, name} for paths to remove
+   */
+  const handleCreateChildPaths = async (
+    pathsToUpdate: { index: number; name: string }[],
+    pathsToAdd: string[],
+    pathsToRemove: { index: number; name: string }[]
+  ) => {
     try {
       setShowModal(false);
 
@@ -41,65 +51,48 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
         throw new Error('Path data is missing');
       }
 
-      // If we have existing paths, handle updates and deletions
-      if (existingPaths.length > 0) {
-        // Find paths to update and paths to delete
-        const pathsToUpdate = existingPaths.filter(
-          (_, index) => index < pathNames.length
-        );
-        const pathsToDelete = existingPaths.filter(
-          (_, index) => index >= pathNames.length
-        );
+      // Add new paths
+      if (pathsToAdd.length > 0) {
+        await createChildPaths(pathsToAdd, data.path.workflow_id, data.path);
+      }
 
-        if (existingPaths.length - pathsToDelete.length > 1) {
-          // Delete removed paths
-          await Promise.all(
-            pathsToDelete.map(async (path) => {
-              await fetch(`/api/paths/${path.id}`, {
-                method: 'DELETE',
-              });
-            })
-          );
-        }
-
-        // Update remaining paths
+      // Delete removed paths
+      if (pathsToRemove.length > 0) {
+        const pathsToRemoveIds = pathsToRemove.map(
+          (path) => existingPaths[path.index].id
+        );
         await Promise.all(
-          pathsToUpdate.map(async (path, index) => {
-            await fetch(`/api/paths/${path.id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: pathNames[index] }),
+          pathsToRemoveIds.map(async (id) => {
+            await fetch(`/api/paths/${id}`, {
+              method: 'DELETE',
             });
           })
         );
+      }
 
-        // If we have more new paths than existing ones, create the additional paths
-        if (pathNames.length > existingPaths.length) {
-          const newPathNames = pathNames.slice(existingPaths.length);
-          const result = await createChildPaths(
-            newPathNames,
-            data.path.workflow_id,
-            data.path
-          );
-          data.onPathsUpdate?.(result.paths);
-        } else {
-          // Just fetch the updated paths to refresh the UI
-          const pathsResponse = await fetch(
-            `/api/workspace/${data.path.workflow_id}/paths?workflow_id=${data.path.workflow_id}`
-          );
-          if (pathsResponse.ok) {
-            const pathsData = await pathsResponse.json();
-            data.onPathsUpdate?.(pathsData.paths);
-          }
-        }
-      } else {
-        // If no existing paths, create all new ones
-        const result = await createChildPaths(
-          pathNames,
-          data.path.workflow_id,
-          data.path
+      // Update existing paths
+      if (pathsToUpdate.length > 0) {
+        const pathsToUpdateIdsandname = pathsToUpdate.map((path) => ({
+          id: existingPaths[path.index].id,
+          name: path.name,
+        }));
+        await Promise.all(
+          pathsToUpdateIdsandname.map(async (path) => {
+            await fetch(`/api/paths/${path.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: path.name }),
+            });
+          })
         );
-        data.onPathsUpdate?.(result.paths);
+      }
+      // Just fetch the updated paths to refresh the UI
+      const pathsResponse = await fetch(
+        `/api/workspace/${data.path.workflow_id}/paths?workflow_id=${data.path.workflow_id}`
+      );
+      if (pathsResponse.ok) {
+        const pathsData = await pathsResponse.json();
+        data.onPathsUpdate?.(pathsData.paths);
       }
     } catch (error) {
       console.error('Error managing child paths:', error);

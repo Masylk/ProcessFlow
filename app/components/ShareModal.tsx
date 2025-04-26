@@ -161,10 +161,10 @@ export default function ShareModal({
   };
 
   const handleCopyEmbedSnippet = async () => {
-    if (!shareUrl) return;
+    if (!shareableLink) return;
 
     try {
-      const url = new URL(shareUrl + '/embed');
+      const url = new URL(shareableLink + '/embed');
       url.searchParams.set('theme', currentTheme);
       await navigator.clipboard.writeText(url.toString());
       toast.success('Embed Link Copied!', {

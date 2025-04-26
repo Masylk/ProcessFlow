@@ -51,7 +51,7 @@ export default function ProfessionalInfo() {
 
   const dropdownOptions = {
     industry: ['IT', 'Healthcare', 'Finance', 'Education', 'Retail', 'Other'],
-    role: ['Freelancer', 'Manager', 'Product Manager', 'Analyst', 'Designer', 'Sales', 'Marketing', 'HR', 'Customer Success', 'Other'],
+    role: ['Founder', 'Manager', 'Product Manager', 'Analyst', 'Designer', 'Sales', 'Marketing', 'HR', 'Customer Success', 'Freelancer', 'Other'],
     companySize: ['1', '2-9', '10-49', '50-199', '200-499', '500+'],
     source: ['ProductHunt', 'LinkedIn', 'Google', 'Friend', 'Other'],
   };

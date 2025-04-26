@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { deleteOneBlock } from '../blocks/deleteOne';
+import { deleteManyPaths } from './deleteMany';
 
 export async function deleteOnePath(id: number | string) {
   const pathId = typeof id === 'string' ? parseInt(id, 10) : id;
@@ -34,9 +35,13 @@ export async function deleteOnePath(id: number | string) {
   // Delete each block in the path using deleteOneBlock
   const blocks = await prisma.block.findMany({
     where: { path_id: pathId },
-    select: { id: true },
+    select: { id: true, child_paths: { select: { path_id: true } } },
   });
   for (const block of blocks) {
+    if (block.child_paths.length > 0) {
+      const pathIds = block.child_paths.map((path) => path.path_id);
+      await deleteManyPaths(pathIds);
+    }
     await deleteOneBlock(block.id);
   }
 

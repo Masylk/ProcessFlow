@@ -176,23 +176,71 @@ export function Flow({
   const handleDeleteBlock = useCallback(
     async (nodeId: string) => {
       const blockId = nodeId.replace('block-', '');
+
+      // Optimistically update UI
+      setPaths((currentPaths) => {
+        // Find the path and the deleted block's position
+        let deletedBlockPosition: number | null = null;
+        let deletedBlockPathId: number | null = null;
+
+        currentPaths.forEach((path) => {
+          const found = path.blocks.find(
+            (block) => block.id === parseInt(blockId)
+          );
+          if (found) {
+            deletedBlockPosition = found.position;
+            deletedBlockPathId = path.id;
+          }
+        });
+
+        if (deletedBlockPosition === null || deletedBlockPathId === null) {
+          // Block not found, just filter as before
+          return currentPaths.map((path) => ({
+            ...path,
+            blocks: path.blocks.filter(
+              (block) => block.id !== parseInt(blockId)
+            ),
+          }));
+        }
+
+        // Update the path: remove the block, and decrement positions
+        return currentPaths.map((path) => {
+          if (path.id !== deletedBlockPathId) {
+            return {
+              ...path,
+              blocks: path.blocks,
+            };
+          }
+          const filteredBlocks = path.blocks
+            .filter((block) => block.id !== parseInt(blockId))
+            .map((block) => {
+              if (block.position > deletedBlockPosition!) {
+                return { ...block, position: block.position - 1 };
+              }
+              return block;
+            });
+          return {
+            ...path,
+            blocks: filteredBlocks,
+          };
+        });
+      });
+
+      // Save previous state for rollback
+      const previousPaths = usePathsStore.getState().paths;
+
       try {
         const response = await fetch(`/api/blocks/${blockId}`, {
           method: 'DELETE',
         });
-        if (response.ok) {
-          // Update paths by filtering out the deleted block
-          setPaths((currentPaths) => {
-            const updatedPaths = currentPaths.map((path) => ({
-              ...path,
-              blocks: path.blocks.filter(
-                (block) => block.id !== parseInt(blockId)
-              ),
-            }));
-            return updatedPaths;
-          });
+        if (!response.ok) {
+          // Rollback on error
+          setPaths(previousPaths);
+          throw new Error('Failed to delete block');
         }
       } catch (error) {
+        // Rollback on error
+        setPaths(previousPaths);
         console.error('Error deleting block:', error);
       }
     },
