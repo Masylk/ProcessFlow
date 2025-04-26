@@ -17,13 +17,74 @@ export default function WorkspaceSetup() {
   const [error, setError] = useState('');
   const [urlError, setUrlError] = useState('');
   const [showWorkspaceNameError, setShowWorkspaceNameError] = useState(false);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [slugAvailability, setSlugAvailability] = useState<{
+    available: boolean;
+    message: string;
+  } | null>(null);
+  const slugCheckTimeoutRef = useRef<NodeJS.Timeout>();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const colors = useColors();
 
-  // Prevent unnecessary re-renders with stable references
-  const urlInputRef = useRef<HTMLInputElement>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  // Add debounced slug check function
+  const checkSlugAvailability = useCallback(async (slug: string) => {
+    if (!slug) {
+      setSlugAvailability(null);
+      return;
+    }
+
+    try {
+      setIsCheckingSlug(true);
+      const response = await fetch(`/api/workspace/check-slug?slug=${encodeURIComponent(slug)}`);
+      const data = await response.json();
+      
+      setSlugAvailability({
+        available: data.available,
+        message: data.message
+      });
+    } catch (error) {
+      console.error('Error checking slug availability:', error);
+      setSlugAvailability(null);
+    } finally {
+      setIsCheckingSlug(false);
+    }
+  }, []);
+
+  // Modify handleInputChange to include workspace name handling
+  const handleInputChange = useCallback(
+    (
+      e: React.ChangeEvent<HTMLInputElement>,
+      setter: React.Dispatch<React.SetStateAction<string>>
+    ) => {
+      const value = e.target.value;
+      setter(value);
+
+      // If this is the workspace name input
+      if (setter === setWorkspaceName) {
+        // Generate the URL slug from the workspace name
+        const slug = value
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-zA-Z0-9-]/g, '');
+
+        setWorkspaceURL(slug);
+
+        // Clear any existing timeout
+        if (slugCheckTimeoutRef.current) {
+          clearTimeout(slugCheckTimeoutRef.current);
+        }
+
+        // Set new timeout for slug check
+        slugCheckTimeoutRef.current = setTimeout(() => {
+          checkSlugAvailability(slug);
+        }, 500);
+      }
+    },
+    [checkSlugAvailability, setWorkspaceName]
+  );
 
   // Load saved workspace data on component mount
   useEffect(() => {
@@ -31,15 +92,22 @@ export default function WorkspaceSetup() {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        if (parsedData.workspaceName)
+        if (parsedData.workspaceName) {
           setWorkspaceName(parsedData.workspaceName);
+          // Check availability for the loaded workspace URL
+          const slug = parsedData.workspaceURL || parsedData.workspaceName
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-zA-Z0-9-]/g, '');
+          checkSlugAvailability(slug);
+        }
         if (parsedData.workspaceURL) setWorkspaceURL(parsedData.workspaceURL);
         if (parsedData.logo) setLogo(parsedData.logo);
       } catch (e) {
         console.warn('Error loading saved workspace data:', e);
       }
     }
-  }, []);
+  }, [checkSlugAvailability]);
 
   // Save workspace data when fields change
   useEffect(() => {
@@ -54,17 +122,6 @@ export default function WorkspaceSetup() {
       );
     }
   }, [workspaceName, workspaceURL, logo]);
-
-  // Stable callback functions to prevent re-renders
-  const handleInputChange = useCallback(
-    (
-      e: React.ChangeEvent<HTMLInputElement>,
-      setter: React.Dispatch<React.SetStateAction<string>>
-    ) => {
-      setter(e.target.value);
-    },
-    []
-  );
 
   const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,10 +165,9 @@ export default function WorkspaceSetup() {
     fileInputRef.current?.click();
   }, []);
 
-  // Simplified URL change handler with stabilized functions
+  // Modify URL change handler
   const handleURLChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Get value directly from the DOM element
       const value = e.target.value;
       setWorkspaceURL(value);
 
@@ -120,15 +176,41 @@ export default function WorkspaceSetup() {
 
       if (hasInvalidChars && value !== '') {
         setUrlError('Only letters, numbers, and hyphens (-) are allowed');
+        setSlugAvailability(null);
+        setError('');
       } else {
         setUrlError('');
-        if (error === 'Please fix the URL format before continuing') {
-          setError('');
+
+        // Clear any existing timeout
+        if (slugCheckTimeoutRef.current) {
+          clearTimeout(slugCheckTimeoutRef.current);
         }
+
+        // Set new timeout for slug check
+        slugCheckTimeoutRef.current = setTimeout(() => {
+          checkSlugAvailability(value);
+        }, 500);
       }
     },
-    [error]
+    [checkSlugAvailability]
   );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (slugCheckTimeoutRef.current) {
+        clearTimeout(slugCheckTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Modify the form validation to include slug availability
+  const isFormValid = useCallback(() => {
+    if (!workspaceName) return false;
+    if (/[^a-zA-Z0-9-]/.test(workspaceURL)) return false;
+    if (slugAvailability && !slugAvailability.available) return false;
+    return true;
+  }, [workspaceName, workspaceURL, slugAvailability]);
 
   // Stable focus/blur handlers
   const handleFocus = useCallback(() => {
@@ -138,25 +220,6 @@ export default function WorkspaceSetup() {
   const handleBlur = useCallback(() => {
     setIsFocused(false);
   }, []);
-
-  // Only update URL from workspace name initially
-  useEffect(() => {
-    const sanitizedName = workspaceName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/_/g, '-')
-      .replace(/[^a-zA-Z0-9-]/g, '');
-
-    setWorkspaceURL(sanitizedName);
-    setUrlError('');
-  }, [workspaceName]);
-
-  // Check if form is valid - stable reference
-  const isFormValid = useCallback(() => {
-    if (!workspaceName) return false;
-    if (/[^a-zA-Z0-9-]/.test(workspaceURL)) return false;
-    return true;
-  }, [workspaceName, workspaceURL]);
 
   // Refactored submit handler to use direct DOM access where possible
   const handleSubmit = async () => {
@@ -374,7 +437,8 @@ export default function WorkspaceSetup() {
             </div>
           </div>
 
-          {error && (
+          {/* Only show error if it's not related to slug availability */}
+          {error && !error.includes('workspace URL') && (
             <div className="self-stretch text-center text-red-600 text-sm font-normal">
               {error}
             </div>
@@ -393,16 +457,13 @@ export default function WorkspaceSetup() {
                   { target: { value } } as React.ChangeEvent<HTMLInputElement>,
                   setWorkspaceName
                 );
-                if (error) setError('');
               }}
               disabled={isLoading}
               destructive={!!error && !workspaceName}
-              errorMessage={
-                error && !workspaceName ? 'Workspace name is required' : ''
-              }
+              errorMessage={error && !workspaceName ? 'Workspace name is required' : ''}
             />
 
-            {/* Workspace URL Input - with validation */}
+            {/* Workspace URL Input */}
             <div className="w-full flex-col justify-start items-start gap-1.5 flex">
               <div
                 className="text-sm font-medium font-['Inter'] leading-tight"
@@ -414,19 +475,18 @@ export default function WorkspaceSetup() {
                 className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
                 style={{
                   backgroundColor: colors['bg-primary'],
-                  borderColor: urlError
+                  borderColor: urlError || (slugAvailability && !slugAvailability.available)
                     ? 'rgb(239, 68, 68)'
-                    : isFocused
-                      ? colors['border-accent']
-                      : colors['border-secondary'],
-                  boxShadow: isFocused
-                    ? `0 0 0 4px ${colors['ring-accent']}`
-                    : undefined,
+                    : slugAvailability && slugAvailability.available
+                      ? 'rgb(34, 197, 94)'
+                      : isFocused
+                        ? colors['border-accent']
+                        : colors['border-secondary'],
+                  boxShadow: isFocused ? `0 0 0 4px ${colors['ring-accent']}` : undefined,
                 }}
               >
                 <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
                   <span
-                    className="text-base"
                     style={{ color: colors['text-secondary'] }}
                   >
                     app.process-flow.io/
@@ -439,26 +499,39 @@ export default function WorkspaceSetup() {
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                   onChange={handleURLChange}
-                  placeholder={
-                    workspaceName
-                      .toLowerCase()
-                      .replace(/\s+/g, '-')
-                      .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
-                  }
+                  placeholder={workspaceName
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'}
                   className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
                   style={{
                     backgroundColor: colors['bg-primary'],
-                    borderLeftColor: isFocused
-                      ? colors['border-accent']
-                      : colors['border-secondary'],
-                    color: workspaceURL
-                      ? colors['text-primary']
-                      : colors['text-secondary'],
+                    borderLeftColor: isFocused ? colors['border-accent'] : colors['border-secondary'],
+                    color: workspaceURL ? colors['text-primary'] : colors['text-secondary'],
                   }}
                 />
               </div>
               {urlError && (
                 <div className="text-red-500 text-xs mt-1">{urlError}</div>
+              )}
+              {!urlError && (
+                <div 
+                  className={`text-xs mt-1 ${
+                    isCheckingSlug 
+                      ? 'text-gray-500'
+                      : slugAvailability
+                        ? slugAvailability.available
+                          ? 'text-green-600'
+                          : 'text-red-500'
+                        : ''
+                  }`}
+                >
+                  {isCheckingSlug 
+                    ? 'Checking availability...' 
+                    : slugAvailability
+                      ? slugAvailability.message
+                      : ''}
+                </div>
               )}
             </div>
 
