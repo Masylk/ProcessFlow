@@ -7,6 +7,7 @@ import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { scheduleFollowUpEmail, scheduleTestEmail } from '@/lib/scheduledEmails';
 import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackRequestEmail';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
+import * as Sentry from '@sentry/nextjs';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -36,6 +37,7 @@ async function scheduleOnboardingFollowUpEmail(userId: number): Promise<EmailSch
     
     if (!result.success) {
       console.error('Failed to schedule follow-up email:', result.error);
+      Sentry.captureException(result.error);
       return { success: false, error: result.error };
     }
     
@@ -43,6 +45,7 @@ async function scheduleOnboardingFollowUpEmail(userId: number): Promise<EmailSch
     return { success: true };
   } catch (error) {
     console.error('Error scheduling follow-up email:', error);
+    Sentry.captureException(error);
     return { success: false, error };
   }
 }
@@ -86,6 +89,7 @@ async function scheduleEmail(
     return { success: true };
   } catch (error) {
     console.error(`Failed to schedule ${emailType} email:`, error);
+    Sentry.captureException(error);
     return { success: false, error };
   }
 }
@@ -120,6 +124,7 @@ async function sendWelcomeEmailToUser(email: string, firstName: string): Promise
 
     if (!result.success) {
       console.error('Failed to send welcome email:', result.error);
+      Sentry.captureException(result.error);
       return { success: false, error: result.error };
     }
 
@@ -127,6 +132,7 @@ async function sendWelcomeEmailToUser(email: string, firstName: string): Promise
     return { success: true };
   } catch (error) {
     console.error('Error sending welcome email:', error);
+    Sentry.captureException(error);
     return { success: false, error };
   }
 }
@@ -142,6 +148,7 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
     if (!welcomeResult.success) {
       // Log the error but continue with onboarding
       console.error('Failed to send welcome email, but continuing with onboarding:', welcomeResult.error);
+      Sentry.captureException(welcomeResult.error);
     }
     
     // Schedule follow-up email for 4 days later
@@ -150,6 +157,7 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
     if (!followUpResult.success) {
       // Log the error but continue with onboarding
       console.error('Failed to schedule follow-up email, but continuing with onboarding:', followUpResult.error);
+      Sentry.captureException(followUpResult.error);
     }
     
     // Schedule feedback request email for 7 days later
@@ -160,6 +168,7 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
     if (!feedbackResult.success) {
       // Log the error but continue with onboarding
       console.error('Failed to schedule feedback request email, but continuing with onboarding:', feedbackResult.error);
+      Sentry.captureException(feedbackResult.error);
     }
     
     return { 
@@ -173,6 +182,7 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
     };
   } catch (error) {
     console.error('Error scheduling onboarding emails:', error);
+    Sentry.captureException(error);
     // Return success true because we want onboarding to continue even if emails fail
     return { 
       success: true, 
@@ -212,14 +222,45 @@ async function createTempWorkspaceAndWorkflow(userId: number, firstName: string,
       }),
     }).catch(error => {
       console.error('Error initiating default workflow creation:', error);
+      Sentry.captureException(error);
       // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
     });
 
     return { workspaceId: tempWorkspace.id };
   } catch (error) {
     console.error('Error creating temp workspace and workflow:', error);
+    Sentry.captureException(error);
     // Return a falsy value that will be handled by the caller
     return { workspaceId: 0 };
+  }
+}
+
+// Add a helper function at the top level to update an existing workspace
+async function updateExistingWorkspace(
+  workspaceId: number, 
+  formData: any, 
+  userId: number,
+  tempIndustry: string | null, 
+  tempCompanySize: string | null
+) {
+  try {
+    const workspace = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: {
+        name: formData.workspace_name,
+        slug: formData.workspace_url,
+        icon_url: formData.workspace_icon_url,
+        industry: tempIndustry || null,
+        company_size: tempCompanySize || null,
+      }
+    });
+    
+    console.log(`Updated existing workspace with ID: ${workspace.id}`);
+    return workspace;
+  } catch (error) {
+    console.error(`Error updating existing workspace (ID: ${workspaceId}):`, error);
+    Sentry.captureException(error);
+    throw error;
   }
 }
 
@@ -230,6 +271,7 @@ export async function POST(request: Request) {
 
     if (authError || !user) {
       console.error('Auth error:', authError);
+      Sentry.captureException(authError);
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
@@ -260,6 +302,7 @@ export async function POST(request: Request) {
         
         if (uploadError) {
           console.error('Error uploading logo:', uploadError);
+          Sentry.captureException(uploadError);
           throw new Error('Failed to upload logo');
         }
         
@@ -380,26 +423,70 @@ export async function POST(request: Request) {
         }
 
         let workspace;
+        let workflowCreationWarning = null;
         
         // Check if we have a temporary workspace from the first step
         // Get temp workspace ID from user metadata
         const userMetadata = await supabase.auth.getUser();
         const userTempWorkspaceId = userMetadata?.data?.user?.user_metadata?.temp_workspace_id;
         
+        let existingUserWorkspaces = null;
+        if (!userTempWorkspaceId) {
+          // If no temp workspace ID is found in metadata, check if the user already has a workspace
+          existingUserWorkspaces = await prisma.user_workspace.findMany({
+            where: { user_id: dbUser.id },
+            include: { workspace: true },
+            orderBy: { id: 'desc' },
+            take: 1
+          });
+        }
+        
+        // First try to use temp workspace from metadata
         if (userTempWorkspaceId) {
           // Update the temp workspace with the real information
-          workspace = await prisma.workspace.update({
-            where: { id: userTempWorkspaceId },
-            data: {
-              name: formData.workspace_name,
-              slug: formData.workspace_url,
-              icon_url: formData.workspace_icon_url,
-              industry: dbUser.temp_industry || null,
-              company_size: dbUser.temp_company_size || null,
-            }
-          });
-        } else {
+          workspace = await updateExistingWorkspace(
+            userTempWorkspaceId, 
+            formData, 
+            dbUser.id, 
+            dbUser.temp_industry, 
+            dbUser.temp_company_size
+          );
+        } 
+        // Then try to use the most recently created workspace if one exists
+        else if (existingUserWorkspaces && existingUserWorkspaces.length > 0) {
+          const userWorkspace = existingUserWorkspaces[0];
+          
+          // Check if the workspace reference exists in the user_workspace
+          if (userWorkspace && userWorkspace.workspace_id) {
+            // Get the workspace directly instead of using the included workspace
+            const existingWorkspaceId = userWorkspace.workspace_id;
+            
+            // Log what we're doing
+            console.log(`Found existing workspace to update: ${existingWorkspaceId}`);
+            Sentry.addBreadcrumb({
+              category: 'workspace',
+              message: `Using existing workspace instead of creating new one`,
+              level: 'info',
+              data: {
+                workspaceId: existingWorkspaceId,
+                userId: dbUser.id
+              }
+            });
+            
+            // Update the existing workspace with the real information
+            workspace = await updateExistingWorkspace(
+              existingWorkspaceId, 
+              formData, 
+              dbUser.id, 
+              dbUser.temp_industry, 
+              dbUser.temp_company_size
+            );
+          }
+        }
+        // Only create a new workspace if we couldn't find any existing workspace
+        else {
           // Create a new workspace if no temp workspace exists
+          console.log(`Creating new workspace for user ${dbUser.id} as no existing workspace was found`);
           workspace = await prisma.workspace.create({
             data: {
               name: formData.workspace_name,
@@ -431,10 +518,30 @@ export async function POST(request: Request) {
             });
             
             if (!defaultWorkflowResponse.ok) {
-              console.error('Failed to create default workflow:', await defaultWorkflowResponse.text());
+              const errorText = await defaultWorkflowResponse.text();
+              console.error('Failed to create default workflow:', errorText);
+              Sentry.captureMessage('Failed to create default workflow', {
+                level: 'error',
+                extra: {
+                  workspaceId: workspace.id,
+                  userId: dbUser.id,
+                  error: errorText
+                }
+              });
+              
+              workflowCreationWarning = {
+                message: 'Failed to create default workflow',
+                details: errorText
+              };
             }
           } catch (workflowError) {
             console.error('Error creating default workflow:', workflowError);
+            Sentry.captureException(workflowError);
+            
+            workflowCreationWarning = {
+              message: 'Error creating default workflow',
+              details: workflowError instanceof Error ? workflowError.message : 'Unknown error'
+            };
             // Don't fail the onboarding process if workflow creation fails
           }
         }
@@ -443,7 +550,7 @@ export async function POST(request: Request) {
         await prisma.user.update({
           where: { id: dbUser.id },
           data: {
-            active_workspace_id: workspace.id,
+            active_workspace_id: workspace?.id || null,
             onboarding_step: 'COMPLETED',
             onboarding_completed_at: new Date(),
             temp_industry: null,
@@ -474,6 +581,16 @@ export async function POST(request: Request) {
           };
         }
         
+        // Add workflow creation warnings if any
+        if (workflowCreationWarning) {
+          if (!response.warnings) {
+            response.warnings = {};
+          }
+          response.warnings.workflowCreation = workflowCreationWarning;
+          response.warnings.message = response.warnings.message || 
+            "Onboarding completed successfully, but there were some issues.";
+        }
+
         try {
           // Use the imported scheduleFollowUpEmail function
           await scheduleFollowUpEmail({
@@ -486,6 +603,7 @@ export async function POST(request: Request) {
             },
           }).catch(err => {
             console.warn('Error scheduling feature update email, but continuing:', err);
+            Sentry.captureException(err);
             if (response.warnings) {
               response.warnings.emails.featureUpdateEmail = err;
             }
@@ -504,6 +622,7 @@ export async function POST(request: Request) {
               },
             }).catch(err => {
               console.warn('Error scheduling test email, but continuing:', err);
+              Sentry.captureException(err);
               if (response.warnings) {
                 response.warnings.emails.testEmail = err;
               }
@@ -511,6 +630,7 @@ export async function POST(request: Request) {
           }
         } catch (error) {
           console.warn('Error in additional email scheduling, but continuing with onboarding completion:', error);
+          Sentry.captureException(error);
           if (response.warnings) {
             response.warnings.additionalEmails = error;
           }
@@ -539,6 +659,7 @@ export async function POST(request: Request) {
         });
         
         // Create default workflow for invited users as well
+        let invitedWorkflowCreationWarning = null;
         if (dbUser.active_workspace_id) {
           try {
             const defaultWorkflowResponse = await fetch(new URL('/api/onboarding/create-default-workflow', request.url).toString(), {
@@ -553,10 +674,30 @@ export async function POST(request: Request) {
             });
             
             if (!defaultWorkflowResponse.ok) {
-              console.error('Failed to create default workflow for invited user:', await defaultWorkflowResponse.text());
+              const errorText = await defaultWorkflowResponse.text();
+              console.error('Failed to create default workflow for invited user:', errorText);
+              Sentry.captureMessage('Failed to create default workflow for invited user', {
+                level: 'error',
+                extra: {
+                  workspaceId: dbUser.active_workspace_id,
+                  userId: dbUser.id,
+                  error: errorText
+                }
+              });
+              
+              invitedWorkflowCreationWarning = {
+                message: 'Failed to create default workflow',
+                details: errorText
+              };
             }
           } catch (workflowError) {
             console.error('Error creating default workflow for invited user:', workflowError);
+            Sentry.captureException(workflowError);
+            
+            invitedWorkflowCreationWarning = {
+              message: 'Error creating default workflow',
+              details: workflowError instanceof Error ? workflowError.message : 'Unknown error'
+            };
             // Don't fail the onboarding process if workflow creation fails
           }
         }
@@ -573,6 +714,16 @@ export async function POST(request: Request) {
           };
         }
         
+        // Add workflow creation warnings for invited users if any
+        if (invitedWorkflowCreationWarning) {
+          if (!invitedResponse.warnings) {
+            invitedResponse.warnings = {};
+          }
+          invitedResponse.warnings.workflowCreation = invitedWorkflowCreationWarning;
+          invitedResponse.warnings.message = invitedResponse.warnings.message || 
+            "Onboarding completed successfully, but there were some issues.";
+        }
+        
         return NextResponse.json(invitedResponse);
 
       default:
@@ -582,6 +733,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error processing onboarding:', error);
+    Sentry.captureException(error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to update onboarding information' },
       { status: 500 }
