@@ -11,7 +11,7 @@ const posthog = new PostHog(
   }
 );
 
-// Add a function to create a temporary workspace, similar to the one in email/route.ts
+// Update function to only create a workspace without workflow
 async function createTempWorkspaceForGoogle(userId: number, firstName: string, lastName: string): Promise<number | null> {
   try {
     // Create a temporary workspace for the user
@@ -30,23 +30,7 @@ async function createTempWorkspaceForGoogle(userId: number, firstName: string, l
       }
     });
 
-    // Start creating the default workflow in the background
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    fetch(`${baseUrl}/api/onboarding/create-default-workflow`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        workspaceId: tempWorkspace.id,
-        userId
-      }),
-    }).catch(error => {
-      console.error('Error initiating default workflow creation:', error);
-      Sentry.captureException(error);
-      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
-    });
-
+    console.log(`Created temporary workspace with ID: ${tempWorkspace.id} for Google user ${userId}`);
     return tempWorkspace.id;
   } catch (error) {
     console.error('Error creating temp workspace for Google user:', error);
