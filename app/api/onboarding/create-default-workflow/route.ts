@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
 
     if (!sourceWorkflow) {
       return NextResponse.json(
-        { error: 'Source workflow not found' },
+        { 
+          error: 'Source workflow not found',
+          details: `Could not find workflow with ID ${SOURCE_WORKFLOW_ID} in workspace ${SOURCE_WORKSPACE_ID}`
+        },
         { status: 404 }
       );
     }
@@ -59,7 +62,10 @@ export async function POST(req: NextRequest) {
 
     if (!targetWorkspace) {
       return NextResponse.json(
-        { error: 'Target workspace not found' },
+        { 
+          error: 'Target workspace not found',
+          details: `Could not find workspace with ID ${workspaceId}`
+        },
         { status: 404 }
       );
     }
@@ -87,128 +93,209 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create the workflow and all components without using a transaction for now
-    // This avoids the transaction timeout issues that can occur with complex operations
+    // Track progress and errors that don't prevent completion
+    const progressSteps = {
+      workflow: false,
+      paths: false,
+      blocks: false,
+      parentBlocks: false,
+      strokeLines: false
+    };
     
-    // 1. Create the new workflow in the target workspace
-    const newWorkflow = await prisma.workflow.create({
-      data: {
-        name: newWorkflowName,
-        description: sourceWorkflow.description,
-        icon: sourceWorkflow.icon,
-        is_public: sourceWorkflow.is_public,
-        status: sourceWorkflow.status,
-        team_tags: sourceWorkflow.team_tags,
-        workspace: {
-          connect: { id: workspaceId },
+    const nonFatalErrors = [];
+    let newWorkflow;
+
+    try {
+      // 1. Create the new workflow in the target workspace
+      newWorkflow = await prisma.workflow.create({
+        data: {
+          name: newWorkflowName,
+          description: sourceWorkflow.description,
+          icon: sourceWorkflow.icon,
+          is_public: sourceWorkflow.is_public,
+          status: sourceWorkflow.status,
+          team_tags: sourceWorkflow.team_tags,
+          workspace: {
+            connect: { id: workspaceId },
+          },
+          author: userId ? {
+            connect: { id: userId },
+          } : undefined,
         },
-        author: userId ? {
-          connect: { id: userId },
-        } : undefined,
-      },
-    });
+      });
+      progressSteps.workflow = true;
+    } catch (error) {
+      // If workflow creation fails, we can't continue
+      throw error;
+    }
 
     // 2. Map for tracking old path IDs to new path IDs
     const pathIdMap = new Map();
     
     // 3. Create paths
-    for (const sourcePath of sourceWorkflow.paths) {
-      const newPath = await prisma.path.create({
-        data: {
-          name: sourcePath.name,
-          workflow: {
-            connect: { id: newWorkflow.id },
+    try {
+      for (const sourcePath of sourceWorkflow.paths) {
+        const newPath = await prisma.path.create({
+          data: {
+            name: sourcePath.name,
+            workflow: {
+              connect: { id: newWorkflow.id },
+            },
           },
-        },
+        });
+        
+        pathIdMap.set(sourcePath.id, newPath.id);
+      }
+      progressSteps.paths = true;
+    } catch (error) {
+      nonFatalErrors.push({
+        step: 'paths',
+        error: error instanceof Error ? error.message : 'Unknown error creating paths'
       });
-      
-      pathIdMap.set(sourcePath.id, newPath.id);
     }
 
     // 4. Map for tracking old block IDs to new block IDs
     const blockIdMap = new Map();
 
     // 5. Create blocks for each path
-    for (const sourcePath of sourceWorkflow.paths) {
-      const newPathId = pathIdMap.get(sourcePath.id);
-      
-      for (const sourceBlock of sourcePath.blocks) {
-        const newBlock = await prisma.block.create({
-          data: {
-            type: sourceBlock.type,
-            position: sourceBlock.position,
-            title: sourceBlock.title,
-            icon: sourceBlock.icon,
-            description: sourceBlock.description,
-            image: sourceBlock.image,
-            original_image: sourceBlock.original_image,
-            image_description: sourceBlock.image_description,
-            average_time: sourceBlock.average_time,
-            task_type: sourceBlock.task_type,
-            click_position: sourceBlock.click_position || undefined,
-            delay_seconds: sourceBlock.delay_seconds,
-            step_details: sourceBlock.step_details,
-            delay_event: sourceBlock.delay_event,
-            delay_type: sourceBlock.delay_type,
-            workflow: {
-              connect: { id: newWorkflow.id },
-            },
-            path: {
-              connect: { id: newPathId },
-            },
-          },
-        });
+    try {
+      for (const sourcePath of sourceWorkflow.paths) {
+        const newPathId = pathIdMap.get(sourcePath.id);
         
-        blockIdMap.set(sourceBlock.id, newBlock.id);
+        if (!newPathId) {
+          nonFatalErrors.push({
+            step: 'blocks',
+            error: `Path ID ${sourcePath.id} not found in map`
+          });
+          continue;
+        }
+        
+        for (const sourceBlock of sourcePath.blocks) {
+          try {
+            const newBlock = await prisma.block.create({
+              data: {
+                type: sourceBlock.type,
+                position: sourceBlock.position,
+                title: sourceBlock.title,
+                icon: sourceBlock.icon,
+                description: sourceBlock.description,
+                image: sourceBlock.image,
+                original_image: sourceBlock.original_image,
+                image_description: sourceBlock.image_description,
+                average_time: sourceBlock.average_time,
+                task_type: sourceBlock.task_type,
+                click_position: sourceBlock.click_position || undefined,
+                delay_seconds: sourceBlock.delay_seconds,
+                step_details: sourceBlock.step_details,
+                delay_event: sourceBlock.delay_event,
+                delay_type: sourceBlock.delay_type,
+                workflow: {
+                  connect: { id: newWorkflow.id },
+                },
+                path: {
+                  connect: { id: newPathId },
+                },
+              },
+            });
+            
+            blockIdMap.set(sourceBlock.id, newBlock.id);
+          } catch (blockError) {
+            nonFatalErrors.push({
+              step: 'block',
+              error: `Error creating block ${sourceBlock.id}: ${blockError instanceof Error ? blockError.message : 'Unknown error'}`
+            });
+          }
+        }
       }
+      progressSteps.blocks = true;
+    } catch (error) {
+      nonFatalErrors.push({
+        step: 'blocks',
+        error: error instanceof Error ? error.message : 'Unknown error creating blocks'
+      });
     }
 
     // 6. Create path_parent_block relationships
-    for (const sourcePath of sourceWorkflow.paths) {
-      const newPathId = pathIdMap.get(sourcePath.id);
-      
-      for (const parentBlock of sourcePath.parent_blocks) {
-        const newBlockId = blockIdMap.get(parentBlock.block_id);
+    try {
+      for (const sourcePath of sourceWorkflow.paths) {
+        const newPathId = pathIdMap.get(sourcePath.id);
         
-        if (newBlockId && newPathId) {
-          await prisma.path_parent_block.create({
-            data: {
-              path_id: newPathId,
-              block_id: newBlockId,
-            },
-          });
+        if (!newPathId) continue;
+        
+        for (const parentBlock of sourcePath.parent_blocks) {
+          const newBlockId = blockIdMap.get(parentBlock.block_id);
+          
+          if (newBlockId && newPathId) {
+            try {
+              await prisma.path_parent_block.create({
+                data: {
+                  path_id: newPathId,
+                  block_id: newBlockId,
+                },
+              });
+            } catch (parentBlockError) {
+              nonFatalErrors.push({
+                step: 'parentBlock',
+                error: `Error creating parent block relationship: ${parentBlockError instanceof Error ? parentBlockError.message : 'Unknown error'}`
+              });
+            }
+          }
         }
       }
+      progressSteps.parentBlocks = true;
+    } catch (error) {
+      nonFatalErrors.push({
+        step: 'parentBlocks',
+        error: error instanceof Error ? error.message : 'Unknown error creating parent blocks'
+      });
     }
 
     // 7. Create stroke lines
-    for (const sourceStrokeLine of sourceWorkflow.stroke_lines) {
-      const newSourceBlockId = blockIdMap.get(sourceStrokeLine.source_block_id);
-      const newTargetBlockId = blockIdMap.get(sourceStrokeLine.target_block_id);
-      
-      if (newSourceBlockId && newTargetBlockId) {
-        await prisma.stroke_line.create({
-          data: {
-            label: sourceStrokeLine.label,
-            is_loop: sourceStrokeLine.is_loop,
-            control_points: sourceStrokeLine.control_points || undefined,
-            source_block: {
-              connect: { id: newSourceBlockId },
-            },
-            target_block: {
-              connect: { id: newTargetBlockId },
-            },
-            workflow: {
-              connect: { id: newWorkflow.id },
-            },
-          },
-        });
+    try {
+      for (const sourceStrokeLine of sourceWorkflow.stroke_lines) {
+        const newSourceBlockId = blockIdMap.get(sourceStrokeLine.source_block_id);
+        const newTargetBlockId = blockIdMap.get(sourceStrokeLine.target_block_id);
+        
+        if (newSourceBlockId && newTargetBlockId) {
+          try {
+            await prisma.stroke_line.create({
+              data: {
+                label: sourceStrokeLine.label,
+                is_loop: sourceStrokeLine.is_loop,
+                control_points: sourceStrokeLine.control_points || undefined,
+                source_block: {
+                  connect: { id: newSourceBlockId },
+                },
+                target_block: {
+                  connect: { id: newTargetBlockId },
+                },
+                workflow: {
+                  connect: { id: newWorkflow.id },
+                },
+              },
+            });
+          } catch (strokeLineError) {
+            nonFatalErrors.push({
+              step: 'strokeLine',
+              error: `Error creating stroke line: ${strokeLineError instanceof Error ? strokeLineError.message : 'Unknown error'}`
+            });
+          }
+        }
       }
+      progressSteps.strokeLines = true;
+    } catch (error) {
+      nonFatalErrors.push({
+        step: 'strokeLines',
+        error: error instanceof Error ? error.message : 'Unknown error creating stroke lines'
+      });
     }
 
+    // Return a successful response with details on any non-fatal errors
     return NextResponse.json({
       success: true,
       workflow: newWorkflow,
+      progress: progressSteps,
+      warnings: nonFatalErrors.length > 0 ? nonFatalErrors : undefined,
     });
   } catch (error) {
     console.error('Error creating default workflow:', error);
@@ -216,6 +303,7 @@ export async function POST(req: NextRequest) {
       { 
         error: 'Failed to create default workflow',
         details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error && process.env.NODE_ENV !== 'production' ? error.stack : undefined
       },
       { status: 500 }
     );
