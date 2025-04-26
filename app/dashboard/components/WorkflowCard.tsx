@@ -264,7 +264,7 @@ export default function WorkflowCard({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          is_public: !workflow.is_public,
+          is_public: !localIsPublic,
         }),
       });
 
