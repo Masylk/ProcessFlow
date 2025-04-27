@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/nextjs';
+import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
 
 const posthog = new PostHog(
   process.env.NEXT_PUBLIC_POSTHOG_KEY as string,
@@ -28,7 +29,16 @@ async function createTempWorkspaceForGoogle(userId: number, firstName: string, l
       }
     });
 
-    console.log(`Created temporary workspace with ID: ${tempWorkspace.id} for Google user ${userId}`);
+    // Start creating the default workflow in the background using the util
+    createDefaultWorkflow({
+      workspaceId: tempWorkspace.id,
+      userId
+    }).catch(error => {
+      console.error('Error initiating default workflow creation:', error);
+      Sentry.captureException(error);
+      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
+    });
+
     return tempWorkspace.id;
   } catch (error) {
     console.error('Error creating temp workspace for Google user:', error);
