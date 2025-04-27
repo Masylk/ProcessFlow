@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/nextjs';
+import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
 
 const posthog = new PostHog(
   process.env.NEXT_PUBLIC_POSTHOG_KEY as string,
@@ -30,17 +31,10 @@ async function createTempWorkspaceForGoogle(userId: number, firstName: string, l
       }
     });
 
-    // Start creating the default workflow in the background
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    fetch(`${baseUrl}/api/onboarding/create-default-workflow`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        workspaceId: tempWorkspace.id,
-        userId
-      }),
+    // Start creating the default workflow in the background using the util
+    createDefaultWorkflow({
+      workspaceId: tempWorkspace.id,
+      userId
     }).catch(error => {
       console.error('Error initiating default workflow creation:', error);
       Sentry.captureException(error);
