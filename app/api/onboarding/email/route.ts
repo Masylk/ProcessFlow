@@ -192,8 +192,8 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
   }
 }
 
-// Add a new function to create a temporary workspace and workflow
-async function createTempWorkspaceAndWorkflow(userId: number, firstName: string, lastName: string): Promise<{ workspaceId: number }> {
+// Add a new function to create a temporary workspace WITHOUT workflow creation
+async function createTempWorkspace(userId: number, firstName: string, lastName: string): Promise<{ workspaceId: number }> {
   try {
     // Create a temporary workspace for the user
     const tempWorkspaceName = `${firstName}'s Workspace (Temp)`;
@@ -223,10 +223,12 @@ async function createTempWorkspaceAndWorkflow(userId: number, firstName: string,
 
     return { workspaceId: tempWorkspace.id };
   } catch (error) {
-    console.error('Error creating temp workspace and workflow:', error);
+    console.error('Error creating default workflow:', error);
     Sentry.captureException(error);
-    // Return a falsy value that will be handled by the caller
-    return { workspaceId: 0 };
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
 
@@ -331,8 +333,8 @@ export async function POST(request: Request) {
     // Handle each onboarding step
     switch (step) {
       case 'PERSONAL_INFO':
-        // Create a temporary workspace and start workflow creation
-        const { workspaceId: tempWorkspaceId } = await createTempWorkspaceAndWorkflow(
+        // Create a temporary workspace WITHOUT creating a workflow
+        const { workspaceId: tempWorkspaceId } = await createTempWorkspace(
           dbUser.id, 
           formData.first_name, 
           formData.last_name
@@ -383,6 +385,9 @@ export async function POST(request: Request) {
             }
           }
         });
+        
+        // We don't need to create a workflow here either
+        // The workflow will be created during the WORKSPACE_SETUP step, regardless of auth method
         break;
 
       case 'WORKSPACE_SETUP':
@@ -515,10 +520,9 @@ export async function POST(request: Request) {
             console.error('Error creating default workflow:', workflowError);
             Sentry.captureException(workflowError);
             workflowCreationWarning = {
-              message: 'Error creating default workflow',
-              details: workflowError instanceof Error ? workflowError.message : 'Unknown error'
+              message: 'Failed to create default workflow',
+              details: workflowResult.error
             };
-            // Don't fail the onboarding process if workflow creation fails
           }
         }
 
@@ -652,10 +656,9 @@ export async function POST(request: Request) {
             console.error('Error creating default workflow for invited user:', workflowError);
             Sentry.captureException(workflowError);
             invitedWorkflowCreationWarning = {
-              message: 'Error creating default workflow',
-              details: workflowError instanceof Error ? workflowError.message : 'Unknown error'
+              message: 'Failed to create default workflow',
+              details: workflowResult.error
             };
-            // Don't fail the onboarding process if workflow creation fails
           }
         }
 
