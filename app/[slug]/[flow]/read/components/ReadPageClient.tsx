@@ -27,6 +27,7 @@ import { BlockEndType } from '@/types/block';
 import { cp } from 'fs';
 import VerticalDelay from './steps/VerticalDelay';
 import HorizontalDelay from './steps/HorizontalDelay';
+import ShareModal from '@/app/components/ShareModal';
 import {
   createAndCopyShareLink,
   createShareLink,
@@ -81,6 +82,10 @@ type SourceBlockPair = {
   copies: Block[];
 };
 
+interface ExtendedWorkspace extends Workspace {
+  logo?: string;
+}
+
 interface Workflow {
   id: number;
   name: string;
@@ -105,7 +110,7 @@ export default function ReadPageClient() {
   const [helpCenterVisible, setHelpCenterVisible] = useState<boolean>(false);
   const [passwordChanged, setPasswordChanged] = useState<boolean>(false);
   const [newPassword, setNewPassword] = useState<string>('');
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [workspace, setWorkspace] = useState<ExtendedWorkspace | null>(null);
   const [viewMode, setViewMode] = useState<'vertical' | 'carousel'>('vertical');
   const [selectedOptions, setSelectedOptions] = useState<[number, number][]>(
     []
@@ -124,6 +129,8 @@ export default function ReadPageClient() {
   const [generatedBlockIds] = useState<Set<number>>(new Set());
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
   const [shareUrl, setShareUrl] = useState<string>('');
+  const [isToggling, setIsToggling] = useState(false);
+  const [localIsPublic, setLocalIsPublic] = useState(workflowData?.is_public || false);
 
   // Add sourceBlockPairs as a component-level variable
   const sourceBlockPairs: SourceBlockPair[] = [];
@@ -992,29 +999,56 @@ export default function ReadPageClient() {
   };
 
   const toggleWorkflowAccess = async () => {
+    if (isToggling || !workflowData) return;
+    
     try {
-      const response = await fetch(`/api/workflow/${workflowId}`, {
+      setIsToggling(true);
+      
+      // Optimistic update for immediate feedback
+      setLocalIsPublic(!localIsPublic);
+      
+      const response = await fetch(`/api/workflow/${workflowData.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          is_public: !workflowData?.is_public,
+          is_public: !localIsPublic,
         }),
       });
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to update workflow access');
+        // Revert the optimistic update if the server request failed
+        setLocalIsPublic(workflowData.is_public);
+        throw new Error(responseData.message || 'Failed to update workflow access');
       }
 
-      const updatedWorkflow = await response.json();
-      setWorkflowData((prev) =>
-        prev ? { ...prev, is_public: !prev.is_public } : null
-      );
+      // Update workflowData with the actual server response
+      setWorkflowData({
+        ...workflowData,
+        is_public: responseData.is_public,
+      });
+
+      // Use the actual server response to determine the new state
+      const newState = responseData.is_public;
+      toast.success('Access updated', {
+        description: `Workflow is now ${newState ? 'public' : 'private'}`,
+        duration: 3000,
+      });
     } catch (error) {
       console.error('Error toggling workflow access:', error);
+      toast.error('Failed to update access', {
+        description: 'Could not update the workflow access settings.',
+        duration: 3000,
+      });
+    } finally {
+      setIsToggling(false);
     }
   };
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   return (
     <div
@@ -1058,7 +1092,7 @@ export default function ReadPageClient() {
                       }
                     : undefined
                 }
-                is_public={workflowData?.is_public}
+                is_public={localIsPublic}
                 onToggleAccess={toggleWorkflowAccess}
                 shareUrl={shareUrl}
                 workflowTitle={workflowName}
@@ -1479,6 +1513,15 @@ export default function ReadPageClient() {
           </div>
         </>
       )}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        itemName={workflowData?.name}
+        shareUrl={shareUrl}
+        is_public={localIsPublic}
+        onToggleAccess={toggleWorkflowAccess}
+        workspaceLogo={workspace?.logo ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${workspace.logo}` : undefined}
+      />
     </div>
   );
 }
