@@ -108,19 +108,19 @@ export async function GET(request: NextRequest) {
 
           // For Google users, create a temporary workspace
           if (isGoogleAuth && newUser) {
-            const tempWorkspaceId = await createTempWorkspaceForGoogle(
-              newUser.id,
-              newUser.first_name || 'New',
-              newUser.last_name || 'User'
-            );
+            // const tempWorkspaceId = await createTempWorkspaceForGoogle(
+            //   newUser.id,
+            //   newUser.first_name || 'New',
+            //   newUser.last_name || 'User'
+            // );
             
-            if (tempWorkspaceId) {
-              await supabase.auth.updateUser({
-                data: {
-                  temp_workspace_id: tempWorkspaceId
-                }
-              });
-            }
+            // if (tempWorkspaceId) {
+            //   await supabase.auth.updateUser({
+            //     data: {
+            //       temp_workspace_id: tempWorkspaceId
+            //     }
+            //   });
+            // }
 
             redirectUrl = '/onboarding/professional-info';
           }
