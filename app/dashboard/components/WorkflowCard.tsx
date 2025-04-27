@@ -590,6 +590,7 @@ export default function WorkflowCard({
 
       {/* Share Modal */}
       <ShareModal
+        shareUrl={createShareLink(workflow.name, workflow.public_access_id)}
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         itemName={workflow.name}

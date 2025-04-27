@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import InputField from '@/app/components/InputFields';
 import { useColors } from '@/app/theme/hooks';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
+import * as Sentry from '@sentry/nextjs';
 
 // Add a new LoadingScreen component
 const LoadingScreen = () => {
@@ -50,12 +51,14 @@ export default function WorkspaceSetup() {
 
     try {
       setIsCheckingSlug(true);
-      const response = await fetch(`/api/workspace/check-slug?slug=${encodeURIComponent(slug)}`);
+      const response = await fetch(
+        `/api/workspace/check-slug?slug=${encodeURIComponent(slug)}`
+      );
       const data = await response.json();
-      
+
       setSlugAvailability({
         available: data.available,
-        message: data.message
+        message: data.message,
       });
     } catch (error) {
       console.error('Error checking slug availability:', error);
@@ -107,10 +110,12 @@ export default function WorkspaceSetup() {
         if (parsedData.workspaceName) {
           setWorkspaceName(parsedData.workspaceName);
           // Check availability for the loaded workspace URL
-          const slug = parsedData.workspaceURL || parsedData.workspaceName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-zA-Z0-9-]/g, '');
+          const slug =
+            parsedData.workspaceURL ||
+            parsedData.workspaceName
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-zA-Z0-9-]/g, '');
           checkSlugAvailability(slug);
         }
         if (parsedData.workspaceURL) setWorkspaceURL(parsedData.workspaceURL);
@@ -289,17 +294,20 @@ export default function WorkspaceSetup() {
         router.push('/dashboard');
       } else {
         const data = await response.json();
-        
+
         // If there's an error but it's related to the workflow creation
         // we still want to redirect the user to the dashboard
         if (data.warnings && data.warnings.workflowCreation) {
-          console.warn('Workflow creation had issues, but continuing to dashboard:', data.warnings);
-          
+          console.warn(
+            'Workflow creation had issues, but continuing to dashboard:',
+            data.warnings
+          );
+
           // Clear localStorage data
           localStorage.removeItem('personalInfoData');
           localStorage.removeItem('professionalInfoData');
           localStorage.removeItem('workspaceSetupData');
-          
+
           // Redirect to dashboard despite the workflow creation issue
           router.push('/dashboard');
         } else {
@@ -310,6 +318,7 @@ export default function WorkspaceSetup() {
       }
     } catch (error) {
       console.error('Error creating workspace:', error);
+      Sentry.captureException(error);
       setError('A connection error occurred');
     } finally {
       setIsLoading(false);
@@ -410,7 +419,7 @@ export default function WorkspaceSetup() {
       style={{ backgroundColor: colors['bg-primary'] }}
     >
       {isCreatingWorkflow && <LoadingScreen />}
-      
+
       <div className="w-full max-w-[1280px] flex-col justify-center items-center gap-8 sm:gap-12 md:gap-[72px] inline-flex">
         {/* Logo Section - Responsive */}
         <div className="w-[180px] sm:w-[200px] md:w-[240px] justify-start items-start inline-flex">
@@ -493,7 +502,9 @@ export default function WorkspaceSetup() {
               }}
               disabled={isLoading}
               destructive={!!error && !workspaceName}
-              errorMessage={error && !workspaceName ? 'Workspace name is required' : ''}
+              errorMessage={
+                error && !workspaceName ? 'Workspace name is required' : ''
+              }
             />
 
             {/* Workspace URL Input */}
@@ -508,20 +519,22 @@ export default function WorkspaceSetup() {
                 className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
                 style={{
                   backgroundColor: colors['bg-primary'],
-                  borderColor: urlError || (slugAvailability && !slugAvailability.available)
-                    ? 'rgb(239, 68, 68)'
-                    : slugAvailability && slugAvailability.available
-                      ? 'rgb(34, 197, 94)'
-                      : isFocused
-                        ? colors['border-accent']
-                        : colors['border-secondary'],
-                  boxShadow: isFocused ? `0 0 0 4px ${colors['ring-accent']}` : undefined,
+                  borderColor:
+                    urlError ||
+                    (slugAvailability && !slugAvailability.available)
+                      ? 'rgb(239, 68, 68)'
+                      : slugAvailability && slugAvailability.available
+                        ? 'rgb(34, 197, 94)'
+                        : isFocused
+                          ? colors['border-accent']
+                          : colors['border-secondary'],
+                  boxShadow: isFocused
+                    ? `0 0 0 4px ${colors['ring-accent']}`
+                    : undefined,
                 }}
               >
                 <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
-                  <span
-                    style={{ color: colors['text-secondary'] }}
-                  >
+                  <span style={{ color: colors['text-secondary'] }}>
                     app.process-flow.io/
                   </span>
                 </div>
@@ -532,15 +545,21 @@ export default function WorkspaceSetup() {
                   onFocus={handleFocus}
                   onBlur={handleBlur}
                   onChange={handleURLChange}
-                  placeholder={workspaceName
-                    .toLowerCase()
-                    .replace(/\s+/g, '-')
-                    .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'}
+                  placeholder={
+                    workspaceName
+                      .toLowerCase()
+                      .replace(/\s+/g, '-')
+                      .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
+                  }
                   className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
                   style={{
                     backgroundColor: colors['bg-primary'],
-                    borderLeftColor: isFocused ? colors['border-accent'] : colors['border-secondary'],
-                    color: workspaceURL ? colors['text-primary'] : colors['text-secondary'],
+                    borderLeftColor: isFocused
+                      ? colors['border-accent']
+                      : colors['border-secondary'],
+                    color: workspaceURL
+                      ? colors['text-primary']
+                      : colors['text-secondary'],
                   }}
                 />
               </div>
@@ -548,9 +567,9 @@ export default function WorkspaceSetup() {
                 <div className="text-red-500 text-xs mt-1">{urlError}</div>
               )}
               {!urlError && (
-                <div 
+                <div
                   className={`text-xs mt-1 ${
-                    isCheckingSlug 
+                    isCheckingSlug
                       ? 'text-gray-500'
                       : slugAvailability
                         ? slugAvailability.available
@@ -559,8 +578,8 @@ export default function WorkspaceSetup() {
                         : ''
                   }`}
                 >
-                  {isCheckingSlug 
-                    ? 'Checking availability...' 
+                  {isCheckingSlug
+                    ? 'Checking availability...'
                     : slugAvailability
                       ? slugAvailability.message
                       : ''}

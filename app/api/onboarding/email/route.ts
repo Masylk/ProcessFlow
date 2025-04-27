@@ -529,6 +529,7 @@ export async function POST(request: Request) {
               message: 'Failed to create default workflow after 3 attempts',
               details: workflowErrorFinal
             };
+            Sentry.captureException(workflowErrorFinal);
           }
         }
 
@@ -674,6 +675,7 @@ export async function POST(request: Request) {
               message: 'Failed to create default workflow after 3 attempts',
               details: invitedWorkflowErrorFinal
             };
+            Sentry.captureException(invitedWorkflowErrorFinal);
           }
         }
 

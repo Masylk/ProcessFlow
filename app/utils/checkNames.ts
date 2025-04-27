@@ -40,10 +40,10 @@ export function checkWorkspaceName(name: string): NameError | null {
     };
   }
 
-  if (!/^[a-zA-Z0-9]+$/.test(name)) {
+  if (!/^[a-zA-Z0-9 ]+$/.test(name)) {
     return {
       title: 'Invalid Characters',
-      description: 'Workspace name must contain only letters and numbers.'
+      description: 'Workspace name must contain only letters, numbers, and spaces.'
     };
   }
 
