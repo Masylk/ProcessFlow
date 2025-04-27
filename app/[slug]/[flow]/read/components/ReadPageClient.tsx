@@ -658,7 +658,7 @@ export default function ReadPageClient() {
         const workflowResponse = await fetch(`/api/workflow/${workflowId}`);
         const workflowData = await workflowResponse.json();
         setWorkflowData(workflowData);
-
+        setLocalIsPublic(workflowData.is_public);
         // Create breadcrumbs from workflow data
         const items: BreadcrumbItem[] = [];
 
