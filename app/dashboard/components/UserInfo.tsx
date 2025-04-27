@@ -14,12 +14,16 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
   // Define the default avatar URL using environment variables.
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
 
-  // Use user.avatar_signed_url if it exists, otherwise fall back to avatar_url, then default avatar.
+  // First try to use the direct avatar_url (which could be a Google avatar URL)
+  // Then fall back to avatar_signed_url if it exists
+  // Finally use the default avatar
   const avatarSrc =
-    user && user.avatar_signed_url
-      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
-      : user && user.avatar_url
-        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
+    user?.avatar_url
+      ? user.avatar_url.startsWith('http')
+        ? user.avatar_url // Use as is if it's a full URL (like Google avatar)
+        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
+      : user?.avatar_signed_url
+        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
         : defaultAvatar;
 
   return (

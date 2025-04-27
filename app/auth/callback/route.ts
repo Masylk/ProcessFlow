@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/nextjs';
+import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
 
 const posthog = new PostHog(
   process.env.NEXT_PUBLIC_POSTHOG_KEY as string,
@@ -15,11 +16,9 @@ const posthog = new PostHog(
 async function createTempWorkspaceForGoogle(userId: number, firstName: string, lastName: string): Promise<number | null> {
   try {
     // Create a temporary workspace for the user
-    const tempWorkspaceName = `${firstName}'s Workspace (Temp)`;
-    
     const tempWorkspace = await prisma.workspace.create({
       data: {
-        name: tempWorkspaceName,
+        name: `${firstName}'s Workspace (Temp)`,
         team_tags: [],
         user_workspaces: {
           create: {
@@ -30,7 +29,16 @@ async function createTempWorkspaceForGoogle(userId: number, firstName: string, l
       }
     });
 
-    console.log(`Created temporary workspace with ID: ${tempWorkspace.id} for Google user ${userId}`);
+    // Start creating the default workflow in the background using the util
+    createDefaultWorkflow({
+      workspaceId: tempWorkspace.id,
+      userId
+    }).catch(error => {
+      console.error('Error initiating default workflow creation:', error);
+      Sentry.captureException(error);
+      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
+    });
+
     return tempWorkspace.id;
   } catch (error) {
     console.error('Error creating temp workspace for Google user:', error);
@@ -43,182 +51,110 @@ export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const token_hash = requestUrl.searchParams.get('token_hash');
     const type = requestUrl.searchParams.get('type');
-    const invitationToken = requestUrl.searchParams.get('invitation');
-    
-    if (!code) {
-      console.error('No code received in callback');
-      return NextResponse.redirect(new URL('/login?error=no_code', request.url));
-    }
+    const inviteToken = requestUrl.searchParams.get('invite_token');
+    const workspaceId = requestUrl.searchParams.get('workspace_id');
 
-    // Handle email confirmation
-    if (type === 'email_confirmation') {
-      const supabase = createClient();
-      const { data: { session }, error } = await supabase.auth.verifyOtp({
-        token_hash: code,
-        type: 'email',
-      });
-
-      if (error) {
-        console.error('Error verifying email:', error);
-        return NextResponse.redirect(new URL('/login?error=email_verification', request.url));
-      }
-
-      // Update user's email verification status in your database if needed
-      if (session?.user) {
-        await prisma.user.update({
-          where: { auth_id: session.user.id },
-          data: {
-            // Add any additional fields you want to update
-          }
-        });
-      }
-
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    if (!code && !token_hash) {
+      console.error('No code or token_hash found in URL');
+      return NextResponse.redirect(new URL('/login?error=no-code', request.url));
     }
 
     const supabase = createClient();
-    const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
-    
-    if (error) {
-      console.error('Error exchanging code:', error);
-      return NextResponse.redirect(new URL('/login?error=auth', request.url));
+
+    // Handle email confirmation (using either token_hash or code)
+    const verifyData = token_hash ? 
+      await supabase.auth.verifyOtp({
+        token_hash,
+        type: 'email'
+      }) :
+      await supabase.auth.exchangeCodeForSession(code as string);
+
+    if (verifyData.error) {
+      console.error('Error verifying email:', verifyData.error);
+      return NextResponse.redirect(new URL('/login?error=confirmation-failed', request.url));
     }
 
-    if (!session) {
-      return NextResponse.redirect(new URL('/login?error=no_session', request.url));
-    }
+    const { data: { user, session } } = verifyData;
 
-    // Vérifier si l'utilisateur existe et son état d'onboarding
-    const existingUser = await prisma.user.findUnique({
-      where: { auth_id: session.user.id }
-    });
+    if (user && session) {
+      try {
+        const existingUser = await prisma.user.findUnique({
+          where: { auth_id: user.id }
+        });
 
-    // Définir la redirection en fonction de l'état de l'onboarding
-    let redirectUrl = '/dashboard'; // Par défaut, rediriger vers le dashboard
+        let redirectUrl = '/onboarding/personal-info';
 
-    if (existingUser) {
-      // Si l'onboarding n'est pas terminé, rediriger vers l'étape appropriée
-      if (!existingUser.onboarding_completed_at) {
-        const onboardingSteps: Record<string, string> = {
-          'PERSONAL_INFO': '/onboarding/personal-info',
-          'PROFESSIONAL_INFO': '/onboarding/professional-info',
-          'WORKSPACE_SETUP': '/onboarding/workspace-setup',
-          'INVITED_USER': '/onboarding/invited-user',
-          'COMPLETED': '/dashboard'
-        };
-        
-        redirectUrl = onboardingSteps[existingUser.onboarding_step || 'PERSONAL_INFO'];
-      }
-    } else {
-      // Nouvel utilisateur, créer l'entrée dans la base de données
-      // Check if user was invited
-      if (invitationToken) {
-        try {
-          // Here you would verify the invitation token and get workspace_id
-          // This is pseudo-code - you'll need to implement the actual invitation verification
-          const invitation = await prisma.invitation.findUnique({
-            where: { token: invitationToken }
+        if (!existingUser) {
+          // Check if it's a Google sign-in
+          const isGoogleAuth = user.app_metadata?.provider === 'google';
+          const googleAvatarUrl = isGoogleAuth ? user.user_metadata?.avatar_url : null;
+          const firstName = user.user_metadata?.full_name?.split(' ')[0] || '';
+          const lastName = user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '';
+
+          // Create new user with Google avatar if available
+          const newUser = await prisma.user.create({
+            data: {
+              auth_id: user.id,
+              email: user.email || '',
+              first_name: firstName,
+              last_name: lastName,
+              full_name: user.user_metadata?.full_name || '',
+              avatar_url: googleAvatarUrl, // Store Google avatar URL
+              onboarding_step: isGoogleAuth ? 'PROFESSIONAL_INFO' : 'PERSONAL_INFO'
+            }
           });
-          
-          if (invitation && !invitation.used) {
-            await prisma.user.create({
-              data: {
-                auth_id: session.user.id,
-                email: session.user.email || '',
-                first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                full_name: session.user.user_metadata?.full_name || '',
-                onboarding_step: 'INVITED_USER',
-                avatar_url: session.user.user_metadata?.avatar_url,
-                // Add the user to the workspace they were invited to
-                workspaces: {
-                  create: {
-                    workspace_id: invitation.workspace_id,
-                    role: invitation.role || 'READER'
-                  }
-                },
-                active_workspace_id: invitation.workspace_id
-              },
-            });
+
+          // For Google users, create a temporary workspace
+          if (isGoogleAuth && newUser) {
+            const tempWorkspaceId = await createTempWorkspaceForGoogle(
+              newUser.id,
+              newUser.first_name || 'New',
+              newUser.last_name || 'User'
+            );
             
-            // Mark invitation as used
-            await prisma.invitation.update({
-              where: { id: invitation.id },
-              data: { used: true, used_at: new Date() }
-            });
-            
-            redirectUrl = '/onboarding/invited-user';
-          } else {
-            // Invalid or used invitation
-            redirectUrl = '/onboarding/personal-info';
+            if (tempWorkspaceId) {
+              await supabase.auth.updateUser({
+                data: {
+                  temp_workspace_id: tempWorkspaceId
+                }
+              });
+            }
+
+            redirectUrl = '/onboarding/professional-info';
           }
-        } catch (error) {
-          console.error('Error processing invitation:', error);
-          redirectUrl = '/onboarding/personal-info';
+        } else if (inviteToken && workspaceId) {
+          // Handle workspace invitation
+          redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;
+        } else {
+          redirectUrl = '/dashboard';
         }
-      } else {
-        // Regular new user (not invited)
-        const isGoogleAuth = session.user.app_metadata?.provider === 'google';
+
+        const response = NextResponse.redirect(new URL(redirectUrl, request.url));
         
-        // Create user in the database
-        const newUser = await prisma.user.create({
-          data: {
-            auth_id: session.user.id,
-            email: session.user.email || '',
-            first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-            last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            full_name: session.user.user_metadata?.full_name || '',
-            onboarding_step: isGoogleAuth 
-              ? 'PROFESSIONAL_INFO'  // Skip personal info for Google users since we have their data
-              : 'PERSONAL_INFO',     // Start with personal info for email users
-            avatar_url: session.user.user_metadata?.avatar_url,
-          },
+        response.cookies.set('sb-access-token', session.access_token, {
+          path: '/',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
         });
         
-        // For Google users, also create a temporary workspace like we do in the PERSONAL_INFO step
-        let tempWorkspaceId = null;
-        if (isGoogleAuth && newUser) {
-          tempWorkspaceId = await createTempWorkspaceForGoogle(
-            newUser.id,
-            newUser.first_name || 'New',
-            newUser.last_name || 'User'
-          );
-          
-          // Store the temp workspace ID in Supabase user metadata
-          if (tempWorkspaceId) {
-            await supabase.auth.updateUser({
-              data: {
-                temp_workspace_id: tempWorkspaceId
-              }
-            });
-          }
-        }
-        
-        redirectUrl = isGoogleAuth
-          ? '/onboarding/professional-info'
-          : '/onboarding/personal-info';
+        response.cookies.set('sb-refresh-token', session.refresh_token!, {
+          path: '/',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+        });
+
+        return response;
+      } catch (error) {
+        console.error('Database error:', error);
+        return NextResponse.redirect(new URL('/login?error=database', request.url));
       }
     }
 
-    // Set session cookies and redirect
-    const response = NextResponse.redirect(new URL(redirectUrl, requestUrl.origin));
-    
-    response.cookies.set('sb-access-token', session.access_token, {
-      path: '/',
-      sameSite: 'lax',
-    });
-    
-    response.cookies.set('sb-refresh-token', session.refresh_token!, {
-      path: '/',
-      sameSite: 'lax',
-    });
-
-    return response;
-
+    return NextResponse.redirect(new URL('/login?error=invalid-confirmation-type', request.url));
   } catch (error) {
-    console.error('Top level error in callback:', error);
-    Sentry.captureException(error);
-    return NextResponse.redirect(new URL('/login?error=callback', request.url));
+    console.error('Unexpected error during confirmation:', error);
+    return NextResponse.redirect(new URL('/login?error=confirmation-failed', request.url));
   }
 } 

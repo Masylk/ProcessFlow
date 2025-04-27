@@ -8,6 +8,7 @@ import { scheduleFollowUpEmail, scheduleTestEmail } from '@/lib/scheduledEmails'
 import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackRequestEmail';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import * as Sentry from '@sentry/nextjs';
+import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -210,62 +211,21 @@ async function createTempWorkspace(userId: number, firstName: string, lastName: 
       }
     });
 
-    console.log(`Created temporary workspace with ID: ${tempWorkspace.id} for user ${userId}`);
-    return { workspaceId: tempWorkspace.id };
-  } catch (error) {
-    console.error('Error creating temp workspace:', error);
-    Sentry.captureException(error);
-    return { workspaceId: 0 };
-  }
-}
-
-// Rename and modify the old function to only handle workflow creation
-async function createDefaultWorkflow(workspaceId: number, userId: number): Promise<{ success: boolean; error?: any }> {
-  if (!workspaceId) {
-    console.error('Cannot create workflow: workspace ID is required');
-    return { success: false, error: 'Workspace ID is required' };
-  }
-  
-  try {
-    // Create the default workflow
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/onboarding/create-default-workflow`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        workspaceId,
-        userId
-      }),
+    // Start creating the default workflow in the background using the util
+    createDefaultWorkflow({
+      workspaceId: tempWorkspace.id,
+      userId
+    }).catch(error => {
+      console.error('Error initiating default workflow creation:', error);
+      Sentry.captureException(error);
+      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
     });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Failed to create default workflow for workspace ${workspaceId}:`, errorText);
-      Sentry.captureMessage('Failed to create default workflow', {
-        level: 'error',
-        extra: {
-          workspaceId,
-          userId,
-          error: errorText
-        }
-      });
-      
-      return { 
-        success: false, 
-        error: errorText 
-      };
-    }
-    
-    console.log(`Successfully created default workflow for workspace ${workspaceId}`);
-    return { success: true };
+
+    return { workspaceId: tempWorkspace.id };
   } catch (error) {
     console.error('Error creating default workflow:', error);
     Sentry.captureException(error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    return { workspaceId: 0 };
   }
 }
 
@@ -540,16 +500,25 @@ export async function POST(request: Request) {
               }
             }
           });
-        }
-
-        // After workspace creation/update, create the default workflow
-        // Only when completing the final workspace setup (not navigating back)
-        if (workspace && workspace.id) {
-          const workflowResult = await createDefaultWorkflow(workspace.id, dbUser.id);
-          if (!workflowResult.success) {
+          
+          // If no temp workspace was created, we need to create the workflow now
+          try {
+            const result = await createDefaultWorkflow({
+              workspaceId: workspace.id,
+              userId: dbUser.id
+            });
+            if (result?.warnings) {
+              workflowCreationWarning = {
+                message: 'Default workflow created with warnings',
+                details: result.warnings
+              };
+            }
+          } catch (workflowError) {
+            console.error('Error creating default workflow:', workflowError);
+            Sentry.captureException(workflowError);
             workflowCreationWarning = {
               message: 'Failed to create default workflow',
-              details: workflowResult.error
+              details: workflowError
             };
           }
         }
@@ -669,11 +638,23 @@ export async function POST(request: Request) {
         // Create default workflow for invited users as well
         let invitedWorkflowCreationWarning = null;
         if (dbUser.active_workspace_id) {
-          const workflowResult = await createDefaultWorkflow(dbUser.active_workspace_id, dbUser.id);
-          if (!workflowResult.success) {
+          try {
+            const result = await createDefaultWorkflow({
+              workspaceId: dbUser.active_workspace_id,
+              userId: dbUser.id
+            });
+            if (result?.warnings) {
+              invitedWorkflowCreationWarning = {
+                message: 'Default workflow created with warnings',
+                details: result.warnings
+              };
+            }
+          } catch (workflowError) {
+            console.error('Error creating default workflow for invited user:', workflowError);
+            Sentry.captureException(workflowError);
             invitedWorkflowCreationWarning = {
               message: 'Failed to create default workflow',
-              details: workflowResult.error
+              details: workflowError
             };
           }
         }
