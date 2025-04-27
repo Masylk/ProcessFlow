@@ -64,17 +64,9 @@ export async function PATCH(
     const updatedPath = await prisma.path.update({
       where: { id },
       data: { name },
-      include: {
-        blocks: {
-          orderBy: { position: 'asc' },
-          include: {
-            child_paths: {
-              include: {
-                path: true
-              }
-            }
-          }
-        }
+      select: {
+        id: true,
+        name: true,
       }
     });
 
