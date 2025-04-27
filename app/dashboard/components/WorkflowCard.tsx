@@ -200,7 +200,7 @@ export default function WorkflowCard({
     if (actionsButtonRef.current) {
       const buttonRect = actionsButtonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - buttonRect.bottom;
-      const menuHeight = 180; // Approximate height of menu
+      const menuHeight = 240; // Increased to account for all menu items + padding
       setActionsMenuPosition(spaceBelow < menuHeight ? 'top' : 'bottom');
     }
     setIsMenuOpen(!isMenuOpen);
@@ -518,9 +518,10 @@ export default function WorkflowCard({
               backgroundColor: colors['bg-secondary'],
               borderColor: colors['border-primary'],
               ...(actionsMenuPosition === 'top'
-                ? { bottom: 'calc(100% - 32px)' }
-                : { top: '32px' }),
+                ? { bottom: 'calc(100%)' }
+                : { top: '40px' }),
               right: '4px',
+              
             }}
             className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
             onClick={(e) => e.stopPropagation()}
