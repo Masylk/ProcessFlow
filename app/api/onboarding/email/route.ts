@@ -212,7 +212,7 @@ async function createTempWorkspace(userId: number, firstName: string, lastName: 
     });
 
     // Start creating the default workflow in the background using the util
-    createDefaultWorkflow({
+    await createDefaultWorkflow({
       workspaceId: tempWorkspace.id,
       userId
     }).catch(error => {
@@ -330,12 +330,12 @@ export async function POST(request: Request) {
     // Handle each onboarding step
     switch (step) {
       case 'PERSONAL_INFO':
-        // Create a temporary workspace WITHOUT creating a workflow
-        const { workspaceId: tempWorkspaceId } = await createTempWorkspace(
-          dbUser.id, 
-          formData.first_name, 
-          formData.last_name
-        );
+      //   // Create a temporary workspace WITHOUT creating a workflow
+      //   const { workspaceId: tempWorkspaceId } = await createTempWorkspace(
+      //     dbUser.id, 
+      //     formData.first_name, 
+      //     formData.last_name
+      //   );
 
         // Update user with personal info and temporary workspace ID
         await prisma.user.update({
@@ -353,7 +353,6 @@ export async function POST(request: Request) {
               current_step: 'professional-info',
               completed_at: null
             },
-            temp_workspace_id: tempWorkspaceId || null
           }
         });
         break;
@@ -502,23 +501,33 @@ export async function POST(request: Request) {
           });
           
           // If no temp workspace was created, we need to create the workflow now
-          try {
-            const result = await createDefaultWorkflow({
-              workspaceId: workspace.id,
-              userId: dbUser.id
-            });
-            if (result?.warnings) {
-              workflowCreationWarning = {
-                message: 'Default workflow created with warnings',
-                details: result.warnings
-              };
+          let workflowErrorFinal = null;
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              const result = await createDefaultWorkflow({
+                workspaceId: workspace.id,
+                userId: dbUser.id
+              });
+              if (result?.warnings) {
+                workflowCreationWarning = {
+                  message: 'Default workflow created with warnings',
+                  details: result.warnings
+                };
+              }
+              workflowErrorFinal = null;
+              break; // Success, exit retry loop
+            } catch (workflowError) {
+              console.error(`Error creating default workflow (attempt ${attempt}):`, workflowError);
+              Sentry.captureException(workflowError);
+              workflowErrorFinal = workflowError;
+              // Wait a short time before retrying (optional)
+              if (attempt < 3) await new Promise(res => setTimeout(res, 500));
             }
-          } catch (workflowError) {
-            console.error('Error creating default workflow:', workflowError);
-            Sentry.captureException(workflowError);
+          }
+          if (workflowErrorFinal) {
             workflowCreationWarning = {
-              message: 'Failed to create default workflow',
-              details: workflowError
+              message: 'Failed to create default workflow after 3 attempts',
+              details: workflowErrorFinal
             };
           }
         }
@@ -638,23 +647,32 @@ export async function POST(request: Request) {
         // Create default workflow for invited users as well
         let invitedWorkflowCreationWarning = null;
         if (dbUser.active_workspace_id) {
-          try {
-            const result = await createDefaultWorkflow({
-              workspaceId: dbUser.active_workspace_id,
-              userId: dbUser.id
-            });
-            if (result?.warnings) {
-              invitedWorkflowCreationWarning = {
-                message: 'Default workflow created with warnings',
-                details: result.warnings
-              };
+          let invitedWorkflowErrorFinal = null;
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              const result = await createDefaultWorkflow({
+                workspaceId: dbUser.active_workspace_id,
+                userId: dbUser.id
+              });
+              if (result?.warnings) {
+                invitedWorkflowCreationWarning = {
+                  message: 'Default workflow created with warnings',
+                  details: result.warnings
+                };
+              }
+              invitedWorkflowErrorFinal = null;
+              break; // Success, exit retry loop
+            } catch (workflowError) {
+              console.error(`Error creating default workflow for invited user (attempt ${attempt}):`, workflowError);
+              Sentry.captureException(workflowError);
+              invitedWorkflowErrorFinal = workflowError;
+              if (attempt < 3) await new Promise(res => setTimeout(res, 500));
             }
-          } catch (workflowError) {
-            console.error('Error creating default workflow for invited user:', workflowError);
-            Sentry.captureException(workflowError);
+          }
+          if (invitedWorkflowErrorFinal) {
             invitedWorkflowCreationWarning = {
-              message: 'Failed to create default workflow',
-              details: workflowError
+              message: 'Failed to create default workflow after 3 attempts',
+              details: invitedWorkflowErrorFinal
             };
           }
         }
