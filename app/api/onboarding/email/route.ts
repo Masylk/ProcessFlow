@@ -225,10 +225,7 @@ async function createTempWorkspace(userId: number, firstName: string, lastName: 
   } catch (error) {
     console.error('Error creating default workflow:', error);
     Sentry.captureException(error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    return { workspaceId: 0 };
   }
 }
 
@@ -521,7 +518,7 @@ export async function POST(request: Request) {
             Sentry.captureException(workflowError);
             workflowCreationWarning = {
               message: 'Failed to create default workflow',
-              details: workflowResult.error
+              details: workflowError
             };
           }
         }
@@ -657,7 +654,7 @@ export async function POST(request: Request) {
             Sentry.captureException(workflowError);
             invitedWorkflowCreationWarning = {
               message: 'Failed to create default workflow',
-              details: workflowResult.error
+              details: workflowError
             };
           }
         }
