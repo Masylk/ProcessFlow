@@ -111,6 +111,66 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
   }, [data.path?.name]);
 
   const handlePathNameUpdate = async () => {
+    // Save previous name for rollback
+    const prevPathName = data.path?.name;
+    let pathUpdated: Path | undefined = allPaths.find(
+      (p) => p.id === data.path?.id
+    );
+
+    if (!pathUpdated || !data.path?.id) {
+      toast.error('Path not found');
+      return;
+    }
+
+    // Optimistically update the path name in state
+    pathUpdated = {
+      ...pathUpdated,
+      id: data.path?.id,
+      name: pathName,
+    };
+    let updatedPaths = allPaths.map((path) =>
+      path.id === pathUpdated.id ? { ...path, ...pathUpdated } : path
+    );
+
+    // Also update parent_blocks' child_paths names
+    const mergedUpdatedPath = updatedPaths.find((p) => p.id === pathUpdated.id);
+    if (mergedUpdatedPath && Array.isArray(mergedUpdatedPath.parent_blocks)) {
+      mergedUpdatedPath.parent_blocks.forEach(
+        (parentBlock: { block_id: number; path_id: number }) => {
+          updatedPaths = updatedPaths.map((path: Path) => ({
+            ...path,
+            blocks: path.blocks.map((block: Block) => {
+              if (
+                block.id === parentBlock.block_id &&
+                Array.isArray(block.child_paths)
+              ) {
+                return {
+                  ...block,
+                  child_paths: block.child_paths.map((cp: PathParentBlock) =>
+                    cp.path_id === mergedUpdatedPath.id
+                      ? {
+                          ...cp,
+                          path: {
+                            ...cp.path,
+                            name: mergedUpdatedPath.name,
+                          },
+                        }
+                      : cp
+                  ),
+                };
+              }
+              return block;
+            }),
+          }));
+        }
+      );
+    }
+
+    // Optimistically update global state and UI
+    setAllPaths(updatedPaths);
+    data.onPathsUpdate?.(updatedPaths);
+    setIsEditing(false);
+
     try {
       const response = await fetch(`/api/paths/${data.path?.id}`, {
         method: 'PATCH',
@@ -125,62 +185,64 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
       if (!response.ok) {
         throw new Error('Failed to update path name');
       }
-
-      const updatedPath = await response.json();
-
-      // Update the path in allPaths while preserving existing data
-      let updatedPaths = allPaths.map((path) =>
-        path.id === updatedPath.id
-          ? { ...path, ...updatedPath } // Merge the update with existing data
-          : path
-      );
-
-      // Use the merged path from updatedPaths for further updates
-      const mergedUpdatedPath = updatedPaths.find(
-        (p) => p.id === updatedPath.id
-      );
-
-      // If mergedUpdatedPath has parent_blocks, update their child_path name
-      if (mergedUpdatedPath && Array.isArray(mergedUpdatedPath.parent_blocks)) {
-        mergedUpdatedPath.parent_blocks.forEach(
-          (parentBlock: { block_id: number; path_id: number }) => {
-            updatedPaths = updatedPaths.map((path: Path) => ({
-              ...path,
-              blocks: path.blocks.map((block: Block) => {
-                if (
-                  block.id === parentBlock.block_id &&
-                  Array.isArray(block.child_paths)
-                ) {
-                  return {
-                    ...block,
-                    child_paths: block.child_paths.map((cp: PathParentBlock) =>
-                      cp.path_id === mergedUpdatedPath.id
-                        ? {
-                            ...cp,
-                            path: {
-                              ...cp.path,
-                              name: mergedUpdatedPath.name,
-                            },
-                          }
-                        : cp
-                    ),
-                  };
-                }
-                return block;
-              }),
-            }));
-          }
-        );
-      }
-
-      // Update global state
-      setAllPaths(updatedPaths);
-
-      // Notify parent of update
-      data.onPathsUpdate?.(updatedPaths);
-      setIsEditing(false);
+      // No further action needed, optimistic update already applied
     } catch (error) {
-      console.error('Error updating path name:', error);
+      // Rollback: revert to previous name
+      let rollbackPath = allPaths.find((p) => p.id === data.path?.id);
+      if (rollbackPath && data.path?.id && prevPathName) {
+        rollbackPath = {
+          ...rollbackPath,
+          id: data.path?.id,
+          name: prevPathName,
+        };
+        let rollbackPaths = allPaths.map((path) =>
+          path.id === rollbackPath!.id ? { ...path, ...rollbackPath } : path
+        );
+
+        // Also rollback parent_blocks' child_paths names
+        const mergedRollbackPath = rollbackPaths.find(
+          (p) => p.id === rollbackPath!.id
+        );
+        if (
+          mergedRollbackPath &&
+          Array.isArray(mergedRollbackPath.parent_blocks)
+        ) {
+          mergedRollbackPath.parent_blocks.forEach(
+            (parentBlock: { block_id: number; path_id: number }) => {
+              rollbackPaths = rollbackPaths.map((path: Path) => ({
+                ...path,
+                blocks: path.blocks.map((block: Block) => {
+                  if (
+                    block.id === parentBlock.block_id &&
+                    Array.isArray(block.child_paths)
+                  ) {
+                    return {
+                      ...block,
+                      child_paths: block.child_paths.map(
+                        (cp: PathParentBlock) =>
+                          cp.path_id === mergedRollbackPath.id
+                            ? {
+                                ...cp,
+                                path: {
+                                  ...cp.path,
+                                  name: mergedRollbackPath.name,
+                                },
+                              }
+                            : cp
+                      ),
+                    };
+                  }
+                  return block;
+                }),
+              }));
+            }
+          );
+        }
+
+        setAllPaths(rollbackPaths);
+        data.onPathsUpdate?.(rollbackPaths);
+      }
+      toast.error('Failed to update path name');
     }
   };
 
