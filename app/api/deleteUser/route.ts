@@ -88,9 +88,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Delete related user_workspace and actions
+    const workspaces = await prisma.user_workspace.findMany({
+      where: {
+        user_id: user.id,
+      },
+      select: {
+        workspace_id: true,
+      },
+    });
+    
     await prisma.user_workspace.deleteMany({ where: { user_id: user.id } });
-    await prisma.action.deleteMany({ where: { user_id: user.id } });
+
+    // For each workspace, check if the user was the only member. If so, delete the workspace.
+    for (const { workspace_id } of workspaces) {
+      const userCount = await prisma.user_workspace.count({
+        where: { workspace_id }
+      });
+      // If no users left (because we just deleted the user_workspace), delete the workspace
+      if (userCount === 0) {
+        await prisma.workspace.delete({
+          where: { id: workspace_id }
+        });
+      }
+    }
 
     // Delete the user from PostgreSQL
     await prisma.user.delete({ where: { id: user.id } });

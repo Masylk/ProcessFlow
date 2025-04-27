@@ -8,7 +8,7 @@ export interface CreateDefaultWorkflowOptions {
 export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefaultWorkflowOptions) {
   // Source workflow details - the workflow we want to duplicate
   const SOURCE_WORKFLOW_ID = 257;
-  const SOURCE_WORKSPACE_ID = 52;
+  const SOURCE_WORKSPACE_ID = 110;
 
   // Get the source workflow with all related components
   const sourceWorkflow = await prisma.workflow.findUnique({
