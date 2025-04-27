@@ -541,6 +541,7 @@ export default function WorkspaceSetup() {
                 <input
                   ref={urlInputRef}
                   type="text"
+                  disabled
                   value={workspaceURL}
                   onFocus={handleFocus}
                   onBlur={handleBlur}

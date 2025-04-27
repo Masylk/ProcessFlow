@@ -92,7 +92,7 @@ model workspace_billing_infos {
   tax_rate        Decimal   @db.Decimal(5, 2)
   vat_number      String?
   workspace_id    Int       @unique
-  workspace       workspace @relation(fields: [workspace_id], references: [id])
+  workspace       workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([workspace_id])
   @@map("workspace_billing_infos")
@@ -132,7 +132,7 @@ model billing {
   due_date          DateTime
   workspace_id      Int
   subscription      subscription @relation(fields: [subscription_id], references: [id])
-  workspace         workspace    @relation(fields: [workspace_id], references: [id])
+  workspace         workspace    @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([subscription_id])
   @@index([workspace_id])
@@ -145,8 +145,8 @@ model user_workspace {
   user_id      Int
   workspace_id Int
   role         user_role @default(ADMIN)
-  user         user      @relation(fields: [user_id], references: [id])
-  workspace    workspace @relation(fields: [workspace_id], references: [id])
+  user         user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  workspace    workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, workspace_id], map: "user_workspace_composite_idx")
   @@index([user_id])
@@ -165,7 +165,7 @@ model invitation {
   used_at      DateTime?
   workspace_id Int
   role         user_role @default(READER)
-  workspace    workspace @relation(fields: [workspace_id], references: [id])
+  workspace    workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([workspace_id])
   @@index([token])
@@ -185,7 +185,7 @@ model folder {
   position     Int        @default(0)
   parent       folder?    @relation("folder_hierarchy", fields: [parent_id], references: [id])
   subfolders   folder[]   @relation("folder_hierarchy")
-  workspace    workspace  @relation(fields: [workspace_id], references: [id])
+  workspace    workspace  @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   workflows    workflow[]
 
   @@index([workspace_id])
@@ -217,7 +217,7 @@ model workflow {
   stroke_lines     stroke_line[]
   folder           folder?            @relation(fields: [folder_id], references: [id])
   template         workflow_template? @relation(fields: [template_id], references: [id])
-  workspace        workspace          @relation(fields: [workspace_id], references: [id])
+  workspace        workspace          @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   versions         workflow_version[]
   author           user?              @relation("author", fields: [author_id], references: [id])
   author_id        Int?
@@ -301,7 +301,7 @@ model action {
   created_at  DateTime @default(now())
   target      block    @relation(fields: [target_id], references: [id])
   user        user     @relation(fields: [user_id], references: [id])
-  workflow    workflow @relation(fields: [workflow_id], references: [id])
+  workflow    workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
   @@index([target_id])
@@ -342,7 +342,7 @@ model workflow_template {
   rating       Float?
   rating_count Int        @default(0)
   workflows    workflow[]
-  workspace    workspace  @relation(fields: [workspace_id], references: [id])
+  workspace    workspace  @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([workspace_id])
   @@index([category])
@@ -430,7 +430,7 @@ model ai_embedding {
   content_text   String   // The text that was embedded - consider @db.Text if it can be very long
   embedding_id   String   // The ID in the vector database
   workspace_id   Int
-  workspace      workspace @relation(fields: [workspace_id], references: [id])
+  workspace      workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
   @@index([workspace_id])
   @@index([content_type, content_id])

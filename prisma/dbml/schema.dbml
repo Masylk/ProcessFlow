@@ -420,27 +420,27 @@ Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
 
-Ref: workspace_billing_infos.workspace_id - workspace.id
+Ref: workspace_billing_infos.workspace_id - workspace.id [delete: Cascade]
 
 Ref: billing.subscription_id > subscription.id
 
-Ref: billing.workspace_id > workspace.id
+Ref: billing.workspace_id > workspace.id [delete: Cascade]
 
-Ref: user_workspace.user_id > user.id
+Ref: user_workspace.user_id > user.id [delete: Cascade]
 
-Ref: user_workspace.workspace_id > workspace.id
+Ref: user_workspace.workspace_id > workspace.id [delete: Cascade]
 
-Ref: invitation.workspace_id > workspace.id
+Ref: invitation.workspace_id > workspace.id [delete: Cascade]
 
 Ref: folder.parent_id - folder.id
 
-Ref: folder.workspace_id > workspace.id
+Ref: folder.workspace_id > workspace.id [delete: Cascade]
 
 Ref: workflow.folder_id > folder.id
 
 Ref: workflow.template_id > workflow_template.id
 
-Ref: workflow.workspace_id > workspace.id
+Ref: workflow.workspace_id > workspace.id [delete: Cascade]
 
 Ref: workflow.author_id > user.id
 
@@ -458,13 +458,13 @@ Ref: action.target_id > block.id
 
 Ref: action.user_id > user.id
 
-Ref: action.workflow_id > workflow.id
+Ref: action.workflow_id > workflow.id [delete: Cascade]
 
 Ref: workflow_version.created_by_id > user.id
 
 Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
 
-Ref: workflow_template.workspace_id > workspace.id
+Ref: workflow_template.workspace_id > workspace.id [delete: Cascade]
 
 Ref: saved_search.user_id > user.id
 
@@ -480,4 +480,4 @@ Ref: ai_conversations.user_id > user.id
 
 Ref: ai_conversations.workflow_id > workflow.id
 
-Ref: ai_embeddings.workspace_id > workspace.id
+Ref: ai_embeddings.workspace_id > workspace.id [delete: Cascade]
