@@ -46,11 +46,19 @@ export default function UserSettings({
     }
   };
 
-  // Default avatar if none provided.
+  // Update the avatar URL handling logic
   const defaultAvatar = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`;
-  const avatarSrc = user.avatar_signed_url
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
-    : defaultAvatar;
+
+  // First try to use the direct avatar_url (which could be a Google avatar URL)
+  // Then fall back to avatar_signed_url if it exists
+  // Finally use the default avatar
+  const avatarSrc = user.avatar_url
+    ? user.avatar_url.startsWith('http')
+      ? user.avatar_url // Use as is if it's a full URL (like Google avatar)
+      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
+    : user.avatar_signed_url
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
+      : defaultAvatar;
 
   // Local state for file upload and preview.
   const fileInputRef = useRef<HTMLInputElement>(null);
