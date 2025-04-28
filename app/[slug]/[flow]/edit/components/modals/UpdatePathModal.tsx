@@ -7,21 +7,21 @@ import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
 import { remove } from 'lodash';
 import IconModifier from '../IconModifier';
+import { Block } from '../../../types';
 
 interface UpdatePathModalProps {
   onClose: () => void;
-  onConfirm: (
-    data: {
-      conditionName: string;
-      conditionDescription: string;
-      icon?: string;
-      pathsToUpdate: { index: number; name: string }[];
-      pathsToAdd: string[];
-      pathsToRemove: { index: number; name: string }[];
-    }
-  ) => void;
+  onConfirm: (data: {
+    conditionName: string;
+    conditionDescription: string;
+    icon?: string;
+    pathsToUpdate: { index: number; name: string }[];
+    pathsToAdd: string[];
+    pathsToRemove: { index: number; name: string }[];
+  }) => void;
   existingPathsCount: number;
   existingPaths?: string[];
+  block: Block;
 }
 
 type PathRow = {
@@ -36,9 +36,12 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   onConfirm,
   existingPathsCount = 0,
   existingPaths = [],
+  block,
 }) => {
-  const [conditionName, setConditionName] = useState<string>("");
-  const [conditionDescription, setConditionDescription] = useState<string>("");
+  const [conditionName, setConditionName] = useState<string>(block.title || '');
+  const [conditionDescription, setConditionDescription] = useState<string>(
+    block.description || ''
+  );
   const [icon, setIcon] = useState<string | undefined>(undefined);
   const [pathRows, setPathRows] = useState<PathRow[]>([]);
   const [removedPaths, setRemovedPaths] = useState<PathRow[]>([]);
@@ -127,7 +130,9 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
 
   const handleConfirm = () => {
     // pathsToAdd: all rows without id
-    const pathsToAdd = pathRows.filter((row) => row.originalIndex === undefined).map((row) => row.name);
+    const pathsToAdd = pathRows
+      .filter((row) => row.originalIndex === undefined)
+      .map((row) => row.name);
 
     // pathsToRemove: all removed paths with id, deduplicated by (index, name)
     const seen = new Set<string>();
@@ -164,41 +169,15 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   };
 
   // Minimal workflow and path for IconModifier
-  const minimalWorkflow = useMemo(() => ({
-    id: 0,
-    name: '',
-    workspaceId: 0,
-    description: '',
-    folder_id: null,
-    team_tags: [],
-    icon: '',
-    created_at: '',
-    updated_at: '',
-    last_modified: '',
-  }), []);
-  const minimalPath = useMemo(() => ({
-    id: 0,
-    name: '',
-    workflow_id: 0,
-    workflow: minimalWorkflow,
-    blocks: [],
-    parent_blocks: [],
-  }), [minimalWorkflow]);
 
   // Minimal block for icon selector
-  const minimalBlock = useMemo(() => ({
-    id: 0,
-    created_at: '',
-    updated_at: '',
-    type: 'STEP' as const,
-    position: 0,
-    workflow_id: 0,
-    path_id: 0,
-    workflow: minimalWorkflow,
-    path: minimalPath,
-    child_paths: [],
-    icon: icon || undefined,
-  }), [icon, minimalWorkflow, minimalPath]);
+  const minimalBlock: Block = useMemo(
+    () => ({
+      ...block,
+      icon: icon || undefined,
+    }),
+    [icon]
+  );
 
   const modalContent = (
     <div style={themeVars as React.CSSProperties} className={currentTheme}>
@@ -233,14 +212,19 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
         >
           {/* Condition Name + Icon Selector */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold flex items-center gap-1 text-left" style={{ color: colors['text-secondary'] }}>
+            <label
+              className="text-sm font-semibold flex items-center gap-1 text-left"
+              style={{ color: colors['text-secondary'] }}
+            >
               Condition name <span className="text-primary">*</span>
             </label>
             <div className="flex flex-row items-center w-full gap-2">
               <div className="flex items-center">
                 <IconModifier
                   block={minimalBlock}
-                  onUpdate={update => setIcon(update.icon ?? undefined)}
+                  onUpdate={(update) => {
+                    setIcon(update.icon ?? undefined);
+                  }}
                 />
               </div>
               <div className="flex-1">
@@ -255,14 +239,20 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
           </div>
           {/* Condition Description */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold" style={{ color: colors['text-secondary'] }}>
+            <label
+              className="text-sm font-semibold"
+              style={{ color: colors['text-secondary'] }}
+            >
               Condition description
             </label>
             <textarea
               className="border rounded-lg p-3 min-h-[80px] resize-y text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-primary"
-              style={{ background: colors['bg-primary'], borderColor: colors['border-primary'] }}
+              style={{
+                background: colors['bg-primary'],
+                borderColor: colors['border-primary'],
+              }}
               value={conditionDescription}
-              onChange={e => setConditionDescription(e.target.value)}
+              onChange={(e) => setConditionDescription(e.target.value)}
               placeholder="Describe the condition (optional)"
             />
           </div>

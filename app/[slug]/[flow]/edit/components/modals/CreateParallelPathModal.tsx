@@ -24,7 +24,7 @@ interface CreateParallelPathModalProps {
   /** Confirms creation with all data */
   onConfirm: (data: {
     conditionName: string;
-    conditionDescription: string;
+    conditionDescription?: string;
     icon?: string;
     paths_to_create: string[];
     path_to_move: number;

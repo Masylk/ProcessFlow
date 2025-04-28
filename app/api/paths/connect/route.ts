@@ -6,12 +6,15 @@ import { BlockEndType } from '@/types/block';
 interface ConnectPathsRequest {
   child_path_ids: number[];
   destination_path_id: number;
+  pathblock_title?: string;
+  pathblock_description?: string;
+  pathblock_icon?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: ConnectPathsRequest = await req.json();
-    const { child_path_ids, destination_path_id } = body;
+    const { child_path_ids, destination_path_id, pathblock_title, pathblock_description, pathblock_icon } = body;
 
     // Validate input
     if (!Array.isArray(child_path_ids) || child_path_ids.length === 0 || !destination_path_id) {
@@ -38,10 +41,10 @@ export async function POST(req: NextRequest) {
       }
 
       // Update block type to PATH if it isn't already
-      if (destinationEndBlock.type !== BlockEndType.PATH) {
+      if (destinationEndBlock.type !== BlockEndType.PATH || pathblock_title || pathblock_description || pathblock_icon) {
         await tx.block.update({
           where: { id: destinationEndBlock.id },
-          data: { type: BlockEndType.PATH }
+          data: { type: BlockEndType.PATH, title: pathblock_title, description: pathblock_description, icon: pathblock_icon }
         });
       }
 

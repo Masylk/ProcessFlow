@@ -313,7 +313,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   const handleDropdownToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!showDropdown) {
-      const rect = e.currentTarget.getBoundingClientRect();
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const dropdownWidth = 170; // px
       const dropdownHeight = 280; // px, estimate or measure your dropdown height
       const offset = 4; // px

@@ -238,9 +238,6 @@ export default function HorizontalStep({
   const scrollbarWidth = getScrollbarWidth();
 
   const getIconPath = (block: Block) => {
-    if (block.type === 'PATH') {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`;
-    }
 
     if (block.icon) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
@@ -413,7 +410,7 @@ export default function HorizontalStep({
         ref={containerRef}
         className={cn(
           'h-full w-full overflow-hidden relative',
-          (block.type === 'PATH' || !block.image) &&
+          (!block.image) &&
             'flex flex-col items-center justify-center'
         )}
       >
@@ -422,15 +419,15 @@ export default function HorizontalStep({
           ref={contentRef}
           className={cn(
             `h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`,
-            (block.type === 'PATH' || !block.image) &&
+            (!block.image) &&
               'flex flex-col items-center justify-center'
           )}
         >
           <div
             className={cn(
               'pb-16',
-              hasOnlyDescription && 'flex flex-col items-center justify-center h-full',
-              (block.type === 'PATH' || (!block.image && !block.child_paths)) &&
+              hasOnlyDescription && 'flex flex-col items-center justify-center h-full w-full',
+              ((!block.image)) &&
                 'w-full pb-0 flex flex-col items-center justify-center'
             )}
           >
@@ -439,7 +436,7 @@ export default function HorizontalStep({
             {/* Fixed Header Section */}
             <div className="mb-4 sm:mb-5 md:mb-6">
               {/* Step Header */}
-              {block.type !== 'PATH' && (
+              { (
                 <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
                   {/* App Icon */}
                   <div
@@ -482,8 +479,8 @@ export default function HorizontalStep({
               )}
 
               {/* Description */}
-              {block.type !== 'PATH' && (
-                <div className="relative">
+              {(
+                <div className="relative w-full">
                   <p
                     className="text-base whitespace-pre-line"
                     style={{ color: colors['text-quaternary'] }}

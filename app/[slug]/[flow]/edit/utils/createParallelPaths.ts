@@ -7,6 +7,9 @@ import { useLoadingStore } from '../store/loadingStore';
 interface CreateParallelPathsOptions {
   paths_to_create?: string[];
   path_to_move?: number;
+  pathblock_title?: string;
+  pathblock_description?: string;
+  pathblock_icon?: string;
 }
 
 function updateCreatedPaths(
@@ -145,6 +148,7 @@ function createOptimisticPaths(
         }));
 
       if (childPathIdsToMove.length > 0) {
+        const lastParentBlock = parent_path.blocks[parent_path.blocks.length - 1];
         lastBlock.child_paths = childPathIdsToMove.map((cpid) => ({
           path_id: cpid,
           block_id: lastBlock.id,
@@ -153,6 +157,9 @@ function createOptimisticPaths(
           block: lastBlock,
         }));
         lastBlock.type = BlockEndType.PATH;
+        lastBlock.title = lastParentBlock.title;
+        lastBlock.description = lastParentBlock.description;
+        lastBlock.icon = lastParentBlock.icon;
       }
       // Set correct positions for begin and last
       path_to_move = {
@@ -195,7 +202,10 @@ export async function createParallelPaths(
   // Set loading to true at the start
   const { 
     paths_to_create = ["If", "Else"],
-    path_to_move = 0 
+    path_to_move = 0,
+    pathblock_title = "If",
+    pathblock_description = "",
+    pathblock_icon = "",
   } = options;
   
   if (path_to_move >= paths_to_create.length) {
@@ -253,7 +263,7 @@ export async function createParallelPaths(
         .filter(b => !blocksToMoveIds.has(b.id))
         .map((b) =>
           b.id === parentBlockId
-            ? { ...b, type: BlockEndType.PATH, child_paths: [...(b.child_paths || []), ...newChildPaths], id: optimisticParentBlockId }
+            ? { ...b, type: BlockEndType.PATH, child_paths: [...(b.child_paths || []), ...newChildPaths], id: optimisticParentBlockId, title: pathblock_title, description: pathblock_description, icon: pathblock_icon }
             : b
         );
       return { ...p, blocks: updatedBlocks };
@@ -287,7 +297,8 @@ export async function createParallelPaths(
       })
     );
 
-    // 2. Get blocks after position and child paths IDs
+    // 2. Transform last block into a PATH block
+    // await fetch('/api/blocks/'
 
     // 3. Move blocks to specified path
     if (blocksToMove.length > 0) {
@@ -301,6 +312,7 @@ export async function createParallelPaths(
       });
     }
 
+    const parentPathLastBlock = parent_path.blocks[parent_path.blocks.length - 1];
     // 4. Move child paths to specified path
     let updatedPathToMoveResponse = null;
     if (childPathIdsToMove.length > 0) {
@@ -310,6 +322,9 @@ export async function createParallelPaths(
         body: JSON.stringify({
           child_path_ids: childPathIdsToMove,
           destination_path_id: createdPaths[path_to_move].id,
+          pathblock_title: parentPathLastBlock.title,
+          pathblock_description: parentPathLastBlock.description,
+          pathblock_icon: parentPathLastBlock.icon,
         }),
       });
 
@@ -324,6 +339,9 @@ export async function createParallelPaths(
       body: JSON.stringify({
         child_path_ids: createdPaths.map(path => path.id),
         destination_path_id: parent_path.id,
+        pathblock_title: pathblock_title,
+        pathblock_description: pathblock_description,
+        pathblock_icon: pathblock_icon,
       }),
     });
 
@@ -367,7 +385,10 @@ export async function createParallelPaths(
           return {
             ...block,
             type: BlockEndType.PATH,
-            child_paths: updatedLastBlockFromBackend.child_paths
+            child_paths: updatedLastBlockFromBackend.child_paths,
+            title: pathblock_title,
+            description: pathblock_description,
+            icon: pathblock_icon,
           };
         }
         return block;
