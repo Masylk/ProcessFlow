@@ -35,15 +35,16 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
 
   /**
    * Handles updating, adding, and removing child paths.
-   * @param pathsToUpdate Array of {id, name} for paths to update
-   * @param pathsToAdd Array of names for new paths to add
-   * @param pathsToRemove Array of {id, name} for paths to remove
+   * @param modalData Object containing condition name, description, icon, and path updates
    */
-  const handleCreateChildPaths = async (
-    pathsToUpdate: { index: number; name: string }[],
-    pathsToAdd: string[],
-    pathsToRemove: { index: number; name: string }[]
-  ) => {
+  const handleCreateChildPaths = async (modalData: {
+    conditionName: string;
+    conditionDescription: string;
+    icon?: string;
+    pathsToUpdate: { index: number; name: string }[];
+    pathsToAdd: string[];
+    pathsToRemove: { index: number; name: string }[];
+  }) => {
     try {
       setShowModal(false);
 
@@ -52,13 +53,13 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
       }
 
       // Add new paths
-      if (pathsToAdd.length > 0) {
-        await createChildPaths(pathsToAdd, data.path.workflow_id, data.path);
+      if (modalData.pathsToAdd.length > 0) {
+        await createChildPaths(modalData.pathsToAdd, data.path.workflow_id, data.path);
       }
 
       // Delete removed paths
-      if (pathsToRemove.length > 0) {
-        const pathsToRemoveIds = pathsToRemove.map(
+      if (modalData.pathsToRemove.length > 0) {
+        const pathsToRemoveIds = modalData.pathsToRemove.map(
           (path) => existingPaths[path.index].id
         );
         await Promise.all(
@@ -71,8 +72,8 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
       }
 
       // Update existing paths
-      if (pathsToUpdate.length > 0) {
-        const pathsToUpdateIdsandname = pathsToUpdate.map((path) => ({
+      if (modalData.pathsToUpdate.length > 0) {
+        const pathsToUpdateIdsandname = modalData.pathsToUpdate.map((path) => ({
           id: existingPaths[path.index].id,
           name: path.name,
         }));
@@ -86,6 +87,20 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
           })
         );
       }
+
+      // Update the block with condition data
+      await fetch(`/api/blocks/${pathBlock?.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          condition: {
+            name: modalData.conditionName,
+            title: modalData.conditionName,
+            description: modalData.conditionDescription,
+          },
+        }),
+      });
+
       // Just fetch the updated paths to refresh the UI
       const pathsResponse = await fetch(
         `/api/workspace/${data.path.workflow_id}/paths?workflow_id=${data.path.workflow_id}`
@@ -102,13 +117,15 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
   return (
     <BasicBlock {...props}>
       <div
-        className={`transition-opacity duration-300 ${isConnectMode || isEditMode ? 'opacity-40' : 'hover:opacity-80'}`}
+        className={`transition-opacity duration-300 ${
+          isConnectMode || isEditMode ? 'opacity-40' : 'hover:opacity-80'
+        }`}
       >
         <div
-          className="transition-all duration-300 relative cursor-pointer"
+          className="transition-all duration-300 relative cursor-pointer rounded-[13.7px] bg-white shadow-sm overflow-hidden"
           style={{
-            width: '32px',
-            height: '32px',
+            width: '383px',
+            boxShadow: '0px 0.86px 1.72px 0px rgba(16, 24, 40, 0.05), inset 0px -1.72px 0px 0px rgba(16, 24, 40, 0.05), inset 0px 0px 0px 0.86px rgba(16, 24, 40, 0.18)',
           }}
           onClick={handleClick}
         >
@@ -125,23 +142,51 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
               pointerEvents: 'none',
             }}
           />
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '4px',
-              background: colors['utility-brand-500'],
-              transform: 'rotate(45deg)',
-            }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
-              alt="Add path"
-              className="w-6 h-6"
-              style={{ transform: 'rotate(-45deg)' }}
-            />
+          
+          {/* Header - Blue background */}
+          <div className="bg-[#4761C4] p-[17px] flex items-center justify-between">
+            <div className="flex items-center gap-[13.7px]">
+              <div className="flex items-center">
+                <div 
+                  className="w-[46px] h-[46px] rounded-[11.6px] flex items-center justify-center"
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/ticket-icon-white.svg`}
+                    alt="Process step"
+                    className="w-[27px] h-[27px]"
+                  />
+                </div>
+              </div>
+              <div className="text-[13.7px] font-semibold text-white leading-[1.5]">
+                {pathBlock?.condition?.name || 'Ticket Triage'}
+              </div>
+            </div>
+            <button className="w-[34px] h-[34px] rounded-[3.4px] flex items-center justify-center hover:bg-[rgba(255,255,255,0.1)]">
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-white.svg`}
+                alt="Menu"
+                className="w-5 h-5"
+              />
+            </button>
           </div>
+
+          {/* Content - White background */}
+          <div className="bg-white p-[17px] flex flex-col gap-[13.7px]">
+            <div className="inline-flex items-center gap-1 px-2 py-[2px] bg-[#EDF0FB] border border-[#AEBBED] rounded-[8543px] w-fit">
+              <span className="text-xs font-medium text-[#374C99]">Conditional</span>
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/help-circle-blue.svg`}
+                alt="Help"
+                className="w-4 h-4"
+              />
+            </div>
+            <div className="flex flex-col gap-[6.9px]">
+              <div className="text-[12px] text-[#667085] leading-[1.43] whitespace-pre-line">
+                {pathBlock?.condition?.description || ''}
+              </div>
+            </div>
+          </div>
+
           <Handle
             type="source"
             position={Position.Bottom}
