@@ -6,13 +6,19 @@ import InputField from '@/app/components/InputFields';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
 import { remove } from 'lodash';
+import IconModifier from '../IconModifier';
 
 interface UpdatePathModalProps {
   onClose: () => void;
   onConfirm: (
-    pathsToUpdate: { index: number; name: string }[],
-    pathsToAdd: string[],
-    pathsToRemove: { index: number; name: string }[]
+    data: {
+      conditionName: string;
+      conditionDescription: string;
+      icon?: string;
+      pathsToUpdate: { index: number; name: string }[];
+      pathsToAdd: string[];
+      pathsToRemove: { index: number; name: string }[];
+    }
   ) => void;
   existingPathsCount: number;
   existingPaths?: string[];
@@ -31,6 +37,9 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   existingPathsCount = 0,
   existingPaths = [],
 }) => {
+  const [conditionName, setConditionName] = useState<string>("");
+  const [conditionDescription, setConditionDescription] = useState<string>("");
+  const [icon, setIcon] = useState<string | undefined>(undefined);
   const [pathRows, setPathRows] = useState<PathRow[]>([]);
   const [removedPaths, setRemovedPaths] = useState<PathRow[]>([]);
 
@@ -144,8 +153,52 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
       )
       .map((row) => ({ index: row.id as number, name: row.name }));
 
-    onConfirm(pathsToUpdate, pathsToAdd, pathsToRemove);
+    onConfirm({
+      conditionName,
+      conditionDescription,
+      icon,
+      pathsToUpdate,
+      pathsToAdd,
+      pathsToRemove,
+    });
   };
+
+  // Minimal workflow and path for IconModifier
+  const minimalWorkflow = useMemo(() => ({
+    id: 0,
+    name: '',
+    workspaceId: 0,
+    description: '',
+    folder_id: null,
+    team_tags: [],
+    icon: '',
+    created_at: '',
+    updated_at: '',
+    last_modified: '',
+  }), []);
+  const minimalPath = useMemo(() => ({
+    id: 0,
+    name: '',
+    workflow_id: 0,
+    workflow: minimalWorkflow,
+    blocks: [],
+    parent_blocks: [],
+  }), [minimalWorkflow]);
+
+  // Minimal block for icon selector
+  const minimalBlock = useMemo(() => ({
+    id: 0,
+    created_at: '',
+    updated_at: '',
+    type: 'STEP' as const,
+    position: 0,
+    workflow_id: 0,
+    path_id: 0,
+    workflow: minimalWorkflow,
+    path: minimalPath,
+    child_paths: [],
+    icon: icon || undefined,
+  }), [icon, minimalWorkflow, minimalPath]);
 
   const modalContent = (
     <div style={themeVars as React.CSSProperties} className={currentTheme}>
@@ -178,6 +231,41 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
           className="flex flex-col gap-6 pb-4"
           style={{ color: colors['text-primary'] }}
         >
+          {/* Condition Name + Icon Selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold flex items-center gap-1 text-left" style={{ color: colors['text-secondary'] }}>
+              Condition name <span className="text-primary">*</span>
+            </label>
+            <div className="flex flex-row items-center w-full gap-2">
+              <div className="flex items-center">
+                <IconModifier
+                  block={minimalBlock}
+                  onUpdate={update => setIcon(update.icon ?? undefined)}
+                />
+              </div>
+              <div className="flex-1">
+                <InputField
+                  type="default"
+                  value={conditionName}
+                  onChange={setConditionName}
+                  placeholder="Enter condition name"
+                />
+              </div>
+            </div>
+          </div>
+          {/* Condition Description */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold" style={{ color: colors['text-secondary'] }}>
+              Condition description
+            </label>
+            <textarea
+              className="border rounded-lg p-3 min-h-[80px] resize-y text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-primary"
+              style={{ background: colors['bg-primary'], borderColor: colors['border-primary'] }}
+              value={conditionDescription}
+              onChange={e => setConditionDescription(e.target.value)}
+              placeholder="Describe the condition (optional)"
+            />
+          </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto">
               {pathRows.map((row, index) => (
