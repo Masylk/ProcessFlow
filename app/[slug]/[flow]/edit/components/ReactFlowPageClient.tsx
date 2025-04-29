@@ -52,6 +52,7 @@ export function ReactFlowPageClient({
 
     // Prepare the block data
     const data = {
+      title: blockData.title,
       type: blockData.type,
       position: cappedPosition,
       workflow_id: parseInt(workflowId),
@@ -60,9 +61,11 @@ export function ReactFlowPageClient({
       icon:
         blockData.type === 'STEP'
           ? '/step-icons/default-icons/container.svg'
-          : blockData.type === 'DELAY'
-            ? '/step-icons/default-icons/delay.svg'
-            : '/step-icons/default-icons/path.svg',
+          : blockData.type === 'PATH'
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`
+            : blockData.type === 'DELAY'
+              ? '/step-icons/default-icons/delay.svg'
+              : '/step-icons/default-icons/path.svg',
       description: '',
       delay_type: blockData.delay_type,
       delay_event: blockData.delay_event,
@@ -128,7 +131,6 @@ export function ReactFlowPageClient({
         const pathsData = await pathsRes.json();
         setPaths(pathsData.paths);
 
-        console.log('pathsData', pathsData);
         // Fetch stroke lines
         const strokeLinesData = await getWorkflowStrokeLines(
           parseInt(workflowId)

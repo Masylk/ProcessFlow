@@ -8,6 +8,7 @@ import DeleteBlocksModal from '../modals/DeleteBlocksModal';
 import { usePathsStore } from '../../store/pathsStore';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
 import { BasicEdge } from './BasicEdge';
+import collectAllPathIds from '../../utils/collectAllPathIds';
 
 // Helper function to check if we're in non-production environment
 const isNonProduction = () => process.env.NODE_ENV !== 'production';
@@ -62,37 +63,7 @@ function CustomSmoothStepEdge({
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
   // Recursively collect all unique path IDs from a path and its descendants
-  function collectAllPathIds(
-    path: { id: number; blocks: any[] },
-    allPaths: { id: number; blocks: any[] }[]
-  ): Set<number> {
-    const visitedPathIds = new Set<number>();
-    const queue: number[] = [path.id];
 
-    while (queue.length > 0) {
-      const currentPathId = queue.pop()!;
-      if (visitedPathIds.has(currentPathId)) continue;
-      visitedPathIds.add(currentPathId);
-
-      // Find the path object by id
-      const currentPath: { id: number; blocks: Block[] } | undefined =
-        allPaths.find((p) => p.id === currentPathId);
-      if (!currentPath) continue;
-
-      for (const block of currentPath.blocks) {
-        if (Array.isArray(block.child_paths)) {
-          for (const child of block.child_paths) {
-            if (child.path_id && !visitedPathIds.has(child.path_id)) {
-              queue.push(child.path_id);
-            }
-          }
-        }
-      }
-    }
-
-    visitedPathIds.delete(path.id);
-    return visitedPathIds;
-  }
 
   const handleDeleteBlocks = async () => {
     // Get all blocks after this position except the last one

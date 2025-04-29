@@ -271,15 +271,20 @@ export default function VerticalStep({
 
   // Helper function to get icon path
   const getIconPath = (block: Block) => {
-    if (block.type === 'PATH') {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`;
-    }
-
     if (block.icon) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
     }
 
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    switch (block.type) {
+      case 'STEP':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-commit.svg`;
+      case 'PATH':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`;
+      case 'DELAY':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`;
+      default:
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    }
   };
 
   // Add this function to parse text into segments with links
@@ -287,33 +292,33 @@ export default function VerticalStep({
     const parts = [];
     let lastIndex = 0;
     let match;
-    
+
     while ((match = URL_REGEX.exec(text)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
-          content: text.slice(lastIndex, match.index)
+          content: text.slice(lastIndex, match.index),
         });
       }
-      
+
       // Add the link
       parts.push({
         type: 'link',
-        content: match[0]
+        content: match[0],
       });
-      
+
       lastIndex = match.index + match[0].length;
     }
-    
+
     // Add remaining text after last link
     if (lastIndex < text.length) {
       parts.push({
         type: 'text',
-        content: text.slice(lastIndex)
+        content: text.slice(lastIndex),
       });
     }
-    
+
     return parts.length > 0 ? parts : [{ type: 'text', content: text }];
   };
 
@@ -356,7 +361,7 @@ export default function VerticalStep({
           onClick={handleToggle}
           className={cn(
             'w-full flex flex-col',
-            block.type === 'PATH' ? 'p-2' : 'p-6',
+            'p-6',
             'transition-colors duration-200 ease-in-out',
             block.image ? 'cursor-pointer' : 'cursor-default'
           )}
@@ -365,7 +370,7 @@ export default function VerticalStep({
           }}
         >
           {/* Header with Icon and Title */}
-          {block.type !== 'PATH' && (
+          {
             <div className="flex items-center gap-4 flex-1 min-w-0 mb-3">
               <motion.div
                 className="w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
@@ -374,24 +379,25 @@ export default function VerticalStep({
                   borderColor: colors['border-secondary'],
                 }}
               >
-                {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
-                <img
-                  src={block.icon}
-                  alt="Step Icon"
-                  className="w-6 h-6"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-              ) : (
-                <img
+                {block.icon &&
+                block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                  <img
+                    src={block.icon}
+                    alt="Step Icon"
+                    className="w-6 h-6"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                ) : (
+                  <img
                     src={getIconPath(block)}
                     alt={getDisplayTitle(block)}
                     className="w-6 h-6"
                     onError={(e) => {
-                    e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                  }}
-                />
+                      e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                    }}
+                  />
                 )}
-            </motion.div>
+              </motion.div>
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn('text-left text-base font-semibold')}
@@ -421,75 +427,84 @@ export default function VerticalStep({
                 </motion.div>
               )}
             </div>
-          )}
+          }
 
           {/* Description section - always displayed below icon and title */}
-          {block.type !== 'PATH' &&
-            (block.step_details || block.description ? (
-              <div className="text-left w-full">
-                <p
-                  ref={descriptionRef}
-                  className={cn(
-                    'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
-                    !isExpanded && 'line-clamp-2'
-                  )}
-                  style={{ color: colors['text-quaternary'] }}
-                >
-                  {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
-                    segment.type === 'link' ? (
-                      <a
-                        key={index}
-                        href={segment.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.open(segment.content, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        {segment.content}
-                      </a>
-                    ) : (
-                      <span key={index}>{segment.content}</span>
-                    )
-                  ))}
-                </p>
-              </div>
-            ) : (
-              <div className="text-left w-full ">
-                <p
-                  ref={descriptionRef}
-                  className={cn(
-                    'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
-                    !isExpanded && 'line-clamp-2'
-                  )}
-                  style={{ color: colors['text-quaternary'] }}
-                >
-                  {parseTextWithLinks('').map((segment, index) => (
-                    segment.type === 'link' ? (
-                      <a
-                        key={index}
-                        href={segment.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.open(segment.content, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        {segment.content}
-                      </a>
-                    ) : (
-                      <span key={index}>{segment.content}</span>
-                    )
-                  ))}
-                </p>
-              </div>
-            ))}
+          {block.step_details || block.description ? (
+            <div className="text-left w-full">
+              <p
+                ref={descriptionRef}
+                className={cn(
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
+                  !isExpanded && 'line-clamp-2'
+                )}
+                style={{ color: colors['text-quaternary'] }}
+              >
+                {parseTextWithLinks(
+                  block.step_details || block.description || ''
+                ).map((segment, index) =>
+                  segment.type === 'link' ? (
+                    <a
+                      key={index}
+                      href={segment.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        window.open(
+                          segment.content,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }}
+                    >
+                      {segment.content}
+                    </a>
+                  ) : (
+                    <span key={index}>{segment.content}</span>
+                  )
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="text-left w-full ">
+              <p
+                ref={descriptionRef}
+                className={cn(
+                  'text-sm transition-all duration-200 break-words min-h-[1.5rem] whitespace-pre-line',
+                  !isExpanded && 'line-clamp-2'
+                )}
+                style={{ color: colors['text-quaternary'] }}
+              >
+                {parseTextWithLinks('').map((segment, index) =>
+                  segment.type === 'link' ? (
+                    <a
+                      key={index}
+                      href={segment.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        window.open(
+                          segment.content,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }}
+                    >
+                      {segment.content}
+                    </a>
+                  ) : (
+                    <span key={index}>{segment.content}</span>
+                  )
+                )}
+              </p>
+            </div>
+          )}
         </button>
 
         <AnimatePresence>

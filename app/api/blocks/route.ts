@@ -90,6 +90,7 @@ enum DelayType {
  */
 export async function POST(req: NextRequest) {
   const {
+    title,
     type,
     position,
     icon,
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
     click_position,
   } = await req.json();
 
+  console.log("creating block", title, type, position, icon);
   if (!['STEP', 'PATH', 'DELAY'].includes(type)) {
     return NextResponse.json(
       { error: 'Invalid block type. Expected STEP, PATH, or DELAY.' },
@@ -180,6 +182,7 @@ export async function POST(req: NextRequest) {
 
       // Create the new block
       const blockData = {
+        title: title,
         type,
         position: cappedPosition,
         icon,

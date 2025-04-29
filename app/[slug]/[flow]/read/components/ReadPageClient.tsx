@@ -130,7 +130,9 @@ export default function ReadPageClient() {
   const [copyPaths, setCopyPaths] = useState<Path[]>([]);
   const [shareUrl, setShareUrl] = useState<string>('');
   const [isToggling, setIsToggling] = useState(false);
-  const [localIsPublic, setLocalIsPublic] = useState(workflowData?.is_public || false);
+  const [localIsPublic, setLocalIsPublic] = useState(
+    workflowData?.is_public || false
+  );
 
   // Add sourceBlockPairs as a component-level variable
   const sourceBlockPairs: SourceBlockPair[] = [];
@@ -249,6 +251,7 @@ export default function ReadPageClient() {
           if (strokeLinesResponse.ok) {
             const strokeLinesData: StrokeLine[] =
               await strokeLinesResponse.json();
+            console.log('strokeLinesData', strokeLinesData);
             setStrokeLines(strokeLinesData);
 
             strokeLinesData.forEach((strokeLine) => {
@@ -271,107 +274,82 @@ export default function ReadPageClient() {
 
                   let continuePath: Path | undefined;
 
-                  if (nextBlock?.type === 'PATH') {
-                    // If next block is PATH, append its child paths to source block
+                  // Original logic for non-PATH blocks
+                  const blocksAfterSource = sourcePath.blocks.slice(
+                    sourceBlockIndex + 1
+                  );
+                  if (blocksAfterSource.length > 0) {
+                    continuePath = {
+                      id: generateUniqueId(generatedPathIds, true),
+                      name:
+                        blocksAfterSource[0].type === 'MERGE' &&
+                        blocksAfterSource[0].child_paths?.[0]
+                          ? (() => {
+                              const childPathId =
+                                blocksAfterSource[0].child_paths[0].path_id;
+                              const childPath = pathsData.paths.find(
+                                (p: Path) => p.id === childPathId
+                              );
+                              const childBlock = childPath?.blocks[1];
+                              return (
+                                childBlock?.title ||
+                                (childBlock?.type
+                                  ? childBlock.type.charAt(0).toUpperCase() +
+                                    childBlock.type.slice(1).toLowerCase() +
+                                    ' Block'
+                                  : 'Merge Block')
+                              );
+                            })()
+                          : blocksAfterSource[0].title ||
+                            (blocksAfterSource[0].type === 'LAST' ||
+                            blocksAfterSource[0].type === 'END'
+                              ? 'Complete process'
+                              : blocksAfterSource[0].type
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                blocksAfterSource[0].type
+                                  .slice(1)
+                                  .toLowerCase() +
+                                ' Block'),
+                      workflow_id: parseInt(workflowId as string),
+                      workflow: sourcePath.workflow,
+                      blocks: blocksAfterSource,
+                      parent_blocks: [
+                        {
+                          path_id: -1,
+                          block_id: strokeLine.source_block_id,
+                          created_at: new Date().toISOString(),
+                          path: {} as Path,
+                          block: {} as Block,
+                        },
+                      ],
+                    };
+
                     const sourceBlock = newPaths
                       .flatMap((p) => p.blocks)
                       .find((b: Block) => b.id === strokeLine.source_block_id);
 
-                    if (sourceBlock && nextBlock.child_paths) {
+                    if (sourceBlock) {
                       sourceBlock.child_paths = [
                         ...(sourceBlock.child_paths || []),
-                        ...nextBlock.child_paths.map((childPath: Path) => ({
-                          ...childPath,
-                          block_id: sourceBlock.id, // Update block_id to point to source block
-                        })),
+                        {
+                          path_id: continuePath.id,
+                          block_id: sourceBlock.id,
+                          created_at: new Date().toISOString(),
+                          path: continuePath,
+                          block: sourceBlock,
+                        },
                       ];
                     }
 
-                    // Remove blocks after source block including the PATH block
-                    sourcePath.blocks = sourcePath.blocks.slice(
-                      0,
-                      sourceBlockIndex + 1
-                    );
-                  } else {
-                    // Original logic for non-PATH blocks
-                    const blocksAfterSource = sourcePath.blocks.slice(
-                      sourceBlockIndex + 1
-                    );
-                    if (blocksAfterSource.length > 0) {
-                      continuePath = {
-                        id: generateUniqueId(generatedPathIds, true),
-                        name:
-                          blocksAfterSource[0].type === 'MERGE' &&
-                          blocksAfterSource[0].child_paths?.[0]
-                            ? (() => {
-                                const childPathId =
-                                  blocksAfterSource[0].child_paths[0].path_id;
-                                const childPath = pathsData.paths.find(
-                                  (p: Path) => p.id === childPathId
-                                );
-                                const childBlock = childPath?.blocks[1];
-                                return (
-                                  childBlock?.title ||
-                                  (childBlock?.type
-                                    ? childBlock.type.charAt(0).toUpperCase() +
-                                      childBlock.type.slice(1).toLowerCase() +
-                                      ' Block'
-                                    : 'Merge Block')
-                                );
-                              })()
-                            : blocksAfterSource[0].title ||
-                              (blocksAfterSource[0].type === 'LAST' ||
-                              blocksAfterSource[0].type === 'END'
-                                ? 'Complete process'
-                                : blocksAfterSource[0].type
-                                    .charAt(0)
-                                    .toUpperCase() +
-                                  blocksAfterSource[0].type
-                                    .slice(1)
-                                    .toLowerCase() +
-                                  ' Block'),
-                        workflow_id: parseInt(workflowId as string),
-                        workflow: sourcePath.workflow,
-                        blocks: blocksAfterSource,
-                        parent_blocks: [
-                          {
-                            path_id: -1,
-                            block_id: strokeLine.source_block_id,
-                            created_at: new Date().toISOString(),
-                            path: {} as Path,
-                            block: {} as Block,
-                          },
-                        ],
-                      };
-
-                      const sourceBlock = newPaths
-                        .flatMap((p) => p.blocks)
-                        .find(
-                          (b: Block) => b.id === strokeLine.source_block_id
-                        );
-
-                      if (sourceBlock) {
-                        sourceBlock.child_paths = [
-                          ...(sourceBlock.child_paths || []),
-                          {
-                            path_id: continuePath.id,
-                            block_id: sourceBlock.id,
-                            created_at: new Date().toISOString(),
-                            path: continuePath,
-                            block: sourceBlock,
-                          },
-                        ];
-                      }
-
-                      newPaths.push(continuePath);
-                    }
-
-                    // Remove blocks after source block
-                    sourcePath.blocks = sourcePath.blocks.slice(
-                      0,
-                      sourceBlockIndex + 1
-                    );
+                    newPaths.push(continuePath);
                   }
+
+                  // Remove blocks after source block
+                  sourcePath.blocks = sourcePath.blocks.slice(
+                    0,
+                    sourceBlockIndex + 1
+                  );
 
                   // If target path is the same as source path and we created a continue path,
                   // update targetPath to be the continue path
@@ -930,7 +908,7 @@ export default function ReadPageClient() {
 
   const handleCopyLink = async () => {
     if (!workflowData?.id) return;
-    
+
     try {
       const url = await createAndCopyShareLink(workflowData.id);
       setShareUrl(url);
@@ -1000,13 +978,13 @@ export default function ReadPageClient() {
 
   const toggleWorkflowAccess = async () => {
     if (isToggling || !workflowData) return;
-    
+
     try {
       setIsToggling(true);
-      
+
       // Optimistic update for immediate feedback
       setLocalIsPublic(!localIsPublic);
-      
+
       const response = await fetch(`/api/workflow/${workflowData.id}`, {
         method: 'PATCH',
         headers: {
@@ -1018,11 +996,13 @@ export default function ReadPageClient() {
       });
 
       const responseData = await response.json();
-      
+
       if (!response.ok) {
         // Revert the optimistic update if the server request failed
         setLocalIsPublic(workflowData.is_public);
-        throw new Error(responseData.message || 'Failed to update workflow access');
+        throw new Error(
+          responseData.message || 'Failed to update workflow access'
+        );
       }
 
       // Update workflowData with the actual server response
@@ -1161,6 +1141,10 @@ export default function ReadPageClient() {
                                         isActive={currentStep === block.id}
                                         isLastStep={
                                           index === filteredBlocks.length - 1
+                                        }
+                                        selectedOptionIds={selectedOptions}
+                                        onOptionSelect={(optionId, blockId) =>
+                                          handleOptionSelect(optionId, blockId)
                                         }
                                       />
                                     ) : (
@@ -1369,6 +1353,10 @@ export default function ReadPageClient() {
                                 'DELAY' ? (
                                 <HorizontalDelay
                                   block={PathsToDisplayBlocks[currentStep]}
+                                  selectedOptionIds={selectedOptions}
+                                  onOptionSelect={(optionId, blockId) =>
+                                    handleOptionSelect(optionId, blockId)
+                                  }
                                 />
                               ) : (
                                 <HorizontalStep
@@ -1520,7 +1508,11 @@ export default function ReadPageClient() {
         shareUrl={shareUrl}
         is_public={localIsPublic}
         onToggleAccess={toggleWorkflowAccess}
-        workspaceLogo={workspace?.logo ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${workspace.logo}` : undefined}
+        workspaceLogo={
+          workspace?.logo
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${workspace.logo}`
+            : undefined
+        }
       />
     </div>
   );

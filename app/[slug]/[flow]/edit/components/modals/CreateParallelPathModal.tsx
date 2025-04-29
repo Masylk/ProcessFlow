@@ -7,10 +7,25 @@ import InputDropdown from '@/app/components/InputDropdown';
 import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
 import { Path } from '../../../types';
+import IconModifier from '../IconModifier';
 
+/**
+ * Modal for creating a new parallel path condition.
+ * Allows user to specify a condition name, description, and multiple paths.
+ * @param onClose - Closes the modal
+ * @param onConfirm - Confirms creation with all data
+ * @param path - The current path object
+ * @param position - The position in the flow
+ * @param existingPaths - Optional, pre-existing path names
+ */
 interface CreateParallelPathModalProps {
+  /** Closes the modal */
   onClose: () => void;
+  /** Confirms creation with all data */
   onConfirm: (data: {
+    conditionName: string;
+    conditionDescription?: string;
+    icon?: string;
     paths_to_create: string[];
     path_to_move: number;
   }) => void;
@@ -26,6 +41,9 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   position,
   existingPaths = [],
 }) => {
+  const [conditionName, setConditionName] = useState<string>("");
+  const [conditionDescription, setConditionDescription] = useState<string>("");
+  const [icon, setIcon] = useState<string | undefined>(undefined);
   const [pathNames, setPathNames] = useState<string[]>([]);
   const [selectedPath, setSelectedPath] = useState<number>(0);
   const colors = useColors();
@@ -61,8 +79,9 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
     );
   };
 
-  // Check if any path name is empty
-  const hasEmptyPath = pathNames.some((name) => name.trim() === '');
+  // Check if any path name is empty or if condition name is empty
+  const hasEmptyPath = pathNames.some((name) => name.trim() === "");
+  const isConditionNameEmpty = conditionName.trim() === "";
 
   const handleAddPath = () => {
     setPathNames([...pathNames, `Path n°${pathNames.length + 1}`]);
@@ -74,10 +93,24 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
     setPathNames(newPathNames);
   };
 
+  const minimalBlock = useMemo(() => ({
+    id: 0,
+    created_at: '',
+    updated_at: '',
+    type: 'STEP' as const,
+    position: 0,
+    workflow_id: 0,
+    path_id: 0,
+    workflow: path.workflow,
+    path: path,
+    child_paths: [],
+    icon: icon || undefined,
+  }), [icon, path]);
+
   const modalContent = (
     <div style={themeVars as React.CSSProperties} className={currentTheme}>
       <Modal
-        title="Add Conditions"
+        title="Create a new condition"
         onClose={onClose}
         icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
         iconBackgroundColor={colors['bg-secondary']}
@@ -85,6 +118,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
         showHeaderSeparator={true}
         showActionsSeparator={true}
         width="w-[600px]"
+        className="overflow-hidden"
         actions={
           <div className="flex justify-end gap-2 w-full">
             <ButtonNormal variant="tertiary" size="small" onClick={onClose}>
@@ -95,13 +129,16 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               size="small"
               onClick={() =>
                 onConfirm({
+                  conditionName,
+                  conditionDescription,
+                  icon,
                   paths_to_create: pathNames,
                   path_to_move: selectedPath,
                 })
               }
-              disabled={hasEmptyPath || pathNames.length === 0}
+              disabled={isConditionNameEmpty || hasEmptyPath || pathNames.length === 0}
             >
-              Create paths
+              Create condition
             </ButtonNormal>
           </div>
         }
@@ -110,6 +147,42 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
           className="flex flex-col gap-6 pb-4"
           style={{ color: colors['text-primary'] }}
         >
+          {/* Condition Name + Icon Selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold flex items-center gap-1 text-left" style={{ color: colors['text-secondary'] }}>
+              Condition name <span className="text-primary">*</span>
+            </label>
+            <div className="flex flex-row items-center w-full gap-2">
+              <div className="flex items-center">
+                <IconModifier
+                  block={minimalBlock}
+                  onUpdate={update => setIcon(update.icon ?? undefined)}
+                />
+              </div>
+              <div className="flex-1">
+                <InputField
+                  type="default"
+                  value={conditionName}
+                  onChange={setConditionName}
+                  placeholder="Enter condition name"
+                />
+              </div>
+            </div>
+          </div>
+          {/* Condition Description */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold" style={{ color: colors['text-secondary'] }}>
+              Condition description
+            </label>
+            <textarea
+              className="border rounded-lg p-3 min-h-[80px] resize-y text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-primary"
+              style={{ background: colors['bg-primary'], borderColor: colors['border-primary'] }}
+              value={conditionDescription}
+              onChange={e => setConditionDescription(e.target.value)}
+              placeholder="Describe the condition (optional)"
+            />
+          </div>
+          {/* Paths Section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto p-1">
               {pathNames.map((name, index) => (
@@ -152,7 +225,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               Add new path
             </ButtonNormal>
           </div>
-
+          {/* Move blocks dropdown if needed */}
           {hasBlocksAfterPosition(position) && (
             <div className="flex flex-col gap-1">
               <label

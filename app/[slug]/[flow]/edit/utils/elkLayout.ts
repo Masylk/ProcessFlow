@@ -23,7 +23,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     width: node.type === 'begin' ? 
             (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 0 ? 200 : 350)) :
             node.type === 'last' ? 32 :
-            node.type === 'path' ? 32 :
+            node.type === 'path' ? 481 :
             node.type === 'end' ? 290 :
             node.type === 'merge' ? 12 :
             node.type === 'eventDelay' ? 531 :
@@ -32,7 +32,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
     height: node.type === 'begin' ? 
              (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 50) :
              node.type === 'last' ? 32 :
-             node.type === 'path' ? 32 :
+             node.type === 'path' ? 200 :
              node.type === 'end' ? 48 :
              node.type === 'merge' ? 12 :
              node.type === 'eventDelay' ? 223 :
@@ -55,7 +55,7 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
   const layoutOptions = {
     'elk.algorithm': 'layered',
     'elk.direction': 'DOWN',
-    'elk.spacing.nodeNode': '80',
+    'elk.spacing.nodeNode': '500',
     'elk.layered.spacing.nodeNodeBetweenLayers': '120',
     'elk.spacing.componentComponent': '80',
     'elk.edgeRouting': 'ORTHOGONAL',

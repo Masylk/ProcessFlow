@@ -109,111 +109,83 @@ export default function SharePage({
 
                   let continuePath: Path | undefined;
 
-                  if (nextBlock?.type === 'PATH') {
-                    // If next block is PATH, append its child paths to source block
+                  // Original logic for non-PATH blocks
+                  const blocksAfterSource = sourcePath.blocks.slice(
+                    sourceBlockIndex + 1
+                  );
+
+                  if (blocksAfterSource.length > 0) {
+                    continuePath = {
+                      id: generateUniqueId(generatedPathIds, true),
+                      name:
+                        blocksAfterSource[0].type === 'MERGE' &&
+                        blocksAfterSource[0].child_paths?.[0]
+                          ? (() => {
+                              const childPathId =
+                                blocksAfterSource[0].child_paths[0].path_id;
+                              const childPath = pathsData.paths.find(
+                                (p: Path) => p.id === childPathId
+                              );
+                              const childBlock = childPath?.blocks[1];
+                              return (
+                                childBlock?.title ||
+                                (childBlock?.type
+                                  ? childBlock.type.charAt(0).toUpperCase() +
+                                    childBlock.type.slice(1).toLowerCase() +
+                                    ' Block'
+                                  : 'Merge Block')
+                              );
+                            })()
+                          : blocksAfterSource[0].title ||
+                            (blocksAfterSource[0].type === 'LAST' ||
+                            blocksAfterSource[0].type === 'END'
+                              ? 'Complete process'
+                              : blocksAfterSource[0].type
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                blocksAfterSource[0].type
+                                  .slice(1)
+                                  .toLowerCase() +
+                                ' Block'),
+                      workflow_id: parseInt(workflowData.id),
+                      workflow: sourcePath.workflow,
+                      blocks: blocksAfterSource,
+                      parent_blocks: [
+                        {
+                          path_id: -1,
+                          block_id: strokeLine.source_block_id,
+                          created_at: new Date().toISOString(),
+                          path: {} as Path,
+                          block: {} as Block,
+                        },
+                      ],
+                    };
+
                     const sourceBlock = newPaths
                       .flatMap((p) => p.blocks)
                       .find((b: Block) => b.id === strokeLine.source_block_id);
 
-                    if (sourceBlock && nextBlock.child_paths) {
+                    if (sourceBlock) {
                       sourceBlock.child_paths = [
                         ...(sourceBlock.child_paths || []),
-                        ...nextBlock.child_paths.map((childPath: any) => ({
-                          ...childPath,
+                        {
+                          path_id: continuePath.id,
                           block_id: sourceBlock.id,
-                        })),
+                          created_at: new Date().toISOString(),
+                          path: continuePath,
+                          block: sourceBlock,
+                        },
                       ];
                     }
 
-                    // Remove blocks after source block including the PATH block
-                    sourcePath.blocks = sourcePath.blocks.slice(
-                      0,
-                      sourceBlockIndex + 1
-                    );
-                  } else {
-                    // Original logic for non-PATH blocks
-                    const blocksAfterSource = sourcePath.blocks.slice(
-                      sourceBlockIndex + 1
-                    );
-                    //   .filter(
-                    //     (b: Block) => b.type !== 'END' && b.type !== 'LAST'
-                    //   );
-
-                    if (blocksAfterSource.length > 0) {
-                      continuePath = {
-                        id: generateUniqueId(generatedPathIds, true),
-                        name:
-                          blocksAfterSource[0].type === 'MERGE' &&
-                          blocksAfterSource[0].child_paths?.[0]
-                            ? (() => {
-                                const childPathId =
-                                  blocksAfterSource[0].child_paths[0].path_id;
-                                const childPath = pathsData.paths.find(
-                                  (p: Path) => p.id === childPathId
-                                );
-                                const childBlock = childPath?.blocks[1];
-                                return (
-                                  childBlock?.title ||
-                                  (childBlock?.type
-                                    ? childBlock.type.charAt(0).toUpperCase() +
-                                      childBlock.type.slice(1).toLowerCase() +
-                                      ' Block'
-                                    : 'Merge Block')
-                                );
-                              })()
-                            : blocksAfterSource[0].title ||
-                              (blocksAfterSource[0].type === 'LAST' ||
-                              blocksAfterSource[0].type === 'END'
-                                ? 'Complete process'
-                                : blocksAfterSource[0].type
-                                    .charAt(0)
-                                    .toUpperCase() +
-                                  blocksAfterSource[0].type
-                                    .slice(1)
-                                    .toLowerCase() +
-                                  ' Block'),
-                        workflow_id: parseInt(workflowData.id),
-                        workflow: sourcePath.workflow,
-                        blocks: blocksAfterSource,
-                        parent_blocks: [
-                          {
-                            path_id: -1,
-                            block_id: strokeLine.source_block_id,
-                            created_at: new Date().toISOString(),
-                            path: {} as Path,
-                            block: {} as Block,
-                          },
-                        ],
-                      };
-
-                      const sourceBlock = newPaths
-                        .flatMap((p) => p.blocks)
-                        .find(
-                          (b: Block) => b.id === strokeLine.source_block_id
-                        );
-
-                      if (sourceBlock) {
-                        sourceBlock.child_paths = [
-                          ...(sourceBlock.child_paths || []),
-                          {
-                            path_id: continuePath.id,
-                            block_id: sourceBlock.id,
-                            created_at: new Date().toISOString(),
-                            path: continuePath,
-                            block: sourceBlock,
-                          },
-                        ];
-                      }
-
-                      newPaths.push(continuePath);
-                    }
-
-                    // Remove blocks after source block
-                    sourcePath.blocks = sourcePath.blocks.slice(
-                      0,
-                      sourceBlockIndex + 1
-                    );
+                    newPaths.push(continuePath);
                   }
+
+                  // Remove blocks after source block
+                  sourcePath.blocks = sourcePath.blocks.slice(
+                    0,
+                    sourceBlockIndex + 1
+                  );
 
                   // If target path is the same as source path and we created a continue path,
                   // update targetPath to be the continue path
@@ -369,7 +341,7 @@ export default function SharePage({
   const toggleEmbedTheme = () => {
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    
+
     // Update URL without navigation
     const url = new URL(window.location.href);
     url.searchParams.set('theme', newTheme);
@@ -511,11 +483,11 @@ export default function SharePage({
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (!workflowData) return;
-    
+
     const url = window.location.href;
-    
+
     try {
       // Try the modern clipboard API first
       await navigator.clipboard.writeText(url);
@@ -536,7 +508,7 @@ export default function SharePage({
         textArea.style.left = '-9999px';
         textArea.style.top = '0';
         document.body.appendChild(textArea);
-        
+
         // Select and copy without focusing
         textArea.select();
         const successful = document.execCommand('copy');
@@ -602,7 +574,8 @@ export default function SharePage({
         author: workflowData.author && {
           name: workflowData.author.full_name,
           avatar:
-            workflowData.author.avatar_url && workflowData.author.avatar_url.trim() !== ''
+            workflowData.author.avatar_url &&
+            workflowData.author.avatar_url.trim() !== ''
               ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.author.avatar_url}`
               : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
         },
@@ -679,6 +652,8 @@ export default function SharePage({
                     ) : PathsToDisplayBlocks[currentStep]?.type === 'DELAY' ? (
                       <HorizontalDelay
                         block={PathsToDisplayBlocks[currentStep]}
+                        selectedOptionIds={selectedOptions}
+                        onOptionSelect={handleOptionSelect}
                       />
                     ) : (
                       <HorizontalStep
@@ -758,14 +733,16 @@ export default function SharePage({
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
                   onClick={toggleEmbedTheme}
                   title={`Switch to ${currentTheme === 'light' ? 'dark' : 'light'} theme`}
                 >
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'moon' : 'sun'}.svg`}
-                    alt={currentTheme === 'light' ? 'Dark theme' : 'Light theme'}
+                    alt={
+                      currentTheme === 'light' ? 'Dark theme' : 'Light theme'
+                    }
                     className="w-[14.5px] h-[14.5px]"
                   />
                 </button>

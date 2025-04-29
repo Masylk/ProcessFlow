@@ -124,6 +124,11 @@ export interface Block {
   path: Path;
   // actions: Action[];  // Assuming an Action interface exists
   child_paths: PathParentBlock[];  // Assuming a PathParentBlock interface exists
+  condition?: {
+    name: string;
+    title: string;
+    description: string;
+  };
 }
 
 // Assuming enums and other interfaces
