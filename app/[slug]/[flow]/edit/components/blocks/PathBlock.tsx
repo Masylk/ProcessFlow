@@ -90,9 +90,11 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     return parts.length > 0 ? parts : [{ type: 'text', content: text }];
   };
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleBlockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowModal(true);
+    if (!isConnectMode && !isEditMode) {
+      setShowModal(true);
+    }
   };
 
   const handleConnectClick = (e: React.MouseEvent) => {
@@ -518,6 +520,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
               ? 'opacity-40'
               : ''
         }`}
+        onClick={handleBlockClick}
       >
         <div
           className="transition-all duration-300 relative rounded-lg bg-white shadow-sm overflow-hidden min-w-[481px] max-w-[481px]"
