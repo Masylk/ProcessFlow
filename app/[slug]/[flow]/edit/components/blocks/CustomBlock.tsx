@@ -653,7 +653,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                Delete block
+                Delete
               </div>
             </div>
           </div>
@@ -740,33 +740,33 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     const parts = [];
     let lastIndex = 0;
     let match;
-    
+
     while ((match = URL_REGEX.exec(text)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
-          content: text.slice(lastIndex, match.index)
+          content: text.slice(lastIndex, match.index),
         });
       }
-      
+
       // Add the link
       parts.push({
         type: 'link',
-        content: match[0]
+        content: match[0],
       });
-      
+
       lastIndex = match.index + match[0].length;
     }
-    
+
     // Add remaining text after last link
     if (lastIndex < text.length) {
       parts.push({
         type: 'text',
-        content: text.slice(lastIndex)
+        content: text.slice(lastIndex),
       });
     }
-    
+
     return parts.length > 0 ? parts : [{ type: 'text', content: text }];
   };
 
@@ -1082,26 +1082,31 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
               className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
               style={{ color: colors['fg-tertiary'] }}
             >
-              {parseTextWithLinks(blockData.description).map((segment, index) => (
-                segment.type === 'link' ? (
-                  <a
-                    key={index}
-                    href={segment.content}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      window.open(segment.content, '_blank', 'noopener,noreferrer');
-                    }}
-                  >
-                    {segment.content}
-                  </a>
-                ) : (
-                  <span key={index}>{segment.content}</span>
-                )
-              ))}
+              {parseTextWithLinks(blockData.description).map(
+                (segment, index) =>
+                  segment.type === 'link' ? (
+                    <a
+                      key={index}
+                      href={segment.content}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        window.open(
+                          segment.content,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }}
+                    >
+                      {segment.content}
+                    </a>
+                  ) : (
+                    <span key={index}>{segment.content}</span>
+                  )
+              )}
             </p>
           )}
 

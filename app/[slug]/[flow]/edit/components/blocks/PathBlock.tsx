@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Handle, Position, NodeProps, Node } from '@xyflow/react';
 import { NodeData } from '../../../types';
 import UpdatePathModal from '../modals/UpdatePathModal';
 import { createChildPaths } from '../../utils/createChildPaths';
@@ -11,6 +11,10 @@ import { createPortal } from 'react-dom';
 import collectAllPathIds from '../../utils/collectAllPathIds';
 import { usePathsStore } from '../../store/pathsStore';
 import { BlockEndType } from '@/types/block';
+import { useModalStore } from '../../store/modalStore';
+import { useStrokeLinesStore } from '../../store/strokeLinesStore';
+import { useReactFlow } from '@xyflow/react';
+import { CustomTooltip } from '@/app/components/CustomTooltip';
 
 function PathBlock(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
@@ -22,10 +26,19 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
   }>({ x: 0, y: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
+  const setShowConnectModal = useModalStore(
+    (state) => state.setShowConnectModal
+  );
+  const showConnectModal = useModalStore((state) => state.showConnectModal);
+  const connectData = useModalStore((state) => state.connectData);
+  const setConnectData = useModalStore((state) => state.setConnectData);
   const isEditMode = useEditModeStore((state) => state.isEditMode);
   const colors = useColors();
   const allPaths = usePathsStore((state) => state.paths);
   const setAllPaths = usePathsStore((state) => state.setPaths);
+  const { allStrokeLinesVisible } = useStrokeLinesStore();
+  const { getEdges } = useReactFlow();
+
   // Find the path block to get the count of existing child paths
   const pathBlock = data.path?.blocks.find(
     (block: { id: number }) => block.id === parseInt(id.replace('block-', ''))
@@ -44,6 +57,21 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     setShowModal(true);
   };
 
+  const handleConnectClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConnectData({
+      sourceNode: {
+        id,
+        data,
+        position: { x: 0, y: 0 },
+        type: 'custom',
+        width: undefined,
+        height: undefined,
+      } as Node,
+    });
+    setShowConnectModal(true);
+    setShowDropdown(false);
+  };
   /**
    * Handles updating, adding, and removing child paths.
    * @param modalData Object containing condition name, description, icon, and path updates
@@ -133,12 +161,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     if (!showDropdown) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
+      setShowDropdown(false);
     };
 
     const handleEsc = (event: KeyboardEvent) => {
@@ -300,11 +323,157 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     }
   };
 
+  // --- Stroke lines toggle logic ---
+  const useTooltip = () => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState<number | null>(null);
+    const elementRef = useRef<HTMLDivElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseEnter = useCallback(() => {
+      setShowTooltip(true);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+      setShowTooltip(false);
+      setTooltipPosition(null);
+    }, []);
+
+    useEffect(() => {
+      if (showTooltip && tooltipRef.current && elementRef.current) {
+        const toggleRect = elementRef.current.getBoundingClientRect();
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        const gap = 12; // gap between toggle and tooltip
+        setTooltipPosition(-(tooltipRect.width + gap));
+      }
+    }, [showTooltip]);
+
+    return {
+      elementRef,
+      tooltipRef,
+      showTooltip,
+      tooltipPosition,
+      handleMouseEnter,
+      handleMouseLeave,
+    };
+  };
+
+  const {
+    elementRef,
+    tooltipRef,
+    showTooltip,
+    tooltipPosition,
+    handleMouseEnter,
+    handleMouseLeave,
+  } = useTooltip();
+
+  // Toggle handler (copied from CustomBlock)
+  const toggleStrokeLines = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!allStrokeLinesVisible) return;
+    const blockId = parseInt(id.replace('block-', ''));
+    const newVisibility = !data.strokeLinesVisible;
+    data.updateStrokeLineVisibility?.(blockId, newVisibility);
+  };
+
   return (
     <BasicBlock {...props}>
+      {/* --- Vertical Toggle Switch Container (copied from CustomBlock) --- */}
+      {getEdges().some(
+        (edge) => edge.source === id && edge.type === 'strokeEdge'
+      ) &&
+        !showConnectModal && (
+          <div
+            className="absolute top-[50%] -translate-y-1/2 transition-opacity duration-300"
+            style={{
+              left: '-20px',
+              backgroundColor: colors['bg-primary'],
+              padding: '4px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              border: `1px solid ${colors['border-secondary']}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              paddingLeft: '6px',
+            }}
+          >
+            <div
+              ref={elementRef}
+              onClick={toggleStrokeLines}
+              className={`${allStrokeLinesVisible ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+              style={{
+                width: '12px',
+                height: '20px',
+                borderRadius: '6px',
+                backgroundColor:
+                  allStrokeLinesVisible && data.strokeLinesVisible
+                    ? '#FF69A3'
+                    : colors['bg-quaternary'],
+                transition: 'background-color 0.2s',
+                position: 'relative',
+                opacity: allStrokeLinesVisible ? 1 : 0.5,
+              }}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: colors['bg-primary'],
+                  position: 'absolute',
+                  left: '1px',
+                  top:
+                    allStrokeLinesVisible && data.strokeLinesVisible
+                      ? '1px'
+                      : '9px',
+                  transition: 'top 0.2s',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+      {/* Tooltip for the toggle */}
+      {showTooltip && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'absolute',
+            left: '-210px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 1000,
+            pointerEvents: 'none',
+          }}
+        >
+          <CustomTooltip
+            text={
+              allStrokeLinesVisible
+                ? data.strokeLinesVisible
+                  ? 'Hide connecting lines'
+                  : 'Show connecting lines'
+                : 'Global connecting lines are disabled in Settings'
+            }
+            show={true}
+            direction="left"
+          />
+        </div>
+      )}
       <div
         className={`transition-opacity duration-300 ${
-          isConnectMode || isEditMode ? 'opacity-40' : ''
+          isConnectMode &&
+          id !== connectData?.sourceNode?.id &&
+          id !== connectData?.targetNode?.id
+            ? 'opacity-40'
+            : isEditMode
+              ? 'opacity-40'
+              : ''
         }`}
       >
         <div
@@ -382,60 +551,167 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
               <div
                 ref={dropdownRef}
                 style={{
-                  position: 'fixed',
+                  backgroundColor: colors['bg-secondary'],
+                  border: `1px solid ${colors['border-primary']}`,
                   left: dropdownPosition.x,
                   top: dropdownPosition.y,
-                  zIndex: 1000,
-                  minWidth: 180,
-                  background: '#fff',
-                  borderRadius: 10,
-                  boxShadow: '0 8px 32px rgba(16,24,40,0.18)',
-                  border: '1px solid #E5E7EB',
-                  padding: '8px 0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
+                  zIndex: 99999999,
                 }}
-                className="dropdown-menu"
+                className="fixed shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 flex flex-col overflow-hidden cursor-pointer rounded-lg"
               >
-                <button
-                  className="w-full text-left px-5 py-2 text-sm hover:bg-gray-100 transition"
+                {/* Connect block - now first */}
+                <div
+                  onClick={handleConnectClick}
+                  className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+                >
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="w-[170px] grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                      <div className="w-4 h-4 relative overflow-hidden">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`}
+                          alt="Connect"
+                          className="w-4 h-4"
+                        />
+                      </div>
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                      >
+                        Connect block
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Edit */}
+                <div
                   onClick={handleEdit}
-                  type="button"
+                  className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
                 >
-                  Edit
-                </button>
-                <button
-                  className="w-full text-left px-5 py-2 text-sm text-red-600 hover:bg-gray-100 transition"
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="w-[170px] grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                      <div className="w-4 h-4 relative overflow-hidden">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/edit-05.svg`}
+                          alt="Edit"
+                          className="w-4 h-4"
+                        />
+                      </div>
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                      >
+                        Edit
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Separator */}
+                <div
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="self-stretch h-px border-b my-1"
+                />
+
+                {/* Delete */}
+                <div
                   onClick={handleDelete}
-                  type="button"
+                  className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
                 >
-                  Delete
-                </button>
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+                      <div className="w-4 h-4 relative overflow-hidden">
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                          alt="Delete"
+                          className="w-4 h-4"
+                        />
+                      </div>
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+                      >
+                        Delete
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>,
               document.body
             )}
 
           {/* Content - White background */}
           <div className="bg-white p-[17px] flex flex-col gap-[13.7px]">
-            <div className="inline-flex items-center gap-1 px-2 py-[2px] bg-[#EDF0FB] border border-[#AEBBED] rounded-[8543px] w-fit">
-              <span className="text-xs font-medium text-[#374C99]">
-                Conditional
-              </span>
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/help-circle-blue.svg`}
-                alt="Help"
-                className="w-4 h-4"
-              />
-            </div>
             <div className="flex flex-col gap-[6.9px]">
               <div className="text-[12px] text-[#667085] leading-[1.43] whitespace-pre-line">
                 {data.block.description || ''}
               </div>
             </div>
           </div>
-
+          <Handle
+            type="source"
+            position={Position.Left}
+            id="stroke_source"
+            style={{
+              width: 8,
+              height: 8,
+              background: colors['fg-tertiary'],
+              border: `2px solid ${colors['bg-primary']}`,
+              top: '35%',
+              opacity: 0,
+              pointerEvents: 'none',
+            }}
+          />
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="stroke_target"
+            style={{
+              width: 8,
+              height: 8,
+              background: colors['fg-tertiary'],
+              border: `2px solid ${colors['bg-primary']}`,
+              top: '35%',
+              left: 0,
+              opacity: 0,
+              pointerEvents: 'none',
+            }}
+          />
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="stroke_self_target"
+            style={{
+              width: 8,
+              height: 8,
+              background: colors['fg-tertiary'],
+              border: `2px solid ${colors['bg-primary']}`,
+              top: '65%',
+              opacity: 0,
+              pointerEvents: 'none',
+            }}
+          />
           <Handle
             type="source"
             position={Position.Bottom}

@@ -185,7 +185,9 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const filteredNodes = availableNodes.filter(
     (node) =>
       // Only include STEP type nodes
-      node.data.type === 'STEP' &&
+      (node.data.type === 'STEP' ||
+        node.data.type === 'DELAY' ||
+        node.data.type === 'PATH') &&
       ((typeof node.data.label === 'string' &&
         node.data.label.toLowerCase().includes(searchTerm.toLowerCase())) ||
         `Block ${node.data.position}`
@@ -292,12 +294,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     switch (type) {
       case 'STEP':
         return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-commit.svg`;
-      case 'DECISION':
-        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/decision-icon.svg`;
-      case 'START':
-        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/start-icon.svg`;
-      case 'END':
-        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/stop-circle.svg`;
+      case 'PATH':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`;
+      case 'DELAY':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`;
       default:
         return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/default-icon.svg`;
     }
