@@ -145,11 +145,35 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
   const handleDropdownToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!showDropdown) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setDropdownPosition({
-        x: rect.right - 170,
-        y: rect.bottom + 4,
-      });
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const dropdownWidth = 170; // px
+      const dropdownHeight = 280; // px, estimate for dropdown height
+      const offset = 4; // px
+
+      let x = rect.right - 30;
+      // Default: show below
+      let y = rect.bottom + offset;
+
+      // Clamp to right edge
+      if (x + dropdownWidth > window.innerWidth - 8) {
+        x = window.innerWidth - dropdownWidth - 8;
+      }
+      // Clamp to left edge
+      if (x < 8) {
+        x = 8;
+      }
+
+      // If not enough space below, flip above
+      if (y + dropdownHeight > window.innerHeight - 8) {
+        // Try to show above the trigger
+        y = rect.top - dropdownHeight / 1.5 - offset;
+        // If still offscreen, clamp to top
+        if (y < 8) y = window.innerHeight - dropdownHeight - 8;
+        // If dropdown is taller than viewport, stick to top
+        if (y < 8) y = 8;
+      }
+
+      setDropdownPosition({ x, y });
     }
     setShowDropdown(!showDropdown);
   };
@@ -551,7 +575,7 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
         </div>
       )}
       <div
-        className={`w-[531px] relative ${
+        className={`w-[481px] relative ${
           isConnectMode &&
           id !== connectData?.sourceNode?.id &&
           id !== connectData?.targetNode?.id
@@ -634,13 +658,19 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
           }}
         />
         <div
-          className="p-4 rounded-xl border-2 flex flex-col gap-4"
+          className="rounded-lg border-2 flex flex-col"
           style={{
             backgroundColor: colors['bg-primary'],
             borderColor: colors['border-secondary'],
           }}
         >
-          <div className="flex items-center justify-between">
+          {/* Header with separator */}
+          <div 
+            className="p-[17px] flex items-center justify-between"
+            style={{
+              borderBottom: `1px solid ${colors['border-secondary']}`
+            }}
+          >
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
@@ -654,12 +684,14 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
                   className="w-6 h-6"
                 />
               </div>
-              <span
-                className="text-sm font-medium"
-                style={{ color: colors['text-primary'] }}
-              >
-                Event-Based Delay
-              </span>
+              <div className="flex flex-col gap-0.5">
+                <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+                  Delay
+                </div>
+                <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+                  Event-Based Delay
+                </div>
+              </div>
             </div>
             <button
               className="p-1 rounded-md hover:bg-[var(--hover-bg)] transition-all duration-300"
@@ -673,59 +705,64 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
                 alt="Menu"
-                className="w-4 h-4"
+                className="w-5 h-5"
               />
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span
-              className="text-sm"
-              style={{ color: colors['text-secondary'] }}
-            >
-              Waiting for:
-            </span>
-            <span
-              className="text-sm font-medium"
-              style={{ color: colors['text-primary'] }}
-            >
-              {block.delay_event}
-            </span>
-          </div>
+          {/* Content section */}
+          <div className="p-[17px] flex flex-col gap-[13.7px]">
+            {block.delay_event && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-sm"
+                  style={{ color: colors['text-secondary'] }}
+                >
+                  Waiting for:
+                </span>
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  {block.delay_event}
+                </span>
+              </div>
+            )}
 
-          {block.delay_seconds && (
-            <div className="flex items-center gap-2">
+            {(block.delay_seconds ?? 0) > 0 && (
+              <div className="flex items-center gap-2">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
+                  alt="Clock"
+                  className="w-4 h-4"
+                />
+                <span
+                  className="text-sm"
+                  style={{ color: colors['text-secondary'] }}
+                >
+                  Expires after {expirationText()}
+                </span>
+              </div>
+            )}
+
+            <div
+              className="flex items-center gap-2 p-3 rounded-lg bg-opacity-5"
+              style={{ backgroundColor: colors['bg-secondary'] }}
+            >
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
-                alt="Clock"
-                className="w-4 h-4"
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
+                alt="Info"
+                className="w-5 h-5"
               />
               <span
-                className="text-sm"
+                className="text-sm whitespace-nowrap"
                 style={{ color: colors['text-secondary'] }}
               >
-                Expires after {expirationText()}
+                {(block.delay_seconds ?? 0) > 0
+                  ? 'Flow paused until event occurs or time expires'
+                  : 'Flow paused until event occurs'}
               </span>
             </div>
-          )}
-
-          <div
-            className="flex items-center gap-2 p-3 mt-auto rounded-lg bg-opacity-5"
-            style={{ backgroundColor: colors['bg-secondary'] }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/pause-circle.svg`}
-              alt="Info"
-              className="w-5 h-5"
-            />
-            <span
-              className="text-sm whitespace-nowrap"
-              style={{ color: colors['text-secondary'] }}
-            >
-              {block.delay_seconds
-                ? 'Flow paused until event occurs or time expires'
-                : 'Flow paused until event occurs'}
-            </span>
           </div>
         </div>
         <Handle

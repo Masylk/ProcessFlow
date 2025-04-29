@@ -310,7 +310,7 @@ export default function Sidebar({
             className="self-stretch px-3 py-2.5 cursor-pointer rounded-md flex justify-between items-center overflow-hidden transition-colors"
             data-testid="workspace-switcher"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               <div className="relative w-8 h-8">
                 {activeWorkspace.icon_url && (
                   <img
@@ -338,9 +338,19 @@ export default function Sidebar({
               <div className="relative flex flex-col px-0.5 min-w-0 flex-1">
                 <div
                   style={{ color: colors['text-primary'] }}
-                  className="text-sm font-medium font-['Inter'] leading-tight truncate"
+                  className="text-sm font-medium font-['Inter'] leading-tight flex items-center justify-between gap-2 min-w-0"
                 >
-                  {activeWorkspace.name}
+                  <span className="truncate min-w-0">{activeWorkspace.name}</span>
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-selector-vertical.svg`}
+                    alt="Open workspace menu"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5 flex-shrink-0"
+                    style={{
+                      filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}`,
+                    }}
+                  />
                 </div>
               </div>
               {dropdownVisible && (

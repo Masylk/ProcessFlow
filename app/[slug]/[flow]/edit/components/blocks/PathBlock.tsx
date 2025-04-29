@@ -52,6 +52,44 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
       name: cp.path.name,
     })) || [];
 
+  // Add URL regex constant
+  const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+  // Add parseTextWithLinks function
+  const parseTextWithLinks = (text: string) => {
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = URL_REGEX.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          content: text.slice(lastIndex, match.index),
+        });
+      }
+
+      // Add the link
+      parts.push({
+        type: 'link',
+        content: match[0],
+      });
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text after last link
+    if (lastIndex < text.length) {
+      parts.push({
+        type: 'text',
+        content: text.slice(lastIndex),
+      });
+    }
+
+    return parts.length > 0 ? parts : [{ type: 'text', content: text }];
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowModal(true);
@@ -183,31 +221,36 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
     e.stopPropagation();
     if (!showDropdown) {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const dropdownWidth = 180; // px, matches minWidth below
-      const dropdownHeight = 120; // px, estimate for 2 options
-      const offset = 6; // px, gap below the button
+      const dropdownWidth = 170; // px
+      const dropdownHeight = 280; // px, estimate for dropdown height
+      const offset = 4; // px
 
       let x = rect.right - 30;
+      // Default: show below
       let y = rect.bottom + offset;
 
-      // // Clamp to right edge
-      // if (x + dropdownWidth > window.innerWidth - 8) {
-      //   x = window.innerWidth - dropdownWidth - 8;
-      // }
-      // // Clamp to left edge
-      // if (x < 8) {
-      //   x = 8;
-      // }
+      // Clamp to right edge
+      if (x + dropdownWidth > window.innerWidth - 8) {
+        x = window.innerWidth - dropdownWidth - 8;
+      }
+      // Clamp to left edge
+      if (x < 8) {
+        x = 8;
+      }
 
-      // // If not enough space below, flip above
-      // if (y + dropdownHeight > window.innerHeight - 8) {
-      //   y = rect.top - dropdownHeight - offset;
-      //   if (y < 8) y = 8;
-      // }
+      // If not enough space below, flip above
+      if (y + dropdownHeight > window.innerHeight - 8) {
+        // Try to show above the trigger
+        y = rect.top - dropdownHeight / 1.5 - offset;
+        // If still offscreen, clamp to top
+        if (y < 8) y = window.innerHeight - dropdownHeight - 8;
+        // If dropdown is taller than viewport, stick to top
+        if (y < 8) y = 8;
+      }
 
       setDropdownPosition({ x, y });
     }
-    setShowDropdown((prev) => !prev);
+    setShowDropdown(!showDropdown);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -477,10 +520,11 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
         }`}
       >
         <div
-          className="transition-all duration-300 relative rounded-[8px] bg-white shadow-sm overflow-hidden"
+          className="transition-all duration-300 relative rounded-lg bg-white shadow-sm overflow-hidden min-w-[481px] max-w-[481px]"
           style={{
-            width: '481px',
-            height: '200px',
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            borderColor: showModal ? colors['border-brand_alt'] : colors['border-secondary'],
           }}
         >
           <Handle
@@ -497,48 +541,71 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
             }}
           />
 
-          {/* Header - Blue background */}
-          <div className="bg-[#4761C4] p-[17px] flex items-center justify-between">
+          {/* Header - Condition styling */}
+          <div 
+            className="p-[17px] flex items-center justify-between"
+            style={{
+              borderBottom: data.block.description ? `1px solid ${colors['border-secondary']}` : 'none'
+            }}
+          >
             {/* Icon section */}
-            <div className="flex items-center gap-[13.7px]">
-              <div className="flex items-center">
-                <div className="w-[46px] h-[46px] rounded-[11.6px] flex items-center justify-center bg-[#4761C4]">
-                  {data.block.icon ? (
-                    data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
-                      <img
-                        src={data.block.icon}
-                        alt="Block Icon"
-                        className="w-[27px] h-[27px]"
-                        referrerPolicy="strict-origin-when-cross-origin"
-                      />
-                    ) : (
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${data.block.icon}`}
-                        alt="Block Icon"
-                        className="w-[27px] h-[27px]"
-                      />
-                    )
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 bg-white"
+                style={{
+                  border: `1px solid ${colors['border-secondary']}`,
+                }}
+              >
+                {data.block.icon ? (
+                  data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                    <img
+                      src={data.block.icon}
+                      alt="Block Icon"
+                      className="w-6 h-6"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
                   ) : (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
-                      alt="Default Icon"
-                      className="w-[27px] h-[27px]"
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${data.block.icon}`}
+                      alt="Block Icon"
+                      className="w-6 h-6"
                     />
-                  )}
-                </div>
+                  )
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
+                    alt="Default Icon"
+                    className="w-6 h-6"
+                  />
+                )}
               </div>
-              <div className="text-[13.7px] font-semibold text-white leading-[1.5]">
-                {data.block.title || 'Ticket Triage'}
+              <div className="flex flex-col gap-0.5">
+                <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+                  Condition
+                </div>
+                <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+                  {data.block.title || 'Untitled Condition'}
+                </div>
               </div>
             </div>
             {/* Dropdown toggle button with hover effect */}
             <button
-              className="w-[34px] h-[34px] rounded-[3.4px] flex items-center justify-center transition-colors duration-200 hover:bg-[rgba(255,255,255,0.1)]"
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
               onClick={handleDropdownToggle}
               type="button"
             >
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-white.svg`}
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
                 alt="Menu"
                 className="w-5 h-5"
               />
@@ -661,14 +728,41 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
               document.body
             )}
 
-          {/* Content - White background */}
-          <div className="bg-white p-[17px] flex flex-col gap-[13.7px]">
-            <div className="flex flex-col gap-[6.9px]">
-              <div className="text-[12px] text-[#667085] leading-[1.43] whitespace-pre-line">
-                {data.block.description || ''}
-              </div>
+          {/* Content section - only render if there's content */}
+          {data.block.description && (
+            <div className="p-[17px] flex flex-col gap-[13.7px]">
+              <p
+                className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
+                style={{ color: colors['fg-tertiary'] }}
+              >
+                {parseTextWithLinks(data.block.description).map(
+                  (segment: { type: string; content: string }, index: number) =>
+                    segment.type === 'link' ? (
+                      <a
+                        key={index}
+                        href={segment.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.open(
+                            segment.content,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
+                        }}
+                      >
+                        {segment.content}
+                      </a>
+                    ) : (
+                      <span key={index}>{segment.content}</span>
+                    )
+                )}
+              </p>
             </div>
-          </div>
+          )}
           <Handle
             type="source"
             position={Position.Left}

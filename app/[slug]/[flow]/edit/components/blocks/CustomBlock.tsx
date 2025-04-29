@@ -922,7 +922,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       )}
 
       <div
-        className={`relative rounded-xl
+        className={`relative rounded-lg
         ${isHighlighted ? 'bg-blue-50' : `bg-[${colors['bg-primary']}]`} 
         transition-all duration-300 min-w-[481px] max-w-[481px]
         ${
@@ -1013,133 +1013,145 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
           }}
         />
 
-        <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{
-                  border: `1px solid ${colors['border-secondary']}`,
-                }}
-              >
-                {blockData.icon ? (
-                  blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
-                    <img
-                      src={blockData.icon}
-                      alt="Block Icon"
-                      className="w-6 h-6"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                    />
-                  ) : (
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                      alt="Block Icon"
-                      className="w-6 h-6"
-                    />
-                  )
-                ) : (
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
-                    alt="Default Icon"
-                    className="w-6 h-6"
-                  />
-                )}
-              </div>
-              <h3
-                className="text-sm font-medium"
-                style={{ color: colors['fg-primary'] }}
-              >
-                {blockData.title || 'Untitled Block'}
-              </h3>
-            </div>
-            {data.block.id >= 0 && (
-              <button
-                onClick={handleDropdownToggle}
-                className="p-1 rounded-md transition-colors hover:bg-opacity-80"
-                style={{
-                  color: colors['fg-tertiary'],
-                  backgroundColor: 'transparent',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    colors['bg-secondary'];
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
-                  alt="Menu"
-                  className="w-4 h-4"
-                />
-              </button>
-            )}
-          </div>
-
-          {blockData.description && (
-            <p
-              className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
-              style={{ color: colors['fg-tertiary'] }}
-            >
-              {parseTextWithLinks(blockData.description).map(
-                (segment, index) =>
-                  segment.type === 'link' ? (
-                    <a
-                      key={index}
-                      href={segment.content}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        window.open(
-                          segment.content,
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-                      }}
-                    >
-                      {segment.content}
-                    </a>
-                  ) : (
-                    <span key={index}>{segment.content}</span>
-                  )
-              )}
-            </p>
-          )}
-
-          {/* Image with signed URL */}
-          {signedImageUrl && (
+        {/* Header section with separator */}
+        <div 
+          className="p-[17px] flex items-center justify-between"
+          style={{
+            borderBottom: blockData.description || signedImageUrl || blockData.average_time ? 
+              `1px solid ${colors['border-secondary']}` : 'none'
+          }}
+        >
+          <div className="flex items-center gap-3">
             <div
-              className="rounded-md overflow-hidden h-[267px] w-full"
-              style={{ backgroundColor: colors['bg-secondary'] }}
-            >
-              <img
-                src={signedImageUrl}
-                alt="Block Media"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
-
-          {/* Average time - only show if defined */}
-          {blockData.average_time && (
-            <span
-              className="flex w-fit px-3 py-1 rounded-full text-xs"
+              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
               style={{
-                backgroundColor: colors['bg-secondary'],
-                borderWidth: '1px',
-                borderStyle: 'solid',
-                borderColor: colors['border-secondary'],
-                color: colors['fg-tertiary'],
+                border: `1px solid ${colors['border-secondary']}`,
               }}
             >
-              {blockData.average_time} min
-            </span>
+              {blockData.icon ? (
+                blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                  <img
+                    src={blockData.icon}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                ) : (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                  />
+                )
+              ) : (
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
+                  alt="Default Icon"
+                  className="w-6 h-6"
+                />
+              )}
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+                Step
+              </div>
+              <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+                {blockData.title || 'Untitled Block'}
+              </div>
+            </div>
+          </div>
+          {data.block.id >= 0 && (
+            <button
+              onClick={handleDropdownToggle}
+              className="p-1 rounded-md transition-colors hover:bg-opacity-80"
+              style={{
+                color: colors['fg-tertiary'],
+                backgroundColor: 'transparent',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  colors['bg-secondary'];
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
+                alt="Menu"
+                className="w-5 h-5"
+              />
+            </button>
           )}
         </div>
+
+        {/* Content section - only render if there's content */}
+        {(blockData.description || signedImageUrl || blockData.average_time) && (
+          <div className="p-[17px] flex flex-col gap-[13.7px]">
+            {blockData.description && (
+              <p
+                className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
+                style={{ color: colors['fg-tertiary'] }}
+              >
+                {parseTextWithLinks(blockData.description).map(
+                  (segment, index) =>
+                    segment.type === 'link' ? (
+                      <a
+                        key={index}
+                        href={segment.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.open(
+                            segment.content,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
+                        }}
+                      >
+                        {segment.content}
+                      </a>
+                    ) : (
+                      <span key={index}>{segment.content}</span>
+                    )
+                )}
+              </p>
+            )}
+
+            {/* Image with signed URL */}
+            {signedImageUrl && (
+              <div
+                className="rounded-md overflow-hidden h-[267px] w-full"
+                style={{ backgroundColor: colors['bg-secondary'] }}
+              >
+                <img
+                  src={signedImageUrl}
+                  alt="Block Media"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+
+            {/* Average time - only show if defined */}
+            {blockData.average_time && (
+              <span
+                className="flex w-fit px-3 py-1 rounded-full text-xs"
+                style={{
+                  backgroundColor: colors['bg-secondary'],
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: colors['border-secondary'],
+                  color: colors['fg-tertiary'],
+                }}
+              >
+                {blockData.average_time} min
+              </span>
+            )}
+          </div>
+        )}
 
         {showCheckbox && (
           <div className="absolute -top-8 left-0 flex items-center gap-2">

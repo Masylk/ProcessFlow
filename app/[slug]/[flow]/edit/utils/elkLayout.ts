@@ -26,8 +26,8 @@ export async function createElkLayout(nodes: Node[], edges: Edge[]) {
             node.type === 'path' ? 481 :
             node.type === 'end' ? 290 :
             node.type === 'merge' ? 12 :
-            node.type === 'eventDelay' ? 531 :
-            node.type === 'fixedDelay' ? 382 :
+            node.type === 'eventDelay' ? 481 :
+            node.type === 'fixedDelay' ? 481 :
             481,
     height: node.type === 'begin' ? 
              (((node.data as NodeData)?.path?.parent_blocks?.length ?? 0) > 1 ? 12 : 50) :
