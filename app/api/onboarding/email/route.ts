@@ -192,43 +192,6 @@ async function scheduleOnboardingEmails(userId: number, firstName: string, email
   }
 }
 
-// Add a new function to create a temporary workspace WITHOUT workflow creation
-async function createTempWorkspace(userId: number, firstName: string, lastName: string): Promise<{ workspaceId: number }> {
-  try {
-    // Create a temporary workspace for the user
-    const tempWorkspaceName = `${firstName}'s Workspace (Temp)`;
-    
-    const tempWorkspace = await prisma.workspace.create({
-      data: {
-        name: tempWorkspaceName,
-        team_tags: [],
-        user_workspaces: {
-          create: {
-            user_id: userId,
-            role: 'ADMIN'
-          }
-        }
-      }
-    });
-
-    // Start creating the default workflow in the background using the util
-    await createDefaultWorkflow({
-      workspaceId: tempWorkspace.id,
-      userId
-    }).catch(error => {
-      console.error('Error initiating default workflow creation:', error);
-      Sentry.captureException(error);
-      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
-    });
-
-    return { workspaceId: tempWorkspace.id };
-  } catch (error) {
-    console.error('Error creating default workflow:', error);
-    Sentry.captureException(error);
-    return { workspaceId: 0 };
-  }
-}
-
 // Add a helper function at the top level to update an existing workspace
 async function updateExistingWorkspace(
   workspaceId: number, 

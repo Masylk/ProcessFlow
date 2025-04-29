@@ -12,41 +12,6 @@ const posthog = new PostHog(
   }
 );
 
-// Update function to only create a workspace without workflow
-async function createTempWorkspaceForGoogle(userId: number, firstName: string, lastName: string): Promise<number | null> {
-  try {
-    // Create a temporary workspace for the user
-    const tempWorkspace = await prisma.workspace.create({
-      data: {
-        name: `${firstName}'s Workspace (Temp)`,
-        team_tags: [],
-        user_workspaces: {
-          create: {
-            user_id: userId,
-            role: 'ADMIN'
-          }
-        }
-      }
-    });
-
-    // Start creating the default workflow in the background using the util
-    createDefaultWorkflow({
-      workspaceId: tempWorkspace.id,
-      userId
-    }).catch(error => {
-      console.error('Error initiating default workflow creation:', error);
-      Sentry.captureException(error);
-      // Non-blocking error handling - the workflow will be created when onboarding completes if this fails
-    });
-
-    return tempWorkspace.id;
-  } catch (error) {
-    console.error('Error creating temp workspace for Google user:', error);
-    Sentry.captureException(error);
-    return null;
-  }
-}
-
 export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);

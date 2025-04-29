@@ -288,15 +288,17 @@ const DelayTypeModal: React.FC<DelayTypeModalProps> = ({
               {/* Dropdown menu */}
               {isDropdownOpen && (
                 <div 
-                  className={`absolute left-0 right-0 rounded-lg shadow-lg max-h-[200px] overflow-y-auto z-10 transition-all duration-200 ease-in-out border py-1 ${
-                    dropdownPosition === 'top' 
-                      ? 'bottom-[calc(100%_+_5px)]' 
-                      : 'top-[calc(100%_+_5px)]'
-                  }`}
+                  className="fixed rounded-lg shadow-lg max-h-[200px] overflow-y-auto transition-all duration-200 ease-in-out border py-1"
                   style={{ 
                     backgroundColor: colors['bg-secondary'],
                     borderColor: colors['border-secondary'],
                     animation: 'fadeIn 0.2s ease-out',
+                    zIndex: 99999,
+                    width: dropdownRef.current?.offsetWidth || 'auto',
+                    left: dropdownRef.current?.getBoundingClientRect().left || 0,
+                    top: dropdownPosition === 'top' 
+                      ? (dropdownRef.current?.getBoundingClientRect().top || 0) - 10 - (dropdownRef.current?.offsetHeight || 0)
+                      : (dropdownRef.current?.getBoundingClientRect().bottom || 0) + 10
                   }}
                 >
                   {/* Fixed Duration Option */}

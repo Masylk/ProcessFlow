@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BaseStepProps } from './BaseStep';
 import Image from 'next/image';
 import { DelayType } from '../../../types';
@@ -11,7 +11,16 @@ export default function VerticalDelay({
   isActive = false,
   className,
   isLastStep = false,
-}: BaseStepProps) {
+  selectedOptionIds,
+  onOptionSelect,
+}: BaseStepProps & {
+  selectedOptionIds?: [number, number][];
+  onOptionSelect?: (
+    optionId: number,
+    blockId: number,
+    isMerge?: boolean
+  ) => void;
+}) {
   const colors = useColors();
 
   const slideUpVariants = {
@@ -20,7 +29,9 @@ export default function VerticalDelay({
   };
 
   const getDelayTitle = () => {
-    return block.delay_type === DelayType.WAIT_FOR_EVENT ? 'Event-Based Delay' : 'Fixed Duration';
+    return block.delay_type === DelayType.WAIT_FOR_EVENT
+      ? 'Event-Based Delay'
+      : 'Fixed Duration';
   };
 
   const getDelayIcon = () => {
@@ -42,10 +53,19 @@ export default function VerticalDelay({
       const parts = [];
       if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
       if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
-      if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+      if (minutes > 0)
+        parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
 
       return parts.length > 0 ? parts.join(' and ') : '';
     }
+  };
+
+  const handleOptionSelect = (
+    optionId: number,
+    blockId: number,
+    isMerge?: boolean
+  ) => {
+    onOptionSelect?.(optionId, blockId, isMerge);
   };
 
   if (block.delay_type === DelayType.FIXED_DURATION) {
@@ -113,10 +133,106 @@ export default function VerticalDelay({
                 width={20}
                 height={20}
               />
-              <span className="text-sm whitespace-pre-line" style={{ color: colors['text-secondary'] }}>
+              <span
+                className="text-sm whitespace-pre-line"
+                style={{ color: colors['text-secondary'] }}
+              >
                 Flow paused for {getDelayText()}
               </span>
             </div>
+
+            {block.child_paths && block.child_paths.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
+                className="mt-4"
+              >
+                <p
+                  className="text-sm font-medium mb-4"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  Select an option
+                </p>
+                <div className="space-y-2">
+                  {block.child_paths.map((option, index) => (
+                    <motion.button
+                      key={option.path.id}
+                      onClick={() =>
+                        handleOptionSelect(option.path.id, block.id, false)
+                      }
+                      className={cn(
+                        'w-full p-4 rounded-lg border transition-colors duration-200 will-change-transform',
+                        'flex items-start gap-3 text-left',
+                        selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        ) && 'border-brand'
+                      )}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.2,
+                        delay: 0.1 + index * 0.05,
+                      }}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      style={{
+                        backgroundColor: colors['bg-primary'],
+                        borderColor: selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        )
+                          ? colors['border-brand']
+                          : colors['border-secondary'],
+                        transform: 'translateZ(0)',
+                      }}
+                    >
+                      <div
+                        className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                        style={{
+                          borderColor: selectedOptionIds?.some(
+                            ([pathId, blockId]) =>
+                              pathId === option.path.id && blockId === block.id
+                          )
+                            ? colors['border-brand']
+                            : colors['border-secondary'],
+                          backgroundColor: selectedOptionIds?.some(
+                            ([pathId, blockId]) =>
+                              pathId === option.path.id && blockId === block.id
+                          )
+                            ? colors['bg-brand-solid']
+                            : 'transparent',
+                        }}
+                      >
+                        <AnimatePresence>
+                          {selectedOptionIds?.some(
+                            ([pathId, blockId]) =>
+                              pathId === option.path.id && blockId === block.id
+                          ) && (
+                            <motion.div
+                              className="w-2 h-2 bg-white rounded-full"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              transition={{ duration: 0.2 }}
+                            />
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <p
+                          className="font-normal text-sm"
+                          style={{ color: colors['text-primary'] }}
+                        >
+                          {option.path.name}
+                        </p>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
         {!isLastStep && (
@@ -188,10 +304,16 @@ export default function VerticalDelay({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+              <span
+                className="text-sm"
+                style={{ color: colors['text-secondary'] }}
+              >
                 Waiting for:
               </span>
-              <span className="text-sm whitespace-pre-line" style={{ color: colors['text-primary'] }}>
+              <span
+                className="text-sm whitespace-pre-line"
+                style={{ color: colors['text-primary'] }}
+              >
                 {block.delay_event}
               </span>
             </div>
@@ -204,7 +326,10 @@ export default function VerticalDelay({
                   width={16}
                   height={16}
                 />
-                <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+                <span
+                  className="text-sm"
+                  style={{ color: colors['text-secondary'] }}
+                >
                   Expires after {getDelayText()}
                 </span>
               </div>
@@ -221,10 +346,108 @@ export default function VerticalDelay({
               width={20}
               height={20}
             />
-            <span className="text-sm whitespace-pre-line" style={{ color: colors['text-secondary'] }}>
-              {block.delay_seconds ? "Flow paused until event occurs or time expires" : "Flow paused until event occurs"}
+            <span
+              className="text-sm whitespace-pre-line"
+              style={{ color: colors['text-secondary'] }}
+            >
+              {block.delay_seconds
+                ? 'Flow paused until event occurs or time expires'
+                : 'Flow paused until event occurs'}
             </span>
           </div>
+
+          {block.child_paths && block.child_paths.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+              className="mt-4"
+            >
+              <p
+                className="text-sm font-medium mb-4"
+                style={{ color: colors['text-primary'] }}
+              >
+                Select an option
+              </p>
+              <div className="space-y-2">
+                {block.child_paths.map((option, index) => (
+                  <motion.button
+                    key={option.path.id}
+                    onClick={() =>
+                      handleOptionSelect(option.path.id, block.id, false)
+                    }
+                    className={cn(
+                      'w-full p-4 rounded-lg border transition-colors duration-200 will-change-transform',
+                      'flex items-start gap-3 text-left',
+                      selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      ) && 'border-brand'
+                    )}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.2,
+                      delay: 0.1 + index * 0.05,
+                    }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    style={{
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      )
+                        ? colors['border-brand']
+                        : colors['border-secondary'],
+                      transform: 'translateZ(0)',
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        borderColor: selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        )
+                          ? colors['border-brand']
+                          : colors['border-secondary'],
+                        backgroundColor: selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        )
+                          ? colors['bg-brand-solid']
+                          : 'transparent',
+                      }}
+                    >
+                      <AnimatePresence>
+                        {selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        ) && (
+                          <motion.div
+                            className="w-2 h-2 bg-white rounded-full"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p
+                        className="font-normal text-sm"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        {option.path.name}
+                      </p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </motion.div>
       {!isLastStep && (

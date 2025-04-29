@@ -19,33 +19,33 @@ const parseTextWithLinks = (text: string) => {
   const parts = [];
   let lastIndex = 0;
   let match;
-  
+
   while ((match = URL_REGEX.exec(text)) !== null) {
     // Add text before the link
     if (match.index > lastIndex) {
       parts.push({
         type: 'text',
-        content: text.slice(lastIndex, match.index)
+        content: text.slice(lastIndex, match.index),
       });
     }
-    
+
     // Add the link
     parts.push({
       type: 'link',
-      content: match[0]
+      content: match[0],
     });
-    
+
     lastIndex = match.index + match[0].length;
   }
-  
+
   // Add remaining text after last link
   if (lastIndex < text.length) {
     parts.push({
       type: 'text',
-      content: text.slice(lastIndex)
+      content: text.slice(lastIndex),
     });
   }
-  
+
   return parts.length > 0 ? parts : [{ type: 'text', content: text }];
 };
 
@@ -238,15 +238,20 @@ export default function HorizontalStep({
   const scrollbarWidth = getScrollbarWidth();
 
   const getIconPath = (block: Block) => {
-    if (block.type === 'PATH') {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-branch-icon.svg`;
-    }
-
     if (block.icon) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
     }
 
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    switch (block.type) {
+      case 'STEP':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/git-commit.svg`;
+      case 'PATH':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`;
+      case 'DELAY':
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`;
+      default:
+        return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    }
   };
 
   const getDisplayTitle = (block: Block) => {
@@ -398,13 +403,38 @@ export default function HorizontalStep({
     e.stopPropagation();
     setIsImageFullscreen(!isImageFullscreen);
   };
-  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setZoomLevel((prev) => Math.min(prev + 0.1, 5)); };
-  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setZoomLevel((prev) => Math.max(prev - 0.1, 0.5)); };
-  const resetZoom = (e?: React.MouseEvent) => { if (e) e.stopPropagation(); setZoomLevel(1); setDragPosition({ x: 0, y: 0 }); };
-  const handleMouseDown = (e: React.MouseEvent) => { if (zoomLevel <= 1) return; e.preventDefault(); setIsDragging(true); };
-  const handleMouseMove = (e: React.MouseEvent) => { if (!isDragging || zoomLevel <= 1) return; setDragPosition((prev) => ({ x: prev.x + e.movementX, y: prev.y + e.movementY })); };
-  const handleMouseUp = () => { setIsDragging(false); };
-  const handleDoubleClick = (e: React.MouseEvent) => { e.stopPropagation(); resetZoom(); };
+  const zoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel((prev) => Math.min(prev + 0.1, 5));
+  };
+  const zoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
+  };
+  const resetZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoomLevel(1);
+    setDragPosition({ x: 0, y: 0 });
+  };
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoomLevel <= 1) return;
+    setDragPosition((prev) => ({
+      x: prev.x + e.movementX,
+      y: prev.y + e.movementY,
+    }));
+  };
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    resetZoom();
+  };
 
   return (
     <>
@@ -413,8 +443,7 @@ export default function HorizontalStep({
         ref={containerRef}
         className={cn(
           'h-full w-full overflow-hidden relative',
-          (block.type === 'PATH' || !block.image) &&
-            'flex flex-col items-center justify-center'
+          !block.image && 'flex flex-col items-center justify-center'
         )}
       >
         {/* Content Container - Main scrollable area */}
@@ -422,15 +451,15 @@ export default function HorizontalStep({
           ref={contentRef}
           className={cn(
             `h-full w-full overflow-y-auto hide-scrollbar ${getResponsivePadding()}`,
-            (block.type === 'PATH' || !block.image) &&
-              'flex flex-col items-center justify-center'
+            !block.image && 'flex flex-col items-center justify-center'
           )}
         >
           <div
             className={cn(
               'pb-16',
-              hasOnlyDescription && 'flex flex-col items-center justify-center h-full',
-              (block.type === 'PATH' || (!block.image && !block.child_paths)) &&
+              hasOnlyDescription &&
+                'flex flex-col items-center justify-center h-full w-full',
+              !block.image &&
                 'w-full pb-0 flex flex-col items-center justify-center'
             )}
           >
@@ -439,7 +468,7 @@ export default function HorizontalStep({
             {/* Fixed Header Section */}
             <div className="mb-4 sm:mb-5 md:mb-6">
               {/* Step Header */}
-              {block.type !== 'PATH' && (
+              {
                 <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
                   {/* App Icon */}
                   <div
@@ -450,7 +479,8 @@ export default function HorizontalStep({
                     }}
                   >
                     <div className="flex items-center justify-center">
-                      {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                      {block.icon &&
+                      block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                         <img
                           src={block.icon}
                           alt="Step Icon"
@@ -479,16 +509,18 @@ export default function HorizontalStep({
                     </div>
                   </div>
                 </div>
-              )}
+              }
 
               {/* Description */}
-              {block.type !== 'PATH' && (
-                <div className="relative">
+              {
+                <div className="relative w-full">
                   <p
                     className="text-base whitespace-pre-line"
                     style={{ color: colors['text-quaternary'] }}
                   >
-                    {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
+                    {parseTextWithLinks(
+                      block.step_details || block.description || ''
+                    ).map((segment, index) =>
                       segment.type === 'link' ? (
                         <a
                           key={index}
@@ -499,7 +531,11 @@ export default function HorizontalStep({
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            window.open(segment.content, '_blank', 'noopener,noreferrer');
+                            window.open(
+                              segment.content,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
                           }}
                         >
                           {segment.content}
@@ -507,17 +543,18 @@ export default function HorizontalStep({
                       ) : (
                         <span key={index}>{segment.content}</span>
                       )
-                    ))}
+                    )}
                   </p>
                 </div>
-              )}
+              }
             </div>
             {/* Content Section - Adapts to content type */}
             {!hasOnlyDescription && (
               <div className="h-full w-full space-y-4 sm:space-y-5 md:space-y-6 flex flex-col items-center justify-center">
                 {/* Image Section */}
                 {block.image && (
-                  <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
+                  <div
+                    className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
                     onClick={toggleFullscreen}
                     aria-label="View image fullscreen"
                     style={{ backgroundColor: colors['bg-secondary'] }}
@@ -681,25 +718,94 @@ export default function HorizontalStep({
             onClick={() => setIsImageFullscreen(false)}
             aria-label="Close fullscreen view"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           {/* Help tooltip */}
           <div className="absolute top-4 left-4 z-10 text-white font-normal text-sm bg-black/50 px-3 py-2 rounded-md">
-            <span className="hidden sm:inline">Use mouse wheel to zoom • Double-click to reset • {Math.round(zoomLevel * 100)}%</span>
+            <span className="hidden sm:inline">
+              Use mouse wheel to zoom • Double-click to reset •{' '}
+              {Math.round(zoomLevel * 100)}%
+            </span>
             <span className="sm:hidden">{Math.round(zoomLevel * 100)}%</span>
           </div>
           {/* Zoom controls */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/50 p-2 rounded-lg z-10">
-            <button onClick={zoomOut} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Zoom out">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={zoomOut}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom out"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12H19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-            <button onClick={resetZoom} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Reset zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 15L21 21M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={resetZoom}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Reset zoom"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 15L21 21M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-            <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Zoom in">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={zoomIn}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom in"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 5V19M5 12H19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
           {/* Image container with drag functionality */}

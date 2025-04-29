@@ -456,6 +456,9 @@ export function Flow({
   const setShowModal = useModalStore((state) => state.setShowModal);
 
   const handleCreateParallelPaths = async (data: {
+    conditionName: string;
+    conditionDescription?: string;
+    icon?: string;
     paths_to_create: string[];
     path_to_move: number;
   }) => {
@@ -474,20 +477,13 @@ export function Flow({
           {
             paths_to_create: data.paths_to_create,
             path_to_move: data.path_to_move,
+            pathblock_title: data.conditionName,
+            pathblock_description: data.conditionDescription,
+            pathblock_icon: data.icon,
           },
           setPaths
         );
         setIsModalOpen(false);
-        // setPaths(creationData.updatedPaths);
-        // console.log('HERE');
-        // Fetch updated paths data
-        // const pathsResponse = await fetch(
-        //   `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-        // );
-        // if (pathsResponse.ok) {
-        //   const pathsData = await pathsResponse.json();
-        //   setPaths(pathsData.paths);
-        // }
       }
     } catch (error) {
       console.error('Error creating parallel paths:', error);
