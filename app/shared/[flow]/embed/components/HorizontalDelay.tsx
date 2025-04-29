@@ -4,11 +4,31 @@ import { useColors } from '@/app/theme/hooks';
 import { BaseStepProps } from '@/app/[slug]/[flow]/read/components/steps/BaseStep';
 import Image from 'next/image';
 import { DelayType } from '@/app/[slug]/[flow]/types';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface HorizontalDelayProps extends BaseStepProps {}
+interface HorizontalDelayProps extends BaseStepProps {
+  selectedOptionIds?: [number, number][];
+  onOptionSelect?: (
+    optionId: number,
+    blockId: number,
+    isMerge?: boolean
+  ) => void;
+}
 
-export default function HorizontalDelay({ block }: HorizontalDelayProps) {
+export default function HorizontalDelay({
+  block,
+  selectedOptionIds,
+  onOptionSelect,
+}: HorizontalDelayProps) {
   const colors = useColors();
+
+  const handleOptionSelect = (
+    optionId: number,
+    blockId: number,
+    isMerge?: boolean
+  ) => {
+    onOptionSelect?.(optionId, blockId, isMerge);
+  };
 
   const getDelayText = () => {
     if (block.delay_type === DelayType.WAIT_FOR_EVENT) {
@@ -59,8 +79,8 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
 
   if (block.delay_type === DelayType.FIXED_DURATION) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="flex flex-col items-center text-center gap-6 max-w-2xl">
+      <div className="h-full flex items-center justify-center w-screen">
+        <div className="flex flex-col items-center text-center gap-6 w-screen">
           {/* Icon */}
           <div
             className="w-[5vw] h-[5vw] max-w-[72px] max-h-[72px] rounded-xl flex items-center justify-center"
@@ -69,7 +89,7 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
             }}
           >
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock.svg`}
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`}
               alt="Delay"
               className="w-[2.5vw] h-[2.5vw] max-w-[36px] max-h-[36px]"
             />
@@ -103,14 +123,108 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
               </span>
             )}
           </div>
+
+          {/* Select Option Section */}
+          {block.child_paths && block.child_paths.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+              className="mt-4 w-screen"
+            >
+              <p
+                className="text-sm font-medium mb-4 text-left"
+                style={{ color: colors['text-primary'] }}
+              >
+                Select an option
+              </p>
+              <div className="space-y-2 w-screen">
+                {block.child_paths.map((option, index) => (
+                  <motion.button
+                    key={option.path.id}
+                    onClick={() =>
+                      handleOptionSelect(option.path.id, block.id, false)
+                    }
+                    className={cn(
+                      'w-screen p-4 rounded-lg border transition-colors duration-200 will-change-transform',
+                      'flex items-start gap-3 text-left',
+                      selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      ) && 'border-brand'
+                    )}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.2,
+                      delay: 0.1 + index * 0.05,
+                    }}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    style={{
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      )
+                        ? colors['border-brand']
+                        : colors['border-secondary'],
+                      transform: 'translateZ(0)',
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        borderColor: selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        )
+                          ? colors['border-brand']
+                          : colors['border-secondary'],
+                        backgroundColor: selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        )
+                          ? colors['bg-brand-solid']
+                          : 'transparent',
+                      }}
+                    >
+                      <AnimatePresence>
+                        {selectedOptionIds?.some(
+                          ([pathId, blockId]) =>
+                            pathId === option.path.id && blockId === block.id
+                        ) && (
+                          <motion.div
+                            className="w-2 h-2 bg-white rounded-full"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p
+                        className="font-normal text-sm"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        {option.path.name}
+                      </p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4 h-full flex items-center justify-center">
-      <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 h-full items-center justify-center w-screen">
+      <div className="flex flex-col gap-6 w-screen">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-4">
             <div
@@ -187,6 +301,100 @@ export default function HorizontalDelay({ block }: HorizontalDelayProps) {
               : 'Flow paused until event occurs'}
           </span>
         </div>
+
+        {/* Select Option Section */}
+        {block.child_paths && block.child_paths.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className="mt-4 w-screen"
+          >
+            <p
+              className="text-sm font-medium mb-4 text-left"
+              style={{ color: colors['text-primary'] }}
+            >
+              Select an option
+            </p>
+            <div className="space-y-2 w-screen">
+              {block.child_paths.map((option, index) => (
+                <motion.button
+                  key={option.path.id}
+                  onClick={() =>
+                    handleOptionSelect(option.path.id, block.id, false)
+                  }
+                  className={cn(
+                    'w-screen p-4 rounded-lg border transition-colors duration-200 will-change-transform',
+                    'flex items-start gap-3 text-left',
+                    selectedOptionIds?.some(
+                      ([pathId, blockId]) =>
+                        pathId === option.path.id && blockId === block.id
+                    ) && 'border-brand'
+                  )}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: 0.1 + index * 0.05,
+                  }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  style={{
+                    backgroundColor: colors['bg-primary'],
+                    borderColor: selectedOptionIds?.some(
+                      ([pathId, blockId]) =>
+                        pathId === option.path.id && blockId === block.id
+                    )
+                      ? colors['border-brand']
+                      : colors['border-secondary'],
+                    transform: 'translateZ(0)',
+                  }}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                    style={{
+                      borderColor: selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      )
+                        ? colors['border-brand']
+                        : colors['border-secondary'],
+                      backgroundColor: selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      )
+                        ? colors['bg-brand-solid']
+                        : 'transparent',
+                    }}
+                  >
+                    <AnimatePresence>
+                      {selectedOptionIds?.some(
+                        ([pathId, blockId]) =>
+                          pathId === option.path.id && blockId === block.id
+                      ) && (
+                        <motion.div
+                          className="w-2 h-2 bg-white rounded-full"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.2 }}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p
+                      className="font-normal text-sm"
+                      style={{ color: colors['text-primary'] }}
+                    >
+                      {option.path.name}
+                    </p>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
