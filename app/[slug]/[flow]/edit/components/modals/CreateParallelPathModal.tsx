@@ -43,7 +43,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
 }) => {
   const [conditionName, setConditionName] = useState<string>("");
   const [conditionDescription, setConditionDescription] = useState<string>("");
-  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [icon, setIcon] = useState<string | undefined>(`step-icons/default-icons/dataflow.svg`);
   const [pathNames, setPathNames] = useState<string[]>([]);
   const [selectedPath, setSelectedPath] = useState<number>(0);
   const colors = useColors();
@@ -210,7 +210,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
                       variant="tertiary"
                       size="medium"
                       onClick={() => handleRemovePath(index)}
-                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
                     />
                   )}
                 </div>
@@ -220,7 +220,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               variant="secondary"
               size="small"
               onClick={handleAddPath}
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
             >
               Add new path
             </ButtonNormal>

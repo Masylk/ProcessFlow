@@ -42,7 +42,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   const [conditionDescription, setConditionDescription] = useState<string>(
     block.description || ''
   );
-  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [icon, setIcon] = useState<string | undefined>(block.icon || 'step-icons/default-icons/dataflow.svg');
   const [pathRows, setPathRows] = useState<PathRow[]>([]);
   const [removedPaths, setRemovedPaths] = useState<PathRow[]>([]);
 
@@ -184,7 +184,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
       <Modal
         title="Add Child Paths"
         onClose={onClose}
-        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-04.svg`}
+        icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
         iconBackgroundColor={colors['bg-secondary']}
         iconBorderColor={colors['border-light']}
         showHeaderSeparator={true}
