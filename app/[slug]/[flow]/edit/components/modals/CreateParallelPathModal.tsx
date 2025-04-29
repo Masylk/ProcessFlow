@@ -210,7 +210,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
                       variant="tertiary"
                       size="medium"
                       onClick={() => handleRemovePath(index)}
-                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
                     />
                   )}
                 </div>
