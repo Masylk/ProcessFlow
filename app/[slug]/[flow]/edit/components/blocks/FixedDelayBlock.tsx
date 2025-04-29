@@ -291,6 +291,14 @@ const FixedDelayBlock = (props: NodeProps & { data: NodeData }) => {
     setTriggerPathId(parentBlockId); // Set the triggering node's parent block ID
   };
 
+  // Add handleBlockClick function
+  const handleBlockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isConnectMode) {
+      setShowDelayModal(true);
+    }
+  };
+
   const renderDropdown = () => {
     if (!showDropdown) return null;
     return createPortal(
@@ -584,6 +592,7 @@ const FixedDelayBlock = (props: NodeProps & { data: NodeData }) => {
             ? 'opacity-40'
             : ''
         }`}
+        onClick={handleBlockClick}
       >
         {/* --- Checkbox UI --- */}
         {showCheckbox && (
