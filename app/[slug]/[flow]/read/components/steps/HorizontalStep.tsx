@@ -350,44 +350,39 @@ export default function HorizontalStep({
       <div
         ref={containerRef}
         className={cn(
-          'h-[472px] w-full',
+          'h-[472px] w-full overflow-hidden relative',
           (!block.image) &&
             'flex flex-col items-center justify-center'
         )}
       >
-        {/* Content Container - Main scrollable area */}
+        {/* Main scrollable container */}
         <div
           ref={contentRef}
           className={cn(
-            'h-full w-full overflow-y-auto px-5 pt-5',
-            (!block.image) &&
-              'flex flex-col items-center justify-center'
+            'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
+            hasOnlyDescription && 'flex items-center justify-center'
           )}
         >
-          <div
-            className={cn(
-              'w-full',
-              hasOnlyDescription && 'flex flex-col items-center justify-center h-full',
-              ((!block.image && !block.child_paths)) && 'w-full'
-                ? 'pb-0 flex flex-col items-center justify-center'
-                : 'pb-16'
-            )}
-          >
-            {/* Fixed Header Section */}
-            <div className="mb-6">
+          <div className={cn(
+            'w-full',
+            hasOnlyDescription ? 'flex flex-col items-center justify-center px-5' : ''
+          )}>
+            {/* Header Section */}
+            <div className={cn(
+              hasOnlyDescription ? '' : 'px-5 pt-5 pb-4'
+            )}>
               {/* Step Header */}
-              { (
-                <div className="flex items-center gap-4 mb-4">
-                  {/* App Icon */}
-                  <div
-                    className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-                    style={{
-                      backgroundColor: colors['bg-primary'],
-                      borderColor: colors['border-secondary'],
-                    }}
-                  >
-                    <div className="flex items-center justify-center">
-                      {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+              <div className="flex items-center gap-4 mb-4">
+                {/* App Icon */}
+                <div
+                  className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                  style={{
+                    backgroundColor: colors['bg-primary'],
+                    borderColor: colors['border-secondary'],
+                  }}
+                >
+                  <div className="flex items-center justify-center">
+                    {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                       <img
                         src={block.icon}
                         alt="Step Icon"
@@ -396,140 +391,126 @@ export default function HorizontalStep({
                       />
                     ) : (
                       <img
-                          src={getIconPath(block)}
-                          alt="Step Icon"
-                          className="w-6 h-6"
-                          onError={(e) => {
-                            e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                          }}
-                        />
-                      )}
-                  </div>
-                  </div>
-                  {/* Step Title */}
-                  <div className="flex-1">
-                    <div
-                      className="flex items-center text-base font-semibold"
-                      style={{ color: colors['text-primary'] }}
-                    >
-                      <span>{getDisplayTitle(block)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              {(
-                <div className="relative">
-                  <p
-                    className="text-base whitespace-pre-line"
-                    style={{ color: colors['text-quaternary'] }}
-                  >
-                    {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
-                      segment.type === 'link' ? (
-                        <a
-                          key={index}
-                          href={segment.content}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            window.open(segment.content, '_blank', 'noopener,noreferrer');
-                          }}
-                        >
-                          {segment.content}
-                        </a>
-                      ) : (
-                        <span key={index}>{segment.content}</span>
-                      )
-                    ))}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Content Section - Adapts to content type */}
-            {!hasOnlyDescription && (
-              <div className="space-y-6 w-full">
-                {/* Image Section */}
-                {block.image && (
-                  <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
-                    onClick={toggleFullscreen}
-                    aria-label="View image fullscreen"
-                    style={{ backgroundColor: colors['bg-secondary'] }}
-                  >
-                    {signedImageUrl && !imageError ? (
-                      <img
-                        src={signedImageUrl}
-                        alt="Step visualization"
-                        className="w-full h-[500px] object-contain"
-                        onLoad={() => setImageLoaded(true)}
-                        onError={() => setImageError(true)}
+                        src={getIconPath(block)}
+                        alt="Step Icon"
+                        className="w-6 h-6"
+                        onError={(e) => {
+                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                        }}
                       />
-                    ) : (
-                      <div
-                        className="w-full h-40 flex items-center justify-center"
-                        style={{ backgroundColor: colors['bg-secondary'] }}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full"
-                          style={{ backgroundColor: colors['bg-tertiary'] }}
-                        />
-                      </div>
                     )}
                   </div>
-                )}
+                </div>
+                {/* Step Title */}
+                <div className="flex-1">
+                  <div
+                    className="flex items-center text-base font-semibold"
+                    style={{ color: colors['text-primary'] }}
+                  >
+                    <span>{getDisplayTitle(block)}</span>
+                  </div>
+                </div>
+              </div>
 
-                {/* Options Section */}
-                {block.child_paths && block.child_paths.length > 0 && (
-                  <div className="w-full">
-                    <p
-                      className="text-sm font-medium mb-4"
-                      style={{ color: colors['text-primary'] }}
+              {/* Description */}
+              <div className="relative w-full">
+                <p
+                  className="text-base whitespace-pre-line break-words w-full"
+                  style={{ color: colors['text-quaternary'] }}
+                >
+                  {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
+                    segment.type === 'link' ? (
+                      <a
+                        key={index}
+                        href={segment.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline break-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.open(segment.content, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        {segment.content}
+                      </a>
+                    ) : (
+                      <span key={index}>{segment.content}</span>
+                    )
+                  ))}
+                </p>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            {!hasOnlyDescription && (
+              <div className="px-5 pb-16">
+                <div className="space-y-6 w-full">
+                  {/* Image Section */}
+                  {block.image && (
+                    <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
+                      onClick={toggleFullscreen}
+                      aria-label="View image fullscreen"
+                      style={{ backgroundColor: colors['bg-secondary'] }}
                     >
-                      Select an option
-                    </p>
-                    <div className="space-y-2">
-                      {block.child_paths.map((option, index) => (
-                        <div key={option.path.id} className="overflow-hidden">
-                          <motion.button
-                            onClick={() =>
-                              onOptionSelect?.(option.path.id, block.id, false)
-                            }
-                            className={cn(
-                              'w-full p-4 rounded-lg border transition-all duration-200',
-                              'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
-                              selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id &&
-                                  blockId === block.id
-                              ) && 'border-brand'
-                            )}
-                            initial={{ opacity: 0.4 }}
-                            animate={{
-                              opacity: 1,
-                              transition: {
-                                duration: 0.2,
-                                ease: 'easeOut',
-                                delay: index * 0.05,
-                              },
-                            }}
-                            style={{
-                              backgroundColor: colors['bg-primary'],
-                              borderColor: selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id &&
-                                  blockId === block.id
-                              )
-                                ? colors['border-brand']
-                                : colors['border-secondary'],
-                            }}
-                          >
-                            <div
-                              className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                      {signedImageUrl && !imageError ? (
+                        <img
+                          src={signedImageUrl}
+                          alt="Step visualization"
+                          className="w-full h-[500px] object-contain"
+                          onLoad={() => setImageLoaded(true)}
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-40 flex items-center justify-center"
+                          style={{ backgroundColor: colors['bg-secondary'] }}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full"
+                            style={{ backgroundColor: colors['bg-tertiary'] }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Options Section */}
+                  {block.child_paths && block.child_paths.length > 0 && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm font-medium mb-4"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        Select an option
+                      </p>
+                      <div className="space-y-2">
+                        {block.child_paths.map((option, index) => (
+                          <div key={option.path.id} className="overflow-hidden">
+                            <motion.button
+                              onClick={() =>
+                                onOptionSelect?.(option.path.id, block.id, false)
+                              }
+                              className={cn(
+                                'w-full p-4 rounded-lg border transition-all duration-200',
+                                'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
+                                selectedOptionIds?.some(
+                                  ([pathId, blockId]) =>
+                                    pathId === option.path.id &&
+                                    blockId === block.id
+                                ) && 'border-brand'
+                              )}
+                              initial={{ opacity: 0.4 }}
+                              animate={{
+                                opacity: 1,
+                                transition: {
+                                  duration: 0.2,
+                                  ease: 'easeOut',
+                                  delay: index * 0.05,
+                                },
+                              }}
                               style={{
+                                backgroundColor: colors['bg-primary'],
                                 borderColor: selectedOptionIds?.some(
                                   ([pathId, blockId]) =>
                                     pathId === option.path.id &&
@@ -537,45 +518,58 @@ export default function HorizontalStep({
                                 )
                                   ? colors['border-brand']
                                   : colors['border-secondary'],
-                                backgroundColor: selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                )
-                                  ? colors['bg-brand-solid']
-                                  : 'transparent',
                               }}
                             >
-                              <AnimatePresence>
-                                {selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                ) && (
-                                  <motion.div
-                                    className="w-2 h-2 bg-white rounded-full"
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    exit={{ scale: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                  />
-                                )}
-                              </AnimatePresence>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <p
-                                className="font-normal text-sm"
-                                style={{ color: colors['text-primary'] }}
+                              <div
+                                className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                                style={{
+                                  borderColor: selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  )
+                                    ? colors['border-brand']
+                                    : colors['border-secondary'],
+                                  backgroundColor: selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  )
+                                    ? colors['bg-brand-solid']
+                                    : 'transparent',
+                                }}
                               >
-                                {option.path.name}
-                              </p>
-                            </div>
-                          </motion.button>
-                        </div>
-                      ))}
+                                <AnimatePresence>
+                                  {selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  ) && (
+                                    <motion.div
+                                      className="w-2 h-2 bg-white rounded-full"
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      exit={{ scale: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    />
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <p
+                                  className="font-normal text-sm"
+                                  style={{ color: colors['text-primary'] }}
+                                >
+                                  {option.path.name}
+                                </p>
+                              </div>
+                            </motion.button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>

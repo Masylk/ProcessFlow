@@ -260,7 +260,7 @@ export default function HorizontalDelay({
               </span>
             </div>
 
-            {block.delay_seconds && (
+            {(block.delay_seconds ?? 0) > 0 && (
               <div className="flex items-center gap-2">
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
@@ -293,7 +293,7 @@ export default function HorizontalDelay({
             className={cn('text-sm')}
             style={{ color: colors['text-secondary'] }}
           >
-            {block.delay_seconds
+            {(block.delay_seconds ?? 0) > 0
               ? 'Flow paused until event occurs or time expires'
               : 'Flow paused until event occurs'}
           </span>
