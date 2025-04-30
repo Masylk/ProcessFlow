@@ -28,6 +28,20 @@ export default function VerticalDelay({
     visible: { opacity: 1, y: 0 },
   };
 
+  const expirationText = () => {
+    if (!block.delay_seconds) return '';
+    const days = Math.floor(block.delay_seconds / 86400);
+    const hours = Math.floor((block.delay_seconds % 86400) / 3600);
+    const minutes = Math.floor((block.delay_seconds % 3600) / 60);
+
+    const parts = [];
+    if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+
+    return parts.length > 0 ? `${parts.join(' and ')}` : '';
+  };
+
   const getDelayTitle = () => {
     return block.delay_type === DelayType.WAIT_FOR_EVENT
       ? 'Event-Based Delay'
@@ -303,37 +317,39 @@ export default function VerticalDelay({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
-              >
-                Waiting for:
-              </span>
-              <span
-                className="text-sm whitespace-pre-line"
-                style={{ color: colors['text-primary'] }}
-              >
-                {block.delay_event}
-              </span>
-            </div>
-
-            {block.delay_seconds && (
+            <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
-                  alt="Clock"
-                  width={16}
-                  height={16}
-                />
                 <span
                   className="text-sm"
                   style={{ color: colors['text-secondary'] }}
                 >
-                  Expires after {getDelayText()}
+                  Waiting for:
+                </span>
+                <span
+                  className="text-sm whitespace-pre-line"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  {block.delay_event}
                 </span>
               </div>
-            )}
+
+              {(block.delay_seconds ?? 0) > 0 && (
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/hourglass-01.svg`}
+                    alt="Clock"
+                    width={16}
+                    height={16}
+                  />
+                  <span
+                    className="text-sm"
+                    style={{ color: colors['text-secondary'] }}
+                  >
+                    Expires after {expirationText()}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div
@@ -350,7 +366,7 @@ export default function VerticalDelay({
               className="text-sm whitespace-pre-line"
               style={{ color: colors['text-secondary'] }}
             >
-              {block.delay_seconds
+              {(block.delay_seconds ?? 0) > 0
                 ? 'Flow paused until event occurs or time expires'
                 : 'Flow paused until event occurs'}
             </span>
