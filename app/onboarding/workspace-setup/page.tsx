@@ -415,254 +415,254 @@ export default function WorkspaceSetup() {
 
   return (
     <div
-      className="w-full min-h-screen flex justify-center items-center px-4 py-6"
+      className="w-full h-screen flex flex-col overflow-y-auto"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
       {isCreatingWorkflow && <LoadingScreen />}
 
-      <div className="w-full max-w-[1280px] flex-col justify-center items-center gap-8 sm:gap-12 md:gap-[72px] inline-flex">
-        {/* Logo Section - Responsive */}
-        <div className="w-[180px] sm:w-[200px] md:w-[240px] justify-start items-start inline-flex">
-          <div className="justify-end items-center gap-3 flex">
+      <div className="w-full flex-1 flex justify-center px-4 py-6">
+        <div className="w-full max-w-[1280px] flex flex-col items-center gap-8 sm:gap-12 md:gap-[72px]">
+          {/* Logo Section - Responsive */}
+          <div className="w-[140px] sm:w-[180px] md:w-[240px] flex items-center">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
               alt="Logo ProcessFlow"
               className="w-full"
             />
           </div>
-        </div>
 
-        {/* Progress indicator - Hide on very small screens */}
-        <div className="hidden sm:flex relative items-center w-64">
-          {/* First Step - Validated */}
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
-            alt="Validated step icon"
-            className="w-8 h-8"
-          />
-
-          {/* Progress Bar */}
-          <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
-
-          {/* Second Step - Validated */}
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
-            alt="Validated step icon"
-            className="w-8 h-8"
-          />
-
-          {/* Progress Bar */}
-          <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
-
-          {/* Third Step - Current Step */}
-          <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-[#edf0fb] rounded-full border-2 border-[#4761c4]">
-            <div className="flex items-center justify-center w-6 h-6 bg-[#4761c4] rounded-full">
-              <div className="w-2 h-2 bg-white rounded-full" />
-            </div>
-          </div>
-        </div>
-
-        {/* Form container - Responsive */}
-        <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex-col justify-start items-start gap-4 sm:gap-6 inline-flex">
-          <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
-            <div
-              className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose"
-              style={{ color: colors['text-primary'] }}
-            >
-              Welcome to ProcessFlow!
-            </div>
-            <div
-              className="self-stretch text-center text-sm sm:text-base font-normal font-['Inter'] leading-normal"
-              style={{ color: colors['text-secondary'] }}
-            >
-              You will still be able to modify your workspace later.
-            </div>
-          </div>
-
-          {/* Only show error if it's not related to slug availability */}
-          {error && !error.includes('workspace URL') && (
-            <div className="self-stretch text-center text-red-600 text-sm font-normal">
-              {error}
-            </div>
-          )}
-
-          <div className="w-full flex-col justify-start items-start gap-4 sm:gap-6 flex pt-4 sm:pt-6">
-            {/* Workspace Name Input */}
-            <InputField
-              label="Workspace Name"
-              required
-              type="default"
-              placeholder="Processflow"
-              value={workspaceName}
-              onChange={(value) => {
-                handleInputChange(
-                  { target: { value } } as React.ChangeEvent<HTMLInputElement>,
-                  setWorkspaceName
-                );
-              }}
-              disabled={isLoading}
-              destructive={!!error && !workspaceName}
-              errorMessage={
-                error && !workspaceName ? 'Workspace name is required' : ''
-              }
+          {/* Progress indicator - Hide on very small screens */}
+          <div className="hidden sm:flex relative items-center w-64">
+            {/* First Step - Validated */}
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
+              alt="Validated step icon"
+              className="w-8 h-8"
             />
 
-            {/* Workspace URL Input */}
-            <div className="w-full flex-col justify-start items-start gap-1.5 flex">
+            {/* Progress Bar */}
+            <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
+
+            {/* Second Step - Validated */}
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
+              alt="Validated step icon"
+              className="w-8 h-8"
+            />
+
+            {/* Progress Bar */}
+            <div className="flex-grow h-0.5 bg-[#4761c4] mx-2"></div>
+
+            {/* Third Step - Current Step */}
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-[#edf0fb] rounded-full border-2 border-[#4761c4]">
+              <div className="flex items-center justify-center w-6 h-6 bg-[#4761c4] rounded-full">
+                <div className="w-2 h-2 bg-white rounded-full" />
+              </div>
+            </div>
+          </div>
+
+          {/* Form container - Responsive */}
+          <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex flex-col gap-4 sm:gap-6 mb-8">
+            <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
               <div
-                className="text-sm font-medium font-['Inter'] leading-tight"
+                className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose"
                 style={{ color: colors['text-primary'] }}
               >
-                Workspace URL
+                Welcome to ProcessFlow!
               </div>
               <div
-                className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
-                style={{
-                  backgroundColor: colors['bg-primary'],
-                  borderColor:
-                    urlError ||
-                    (slugAvailability && !slugAvailability.available)
-                      ? 'rgb(239, 68, 68)'
-                      : slugAvailability && slugAvailability.available
-                        ? 'rgb(34, 197, 94)'
-                        : isFocused
-                          ? colors['border-accent']
-                          : colors['border-secondary'],
-                  boxShadow: isFocused
-                    ? `0 0 0 4px ${colors['ring-accent']}`
-                    : undefined,
-                }}
+                className="self-stretch text-center text-sm sm:text-base font-normal font-['Inter'] leading-normal"
+                style={{ color: colors['text-secondary'] }}
               >
-                <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
-                  <span style={{ color: colors['text-secondary'] }}>
-                    app.process-flow.io/
-                  </span>
-                </div>
-                <input
-                  ref={urlInputRef}
-                  type="text"
-                  disabled
-                  value={workspaceURL}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                  onChange={handleURLChange}
-                  placeholder={
-                    workspaceName
-                      .toLowerCase()
-                      .replace(/\s+/g, '-')
-                      .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
-                  }
-                  className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
-                  style={{
-                    backgroundColor: colors['bg-primary'],
-                    borderLeftColor: isFocused
-                      ? colors['border-accent']
-                      : colors['border-secondary'],
-                    color: workspaceURL
-                      ? colors['text-primary']
-                      : colors['text-secondary'],
-                  }}
-                />
+                You will still be able to modify your workspace later.
               </div>
-              {urlError && (
-                <div className="text-red-500 text-xs mt-1">{urlError}</div>
-              )}
-              {!urlError && (
-                <div
-                  className={`text-xs mt-1 ${
-                    isCheckingSlug
-                      ? 'text-gray-500'
-                      : slugAvailability
-                        ? slugAvailability.available
-                          ? 'text-green-600'
-                          : 'text-red-500'
-                        : ''
-                  }`}
-                >
-                  {isCheckingSlug
-                    ? 'Checking availability...'
-                    : slugAvailability
-                      ? slugAvailability.message
-                      : ''}
-                </div>
-              )}
             </div>
 
-            {/* Workspace Logo Upload - Made responsive */}
-            <div className="self-stretch flex-col justify-start items-start gap-2 flex">
-              <div
-                className="w-40 text-sm font-medium font-['Inter'] leading-tight"
-                style={{ color: colors['text-primary'] }}
-              >
-                Workspace Logo
+            {/* Only show error if it's not related to slug availability */}
+            {error && !error.includes('workspace URL') && (
+              <div className="self-stretch text-center text-red-600 text-sm font-normal">
+                {error}
               </div>
-              <div className="self-stretch flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
-                {/* Upload Circle */}
-                <label
-                  htmlFor="logo-upload"
-                  className="w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full border cursor-pointer"
+            )}
+
+            <div className="w-full flex-col justify-start items-start gap-4 sm:gap-6 flex pt-4 sm:pt-6">
+              {/* Workspace Name Input */}
+              <InputField
+                label="Workspace Name"
+                required
+                type="default"
+                placeholder="Processflow"
+                value={workspaceName}
+                onChange={(value) => {
+                  handleInputChange(
+                    { target: { value } } as React.ChangeEvent<HTMLInputElement>,
+                    setWorkspaceName
+                  );
+                }}
+                disabled={isLoading}
+                destructive={!!error && !workspaceName}
+                errorMessage={
+                  error && !workspaceName ? 'Workspace name is required' : ''
+                }
+              />
+
+              {/* Workspace URL Input */}
+              <div className="w-full flex-col justify-start items-start gap-1.5 flex">
+                <div
+                  className="text-sm font-medium font-['Inter'] leading-tight"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  Workspace URL
+                </div>
+                <div
+                  className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
                   style={{
-                    backgroundColor: colors['bg-secondary'],
-                    borderColor: colors['border-secondary'],
+                    backgroundColor: colors['bg-primary'],
+                    borderColor:
+                      urlError ||
+                      (slugAvailability && !slugAvailability.available)
+                        ? 'rgb(239, 68, 68)'
+                        : slugAvailability && slugAvailability.available
+                          ? 'rgb(34, 197, 94)'
+                          : isFocused
+                            ? colors['border-accent']
+                            : colors['border-secondary'],
+                    boxShadow: isFocused
+                      ? `0 0 0 4px ${colors['ring-accent']}`
+                      : undefined,
                   }}
                 >
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt="Workspace Logo"
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/image-plus.svg`}
-                      alt="Add Workspace Logo"
-                      className="w-8 h-8"
-                    />
-                  )}
-                </label>
-                <input
-                  ref={fileInputRef}
-                  id="logo-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-
-                {/* Drag & Drop Zone */}
-                <div
-                  className="w-full flex-grow flex-col justify-start items-start gap-4 cursor-pointer mt-2 sm:mt-0"
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                  onClick={handleFileInputClick}
-                >
-                  <div
-                    className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl border hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1"
+                  <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
+                    <span style={{ color: colors['text-secondary'] }}>
+                      app.process-flow.io/
+                    </span>
+                  </div>
+                  <input
+                    ref={urlInputRef}
+                    type="text"
+                    disabled
+                    value={workspaceURL}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    onChange={handleURLChange}
+                    placeholder={
+                      workspaceName
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
+                    }
+                    className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
                     style={{
                       backgroundColor: colors['bg-primary'],
+                      borderLeftColor: isFocused
+                        ? colors['border-accent']
+                        : colors['border-secondary'],
+                      color: workspaceURL
+                        ? colors['text-primary']
+                        : colors['text-secondary'],
+                    }}
+                  />
+                </div>
+                {urlError && (
+                  <div className="text-red-500 text-xs mt-1">{urlError}</div>
+                )}
+                {!urlError && (
+                  <div
+                    className={`text-xs mt-1 ${
+                      isCheckingSlug
+                        ? 'text-gray-500'
+                        : slugAvailability
+                          ? slugAvailability.available
+                            ? 'text-green-600'
+                            : 'text-red-500'
+                          : ''
+                    }`}
+                  >
+                    {isCheckingSlug
+                      ? 'Checking availability...'
+                      : slugAvailability
+                        ? slugAvailability.message
+                        : ''}
+                  </div>
+                )}
+              </div>
+
+              {/* Workspace Logo Upload - Made responsive */}
+              <div className="self-stretch flex-col justify-start items-start gap-2 flex">
+                <div
+                  className="w-40 text-sm font-medium font-['Inter'] leading-tight"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  Workspace Logo
+                </div>
+                <div className="self-stretch flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
+                  {/* Upload Circle */}
+                  <label
+                    htmlFor="logo-upload"
+                    className="w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full border cursor-pointer"
+                    style={{
+                      backgroundColor: colors['bg-secondary'],
                       borderColor: colors['border-secondary'],
                     }}
                   >
-                    <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1 sm:gap-3">
-                      <div className="w-full flex flex-col justify-center items-center">
-                        <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
-                          <div className="flex justify-center items-center gap-1 overflow-hidden">
-                            <div className="font-semibold font-['Inter'] leading-tight text-[#4761c4]">
-                              Click to upload
+                    {logo ? (
+                      <img
+                        src={logo}
+                        alt="Workspace Logo"
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/image-plus.svg`}
+                        alt="Add Workspace Logo"
+                        className="w-8 h-8"
+                      />
+                    )}
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+
+                  {/* Drag & Drop Zone */}
+                  <div
+                    className="w-full flex-grow flex-col justify-start items-start gap-4 cursor-pointer mt-2 sm:mt-0"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onClick={handleFileInputClick}
+                  >
+                    <div
+                      className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl border hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1"
+                      style={{
+                        backgroundColor: colors['bg-primary'],
+                        borderColor: colors['border-secondary'],
+                      }}
+                    >
+                      <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1 sm:gap-3">
+                        <div className="w-full flex flex-col justify-center items-center">
+                          <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
+                            <div className="flex justify-center items-center gap-1 overflow-hidden">
+                              <div className="font-semibold font-['Inter'] leading-tight text-[#4761c4]">
+                                Click to upload
+                              </div>
+                            </div>
+                            <div
+                              className="font-normal font-['Inter'] leading-tight"
+                              style={{ color: colors['text-secondary'] }}
+                            >
+                              or drag and drop
                             </div>
                           </div>
                           <div
-                            className="font-normal font-['Inter'] leading-tight"
+                            className="w-full text-center text-xs font-normal font-['Inter'] leading-[18px]"
                             style={{ color: colors['text-secondary'] }}
                           >
-                            or drag and drop
+                            SVG, PNG, JPG or GIF (max. 800×400px)
                           </div>
-                        </div>
-                        <div
-                          className="w-full text-center text-xs font-normal font-['Inter'] leading-[18px]"
-                          style={{ color: colors['text-secondary'] }}
-                        >
-                          SVG, PNG, JPG or GIF (max. 800×400px)
                         </div>
                       </div>
                     </div>
@@ -670,31 +670,31 @@ export default function WorkspaceSetup() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Buttons - Responsive */}
-          <div className="h-10 flex justify-between items-start w-full mt-2 sm:mt-4">
-            <ButtonNormal
-              variant="secondary"
-              size="small"
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-              onClick={handleBackClick}
-              disabled={isNavigatingBack}
-              className="text-sm sm:text-base"
-            >
-              Back
-            </ButtonNormal>
+            {/* Buttons - Responsive */}
+            <div className="h-10 flex justify-between items-start w-full mt-4 sm:mt-6">
+              <ButtonNormal
+                variant="secondary"
+                size="small"
+                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                onClick={handleBackClick}
+                disabled={isNavigatingBack}
+                className="text-sm sm:text-base"
+              >
+                Back
+              </ButtonNormal>
 
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              onClick={handleSubmit}
-              disabled={isLoading || !isFormValid() || isNavigatingBack}
-              trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
-              className="text-sm sm:text-base"
-            >
-              {isLoading ? 'Loading...' : 'Continue'}
-            </ButtonNormal>
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                onClick={handleSubmit}
+                disabled={isLoading || !isFormValid() || isNavigatingBack}
+                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
+                className="text-sm sm:text-base"
+              >
+                {isLoading ? 'Loading...' : 'Continue'}
+              </ButtonNormal>
+            </div>
           </div>
         </div>
       </div>
