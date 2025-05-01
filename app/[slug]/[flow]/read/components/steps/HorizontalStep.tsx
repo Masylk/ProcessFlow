@@ -46,11 +46,14 @@ export default function HorizontalStep({
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [windowWidth, setWindowWidth] = useState<number>(0);
+  const [windowHeight, setWindowHeight] = useState<number>(0);
   const [isImageFullscreen, setIsImageFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const [descriptionHeight, setDescriptionHeight] = useState(0);
 
   // Add null check for block
   if (!block) {
@@ -69,6 +72,7 @@ export default function HorizontalStep({
   useEffect(() => {
     const updateWindowDimensions = () => {
       setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
     };
 
     // Initialize
@@ -185,7 +189,6 @@ export default function HorizontalStep({
         (containerHeight - (scrollbarThumbHeight || 0));
 
   const getIconPath = (block: Block) => {
-
     if (block.icon) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
     }
@@ -301,48 +304,96 @@ export default function HorizontalStep({
     e.stopPropagation();
     setIsImageFullscreen(!isImageFullscreen);
   };
-  const zoomIn = (e: React.MouseEvent) => { e.stopPropagation(); setZoomLevel((prev) => Math.min(prev + 0.1, 5)); };
-  const zoomOut = (e: React.MouseEvent) => { e.stopPropagation(); setZoomLevel((prev) => Math.max(prev - 0.1, 0.5)); };
-  const resetZoom = (e?: React.MouseEvent) => { if (e) e.stopPropagation(); setZoomLevel(1); setDragPosition({ x: 0, y: 0 }); };
-  const handleMouseDown = (e: React.MouseEvent) => { if (zoomLevel <= 1) return; e.preventDefault(); setIsDragging(true); };
-  const handleMouseMove = (e: React.MouseEvent) => { if (!isDragging || zoomLevel <= 1) return; setDragPosition((prev) => ({ x: prev.x + e.movementX, y: prev.y + e.movementY })); };
-  const handleMouseUp = () => { setIsDragging(false); };
-  const handleDoubleClick = (e: React.MouseEvent) => { e.stopPropagation(); resetZoom(); };
+  const zoomIn = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel((prev) => Math.min(prev + 0.1, 5));
+  };
+  const zoomOut = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
+  };
+  const resetZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoomLevel(1);
+    setDragPosition({ x: 0, y: 0 });
+  };
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || zoomLevel <= 1) return;
+    setDragPosition((prev) => ({
+      x: prev.x + e.movementX,
+      y: prev.y + e.movementY,
+    }));
+  };
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    resetZoom();
+  };
 
   // Add this function to parse text into segments with links
   const parseTextWithLinks = (text: string) => {
     const parts = [];
     let lastIndex = 0;
     let match;
-    
+
     while ((match = URL_REGEX.exec(text)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
-          content: text.slice(lastIndex, match.index)
+          content: text.slice(lastIndex, match.index),
         });
       }
-      
+
       // Add the link
       parts.push({
         type: 'link',
-        content: match[0]
+        content: match[0],
       });
-      
+
       lastIndex = match.index + match[0].length;
     }
-    
+
     // Add remaining text after last link
     if (lastIndex < text.length) {
       parts.push({
         type: 'text',
-        content: text.slice(lastIndex)
+        content: text.slice(lastIndex),
       });
     }
-    
+
     return parts.length > 0 ? parts : [{ type: 'text', content: text }];
   };
+
+  // Helper function to split a string into chunks of N characters and render with <br />
+  const renderTitleWithLineBreaks = (title: string, chunkSize = 50) => {
+    if (!title) return null;
+    const chunks = [];
+    for (let i = 0; i < title.length; i += chunkSize) {
+      chunks.push(title.slice(i, i + chunkSize));
+    }
+    // Interleave <br /> except after the last chunk
+    return chunks.map((chunk, idx) => (
+      <React.Fragment key={idx}>
+        {chunk}
+        {idx < chunks.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
+  useEffect(() => {
+    if (descriptionRef.current) {
+      console.log(descriptionRef.current.offsetHeight);
+      setDescriptionHeight(descriptionRef.current.offsetHeight);
+    }
+  }, [descriptionRef.current]);
 
   return (
     <>
@@ -350,44 +401,49 @@ export default function HorizontalStep({
       <div
         ref={containerRef}
         className={cn(
-          'h-[472px] w-full',
-          (!block.image) &&
-            'flex flex-col items-center justify-center'
+          'h-[472px] overflow-hidden relative',
+          !block.image && 'flex flex-col items-center justify-center'
         )}
       >
-        {/* Content Container - Main scrollable area */}
+        {/* Main scrollable container */}
         <div
           ref={contentRef}
           className={cn(
-            'h-full w-full overflow-y-auto px-5 pt-5',
-            (!block.image) &&
-              'flex flex-col items-center justify-center'
+            'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
+            hasOnlyDescription &&
+              descriptionHeight <= windowHeight * 0.5 &&
+              'flex items-center justify-center'
           )}
         >
           <div
             className={cn(
               'w-full',
-              hasOnlyDescription && 'flex flex-col items-center justify-center h-full',
-              ((!block.image && !block.child_paths)) && 'w-full'
-                ? 'pb-0 flex flex-col items-center justify-center'
-                : 'pb-16'
+              !hasOnlyDescription || descriptionHeight <= windowHeight * 0.5
+                ? 'flex flex-col items-center justify-center px-5'
+                : ''
             )}
           >
-            {/* Fixed Header Section */}
-            <div className="mb-6">
+            {/* Header Section */}
+            <div
+              className={cn(
+                hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+                  ? ''
+                  : 'px-5 pt-5 pb-4'
+              )}
+            >
               {/* Step Header */}
-              { (
-                <div className="flex items-center gap-4 mb-4">
-                  {/* App Icon */}
-                  <div
-                    className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
-                    style={{
-                      backgroundColor: colors['bg-primary'],
-                      borderColor: colors['border-secondary'],
-                    }}
-                  >
-                    <div className="flex items-center justify-center">
-                      {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+              <div className="flex items-center gap-4 mb-4">
+                {/* App Icon */}
+                <div
+                  className="flex-shrink-0 w-12 h-12 rounded-[6px] border shadow-sm flex items-center justify-center"
+                  style={{
+                    backgroundColor: colors['bg-primary'],
+                    borderColor: colors['border-secondary'],
+                  }}
+                >
+                  <div className="flex items-center justify-center">
+                    {block.icon &&
+                    block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                       <img
                         src={block.icon}
                         alt="Step Icon"
@@ -396,140 +452,140 @@ export default function HorizontalStep({
                       />
                     ) : (
                       <img
-                          src={getIconPath(block)}
-                          alt="Step Icon"
-                          className="w-6 h-6"
-                          onError={(e) => {
-                            e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
-                          }}
-                        />
-                      )}
-                  </div>
-                  </div>
-                  {/* Step Title */}
-                  <div className="flex-1">
-                    <div
-                      className="flex items-center text-base font-semibold"
-                      style={{ color: colors['text-primary'] }}
-                    >
-                      <span>{getDisplayTitle(block)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Description */}
-              {(
-                <div className="relative">
-                  <p
-                    className="text-base whitespace-pre-line"
-                    style={{ color: colors['text-quaternary'] }}
-                  >
-                    {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) => (
-                      segment.type === 'link' ? (
-                        <a
-                          key={index}
-                          href={segment.content}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            window.open(segment.content, '_blank', 'noopener,noreferrer');
-                          }}
-                        >
-                          {segment.content}
-                        </a>
-                      ) : (
-                        <span key={index}>{segment.content}</span>
-                      )
-                    ))}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Content Section - Adapts to content type */}
-            {!hasOnlyDescription && (
-              <div className="space-y-6 w-full">
-                {/* Image Section */}
-                {block.image && (
-                  <div className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
-                    onClick={toggleFullscreen}
-                    aria-label="View image fullscreen"
-                    style={{ backgroundColor: colors['bg-secondary'] }}
-                  >
-                    {signedImageUrl && !imageError ? (
-                      <img
-                        src={signedImageUrl}
-                        alt="Step visualization"
-                        className="w-full h-[500px] object-contain"
-                        onLoad={() => setImageLoaded(true)}
-                        onError={() => setImageError(true)}
+                        src={getIconPath(block)}
+                        alt="Step Icon"
+                        className="w-6 h-6"
+                        onError={(e) => {
+                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+                        }}
                       />
-                    ) : (
-                      <div
-                        className="w-full h-40 flex items-center justify-center"
-                        style={{ backgroundColor: colors['bg-secondary'] }}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full"
-                          style={{ backgroundColor: colors['bg-tertiary'] }}
-                        />
-                      </div>
                     )}
                   </div>
-                )}
+                </div>
+                {/* Step Title */}
+                <div className="flex-1">
+                  <div
+                    className="flex items-center text-base font-semibold break-words line-clamp-2 whitespace-pre-line"
+                    style={{ color: colors['text-primary'] }}
+                  >
+                    <span>
+                      {renderTitleWithLineBreaks(getDisplayTitle(block))}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-                {/* Options Section */}
-                {block.child_paths && block.child_paths.length > 0 && (
-                  <div className="w-full">
-                    <p
-                      className="text-sm font-medium mb-4"
-                      style={{ color: colors['text-primary'] }}
+              {/* Description */}
+              <div className="relative w-full">
+                <p
+                  ref={descriptionRef}
+                  className="text-base whitespace-pre-line w-[460px] break-words"
+                  style={{ color: colors['text-quaternary'] }}
+                >
+                  {parseTextWithLinks(
+                    block.step_details || block.description || ''
+                  ).map((segment, index) =>
+                    segment.type === 'link' ? (
+                      <a
+                        key={index}
+                        href={segment.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline break-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.open(
+                            segment.content,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
+                        }}
+                      >
+                        {segment.content}
+                      </a>
+                    ) : (
+                      <span key={index}>{segment.content}</span>
+                    )
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            {!hasOnlyDescription && (
+              <div className="px-5 pb-16">
+                <div className="space-y-6 w-full">
+                  {/* Image Section */}
+                  {block.image && (
+                    <div
+                      className="rounded-lg overflow-hidden w-full bg-[#fafafa] dark:bg-[#1c1c1c] mb-4 cursor-zoom-in"
+                      onClick={toggleFullscreen}
+                      aria-label="View image fullscreen"
+                      style={{ backgroundColor: colors['bg-secondary'] }}
                     >
-                      Select an option
-                    </p>
-                    <div className="space-y-2">
-                      {block.child_paths.map((option, index) => (
-                        <div key={option.path.id} className="overflow-hidden">
-                          <motion.button
-                            onClick={() =>
-                              onOptionSelect?.(option.path.id, block.id, false)
-                            }
-                            className={cn(
-                              'w-full p-4 rounded-lg border transition-all duration-200',
-                              'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
-                              selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id &&
-                                  blockId === block.id
-                              ) && 'border-brand'
-                            )}
-                            initial={{ opacity: 0.4 }}
-                            animate={{
-                              opacity: 1,
-                              transition: {
-                                duration: 0.2,
-                                ease: 'easeOut',
-                                delay: index * 0.05,
-                              },
-                            }}
-                            style={{
-                              backgroundColor: colors['bg-primary'],
-                              borderColor: selectedOptionIds?.some(
-                                ([pathId, blockId]) =>
-                                  pathId === option.path.id &&
-                                  blockId === block.id
-                              )
-                                ? colors['border-brand']
-                                : colors['border-secondary'],
-                            }}
-                          >
-                            <div
-                              className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                      {signedImageUrl && !imageError ? (
+                        <img
+                          src={signedImageUrl}
+                          alt="Step visualization"
+                          className="w-full h-[500px] object-contain"
+                          onLoad={() => setImageLoaded(true)}
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-40 flex items-center justify-center"
+                          style={{ backgroundColor: colors['bg-secondary'] }}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full"
+                            style={{ backgroundColor: colors['bg-tertiary'] }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Options Section */}
+                  {block.child_paths && block.child_paths.length > 0 && (
+                    <div className="w-full">
+                      <p
+                        className="text-sm font-medium mb-4"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        Select an option
+                      </p>
+                      <div className="space-y-2">
+                        {block.child_paths.map((option, index) => (
+                          <div key={option.path.id} className="overflow-hidden">
+                            <motion.button
+                              onClick={() =>
+                                onOptionSelect?.(
+                                  option.path.id,
+                                  block.id,
+                                  false
+                                )
+                              }
+                              className={cn(
+                                'w-full p-4 rounded-lg border transition-all duration-200',
+                                'flex items-center gap-3 text-left hover:bg-secondary active:bg-secondary',
+                                selectedOptionIds?.some(
+                                  ([pathId, blockId]) =>
+                                    pathId === option.path.id &&
+                                    blockId === block.id
+                                ) && 'border-brand'
+                              )}
+                              initial={{ opacity: 0.4 }}
+                              animate={{
+                                opacity: 1,
+                                transition: {
+                                  duration: 0.2,
+                                  ease: 'easeOut',
+                                  delay: index * 0.05,
+                                },
+                              }}
                               style={{
+                                backgroundColor: colors['bg-primary'],
                                 borderColor: selectedOptionIds?.some(
                                   ([pathId, blockId]) =>
                                     pathId === option.path.id &&
@@ -537,45 +593,58 @@ export default function HorizontalStep({
                                 )
                                   ? colors['border-brand']
                                   : colors['border-secondary'],
-                                backgroundColor: selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                )
-                                  ? colors['bg-brand-solid']
-                                  : 'transparent',
                               }}
                             >
-                              <AnimatePresence>
-                                {selectedOptionIds?.some(
-                                  ([pathId, blockId]) =>
-                                    pathId === option.path.id &&
-                                    blockId === block.id
-                                ) && (
-                                  <motion.div
-                                    className="w-2 h-2 bg-white rounded-full"
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    exit={{ scale: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                  />
-                                )}
-                              </AnimatePresence>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <p
-                                className="font-normal text-sm"
-                                style={{ color: colors['text-primary'] }}
+                              <div
+                                className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                                style={{
+                                  borderColor: selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  )
+                                    ? colors['border-brand']
+                                    : colors['border-secondary'],
+                                  backgroundColor: selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  )
+                                    ? colors['bg-brand-solid']
+                                    : 'transparent',
+                                }}
                               >
-                                {option.path.name}
-                              </p>
-                            </div>
-                          </motion.button>
-                        </div>
-                      ))}
+                                <AnimatePresence>
+                                  {selectedOptionIds?.some(
+                                    ([pathId, blockId]) =>
+                                      pathId === option.path.id &&
+                                      blockId === block.id
+                                  ) && (
+                                    <motion.div
+                                      className="w-2 h-2 bg-white rounded-full"
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      exit={{ scale: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    />
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <p
+                                  className="font-normal text-sm break-words line-clamp-2"
+                                  style={{ color: colors['text-primary'] }}
+                                >
+                                  {renderTitleWithLineBreaks(option.path.name)}
+                                </p>
+                              </div>
+                            </motion.button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -619,25 +688,94 @@ export default function HorizontalStep({
             onClick={() => setIsImageFullscreen(false)}
             aria-label="Close fullscreen view"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
           {/* Help tooltip */}
           <div className="absolute top-4 left-4 z-10 text-white font-normal text-sm bg-black/50 px-3 py-2 rounded-md">
-            <span className="hidden sm:inline">Use mouse wheel to zoom • Double-click to reset • {Math.round(zoomLevel * 100)}%</span>
+            <span className="hidden sm:inline">
+              Use mouse wheel to zoom • Double-click to reset •{' '}
+              {Math.round(zoomLevel * 100)}%
+            </span>
             <span className="sm:hidden">{Math.round(zoomLevel * 100)}%</span>
           </div>
           {/* Zoom controls */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/50 p-2 rounded-lg z-10">
-            <button onClick={zoomOut} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Zoom out">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={zoomOut}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom out"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 12H19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-            <button onClick={resetZoom} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Reset zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 15L21 21M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={resetZoom}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Reset zoom"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 15L21 21M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
-            <button onClick={zoomIn} className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors" aria-label="Zoom in">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button
+              onClick={zoomIn}
+              className="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-colors"
+              aria-label="Zoom in"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 5V19M5 12H19"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
           {/* Image container with drag functionality */}

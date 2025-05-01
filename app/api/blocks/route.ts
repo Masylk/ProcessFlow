@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { formatTitle } from '../utils/formatTitle';
 
 enum DelayType {
   FIXED_DURATION = 'FIXED_DURATION',
@@ -106,6 +107,9 @@ export async function POST(req: NextRequest) {
     click_position,
   } = await req.json();
 
+  const formattedTitle = formatTitle(title);
+  const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
+
   console.log("creating block", title, type, position, icon);
   if (!['STEP', 'PATH', 'DELAY'].includes(type)) {
     return NextResponse.json(
@@ -182,7 +186,7 @@ export async function POST(req: NextRequest) {
 
       // Create the new block
       const blockData = {
-        title: title,
+        title: formattedTitle,
         type,
         position: cappedPosition,
         icon,
@@ -194,7 +198,7 @@ export async function POST(req: NextRequest) {
         step_details: type === 'STEP' ? step_details : null,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
         delay_type: type === 'DELAY' ? (delay_type as DelayType) : null,
-        delay_event: type === 'DELAY' ? delay_event : null,
+        delay_event: type === 'DELAY' ? formattedDelayEvent : null,
       };
 
       const newBlock = await prisma.block.create({

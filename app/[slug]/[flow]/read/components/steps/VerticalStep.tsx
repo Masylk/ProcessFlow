@@ -322,6 +322,22 @@ export default function VerticalStep({
     return parts.length > 0 ? parts : [{ type: 'text', content: text }];
   };
 
+  // Helper function to split a string into chunks of N characters and render with <br />
+  const renderTitleWithLineBreaks = (title: string, chunkSize = 50) => {
+    if (!title) return null;
+    const chunks = [];
+    for (let i = 0; i < title.length; i += chunkSize) {
+      chunks.push(title.slice(i, i + chunkSize));
+    }
+    // Interleave <br /> except after the last chunk
+    return chunks.map((chunk, idx) => (
+      <React.Fragment key={idx}>
+        {chunk}
+        {idx < chunks.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   // Don't render anything for MERGE blocks except the line
   if (block.type === 'MERGE') {
     return (
@@ -398,14 +414,17 @@ export default function VerticalStep({
                   />
                 )}
               </motion.div>
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 whitespace-pre-line break-words">
                 <span
-                  className={cn('text-left text-base font-semibold')}
+                  className={cn(
+                    'text-left text-base font-semibold break-words line-clamp-2'
+                  )}
                   style={{
                     color: colors['text-primary'],
+                    wordBreak: 'break-word',
                   }}
                 >
-                  {getDisplayTitle(block)}
+                  {renderTitleWithLineBreaks(getDisplayTitle(block), 60)}
                 </span>
               </div>
               {block.image && (
@@ -644,7 +663,7 @@ export default function VerticalStep({
                             )}
                           </AnimatePresence>
                         </div>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 break-words line-clamp-2">
                           <p
                             className="font-normal text-sm"
                             style={{ color: colors['text-primary'] }}
