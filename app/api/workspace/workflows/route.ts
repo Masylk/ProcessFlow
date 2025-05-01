@@ -357,7 +357,6 @@ export async function POST(req: NextRequest) {
         description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
-        step_details: '',
       }
     });
 
@@ -370,7 +369,6 @@ export async function POST(req: NextRequest) {
         description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
-        step_details: '',
       }
     });
 
@@ -383,7 +381,6 @@ export async function POST(req: NextRequest) {
         description: '',
         workflow: { connect: { id: workflow.id } },
         path: { connect: { id: newPath.id } },
-        step_details: '',
       }
     });
     // --- END NEW LOGIC ---

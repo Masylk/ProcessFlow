@@ -544,31 +544,30 @@ export default function HorizontalStep({
                   className="text-base whitespace-pre-line break-words w-full"
                   style={{ color: colors['text-quaternary'] }}
                 >
-                  {parseTextWithLinks(
-                    block.step_details || block.description || ''
-                  ).map((segment, index) =>
-                    segment.type === 'link' ? (
-                      <a
-                        key={index}
-                        href={segment.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline break-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.open(
-                            segment.content,
-                            '_blank',
-                            'noopener,noreferrer'
-                          );
-                        }}
-                      >
-                        {segment.content}
-                      </a>
-                    ) : (
-                      <span key={index}>{segment.content}</span>
-                    )
+                  {parseTextWithLinks(block.description || '').map(
+                    (segment, index) =>
+                      segment.type === 'link' ? (
+                        <a
+                          key={index}
+                          href={segment.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline break-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(
+                              segment.content,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
+                          }}
+                        >
+                          {segment.content}
+                        </a>
+                      ) : (
+                        <span key={index}>{segment.content}</span>
+                      )
                   )}
                 </p>
               </div>

@@ -525,6 +525,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
         <div
           className="transition-all duration-300 relative rounded-lg bg-white shadow-sm overflow-hidden min-w-[481px] max-w-[481px]"
           style={{
+            backgroundColor: colors['bg-primary'],
             borderWidth: '2px',
             borderStyle: 'solid',
             borderColor: showModal ? colors['border-brand_alt'] : colors['border-secondary'],
@@ -535,11 +536,11 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
             position={Position.Top}
             id="top"
             style={{
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               opacity: 0,
-              background: colors['utility-brand-500'],
-              border: '2px solid white',
+              background: colors['fg-brand-primary'],
+              border: `2px solid ${colors['bg-primary']}`,
               pointerEvents: 'none',
             }}
           />
@@ -554,8 +555,9 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
             {/* Icon section */}
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 bg-white"
+                className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
                 style={{
+                  backgroundColor: colors['bg-primary'],
                   border: `1px solid ${colors['border-secondary']}`,
                 }}
               >
@@ -814,11 +816,11 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
             position={Position.Bottom}
             id="bottom"
             style={{
-              width: 6,
-              height: 6,
+              width: 8,
+              height: 8,
               opacity: 0,
-              background: colors['utility-brand-500'],
-              border: '2px solid white',
+              background: colors['fg-brand-primary'],
+              border: `2px solid ${colors['bg-primary']}`,
               pointerEvents: 'none',
             }}
           />

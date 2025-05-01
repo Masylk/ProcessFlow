@@ -63,7 +63,7 @@ export default function StepsContainer({
         ? `Wait for Event: ${block.delay_event || 'Not set'}`
         : `Duration Delay: ${formatDuration(block.delay_seconds)}`;
     }
-    return block.title || block.step_details || `Block ${block.id}`;
+    return block.title || `Block ${block.id}`;
   };
 
   return (

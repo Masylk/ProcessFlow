@@ -104,7 +104,6 @@ export interface Block {
   updated_at: string;  // DateTime
   last_modified?: string | null;  // DateTime | null
   type: BlockType;  // Assuming a BlockType enum exists
-  step_details?: string | null;
   delay_seconds?: number | null;
   position: number;
   title?: string | null;

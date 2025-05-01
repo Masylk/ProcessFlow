@@ -69,9 +69,6 @@ import { BlockEndType } from '@/types/block';
  *                                 id:
  *                                   type: integer
  *                                   example: 15
- *                                 step_details:
- *                                   type: string
- *                                   example: ""
  *       400:
  *         description: Missing workflow_id or invalid workspaceId
  *         content:
@@ -155,7 +152,6 @@ export async function GET(
               description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: '',
             }
           });
           blocks.unshift({ ...newBeginBlock, child_paths: [] });
@@ -205,7 +201,6 @@ export async function GET(
               description: '',
               workflow: { connect: { id: path.workflow_id } },
               path: { connect: { id: path.id } },
-              step_details: '',
             }
           });
           blocks.push({ ...newEndBlock, child_paths: [] });
@@ -222,7 +217,6 @@ export async function GET(
         //       description: '',
         //       workflow: { connect: { id: path.workflow_id } },
         //       path: { connect: { id: path.id } },
-        //       step_details: '',
         //     }
         //   });
         //   blocks.splice(1, 0, { ...newStepBlock, child_paths: [] });
@@ -282,7 +276,6 @@ export async function GET(
             description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: '',
           }
         });
 
@@ -295,7 +288,6 @@ export async function GET(
             description: '',
             workflow: { connect: { id: parsedworkflow_id } },
             path: { connect: { id: newPath.id } },
-            step_details: '',
           }
         });
 
