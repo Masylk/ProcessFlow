@@ -237,7 +237,7 @@ const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
             ? block.delay_type === 'WAIT_FOR_EVENT'
               ? `Wait for Event: ${block.delay_event || 'Not set'}`
               : `Duration Delay: ${formatDuration(block.delay_seconds || undefined)}`
-            : block.title || block.step_details || `Block ${block.id}`}
+            : block.title || `Block ${block.id}`}
         </span>
         {isTruncated && (
           <div
@@ -250,7 +250,7 @@ const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
             className="pointer-events-none"
           >
             <CustomTooltip
-              text={block.title || block.step_details || `Block ${block.id}`}
+              text={block.title || `Block ${block.id}`}
               show={showTooltip}
             />
           </div>
@@ -451,7 +451,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
           ...prev,
           {
             id: block.id,
-            title: block.title || block.step_details || `Block ${block.id}`,
+            title: block.title || `Block ${block.id}`,
             icon: block.icon,
             pathName,
           },
@@ -829,7 +829,6 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     const searchTerm = searchFilter.toLowerCase();
     const blockTitle = (
       block.title ||
-      block.step_details ||
       `Block ${block.id}`
     ).toLowerCase();
 
