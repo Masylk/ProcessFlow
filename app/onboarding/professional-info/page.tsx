@@ -246,21 +246,19 @@ export default function ProfessionalInfo() {
 
   return (
     <div 
-      className="w-full min-h-screen flex justify-center items-center p-4"
+      className="w-full h-screen flex flex-col overflow-y-auto"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      <div className="max-w-[1280px] w-full flex-col justify-center items-center gap-8 md:gap-12 inline-flex py-8 md:py-16">
-        <div className="w-[180px] md:w-[240px] justify-start items-start inline-flex">
-          <div className="justify-end items-center gap-3 flex">
+      <div className="w-full flex-1 flex justify-center px-4 py-6">
+        <div className="w-full max-w-[1280px] flex flex-col items-center gap-8 sm:gap-12 md:gap-[72px]">
+          <div className="w-[140px] sm:w-[180px] md:w-[240px] flex items-center">
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
               alt="Logo ProcessFlow"
               className="w-full"
             />
           </div>
-        </div>
-        <div className="flex items-center justify-center w-full">
-          <div className="relative flex items-center w-48 md:w-64">
+          <div className="flex items-center justify-center w-48 md:w-64">
             {/* First Step - Validated */}
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/validated-step-icon.svg`}
@@ -285,36 +283,124 @@ export default function ProfessionalInfo() {
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex-col justify-start items-start gap-4 md:gap-6 inline-flex max-w-[500px] w-full px-4 md:px-0">
-          <div 
-            className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose"
-            style={{ color: colors['text-primary'] }}
-          >
-            Welcome to ProcessFlow!
-          </div>
-          <div 
-            className="self-stretch text-center text-sm md:text-base font-normal font-['Inter'] leading-normal"
-            style={{ color: colors['text-secondary'] }}
-          >
-            You will still be able to modify your workspace later.
-          </div>
-          
-          {error && (
-            <div className="self-stretch text-center text-red-600 text-sm font-normal">
-              {error}
+          <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex flex-col gap-4 sm:gap-6 mb-8">
+            <div 
+              className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose"
+              style={{ color: colors['text-primary'] }}
+            >
+              Welcome to ProcessFlow!
             </div>
-          )}
-          
-          <div className="w-full flex flex-col md:flex-row pt-4 md:pt-6 justify-start items-start md:items-center gap-4 md:gap-2">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full md:w-auto">
+            <div 
+              className="self-stretch text-center text-sm md:text-base font-normal font-['Inter'] leading-normal"
+              style={{ color: colors['text-secondary'] }}
+            >
+              You will still be able to modify your workspace later.
+            </div>
+            
+            {error && (
+              <div className="self-stretch text-center text-red-600 text-sm font-normal">
+                {error}
+              </div>
+            )}
+            
+            <div className="w-full flex flex-col md:flex-row pt-4 md:pt-6 justify-start items-start md:items-center gap-4 md:gap-2">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full">
+                <div 
+                  className="whitespace-nowrap text-base font-normal leading-normal"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  I work in
+                </div>
+                <div className="w-full relative">
+                  <select
+                    className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
+                    style={{ 
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: colors['border-secondary'],
+                      color: colors['text-primary'],
+                    }}
+                    value={industry}
+                    onChange={(e) => setIndustry(e.target.value)}
+                  >
+                    <option value="">Select industry</option>
+                    {dropdownOptions.industry.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+                    <svg
+                      className="w-5 h-5"
+                      style={{ color: colors['text-secondary'] }}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full">
+                <div 
+                  className="whitespace-nowrap text-base font-normal leading-normal"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  as a
+                </div>
+                <div className="w-full relative">
+                  <select
+                    className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
+                    style={{ 
+                      backgroundColor: colors['bg-primary'],
+                      borderColor: colors['border-secondary'],
+                      color: colors['text-primary'],
+                    }}
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                  >
+                    <option value="">Select role</option>
+                    {dropdownOptions.role.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+                    <svg
+                      className="w-5 h-5"
+                      style={{ color: colors['text-secondary'] }}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-2 w-full">
               <div 
                 className="whitespace-nowrap text-base font-normal leading-normal"
                 style={{ color: colors['text-primary'] }}
               >
-                I work in
+                for a company of
               </div>
-              <div className="w-full md:w-[180px] relative">
+              <div className="w-full relative">
                 <select
                   className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
                   style={{ 
@@ -322,11 +408,11 @@ export default function ProfessionalInfo() {
                     borderColor: colors['border-secondary'],
                     color: colors['text-primary'],
                   }}
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
+                  value={companySize}
+                  onChange={(e) => setCompanySize(e.target.value)}
                 >
-                  <option value="">Select industry</option>
-                  {dropdownOptions.industry.map((option) => (
+                  <option value="">Select company size</option>
+                  {dropdownOptions.companySize.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -351,14 +437,14 @@ export default function ProfessionalInfo() {
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full md:w-auto">
+            <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-2 w-full">
               <div 
                 className="whitespace-nowrap text-base font-normal leading-normal"
                 style={{ color: colors['text-primary'] }}
               >
-                as a
+                I learned about ProcessFlow from
               </div>
-              <div className="w-full md:w-[200px] relative">
+              <div className="w-full relative">
                 <select
                   className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
                   style={{ 
@@ -366,11 +452,11 @@ export default function ProfessionalInfo() {
                     borderColor: colors['border-secondary'],
                     color: colors['text-primary'],
                   }}
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
                 >
-                  <option value="">Select role</option>
-                  {dropdownOptions.role.map((option) => (
+                  <option value="">Select source</option>
+                  {dropdownOptions.source.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -394,119 +480,30 @@ export default function ProfessionalInfo() {
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-2 w-full">
-            <div 
-              className="whitespace-nowrap text-base font-normal leading-normal"
-              style={{ color: colors['text-primary'] }}
-            >
-              for a company of
-            </div>
-            <div className="w-full relative">
-              <select
-                className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
-                style={{ 
-                  backgroundColor: colors['bg-primary'],
-                  borderColor: colors['border-secondary'],
-                  color: colors['text-primary'],
-                }}
-                value={companySize}
-                onChange={(e) => setCompanySize(e.target.value)}
+            <div className="h-10 flex justify-between items-start w-full mt-2 md:mt-4">
+              <ButtonNormal
+                variant="secondary"
+                size="small"
+                leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
+                onClick={handleBackClick}
+                disabled={isNavigatingBack}
+                className="w-fit"
               >
-                <option value="">Select company size</option>
-                {dropdownOptions.companySize.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                <svg
-                  className="w-5 h-5"
-                  style={{ color: colors['text-secondary'] }}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+                Back
+              </ButtonNormal>
 
-          <div className="flex flex-col md:flex-row justify-start items-start md:items-center gap-2 w-full">
-            <div 
-              className="whitespace-nowrap text-base font-normal leading-normal"
-              style={{ color: colors['text-primary'] }}
-            >
-              I learned about ProcessFlow from
-            </div>
-            <div className="w-full relative">
-              <select
-                className="w-full px-3.5 py-2.5 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none"
-                style={{ 
-                  backgroundColor: colors['bg-primary'],
-                  borderColor: colors['border-secondary'],
-                  color: colors['text-primary'],
-                }}
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
+                onClick={handleSubmit}
+                disabled={isLoading || !industry || !role || !companySize || !source}
+                className="w-fit"
               >
-                <option value="">Select source</option>
-                {dropdownOptions.source.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-                <svg
-                  className="w-5 h-5"
-                  style={{ color: colors['text-secondary'] }}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
+                {isLoading ? "Loading..." : "Continue"}
+              </ButtonNormal>
             </div>
-          </div>
-
-          <div className="h-10 flex justify-between items-start w-full mt-2 md:mt-4">
-            {/* Always show back button regardless of auth state */}
-            <ButtonNormal
-              variant="secondary"
-              size="small"
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-              onClick={handleBackClick}
-              disabled={isNavigatingBack}
-              className="w-fit"
-            >
-              Back
-            </ButtonNormal>
-
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
-              onClick={handleSubmit}
-              disabled={isLoading || !industry || !role || !companySize || !source}
-              className="w-fit"
-            >
-              {isLoading ? "Loading..." : "Continue"}
-            </ButtonNormal>
           </div>
         </div>
       </div>

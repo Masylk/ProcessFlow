@@ -128,21 +128,19 @@ export default function PersonalInfo() {
 
   return (
     <div 
-      className="w-full h-screen flex justify-center items-center"
+      className="w-full h-screen flex flex-col overflow-y-auto"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      <div className="max-w-[1280px] w-full px-4 flex flex-col justify-center items-center gap-[72px]">
-        <div className="w-[240px] justify-start items-start inline-flex">
-          <div className="justify-end items-center gap-3 flex">
+      <div className="w-full flex-1 flex justify-center px-4 py-6">
+        <div className="w-full max-w-[1280px] flex flex-col items-center gap-8 sm:gap-12 md:gap-[72px]">
+          <div className="w-[140px] sm:w-[180px] md:w-[240px] flex items-center">
             <img 
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`} 
               alt="Logo ProcessFlow" 
               className="w-full" 
             />
           </div>
-        </div>
-        <div className="flex items-center justify-center w-full">
-          <div className="relative flex items-center w-64">
+          <div className="flex items-center justify-center w-48 md:w-64">
             <div className="relative z-10 flex items-center justify-center w-8 h-8 bg-[#edf0fb] rounded-full border-2 border-[#4761c4]">
               <div className="flex items-center justify-center w-6 h-6 bg-[#4761c4] rounded-full">
                 <div className="w-2 h-2 bg-white rounded-full" />
@@ -161,48 +159,48 @@ export default function PersonalInfo() {
               </div>
             </div>
           </div>
-        </div>
-        <div className="w-[420px] flex-col justify-start items-start gap-6 flex">
-          <div 
-            className="self-stretch text-center text-2xl font-semibold"
-            style={{ color: colors['text-primary'] }}
-          >
-            Welcome to ProcessFlow!
-          </div>
-          <div 
-            className="self-stretch text-center text-base font-normal"
-            style={{ color: colors['text-secondary'] }}
-          >
-            You can always change your name later.
-          </div>
-          <div className="self-stretch pt-6 flex-col justify-start items-start gap-6 flex">
-            <InputField
-              label="Last Name"
-              placeholder="Jobs"
-              value={lastName}
-              onChange={handleLastNameChange}
-              type="default"
-              size="medium"
-            />
-            <InputField
-              label="First Name"
-              placeholder="Steve"
-              value={firstName}
-              onChange={handleFirstNameChange}
-              type="default"
-              size="medium"
-            />
-            <div className="h-10 flex justify-center items-start w-full">
-              <ButtonNormal
-                variant="primary"
-                size="small"
-                onClick={handleSubmit}
-                disabled={isLoading}
-                trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
-                className="w-full"
-              >
-                {isLoading ? "Loading..." : "Continue"}
-              </ButtonNormal>
+          <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex flex-col gap-4 sm:gap-6 mb-8">
+            <div 
+              className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose"
+              style={{ color: colors['text-primary'] }}
+            >
+              Welcome to ProcessFlow!
+            </div>
+            <div 
+              className="self-stretch text-center text-sm md:text-base font-normal font-['Inter'] leading-normal"
+              style={{ color: colors['text-secondary'] }}
+            >
+              You can always change your name later.
+            </div>
+            <div className="self-stretch pt-4 md:pt-6 flex-col justify-start items-start gap-4 sm:gap-6 flex">
+              <InputField
+                label="Last Name"
+                placeholder="Jobs"
+                value={lastName}
+                onChange={handleLastNameChange}
+                type="default"
+                size="medium"
+              />
+              <InputField
+                label="First Name"
+                placeholder="Steve"
+                value={firstName}
+                onChange={handleFirstNameChange}
+                type="default"
+                size="medium"
+              />
+              <div className="h-10 flex justify-center items-start w-full mt-2 sm:mt-4">
+                <ButtonNormal
+                  variant="primary"
+                  size="small"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
+                  className="w-full"
+                >
+                  {isLoading ? "Loading..." : "Continue"}
+                </ButtonNormal>
+              </div>
             </div>
           </div>
         </div>
