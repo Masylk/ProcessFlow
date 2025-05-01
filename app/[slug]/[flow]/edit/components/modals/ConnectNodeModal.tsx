@@ -466,7 +466,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                           className="text-xs mb-1"
                           style={{ color: colors['text-tertiary'] }}
                         >
-                          #STEP
+                          #{(getNode(selectedNodeId)?.data.block as Block).type}
                         </div>
                         <div
                           className="text-sm font-medium break-words line-clamp-2"
