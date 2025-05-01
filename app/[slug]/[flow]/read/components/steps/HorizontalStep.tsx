@@ -483,7 +483,7 @@ export default function HorizontalStep({
                   style={{ color: colors['text-quaternary'] }}
                 >
                   {parseTextWithLinks(
-                    block.step_details || block.description || ''
+                    block.description || ''
                   ).map((segment, index) =>
                     segment.type === 'link' ? (
                       <a

@@ -54,8 +54,6 @@ import { formatTitle } from '../../utils/formatTitle';
  *                 type: string
  *               delay_seconds:
  *                 type: integer
- *               step_details:
- *                 type: string
  *     responses:
  *       200:
  *         description: Successfully updated block.
@@ -100,7 +98,6 @@ export async function PATCH(req: NextRequest) {
       delay_seconds,
       delay_type,
       delay_event,
-      step_details,
     } = await req.json();
 
     // const formattedTitle = formatTitle(title);
@@ -175,7 +172,6 @@ export async function PATCH(req: NextRequest) {
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
         delay_type: type === 'DELAY' ? delay_type : null,
         delay_event: type === 'DELAY' ? formattedDelayEvent : null,
-        step_details: type === 'STEP' ? step_details : null,
       },
     });
 

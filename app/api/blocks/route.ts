@@ -60,10 +60,6 @@ enum DelayType {
  *               path_id:
  *                 type: integer
  *                 description: The ID of the path the block belongs to.
- *               step_details:
- *                 type: string
- *                 nullable: true
- *                 description: Details for the STEP block.
  *               path_options:
  *                 type: array
  *                 items:
@@ -101,7 +97,6 @@ export async function POST(req: NextRequest) {
     description,
     workflow_id,
     path_id,
-    step_details,
     path_options,
     imageUrl,
     click_position,
@@ -195,7 +190,6 @@ export async function POST(req: NextRequest) {
         workflow: { connect: { id: workflow_id } },
         path: { connect: { id: path_id } },
         click_position: click_position || null,
-        step_details: type === 'STEP' ? step_details : null,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
         delay_type: type === 'DELAY' ? (delay_type as DelayType) : null,
         delay_event: type === 'DELAY' ? formattedDelayEvent : null,

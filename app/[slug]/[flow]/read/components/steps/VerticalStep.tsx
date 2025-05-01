@@ -449,7 +449,7 @@ export default function VerticalStep({
           }
 
           {/* Description section - always displayed below icon and title */}
-          {block.step_details || block.description ? (
+          {block.description ? (
             <div className="text-left w-full">
               <p
                 ref={descriptionRef}
@@ -460,7 +460,7 @@ export default function VerticalStep({
                 style={{ color: colors['text-quaternary'] }}
               >
                 {parseTextWithLinks(
-                  block.step_details || block.description || ''
+                block.description || ''
                 ).map((segment, index) =>
                   segment.type === 'link' ? (
                     <a

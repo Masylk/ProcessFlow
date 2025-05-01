@@ -114,7 +114,6 @@ function createOptimisticPaths(
       child_paths: [],
       created_at: nowStr,
       updated_at: nowStr,
-      step_details: null,
       delay_seconds: null,
       last_modified: null,
     };

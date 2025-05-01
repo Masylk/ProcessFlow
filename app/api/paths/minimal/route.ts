@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
           description: '',
           workflow_id,
           path_id: newPath.id,
-          step_details: 'Begin',
         }
       });
 
@@ -53,7 +52,6 @@ export async function POST(req: NextRequest) {
           description: '',
           workflow_id,
           path_id: newPath.id,
-          step_details: 'Last',
         }
       });
 

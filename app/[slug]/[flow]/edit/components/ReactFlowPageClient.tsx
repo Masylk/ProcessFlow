@@ -57,7 +57,6 @@ export function ReactFlowPageClient({
       position: cappedPosition,
       workflow_id: parseInt(workflowId),
       path_id: path_id,
-      step_details: blockData.type === 'STEP' ? '' : undefined,
       icon:
         blockData.type === 'STEP'
           ? '/step-icons/default-icons/container.svg'

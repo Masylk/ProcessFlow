@@ -162,7 +162,7 @@ export function processPath(
       },
       data: {
         workspaceId,
-        label: block.title || block.step_details || 'Block',
+        label: block.title || 'Block',
         position: block.position,
         type: block.type,
         onDelete: handleDeleteBlock,
