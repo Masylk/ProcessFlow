@@ -586,7 +586,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                 <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
                   Condition
                 </div>
-                <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+                <div className="text-sm font-semibold break-words line-clamp-1" style={{ color: colors['fg-primary'], width: '333px' }}>
                   {data.block.title || 'Untitled Condition'}
                 </div>
               </div>
@@ -735,7 +735,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
           {data.block.description && (
             <div className="p-[17px] flex flex-col gap-[13.7px]">
               <p
-                className="text-xs mt-1 line-clamp-2 whitespace-pre-line"
+                className="text-xs mt-1 line-clamp-2 break-words whitespace-pre-line"
                 style={{ color: colors['fg-tertiary'] }}
               >
                 {parseTextWithLinks(data.block.description).map(

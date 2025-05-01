@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { formatTitle } from '../utils/formatTitle';
 
 /**
  * @swagger
@@ -59,6 +60,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const formattedLabel = formatTitle(label);
+
     // Check if a stroke line with same source and target already exists
     const existingStrokeLine = await prisma.stroke_line.findFirst({
       where: {
@@ -81,7 +84,7 @@ export async function POST(request: Request) {
         source_block_id,
         target_block_id,
         workflow_id,
-        label,
+        label: formattedLabel || '',
         is_loop,
         control_points: control_points ? { set: control_points } : undefined,
       },
@@ -172,6 +175,8 @@ export async function PUT(request: Request) {
       );
     }
 
+    const formattedLabel = label ? formatTitle(label) : undefined;
+
     // Update stroke line
     const updatedStrokeLine = await prisma.stroke_line.update({
       where: { id },
@@ -179,7 +184,7 @@ export async function PUT(request: Request) {
         source_block_id,
         target_block_id,
         workflow_id,
-        label,
+        label: formattedLabel,
         is_loop,
         control_points: control_points ? { set: control_points } : undefined,
       },

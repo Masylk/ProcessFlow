@@ -49,6 +49,21 @@ export default function HorizontalDelay({
     }
   };
 
+  const renderTitleWithLineBreaks = (title: string, chunkSize = 200) => {
+    if (!title) return null;
+    const chunks = [];
+    for (let i = 0; i < title.length; i += chunkSize) {
+      chunks.push(title.slice(i, i + chunkSize));
+    }
+    // Interleave <br /> except after the last chunk
+    return chunks.map((chunk, idx) => (
+      <React.Fragment key={idx}>
+        {chunk}
+        {idx < chunks.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   const getDelayIcon = () => {
     if (block.delay_type === DelayType.WAIT_FOR_EVENT) {
       return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`;
@@ -93,7 +108,12 @@ export default function HorizontalDelay({
                   borderColor: colors['border-secondary'],
                 }}
               >
-                <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
+                <Image
+                  src={getDelayIcon()}
+                  alt="Delay"
+                  width={24}
+                  height={24}
+                />
               </div>
               <span
                 className={cn('font-semibold', 'text-base')}
@@ -164,9 +184,9 @@ export default function HorizontalDelay({
                         borderColor: selectedOptionIds?.some(
                           ([pathId, blockId]) =>
                             pathId === option.path.id && blockId === block.id
-                          )
-                            ? colors['border-brand']
-                            : colors['border-secondary'],
+                        )
+                          ? colors['border-brand']
+                          : colors['border-secondary'],
                         transform: 'translateZ(0)',
                       }}
                     >
@@ -204,10 +224,10 @@ export default function HorizontalDelay({
                       </div>
                       <div className="flex flex-col gap-1">
                         <p
-                          className="font-normal text-sm"
+                          className="font-normal text-sm break-words line-clamp-2"
                           style={{ color: colors['text-primary'] }}
                         >
-                          {option.path.name}
+                          {renderTitleWithLineBreaks(option.path.name)}
                         </p>
                       </div>
                     </motion.button>
@@ -237,7 +257,12 @@ export default function HorizontalDelay({
                   borderColor: colors['border-secondary'],
                 }}
               >
-                <Image src={getDelayIcon()} alt="Delay" width={24} height={24} />
+                <Image
+                  src={getDelayIcon()}
+                  alt="Delay"
+                  width={24}
+                  height={24}
+                />
               </div>
               <span
                 className={cn('font-semibold', 'text-base')}
@@ -256,10 +281,12 @@ export default function HorizontalDelay({
                   Waiting for:
                 </span>
                 <span
-                  className={cn('text-sm whitespace-pre-line')}
+                  className={cn(
+                    'text-sm whitespace-pre-line line-clamp-2 break-words'
+                  )}
                   style={{ color: colors['text-primary'] }}
                 >
-                  {getDelayText()}
+                  {renderTitleWithLineBreaks(getDelayText() || '')}
                 </span>
               </div>
 
@@ -283,7 +310,9 @@ export default function HorizontalDelay({
           </div>
 
           <div
-            className={cn('flex items-center gap-2 p-3 rounded-lg bg-opacity-5')}
+            className={cn(
+              'flex items-center gap-2 p-3 rounded-lg bg-opacity-5'
+            )}
             style={{ backgroundColor: colors['bg-secondary'] }}
           >
             <Image
@@ -383,10 +412,10 @@ export default function HorizontalDelay({
                     </div>
                     <div className="flex flex-col gap-1">
                       <p
-                        className="font-normal text-sm"
+                        className="font-normal text-sm break-words line-clamp-2"
                         style={{ color: colors['text-primary'] }}
                       >
-                        {option.path.name}
+                        {renderTitleWithLineBreaks(option.path.name)}
                       </p>
                     </div>
                   </motion.button>

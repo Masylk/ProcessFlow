@@ -196,7 +196,7 @@ export default function BlockDetailsSidebar({
                 />
               ) : (
                 <h1
-                  className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50"
+                  className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50 break-words line-clamp-2"
                   style={{
                     color: colors['text-primary'],
                     backgroundColor: 'transparent',

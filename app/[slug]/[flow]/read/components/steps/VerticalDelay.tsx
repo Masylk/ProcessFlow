@@ -28,6 +28,21 @@ export default function VerticalDelay({
     visible: { opacity: 1, y: 0 },
   };
 
+  const renderTitleWithLineBreaks = (title: string, chunkSize = 90) => {
+    if (!title) return null;
+    const chunks = [];
+    for (let i = 0; i < title.length; i += chunkSize) {
+      chunks.push(title.slice(i, i + chunkSize));
+    }
+    // Interleave <br /> except after the last chunk
+    return chunks.map((chunk, idx) => (
+      <React.Fragment key={idx}>
+        {chunk}
+        {idx < chunks.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   const expirationText = () => {
     if (!block.delay_seconds) return '';
     const days = Math.floor(block.delay_seconds / 86400);
@@ -37,7 +52,8 @@ export default function VerticalDelay({
     const parts = [];
     if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
     if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
-    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+    if (minutes > 0)
+      parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
 
     return parts.length > 0 ? `${parts.join(' and ')}` : '';
   };
@@ -326,7 +342,7 @@ export default function VerticalDelay({
                   Waiting for:
                 </span>
                 <span
-                  className="text-sm whitespace-pre-line"
+                  className="text-sm whitespace-pre-line break-words line-clamp-2"
                   style={{ color: colors['text-primary'] }}
                 >
                   {block.delay_event}
@@ -453,10 +469,10 @@ export default function VerticalDelay({
                     </div>
                     <div className="flex flex-col gap-1">
                       <p
-                        className="font-normal text-sm"
+                        className="font-normal text-sm break-words line-clamp-2"
                         style={{ color: colors['text-primary'] }}
                       >
-                        {option.path.name}
+                        {renderTitleWithLineBreaks(option.path.name)}
                       </p>
                     </div>
                   </motion.button>

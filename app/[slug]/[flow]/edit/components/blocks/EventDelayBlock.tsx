@@ -674,10 +674,10 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
           }}
         >
           {/* Header with separator */}
-          <div 
+          <div
             className="p-[17px] flex items-center justify-between"
             style={{
-              borderBottom: `1px solid ${colors['border-secondary']}`
+              borderBottom: `1px solid ${colors['border-secondary']}`,
             }}
           >
             <div className="flex items-center gap-3">
@@ -694,10 +694,16 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
                 />
               </div>
               <div className="flex flex-col gap-0.5">
-                <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+                <div
+                  className="text-xs font-medium"
+                  style={{ color: colors['fg-tertiary'] }}
+                >
                   Delay
                 </div>
-                <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+                <div
+                  className="text-sm font-semibold"
+                  style={{ color: colors['fg-primary'] }}
+                >
                   Event-Based Delay
                 </div>
               </div>
@@ -730,8 +736,14 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
                   Waiting for:
                 </span>
                 <span
-                  className="text-sm font-medium"
-                  style={{ color: colors['text-primary'] }}
+                  className="text-sm font-medium line-clamp-2 break-words"
+                  style={{
+                    color: colors['text-primary'],
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
                 >
                   {block.delay_event}
                 </span>
