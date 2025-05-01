@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { deleteOneBlock } from '../../utils/blocks/deleteOne';
+import { formatTitle } from '../../utils/formatTitle';
 
 /**
  * @swagger
@@ -102,7 +103,10 @@ export async function PATCH(req: NextRequest) {
       step_details,
     } = await req.json();
 
-    
+    // const formattedTitle = formatTitle(title);
+    const formattedTitle = title;
+    const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
+
     const existingBlock = await prisma.block.findUnique({
       where: { id: block_id },
       select: { 
@@ -156,7 +160,7 @@ export async function PATCH(req: NextRequest) {
       data: {
         type,
         position,
-        title,
+        title: formattedTitle,
         icon,
         description,
         path_id,
@@ -170,7 +174,7 @@ export async function PATCH(req: NextRequest) {
         task_type,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
         delay_type: type === 'DELAY' ? delay_type : null,
-        delay_event: type === 'DELAY' ? delay_event : null,
+        delay_event: type === 'DELAY' ? formattedDelayEvent : null,
         step_details: type === 'STEP' ? step_details : null,
       },
     });

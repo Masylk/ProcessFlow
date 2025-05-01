@@ -91,6 +91,8 @@ export default function HorizontalStep({
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const [descriptionHeight, setDescriptionHeight] = useState(0);
 
   // Add null check for block
   if (!block) {
@@ -344,6 +346,19 @@ export default function HorizontalStep({
     return 'object-contain';
   };
 
+  const renderTitleWithLineBreaks = (title: string, chunkSize = 150) => {
+    if (!title) return null;
+    const chunks = [];
+    for (let i = 0; i < title.length; i += chunkSize) {
+      chunks.push(title.slice(i, i + chunkSize));
+    }
+    return chunks.map((chunk, idx) => (
+      <React.Fragment key={idx}>
+        {chunk}
+        {idx < chunks.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
   // Reset zoom and drag when closing fullscreen
   useEffect(() => {
     if (!isImageFullscreen) {
@@ -399,6 +414,12 @@ export default function HorizontalStep({
     };
   }, [isImageFullscreen]);
 
+  useEffect(() => {
+    if (descriptionRef.current) {
+      setDescriptionHeight(descriptionRef.current.offsetHeight);
+    }
+  }, [block.description]);
+
   const toggleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsImageFullscreen(!isImageFullscreen);
@@ -451,17 +472,27 @@ export default function HorizontalStep({
           ref={contentRef}
           className={cn(
             'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
-            hasOnlyDescription && 'flex items-center justify-center'
+            hasOnlyDescription &&
+              descriptionHeight <= windowHeight * 0.5 &&
+              'flex items-center justify-center'
           )}
         >
-          <div className={cn(
-            'w-full',
-            hasOnlyDescription ? 'flex flex-col items-center justify-center px-5' : ''
-          )}>
+          <div
+            className={cn(
+              'w-full',
+              hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+                ? 'flex flex-col items-center justify-center px-5'
+                : ''
+            )}
+          >
             {/* Header Section */}
-            <div className={cn(
-              hasOnlyDescription ? '' : 'px-5 pt-5 pb-4'
-            )}>
+            <div
+              className={cn(
+                hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+                  ? ''
+                  : 'px-5 pt-5 pb-4'
+              )}
+            >
               {/* Step Header */}
               <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
                 {/* App Icon */}
@@ -473,7 +504,8 @@ export default function HorizontalStep({
                   }}
                 >
                   <div className="flex items-center justify-center">
-                    {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                    {block.icon &&
+                    block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                       <img
                         src={block.icon}
                         alt="Step Icon"
@@ -495,10 +527,12 @@ export default function HorizontalStep({
                 {/* Step Title */}
                 <div className="flex-1">
                   <div
-                    className="flex items-center text-sm sm:text-base font-semibold"
+                    className="flex items-center text-sm sm:text-base font-semibold break-words line-clamp-2"
                     style={{ color: colors['text-primary'] }}
                   >
-                    <span>{getDisplayTitle(block)}</span>
+                    <span>
+                      {renderTitleWithLineBreaks(getDisplayTitle(block))}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -506,10 +540,13 @@ export default function HorizontalStep({
               {/* Description */}
               <div className="relative w-full">
                 <p
+                  ref={descriptionRef}
                   className="text-base whitespace-pre-line break-words w-full"
                   style={{ color: colors['text-quaternary'] }}
                 >
-                  {parseTextWithLinks(block.step_details || block.description || '').map((segment, index) =>
+                  {parseTextWithLinks(
+                    block.step_details || block.description || ''
+                  ).map((segment, index) =>
                     segment.type === 'link' ? (
                       <a
                         key={index}
@@ -520,7 +557,11 @@ export default function HorizontalStep({
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          window.open(segment.content, '_blank', 'noopener,noreferrer');
+                          window.open(
+                            segment.content,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
                         }}
                       >
                         {segment.content}
@@ -581,7 +622,11 @@ export default function HorizontalStep({
                           <div key={option.path.id} className="overflow-hidden">
                             <motion.button
                               onClick={() =>
-                                onOptionSelect?.(option.path.id, block.id, false)
+                                onOptionSelect?.(
+                                  option.path.id,
+                                  block.id,
+                                  false
+                                )
                               }
                               className={cn(
                                 'w-full p-3 sm:p-4 rounded-lg border transition-all duration-200',
@@ -652,7 +697,7 @@ export default function HorizontalStep({
                                   className="font-normal text-xs sm:text-sm"
                                   style={{ color: colors['text-primary'] }}
                                 >
-                                  {option.path.name}
+                                  {renderTitleWithLineBreaks(option.path.name)}
                                 </p>
                               </div>
                             </motion.button>

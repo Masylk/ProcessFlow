@@ -244,9 +244,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
         icon: updatedData.icon !== undefined ? updatedBlock.icon : prev.icon,
       }));
 
-      if (updatedData.title !== undefined) {
-        data.label = updatedData.title || 'Untitled Block';
-      }
+      // if (updatedData.title !== undefined) {
+      //   data.label = updatedData.title || 'Untitled Block';
+      // }
 
       // Only update paths if image was changed
       if (updatedData.image !== undefined) {
@@ -1014,11 +1014,13 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
         />
 
         {/* Header section with separator */}
-        <div 
+        <div
           className="p-[17px] flex items-center justify-between"
           style={{
-            borderBottom: blockData.description || signedImageUrl || blockData.average_time ? 
-              `1px solid ${colors['border-secondary']}` : 'none'
+            borderBottom:
+              blockData.description || signedImageUrl || blockData.average_time
+                ? `1px solid ${colors['border-secondary']}`
+                : 'none',
           }}
         >
           <div className="flex items-center gap-3">
@@ -1052,10 +1054,23 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
               )}
             </div>
             <div className="flex flex-col gap-0.5">
-              <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+              <div
+                className="text-xs font-medium"
+                style={{ color: colors['fg-tertiary'] }}
+              >
                 Step
               </div>
-              <div className="text-sm font-semibold" style={{ color: colors['fg-primary'] }}>
+              <div
+                className="text-sm font-semibold line-clamp-2 break-words"
+                style={{
+                  color: colors['fg-primary'],
+                  display: '-webkit-box',
+                  WebkitLineClamp: 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  width: '333px',
+                }}
+              >
                 {blockData.title || 'Untitled Block'}
               </div>
             </div>
@@ -1069,8 +1084,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 backgroundColor: 'transparent',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  colors['bg-secondary'];
+                e.currentTarget.style.backgroundColor = colors['bg-secondary'];
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -1086,7 +1100,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
         </div>
 
         {/* Content section - only render if there's content */}
-        {(blockData.description || signedImageUrl || blockData.average_time) && (
+        {(blockData.description ||
+          signedImageUrl ||
+          blockData.average_time) && (
           <div className="p-[17px] flex flex-col gap-[13.7px]">
             {blockData.description && (
               <p

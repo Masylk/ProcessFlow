@@ -10,6 +10,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { ThemeProvider } from '@/app/context/ThemeContext';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
+import { Block, BlockType } from '../../../types';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -354,7 +355,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             className="text-lg font-medium"
             style={{ color: colors['text-primary'] }}
           >
-            {step === 1 ? 'Create a path to a node' : ''}
+            {step === 1 ? 'Connect blocks' : ''}
           </h2>
         </div>
 
@@ -366,7 +367,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                 className="text-sm"
                 style={{ color: colors['text-secondary'] }}
               >
-                Select Node
+                Select Block
               </div>
 
               {/* Two Column Layout */}
@@ -412,10 +413,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                         className="text-xs mb-1"
                         style={{ color: colors['text-tertiary'] }}
                       >
-                        #STEP
+                        #{(sourceNode.data.block as Block).type}
                       </div>
                       <div
-                        className="text-sm font-medium"
+                        className="text-sm font-medium break-words line-clamp-2"
                         style={{ color: colors['text-primary'] }}
                       >
                         {sourceNode.data.label as string}
@@ -465,10 +466,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                           className="text-xs mb-1"
                           style={{ color: colors['text-tertiary'] }}
                         >
-                          #STEP
+                          #{(getNode(selectedNodeId)?.data.block as Block).type}
                         </div>
                         <div
-                          className="text-sm font-medium"
+                          className="text-sm font-medium break-words line-clamp-2"
                           style={{ color: colors['text-primary'] }}
                         >
                           {getNode(selectedNodeId)?.data.label as string}
