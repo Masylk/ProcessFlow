@@ -11,9 +11,22 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const colors = useColors();
 
+  // Helper for file validation
+  const validateFile = (file: File): boolean => {
+    if (!file.type.startsWith('image/')) {
+      alert('Invalid file type. Please select an image file.');
+      return false;
+    }
+    if (file.size > 1024 * 1024) {
+      alert('File too large. Image must be less than 1MB.');
+      return false;
+    }
+    return true;
+  };
+
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && validateFile(file)) {
       await uploadFile(file);
     }
   };
@@ -32,7 +45,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     setIsDragOver(false);
 
     const file = event.dataTransfer.files[0];
-    if (file) {
+    if (file && validateFile(file)) {
       await uploadFile(file);
     }
   };

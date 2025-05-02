@@ -38,12 +38,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self';",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net;", // adjust for your needs
-              "style-src 'self' 'unsafe-inline' fonts.googleapis.com;", // Tailwind JIT & Google Fonts
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net unpkg.com https://js.stripe.com https://media-editor.cloudinary.com https://js.hs-scripts.com http://js.hs-scripts.com https://eu-assets.i.posthog.com https://js.usemessages.com https://js.hs-analytics.net https://js.hs-banner.com https://js.hscollectedforms.net;",
+              "style-src 'self' 'unsafe-inline' data: fonts.googleapis.com;", // Tailwind JIT & Google Fonts & data: for TUI
               "img-src 'self' data: blob: https:;", // allow images from any HTTPS source
               "font-src 'self' fonts.gstatic.com;",
-              "connect-src 'self' https://*.supabase.co;",
-              "frame-src 'none';", // no iframes allowed
+              "connect-src 'self' https://*.supabase.co https://js.stripe.com https://api.stripe.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://api.hubspot.com https://forms.hscollectedforms.net;",
+              "frame-src 'self' https://js.stripe.com https://app.hubspot.com;", // allow Stripe & HubSpot iframes
               "object-src 'none';",
               "base-uri 'self';",
               "frame-ancestors 'none';", // CSP way to prevent embedding

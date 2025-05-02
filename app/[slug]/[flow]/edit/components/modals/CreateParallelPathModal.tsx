@@ -8,6 +8,7 @@ import { useColors, useTheme } from '@/app/theme/hooks';
 import { themeRegistry } from '@/app/theme/registry';
 import { Path } from '../../../types';
 import IconModifier from '../IconModifier';
+import DOMPurify from 'dompurify';
 
 /**
  * Modal for creating a new parallel path condition.
@@ -129,10 +130,10 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               size="small"
               onClick={() =>
                 onConfirm({
-                  conditionName,
-                  conditionDescription,
+                  conditionName: DOMPurify.sanitize(conditionName),
+                  conditionDescription: DOMPurify.sanitize(conditionDescription),
                   icon,
-                  paths_to_create: pathNames,
+                  paths_to_create: pathNames.map((n) => DOMPurify.sanitize(n)),
                   path_to_move: selectedPath,
                 })
               }

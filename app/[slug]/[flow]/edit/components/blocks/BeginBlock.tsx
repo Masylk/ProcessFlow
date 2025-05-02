@@ -8,6 +8,7 @@ import { useColors } from '@/app/theme/hooks';
 import DeletePathModal from '../modals/DeletePathModal';
 import { BasicBlock } from './BasicBlock';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 // Simple tooltip component
 type TooltipProps = {
@@ -122,11 +123,13 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
       return;
     }
 
+    const cleanPathName = DOMPurify.sanitize(pathName);
+
     // Optimistically update the path name in state
     pathUpdated = {
       ...pathUpdated,
       id: data.path?.id,
-      name: pathName,
+      name: cleanPathName,
     };
     let updatedPaths = allPaths.map((path) =>
       path.id === pathUpdated.id ? { ...path, ...pathUpdated } : path
@@ -152,7 +155,7 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
                           ...cp,
                           path: {
                             ...cp.path,
-                            name: mergedUpdatedPath.name,
+                            name: cleanPathName,
                           },
                         }
                       : cp
@@ -178,7 +181,7 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: pathName,
+          name: cleanPathName,
         }),
       });
 

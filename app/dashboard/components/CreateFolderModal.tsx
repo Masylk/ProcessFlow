@@ -8,6 +8,7 @@ import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
 import { checkFolderName } from '@/app/utils/checkNames';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface CreateFolderModalProps {
   onClose: () => void;
@@ -39,11 +40,14 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       return;
     }
 
+    // Sanitize the folder name before using it
+    const sanitizedFolderName = DOMPurify.sanitize(folderName);
+
     setIsSubmitting(true);
     try {
-      if (iconUrl) await onCreate(folderName, iconUrl);
-      else if (emote) await onCreate(folderName, undefined, emote);
-      else await onCreate(folderName);
+      if (iconUrl) await onCreate(sanitizedFolderName, iconUrl);
+      else if (emote) await onCreate(sanitizedFolderName, undefined, emote);
+      else await onCreate(sanitizedFolderName);
       onClose();
     } catch (error) {
       console.error('Error creating folder:', error);
@@ -98,7 +102,10 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       <div className="flex flex-col gap-4">
         {/* Input Field */}
         <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: colors['text-primary'] }}>
+          <label
+            className="block text-sm font-semibold mb-2"
+            style={{ color: colors['text-primary'] }}
+          >
             Folder name <span style={{ color: colors['text-accent'] }}>*</span>
           </label>
           <div className="flex items-center gap-2">

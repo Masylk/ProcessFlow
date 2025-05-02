@@ -9,6 +9,7 @@ import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
 import { checkFolderName } from '@/app/utils/checkNames';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface EditFolderModalProps {
   onClose: () => void;
@@ -45,11 +46,13 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       return;
     }
 
+    const sanitizedName = DOMPurify.sanitize(name);
+
     setIsSubmitting(true);
     try {
-      if (iconUrl) await onEdit(name, iconUrl);
-      else if (emote) await onEdit(name, undefined, emote);
-      else await onEdit(name);
+      if (iconUrl) await onEdit(sanitizedName, iconUrl);
+      else if (emote) await onEdit(sanitizedName, undefined, emote);
+      else await onEdit(sanitizedName);
 
       onClose();
     } catch (error) {

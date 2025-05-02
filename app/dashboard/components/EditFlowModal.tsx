@@ -9,6 +9,7 @@ import { useColors } from '@/app/theme/hooks';
 import IconUpload from '@/app/components/IconUpload';
 import IconModifier from './IconModifier';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 interface EditFlowModalProps {
   onClose: () => void;
@@ -41,10 +42,12 @@ export default function EditFlowModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const sanitizedProcessName = DOMPurify.sanitize(processName);
+      const sanitizedFlowDescription = DOMPurify.sanitize(flowDescription);
       const result = await onConfirm(
         selectedWorkflow.id,
-        processName,
-        flowDescription,
+        sanitizedProcessName,
+        sanitizedFlowDescription,
         undefined,
         flowIcon
       );

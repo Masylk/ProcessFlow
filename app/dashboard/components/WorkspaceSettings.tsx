@@ -16,6 +16,29 @@ interface WorkspaceSettingsProps {
 // Maximum file size (1MB)
 const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
+// Allowed image MIME types
+const ALLOWED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/svg+xml',
+  'image/avif',
+];
+
+// Utility to sanitize workspace name input
+function sanitizeNameInput(input: string): string {
+  // Remove leading/trailing whitespace, control chars, and collapse spaces
+  return input
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Utility to check file extension if MIME type is missing or unreliable
+function hasAllowedImageExtension(fileName: string): boolean {
+  return /\.(png|jpe?g|gif|svg|avif)$/i.test(fileName);
+}
+
 export default function WorkspaceSettings({
   workspace,
   onUpdate,
@@ -55,26 +78,54 @@ export default function WorkspaceSettings({
     }
   }, [name]);
 
-  // Handle file upload when user selects a file
+  // Update name input handler to limit and sanitize
+  const handleNameChange = (value: string) => {
+    let sanitized = sanitizeNameInput(value);
+    if (sanitized.length > 50) {
+      sanitized = sanitized.slice(0, 50);
+    }
+    setName(sanitized);
+  };
+
+  // Update file change handler to check type and size
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check file size before processing
-      if (file.size > MAX_FILE_SIZE) {
-        setError('File is too large. Maximum size is 1MB.');
-        // Reset the file input
-        if (e.target) e.target.value = '';
-        return;
-      }
-
-      setError(''); // Clear any previous errors
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) {
+      setError('No file selected. Please choose an image file.');
+      setLogoFile(null);
+      setLogoPreview(null);
+      return;
     }
+
+    // Check file type and extension
+    const isAllowedType = ALLOWED_IMAGE_TYPES.includes(file.type);
+    const isAllowedExt = hasAllowedImageExtension(file.name);
+
+    if (!isAllowedType && !isAllowedExt) {
+      setError(
+        'Invalid file type. Please upload a PNG, JPEG, GIF, SVG, or AVIF image.'
+      );
+      if (e.target) e.target.value = '';
+      setLogoFile(null);
+      setLogoPreview(null);
+      return;
+    }
+    // Check file size before processing
+    if (file.size > MAX_FILE_SIZE) {
+      setError('File is too large. Maximum size is 1MB.');
+      if (e.target) e.target.value = '';
+      setLogoFile(null);
+      setLogoPreview(null);
+      return;
+    }
+
+    setError(''); // Clear any previous errors
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleLogoClick = () => {
@@ -278,9 +329,10 @@ export default function WorkspaceSettings({
             <InputField
               type="default"
               value={name}
-              onChange={setName}
+              onChange={handleNameChange}
               placeholder="Enter workspace name"
             />
+            <div className="text-xs text-gray-400 mt-1">{name.length}</div>
             {nameError && (
               <div className="text-red-500 text-xs mt-1">{nameError}</div>
             )}
@@ -355,7 +407,7 @@ export default function WorkspaceSettings({
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="image/svg+xml,image/png,image/jpeg,image/gif"
+              accept="image/png,image/jpeg,image/gif,image/svg+xml,image/avif"
               className="hidden"
             />
             <div
