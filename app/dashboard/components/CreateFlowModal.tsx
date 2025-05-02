@@ -6,6 +6,7 @@ import TextAreaInput from '../../components/TextAreaInput';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '../../components/IconUpload';
 import IconModifier from './IconModifier';
+import DOMPurify from 'dompurify';
 
 interface CreateFlowModalProps {
   onClose: () => void;
@@ -228,7 +229,14 @@ export default function CreateFlowModal({
                 onClick={() => {
                   if (!flowName.trim()) return;
                   setIsSaving(true);
-                  onCreateFlow(flowName, flowDescription, flowIcon)
+                  const sanitizedFlowName = DOMPurify.sanitize(flowName);
+                  const sanitizedFlowDescription =
+                    DOMPurify.sanitize(flowDescription);
+                  onCreateFlow(
+                    sanitizedFlowName,
+                    sanitizedFlowDescription,
+                    flowIcon
+                  )
                     .then(() => {
                       setIsSaving(false);
                       onClose();

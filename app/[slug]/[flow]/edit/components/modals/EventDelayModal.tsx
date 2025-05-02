@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
 import ButtonNormal from '@/app/components/ButtonNormal';
+import DOMPurify from 'dompurify';
 
 interface EventDelayModalProps {
   onClose: () => void;
@@ -22,8 +23,12 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
 
   // Convert initial seconds to days, hours, minutes
   const [days, setDays] = useState(Math.floor(initialSeconds / 86400));
-  const [hours, setHours] = useState(Math.floor((initialSeconds % 86400) / 3600));
-  const [minutes, setMinutes] = useState(Math.floor((initialSeconds % 3600) / 60));
+  const [hours, setHours] = useState(
+    Math.floor((initialSeconds % 86400) / 3600)
+  );
+  const [minutes, setMinutes] = useState(
+    Math.floor((initialSeconds % 3600) / 60)
+  );
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -39,7 +44,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
   const buttonSecondaryStyle = {
     backgroundColor: colors['bg-secondary'],
     borderColor: colors['border-primary'],
-    color: colors['text-primary']
+    color: colors['text-primary'],
   };
 
   const increment = (
@@ -60,7 +65,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
 
   const delayText = () => {
     if (!hasExpiration) {
-      return "Flow paused until event occurs";
+      return 'Flow paused until event occurs';
     }
     if (days === 0 && hours === 0 && minutes === 0) return null;
 
@@ -74,16 +79,19 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
   };
 
   const handleSubmit = () => {
-    if (eventName.trim()) {
+    const cleanEventName = DOMPurify.sanitize(eventName.trim());
+    if (cleanEventName) {
       const expirationSeconds = hasExpiration
         ? days * 86400 + hours * 3600 + minutes * 60
         : 0;
-      onSubmit(eventName.trim(), expirationSeconds);
+      onSubmit(cleanEventName, expirationSeconds);
     }
   };
 
   return (
-    <div className={`transition-opacity duration-300 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+    <div
+      className={`transition-opacity duration-300 ease-in-out ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+    >
       <Modal
         title="Set an event based delay"
         subtitle="Pause the Flow until a specific event occurs. Optionally, set a time limit to continue if the event doesn't happen."
@@ -92,7 +100,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
         icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`}
         actions={
           <div className="flex gap-3 w-full">
-            <ButtonNormal 
+            <ButtonNormal
               onClick={onClose}
               variant="secondary"
               size="small"
@@ -130,11 +138,15 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
               placeholder="User completes onboarding"
               className="w-full px-3 py-2 rounded-lg border outline-none"
               style={{
-                borderColor: isFocused ? colors['border-primary'] : colors['border-primary'],
+                borderColor: isFocused
+                  ? colors['border-primary']
+                  : colors['border-primary'],
                 backgroundColor: colors['bg-secondary'],
                 color: colors['text-primary'],
-                boxShadow: isFocused ? "0px 0px 0px 4px rgba(78,107,215,0.12)" : "0px 1px 2px rgba(16, 24, 40, 0.05)",
-                transition: "border-color 0.2s, box-shadow 0.2s"
+                boxShadow: isFocused
+                  ? '0px 0px 0px 4px rgba(78,107,215,0.12)'
+                  : '0px 1px 2px rgba(16, 24, 40, 0.05)',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
               }}
             />
           </div>
@@ -158,7 +170,9 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
               onClick={() => setHasExpiration(!hasExpiration)}
               className={`w-12 h-6 rounded-full transition-colors`}
               style={{
-                backgroundColor: hasExpiration ? colors['fg-brand-primary'] : colors['bg-tertiary']
+                backgroundColor: hasExpiration
+                  ? colors['fg-brand-primary']
+                  : colors['bg-tertiary'],
               }}
             >
               <div
@@ -179,7 +193,10 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                 >
                   Days
                 </label>
-                <div className="relative rounded-lg border overflow-hidden" style={{ borderColor: colors['border-primary'] }}>
+                <div
+                  className="relative rounded-lg border overflow-hidden"
+                  style={{ borderColor: colors['border-primary'] }}
+                >
                   <input
                     type="number"
                     value={days}
@@ -199,15 +216,17 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => increment(setDays, 1)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150 border-b"
-                      style={{ 
+                      style={{
                         backgroundColor: colors['bg-secondary'],
-                        borderColor: colors['border-primary']
+                        borderColor: colors['border-primary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img
@@ -219,14 +238,16 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => decrement(setDays, 1)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150"
-                      style={{ 
-                        backgroundColor: colors['bg-secondary']
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img
@@ -247,7 +268,10 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                 >
                   Hours
                 </label>
-                <div className="relative rounded-lg border overflow-hidden" style={{ borderColor: colors['border-primary'] }}>
+                <div
+                  className="relative rounded-lg border overflow-hidden"
+                  style={{ borderColor: colors['border-primary'] }}
+                >
                   <input
                     type="number"
                     value={hours}
@@ -269,15 +293,17 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => increment(setHours, 1, 23)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150 border-b"
-                      style={{ 
+                      style={{
                         backgroundColor: colors['bg-secondary'],
-                        borderColor: colors['border-primary']
+                        borderColor: colors['border-primary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img
@@ -289,14 +315,16 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => decrement(setHours, 1)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150"
-                      style={{ 
-                        backgroundColor: colors['bg-secondary']
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img
@@ -317,7 +345,10 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                 >
                   Minutes
                 </label>
-                <div className="relative rounded-lg border overflow-hidden" style={{ borderColor: colors['border-primary'] }}>
+                <div
+                  className="relative rounded-lg border overflow-hidden"
+                  style={{ borderColor: colors['border-primary'] }}
+                >
                   <input
                     type="number"
                     value={minutes}
@@ -339,15 +370,17 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => increment(setMinutes, 1, 59)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150 border-b"
-                      style={{ 
+                      style={{
                         backgroundColor: colors['bg-secondary'],
-                        borderColor: colors['border-primary']
+                        borderColor: colors['border-primary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img
@@ -359,14 +392,16 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
                     <button
                       onClick={() => decrement(setMinutes, 1)}
                       className="h-1/2 px-1.5 flex items-center justify-center transition-colors duration-150"
-                      style={{ 
-                        backgroundColor: colors['bg-secondary']
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-hover'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-hover'];
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = colors['bg-secondary'];
+                        e.currentTarget.style.backgroundColor =
+                          colors['bg-secondary'];
                       }}
                     >
                       <img

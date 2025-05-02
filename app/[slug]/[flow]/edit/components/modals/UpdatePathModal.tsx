@@ -8,6 +8,7 @@ import { themeRegistry } from '@/app/theme/registry';
 import { remove } from 'lodash';
 import IconModifier from '../IconModifier';
 import { Block } from '../../../types';
+import DOMPurify from 'dompurify';
 
 interface UpdatePathModalProps {
   onClose: () => void;
@@ -42,7 +43,9 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   const [conditionDescription, setConditionDescription] = useState<string>(
     block.description || ''
   );
-  const [icon, setIcon] = useState<string | undefined>(block.icon || 'step-icons/default-icons/dataflow.svg');
+  const [icon, setIcon] = useState<string | undefined>(
+    block.icon || 'step-icons/default-icons/dataflow.svg'
+  );
   const [pathRows, setPathRows] = useState<PathRow[]>([]);
   const [removedPaths, setRemovedPaths] = useState<PathRow[]>([]);
 
@@ -132,14 +135,14 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
     // pathsToAdd: all rows without id
     const pathsToAdd = pathRows
       .filter((row) => row.originalIndex === undefined)
-      .map((row) => row.name);
+      .map((row) => DOMPurify.sanitize(row.name));
 
     // pathsToRemove: all removed paths with id, deduplicated by (index, name)
     const seen = new Set<string>();
     const pathsToRemove = removedPaths
       .map((row) => ({
         index: row?.id ?? 0,
-        name: row.name,
+        name: DOMPurify.sanitize(row.name),
       }))
       .filter((row) => {
         const key = `${row.index}|${row.name}`;
@@ -156,11 +159,14 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
           row.name !== row.originalName &&
           row.originalIndex !== undefined
       )
-      .map((row) => ({ index: row.id as number, name: row.name }));
+      .map((row) => ({
+        index: row.id as number,
+        name: DOMPurify.sanitize(row.name),
+      }));
 
     onConfirm({
-      conditionName,
-      conditionDescription,
+      conditionName: DOMPurify.sanitize(conditionName),
+      conditionDescription: DOMPurify.sanitize(conditionDescription),
       icon,
       pathsToUpdate,
       pathsToAdd,

@@ -4,6 +4,7 @@ import { Folder } from '@/types/workspace';
 import InputField from '@/app/components/InputFields';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useColors } from '@/app/theme/hooks';
+import DOMPurify from 'dompurify';
 
 interface CreateSubfolderModalProps {
   onClose: () => void;
@@ -31,9 +32,10 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 
   const createFolder = (name: string) => {
     setIsSaving(true);
-    if (iconUrl) onCreate(name, parentId, iconUrl);
-    else if (emote) onCreate(name, parentId, undefined, emote);
-    else onCreate(name, parentId);
+    const sanitizedName = DOMPurify.sanitize(name);
+    if (iconUrl) onCreate(sanitizedName, parentId, iconUrl);
+    else if (emote) onCreate(sanitizedName, parentId, undefined, emote);
+    else onCreate(sanitizedName, parentId);
     setIsSaving(false);
     onClose();
   };

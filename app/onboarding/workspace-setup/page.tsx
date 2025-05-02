@@ -19,6 +19,30 @@ const LoadingScreen = () => {
   );
 };
 
+// Utility to sanitize workspace name input
+function sanitizeWorkspaceNameInput(value: string): string {
+  // Remove leading/trailing whitespace
+  let sanitized = value.trim();
+  // Remove any HTML tags
+  sanitized = sanitized.replace(/<[^>]*>?/gm, '');
+  // Allow only letters, numbers, spaces, hyphens, and apostrophes
+  sanitized = sanitized.replace(/[^a-zA-Z0-9À-ÿ' -]/g, '');
+  // Limit to 50 characters
+  sanitized = sanitized.slice(0, 50);
+  return sanitized;
+}
+
+const ALLOWED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/gif',
+  'image/svg+xml',
+  'image/avif',
+];
+const MAX_IMAGE_SIZE_MB = 1;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
 export default function WorkspaceSetup() {
   const [workspaceName, setWorkspaceName] = useState('');
   const [workspaceURL, setWorkspaceURL] = useState('');
@@ -74,11 +98,11 @@ export default function WorkspaceSetup() {
       e: React.ChangeEvent<HTMLInputElement>,
       setter: React.Dispatch<React.SetStateAction<string>>
     ) => {
-      const value = e.target.value;
-      setter(value);
-
+      let value = e.target.value;
       // If this is the workspace name input
       if (setter === setWorkspaceName) {
+        value = sanitizeWorkspaceNameInput(value);
+        setter(value);
         // Generate the URL slug from the workspace name
         const slug = value
           .toLowerCase()
@@ -96,6 +120,8 @@ export default function WorkspaceSetup() {
         slugCheckTimeoutRef.current = setTimeout(() => {
           checkSlugAvailability(slug);
         }, 500);
+      } else {
+        setter(value);
       }
     },
     [checkSlugAvailability, setWorkspaceName]
@@ -144,7 +170,21 @@ export default function WorkspaceSetup() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+        // Type check
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          setError(
+            'Invalid file type. Please upload a PNG, JPG, GIF, or SVG image.'
+          );
+          return;
+        }
+        // Size check
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
+          setError('File is too large. Maximum size is 1MB.');
+          return;
+        }
+
         setLogoFile(file);
+        setError('');
 
         // Convert the file to a base64 string for proper storage and API transmission
         const reader = new FileReader();
@@ -166,7 +206,21 @@ export default function WorkspaceSetup() {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
+      // Type check
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setError(
+          'Invalid file type. Please upload a PNG, JPG, GIF, or SVG image.'
+        );
+        return;
+      }
+      // Size check
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        setError('File is too large. Maximum size is 15MB.');
+        return;
+      }
+
       setLogoFile(file);
+      setError('');
 
       // Convert the file to a base64 string for proper storage and API transmission
       const reader = new FileReader();
@@ -495,7 +549,9 @@ export default function WorkspaceSetup() {
                 value={workspaceName}
                 onChange={(value) => {
                   handleInputChange(
-                    { target: { value } } as React.ChangeEvent<HTMLInputElement>,
+                    {
+                      target: { value },
+                    } as React.ChangeEvent<HTMLInputElement>,
                     setWorkspaceName
                   );
                 }}
@@ -668,6 +724,9 @@ export default function WorkspaceSetup() {
                     </div>
                   </div>
                 </div>
+                {error && (
+                  <div className="text-red-500 text-xs mt-1">{error}</div>
+                )}
               </div>
             </div>
 
