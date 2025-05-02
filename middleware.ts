@@ -24,7 +24,47 @@ const shareRoutes = [
   '/monitoring',
 ];
 
+// Simple in-memory store (not for production)
+const rateLimitStore = new Map<string, { count: number; lastRequest: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_AUTH_SHARE = 20;    // 20 requests per window for auth/share routes
+const RATE_LIMIT_GENERAL = 1000;      // 500 requests per window for other routes
+
+function isRateLimited(ip: string, maxRequests: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry || now - entry.lastRequest > RATE_LIMIT_WINDOW) {
+    rateLimitStore.set(ip, { count: 1, lastRequest: now });
+    return false;
+  }
+
+  if (entry.count >= maxRequests) {
+    return true;
+  }
+
+  entry.count += 1;
+  entry.lastRequest = now;
+  rateLimitStore.set(ip, entry);
+  return false;
+}
+
 export async function middleware(request: NextRequest) {
+  // Add this at the top of your middleware function
+  const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+
+  // Determine route type for rate limiting
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+  const isShareRoute = shareRoutes.some(route => pathname.includes(route));
+  const isSensitiveRoute = isAuthRoute || isShareRoute;
+
+  // Apply rate limiting based on route type
+  const maxRequests = isSensitiveRoute ? RATE_LIMIT_AUTH_SHARE : RATE_LIMIT_GENERAL;
+  if (isRateLimited(ip, maxRequests)) {
+    return new NextResponse('Too many requests', { status: 429 });
+  }
+
   // Add embed headers if needed
   if (request.nextUrl.pathname.startsWith('/shared/') && request.nextUrl.pathname.endsWith('/embed')) {
     const response = NextResponse.next();

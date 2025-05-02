@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { sanitizeInput } from '../utils/sanitize';
 
 export default function ResetPasswordRequestPage() {
   const [email, setEmail] = useState('');
@@ -22,11 +23,13 @@ export default function ResetPasswordRequestPage() {
     e.preventDefault();
     setIsLoading(true);
 
+    const cleanEmail = sanitizeInput(email);
+
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
 
       const data = await response.json();
@@ -237,7 +240,7 @@ export default function ResetPasswordRequestPage() {
                         placeholder="Email address"
                         className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(sanitizeInput(e.target.value))}
                         required
                       />
                     </div>

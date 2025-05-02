@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
+import { sanitizeInput } from '../utils/sanitize';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -30,7 +31,10 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!password || !confirmPassword) {
+    const cleanPassword = sanitizeInput(password);
+    const cleanConfirmPassword = sanitizeInput(confirmPassword);
+
+    if (!cleanPassword || !cleanConfirmPassword) {
       toast.error('Missing Fields', {
         description: 'Please fill in both password fields.',
         duration: 5000,
@@ -38,7 +42,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (cleanPassword !== cleanConfirmPassword) {
       toast.error('Password Mismatch', {
         description: 'Passwords do not match.',
         duration: 5000,
@@ -55,7 +59,7 @@ export default function ResetPasswordPage() {
       await supabase.auth.signOut();
 
       // Update the password
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password: cleanPassword });
 
       if (error) {
         if (error.message.includes('same')) {
@@ -258,7 +262,7 @@ export default function ResetPasswordPage() {
                       bg-transparent
                     "
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(sanitizeInput(e.target.value))}
                     required
                   />
                   <img
@@ -312,7 +316,7 @@ export default function ResetPasswordPage() {
                       bg-transparent
                     "
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => setConfirmPassword(sanitizeInput(e.target.value))}
                     required
                   />
                   <img
