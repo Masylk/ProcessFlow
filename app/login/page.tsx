@@ -9,25 +9,101 @@ import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { toast } from 'sonner';
+import { sanitizeInput } from '../utils/sanitize';
+
+// Add these constants at the top (after imports)
+const LOGIN_ATTEMPT_KEY = 'login_attempts';
+const LOGIN_BLOCK_KEY = 'login_block_until';
+const MAX_ATTEMPTS = 30;
+const WINDOW_MINUTES = 10;
+const BLOCK_MINUTES = 10;
+
+function getLoginAttempts(): number[] {
+  try {
+    const raw = localStorage.getItem(LOGIN_ATTEMPT_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as number[];
+  } catch {
+    return [];
+  }
+}
+
+function setLoginAttempts(attempts: number[]) {
+  localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(attempts));
+}
+
+function addLoginAttempt() {
+  const now = Date.now();
+  const attempts = getLoginAttempts().filter(
+    (ts) => now - ts < WINDOW_MINUTES * 60 * 1000
+  );
+  attempts.push(now);
+  setLoginAttempts(attempts);
+  return attempts.length;
+}
+
+function clearLoginAttempts() {
+  localStorage.removeItem(LOGIN_ATTEMPT_KEY);
+}
+
+function setBlockUntil(timestamp: number) {
+  localStorage.setItem(LOGIN_BLOCK_KEY, timestamp.toString());
+}
+
+function getBlockUntil(): number | null {
+  const raw = localStorage.getItem(LOGIN_BLOCK_KEY);
+  if (!raw) return null;
+  return parseInt(raw, 10);
+}
+
+function clearBlock() {
+  localStorage.removeItem(LOGIN_BLOCK_KEY);
+}
 
 function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockTimeLeft, setBlockTimeLeft] = useState<number | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const notificationShown = useRef(false);
+
+  // Check block status on mount and every second if blocked
+  useEffect(() => {
+    const checkBlock = () => {
+      const blockUntil = getBlockUntil();
+      if (blockUntil && Date.now() < blockUntil) {
+        setIsBlocked(true);
+        setBlockTimeLeft(Math.ceil((blockUntil - Date.now()) / 1000));
+      } else {
+        setIsBlocked(false);
+        setBlockTimeLeft(null);
+        clearBlock();
+      }
+    };
+    checkBlock();
+    let interval: NodeJS.Timeout | undefined;
+    if (isBlocked) {
+      interval = setInterval(checkBlock, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isBlocked]);
 
   // Get URL parameters for signup confirmation
   useEffect(() => {
     const signupEmail = searchParams?.get('email');
     const isSignupSuccess = searchParams?.get('signup') === 'success';
-    
+
     if (signupEmail && isSignupSuccess && !notificationShown.current) {
       setEmail(signupEmail); // Pre-fill the email field
       toast.success('Confirm your email', {
-        description: 'A confirmation email has been sent. Please check your inbox.',
+        description:
+          'A confirmation email has been sent. Please check your inbox.',
         duration: 7000,
       });
       notificationShown.current = true;
@@ -42,33 +118,63 @@ function LoginContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    if (!validateEmail(email)) {
+
+    // Sanitize before validation/submission
+    const cleanEmail = sanitizeInput(email);
+    const cleanPassword = sanitizeInput(password);
+
+    // Blocked: prevent login
+    if (isBlocked) {
+      toast.error('Too many failed attempts', {
+        description: 'Please wait before trying again.',
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (!validateEmail(cleanEmail)) {
       toast.error('Invalid Email', {
         description: 'Please enter a valid email address',
         duration: 5000,
       });
       return;
     }
-    
-    if (email && password) {
+
+    if (cleanEmail && cleanPassword) {
       setIsLoading(true);
-      
+
       try {
         const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
-        
+        formData.append('email', cleanEmail);
+        formData.append('password', cleanPassword);
+
         const response = await login(formData);
-        
+
         if (response?.error) {
-          console.error('Login error:', response.error);
+          // Add failed attempt
+          const attempts = addLoginAttempt();
+          if (attempts >= MAX_ATTEMPTS) {
+            const blockUntil = Date.now() + BLOCK_MINUTES * 60 * 1000;
+            setBlockUntil(blockUntil);
+            setIsBlocked(true);
+            setBlockTimeLeft(BLOCK_MINUTES * 60);
+            toast.error('Too many failed attempts', {
+              description:
+                'You have been blocked for 10 minutes. Please wait before trying again.',
+              duration: 7000,
+            });
+            return;
+          }
           toast.error('Login Failed', {
             description: response.error,
             duration: 5000,
           });
           return;
         }
+
+        // On successful login, clear attempts and block
+        clearLoginAttempts();
+        clearBlock();
 
         if (response?.needsEmailConfirmation) {
           if (process.env.NODE_ENV !== 'production') {
@@ -93,6 +199,20 @@ function LoginContent() {
           router.push('/dashboard');
         }
       } catch (err) {
+        // Add failed attempt on unexpected error
+        const attempts = addLoginAttempt();
+        if (attempts >= MAX_ATTEMPTS) {
+          const blockUntil = Date.now() + BLOCK_MINUTES * 60 * 1000;
+          setBlockUntil(blockUntil);
+          setIsBlocked(true);
+          setBlockTimeLeft(BLOCK_MINUTES * 60);
+          toast.error('Too many failed attempts', {
+            description:
+              'You have been blocked for 10 minutes. Please wait before trying again.',
+            duration: 7000,
+          });
+          return;
+        }
         console.error('Unexpected error during login:', err);
         toast.error('Login Failed', {
           description: 'An unexpected error occurred. Please try again.',
@@ -167,10 +287,22 @@ function LoginContent() {
         <div className="relative w-full h-fit px-4 sm:px-6 py-8 sm:py-10 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-6 sm:gap-8 overflow-hidden">
           {/* Corner dots */}
           <div className="pointer-events-none absolute inset-0">
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ top: 16, left: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ bottom: 16, left: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ top: 16, right: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ bottom: 16, right: 16 }} />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ top: 16, left: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ bottom: 16, left: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ top: 16, right: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ bottom: 16, right: 16 }}
+            />
           </div>
 
           {/* App icon */}
@@ -196,15 +328,28 @@ function LoginContent() {
             </div>
           </div>
 
+          {/* Blocked message */}
+          {isBlocked ? (
+            <div className="w-full text-center text-red-600 text-base font-semibold font-['Inter'] leading-tight mb-4">
+              Too many failed attempts, please wait{' '}
+              {blockTimeLeft ? Math.ceil(blockTimeLeft / 60) : ''} minute(s).
+            </div>
+          ) : null}
+
           {/* Login form */}
-          <form onSubmit={handleSubmit} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
+          <form
+            onSubmit={handleSubmit}
+            className="z-10 flex flex-col items-center gap-6 w-full rounded-xl"
+          >
             <div className="flex flex-col items-start gap-5 w-full">
               {/* Email field */}
               <div className="flex flex-col items-start gap-1.5 w-full">
                 <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Email
                 </label>
-                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
+                <div
+                  className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border border-[#d0d5dd] flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}
+                >
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
                     alt="Mail Icon"
@@ -216,7 +361,7 @@ function LoginContent() {
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={email}
                     onChange={(e) => {
-                      const newEmail = e.target.value;
+                      const newEmail = sanitizeInput(e.target.value);
                       setEmail(newEmail);
                     }}
                   />
@@ -235,15 +380,15 @@ function LoginContent() {
                     className="w-4 h-4"
                   />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(sanitizeInput(e.target.value))}
                   />
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? "eye-off" : "eye"}.svg`}
-                    alt={showPassword ? "Hide Password" : "Show Password"}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}
+                    alt={showPassword ? 'Hide Password' : 'Show Password'}
                     className="w-4 h-4 cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   />
@@ -252,7 +397,10 @@ function LoginContent() {
             </div>
 
             {/* Forgot password link */}
-            <Link href="/reset-password-request" className="flex items-center gap-1 w-full text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
+            <Link
+              href="/reset-password-request"
+              className="flex items-center gap-1 w-full text-[#667085] text-sm font-normal font-['Inter'] leading-tight"
+            >
               <span>Forgot password?</span>
               <span className="text-[#374c99] font-semibold">Reset</span>
             </Link>
@@ -261,18 +409,19 @@ function LoginContent() {
             <div className="flex flex-col items-start gap-4 w-full">
               <button
                 type="submit"
-                disabled={isLoading || !email || !password}
+                disabled={isLoading || !email || !password || isBlocked}
                 className={`w-full px-3 py-2 rounded-lg border-2 border-white flex items-center justify-center gap-1 overflow-hidden transition-colors duration-300 ${
-                  isLoading ? "bg-[#F9FAFB]" : "bg-[#4e6bd7] hover:bg-[#374c99]"
-                }`}
+                  isLoading ? 'bg-[#F9FAFB]' : 'bg-[#4e6bd7] hover:bg-[#374c99]'
+                } ${isBlocked ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
                   <div
                     className="w-5 h-5 animate-spin"
                     style={{
-                      borderRadius: "50%",
-                      background: "conic-gradient(#4761C4 0%, #F9FAFB 100%)",
-                      maskImage: "radial-gradient(closest-side, transparent 83%, black 84%)"
+                      borderRadius: '50%',
+                      background: 'conic-gradient(#4761C4 0%, #F9FAFB 100%)',
+                      maskImage:
+                        'radial-gradient(closest-side, transparent 83%, black 84%)',
                     }}
                   />
                 ) : (
@@ -316,7 +465,10 @@ function LoginContent() {
           <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
             Don't have an account?
           </div>
-          <Link href="/signup" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+          <Link
+            href="/signup"
+            className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight"
+          >
             Sign up
           </Link>
         </div>

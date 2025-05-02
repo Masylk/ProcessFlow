@@ -7,6 +7,7 @@ import posthog from 'posthog-js';
 import { signup, checkEmailExists } from '../login/actions';
 import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
+import { sanitizeInput } from '../utils/sanitize';
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,14 +34,14 @@ export default function SignupPage() {
 
   // Handle email validation and check if it exists
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
+    const newEmail = sanitizeInput(e.target.value);
     setEmail(newEmail);
     if (emailError) setEmailError("");
     if (globalError) setGlobalError("");
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+    setPassword(sanitizeInput(e.target.value));
     if (passwordError) setPasswordError("");
   };
 
@@ -85,6 +86,10 @@ export default function SignupPage() {
       console.log("Starting signup process");
     }
     
+    // Sanitize before validation/submission
+    const cleanEmail = sanitizeInput(email);
+    const cleanPassword = sanitizeInput(password);
+    
     // Clear any existing notifications first
     setShowEmailNotification(false);
     setGlobalError("");
@@ -94,12 +99,12 @@ export default function SignupPage() {
     // Validate inputs before submission
     let hasErrors = false;
     
-    if (!validateEmail(email)) {
+    if (!validateEmail(cleanEmail)) {
       setEmailError("Please enter a valid email address.");
       hasErrors = true;
     }
     
-    if (!validatePassword(password)) {
+    if (!validatePassword(cleanPassword)) {
       setPasswordError("Password must be at least 8 characters long.");
       hasErrors = true;
     }
@@ -107,7 +112,7 @@ export default function SignupPage() {
     if (hasErrors) return;
     
     // Validate password
-    if (password.length < 8) {
+    if (cleanPassword.length < 8) {
       setPasswordError("Password must be at least 8 characters");
       if (process.env.NODE_ENV !== 'production') {
         console.log("Password too short, signup blocked");
@@ -121,7 +126,7 @@ export default function SignupPage() {
     }
     setIsLoading(true);
     try {
-      const emailCheck = await checkEmailExists(email);
+      const emailCheck = await checkEmailExists(cleanEmail);
       
       if (emailCheck.error) {
         if (process.env.NODE_ENV !== 'production') {
@@ -135,13 +140,13 @@ export default function SignupPage() {
       }
       
       // Continue with signup process if email doesn't exist
-      if (email && password) {
+      if (cleanEmail && cleanPassword) {
         const formData = new FormData();
-        formData.append('email', email);
-        formData.append('password', password);
+        formData.append('email', cleanEmail);
+        formData.append('password', cleanPassword);
         
         if (process.env.NODE_ENV !== 'production') {
-          console.log("Submitting signup request with email:", email);
+          console.log("Submitting signup request with email:", cleanEmail);
         }
         const newUser = await signup(formData);
         if (process.env.NODE_ENV !== 'production') {

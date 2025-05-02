@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { sanitizeInput } from '../utils/sanitize';
 
 export default function Home() {
   const [isResending, setIsResending] = useState(false);
@@ -8,10 +9,12 @@ export default function Home() {
   const handleResendEmail = async () => {
     setIsResending(true);
     try {
+      // If you make email dynamic, sanitize it:
+      // const cleanEmail = sanitizeInput(email);
       const response = await fetch('/api/auth/resend-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'ceo@process-flow.io' }), // This should be dynamic in a real implementation
+        body: JSON.stringify({ email: 'ceo@process-flow.io' }), // sanitize if dynamic
       });
 
       if (response.ok) {
