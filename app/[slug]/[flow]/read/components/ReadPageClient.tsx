@@ -1349,8 +1349,9 @@ export default function ReadPageClient() {
                                   onCopyLink={handleCopyLink}
                                   onRestart={handleRestart}
                                 />
-                              ) : PathsToDisplayBlocks[currentStep].type ===
-                                'DELAY' ? (
+                              ) : PathsToDisplayBlocks[currentStep] &&
+                                PathsToDisplayBlocks[currentStep].type ===
+                                  'DELAY' ? (
                                 <HorizontalDelay
                                   block={PathsToDisplayBlocks[currentStep]}
                                   selectedOptionIds={selectedOptions}

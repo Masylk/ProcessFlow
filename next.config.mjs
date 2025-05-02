@@ -28,7 +28,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*', // Match all other paths
+        source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
@@ -36,7 +36,38 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'none'", // Prevent embedding via CSP
+            value: [
+              "default-src 'self';",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net;", // adjust for your needs
+              "style-src 'self' 'unsafe-inline' fonts.googleapis.com;", // Tailwind JIT & Google Fonts
+              "img-src 'self' data: blob: https:;", // allow images from any HTTPS source
+              "font-src 'self' fonts.gstatic.com;",
+              "connect-src 'self' https://*.supabase.co;",
+              "frame-src 'none';", // no iframes allowed
+              "object-src 'none';",
+              "base-uri 'self';",
+              "frame-ancestors 'none';", // CSP way to prevent embedding
+            ].join(' '),
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff', // Prevent MIME type sniffing
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin', // Privacy-safe referrer
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload', // HSTS
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()', // Disable unused browser features
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
           },
         ],
       },
