@@ -1,14 +1,28 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useRouter } from 'next/navigation';
 import { useColors } from '@/app/theme/hooks';
 
+// Utility to sanitize name input
+function sanitizeNameInput(value: string): string {
+  // Remove leading/trailing whitespace
+  let sanitized = value.trim();
+
+  // Remove any HTML tags
+  sanitized = sanitized.replace(/<[^>]*>?/gm, '');
+
+  // Allow only letters, spaces, hyphens, and apostrophes
+  sanitized = sanitized.replace(/[^a-zA-ZÀ-ÿ' -]/g, '');
+
+  return sanitized;
+}
+
 export default function PersonalInfo() {
-  const [lastName, setLastName] = useState("");
-  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const router = useRouter();
@@ -20,8 +34,8 @@ export default function PersonalInfo() {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
-        setFirstName(parsedData.firstName || "");
-        setLastName(parsedData.lastName || "");
+        setFirstName(parsedData.firstName || '');
+        setLastName(parsedData.lastName || '');
       } catch (e) {
         console.warn('Error loading saved personal info data:', e);
       }
@@ -31,19 +45,28 @@ export default function PersonalInfo() {
   // Save form data when it changes
   useEffect(() => {
     if (firstName || lastName) {
-      localStorage.setItem('personalInfoData', JSON.stringify({
-        firstName,
-        lastName
-      }));
+      localStorage.setItem(
+        'personalInfoData',
+        JSON.stringify({
+          firstName,
+          lastName,
+        })
+      );
     }
   }, [firstName, lastName]);
 
   const handleLastNameChange = (value: string) => {
-    setLastName(value);
+    const sanitized = sanitizeNameInput(value);
+    if (sanitized.length <= 40) {
+      setLastName(sanitized);
+    }
   };
 
   const handleFirstNameChange = (value: string) => {
-    setFirstName(value);
+    const sanitized = sanitizeNameInput(value);
+    if (sanitized.length <= 40) {
+      setFirstName(sanitized);
+    }
   };
 
   useEffect(() => {
@@ -65,9 +88,9 @@ export default function PersonalInfo() {
             step: 'PERSONAL_INFO',
             data: {
               onboarding_step: 'WELCOME',
-              is_navigating_back: true
-            }
-          })
+              is_navigating_back: true,
+            },
+          }),
         });
 
         if (response.ok) {
@@ -111,9 +134,9 @@ export default function PersonalInfo() {
             first_name: firstName,
             last_name: lastName,
             full_name: `${firstName} ${lastName}`,
-            onboarding_step: 'PROFESSIONAL_INFO'
-          }
-        })
+            onboarding_step: 'PROFESSIONAL_INFO',
+          },
+        }),
       });
 
       if (response.ok) {
@@ -127,17 +150,17 @@ export default function PersonalInfo() {
   };
 
   return (
-    <div 
+    <div
       className="w-full h-screen flex flex-col overflow-y-auto"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
       <div className="w-full flex-1 flex justify-center px-4 py-6">
         <div className="w-full max-w-[1280px] flex flex-col items-center gap-8 sm:gap-12 md:gap-[72px]">
           <div className="w-[140px] sm:w-[180px] md:w-[240px] flex items-center">
-            <img 
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`} 
-              alt="Logo ProcessFlow" 
-              className="w-full" 
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
+              alt="Logo ProcessFlow"
+              className="w-full"
             />
           </div>
           <div className="flex items-center justify-center w-48 md:w-64">
@@ -160,13 +183,13 @@ export default function PersonalInfo() {
             </div>
           </div>
           <div className="w-full max-w-[320px] sm:max-w-[380px] md:max-w-[442px] flex flex-col gap-4 sm:gap-6 mb-8">
-            <div 
+            <div
               className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose"
               style={{ color: colors['text-primary'] }}
             >
               Welcome to ProcessFlow!
             </div>
-            <div 
+            <div
               className="self-stretch text-center text-sm md:text-base font-normal font-['Inter'] leading-normal"
               style={{ color: colors['text-secondary'] }}
             >
@@ -198,7 +221,7 @@ export default function PersonalInfo() {
                   trailingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-arrow-right.svg`}
                   className="w-full"
                 >
-                  {isLoading ? "Loading..." : "Continue"}
+                  {isLoading ? 'Loading...' : 'Continue'}
                 </ButtonNormal>
               </div>
             </div>
@@ -207,4 +230,4 @@ export default function PersonalInfo() {
       </div>
     </div>
   );
-} 
+}

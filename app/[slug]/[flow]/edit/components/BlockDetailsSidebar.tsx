@@ -11,6 +11,7 @@ import { useEditModeStore } from '../store/editModeStore';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { InputTokens } from '@/app/theme/types';
 import InputField from '@/app/components/InputFields';
+import DOMPurify from 'dompurify';
 
 // Helper function from TextAreaInput
 const getInputToken = (
@@ -64,7 +65,7 @@ export default function BlockDetailsSidebar({
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onUpdate({ title });
+      onUpdate({ title: DOMPurify.sanitize(title) });
       setIsEditingTitle(false);
     } else if (e.key === 'Escape') {
       setTitle(block.title || '');
@@ -100,7 +101,7 @@ export default function BlockDetailsSidebar({
 
   const handleDescriptionUpdate = () => {
     if (description !== block.description) {
-      onUpdate({ description });
+      onUpdate({ description: DOMPurify.sanitize(description) });
     }
     setIsEditingDescription(false);
   };
@@ -184,7 +185,7 @@ export default function BlockDetailsSidebar({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  onBlur={() => onUpdate({ title })}
+                  onBlur={() => onUpdate({ title: DOMPurify.sanitize(title) })}
                   onKeyDown={handleTitleKeyDown}
                   autoFocus
                   className="text-lg font-semibold border-b-2 outline-none bg-transparent"

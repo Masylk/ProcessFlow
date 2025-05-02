@@ -19,6 +19,20 @@ interface UserSettingsProps {
   onUserUpdate?: (updatedUser: User) => void;
 }
 
+// Utility to sanitize name input
+function sanitizeNameInput(value: string): string {
+  // Remove leading/trailing whitespace
+  let sanitized = value.trim();
+
+  // Remove any HTML tags
+  sanitized = sanitized.replace(/<[^>]*>?/gm, '');
+
+  // Allow only letters, spaces, hyphens, and apostrophes
+  sanitized = sanitized.replace(/[^a-zA-ZÀ-ÿ' -]/g, '');
+
+  return sanitized;
+}
+
 export default function UserSettings({
   user,
   onClose,
@@ -64,8 +78,12 @@ export default function UserSettings({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Local state for editable fields.
-  const [firstName, setFirstName] = useState<string>(user.first_name);
-  const [lastName, setLastName] = useState<string>(user.last_name);
+  const [firstName, setFirstName] = useState<string>(
+    sanitizeNameInput(user.first_name).slice(0, 40)
+  );
+  const [lastName, setLastName] = useState<string>(
+    sanitizeNameInput(user.last_name).slice(0, 40)
+  );
   const [newEmail, setNewEmail] = useState<string>(user.email);
 
   // New states for password change section.
@@ -85,23 +103,56 @@ export default function UserSettings({
 
   // Update local state when user changes.
   useEffect(() => {
-    setFirstName(user.first_name);
-    setLastName(user.last_name);
+    setFirstName(sanitizeNameInput(user.first_name).slice(0, 40));
+    setLastName(sanitizeNameInput(user.last_name).slice(0, 40));
     setNewEmail(user.email);
   }, [user]);
 
+  // --- Add these handlers for sanitization and length cap ---
+  const handleFirstNameChange = (value: string) => {
+    const sanitized = sanitizeNameInput(value).slice(0, 40);
+    setFirstName(sanitized);
+  };
+
+  const handleLastNameChange = (value: string) => {
+    const sanitized = sanitizeNameInput(value).slice(0, 40);
+    setLastName(sanitized);
+  };
+
+  // --- Sanitize email input as well ---
+  const handleEmailChange = (value: string) => {
+    setNewEmail(value.trim().replace(/<[^>]*>?/gm, ''));
+  };
+
+  // --- Update file input handler for type/size check ---
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Set isDeleteAvatar to false when a new file is selected
+      // Check file type (image only)
+      if (!file.type.startsWith('image/')) {
+        toast.error('Invalid file type', {
+          description: 'Please select a valid image file.',
+          duration: 5000,
+        });
+        event.target.value = '';
+        return;
+      }
+      // Check file size (max 1MB)
+      if (file.size > 1024 * 1024) {
+        toast.error('File too large', {
+          description: 'Image must be less than 1MB.',
+          duration: 5000,
+        });
+        event.target.value = '';
+        return;
+      }
+
       setIsDeleteAvatar(false);
 
-      // Set preview file and preview URL
       setPreviewFile(file);
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
 
-      // Log file details
       if (process.env.NODE_ENV !== 'production') {
         console.log('Selected file:', {
           name: file.name,
@@ -111,7 +162,6 @@ export default function UserSettings({
         });
       }
     }
-    // Reset the input value to allow selecting the same file again
     event.target.value = '';
   };
 
@@ -141,7 +191,7 @@ export default function UserSettings({
     }
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     if (error) {
-      console.error("Error updating email:", error.message);
+      console.error('Error updating email:', error.message);
       toast.error('Failed to Update Email', {
         description: error.message,
         duration: 5000,
@@ -149,7 +199,8 @@ export default function UserSettings({
       return;
     }
     toast.success('Confirmation Email Sent', {
-      description: 'Please check your new email inbox and click the confirmation link to complete the email change.',
+      description:
+        'Please check your new email inbox and click the confirmation link to complete the email change.',
       duration: 7000,
     });
     // Note: We don't update the parent component here anymore since the email isn't actually changed yet
@@ -407,7 +458,7 @@ export default function UserSettings({
                         <InputField
                           type="default"
                           value={lastName}
-                          onChange={setLastName}
+                          onChange={handleLastNameChange}
                           placeholder="Last name"
                         />
                       </div>
@@ -415,7 +466,7 @@ export default function UserSettings({
                         <InputField
                           type="default"
                           value={firstName}
-                          onChange={setFirstName}
+                          onChange={handleFirstNameChange}
                           placeholder="First name"
                         />
                       </div>
@@ -447,7 +498,7 @@ export default function UserSettings({
                             type="default"
                             value={newEmail}
                             iconColor={colors['text-primary']}
-                            onChange={setNewEmail}
+                            onChange={handleEmailChange}
                             placeholder="Enter email"
                             iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
                           />
