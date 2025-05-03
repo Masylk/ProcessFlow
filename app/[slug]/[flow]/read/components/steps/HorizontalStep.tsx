@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import { BaseStepProps } from './BaseStep';
 import DynamicIcon from '@/utils/DynamicIcon';
@@ -388,12 +388,12 @@ export default function HorizontalStep({
     ));
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (descriptionRef.current) {
       console.log(descriptionRef.current.offsetHeight);
       setDescriptionHeight(descriptionRef.current.offsetHeight);
     }
-  }, [descriptionRef.current]);
+  }, [block.description, block.id]);
 
   return (
     <>
@@ -411,14 +411,14 @@ export default function HorizontalStep({
           className={cn(
             'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
             hasOnlyDescription &&
-              descriptionHeight <= windowHeight * 0.5 &&
+              descriptionHeight <= windowHeight * 1000 &&
               'flex items-center justify-center'
           )}
         >
           <div
             className={cn(
               'w-full',
-              !hasOnlyDescription || descriptionHeight <= windowHeight * 0.5
+              hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                 ? 'flex flex-col items-center justify-center px-5'
                 : ''
             )}
@@ -482,31 +482,30 @@ export default function HorizontalStep({
                   className="text-base whitespace-pre-line w-[460px] break-words"
                   style={{ color: colors['text-quaternary'] }}
                 >
-                  {parseTextWithLinks(
-                    block.description || ''
-                  ).map((segment, index) =>
-                    segment.type === 'link' ? (
-                      <a
-                        key={index}
-                        href={segment.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline break-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.open(
-                            segment.content,
-                            '_blank',
-                            'noopener,noreferrer'
-                          );
-                        }}
-                      >
-                        {segment.content}
-                      </a>
-                    ) : (
-                      <span key={index}>{segment.content}</span>
-                    )
+                  {parseTextWithLinks(block.description || '').map(
+                    (segment, index) =>
+                      segment.type === 'link' ? (
+                        <a
+                          key={index}
+                          href={segment.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline break-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(
+                              segment.content,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
+                          }}
+                        >
+                          {segment.content}
+                        </a>
+                      ) : (
+                        <span key={index}>{segment.content}</span>
+                      )
                   )}
                 </p>
               </div>
