@@ -102,7 +102,8 @@ export default function SharedPage({
   );
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
-  const [showLinkCopiedAlert, setShowLinkCopiedAlert] = useState<boolean>(false);
+  const [showLinkCopiedAlert, setShowLinkCopiedAlert] =
+    useState<boolean>(false);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [pathsToDisplay, setPathsToDisplay] = useState<typeof paths>([]);
   const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
@@ -648,7 +649,7 @@ export default function SharedPage({
         }
 
         const workflowData = await workflowResponse.json();
-       
+
         setWorkflowData(workflowData);
 
         // Create breadcrumbs from workflow data
@@ -912,19 +913,22 @@ export default function SharedPage({
 
   const handleCopyLink = () => {
     if (!workflowData) return;
-    
+
     const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success('Link Copied!', {
-        description: 'Share link has been copied to your clipboard.',
-        duration: 3000,
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        toast.success('Link Copied!', {
+          description: 'Share link has been copied to your clipboard.',
+          duration: 3000,
+        });
+      })
+      .catch(() => {
+        toast.error('Failed to Copy', {
+          description: 'Could not copy the link to your clipboard.',
+          duration: 3000,
+        });
       });
-    }).catch(() => {
-      toast.error('Failed to Copy', {
-        description: 'Could not copy the link to your clipboard.',
-        duration: 3000,
-      });
-    });
   };
 
   // Function to handle step click from sidebar
@@ -1130,11 +1134,34 @@ export default function SharedPage({
                         );
                       })
                       .filter(Boolean)}
-                    <VerticalLastStep
-                      onCopyLink={handleCopyLink}
-                      onRestart={handleRestart}
-                      icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
-                    />
+                    {(() => {
+                      const lastPath =
+                        pathsToDisplay[pathsToDisplay.length - 1];
+                      if (!lastPath) return null;
+                      const filteredBlocks = lastPath.blocks.filter(
+                        (block) =>
+                          block.type !== 'BEGIN' &&
+                          block.type !== 'LAST' &&
+                          block.type !== 'END'
+                      );
+                      const lastBlock =
+                        filteredBlocks[filteredBlocks.length - 1];
+
+                      if (
+                        !lastBlock ||
+                        !lastBlock.child_paths ||
+                        lastBlock.child_paths.length === 0
+                      ) {
+                        return (
+                          <VerticalLastStep
+                            onCopyLink={handleCopyLink}
+                            onRestart={handleRestart}
+                            icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               ) : (
