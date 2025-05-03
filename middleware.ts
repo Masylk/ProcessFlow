@@ -145,6 +145,17 @@ export async function middleware(request: NextRequest) {
 
     // If user is authenticated
     if (user) {
+      // If trying to access onboarding route directly while already completed
+      if (isOnboardingRoute) {
+        const onboardingStatus = user.user_metadata?.onboarding_status || {};
+        const isOnboardingComplete = onboardingStatus.completed_at;
+        
+        if (isOnboardingComplete) {
+          // Redirect completed users to dashboard when they try to access onboarding
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+      }
+      
       // If trying to access auth routes while authenticated
       if (isAuthRoute) {
         // Check onboarding status

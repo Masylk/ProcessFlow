@@ -9,6 +9,7 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import { themeRegistry } from '@/app/theme/registry';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 
 export type OnboardingStep = 'PERSONAL_INFO' | 'PROFESSIONAL_INFO' | 'WORKSPACE_SETUP' | 'COMPLETED';
 
@@ -31,6 +32,62 @@ export default function Onboarding() {
   
   // Add flag to track if workspace creation has been initiated
   const [workspaceCreationStarted, setWorkspaceCreationStarted] = useState(false);
+  // Add loading state while we check server state
+  const [isLoadingInitialState, setIsLoadingInitialState] = useState<boolean>(true);
+  
+  // Debug the onboarding flow issues - add this useEffect at the top
+  useEffect(() => {
+    console.log('=== ONBOARDING DEBUG ===');
+    console.log('Initial currentStep:', currentStep);
+    console.log('localStorage workspaceCreationStarted:', localStorage.getItem('workspaceCreationStarted'));
+  }, []);
+  
+  // Add a dedicated effect to check server-side onboarding status
+  // This should run before any other onboarding-related effects
+  useEffect(() => {
+    const checkServerOnboardingStatus = async () => {
+      try {
+        setIsLoadingInitialState(true);
+        const response = await fetch('/api/auth/check-onboarding');
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Server onboarding status:', data);
+          
+          // If the server says onboarding is completed, redirect to dashboard
+          if (data.completed) {
+            router.push('/dashboard');
+            return;
+          }
+          
+          // Trust the server's state about what step we're on
+          const serverStep = data.onboardingStep as OnboardingStep;
+          
+          // Override local state with server state
+          setCurrentStep(serverStep);
+          
+          // Only set workspace creation started if we're on the COMPLETED step
+          const shouldMarkCreationStarted = serverStep === 'COMPLETED';
+          setWorkspaceCreationStarted(shouldMarkCreationStarted);
+          
+          // Sync localStorage with server state
+          if (shouldMarkCreationStarted) {
+            localStorage.setItem('workspaceCreationStarted', 'true');
+          } else {
+            localStorage.removeItem('workspaceCreationStarted');
+          }
+        } else {
+          console.error('Error fetching onboarding status:', await response.text());
+        }
+      } catch (error) {
+        console.error('Exception checking onboarding status:', error);
+      } finally {
+        setIsLoadingInitialState(false);
+      }
+    };
+    
+    checkServerOnboardingStatus();
+  }, [router]);
   
   // Add effect to ensure page is scrollable and uses light mode
   useEffect(() => {
@@ -49,8 +106,11 @@ export default function Onboarding() {
     };
   }, []);
   
-  // Check for step parameter in URL - this needs to run before the workspace creation check
+  // Check for step parameter in URL - now runs after server check
   useEffect(() => {
+    // Skip if we're still loading the initial state from server
+    if (isLoadingInitialState) return;
+    
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       const stepParam = url.searchParams.get('step') as OnboardingStep | null;
@@ -67,18 +127,21 @@ export default function Onboarding() {
       // Only accept valid step values
       if (stepParam && ['PERSONAL_INFO', 'PROFESSIONAL_INFO', 'WORKSPACE_SETUP', 'COMPLETED'].includes(stepParam)) {
         // Don't allow going directly to completed step unless workspace creation was already started
-        if (stepParam === 'COMPLETED' && !localStorage.getItem('workspaceCreationStarted')) return;
+        if (stepParam === 'COMPLETED' && !workspaceCreationStarted) return;
         
         // Set current step from URL parameter
         setCurrentStep(stepParam);
       }
     }
-  }, []);
+  }, [isLoadingInitialState, workspaceCreationStarted]);
   
-  // Check if workspace creation already started and redirect if necessary
+  // Check if workspace creation already started and redirect if necessary - simplified
   useEffect(() => {
-    // Only check for workspace creation if we're not explicitly set to WORKSPACE_SETUP
-    if (currentStep !== 'WORKSPACE_SETUP') {
+    // Skip if we're still loading the initial state from server
+    if (isLoadingInitialState) return;
+    
+    // Only check localStorage if we haven't already determined workspace creation started from server
+    if (!workspaceCreationStarted && currentStep !== 'WORKSPACE_SETUP') {
       const creationStarted = localStorage.getItem('workspaceCreationStarted') === 'true';
       if (creationStarted) {
         setWorkspaceCreationStarted(true);
@@ -89,7 +152,7 @@ export default function Onboarding() {
         }
       }
     }
-  }, [currentStep]);
+  }, [currentStep, workspaceCreationStarted, isLoadingInitialState]);
   
   // Personal Info state
   const [lastName, setLastName] = useState('');
@@ -183,6 +246,9 @@ export default function Onboarding() {
 
   // Load saved data for current step
   useEffect(() => {
+    // Skip if we're still loading the initial state from server
+    if (isLoadingInitialState) return;
+    
     // Load personal info
     if (currentStep === 'PERSONAL_INFO') {
       const savedData = localStorage.getItem('personalInfoData');
@@ -239,14 +305,17 @@ export default function Onboarding() {
     }
     
     // Start creating workspace and workflow when user reaches the completed step
-    if (currentStep === 'COMPLETED') {
+    // Only start creation if it hasn't been started yet 
+    if (currentStep === 'COMPLETED' && !isWorkflowCreated && !isCreatingWorkflow && !error) {
+      console.log('Starting workspace creation from completed step effect');
       createWorkspace();
-      // Set flag that workspace creation has started
+      
+      // Set flag that workspace creation has started if not already set
       if (!workspaceCreationStarted) {
         setWorkspaceCreationStarted(true);
       }
     }
-  }, [currentStep, checkSlugAvailability, workspaceCreationStarted]);
+  }, [currentStep, checkSlugAvailability, workspaceCreationStarted, isLoadingInitialState, isWorkflowCreated, isCreatingWorkflow, error]);
   
   // Save form data when it changes
   useEffect(() => {
@@ -470,6 +539,9 @@ export default function Onboarding() {
 
   // New function to handle workspace creation with retry logic for slug conflicts
   const createWorkspace = async () => {
+    // Prevent multiple simultaneous attempts
+    if (isLoading || isCreatingWorkflow) return;
+    
     setIsLoading(true);
     setError('');
     setIsCreatingWorkflow(true);
@@ -490,6 +562,9 @@ export default function Onboarding() {
     const MAX_RETRIES = 5;
     let retryCount = 0;
     let success = false;
+
+    // Log the initial attempt
+    console.log(`Attempting to create workspace with name: "${workspaceName}" and slug: "${currentSlug}"`);
 
     while (!success && retryCount <= MAX_RETRIES) {
       try {
@@ -513,13 +588,37 @@ export default function Onboarding() {
         if (response.ok) {
           // Workspace creation succeeded
           success = true;
+          console.log(`Workspace created successfully with slug: "${currentSlug}"`);
+          
+          // Verify that onboarding state is properly updated on the server
+          const onboardingCheck = await fetch('/api/auth/check-onboarding');
+          if (onboardingCheck.ok) {
+            const onboardingData = await onboardingCheck.json();
+            console.log('Onboarding status after workspace creation:', onboardingData);
+            
+            // If server doesn't think we're completed, we need to retry or warn the user
+            if (!onboardingData.completed) {
+              console.warn('Server still shows onboarding as incomplete after workspace creation');
+            }
+          }
+          
           // After workspace creation succeeds, create the default workflow
           await initializeDefaultWorkflow();
         } else {
           const data = await response.json();
+          console.error('Workspace creation failed with error:', data);
           
-          // Check if this is a slug constraint error
-          if (data.error && data.error.includes('constraint failed') && data.error.includes('slug')) {
+          // More specific check for slug constraint violation
+          const isSlugError = 
+            data.error && 
+            (
+              (data.error.includes('constraint failed') && data.error.includes('slug')) ||
+              data.error.includes('duplicate key') ||
+              data.error.includes('already exists') ||
+              data.error.includes('unique constraint')
+            );
+          
+          if (isSlugError) {
             // Increment retry counter
             retryCount++;
             
@@ -527,22 +626,24 @@ export default function Onboarding() {
               // Generate a new slug with a suffix
               currentSlug = `${workspaceURL || workspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}-${retryCount}`;
               
-              // Silent retry - don't show error to user yet
-              console.log(`Retrying workspace creation with modified slug: ${currentSlug}`);
+              // Log retry attempt
+              console.log(`Slug constraint violation detected. Retrying workspace creation with modified slug: "${currentSlug}" (attempt ${retryCount} of ${MAX_RETRIES})`);
             } else {
               // Max retries reached
+              console.error(`Max retries (${MAX_RETRIES}) reached. Unable to create workspace.`);
               setError(`Unable to create workspace with the name "${workspaceName}". Please try a different name.`);
               setIsWorkflowCreated(false);
             }
           } else {
             // Not a slug error or unable to handle automatically
+            console.error('Non-slug related error:', data.error);
             setError(data.error || 'An error occurred while creating your workspace');
             setIsWorkflowCreated(false);
             break; // Exit the retry loop for non-slug errors
           }
         }
       } catch (error) {
-        console.error('Error creating workspace:', error);
+        console.error('Exception during workspace creation:', error);
         setError('A connection error occurred. Please try again.');
         setIsWorkflowCreated(false);
         break; // Exit the retry loop on exception
@@ -580,12 +681,38 @@ export default function Onboarding() {
   };
 
   // Handle completed step continue button
-  const handleCompletedContinue = () => {
-    // Clear all onboarding data when onboarding is complete
-    // Note: We keep 'workspaceCreationStarted' flag to prevent returning to onboarding
+  const handleCompletedContinue = async () => {
+    // Clear all onboarding data
     localStorage.removeItem('personalInfoData');
     localStorage.removeItem('professionalInfoData');
     localStorage.removeItem('workspaceSetupData');
+    
+    // Important! Verify with the server that onboarding is actually complete
+    try {
+      const response = await fetch('/api/auth/check-onboarding');
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (!data.completed) {
+          console.warn('Server reports onboarding incomplete, but proceeding to dashboard');
+          
+          // Force update on server that onboarding is complete to prevent being stuck
+          await fetch('/api/onboarding/force-complete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }).catch(err => {
+            console.error('Failed to force complete onboarding:', err);
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying onboarding completion:', error);
+    }
+    
+    // Keep workspaceCreationStarted flag in localStorage to prevent returning to onboarding
+    // in case the user revisits the page
     
     // Force navigation to dashboard even if there were errors
     router.push('/dashboard');
@@ -799,7 +926,7 @@ export default function Onboarding() {
   // Render professional info step
   const renderProfessionalInfoStep = () => {
     return (
-      <div className="w-full max-w-[442px] flex flex-col gap-4 sm:gap-6 mb-8 mx-auto">
+      <div className="w-full max-w-[500px] flex flex-col gap-4 sm:gap-6 mb-8 mx-auto">
         <div 
           className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose"
           style={{ color: colors['text-primary'] }}
@@ -1569,6 +1696,14 @@ export default function Onboarding() {
     };
   }, [workspaceCreationStarted]);
 
+  // Render loading state during initial check to prevent flashing of onboarding UI
+  if (isLoadingInitialState) {
+    return <div className="flex h-screen w-full items-center justify-center">
+      <LoadingSpinner size="large" />
+    </div>;
+  }
+  
+  // Render the actual onboarding content
   return (
     <div
       className="w-full min-h-screen flex flex-col overflow-auto"

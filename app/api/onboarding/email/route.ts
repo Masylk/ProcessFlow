@@ -446,22 +446,59 @@ export async function POST(request: Request) {
         else {
           // Create a new workspace if no temp workspace exists
           console.log(`Creating new workspace for user ${dbUser.id} as no existing workspace was found`);
-          workspace = await prisma.workspace.create({
-            data: {
-              name: formData.workspace_name,
-              slug: formData.workspace_url,
-              icon_url: formData.workspace_icon_url,
-              industry: dbUser.temp_industry || null,
-              company_size: dbUser.temp_company_size || null,
-              team_tags: [],
-              user_workspaces: {
-                create: {
-                  user_id: dbUser.id,
-                  role: 'ADMIN'
+          
+          // Double-check slug availability before attempting to create
+          const existingWorkspaceWithSlug = await prisma.workspace.findFirst({
+            where: { slug: formData.workspace_url }
+          });
+          
+          if (existingWorkspaceWithSlug) {
+            console.error(`Slug "${formData.workspace_url}" already exists in database before creation attempt`);
+            return NextResponse.json({ 
+              error: `Slug constraint failed: The workspace URL "${formData.workspace_url}" is already taken. Please try a different URL.` 
+            }, { status: 400 });
+          }
+          
+          try {
+            workspace = await prisma.workspace.create({
+              data: {
+                name: formData.workspace_name,
+                slug: formData.workspace_url,
+                icon_url: formData.workspace_icon_url,
+                industry: dbUser.temp_industry || null,
+                company_size: dbUser.temp_company_size || null,
+                team_tags: [],
+                user_workspaces: {
+                  create: {
+                    user_id: dbUser.id,
+                    role: 'ADMIN'
+                  }
                 }
               }
+            });
+            
+            console.log(`Successfully created workspace with slug: ${formData.workspace_url}`);
+          } catch (workspaceError) {
+            // Check if this is a slug constraint error
+            const errorMsg = workspaceError instanceof Error ? workspaceError.message : 'Unknown error';
+            console.error(`Error creating workspace for user ${dbUser.id}:`, errorMsg);
+            Sentry.captureException(workspaceError);
+            
+            // Provide a more detailed error message for slug constraint violations
+            if (
+              errorMsg.includes('Unique constraint failed') ||
+              errorMsg.includes('unique constraint') ||
+              errorMsg.includes('duplicate key') ||
+              errorMsg.includes('workspace_slug_key')
+            ) {
+              return NextResponse.json({ 
+                error: `Slug constraint failed: The workspace URL "${formData.workspace_url}" is already taken. Please try a different URL.` 
+              }, { status: 400 });
             }
-          });
+            
+            // For other errors, rethrow to be handled by the outer catch block
+            throw workspaceError;
+          }
           
           // If no temp workspace was created, we need to create the workflow now
           let workflowErrorFinal = null;
