@@ -27,8 +27,8 @@ const shareRoutes = [
 // Simple in-memory store (not for production)
 const rateLimitStore = new Map<string, { count: number; lastRequest: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_AUTH_SHARE = 20;    // 20 requests per window for auth/share routes
-const RATE_LIMIT_GENERAL = 1000;      // 500 requests per window for other routes
+const RATE_LIMIT_AUTH_SHARE = process.env.NODE_ENV === 'production' ? 20 : 1000; // 20 in prod, 1000 otherwise
+const RATE_LIMIT_GENERAL = 1000;      // 1000 requests per window for other routes
 
 function isRateLimited(ip: string, maxRequests: number): boolean {
   const now = Date.now();
