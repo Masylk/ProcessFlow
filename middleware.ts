@@ -49,6 +49,17 @@ function isRateLimited(ip: string, maxRequests: number): boolean {
   return false;
 }
 
+/**
+ * Format a string for use in URLs by replacing spaces and special characters with hyphens
+ */
+function formatSlug(value: string): string {
+  return value
+    .replace(/\s+/g, '-')       // Replace spaces with hyphens
+    .replace(/[^a-zA-Z0-9-]/g, '-') // Remove any non-alphanumeric characters
+    .replace(/-+/g, '-')        // Replace multiple hyphens with a single one
+    .replace(/^-|-$/g, '');     // Remove leading/trailing hyphens
+}
+
 export async function middleware(request: NextRequest) {
   // Add this at the top of your middleware function
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
@@ -63,6 +74,37 @@ export async function middleware(request: NextRequest) {
   const maxRequests = isSensitiveRoute ? RATE_LIMIT_AUTH_SHARE : RATE_LIMIT_GENERAL;
   if (isRateLimited(ip, maxRequests)) {
     return new NextResponse('Too many requests', { status: 429 });
+  }
+
+  // Handle URLs with encoded spaces in the workspace slug
+  // Match pattern like /workspace%20name/flow/edit
+  if (pathname.match(/^\/[^/]*%20[^/]*/)) {
+    try {
+      // Split the path into segments
+      const segments = pathname.split('/').filter(Boolean);
+      
+      if (segments.length >= 1) {
+        // Clean the slug (first segment) by replacing encoded spaces with hyphens
+        const originalSlug = segments[0];
+        const decodedSlug = decodeURIComponent(originalSlug);
+        const cleanSlug = formatSlug(decodedSlug);
+        
+        // Only redirect if the slug actually changed
+        if (cleanSlug !== originalSlug) {
+          // Reconstruct the URL with the clean slug
+          const cleanUrl = new URL(request.url);
+          
+          // Replace only the first segment
+          const restOfPath = pathname.substring(originalSlug.length + 1);
+          cleanUrl.pathname = `/${cleanSlug}${restOfPath ? `/${restOfPath}` : ''}`;
+          
+          return NextResponse.redirect(cleanUrl);
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning URL:', error);
+      // Continue with normal middleware if URL cleaning fails
+    }
   }
 
   // Add embed headers if needed
