@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import { BaseStepProps } from './BaseStep';
 import DynamicIcon from '@/utils/DynamicIcon';
@@ -388,12 +388,13 @@ export default function HorizontalStep({
     ));
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (descriptionRef.current) {
+      console.log(hasOnlyDescription);
       console.log(descriptionRef.current.offsetHeight);
       setDescriptionHeight(descriptionRef.current.offsetHeight);
     }
-  }, [descriptionRef.current]);
+  }, [block.description, block.id]);
 
   return (
     <>
@@ -409,16 +410,17 @@ export default function HorizontalStep({
         <div
           ref={contentRef}
           className={cn(
-            'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
+            'h-full overflow-y-auto overflow-x-hidden hide-scrollbar',
             hasOnlyDescription &&
               descriptionHeight <= windowHeight * 0.5 &&
-              'flex items-center justify-center'
+              'flex items-center justify-center',
+            !hasOnlyDescription && 'w-full'
           )}
         >
           <div
             className={cn(
               'w-full',
-              !hasOnlyDescription || descriptionHeight <= windowHeight * 0.5
+              !hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                 ? 'flex flex-col items-center justify-center px-5'
                 : ''
             )}
@@ -428,7 +430,7 @@ export default function HorizontalStep({
               className={cn(
                 hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                   ? ''
-                  : 'px-5 pt-5 pb-4'
+                  : 'w-full px-5 pt-5 pb-4'
               )}
             >
               {/* Step Header */}
@@ -482,31 +484,30 @@ export default function HorizontalStep({
                   className="text-base whitespace-pre-line w-[460px] break-words"
                   style={{ color: colors['text-quaternary'] }}
                 >
-                  {parseTextWithLinks(
-                    block.description || ''
-                  ).map((segment, index) =>
-                    segment.type === 'link' ? (
-                      <a
-                        key={index}
-                        href={segment.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline break-all"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          window.open(
-                            segment.content,
-                            '_blank',
-                            'noopener,noreferrer'
-                          );
-                        }}
-                      >
-                        {segment.content}
-                      </a>
-                    ) : (
-                      <span key={index}>{segment.content}</span>
-                    )
+                  {parseTextWithLinks(block.description || '').map(
+                    (segment, index) =>
+                      segment.type === 'link' ? (
+                        <a
+                          key={index}
+                          href={segment.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline break-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(
+                              segment.content,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
+                          }}
+                        >
+                          {segment.content}
+                        </a>
+                      ) : (
+                        <span key={index}>{segment.content}</span>
+                      )
                   )}
                 </p>
               </div>
@@ -514,7 +515,7 @@ export default function HorizontalStep({
 
             {/* Content Section */}
             {!hasOnlyDescription && (
-              <div className="px-5 pb-16">
+              <div className="px-5 pb-16 w-full">
                 <div className="space-y-6 w-full">
                   {/* Image Section */}
                   {block.image && (

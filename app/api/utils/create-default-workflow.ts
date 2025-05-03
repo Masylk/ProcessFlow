@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { generatePublicAccessId } from '../workflow/utils';
 
 export interface CreateDefaultWorkflowOptions {
   workspaceId: number;
@@ -93,6 +94,7 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
       is_public: sourceWorkflow.is_public,
       status: sourceWorkflow.status,
       team_tags: sourceWorkflow.team_tags,
+      public_access_id: await generatePublicAccessId(newWorkflowName, 0, workspaceId),
       workspace: {
         connect: { id: workspaceId },
       },
