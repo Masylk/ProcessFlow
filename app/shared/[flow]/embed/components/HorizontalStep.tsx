@@ -480,7 +480,7 @@ export default function HorizontalStep({
           <div
             className={cn(
               'w-full',
-              hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+              hasOnlyDescription
                 ? 'flex flex-col items-center justify-center px-5'
                 : ''
             )}
@@ -488,9 +488,9 @@ export default function HorizontalStep({
             {/* Header Section */}
             <div
               className={cn(
-                hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+                hasOnlyDescription
                   ? ''
-                  : 'px-5 pt-5 pb-4'
+                  : 'w-full px-5 pt-5 pb-4'
               )}
             >
               {/* Step Header */}
@@ -541,7 +541,7 @@ export default function HorizontalStep({
               <div className="relative w-full">
                 <p
                   ref={descriptionRef}
-                  className="text-base whitespace-pre-line break-words w-full"
+                  className="text-base break-words whitespace-pre-line w-full"
                   style={{ color: colors['text-quaternary'] }}
                 >
                   {parseTextWithLinks(block.description || '').map(

@@ -390,6 +390,7 @@ export default function HorizontalStep({
 
   useLayoutEffect(() => {
     if (descriptionRef.current) {
+      console.log(hasOnlyDescription);
       console.log(descriptionRef.current.offsetHeight);
       setDescriptionHeight(descriptionRef.current.offsetHeight);
     }
@@ -409,16 +410,17 @@ export default function HorizontalStep({
         <div
           ref={contentRef}
           className={cn(
-            'h-full w-full overflow-y-auto overflow-x-hidden hide-scrollbar',
+            'h-full overflow-y-auto overflow-x-hidden hide-scrollbar',
             hasOnlyDescription &&
-              descriptionHeight <= windowHeight * 1000 &&
-              'flex items-center justify-center'
+              descriptionHeight <= windowHeight * 0.5 &&
+              'flex items-center justify-center',
+            !hasOnlyDescription && 'w-full'
           )}
         >
           <div
             className={cn(
               'w-full',
-              hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+              !hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                 ? 'flex flex-col items-center justify-center px-5'
                 : ''
             )}
@@ -428,7 +430,7 @@ export default function HorizontalStep({
               className={cn(
                 hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                   ? ''
-                  : 'px-5 pt-5 pb-4'
+                  : 'w-full px-5 pt-5 pb-4'
               )}
             >
               {/* Step Header */}
@@ -513,7 +515,7 @@ export default function HorizontalStep({
 
             {/* Content Section */}
             {!hasOnlyDescription && (
-              <div className="px-5 pb-16">
+              <div className="px-5 pb-16 w-full">
                 <div className="space-y-6 w-full">
                   {/* Image Section */}
                   {block.image && (
