@@ -1176,11 +1176,34 @@ export default function ReadPageClient() {
                         );
                       })
                       .filter(Boolean)}
-                    <VerticalLastStep
-                      onCopyLink={handleCopyLink}
-                      onRestart={handleRestart}
-                      icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
-                    />
+                    {(() => {
+                      const lastPath =
+                        pathsToDisplay[pathsToDisplay.length - 1];
+                      if (!lastPath) return null;
+                      const filteredBlocks = lastPath.blocks.filter(
+                        (block) =>
+                          block.type !== 'BEGIN' &&
+                          block.type !== 'LAST' &&
+                          block.type !== 'END'
+                      );
+                      const lastBlock =
+                        filteredBlocks[filteredBlocks.length - 1];
+
+                      if (
+                        !lastBlock ||
+                        !lastBlock.child_paths ||
+                        lastBlock.child_paths.length === 0
+                      ) {
+                        return (
+                          <VerticalLastStep
+                            onCopyLink={handleCopyLink}
+                            onRestart={handleRestart}
+                            icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-circle.svg`}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               ) : (
