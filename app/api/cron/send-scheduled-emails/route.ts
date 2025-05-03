@@ -55,7 +55,6 @@ function getSafePublicUrls() {
     producthuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL || 'https://www.producthunt.com',
     linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/processflow1/',
     xUrl: process.env.NEXT_PUBLIC_X_URL || 'https://x.com',
-    g2Url: process.env.NEXT_PUBLIC_G2_URL || 'https://www.g2.com',
   };
 }
 

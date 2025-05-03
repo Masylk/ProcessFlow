@@ -12,7 +12,6 @@ type EmailSignatureProps = {
     producthuntUrl?: string;
     linkedinUrl?: string;
     xUrl?: string;
-    g2Url?: string;
     [key: string]: string | undefined;
   };
 };
