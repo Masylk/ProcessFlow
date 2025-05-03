@@ -2,30 +2,94 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useColors } from '@/app/theme/hooks';
+import { useColors, useTheme } from '@/app/theme/hooks';
 import { AnimatePresence } from 'framer-motion';
 import MotionStep from './components/MotionStep';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
+import { themeRegistry } from '@/app/theme/registry';
 
 export type OnboardingStep = 'PERSONAL_INFO' | 'PROFESSIONAL_INFO' | 'WORKSPACE_SETUP' | 'COMPLETED';
 
 // Utility function for sanitizing name input
 function sanitizeNameInput(value: string): string {
-  // Remove leading/trailing whitespace
+  // Only remove whitespace from the beginning and end, not within the string
   let sanitized = value.trim();
   // Remove any HTML tags
   sanitized = sanitized.replace(/<[^>]*>?/gm, '');
   // Allow only letters, spaces, hyphens, and apostrophes
-  sanitized = sanitized.replace(/[^a-zA-ZÀ-ÿ' -]/g, '');
+  sanitized = sanitized.replace(/[^a-zA-ZÀ-ÿ'\- ]/g, '');
   return sanitized;
 }
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('PERSONAL_INFO');
-  const colors = useColors();
+  // Use light theme colors regardless of system theme
+  const colors = themeRegistry.get('light').tokens.colors;
   const router = useRouter();
+  
+  // Add flag to track if workspace creation has been initiated
+  const [workspaceCreationStarted, setWorkspaceCreationStarted] = useState(false);
+  
+  // Add effect to ensure page is scrollable and uses light mode
+  useEffect(() => {
+    // Ensure the body has proper overflow behavior
+    document.body.style.overflow = 'auto';
+    document.body.style.height = '100%';
+    
+    // Force light theme styles for onboarding
+    document.documentElement.classList.add('force-light-theme');
+    
+    return () => {
+      // Reset on unmount
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      document.documentElement.classList.remove('force-light-theme');
+    };
+  }, []);
+  
+  // Check for step parameter in URL - this needs to run before the workspace creation check
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const stepParam = url.searchParams.get('step') as OnboardingStep | null;
+      
+      // Check if we're being redirected from a workspace deletion
+      const fromDeletion = url.searchParams.get('from') === 'workspace_deletion';
+      
+      // If we're coming from a workspace deletion, we should not be marked as having started workspace creation
+      if (fromDeletion) {
+        localStorage.removeItem('workspaceCreationStarted');
+        setWorkspaceCreationStarted(false);
+      }
+      
+      // Only accept valid step values
+      if (stepParam && ['PERSONAL_INFO', 'PROFESSIONAL_INFO', 'WORKSPACE_SETUP', 'COMPLETED'].includes(stepParam)) {
+        // Don't allow going directly to completed step unless workspace creation was already started
+        if (stepParam === 'COMPLETED' && !localStorage.getItem('workspaceCreationStarted')) return;
+        
+        // Set current step from URL parameter
+        setCurrentStep(stepParam);
+      }
+    }
+  }, []);
+  
+  // Check if workspace creation already started and redirect if necessary
+  useEffect(() => {
+    // Only check for workspace creation if we're not explicitly set to WORKSPACE_SETUP
+    if (currentStep !== 'WORKSPACE_SETUP') {
+      const creationStarted = localStorage.getItem('workspaceCreationStarted') === 'true';
+      if (creationStarted) {
+        setWorkspaceCreationStarted(true);
+        // If navigating back to a previous step after workspace creation started,
+        // ensure user stays on the COMPLETED step
+        if (currentStep !== 'COMPLETED') {
+          setCurrentStep('COMPLETED');
+        }
+      }
+    }
+  }, [currentStep]);
   
   // Personal Info state
   const [lastName, setLastName] = useState('');
@@ -75,7 +139,7 @@ export default function Onboarding() {
     'image/svg+xml',
     'image/avif',
   ];
-  const MAX_IMAGE_SIZE_MB = 1;
+  const MAX_IMAGE_SIZE_MB = 5;
   const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
   
   // Check slug availability
@@ -106,12 +170,12 @@ export default function Onboarding() {
   
   // Sanitize workspace name input
   function sanitizeWorkspaceNameInput(value: string): string {
-    // Remove leading/trailing whitespace
+    // Only remove whitespace from the beginning and end, not within the string
     let sanitized = value.trim();
     // Remove any HTML tags
     sanitized = sanitized.replace(/<[^>]*>?/gm, '');
     // Allow letters, numbers, spaces, hyphens, and apostrophes
-    sanitized = sanitized.replace(/[^a-zA-Z0-9À-ÿ' -]/g, '');
+    sanitized = sanitized.replace(/[^a-zA-Z0-9À-ÿ'\- ]/g, '');
     // Limit to 50 characters
     sanitized = sanitized.slice(0, 50);
     return sanitized;
@@ -177,8 +241,12 @@ export default function Onboarding() {
     // Start creating workspace and workflow when user reaches the completed step
     if (currentStep === 'COMPLETED') {
       createWorkspace();
+      // Set flag that workspace creation has started
+      if (!workspaceCreationStarted) {
+        setWorkspaceCreationStarted(true);
+      }
     }
-  }, [currentStep, checkSlugAvailability]);
+  }, [currentStep, checkSlugAvailability, workspaceCreationStarted]);
   
   // Save form data when it changes
   useEffect(() => {
@@ -224,15 +292,19 @@ export default function Onboarding() {
   
   // Handle input changes for personal info
   const handleLastNameChange = (value: string) => {
-    const sanitized = sanitizeNameInput(value);
-    if (sanitized.length <= 40) {
+    // Allow spaces and only sanitize other characters
+    if (value.length <= 40) {
+      // Only remove non-allowed characters (keep letters, spaces, hyphens and apostrophes)
+      const sanitized = value.replace(/[^a-zA-ZÀ-ÿ'\- ]/g, '');
       setLastName(sanitized);
     }
   };
 
   const handleFirstNameChange = (value: string) => {
-    const sanitized = sanitizeNameInput(value);
-    if (sanitized.length <= 40) {
+    // Allow spaces and only sanitize other characters
+    if (value.length <= 40) {
+      // Only remove non-allowed characters (keep letters, spaces, hyphens and apostrophes)
+      const sanitized = value.replace(/[^a-zA-ZÀ-ÿ'\- ]/g, '');
       setFirstName(sanitized);
     }
   };
@@ -396,52 +468,89 @@ export default function Onboarding() {
     setCurrentStep('COMPLETED');
   };
 
-  // New function to handle workspace creation in the completed step
+  // New function to handle workspace creation with retry logic for slug conflicts
   const createWorkspace = async () => {
     setIsLoading(true);
     setError('');
     setIsCreatingWorkflow(true);
+    
+    // Mark that workspace creation has started - prevents going back to previous steps
+    setWorkspaceCreationStarted(true);
+    // Also store in localStorage for persistence
+    localStorage.setItem('workspaceCreationStarted', 'true');
 
-    try {
-      const response = await fetch('/api/onboarding/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          step: 'WORKSPACE_SETUP',
-          data: {
-            workspace_name: workspaceName,
-            workspace_url:
-              workspaceURL ||
-              workspaceName
-                .toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-zA-Z0-9-]/g, ''),
-            workspace_icon_url: logo || null,
-            onboarding_step: 'COMPLETED',
+    // Get the initial slug
+    let currentSlug = workspaceURL ||
+      workspaceName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-]/g, '');
+    
+    // Maximum number of retries for slug conflicts
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let success = false;
+
+    while (!success && retryCount <= MAX_RETRIES) {
+      try {
+        // Attempt to create the workspace with the current slug
+        const response = await fetch('/api/onboarding/email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            step: 'WORKSPACE_SETUP',
+            data: {
+              workspace_name: workspaceName,
+              workspace_url: currentSlug,
+              workspace_icon_url: logo || null,
+              onboarding_step: 'COMPLETED',
+            },
+          }),
+        });
 
-      if (response.ok) {
-        // After workspace creation succeeds, create the default workflow
-        await initializeDefaultWorkflow();
-      } else {
-        const data = await response.json();
-        setError(
-          data.error || 'An error occurred while creating your workspace'
-        );
+        if (response.ok) {
+          // Workspace creation succeeded
+          success = true;
+          // After workspace creation succeeds, create the default workflow
+          await initializeDefaultWorkflow();
+        } else {
+          const data = await response.json();
+          
+          // Check if this is a slug constraint error
+          if (data.error && data.error.includes('constraint failed') && data.error.includes('slug')) {
+            // Increment retry counter
+            retryCount++;
+            
+            if (retryCount <= MAX_RETRIES) {
+              // Generate a new slug with a suffix
+              currentSlug = `${workspaceURL || workspaceName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}-${retryCount}`;
+              
+              // Silent retry - don't show error to user yet
+              console.log(`Retrying workspace creation with modified slug: ${currentSlug}`);
+            } else {
+              // Max retries reached
+              setError(`Unable to create workspace with the name "${workspaceName}". Please try a different name.`);
+              setIsWorkflowCreated(false);
+            }
+          } else {
+            // Not a slug error or unable to handle automatically
+            setError(data.error || 'An error occurred while creating your workspace');
+            setIsWorkflowCreated(false);
+            break; // Exit the retry loop for non-slug errors
+          }
+        }
+      } catch (error) {
+        console.error('Error creating workspace:', error);
+        setError('A connection error occurred. Please try again.');
         setIsWorkflowCreated(false);
+        break; // Exit the retry loop on exception
       }
-    } catch (error) {
-      console.error('Error creating workspace:', error);
-      setError('A connection error occurred');
-      setIsWorkflowCreated(false);
-    } finally {
-      setIsLoading(false);
-      setIsCreatingWorkflow(false);
     }
+
+    setIsLoading(false);
+    setIsCreatingWorkflow(false);
   };
 
   // Initialize the default workflow
@@ -472,12 +581,13 @@ export default function Onboarding() {
 
   // Handle completed step continue button
   const handleCompletedContinue = () => {
-    // Clear all localStorage data when onboarding is complete
+    // Clear all onboarding data when onboarding is complete
+    // Note: We keep 'workspaceCreationStarted' flag to prevent returning to onboarding
     localStorage.removeItem('personalInfoData');
     localStorage.removeItem('professionalInfoData');
     localStorage.removeItem('workspaceSetupData');
     
-    // Navigate to dashboard
+    // Force navigation to dashboard even if there were errors
     router.push('/dashboard');
   };
 
@@ -563,6 +673,13 @@ export default function Onboarding() {
   
   // Back button handlers - same approach, update UI first then make API call
   const handleBackToProfessionalInfo = async () => {
+    // If workspace creation has started, don't allow navigation back
+    if (workspaceCreationStarted) {
+      // Keep user on the COMPLETED step
+      setCurrentStep('COMPLETED');
+      return;
+    }
+    
     setCurrentStep('PROFESSIONAL_INFO');
     setIsNavigatingBack(true);
     
@@ -597,6 +714,13 @@ export default function Onboarding() {
   };
   
   const handleBackToPersonalInfo = async () => {
+    // If workspace creation has started, don't allow navigation back
+    if (workspaceCreationStarted) {
+      // Keep user on the COMPLETED step
+      setCurrentStep('COMPLETED');
+      return;
+    }
+    
     setCurrentStep('PERSONAL_INFO');
     setIsNavigatingBack(true);
     
@@ -893,7 +1017,7 @@ export default function Onboarding() {
             disabled={isLoading || !industry || !role || !companySize || !source}
             className="w-full"
           >
-            {isLoading ? "Loading..." : "Continue"}
+            Continue
           </ButtonNormal>
         </div>
       </div>
@@ -1123,6 +1247,23 @@ export default function Onboarding() {
     );
   };
 
+  // Add a manual logout function that will clear all authentication data
+  const handleEmergencyLogout = () => {
+    // Clear all storage data
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear any auth cookies by setting them to expired
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+    });
+    
+    // Force reload to the root page
+    window.location.href = '/';
+  };
+
   // Render the completed step
   const renderCompletedStep = () => {
     return (
@@ -1133,7 +1274,9 @@ export default function Onboarding() {
         >
           {isCreatingWorkflow 
             ? "Setting up your workspace" 
-            : "Your workspace is ready!"}
+            : error
+              ? "Workspace Setup Issue"
+              : "Your workspace is ready!"}
         </div>
         <div
           className="text-center text-base font-normal font-['Inter']"
@@ -1141,23 +1284,27 @@ export default function Onboarding() {
         >
           {isCreatingWorkflow 
             ? "This may take a few moments..." 
-            : "Watch this short video to get started with ProcessFlow."}
+            : error
+              ? "We encountered an issue while setting up your workspace."
+              : "Watch this short video to get started with ProcessFlow."}
         </div>
         
-        {/* Video Container */}
-        <div 
-          className="w-full aspect-video rounded-lg mb-4 bg-gray-100 overflow-hidden"
-          style={{ backgroundColor: colors['bg-secondary'] }}
-        >
-          <iframe
-            ref={videoRef}
-            className="w-full h-full"
-            src="https://www.youtube.com/embed/8WyxhEpbx14" // Replace with your actual video URL
-            title="ProcessFlow Introduction"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
+        {/* Video Container - Only show when no error */}
+        {!error && (
+          <div 
+            className="w-full aspect-video rounded-lg mb-4 bg-gray-100 overflow-hidden"
+            style={{ backgroundColor: colors['bg-secondary'] }}
+          >
+            <iframe
+              ref={videoRef}
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/8WyxhEpbx14" // Replace with your actual video URL
+              title="ProcessFlow Introduction"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        )}
         
         {/* Creation Status */}
         <div className="flex flex-col items-center gap-4">
@@ -1169,19 +1316,24 @@ export default function Onboarding() {
               </span>
             </div>
           ) : error ? (
-            <div className="flex items-center gap-3">
-              <svg 
-                className="w-6 h-6 text-red-500" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-              <span style={{ color: colors['text-error'] }}>
-                {error}
-              </span>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3">
+                <svg 
+                  className="w-6 h-6 text-red-500" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24" 
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                <span style={{ color: colors['text-error'] }}>
+                  {error}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-center" style={{ color: colors['text-secondary'] }}>
+                You can still proceed to the dashboard and try creating a workspace again.
+              </div>
             </div>
           ) : isWorkflowCreated ? (
             <div className="flex items-center gap-3">
@@ -1216,17 +1368,46 @@ export default function Onboarding() {
           ) : null}
         </div>
         
-        {/* Continue Button */}
+        {/* Continue Button - Always enabled after initial loading */}
         <div className="mt-6">
           <ButtonNormal
             variant="primary"
             size="small"
             onClick={handleCompletedContinue}
-            disabled={isCreatingWorkflow || (!isWorkflowCreated && !error)}
+            disabled={isCreatingWorkflow}
             className="w-full"
           >
-            Continue to Dashboard
+            {error ? "Continue to Dashboard Anyway" : "Continue to Dashboard"}
           </ButtonNormal>
+        </div>
+        
+        {/* Retry Button - Show when there's an error */}
+        {error && error.includes("workspace with the name") && (
+          <div className="mt-2">
+            <ButtonNormal
+              variant="secondary"
+              size="small"
+              onClick={() => {
+                setCurrentStep('WORKSPACE_SETUP');
+                setError('');
+                setWorkspaceCreationStarted(false);
+                localStorage.removeItem('workspaceCreationStarted');
+              }}
+              className="w-full"
+            >
+              Go Back and Change Workspace Name
+            </ButtonNormal>
+          </div>
+        )}
+        
+        {/* Emergency Logout Button */}
+        <div className="mt-4">
+          <button
+            onClick={handleEmergencyLogout}
+            className="w-full text-red-500 text-sm font-medium py-2 hover:underline focus:outline-none"
+          >
+            Logout
+          </button>
         </div>
       </div>
     );
@@ -1363,12 +1544,37 @@ export default function Onboarding() {
     return null;
   };
 
+  // Add effect to handle browser back button
+  useEffect(() => {
+    // Listen for popstate events (browser back/forward buttons)
+    const handlePopState = (event: PopStateEvent) => {
+      // If workspace creation has started, prevent going back to onboarding steps
+      if (workspaceCreationStarted) {
+        // Prevent the default back behavior
+        window.history.pushState(null, '', window.location.pathname);
+        
+        // Keep user on the completed step
+        setCurrentStep('COMPLETED');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    
+    // Add a history entry to capture back button
+    window.history.pushState(null, '', window.location.pathname);
+    
+    // Clean up the event listener
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [workspaceCreationStarted]);
+
   return (
     <div
-      className="w-full min-h-screen flex flex-col justify-start items-center overflow-y-auto"
+      className="w-full min-h-screen flex flex-col overflow-auto"
       style={{ backgroundColor: colors['bg-primary'] }}
     >
-      <div className="w-full flex flex-col items-center gap-8 py-6 px-4">
+      <div className="w-full flex-1 flex flex-col items-center gap-8 py-6 px-4">
         {/* Fixed position logo */}
         <div className="w-[140px] sm:w-[180px] md:w-[240px] flex items-center">
           <img
@@ -1383,8 +1589,8 @@ export default function Onboarding() {
           {renderProgressIndicator()}
         </div>
         
-        {/* Fixed height content container */}
-        <div className="w-full min-h-[400px] md:min-h-[500px] flex items-start justify-center">
+        {/* Content container */}
+        <div className="w-full flex items-start justify-center pb-16">
           {/* Content for current step */}
           <AnimatePresence mode="wait">
             {currentStep === 'PERSONAL_INFO' && (
