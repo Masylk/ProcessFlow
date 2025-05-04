@@ -217,6 +217,8 @@ const WorkspaceSetupStep: React.FC = () => {
   // Form validation
   const isFormValid = () => {
     if (!workspaceName) return false;
+    // Only allow letters, numbers, spaces, and hyphens in workspace name
+    if (/[^a-zA-Z0-9\- ]/.test(workspaceName)) return false;
     if (/[^a-zA-Z0-9-]/.test(workspaceURL)) return false;
     if (!slugAvailability || !slugAvailability.available) return false;
     return true;
@@ -228,6 +230,10 @@ const WorkspaceSetupStep: React.FC = () => {
       if (!workspaceName) {
         setError('Workspace name is required');
         setShowWorkspaceNameError(true);
+      }
+      // Show error for invalid workspace name
+      if (/[^a-zA-Z0-9\- ]/.test(workspaceName)) {
+        setError('Workspace name can only contain letters, numbers, spaces, and hyphens');
       }
       if (urlError) {
         setError('Please fix the URL format before continuing');
