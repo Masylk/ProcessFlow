@@ -739,10 +739,11 @@ export default function Page() {
       // Close the settings view
       setIsSettingsView(false);
 
-      // Redirect to the dashboard or onboarding if no workspaces left
+      // Redirect to the onboarding page with workspace_setup step if no workspaces left
       if (workspaces.length <= 1) {
-        // If this was the last workspace, redirect to onboarding
-        window.location.href = '/onboarding/workspace-setup';
+        // If this was the last workspace, redirect to onboarding with workspace_setup step
+        // Include from=workspace_deletion to signal this is a fresh workspace setup
+        window.location.href = '/onboarding?step=WORKSPACE_SETUP&from=workspace_deletion';
       }
     } catch (error) {
       console.error('Error deleting workspace:', error);
@@ -876,7 +877,10 @@ export default function Page() {
         const data = await response.json();
 
         if (!data.hasCompletedTutorial) {
-          setShowTutorial(true);
+          // Add a short delay to ensure DOM elements are fully loaded
+          setTimeout(() => {
+            setShowTutorial(true);
+          }, 500);
         }
       } catch (error) {
         console.error('Error checking tutorial status:', error);

@@ -24,6 +24,11 @@ const shareRoutes = [
   '/monitoring',
 ];
 
+// Add onboarding routes to skip middleware redirects
+const onboardingRoutes = [
+  '/onboarding'
+];
+
 // Simple in-memory store (not for production)
 const rateLimitStore = new Map<string, { count: number; lastRequest: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -69,6 +74,9 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
   const isShareRoute = shareRoutes.some(route => pathname.includes(route));
   const isSensitiveRoute = isAuthRoute || isShareRoute;
+
+  // Check if this is an onboarding route (to avoid redirect loops)
+  const isOnboardingRoute = onboardingRoutes.some(route => pathname === route);
 
   // Apply rate limiting based on route type
   const maxRequests = isSensitiveRoute ? RATE_LIMIT_AUTH_SHARE : RATE_LIMIT_GENERAL;
@@ -137,15 +145,28 @@ export async function middleware(request: NextRequest) {
 
     // If user is authenticated
     if (user) {
+      // If trying to access onboarding route directly while already completed
+      if (isOnboardingRoute) {
+        const onboardingStatus = user.user_metadata?.onboarding_status || {};
+        const isOnboardingComplete = onboardingStatus.completed_at;
+        
+        if (isOnboardingComplete) {
+          // Redirect completed users to dashboard when they try to access onboarding
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+      }
+      
       // If trying to access auth routes while authenticated
       if (isAuthRoute) {
         // Check onboarding status
         const onboardingStatus = user.user_metadata?.onboarding_status || {};
         const isOnboardingComplete = onboardingStatus.completed_at;
-        const currentStep = onboardingStatus.current_step || 'personal-info';
-
+        
         if (!isOnboardingComplete) {
-          return NextResponse.redirect(new URL(`/onboarding/${currentStep}`, request.url));
+          // Only redirect if not already on an onboarding route
+          if (!isOnboardingRoute) {
+            return NextResponse.redirect(new URL('/onboarding', request.url));
+          }
         }
         
         // Redirect to dashboard if trying to access auth routes while authenticated

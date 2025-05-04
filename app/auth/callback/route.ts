@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           where: { auth_id: user.id }
         });
 
-        let redirectUrl = '/onboarding/personal-info';
+        let redirectUrl = '/onboarding';
 
         if (!existingUser) {
           // Check if it's a Google sign-in
@@ -71,24 +71,8 @@ export async function GET(request: NextRequest) {
             }
           });
 
-          // For Google users, create a temporary workspace
-          if (isGoogleAuth && newUser) {
-            // const tempWorkspaceId = await createTempWorkspaceForGoogle(
-            //   newUser.id,
-            //   newUser.first_name || 'New',
-            //   newUser.last_name || 'User'
-            // );
-            
-            // if (tempWorkspaceId) {
-            //   await supabase.auth.updateUser({
-            //     data: {
-            //       temp_workspace_id: tempWorkspaceId
-            //     }
-            //   });
-            // }
-
-            redirectUrl = '/onboarding/professional-info';
-          }
+          // For Google users with complete profile, no need to change the redirect
+          // since we're using a unified '/onboarding' path
         } else if (inviteToken && workspaceId) {
           // Handle workspace invitation
           redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;

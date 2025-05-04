@@ -78,17 +78,17 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
 
           if (data.onboardingStep && !data.completed) {
             const onboardingSteps: Record<onboarding_step, string> = {
-              PERSONAL_INFO: '/onboarding/personal-info',
-              PROFESSIONAL_INFO: '/onboarding/professional-info',
-              WORKSPACE_SETUP: '/onboarding/workspace-setup',
-              COMPLETED: '/onboarding/completed',
-              INVITED_USER: '/onboarding/invited-user',
+              PERSONAL_INFO: '/onboarding',
+              PROFESSIONAL_INFO: '/onboarding',
+              WORKSPACE_SETUP: '/onboarding',
+              COMPLETED: '/onboarding',
+              INVITED_USER: '/onboarding',
             };
 
             const currentStep = onboardingSteps[data.onboardingStep];
 
             // Redirect to appropriate onboarding step if on public path or wrong step
-            if (isPublicPath || (pathname && !pathname.startsWith(currentStep))) {
+            if (isPublicPath || (pathname && pathname !== '/onboarding')) {
               router.push(currentStep);
             }
           } else if (isPublicPath) {

@@ -158,3 +158,30 @@ input, textarea {
   animation: folder-expanding-pulse 1.5s infinite;
   background-color: rgba(73, 131, 247, 0.08) !important;
 }
+
+/* Force light theme for the onboarding page */
+.force-light-theme {
+  /* Override dark mode styles with light mode equivalents */
+  background-color: #ffffff !important;
+  color: #101828 !important;
+}
+
+.force-light-theme * {
+  /* Use !important to override any dark mode styles */
+  --text-primary: #101828 !important;
+  --text-secondary: #344054 !important;
+  --text-tertiary: #475467 !important;
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f9fafb !important;
+  --border-primary: #d0d5dd !important;
+  --border-secondary: #e4e7ec !important;
+}
+
+/* Dark mode scrollbar override for the force-light-theme class */
+.force-light-theme ::-webkit-scrollbar-thumb {
+  background: theme('colors.lightMode.bg-quaternary') !important;
+}
+
+.force-light-theme ::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.lightMode.bg-secondary-solid') !important;
+}
