@@ -877,7 +877,10 @@ export default function Page() {
         const data = await response.json();
 
         if (!data.hasCompletedTutorial) {
-          setShowTutorial(true);
+          // Add a short delay to ensure DOM elements are fully loaded
+          setTimeout(() => {
+            setShowTutorial(true);
+          }, 500);
         }
       } catch (error) {
         console.error('Error checking tutorial status:', error);
