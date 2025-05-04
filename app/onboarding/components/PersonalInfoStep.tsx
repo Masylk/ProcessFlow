@@ -16,7 +16,7 @@ const PersonalInfoStep: React.FC = () => {
   } = useOnboarding();
 
   const handleLastNameChange = (value: string) => {
-    // Allow spaces and only sanitize other characters
+    // Allow spaces and special characters, only limit length
     if (value.length <= 40) {
       const sanitized = sanitizeNameInput(value);
       setLastName(sanitized);
@@ -24,7 +24,7 @@ const PersonalInfoStep: React.FC = () => {
   };
 
   const handleFirstNameChange = (value: string) => {
-    // Allow spaces and only sanitize other characters
+    // Allow spaces and special characters, only limit length
     if (value.length <= 40) {
       const sanitized = sanitizeNameInput(value);
       setFirstName(sanitized);

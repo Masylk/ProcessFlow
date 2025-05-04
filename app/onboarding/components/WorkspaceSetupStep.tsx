@@ -218,7 +218,7 @@ const WorkspaceSetupStep: React.FC = () => {
   const isFormValid = () => {
     if (!workspaceName) return false;
     if (/[^a-zA-Z0-9-]/.test(workspaceURL)) return false;
-    if (slugAvailability && !slugAvailability.available) return false;
+    if (!slugAvailability || !slugAvailability.available) return false;
     return true;
   };
   
@@ -464,7 +464,7 @@ const WorkspaceSetupStep: React.FC = () => {
           variant="primary"
           size="small"
           onClick={handleSubmitWorkspace}
-          disabled={isLoading || !isFormValid() || isNavigatingBack}
+          disabled={isLoading || !isFormValid() || isNavigatingBack || isCheckingSlug}
           className="w-2/3"
         >
           {isLoading ? 'Loading...' : 'Continue'}

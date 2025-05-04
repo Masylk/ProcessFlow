@@ -19,12 +19,10 @@ export function sanitizeNameInput(value: string): string {
  * @returns Sanitized string that allows letters, numbers, spaces, hyphens, and apostrophes
  */
 export function sanitizeWorkspaceNameInput(value: string): string {
-  // Only remove whitespace from the beginning and end, not within the string
-  let sanitized = value.trim();
-  // Remove any HTML tags
-  sanitized = sanitized.replace(/<[^>]*>?/gm, '');
-  // Allow letters, numbers, spaces, hyphens, and apostrophes
-  sanitized = sanitized.replace(/[^a-zA-Z0-9À-ÿ'\- ]/g, '');
+  // Remove HTML tags
+  let sanitized = value.replace(/<[^>]*>?/gm, '');
+  // Only restrict potentially dangerous characters, allow most Unicode characters for names
+  sanitized = sanitized.replace(/[<>{}[\]\\^~|]/g, '');
   // Limit to 50 characters
   sanitized = sanitized.slice(0, 50);
   return sanitized;
