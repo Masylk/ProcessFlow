@@ -15,6 +15,8 @@ interface ReactFlowPageClientProps {
   workflowId: string;
 }
 
+import { ScreenSizeOverlay } from './ScreenSizeOverlay';
+
 export function ReactFlowPageClient({
   workspaceId,
   workflowId,
@@ -145,8 +147,10 @@ export function ReactFlowPageClient({
   }, [workspaceId, workflowId, setPaths]);
 
   return (
-    <div className="h-screen flex flex-col">
-      <WorkflowHeader
+    <>
+      <ScreenSizeOverlay />
+      <div className="h-screen flex flex-col">
+        <WorkflowHeader
         workflowId={workflowId}
         parentFolder={parentFolder}
         grandParentFolder={grandParentFolder}
@@ -167,5 +171,5 @@ export function ReactFlowPageClient({
         </ReactFlowProvider>
       </div>
     </div>
-  );
+  </>);
 }
