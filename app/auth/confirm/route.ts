@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
           });
         }
 
-        const response = NextResponse.redirect(new URL('/onboarding/personal-info', request.url));
+        const response = NextResponse.redirect(new URL('/onboarding', request.url));
         
         response.cookies.set('sb-access-token', session.access_token, {
           path: '/',

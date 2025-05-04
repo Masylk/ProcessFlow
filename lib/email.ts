@@ -120,7 +120,6 @@ export async function sendReactEmail<T extends object>({
       productHuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL ? 'Set' : 'Not set',
       linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL ? 'Set' : 'Not set',
       xUrl: process.env.NEXT_PUBLIC_X_URL ? 'Set' : 'Not set',
-      g2Url: process.env.NEXT_PUBLIC_G2_URL ? 'Set' : 'Not set',
     });
     
     // Create a copy of the props
@@ -134,7 +133,6 @@ export async function sendReactEmail<T extends object>({
         producthuntUrl: enhancedProps.publicUrls.producthuntUrl || process.env.NEXT_PUBLIC_PRODUCTHUNT_URL,
         linkedinUrl: enhancedProps.publicUrls.linkedinUrl || process.env.NEXT_PUBLIC_LINKEDIN_URL,
         xUrl: enhancedProps.publicUrls.xUrl || process.env.NEXT_PUBLIC_X_URL,
-        g2Url: enhancedProps.publicUrls.g2Url || process.env.NEXT_PUBLIC_G2_URL,
       };
     } else {
       // If publicUrls doesn't exist, create it
@@ -144,7 +142,6 @@ export async function sendReactEmail<T extends object>({
         producthuntUrl: process.env.NEXT_PUBLIC_PRODUCTHUNT_URL,
         linkedinUrl: process.env.NEXT_PUBLIC_LINKEDIN_URL,
         xUrl: process.env.NEXT_PUBLIC_X_URL,
-        g2Url: process.env.NEXT_PUBLIC_G2_URL,
       };
     }
     

@@ -59,6 +59,7 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const { currentTheme } = useTheme();
   const colors = useColors();
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Function to handle clicks on the highlighted elements
@@ -81,67 +82,97 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
       el.removeAttribute('data-tutorial-active');
     });
 
-    // Handle different step highlights
-    switch (currentStep) {
-      case 0:
-        const newFlowButton = document.querySelector(
-          '[data-testid="new-flow-button"]'
-        );
-        if (newFlowButton) {
-          newFlowButton.classList.add(styles.highlight);
-          newFlowButton.addEventListener('click', handleElementClick);
-          // Mark as tutorial active instead of changing styles directly
-          newFlowButton.setAttribute('data-tutorial-active', 'true');
-        }
-        break;
+    // Function to highlight elements with retry mechanism
+    const highlightElement = () => {
+      let elementFound = false;
 
-      case 1:
-        const foldersSection = document.querySelector(
-          '[data-testid="folders-section"]'
-        );
-        if (foldersSection) {
-          foldersSection.classList.add(
-            styles.highlight,
-            styles.highlightFolders
+      // Handle different step highlights
+      switch (currentStep) {
+        case 0:
+          const newFlowButton = document.querySelector(
+            '[data-testid="new-flow-button"]'
           );
-          // Add class for styling rather than inline style
-          foldersSection.classList.add(
-            currentTheme === 'dark' ? styles.darkFolderHighlight : styles.lightFolderHighlight
-          );
-          foldersSection.addEventListener('click', handleElementClick);
-          foldersSection.setAttribute('data-tutorial-active', 'true');
-        }
-        break;
+          if (newFlowButton) {
+            elementFound = true;
+            newFlowButton.classList.add(styles.highlight);
+            newFlowButton.addEventListener('click', handleElementClick);
+            // Mark as tutorial active instead of changing styles directly
+            newFlowButton.setAttribute('data-tutorial-active', 'true');
+          }
+          break;
 
-      case 2:
-        const workspaceSwitcher = document.querySelector(
-          '[data-testid="workspace-switcher"]'
-        );
-        if (workspaceSwitcher) {
-          workspaceSwitcher.classList.add(
-            styles.highlight,
-            styles.highlightWorkspace
+        case 1:
+          const foldersSection = document.querySelector(
+            '[data-testid="folders-section"]'
           );
-          workspaceSwitcher.addEventListener('click', handleElementClick);
-          workspaceSwitcher.setAttribute('data-tutorial-active', 'true');
-        }
-        break;
+          if (foldersSection) {
+            elementFound = true;
+            foldersSection.classList.add(
+              styles.highlight,
+              styles.highlightFolders
+            );
+            // Add class for styling rather than inline style
+            foldersSection.classList.add(
+              currentTheme === 'dark' ? styles.darkFolderHighlight : styles.lightFolderHighlight
+            );
+            foldersSection.addEventListener('click', handleElementClick);
+            foldersSection.setAttribute('data-tutorial-active', 'true');
+          }
+          break;
 
-      case 3:
-        const userSettings = document.querySelector(
-          '[data-testid="user-settings"]'
-        );
-        if (userSettings) {
-          userSettings.classList.add(styles.highlight, styles.highlightUser);
-          userSettings.addEventListener('click', handleElementClick);
-          userSettings.setAttribute('data-tutorial-active', 'true');
-        }
-        break;
-    }
+        case 2:
+          const workspaceSwitcher = document.querySelector(
+            '[data-testid="workspace-switcher"]'
+          );
+          if (workspaceSwitcher) {
+            elementFound = true;
+            workspaceSwitcher.classList.add(
+              styles.highlight,
+              styles.highlightWorkspace
+            );
+            workspaceSwitcher.addEventListener('click', handleElementClick);
+            workspaceSwitcher.setAttribute('data-tutorial-active', 'true');
+          }
+          break;
+
+        case 3:
+          const userSettings = document.querySelector(
+            '[data-testid="user-settings"]'
+          );
+          if (userSettings) {
+            elementFound = true;
+            userSettings.classList.add(styles.highlight, styles.highlightUser);
+            userSettings.addEventListener('click', handleElementClick);
+            userSettings.setAttribute('data-tutorial-active', 'true');
+          }
+          break;
+      }
+
+      // If element not found and we haven't exceeded max retries, try again
+      if (!elementFound && retryCount < 5) {
+        const retryTimeout = setTimeout(() => {
+          setRetryCount(prevCount => prevCount + 1);
+        }, 300);
+        return () => clearTimeout(retryTimeout);
+      } else if (retryCount >= 5) {
+        console.warn(`Could not find element for tutorial step ${currentStep}`);
+      }
+
+      return undefined;
+    };
+
+    const cleanupFn = highlightElement();
 
     // Update cleanup function
     return () => {
-      document.querySelectorAll(`.${styles.highlight}`).forEach((el) => {
+      if (cleanupFn) cleanupFn();
+      
+      // Use a more robust query selector to find all elements with highlight class
+      const highlightedElements = document.querySelectorAll(
+        `.${styles.highlight}, [data-tutorial-active="true"]`
+      );
+      
+      highlightedElements.forEach((el) => {
         el.classList.remove(
           styles.highlight,
           styles.highlightFolders,
@@ -155,7 +186,7 @@ export default function TutorialOverlay({ onComplete }: TutorialOverlayProps) {
         el.removeAttribute('data-tutorial-active');
       });
     };
-  }, [currentStep, currentTheme, colors]);
+  }, [currentStep, currentTheme, colors, retryCount]);
 
   const handleNext = () => {
     if (currentStep < tutorialSteps.length - 1) {
