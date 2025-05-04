@@ -8,7 +8,6 @@ type JeanSignatureProps = {
     producthuntUrl?: string;
     linkedinUrl?: string;
     xUrl?: string;
-    g2Url?: string;
     [key: string]: string | undefined;
   };
 };
@@ -36,15 +35,10 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
     ? `${supabaseUrl}${storagePath}/images/mail_linkedin.png`
     : 'https://via.placeholder.com/20';
     
-  const g2IconUrl = supabaseUrl && storagePath 
-    ? `${supabaseUrl}${storagePath}/images/mail_g2.png`
-    : 'https://via.placeholder.com/20';
-    
   // Social media URLs from public URLs or use defaults
   const productHuntUrl = publicUrls.producthuntUrl || 'https://www.producthunt.com';
   const linkedinUrl = publicUrls.linkedinUrl || 'https://www.linkedin.com/company/processflow1/';
   const xUrl = publicUrls.xUrl || 'https://x.com';
-  const g2Url = publicUrls.g2Url || 'https://www.g2.com';
 
   return (
     <Section style={{ marginTop: '32px' }}>
@@ -128,21 +122,6 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
             width="20"
             height="20"
             alt="X"
-            style={{ 
-              display: 'inline-block', 
-              verticalAlign: 'middle',
-              border: 'none',
-              maxWidth: '20px',
-              maxHeight: '20px'
-            }}
-          />
-        </Link>
-        <Link href={g2Url} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
-          <Img
-            src={g2IconUrl}
-            width="20"
-            height="20"
-            alt="G2"
             style={{ 
               display: 'inline-block', 
               verticalAlign: 'middle',
