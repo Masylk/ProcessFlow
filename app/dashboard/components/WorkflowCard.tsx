@@ -357,13 +357,13 @@ export default function WorkflowCard({
                   '--hover-bg': colors['bg-quaternary'],
                 } as React.CSSProperties
               }
-              className="w-6 h-6 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+              className="w-7 h-7 rounded flex items-center justify-center cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
               onClick={handleMenuClick}
             >
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-quinary.svg`}
                 alt="Menu"
-                className="w-4 h-4 opacity-70 hover:opacity-100 transition-opacity select-none"
+                className="w-5 h-5 opacity-70 hover:opacity-100 transition-opacity select-none"
                 draggable="false"
               />
             </div>

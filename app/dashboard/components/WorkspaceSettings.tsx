@@ -6,6 +6,7 @@ import ButtonDestructive from '@/app/components/ButtonDestructive';
 import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
+import { sanitizeWorkspaceNameInput } from '@/app/onboarding/utils/inputSanitizer';
 
 interface WorkspaceSettingsProps {
   workspace: Workspace;
@@ -24,15 +25,6 @@ const ALLOWED_IMAGE_TYPES = [
   'image/svg+xml',
   'image/avif',
 ];
-
-// Utility to sanitize workspace name input
-function sanitizeNameInput(input: string): string {
-  // Remove leading/trailing whitespace, control chars, and collapse spaces
-  return input
-    .replace(/[\u0000-\u001F\u007F]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 // Utility to check file extension if MIME type is missing or unreliable
 function hasAllowedImageExtension(fileName: string): boolean {
@@ -80,10 +72,7 @@ export default function WorkspaceSettings({
 
   // Update name input handler to limit and sanitize
   const handleNameChange = (value: string) => {
-    let sanitized = sanitizeNameInput(value);
-    if (sanitized.length > 50) {
-      sanitized = sanitized.slice(0, 50);
-    }
+    const sanitized = sanitizeWorkspaceNameInput(value);
     setName(sanitized);
   };
 
@@ -332,7 +321,7 @@ export default function WorkspaceSettings({
               onChange={handleNameChange}
               placeholder="Enter workspace name"
             />
-            <div className="text-xs text-gray-400 mt-1">{name.length}</div>
+          
             {nameError && (
               <div className="text-red-500 text-xs mt-1">{nameError}</div>
             )}
@@ -422,8 +411,8 @@ export default function WorkspaceSettings({
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
-                      width: '80px',
-                      height: '80px',
+                      width: '50px',
+                      height: '50px',
                       borderRadius: '8px',
                       border: `2px solid ${colors['border-secondary']}`,
                     }}

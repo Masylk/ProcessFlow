@@ -58,7 +58,7 @@ const CompletedStep: React.FC = () => {
         style={{ color: colors['text-secondary'] }}
       >
         {isCreatingWorkflow 
-          ? "This may take a few moments..." 
+          ? "This will take less than a minute." 
           : error
             ? "We encountered an issue while setting up your workspace."
             : "Watch this short video to get started with ProcessFlow."}
@@ -176,7 +176,7 @@ const CompletedStep: React.FC = () => {
       )}
       
       {/* Emergency Logout Button */}
-      <div className="mt-4">
+      <div className="mt-4 hidden">
         <button
           onClick={handleEmergencyLogout}
           className="w-full text-red-500 text-sm font-medium py-2 hover:underline focus:outline-none"
