@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { onboarding_step } from '@prisma/client';
 import LoadingSpinner from './LoadingSpinner';
+import posthog from 'posthog-js';
+import * as Sentry from '@sentry/nextjs';
 
 type OnboardingResponse = {
   onboardingStep: onboarding_step;
@@ -62,8 +64,34 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Check onboarding status if user is authenticated
+        // Identify user in PostHog if authenticated
         if (user) {
+          // Set up PostHog identification
+          posthog.identify(user.id);
+          
+          // Set user email as a property
+          if (user.email) {
+            posthog.people.set({ email: user.email });
+          }
+          
+          // Capture login event for Google auth users coming from callback
+          if (pathname?.includes('/auth/callback')) {
+            const isGoogleAuth = user.app_metadata?.provider === 'google';
+            if (isGoogleAuth) {
+              posthog.capture('login', { 
+                email: user.email,
+                provider: 'google'
+              });
+            }
+          }
+          
+          // Also set up Sentry user identification
+          Sentry.setUser({
+            id: user.id,
+            email: user.email || undefined
+          });
+
+          // Check onboarding status
           const response = await fetch('/api/auth/check-onboarding');
 
           if (!response.ok) {
