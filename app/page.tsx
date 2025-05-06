@@ -310,6 +310,9 @@ export default function Page() {
   };
 
   const handleDuplicateWorkflow = async () => {
+    console.log('handleDuplicateWorkflow');
+    console.log('selectedWorkflow', selectedWorkflow);
+    console.log('activeWorkspace', activeWorkspace);
     if (!selectedWorkflow || !activeWorkspace) return;
 
     const baseName = selectedWorkflow.name;
@@ -350,6 +353,7 @@ export default function Page() {
         name,
         description,
         workspaceId: activeWorkspace.id,
+        folderId: selectedFolder?.id,
         icon,
         authorId: user.id,
       });
@@ -615,6 +619,8 @@ export default function Page() {
   };
 
   const handleSelectWorkflow = (workflow: Workflow | null) => {
+    console.log('handleSelectWorkflow');
+    console.log('workflow', workflow);
     setSelectedWorkflow(workflow);
   };
 
