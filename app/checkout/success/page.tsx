@@ -153,12 +153,12 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   const workspaceId = String(searchParams?.workspace || '');
 
   if (!sessionId || !workspaceId) {
-    return redirect('/dashboard');
+    return redirect('/');
   }
   
   const workspaceIdNumber = parseInt(workspaceId);
   if (isNaN(workspaceIdNumber)) {
-    return redirect('/dashboard');
+    return redirect('/');
   }
 
   let session;

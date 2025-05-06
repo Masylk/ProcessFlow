@@ -390,8 +390,6 @@ export default function HorizontalStep({
 
   useLayoutEffect(() => {
     if (descriptionRef.current) {
-      console.log(hasOnlyDescription);
-      console.log(descriptionRef.current.offsetHeight);
       setDescriptionHeight(descriptionRef.current.offsetHeight);
     }
   }, [block.description, block.id]);

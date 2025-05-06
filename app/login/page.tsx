@@ -196,7 +196,7 @@ function LoginContent() {
           posthog.identify(response.id);
           posthog.people.set({ email: response.email });
           posthog.capture('login', { email: response.email });
-          router.push('/dashboard');
+          router.push('/');
         }
       } catch (err) {
         // Add failed attempt on unexpected error

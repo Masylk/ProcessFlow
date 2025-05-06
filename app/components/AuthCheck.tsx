@@ -69,7 +69,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           if (!response.ok) {
             console.error('Error checking onboarding status');
             if (isPublicPath) {
-              router.push('/dashboard');
+              router.push('/');
             }
             return;
           }
@@ -93,7 +93,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
             }
           } else if (isPublicPath) {
             // Redirect completed users away from public paths
-            router.push('/dashboard');
+            router.push('/');
           }
         }
       } catch (error) {

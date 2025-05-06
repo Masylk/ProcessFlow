@@ -658,14 +658,14 @@ export default function SharedPage({
         if (workflowData.folder?.parent) {
           items.push({
             label: workflowData.folder.parent.name,
-            href: `/dashboard?folder=${workflowData.folder.parent.id}`,
+            href: `/?folder=${workflowData.folder.parent.id}`,
           });
         }
 
         if (workflowData.folder) {
           items.push({
             label: workflowData.folder.name,
-            href: `/dashboard?folder=${workflowData.folder.id}`,
+            href: `/?folder=${workflowData.folder.id}`,
           });
         }
 
