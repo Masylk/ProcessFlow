@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
 
     if (user && session) {
       try {
+
+        console.log('user', user);
+        console.log('session', session);
         const existingUser = await prisma.user.findUnique({
           where: { auth_id: user.id }
         });
@@ -73,11 +76,13 @@ export async function GET(request: NextRequest) {
 
           // For Google users with complete profile, no need to change the redirect
           // since we're using a unified '/onboarding' path
+        } else if (existingUser && existingUser?.onboarding_step !== 'COMPLETED') {
+          redirectUrl = '/onboarding';
         } else if (inviteToken && workspaceId) {
           // Handle workspace invitation
-          redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;
+          // redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;
         } else {
-          redirectUrl = '/dashboard';
+          redirectUrl = '/';
         }
 
         const response = NextResponse.redirect(new URL(redirectUrl, request.url));

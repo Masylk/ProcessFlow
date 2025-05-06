@@ -21,9 +21,9 @@ export default async function CheckoutCancelPage(props: PageProps) {
 
   if (!workspaceId) {
     console.error('No workspace ID provided');
-    throw redirect('/dashboard');
+    throw redirect('/');
   }
 
   // Redirect to the dashboard with cancelled parameter
-  throw redirect(`/dashboard?workspace=${workspaceId}&checkout=cancelled`);
+  throw redirect(`/&checkout=cancelled`);
 } 

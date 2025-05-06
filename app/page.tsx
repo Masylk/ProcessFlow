@@ -140,13 +140,13 @@ export default function Page() {
   // Add near the top of the component
   const searchParams = useSearchParams();
 
-  // Memoize the filtered workspaces based on search term
-  const filteredWorkspaces = useMemo(() => {
-    if (!activeWorkspace?.workflows) return [];
-    return activeWorkspace.workflows.filter((workflow) =>
-      workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [activeWorkspace?.workflows, searchTerm]);
+  // // Memoize the filtered workspaces based on search term
+  // const filteredWorkspaces = useMemo(() => {
+  //   if (!activeWorkspace?.workflows) return [];
+  //   return activeWorkspace.workflows.filter((workflow) =>
+  //     workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
+  // }, [activeWorkspace?.workflows, searchTerm]);
 
   // Debounced search handler
   const debouncedSearchHandler = useCallback(
@@ -743,7 +743,8 @@ export default function Page() {
       if (workspaces.length <= 1) {
         // If this was the last workspace, redirect to onboarding with workspace_setup step
         // Include from=workspace_deletion to signal this is a fresh workspace setup
-        window.location.href = '/onboarding?step=WORKSPACE_SETUP&from=workspace_deletion';
+        window.location.href =
+          '/onboarding?step=WORKSPACE_SETUP&from=workspace_deletion';
       }
     } catch (error) {
       console.error('Error deleting workspace:', error);

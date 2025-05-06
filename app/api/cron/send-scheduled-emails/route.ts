@@ -132,12 +132,16 @@ export async function GET(request: Request) {
       take: 50, // Process in batches to avoid timeouts
     });
 
-    console.log(`Found ${scheduledEmails.length} emails to send`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Found ${scheduledEmails.length} emails to send`);
+    }
     
     // Log process limit emails specifically
     const processLimitEmails = scheduledEmails.filter(email => email.email_type === 'PROCESS_LIMIT_REACHED');
     if (processLimitEmails.length > 0) {
-      console.log(`Found ${processLimitEmails.length} PROCESS_LIMIT_REACHED emails to send`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Found ${processLimitEmails.length} PROCESS_LIMIT_REACHED emails to send`);
+      }
     }
 
     const results = [];
@@ -193,17 +197,23 @@ export async function GET(request: Request) {
               reason: 'User has not created any flows yet' 
             });
             
-            console.log(`Feedback request email ${email.id} cancelled: User ${email.user_id} has not created any flows`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Feedback request email ${email.id} cancelled: User ${email.user_id} has not created any flows`);
+            }
             continue;
           }
           
           // User has created flows, so we can proceed with sending the email
-          console.log(`User ${email.user_id} has created flows, proceeding with feedback request email`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`User ${email.user_id} has created flows, proceeding with feedback request email`);
+          }
         }
         
         // Special logging for PROCESS_LIMIT_REACHED emails
         if (email.email_type === 'PROCESS_LIMIT_REACHED') {
-          console.log(`Processing PROCESS_LIMIT_REACHED email for user: ${email.user.email}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Processing PROCESS_LIMIT_REACHED email for user: ${email.user.email}`);
+          }
         }
         
         // Send the email
@@ -234,7 +244,9 @@ export async function GET(request: Request) {
           results.push({ id: email.id, status: 'sent', messageId: sendResult.messageId });
           
           if (email.email_type === 'PROCESS_LIMIT_REACHED') {
-            console.log(`Successfully sent PROCESS_LIMIT_REACHED email to ${email.user.email}`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Successfully sent PROCESS_LIMIT_REACHED email to ${email.user.email}`);
+            }
           }
         } else {
           // Handle failed email with retry mechanism
@@ -279,7 +291,9 @@ export async function GET(request: Request) {
               attemptNumber: newRetryCount
             });
             
-            console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime}`);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime}`);
+            }
           }
         }
       } catch (error) {
@@ -326,7 +340,9 @@ export async function GET(request: Request) {
             attemptNumber: newRetryCount
           });
           
-          console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime} after error: ${errorMessage}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Scheduled retry #${newRetryCount} for email ${email.id} at ${nextRetryTime} after error: ${errorMessage}`);
+          }
         }
       }
     }

@@ -211,7 +211,6 @@ async function updateExistingWorkspace(
       }
     });
     
-    console.log(`Updated existing workspace with ID: ${workspace.id}`);
     return workspace;
   } catch (error) {
     console.error(`Error updating existing workspace (ID: ${workspaceId}):`, error);
@@ -419,8 +418,6 @@ export async function POST(request: Request) {
             // Get the workspace directly instead of using the included workspace
             const existingWorkspaceId = userWorkspace.workspace_id;
             
-            // Log what we're doing
-            console.log(`Found existing workspace to update: ${existingWorkspaceId}`);
             Sentry.addBreadcrumb({
               category: 'workspace',
               message: `Using existing workspace instead of creating new one`,

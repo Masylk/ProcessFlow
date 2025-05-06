@@ -105,7 +105,6 @@ export async function POST(req: NextRequest) {
   const formattedTitle = formatTitle(title);
   const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
 
-  console.log("creating block", title, type, position, icon);
   if (!['STEP', 'PATH', 'DELAY'].includes(type)) {
     return NextResponse.json(
       { error: 'Invalid block type. Expected STEP, PATH, or DELAY.' },
