@@ -25,5 +25,5 @@ export default async function CheckoutCancelPage(props: PageProps) {
   }
 
   // Redirect to the dashboard with cancelled parameter
-  throw redirect(`/dashboard?workspace=${workspaceId}&checkout=cancelled`);
+  throw redirect(`/&checkout=cancelled`);
 } 

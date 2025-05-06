@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set');
     }
 
-    const returnUrl = `${baseUrl}/dashboard?workspace=${workspaceId}`;
+    const returnUrl = `${baseUrl}/`;
     const session = await createStripePortalSession({
       customerId: workspace.stripe_customer_id,
       returnUrl
