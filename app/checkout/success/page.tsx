@@ -8,14 +8,18 @@ import Stripe from 'stripe';
 export const dynamic = 'force-dynamic';
 
 // Utility function to wait for a specified time
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // New function to retry getting subscription
-async function getSubscriptionWithRetry(workspaceId: number, maxRetries = 3, delayMs = 2000) {
+async function getSubscriptionWithRetry(
+  workspaceId: number,
+  maxRetries = 3,
+  delayMs = 2000
+) {
   for (let i = 0; i < maxRetries; i++) {
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { 
+      select: {
         id: true,
         subscription_id: true,
         stripe_customer_id: true,
@@ -24,9 +28,9 @@ async function getSubscriptionWithRetry(workspaceId: number, maxRetries = 3, del
             id: true,
             status: true,
             stripe_subscription_id: true,
-            canceled_at: true
-          }
-        }
+            canceled_at: true,
+          },
+        },
       },
     });
 
@@ -40,32 +44,36 @@ async function getSubscriptionWithRetry(workspaceId: number, maxRetries = 3, del
 }
 
 // Safe server-side tracking function that doesn't use client-side PostHog
-async function trackCheckoutServerSide(workspaceId: number, sessionId: string, status: string) {
+async function trackCheckoutServerSide(
+  workspaceId: number,
+  sessionId: string,
+  status: string
+) {
   try {
     // Only attempt if we have a POSTHOG_KEY
     const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-    
+
     if (!posthogApiKey || !posthogHost) return;
-    
+
     // Import PostHog Node library dynamically to avoid client-side loading
     const { PostHog } = await import('posthog-node');
-    
+
     // Initialize server-side PostHog client
     const posthog = new PostHog(posthogApiKey, {
       host: posthogHost,
     });
-    
+
     // Get workspace info for better tracking data
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { 
+      select: {
         id: true,
         name: true,
         created_at: true,
-      }
+      },
     });
-    
+
     if (workspace) {
       // Capture the checkout event server-side
       await posthog.capture({
@@ -77,7 +85,7 @@ async function trackCheckoutServerSide(workspaceId: number, sessionId: string, s
           status: status,
           workspace_name: workspace.name,
           created_at: workspace.created_at,
-        }
+        },
       });
     }
   } catch (error) {
@@ -94,46 +102,57 @@ interface PageProps {
   searchParams: Promise<SearchParams>;
 }
 
-async function handleSubscriptionActivated(sessionId: string, workspaceId: string) {
+async function handleSubscriptionActivated(
+  sessionId: string,
+  workspaceId: string
+) {
   try {
     // Get the session details from Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
       apiVersion: '2025-02-24.acacia',
     });
-    
+
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
+
     if (session.subscription) {
       // Get the subscription details
-      const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-      
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
+
       if (subscription.status === 'active') {
         // Find the user who made the purchase
         const user = await prisma.user.findFirst({
-          where: { 
+          where: {
             workspaces: {
               some: {
-                workspace_id: parseInt(workspaceId)
-              }
-            }
+                workspace_id: parseInt(workspaceId),
+              },
+            },
           },
         });
-        
+
         if (user) {
           // Send the subscription activated email
-          const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email/subscription-activated`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: user.id,
-              workspaceId: parseInt(workspaceId),
-            }),
-          });
-          
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_APP_URL}/api/email/subscription-activated`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId: user.id,
+                workspaceId: parseInt(workspaceId),
+              }),
+            }
+          );
+
           if (!response.ok) {
-            console.error('Failed to send subscription activated email:', await response.text());
+            console.error(
+              'Failed to send subscription activated email:',
+              await response.text()
+            );
           } else {
             if (process.env.NODE_ENV !== 'production') {
               console.log('Successfully sent subscription activated email');
@@ -155,7 +174,7 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   if (!sessionId || !workspaceId) {
     return redirect('/');
   }
-  
+
   const workspaceIdNumber = parseInt(workspaceId);
   if (isNaN(workspaceIdNumber)) {
     return redirect('/');
@@ -165,25 +184,27 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   try {
     session = await stripe.checkout.sessions.retrieve(sessionId);
   } catch (error) {
-    return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=invalid_session`);
+    return redirect(
+      `/?workspace=${workspaceId}&checkout=failed&error=invalid_session`
+    );
   }
-    
+
   if (session.payment_status !== 'paid') {
-    return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed`);
+    return redirect(`/?workspace=${workspaceId}&checkout=failed`);
   }
 
   await sleep(2000);
 
   try {
     const existingWorkspace = await getSubscriptionWithRetry(workspaceIdNumber);
-    
+
     if (existingWorkspace?.subscription?.status === 'ACTIVE') {
-      return redirect(`/dashboard?workspace=${workspaceId}&checkout=success`);
+      return redirect(`/?workspace=${workspaceId}&checkout=success`);
     }
 
     let workspace = await prisma.workspace.findUnique({
       where: { id: workspaceIdNumber },
-      select: { 
+      select: {
         id: true,
         subscription_id: true,
         stripe_customer_id: true,
@@ -192,45 +213,66 @@ export default async function CheckoutSuccessPage(props: PageProps) {
             id: true,
             status: true,
             stripe_subscription_id: true,
-            canceled_at: true
-          }
-        }
+            canceled_at: true,
+          },
+        },
       },
     });
 
     if (!workspace) {
-      return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=workspace_not_found`);
+      return redirect(
+        `/?workspace=${workspaceId}&checkout=failed&error=workspace_not_found`
+      );
     }
 
-    if (!workspace.subscription || workspace.subscription.status === 'CANCELED') {
-      const stripeSubscription = await stripe.subscriptions.retrieve(session.subscription as string);
-      
+    if (
+      !workspace.subscription ||
+      workspace.subscription.status === 'CANCELED'
+    ) {
+      const stripeSubscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
+
       if (!stripeSubscription) {
-        return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=stripe_subscription_not_found`);
+        return redirect(
+          `/?workspace=${workspaceId}&checkout=failed&error=stripe_subscription_not_found`
+        );
       }
-      
+
       const mappedStatus = mapStripeStatusToDbStatus(stripeSubscription.status);
-      
-      if (workspace.subscription && workspace.subscription.status === 'CANCELED') {
+
+      if (
+        workspace.subscription &&
+        workspace.subscription.status === 'CANCELED'
+      ) {
         await prisma.subscription.update({
           where: { id: workspace.subscription.id },
           data: {
             stripe_subscription_id: stripeSubscription.id,
-            plan_type: 'EARLY_ADOPTER', 
+            plan_type: 'EARLY_ADOPTER',
             quantity_seats: stripeSubscription.items.data[0].quantity || 1,
-            current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-            current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-            trial_end_date: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+            current_period_start: new Date(
+              stripeSubscription.current_period_start * 1000
+            ),
+            current_period_end: new Date(
+              stripeSubscription.current_period_end * 1000
+            ),
+            trial_end_date: stripeSubscription.trial_end
+              ? new Date(stripeSubscription.trial_end * 1000)
+              : null,
             status: mappedStatus,
             canceled_at: null,
           },
         });
-        
-        const customer = await stripe.customers.retrieve(session.customer as string, {
-          expand: ['tax_ids']
-        }) as Stripe.Customer;
-        
-        const defaultTaxRate = 20.00;
+
+        const customer = (await stripe.customers.retrieve(
+          session.customer as string,
+          {
+            expand: ['tax_ids'],
+          }
+        )) as Stripe.Customer;
+
+        const defaultTaxRate = 20.0;
         await prisma.workspace_billing_infos.upsert({
           where: {
             workspace_id: workspaceIdNumber,
@@ -244,7 +286,9 @@ export default async function CheckoutSuccessPage(props: PageProps) {
               customer.address?.state,
               customer.address?.postal_code,
               customer.address?.country,
-            ].filter(Boolean).join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n'),
             tax_rate: defaultTaxRate,
             vat_number: customer.tax_ids?.data[0]?.value || null,
           },
@@ -258,12 +302,14 @@ export default async function CheckoutSuccessPage(props: PageProps) {
               customer.address?.state,
               customer.address?.postal_code,
               customer.address?.country,
-            ].filter(Boolean).join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n'),
             tax_rate: defaultTaxRate,
             vat_number: customer.tax_ids?.data[0]?.value || null,
           },
         });
-        
+
         await prisma.workspace.update({
           where: { id: workspaceIdNumber },
           data: { subscription_id: workspace.subscription.id },
@@ -273,20 +319,29 @@ export default async function CheckoutSuccessPage(props: PageProps) {
           data: {
             workspace_id: workspaceIdNumber,
             stripe_subscription_id: stripeSubscription.id,
-            plan_type: 'EARLY_ADOPTER', 
+            plan_type: 'EARLY_ADOPTER',
             quantity_seats: stripeSubscription.items.data[0].quantity || 1,
-            current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-            current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-            trial_end_date: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+            current_period_start: new Date(
+              stripeSubscription.current_period_start * 1000
+            ),
+            current_period_end: new Date(
+              stripeSubscription.current_period_end * 1000
+            ),
+            trial_end_date: stripeSubscription.trial_end
+              ? new Date(stripeSubscription.trial_end * 1000)
+              : null,
             status: mappedStatus,
           },
         });
-        
-        const customer = await stripe.customers.retrieve(session.customer as string, {
-          expand: ['tax_ids']
-        }) as Stripe.Customer;
-        
-        const defaultTaxRate = 20.00;
+
+        const customer = (await stripe.customers.retrieve(
+          session.customer as string,
+          {
+            expand: ['tax_ids'],
+          }
+        )) as Stripe.Customer;
+
+        const defaultTaxRate = 20.0;
         await prisma.workspace_billing_infos.upsert({
           where: {
             workspace_id: workspaceIdNumber,
@@ -300,7 +355,9 @@ export default async function CheckoutSuccessPage(props: PageProps) {
               customer.address?.state,
               customer.address?.postal_code,
               customer.address?.country,
-            ].filter(Boolean).join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n'),
             tax_rate: defaultTaxRate,
             vat_number: customer.tax_ids?.data[0]?.value || null,
           },
@@ -314,12 +371,14 @@ export default async function CheckoutSuccessPage(props: PageProps) {
               customer.address?.state,
               customer.address?.postal_code,
               customer.address?.country,
-            ].filter(Boolean).join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n'),
             tax_rate: defaultTaxRate,
             vat_number: customer.tax_ids?.data[0]?.value || null,
           },
         });
-        
+
         await prisma.workspace.update({
           where: { id: workspaceIdNumber },
           data: { subscription_id: newSubscription.id },
@@ -329,19 +388,23 @@ export default async function CheckoutSuccessPage(props: PageProps) {
     }
 
     await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'success');
-    
-    const wasUpgrade = workspace.subscription && workspace.subscription.status === 'CANCELED';
-    const actionParam = wasUpgrade ? '&action=upgrade' : '';
-    
-    await handleSubscriptionActivated(sessionId, workspaceId);
-    
-    return redirect(`/dashboard?workspace=${workspaceId}&checkout=success${actionParam}`);
 
+    const wasUpgrade =
+      workspace.subscription && workspace.subscription.status === 'CANCELED';
+    const actionParam = wasUpgrade ? '&action=upgrade' : '';
+
+    await handleSubscriptionActivated(sessionId, workspaceId);
+
+    return redirect(
+      `/?workspace=${workspaceId}&checkout=success${actionParam}`
+    );
   } catch (error) {
     if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
       await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'failed');
-      return redirect(`/dashboard?workspace=${workspaceId}&checkout=failed&error=checkout_error`);
+      return redirect(
+        `/?workspace=${workspaceId}&checkout=failed&error=checkout_error`
+      );
     }
     throw error;
   }
-} 
+}
