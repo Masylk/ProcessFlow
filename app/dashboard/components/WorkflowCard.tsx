@@ -138,11 +138,11 @@ export default function WorkflowCard({
 
   const handleCopyLink = async () => {
     if (!workflow) return;
-    
+
     try {
       const url = createShareLink(workflow.name, workflow.public_access_id);
       if (!url) throw new Error('Could not create share link');
-      
+
       try {
         // Try the modern clipboard API first
         await navigator.clipboard.writeText(url);
@@ -251,13 +251,13 @@ export default function WorkflowCard({
 
   const handleToggleAccess = async () => {
     if (isToggling) return;
-    
+
     try {
       setIsToggling(true);
-      
+
       // Optimistic update for immediate feedback
       setLocalIsPublic(!localIsPublic);
-      
+
       const response = await fetch(`/api/workflow/${workflow.id}`, {
         method: 'PATCH',
         headers: {
@@ -269,11 +269,13 @@ export default function WorkflowCard({
       });
 
       const responseData = await response.json();
-      
+
       if (!response.ok) {
         // Revert the optimistic update if the server request failed
         setLocalIsPublic(workflow.is_public);
-        throw new Error(responseData.message || 'Failed to update workflow access');
+        throw new Error(
+          responseData.message || 'Failed to update workflow access'
+        );
       }
 
       // Update with the actual server response data
@@ -304,6 +306,13 @@ export default function WorkflowCard({
   useEffect(() => {
     setLocalIsPublic(workflow.is_public);
   }, [workflow.is_public]);
+
+  // Call onSelectWorkflow when either menu is open
+  useEffect(() => {
+    if (isStatusMenuOpen || isMenuOpen) {
+      onSelectWorkflow(workflow);
+    }
+  }, [isStatusMenuOpen, isMenuOpen, onSelectWorkflow, workflow]);
 
   return (
     <>
@@ -521,7 +530,6 @@ export default function WorkflowCard({
                 ? { bottom: 'calc(100%)' }
                 : { top: '40px' }),
               right: '4px',
-              
             }}
             className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
             onClick={(e) => e.stopPropagation()}
@@ -594,7 +602,10 @@ export default function WorkflowCard({
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         itemName={workflow.name}
-        shareableLink={createShareLink(workflow.name, workflow.public_access_id)}
+        shareableLink={createShareLink(
+          workflow.name,
+          workflow.public_access_id
+        )}
         is_public={localIsPublic}
         onToggleAccess={handleToggleAccess}
       />
