@@ -116,7 +116,7 @@ export default function Sidebar({
       <div className="w-full px-3 py-1 flex-col justify-start items-start inline-flex">
         <div 
           className="self-stretch px-3 py-2.5 rounded-md flex items-center gap-2 cursor-pointer hover:bg-opacity-80"
-          onClick={() => router.push(`/dashboard/`)}
+          onClick={() => router.push(`/`)}
           role="button"
           aria-label="Go to workspace dashboard"
         >

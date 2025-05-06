@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
           // Handle workspace invitation
           redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;
         } else {
-          redirectUrl = '/dashboard';
+          redirectUrl = '/';
         }
 
         const response = NextResponse.redirect(new URL(redirectUrl, request.url));

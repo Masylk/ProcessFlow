@@ -123,7 +123,6 @@ export async function POST(req: NextRequest) {
 
       // Update positions of moved blocks
       const updates = block_ids.map((blockId, index) => {
-        console.log('index', index);
         return tx.block.update({
           where: { id: blockId },
           data: { 

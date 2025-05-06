@@ -152,7 +152,7 @@ export async function middleware(request: NextRequest) {
         
         if (isOnboardingComplete) {
           // Redirect completed users to dashboard when they try to access onboarding
-          return NextResponse.redirect(new URL('/dashboard', request.url));
+          return NextResponse.redirect(new URL('/', request.url));
         }
       }
       
@@ -170,7 +170,7 @@ export async function middleware(request: NextRequest) {
         }
         
         // Redirect to dashboard if trying to access auth routes while authenticated
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
       }
       
       // Add user info to headers for all other protected routes

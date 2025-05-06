@@ -251,7 +251,6 @@ export default function ReadPageClient() {
           if (strokeLinesResponse.ok) {
             const strokeLinesData: StrokeLine[] =
               await strokeLinesResponse.json();
-            console.log('strokeLinesData', strokeLinesData);
             setStrokeLines(strokeLinesData);
 
             strokeLinesData.forEach((strokeLine) => {

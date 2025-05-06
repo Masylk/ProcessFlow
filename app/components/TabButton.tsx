@@ -93,11 +93,6 @@ export const TabButton: React.FC<TabButtonProps> = ({
     };
   }, [dropdownPosition, onSelectFolder]);
 
-  useEffect(() => {
-    console.log('TabButton mount: folder', folder);
-    console.log('TabButton mount: icon', icon);
-  }, []);
-
   const chevronIcon = isExpanded
     ? SHARED_ASSETS.chevronDown
     : SHARED_ASSETS.chevronRight;
