@@ -636,8 +636,10 @@ export default function SharedPage({
           return;
         }
 
-        // Convert underscores back to spaces in the workflow name
-        const decodedWorkflowName = workflowName.replace(/-/g, ' ');
+        // Fix: decode first, then encode
+        const decodedWorkflowName = decodeURIComponent(
+          workflowName.replace(/-/g, ' ')
+        );
 
         // Fetch workflow data using the public API
         const workflowResponse = await fetch(

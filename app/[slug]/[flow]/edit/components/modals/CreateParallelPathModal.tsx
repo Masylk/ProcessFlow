@@ -130,10 +130,10 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               size="small"
               onClick={() =>
                 onConfirm({
-                  conditionName: DOMPurify.sanitize(conditionName),
-                  conditionDescription: DOMPurify.sanitize(conditionDescription),
+                  conditionName: conditionName,
+                  conditionDescription: conditionDescription,
                   icon,
-                  paths_to_create: pathNames.map((n) => DOMPurify.sanitize(n)),
+                  paths_to_create: pathNames,
                   path_to_move: selectedPath,
                 })
               }

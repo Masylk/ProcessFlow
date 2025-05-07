@@ -32,10 +32,9 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 
   const createFolder = (name: string) => {
     setIsSaving(true);
-    const sanitizedName = DOMPurify.sanitize(name);
-    if (iconUrl) onCreate(sanitizedName, parentId, iconUrl);
-    else if (emote) onCreate(sanitizedName, parentId, undefined, emote);
-    else onCreate(sanitizedName, parentId);
+    if (iconUrl) onCreate(name, parentId, iconUrl);
+    else if (emote) onCreate(name, parentId, undefined, emote);
+    else onCreate(name, parentId);
     setIsSaving(false);
     onClose();
   };
