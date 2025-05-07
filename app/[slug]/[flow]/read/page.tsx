@@ -31,7 +31,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   // Decode the flow parameter
   const resolvedParams = await params;
-  const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
+  const lastPfIndex = resolvedParams.flow.lastIndexOf('--pf-');
+  const workflowName = resolvedParams.flow.slice(0, lastPfIndex);
+  const workflowId = resolvedParams.flow.slice(lastPfIndex + 5);
   if (!workflowName || !workflowId) {
     return { title: 'ProcessFlow' };
   }
@@ -54,7 +56,9 @@ export async function generateMetadata({
 export default async function ReadPage(props: PageProps) {
   // Decode the flow parameter
   const params = await props.params;
-  const [workflowName, workflowId] = params.flow.split('--pf-');
+  const lastPfIndex = params.flow.lastIndexOf('--pf-');
+  const workflowName = params.flow.slice(0, lastPfIndex);
+  const workflowId = params.flow.slice(lastPfIndex + 5);
   if (!workflowName || !workflowId) {
     redirect('/'); // Redirect to root if parameters are invalid
   }

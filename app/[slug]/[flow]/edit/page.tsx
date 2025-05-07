@@ -29,7 +29,9 @@ export async function generateMetadata({
   const resolvedParams = await params;
 
   // Decode the flow parameter
-  const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
+  const lastPfIndex = resolvedParams.flow.lastIndexOf('--pf-');
+  const workflowName = resolvedParams.flow.slice(0, lastPfIndex);
+  const workflowId = resolvedParams.flow.slice(lastPfIndex + 5);
   if (!workflowName || !workflowId) {
     return { title: 'ProcessFlow' };
   }
@@ -57,7 +59,9 @@ export default async function ReactFlowPage({
   const resolvedParams = await params;
 
   // Decode the flow parameter
-  const [workflowName, workflowId] = resolvedParams.flow.split('--pf-');
+  const lastPfIndex = resolvedParams.flow.lastIndexOf('--pf-');
+  const workflowName = resolvedParams.flow.slice(0, lastPfIndex);
+  const workflowId = resolvedParams.flow.slice(lastPfIndex + 5);
   if (!workflowName || !workflowId) {
     redirect('/'); // Redirect to root if parameters are invalid
   }

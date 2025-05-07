@@ -292,17 +292,17 @@ export default function SharePage({
   // Fetch workflow data and check public status
   useEffect(() => {
     // Parse the flow parameter
-    const [workflowName, publicAccessId] = resolvedParams.flow.split('--pf-');
+    const lastPfIndex = resolvedParams.flow.lastIndexOf('--pf-');
+    const workflowName = resolvedParams.flow.slice(0, lastPfIndex);
+    const publicAccessId = resolvedParams.flow.slice(lastPfIndex + 5);
 
     if (!workflowName || !publicAccessId) {
       console.error('Invalid URL format');
       return;
     }
 
-    // Fix: decode first, then encode
-    const decodedWorkflowName = decodeURIComponent(
-      workflowName.replace(/-/g, ' ')
-    );
+    // Fix: decode only, do not replace dashes
+    const decodedWorkflowName = decodeURIComponent(workflowName);
     const fetchData = async () => {
       try {
         const workflowResponse = await fetch(
