@@ -17,7 +17,6 @@ Table user {
   hubspot_contact_id String
   sentry_id String
   post_hog_id String
-  phone String
   last_login_at DateTime
   onboarding_completed_at DateTime
   onboarding_step onboarding_step [default: 'PERSONAL_INFO']
@@ -26,14 +25,10 @@ Table user {
   temp_company_size String
   temp_industry String
   tutorial_completed Boolean [not null, default: false]
-  actions action [not null]
-  saved_searches saved_search [not null]
   active_workspace workspace
   workspaces user_workspace [not null]
-  created_versions workflow_version [not null]
   scheduled_emails scheduled_emails [not null]
   workflows workflow [not null]
-  ai_conversations ai_conversations [not null]
 }
 
 Table workspace {
@@ -56,12 +51,9 @@ Table workspace {
   billing_infos workspace_billing_infos
   billings billing [not null]
   folders folder [not null]
-  invitations invitation [not null]
   active_users user [not null]
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
-  workflow_templates workflow_template [not null]
-  ai_embeddings ai_embeddings [not null]
 }
 
 Table workspace_billing_infos {
@@ -120,20 +112,6 @@ Table user_workspace {
   workspace workspace [not null]
 }
 
-Table invitation {
-  id Int [pk, increment]
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
-  email String [not null]
-  token String [unique, not null]
-  expires_at DateTime [not null]
-  used Boolean [not null, default: false]
-  used_at DateTime
-  workspace_id Int [not null]
-  role user_role [not null, default: 'READER']
-  workspace workspace [not null]
-}
-
 Table folder {
   id Int [pk, increment]
   name String [not null]
@@ -167,17 +145,13 @@ Table workflow {
   status workflow_status [not null, default: 'DRAFT']
   template_id Int
   version_number Int [not null, default: 1]
-  actions action [not null]
   blocks block [not null]
   paths path [not null]
   stroke_lines stroke_line [not null]
   folder folder
-  template workflow_template
   workspace workspace [not null]
-  versions workflow_version [not null]
   author user
   author_id Int
-  ai_conversations ai_conversations [not null]
 
   indexes {
     (name, workspace_id) [unique]
@@ -213,7 +187,6 @@ Table block {
   id Int [pk, increment]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
-  last_modified DateTime
   type block_type [not null]
   position Int [not null]
   title String
@@ -226,74 +199,14 @@ Table block {
   task_type task_type
   workflow_id Int [not null]
   path_id Int [not null]
-  click_position Json
   delay_seconds Int
-  step_details String
   delay_event String
   delay_type delay_type
-  actions action [not null]
   path path [not null]
   workflow workflow [not null]
   child_paths path_parent_block [not null]
   source_stroke_lines stroke_line [not null]
   target_stroke_lines stroke_line [not null]
-}
-
-Table action {
-  id Int [pk, increment]
-  user_id Int [not null]
-  type String [not null]
-  target_id Int [not null]
-  workflow_id Int [not null]
-  value Int [not null]
-  created_at DateTime [default: `now()`, not null]
-  target block [not null]
-  user user [not null]
-  workflow workflow [not null]
-}
-
-Table workflow_version {
-  id Int [pk, increment]
-  workflow_id Int [not null]
-  version_number Int [not null]
-  name String [not null]
-  description String [not null]
-  created_at DateTime [default: `now()`, not null]
-  created_by_id Int [not null]
-  change_summary String
-  snapshot Json [not null]
-  created_by user [not null]
-  workflow workflow [not null]
-
-  indexes {
-    (workflow_id, version_number) [unique]
-  }
-}
-
-Table workflow_template {
-  id Int [pk, increment]
-  name String [not null]
-  description String [not null]
-  workspace_id Int [not null]
-  category String [not null]
-  tags String[] [not null]
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
-  structure Json [not null]
-  rating Float
-  rating_count Int [not null, default: 0]
-  workflows workflow [not null]
-  workspace workspace [not null]
-}
-
-Table saved_search {
-  id Int [pk, increment]
-  user_id Int [not null]
-  name String [not null]
-  query String [not null]
-  filters Json
-  created_at DateTime [default: `now()`, not null]
-  user user [not null]
 }
 
 Table stroke_line {
@@ -329,30 +242,6 @@ Table scheduled_emails {
   indexes {
     (user_id, email_type) [unique]
   }
-}
-
-Table ai_conversations {
-  id Int [pk, increment]
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
-  user_id Int [not null]
-  workflow_id Int
-  conversation_id String [unique, not null]
-  messages Json [not null]
-  user user [not null]
-  workflow workflow
-}
-
-Table ai_embeddings {
-  id Int [pk, increment]
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [default: `now()`, not null]
-  content_type String [not null]
-  content_id String [not null]
-  content_text String [not null]
-  embedding_id String [not null]
-  workspace_id Int [not null]
-  workspace workspace [not null]
 }
 
 Enum onboarding_step {
@@ -430,15 +319,11 @@ Ref: user_workspace.user_id > user.id [delete: Cascade]
 
 Ref: user_workspace.workspace_id > workspace.id [delete: Cascade]
 
-Ref: invitation.workspace_id > workspace.id [delete: Cascade]
-
 Ref: folder.parent_id - folder.id
 
 Ref: folder.workspace_id > workspace.id [delete: Cascade]
 
 Ref: workflow.folder_id > folder.id
-
-Ref: workflow.template_id > workflow_template.id
 
 Ref: workflow.workspace_id > workspace.id [delete: Cascade]
 
@@ -454,20 +339,6 @@ Ref: block.path_id > path.id [delete: Cascade]
 
 Ref: block.workflow_id > workflow.id [delete: Cascade]
 
-Ref: action.target_id > block.id
-
-Ref: action.user_id > user.id
-
-Ref: action.workflow_id > workflow.id [delete: Cascade]
-
-Ref: workflow_version.created_by_id > user.id
-
-Ref: workflow_version.workflow_id > workflow.id [delete: Cascade]
-
-Ref: workflow_template.workspace_id > workspace.id [delete: Cascade]
-
-Ref: saved_search.user_id > user.id
-
 Ref: stroke_line.source_block_id > block.id [delete: Cascade]
 
 Ref: stroke_line.target_block_id > block.id [delete: Cascade]
@@ -475,9 +346,3 @@ Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
 
 Ref: scheduled_emails.user_id > user.id [delete: Cascade]
-
-Ref: ai_conversations.user_id > user.id
-
-Ref: ai_conversations.workflow_id > workflow.id
-
-Ref: ai_embeddings.workspace_id > workspace.id [delete: Cascade]

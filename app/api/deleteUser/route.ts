@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
 
     // Delete related user_workspace and actions
     await prisma.user_workspace.deleteMany({ where: { user_id: user.id } });
-    await prisma.action.deleteMany({ where: { user_id: user.id } });
 
     // Delete the user from PostgreSQL
     await prisma.user.delete({ where: { id: user.id } });

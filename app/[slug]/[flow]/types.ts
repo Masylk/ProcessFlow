@@ -102,7 +102,6 @@ export interface Block {
   original_id?: number;
   created_at: string;  // DateTime
   updated_at: string;  // DateTime
-  last_modified?: string | null;  // DateTime | null
   type: BlockType;  // Assuming a BlockType enum exists
   delay_seconds?: number | null;
   position: number;
@@ -118,10 +117,8 @@ export interface Block {
   delay_type?: DelayType | null;  // Assuming a DelayType enum exists
   workflow_id: number;
   path_id: number;
-  click_position?: any;  // Assuming `Json` type
   workflow: Workflow;  // Assuming a Workflow interface exists
   path: Path;
-  // actions: Action[];  // Assuming an Action interface exists
   child_paths: PathParentBlock[];  // Assuming a PathParentBlock interface exists
   condition?: {
     name: string;

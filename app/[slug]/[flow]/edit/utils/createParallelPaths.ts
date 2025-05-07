@@ -108,14 +108,12 @@ function createOptimisticPaths(
       delay_type: null,
       workflow_id: parent_path.workflow_id,
       path_id: fakePathId,
-      click_position: null,
       workflow: parent_path.workflow,
       path: {} as Path, // will be set later
       child_paths: [],
       created_at: nowStr,
       updated_at: nowStr,
       delay_seconds: null,
-      last_modified: null,
     };
 
     const lastBlock: Block = {

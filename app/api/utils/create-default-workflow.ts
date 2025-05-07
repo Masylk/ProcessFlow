@@ -160,7 +160,6 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
               image_description: sourceBlock.image_description,
               average_time: sourceBlock.average_time,
               task_type: sourceBlock.task_type,
-              click_position: sourceBlock.click_position || undefined,
               delay_seconds: sourceBlock.delay_seconds,
               delay_event: sourceBlock.delay_event,
               delay_type: sourceBlock.delay_type,
