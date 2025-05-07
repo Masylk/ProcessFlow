@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
         icon_url: formData.icon_url || null,
         industry: formData.industry || null,
         company_size: formData.company_size || null,
-        team_tags: [],
         // Create a relationship with the user
         user_workspaces: {
           create: {

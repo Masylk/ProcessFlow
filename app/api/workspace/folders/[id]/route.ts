@@ -81,11 +81,6 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *               emote:
  *                 type: string
  *                 example: ":smile:"
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                   example: "tag1"
  *               parent_id:
  *                 type: integer
  *                 example: 2
@@ -109,11 +104,6 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *                 emote:
  *                   type: string
  *                   example: ":smile:"
- *                 team_tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["tag1", "tag2"]
  *                 parent_id:
  *                   type: integer
  *                   example: 2
@@ -201,7 +191,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   const folderId = Number(params.id);
 
   try {
-    const { name, icon_url, emote, team_tags, parent_id } = await req.json();
+    const { name, icon_url, emote, parent_id } = await req.json();
 
     // Check if folder exists
     const existingFolder = await prisma.folder.findUnique({
@@ -228,7 +218,6 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       name,
       icon_url: icon_url ?? null,
       emote: emote ?? null,
-      team_tags,
       parent_id,
     };
 
