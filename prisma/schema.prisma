@@ -53,7 +53,6 @@ model workspace {
   archived_at        DateTime?
   name               String
   slug               String?                   @unique
-  team_tags          String[]
   icon_url           String?
   background_colour  String?
   linear_customer_id String?
@@ -153,7 +152,6 @@ model folder {
   parent_id    Int?
   icon_url     String?
   emote        String?
-  team_tags    String[]
   path         String?
   position     Int        @default(0)
   parent       folder?    @relation("folder_hierarchy", fields: [parent_id], references: [id])
@@ -176,14 +174,10 @@ model workflow {
   icon             String?
   description      String
   workspace_id     Int
-  team_tags        String[]
   folder_id        Int?
   is_public        Boolean            @default(true)
   public_access_id String?            @unique
-  is_template      Boolean            @default(false)
   status           workflow_status    @default(DRAFT)
-  template_id      Int?
-  version_number   Int                @default(1)
   blocks           block[]
   paths            path[]
   stroke_lines     stroke_line[]
@@ -264,7 +258,6 @@ model stroke_line {
   label           String
   created_at      DateTime @default(now())
   updated_at      DateTime @default(now()) @updatedAt
-  is_loop         Boolean  @default(false)
   control_points  Json?    // Array of {x: number, y: number}
   source_block    block    @relation("stroke_source", fields: [source_block_id], references: [id], onDelete: Cascade)
   target_block    block    @relation("stroke_target", fields: [target_block_id], references: [id], onDelete: Cascade)

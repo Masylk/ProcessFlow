@@ -24,11 +24,6 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *               workspace_id:
  *                 type: integer
  *                 example: 1
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["tag1", "tag2"]
  *               icon_url:
  *                 type: string
  *                 example: "/path/to/icon.svg"
@@ -52,11 +47,6 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *                 workspace_id:
  *                   type: integer
  *                   example: 1
- *                 team_tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["tag1", "tag2"]
  *                 icon_url:
  *                   type: string
  *                   example: "/path/to/icon.svg"
@@ -79,7 +69,7 @@ import { checkFolderName } from '@/app/utils/checkNames';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, workspace_id, team_tags, icon_url, emote, position } = await req.json();
+    const { name, workspace_id, icon_url, emote, position } = await req.json();
 
     // Validate folder name
     const nameError = checkFolderName(name);
@@ -95,7 +85,6 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         workspace_id: Number(workspace_id),
-        team_tags: team_tags || [],
         icon_url: icon_url,
         emote: emote,
         parent_id: null,

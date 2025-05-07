@@ -38,7 +38,6 @@ Table workspace {
   archived_at DateTime
   name String [not null]
   slug String [unique]
-  team_tags String[] [not null]
   icon_url String
   background_colour String
   linear_customer_id String
@@ -119,7 +118,6 @@ Table folder {
   parent_id Int
   icon_url String
   emote String
-  team_tags String[] [not null]
   path String
   position Int [not null, default: 0]
   parent folder
@@ -137,14 +135,10 @@ Table workflow {
   icon String
   description String [not null]
   workspace_id Int [not null]
-  team_tags String[] [not null]
   folder_id Int
   is_public Boolean [not null, default: true]
   public_access_id String [unique]
-  is_template Boolean [not null, default: false]
   status workflow_status [not null, default: 'DRAFT']
-  template_id Int
-  version_number Int [not null, default: 1]
   blocks block [not null]
   paths path [not null]
   stroke_lines stroke_line [not null]
@@ -217,7 +211,6 @@ Table stroke_line {
   label String [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [default: `now()`, not null]
-  is_loop Boolean [not null, default: false]
   control_points Json
   source_block block [not null]
   target_block block [not null]

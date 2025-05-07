@@ -111,7 +111,7 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
  *                   example: "Internal server error"
  *   patch:
  *     summary: Update a workspace
- *     description: Updates a workspace's properties (e.g., name, icon_url, team_tags, etc.).
+ *     description: Updates a workspace's properties (e.g., name, icon_url, etc.).
  *     tags:
  *       - Workspace
  *     parameters:
@@ -131,11 +131,6 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
  *               name:
  *                 type: string
  *                 example: "Updated Workspace"
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["tag1", "tag2"]
  *               icon_url:
  *                 type: string
  *                 example: "/path/to/icon.svg"

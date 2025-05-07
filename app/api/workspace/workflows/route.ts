@@ -35,11 +35,6 @@ import { checkWorkflowName } from '@/app/utils/checkNames';
  *               folder_id:
  *                 type: integer
  *                 example: 2
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["teamA", "teamB"]
  *     responses:
  *       201:
  *         description: Workflow created successfully
@@ -63,11 +58,6 @@ import { checkWorkflowName } from '@/app/utils/checkNames';
  *                 folder_id:
  *                   type: integer
  *                   example: 2
- *                 team_tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["teamA", "teamB"]
  *       500:
  *         description: Internal server error
  *         content:
@@ -103,11 +93,6 @@ import { checkWorkflowName } from '@/app/utils/checkNames';
  *               folder_id:
  *                 type: integer
  *                 example: 2
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["teamA"]
  *               icon:
  *                 type: string
  *                 example: "https://example.com/icon.png"
@@ -134,11 +119,6 @@ import { checkWorkflowName } from '@/app/utils/checkNames';
  *                 folder_id:
  *                   type: integer
  *                   example: 2
- *                 team_tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["teamA"]
  *       400:
  *         description: Workflow ID is required
  *         content:
@@ -224,7 +204,6 @@ export async function POST(req: NextRequest) {
       description,
       workspace_id,
       folder_id = null,
-      team_tags = [],
       author_id,
     } = await req.json();
 
@@ -313,7 +292,6 @@ export async function POST(req: NextRequest) {
         workspace_id,
         folder_id,
         is_public: true,
-        team_tags,
         author_id: author_id ? Number(author_id) : null,
         public_access_id: await generatePublicAccessId(cleanedName, 0, workspace_id),
       },
@@ -466,7 +444,6 @@ export async function PUT(req: NextRequest) {
       name,
       description,
       folder_id = null,
-      team_tags = [],
       icon = null,
       status = null,
     } = await req.json();
@@ -502,7 +479,6 @@ export async function PUT(req: NextRequest) {
         ...(folder_id !== null && {
           folder_id: folder_id ? Number(folder_id) : null,
         }),
-        ...(team_tags && { team_tags }),
         ...(icon !== undefined && { icon }),
         ...(status && { status }),
       },
