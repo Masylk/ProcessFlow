@@ -14,13 +14,10 @@ export interface Block {
   description?: string; // Optional field
   image?: string; // Optional, URL for an image
   imageDescription?: string; // Optional, description for the image
-  click_position?: { x: number; y: number } | null; // Optional, coordinates of click position
-  lastModified?: Date; // Optional, last modified date
   averageTime?: string; // Optional, average time for the block
   taskType?: 'MANUAL' | 'AUTOMATIC'; // Optional, enum values as string literals
   workflow_id: number;
   workflow?: Workflow; // Optional, representing the workflow this block belongs to
-  actions?: Action[]; // Optional, actions related to this block
   step_block?: step_block; // Optional, if the block has a step_block
   path_block?: path_block; // Optional, if the block has a path_block
   delay_block?: delay_block;

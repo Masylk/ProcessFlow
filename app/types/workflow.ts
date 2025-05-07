@@ -8,6 +8,5 @@ export interface Workflow {
   icon?: string | null;
   created_at?: string;
   updated_at?: string;
-  last_modified?: string;
   // ... other existing fields
 } 

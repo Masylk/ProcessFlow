@@ -69,10 +69,6 @@ enum DelayType {
  *                 type: string
  *                 nullable: true
  *                 description: URL for an image associated with the block.
- *               click_position:
- *                 type: string
- *                 nullable: true
- *                 description: Position details related to the block.
  *     responses:
  *       201:
  *         description: Successfully created a block.
@@ -99,7 +95,6 @@ export async function POST(req: NextRequest) {
     path_id,
     path_options,
     imageUrl,
-    click_position,
   } = await req.json();
 
   const formattedTitle = formatTitle(title);
@@ -188,7 +183,6 @@ export async function POST(req: NextRequest) {
         image: imageUrl || null,
         workflow: { connect: { id: workflow_id } },
         path: { connect: { id: path_id } },
-        click_position: click_position || null,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
         delay_type: type === 'DELAY' ? (delay_type as DelayType) : null,
         delay_event: type === 'DELAY' ? formattedDelayEvent : null,

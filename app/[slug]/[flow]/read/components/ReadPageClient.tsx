@@ -721,9 +721,9 @@ export default function ReadPageClient() {
             .flatMap((path) => path.blocks)
             .reduce(
               (latest, block) =>
-                block.last_modified &&
-                (!latest || new Date(block.last_modified) > new Date(latest))
-                  ? new Date(block.last_modified).toLocaleDateString('en-GB')
+                block.updated_at &&
+                (!latest || new Date(block.updated_at) > new Date(latest))
+                  ? new Date(block.updated_at).toLocaleDateString('en-GB')
                   : latest,
               ''
             ) || 'No updates',
