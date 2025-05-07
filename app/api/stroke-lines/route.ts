@@ -32,10 +32,6 @@ import { formatTitle } from '../utils/formatTitle';
  *               label:
  *                 type: string
  *                 description: Label for the stroke line
- *               is_loop:
- *                 type: boolean
- *                 description: Whether the connection is a loop
- *                 default: false
  *               control_points:
  *                 type: array
  *                 description: Control points for the stroke line
@@ -50,7 +46,7 @@ import { formatTitle } from '../utils/formatTitle';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { source_block_id, target_block_id, workflow_id, label, is_loop = false, control_points = null } = body;
+    const { source_block_id, target_block_id, workflow_id, label, control_points = null } = body;
 
     // Validate required fields
     if (!source_block_id || !target_block_id || !workflow_id || !label) {
@@ -85,7 +81,6 @@ export async function POST(request: Request) {
         target_block_id,
         workflow_id,
         label: formattedLabel || '',
-        is_loop,
         control_points: control_points ? { set: control_points } : undefined,
       },
     });
@@ -130,9 +125,6 @@ export async function POST(request: Request) {
  *               label:
  *                 type: string
  *                 description: New label for the stroke line
- *               is_loop:
- *                 type: boolean
- *                 description: Whether the connection is a loop
  *               control_points:
  *                 type: array
  *                 description: New control points for the stroke line
@@ -147,7 +139,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, source_block_id, target_block_id, workflow_id, label, is_loop, control_points } = body;
+    const { id, source_block_id, target_block_id, workflow_id, label, control_points } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -185,7 +177,6 @@ export async function PUT(request: Request) {
         target_block_id,
         workflow_id,
         label: formattedLabel,
-        is_loop,
         control_points: control_points ? { set: control_points } : undefined,
       },
     });
@@ -305,7 +296,6 @@ export async function GET(request: Request) {
           target_block_id: true,
           workflow_id: true,
           label: true,
-          is_loop: true,
           control_points: true,
           created_at: true,
           updated_at: true,
@@ -334,7 +324,6 @@ export async function GET(request: Request) {
           target_block_id: true,
           workflow_id: true,
           label: true,
-          is_loop: true,
           control_points: true,
           created_at: true,
           updated_at: true,

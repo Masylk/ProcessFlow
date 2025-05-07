@@ -463,7 +463,6 @@ export async function POST(request: Request) {
                 icon_url: formData.workspace_icon_url,
                 industry: dbUser.temp_industry || null,
                 company_size: dbUser.temp_company_size || null,
-                team_tags: [],
                 user_workspaces: {
                   create: {
                     user_id: dbUser.id,

@@ -1038,7 +1038,6 @@ export default function Page() {
         body: JSON.stringify({
           name,
           workspace_id: activeWorkspace.id,
-          team_tags: [],
           icon_url,
           emote,
           position: activeWorkspace.folders.length,
@@ -1083,7 +1082,6 @@ export default function Page() {
           name,
           workspace_id: activeWorkspace.id,
           parent_id: parentId,
-          team_tags: [],
           icon_url,
           emote,
           position: activeWorkspace.folders.length,

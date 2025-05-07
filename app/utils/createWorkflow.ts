@@ -40,7 +40,6 @@ export async function createWorkflow({
         description,
         workspace_id: workspaceId,
         folder_id: folderId,
-        team_tags: teamTags,
         author_id: authorId,
         icon: icon,
       }),

@@ -26,11 +26,6 @@ import prisma from '@/lib/prisma';
  *               parent_id:
  *                 type: integer
  *                 example: 2
- *               team_tags:
- *                 type: array
- *                 items:
- *                   type: string
- *                 example: ["teamA", "teamB"]
  *               icon_url:
  *                 type: string
  *                 example: "https://example.com/icon.png"
@@ -57,11 +52,6 @@ import prisma from '@/lib/prisma';
  *                 parent_id:
  *                   type: integer
  *                   example: 2
- *                 team_tags:
- *                   type: array
- *                   items:
- *                     type: string
- *                   example: ["teamA", "teamB"]
  *                 icon_url:
  *                   type: string
  *                   example: "https://example.com/icon.png"
@@ -81,7 +71,7 @@ import prisma from '@/lib/prisma';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { name, workspace_id, parent_id, team_tags, icon_url, emote, position } =
+    const { name, workspace_id, parent_id, icon_url, emote, position } =
       await req.json();
 
     // Create a new subfolder with the specified parent folder
@@ -89,7 +79,6 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         workspace_id: Number(workspace_id),
-        team_tags: team_tags || [],
         icon_url: icon_url,
         emote: emote,
         parent_id: parent_id ? Number(parent_id) : null,

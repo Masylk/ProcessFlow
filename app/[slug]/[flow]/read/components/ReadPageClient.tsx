@@ -95,7 +95,6 @@ interface Workflow {
   public_access_id: string;
   folder_id?: number;
   last_opened?: Date;
-  team_tags: string[];
   updated_at: string;
   created_at: string;
 }

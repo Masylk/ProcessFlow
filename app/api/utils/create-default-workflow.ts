@@ -93,7 +93,6 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
       icon: sourceWorkflow.icon,
       is_public: sourceWorkflow.is_public,
       status: sourceWorkflow.status,
-      team_tags: sourceWorkflow.team_tags,
       public_access_id: await generatePublicAccessId(newWorkflowName, 0, workspaceId),
       workspace: {
         connect: { id: workspaceId },
@@ -235,7 +234,6 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
           await prisma.stroke_line.create({
             data: {
               label: sourceStrokeLine.label,
-              is_loop: sourceStrokeLine.is_loop,
               control_points: sourceStrokeLine.control_points || undefined,
               source_block: {
                 connect: { id: newSourceBlockId },

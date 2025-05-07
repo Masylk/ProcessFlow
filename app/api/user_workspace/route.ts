@@ -181,7 +181,6 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         background_colour: randomColour,
-        team_tags: [],
         user_workspaces: {
           create: {
             user_id: Number(user_id),

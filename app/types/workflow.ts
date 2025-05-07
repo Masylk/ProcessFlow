@@ -4,7 +4,6 @@ export interface Workflow {
   description?: string;
   workspaceId: number;
   folder_id?: number | null;
-  team_tags?: string[];
   icon?: string | null;
   created_at?: string;
   updated_at?: string;

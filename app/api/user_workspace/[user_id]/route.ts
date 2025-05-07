@@ -125,7 +125,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
         data: {
           name: 'My Workspace',
           background_colour: defaultBackgroundColor,
-          team_tags: [], // Initialisation du tableau vide
           created_at: new Date(), // Date de création
           updated_at: new Date(), // Date de mise à jour
           user_workspaces: {

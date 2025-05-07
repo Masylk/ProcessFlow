@@ -10,7 +10,6 @@ interface StrokeLineData {
   target_block_id: number;
   workflow_id: number;
   label: string;
-  is_loop?: boolean;
   control_points?: Point[];
 }
 
