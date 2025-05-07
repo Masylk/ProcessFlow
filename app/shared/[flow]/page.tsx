@@ -628,7 +628,8 @@ export default function SharedPage({
     const fetchData = async () => {
       try {
         // Parse the flow parameter
-        const [workflowName, publicAccessId] = resolvedParams.flow.split('--pf-');
+        const [workflowName, publicAccessId] =
+          resolvedParams.flow.split('--pf-');
 
         if (!workflowName || !publicAccessId) {
           console.error('Invalid URL format');
@@ -636,7 +637,9 @@ export default function SharedPage({
         }
 
         // Fix: decode first, then encode
-        const decodedWorkflowName = decodeURIComponent(workflowName.replace(/-/g, ' '));
+        const decodedWorkflowName = decodeURIComponent(
+          workflowName.replace(/-/g, ' ')
+        );
 
         // Fetch workflow data using the public API
         const workflowResponse = await fetch(
