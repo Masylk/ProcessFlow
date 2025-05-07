@@ -123,7 +123,7 @@ function BeginBlock(props: NodeProps & { data: NodeData }) {
       return;
     }
 
-    const cleanPathName = DOMPurify.sanitize(pathName);
+    const cleanPathName = pathName;
 
     // Optimistically update the path name in state
     pathUpdated = {

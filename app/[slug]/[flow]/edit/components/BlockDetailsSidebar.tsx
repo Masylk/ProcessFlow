@@ -65,7 +65,7 @@ export default function BlockDetailsSidebar({
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onUpdate({ title: DOMPurify.sanitize(title) });
+      onUpdate({ title: title });
       setIsEditingTitle(false);
     } else if (e.key === 'Escape') {
       setTitle(block.title || '');
@@ -101,7 +101,7 @@ export default function BlockDetailsSidebar({
 
   const handleDescriptionUpdate = () => {
     if (description !== block.description) {
-      onUpdate({ description: DOMPurify.sanitize(description) });
+      onUpdate({ description: description });
     }
     setIsEditingDescription(false);
   };
@@ -185,7 +185,7 @@ export default function BlockDetailsSidebar({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  onBlur={() => onUpdate({ title: DOMPurify.sanitize(title) })}
+                  onBlur={() => onUpdate({ title: title })}
                   onKeyDown={handleTitleKeyDown}
                   autoFocus
                   className="text-lg font-semibold border-b-2 outline-none bg-transparent"

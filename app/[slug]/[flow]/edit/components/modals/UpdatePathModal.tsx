@@ -135,14 +135,14 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
     // pathsToAdd: all rows without id
     const pathsToAdd = pathRows
       .filter((row) => row.originalIndex === undefined)
-      .map((row) => DOMPurify.sanitize(row.name));
+      .map((row) => row.name);
 
     // pathsToRemove: all removed paths with id, deduplicated by (index, name)
     const seen = new Set<string>();
     const pathsToRemove = removedPaths
       .map((row) => ({
         index: row?.id ?? 0,
-        name: DOMPurify.sanitize(row.name),
+        name: row.name,
       }))
       .filter((row) => {
         const key = `${row.index}|${row.name}`;
@@ -161,12 +161,12 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
       )
       .map((row) => ({
         index: row.id as number,
-        name: DOMPurify.sanitize(row.name),
+        name: row.name,
       }));
 
     onConfirm({
-      conditionName: DOMPurify.sanitize(conditionName),
-      conditionDescription: DOMPurify.sanitize(conditionDescription),
+      conditionName: conditionName,
+      conditionDescription: conditionDescription,
       icon,
       pathsToUpdate,
       pathsToAdd,

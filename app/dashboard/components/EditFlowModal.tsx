@@ -42,12 +42,10 @@ export default function EditFlowModal({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const sanitizedProcessName = DOMPurify.sanitize(processName);
-      const sanitizedFlowDescription = DOMPurify.sanitize(flowDescription);
       const result = await onConfirm(
         selectedWorkflow.id,
-        sanitizedProcessName,
-        sanitizedFlowDescription,
+        processName,
+        flowDescription,
         undefined,
         flowIcon
       );

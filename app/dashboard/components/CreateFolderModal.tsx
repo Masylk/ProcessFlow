@@ -40,14 +40,11 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
       return;
     }
 
-    // Sanitize the folder name before using it
-    const sanitizedFolderName = DOMPurify.sanitize(folderName);
-
     setIsSubmitting(true);
     try {
-      if (iconUrl) await onCreate(sanitizedFolderName, iconUrl);
-      else if (emote) await onCreate(sanitizedFolderName, undefined, emote);
-      else await onCreate(sanitizedFolderName);
+      if (iconUrl) await onCreate(folderName, iconUrl);
+      else if (emote) await onCreate(folderName, undefined, emote);
+      else await onCreate(folderName);
       onClose();
     } catch (error) {
       console.error('Error creating folder:', error);

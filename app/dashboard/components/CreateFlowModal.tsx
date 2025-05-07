@@ -229,9 +229,8 @@ export default function CreateFlowModal({
                 onClick={() => {
                   if (!flowName.trim()) return;
                   setIsSaving(true);
-                  const sanitizedFlowName = DOMPurify.sanitize(flowName);
-                  const sanitizedFlowDescription =
-                    DOMPurify.sanitize(flowDescription);
+                  const sanitizedFlowName = flowName;
+                  const sanitizedFlowDescription = flowDescription;
                   onCreateFlow(
                     sanitizedFlowName,
                     sanitizedFlowDescription,
