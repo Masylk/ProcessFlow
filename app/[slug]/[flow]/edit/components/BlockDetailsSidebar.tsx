@@ -230,8 +230,8 @@ export default function BlockDetailsSidebar({
                     className="text-sm font-normal font-['Inter']"
                     style={{ color: colors['text-secondary'] }}
                   >
-                    {block.last_modified
-                      ? new Date(block.last_modified).toLocaleDateString()
+                    {block.updated_at
+                      ? new Date(block.updated_at).toLocaleDateString()
                       : 'N/A'}
                   </div>
                 </div>

@@ -46,8 +46,6 @@ import { formatTitle } from '../../utils/formatTitle';
  *                 type: string
  *               image_description:
  *                 type: string
- *               click_position:
- *                 type: integer
  *               average_time:
  *                 type: integer
  *               task_type:
@@ -92,7 +90,6 @@ export async function PATCH(req: NextRequest) {
       image,
       original_image,
       image_description,
-      click_position,
       average_time,
       task_type,
       delay_seconds,
@@ -165,8 +162,7 @@ export async function PATCH(req: NextRequest) {
         image,
         original_image,
         image_description,
-        click_position,
-        last_modified: new Date(),
+        updated_at: new Date(),
         average_time,
         task_type,
         delay_seconds: type === 'DELAY' ? delay_seconds : null,
