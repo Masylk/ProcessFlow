@@ -92,7 +92,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
 
   const handleBlockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isConnectMode && !isEditMode) {
+    if (!isConnectMode && !isEditMode && !showModal) {
       setShowModal(true);
     }
   };
@@ -528,7 +528,9 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
             backgroundColor: colors['bg-primary'],
             borderWidth: '2px',
             borderStyle: 'solid',
-            borderColor: showModal ? colors['border-brand_alt'] : colors['border-secondary'],
+            borderColor: showModal
+              ? colors['border-brand_alt']
+              : colors['border-secondary'],
           }}
         >
           <Handle
@@ -546,10 +548,12 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
           />
 
           {/* Header - Condition styling */}
-          <div 
+          <div
             className="p-[17px] flex items-center justify-between"
             style={{
-              borderBottom: data.block.description ? `1px solid ${colors['border-secondary']}` : 'none'
+              borderBottom: data.block.description
+                ? `1px solid ${colors['border-secondary']}`
+                : 'none',
             }}
           >
             {/* Icon section */}
@@ -585,10 +589,16 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                 )}
               </div>
               <div className="flex flex-col gap-0.5">
-                <div className="text-xs font-medium" style={{ color: colors['fg-tertiary'] }}>
+                <div
+                  className="text-xs font-medium"
+                  style={{ color: colors['fg-tertiary'] }}
+                >
                   Condition
                 </div>
-                <div className="text-sm font-semibold break-words line-clamp-1" style={{ color: colors['fg-primary'], width: '333px' }}>
+                <div
+                  className="text-sm font-semibold break-words line-clamp-1"
+                  style={{ color: colors['fg-primary'], width: '333px' }}
+                >
                   {data.block.title || 'Untitled Condition'}
                 </div>
               </div>
@@ -741,7 +751,10 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                 style={{ color: colors['fg-tertiary'] }}
               >
                 {parseTextWithLinks(data.block.description).map(
-                  (segment: { type: string; content: string }, index: number) =>
+                  (
+                    segment: { type: string; content: string },
+                    index: number
+                  ) =>
                     segment.type === 'link' ? (
                       <a
                         key={index}

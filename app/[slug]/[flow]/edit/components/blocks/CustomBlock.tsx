@@ -130,6 +130,14 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     return true;
   }, [mergeBlock, mergePathId]);
 
+  // Add this after other useMemo hooks
+  const lastBlock = useMemo(() => {
+    const blocks = data.path?.blocks;
+    if (!blocks || blocks.length < 2) return false;
+    const idx = blocks.findIndex((block) => block.id === data.block.id);
+    return idx === blocks.length - 2;
+  }, [data.path?.blocks, data.block.id]);
+
   // Add useEffect to fetch signed URL when blockData.image changes
   useEffect(() => {
     const fetchSignedUrl = async () => {
@@ -391,7 +399,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     (parentBlockId === null || pathParentBlockId === parentBlockId);
 
   // Use this condition for both checkbox and dropdown option
-  const showCheckbox = mergeMode && canShowMergeUI;
+  const showCheckbox = mergeMode && canShowMergeUI && lastBlock;
 
   const handleUpdateModeActivation = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -668,9 +676,10 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     return (
       isUpdateMode &&
       data.path?.parent_blocks?.[0]?.block_id === triggerPathId &&
-      isMergingToSameChild
+      isMergingToSameChild &&
+      lastBlock
     );
-  }, [isUpdateMode, data.path?.parent_blocks, triggerPathId]);
+  }, [isUpdateMode, data.path?.parent_blocks, triggerPathId, lastBlock]);
 
   // Get the end block ID for this path
   const endBlockId = data.path?.blocks.find(
@@ -1171,7 +1180,10 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
         {showCheckbox && (
           <div className="absolute -top-8 left-0 flex items-center gap-2">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+            <label
+              className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200 cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
               <input
                 type="checkbox"
                 checked={selectedPaths.includes(data.path?.id ?? -1)}
@@ -1182,7 +1194,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                     pathParentBlockId ?? -1
                   )
                 }
-                className={`${styles.checkbox}`}
+                className={styles.checkbox}
                 style={
                   {
                     borderColor: colors['border-primary'],
@@ -1191,20 +1203,22 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                     '--bg-secondary': colors['bg-primary'],
                   } as React.CSSProperties
                 }
-                onClick={(e) => e.stopPropagation()}
               />
-              <span className="text-sm text-gray-300 dark:text-gray-600">
+              <span className="text-sm text-gray-300 dark:text-gray-600 select-none">
                 {selectedPaths.includes(data.path?.id ?? -1)
                   ? 'Selected'
                   : 'Not selected'}
               </span>
-            </div>
+            </label>
           </div>
         )}
 
         {showUpdateCheckbox && endBlockId && (
           <div className="absolute -top-8 left-0 flex items-center gap-2">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+            <label
+              className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200 cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
+            >
               <input
                 type="checkbox"
                 checked={selectedEndBlocks.includes(endBlockId)}
@@ -1218,14 +1232,13 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                     '--bg-secondary': colors['bg-primary'],
                   } as React.CSSProperties
                 }
-                onClick={(e) => e.stopPropagation()}
               />
-              <span className="text-sm text-gray-300 dark:text-gray-600">
+              <span className="text-sm text-gray-300 dark:text-gray-600 select-none">
                 {selectedEndBlocks.includes(endBlockId)
                   ? 'Selected'
                   : 'Not selected'}
               </span>
-            </div>
+            </label>
           </div>
         )}
 
