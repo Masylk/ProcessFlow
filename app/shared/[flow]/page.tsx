@@ -642,7 +642,7 @@ export default function SharedPage({
 
         // Fetch workflow data using the public API
         const workflowResponse = await fetch(
-          `/api/workflow/public?name=${encodeURIComponent(decodedWorkflowName)}&public_access_id=${encodeURIComponent(publicAccessId)}`
+          `/api/workflow/public?public_access_id=${encodeURIComponent(publicAccessId)}`
         );
 
         if (!workflowResponse.ok) {
