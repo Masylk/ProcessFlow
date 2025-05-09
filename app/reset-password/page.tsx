@@ -23,10 +23,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const cleanPassword = password;
-    const cleanConfirmPassword = confirmPassword;
-
-    if (!cleanPassword || !cleanConfirmPassword) {
+    // Validate password fields before making the API call
+    if (!password || !confirmPassword) {
       toast.error('Missing Fields', {
         description: 'Please fill in both password fields.',
         duration: 5000,
@@ -34,7 +32,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (!validatePassword(cleanPassword)) {
+    if (!validatePassword(password)) {
       toast.error('Weak Password', {
         description:
           'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
@@ -43,7 +41,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (cleanPassword !== cleanConfirmPassword) {
+    if (password !== confirmPassword) {
       toast.error('Password Mismatch', {
         description: 'Passwords do not match.',
         duration: 5000,
@@ -54,49 +52,25 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
-
-      // Update the password
-      const { error } = await supabase.auth.updateUser({
-        password: cleanPassword,
+      const response = await fetch('/api/auth/perform-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
       });
 
-      if (error) {
-        if (error.message.includes('same')) {
-          toast.error('Invalid Password', {
-            description:
-              'Your new password must be different from your previous password.',
-            duration: 5000,
-          });
-        } else {
-          toast.error('Password Reset Failed', {
-            description: error.message,
-            duration: 5000,
-          });
-        }
-      } else {
-        // Clear any auth session that might have been created
-        await supabase.auth.signOut();
-
-        // Clear the reset cookies by making a request to the API
-        await fetch('/api/auth/clear-reset-cookies', {
-          method: 'POST',
-        });
-
-        // Show success message and redirect
-        toast.success('Password Reset Successful', {
-          description:
-            'Your password has been successfully reset. You can now log in with your new password.',
-          duration: 7000,
-        });
-
-        // Redirect to login with success message
-        router.push('/login?message=password-reset-success');
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error('Password Reset Failed', { description: data.error });
+        setIsLoading(false);
+        return;
       }
+
+      toast.success('Password Reset Successful');
+      // Optionally sign out and redirect to login
+      router.push('/login?message=password-reset-success');
     } catch (error) {
       toast.error('Password Reset Failed', {
-        description: 'An unexpected error occurred. Please try again.',
-        duration: 5000,
+        description: 'Unexpected error.',
       });
     } finally {
       setIsLoading(false);
