@@ -79,7 +79,7 @@ const EventDelayModal: React.FC<EventDelayModalProps> = ({
   };
 
   const handleSubmit = () => {
-    const cleanEventName = DOMPurify.sanitize(eventName.trim());
+    const cleanEventName = eventName.trim();
     if (cleanEventName) {
       const expirationSeconds = hasExpiration
         ? days * 86400 + hours * 3600 + minutes * 60

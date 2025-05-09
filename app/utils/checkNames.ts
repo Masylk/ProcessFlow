@@ -4,12 +4,12 @@ interface NameError {
 }
 
 export function checkWorkflowName(name: string): NameError | null {
-  if (name.includes('-')) {
-    return {
-      title: 'Invalid Character',
-      description: 'Workflow name cannot contain hyphens (-)'
-    };
-  }
+  // if (name.includes('-')) {
+  //   return {
+  //     title: 'Invalid Character',
+  //     description: 'Workflow name cannot contain hyphens (-)'
+  //   };
+  // }
 
   if (name.length > 50) {
     return {

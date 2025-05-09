@@ -46,13 +46,11 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       return;
     }
 
-    const sanitizedName = DOMPurify.sanitize(name);
-
     setIsSubmitting(true);
     try {
-      if (iconUrl) await onEdit(sanitizedName, iconUrl);
-      else if (emote) await onEdit(sanitizedName, undefined, emote);
-      else await onEdit(sanitizedName);
+      if (iconUrl) await onEdit(name, iconUrl);
+      else if (emote) await onEdit(name, undefined, emote);
+      else await onEdit(name);
 
       onClose();
     } catch (error) {

@@ -97,6 +97,8 @@ export async function PATCH(req: NextRequest) {
       delay_event,
     } = await req.json();
 
+    console.log('description', description);
+    console.log('title', title);
     // const formattedTitle = formatTitle(title);
     const formattedTitle = title;
     const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;

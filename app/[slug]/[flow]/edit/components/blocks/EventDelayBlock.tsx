@@ -89,21 +89,28 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
     !data.pathHasChildren &&
     (parentBlockId === null || pathParentBlockId === parentBlockId);
 
+  // Only show if this is the second-to-last block in the path
+  const isSecondToLastBlock =
+    typeof data.position === 'number' &&
+    data.path?.blocks &&
+    data.position === data.path.blocks.length - 2;
   // Use this condition for both checkbox and dropdown option
-  const showCheckbox = mergeMode && canShowMergeUI;
+  const showCheckbox = mergeMode && canShowMergeUI && isSecondToLastBlock;
 
   // --- Update checkbox logic ---
   const showUpdateCheckbox = React.useMemo(() => {
     return (
       isUpdateMode &&
       data.path?.parent_blocks?.[0]?.block_id === triggerPathId &&
-      isMergingToSameChild
+      isMergingToSameChild &&
+      isSecondToLastBlock
     );
   }, [
     isUpdateMode,
     data.path?.parent_blocks,
     triggerPathId,
     isMergingToSameChild,
+    isSecondToLastBlock,
   ]);
 
   // Get the end block ID for this path
@@ -595,7 +602,10 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
         {/* --- Checkbox UI --- */}
         {showCheckbox && (
           <div className="absolute -top-8 left-0 flex items-center gap-2">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+            <label
+              className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200"
+              onClick={e => e.stopPropagation()}
+            >
               <input
                 type="checkbox"
                 checked={selectedPaths.includes(data.path?.id ?? -1)}
@@ -621,14 +631,17 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
                   ? 'Selected'
                   : 'Not selected'}
               </span>
-            </div>
+            </label>
           </div>
         )}
 
         {/* --- Update Checkbox UI --- */}
         {showUpdateCheckbox && endBlockId && (
           <div className="absolute -top-8 left-0 flex items-center gap-2">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200">
+            <label
+              className="flex items-center gap-2 px-2 py-1 rounded-md bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-200"
+              onClick={e => e.stopPropagation()}
+            >
               <input
                 type="checkbox"
                 checked={selectedEndBlocks.includes(endBlockId)}
@@ -648,7 +661,7 @@ const EventDelayBlock = (props: NodeProps & { data: NodeData }) => {
                   ? 'Selected'
                   : 'Not selected'}
               </span>
-            </div>
+            </label>
           </div>
         )}
 

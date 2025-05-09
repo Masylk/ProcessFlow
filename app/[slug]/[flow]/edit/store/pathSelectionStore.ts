@@ -20,9 +20,11 @@ export const usePathSelectionStore = create<PathSelectionStore>((set, get) => ({
   selectedEndBlocks: [],
   parentBlockId: null,
   workflowId: (() => {
-    // Match --pf-<number> in the URL
-    const match = window.location.pathname.match(/--pf-(\d+)/);
-    return match ? parseInt(match[1], 10) : NaN;
+    const path = window.location.pathname;
+    const lastPfIndex = path.lastIndexOf('--pf-');
+    if (lastPfIndex === -1) return NaN;
+    const workflowId = path.slice(lastPfIndex + 5).split('/')[0];
+    return Number(workflowId) || NaN;
   })(),
   mergeMode: false,
   updateMode: false,
