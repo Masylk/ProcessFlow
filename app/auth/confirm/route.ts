@@ -28,9 +28,6 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/login?error=recovery-failed', request.url));
       }
 
-      // After verifying OTP, immediately sign out to prevent automatic login
-      await supabase.auth.signOut();
-
       // Set a cookie to indicate that password reset is required and store the user ID
       const response = NextResponse.redirect(new URL('/reset-password', request.url));
       response.cookies.set('password-reset-token', token_hash, {
