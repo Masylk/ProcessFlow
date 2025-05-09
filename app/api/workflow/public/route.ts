@@ -5,11 +5,10 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const public_access_id = searchParams.get('public_access_id');
-    const name = searchParams.get('name');
 
-        if (!public_access_id || !name) {
+    if (!public_access_id) {
       return NextResponse.json(
-        { error: 'Public access ID and workflow name are required' },
+        { error: 'Public access ID is required' },
         { status: 400 }
       );
     }
@@ -18,7 +17,6 @@ export async function GET(req: NextRequest) {
       where: {
         public_access_id,
         is_public: true,
-        name,
       },
       include: {
         workspace: {
@@ -49,7 +47,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!workflow) {
-        return NextResponse.json(
+      return NextResponse.json(
         { error: 'Workflow not found or not public' },
         { status: 404 }
       );

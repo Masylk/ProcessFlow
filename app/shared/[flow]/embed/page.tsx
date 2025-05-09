@@ -306,7 +306,7 @@ export default function SharePage({
     const fetchData = async () => {
       try {
         const workflowResponse = await fetch(
-          `/api/workflow/public?name=${encodeURIComponent(decodedWorkflowName)}&public_access_id=${encodeURIComponent(publicAccessId)}`
+          `/api/workflow/public?public_access_id=${encodeURIComponent(publicAccessId)}`
         );
         const workflowData = await workflowResponse.json();
 
