@@ -1,21 +1,25 @@
 import { WorkflowData } from "../types";
 
+// Utility to sanitize workflow names for URLs
+const sanitizeName = (name: string) =>
+  name.replace(/\s+/g, '-');
+
 export const createShareLink = (name: string, public_access_id: string) => {
   if (!name || !public_access_id) return;
-  const encodedName = encodeURIComponent(name);
-  const shareUrl = `${window.location.origin}/shared/${encodedName}--pf-${public_access_id}`;
+  const sanitizedName = sanitizeName(name);
+  const shareUrl = `${window.location.origin}/shared/${sanitizedName}--pf-${public_access_id}`;
   return shareUrl;
 };
 
 export const createEditLink = (name: string, workflowId: string, slug: string) => {
-  const encodedName = encodeURIComponent(name);
-  const shareUrl = `${window.location.origin}/${slug}/${encodedName}--pf-${workflowId}/edit`;
+  const sanitizedName = sanitizeName(name);
+  const shareUrl = `${window.location.origin}/${slug}/${sanitizedName}--pf-${workflowId}/edit`;
   return shareUrl;
 };
 
 export const createReadLink = (name: string, workflowId: string, slug: string) => {
-  const encodedName = encodeURIComponent(name);
-  const shareUrl = `${window.location.origin}/${slug}/${encodedName}--pf-${workflowId}/read`;
+  const sanitizedName = sanitizeName(name);
+  const shareUrl = `${window.location.origin}/${slug}/${sanitizedName}--pf-${workflowId}/read`;
   return shareUrl;
 };
 
