@@ -11,13 +11,13 @@ import { sanitizeInput } from '../utils/sanitize';
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [globalError, setGlobalError] = useState("");
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [globalError, setGlobalError] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const router = useRouter();
 
@@ -29,40 +29,36 @@ export default function SignupPage() {
 
   // Password validation
   const validatePassword = (password: string): boolean => {
-    return password.length >= 8;
+    // At least 8 characters, one uppercase, one lowercase, one number, one special character
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{8,}$/;
+    return strongPasswordRegex.test(password);
   };
 
   // Handle email validation and check if it exists
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = sanitizeInput(e.target.value);
     setEmail(newEmail);
-    if (emailError) setEmailError("");
-    if (globalError) setGlobalError("");
+    if (emailError) setEmailError('');
+    if (globalError) setGlobalError('');
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(sanitizeInput(e.target.value));
-    if (passwordError) setPasswordError("");
+    if (passwordError) setPasswordError('');
   };
 
   // Add a function to check email existence
   const checkEmailAvailability = async (email: string) => {
     if (!validateEmail(email)) return; // Don't check invalid emails
-    
+
     setIsCheckingEmail(true);
     try {
       const result = await checkEmailExists(email);
-      
-      if (result.error) {
-        console.error("Error checking email:", result.error);
-        return;
-      }
-      
-      if (result.exists) {
-        setEmailError("This email is already registered. Please use a different email or try logging in.");
-      }
+
+      // Optionally, you can show a generic message if you want, but don't reveal existence
     } catch (error) {
-      console.error("Failed to check email:", error);
+      console.error('Failed to check email:', error);
     } finally {
       setIsCheckingEmail(false);
     }
@@ -71,116 +67,87 @@ export default function SignupPage() {
   // Add a debounce effect for email checks
   useEffect(() => {
     if (!email || !validateEmail(email)) return;
-    
+
     const timer = setTimeout(() => {
       checkEmailAvailability(email);
     }, 600); // 600ms debounce
-    
+
     return () => clearTimeout(timer);
   }, [email]);
 
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    
+
     if (process.env.NODE_ENV !== 'production') {
-      console.log("Starting signup process");
+      console.log('Starting signup process');
     }
-    
+
     // Sanitize before validation/submission
     const cleanEmail = sanitizeInput(email);
     const cleanPassword = sanitizeInput(password);
-    
+
     // Clear any existing notifications first
     setShowEmailNotification(false);
-    setGlobalError("");
-    setEmailError("");
-    setPasswordError("");
-    
+    setGlobalError('');
+    setEmailError('');
+    setPasswordError('');
+
     // Validate inputs before submission
     let hasErrors = false;
-    
+
     if (!validateEmail(cleanEmail)) {
-      setEmailError("Please enter a valid email address.");
+      setEmailError('Please enter a valid email address.');
       hasErrors = true;
     }
-    
+
     if (!validatePassword(cleanPassword)) {
-      setPasswordError("Password must be at least 8 characters long.");
+      setPasswordError(
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
+      );
       hasErrors = true;
     }
-    
+
     if (hasErrors) return;
-    
+
     // Validate password
     if (cleanPassword.length < 8) {
-      setPasswordError("Password must be at least 8 characters");
+      setPasswordError('Password must be at least 8 characters');
       if (process.env.NODE_ENV !== 'production') {
-        console.log("Password too short, signup blocked");
+        console.log('Password too short, signup blocked');
       }
       return;
     }
 
     // Final check for email existence before signup
     if (process.env.NODE_ENV !== 'production') {
-      console.log("Performing final email check before signup");
+      console.log('Performing final email check before signup');
     }
     setIsLoading(true);
     try {
       const emailCheck = await checkEmailExists(cleanEmail);
-      
-      if (emailCheck.error) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error("Error checking email before signup:", emailCheck.error);
-        }
-        // Continue with signup attempt even if check fails
-      } else if (emailCheck.exists) {
-        setEmailError("This email is already registered. Please use a different email or try logging in.");
-        setIsLoading(false);
-        return; // Stop here if email exists
-      }
-      
+
       // Continue with signup process if email doesn't exist
       if (cleanEmail && cleanPassword) {
         const formData = new FormData();
         formData.append('email', cleanEmail);
         formData.append('password', cleanPassword);
-        
+
         if (process.env.NODE_ENV !== 'production') {
-          console.log("Submitting signup request with email:", cleanEmail);
+          console.log('Submitting signup request with email:', cleanEmail);
         }
         const newUser = await signup(formData);
         if (process.env.NODE_ENV !== 'production') {
-          console.log("Signup response:", newUser);
+          console.log('Signup response:', newUser);
         }
         setIsLoading(false);
-        
-        // Check if there's an error
-        if ('error' in newUser) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('Signup error detected:', newUser.error);
-          }
-          
-          if (typeof newUser.error === 'string') {
-            if (newUser.error.includes("already exists") || 
-                newUser.error.includes("already registered") || 
-                newUser.error.includes("already in use") ||
-                newUser.error.includes("taken") ||
-                newUser.error.toLowerCase().includes("email already")) {
-              setEmailError("This email is already registered. Please use a different email or try logging in.");
-            } else {
-              setEmailError(newUser.error || "An error occurred during signup. Please try again.");
-            }
-          } else {
-            setEmailError("An error occurred during signup. Please try again.");
-          }
-          // Don't show email notification on error
-          return;
-        }
 
         // Explicit check to ensure we don't proceed if there was an error
         if (globalError || emailError) {
           if (process.env.NODE_ENV !== 'production') {
-            console.log("Preventing notification due to errors:", { globalError, emailError });
+            console.log('Preventing notification due to errors:', {
+              globalError,
+              emailError,
+            });
           }
           return;
         }
@@ -207,17 +174,18 @@ export default function SignupPage() {
             }
             // Continue with redirect even if analytics fails
           }
-          
-          // Single redirect after analytics (success or fail)
-          router.push(`/login?email=${encodeURIComponent(newUser.email)}&signup=success`);
         }
+        // Single redirect after analytics (success or fail)
+        router.push(
+          `/login?email=${encodeURIComponent(newUser.email || (formData.get('email') as string))}&signup=success`
+        );
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
         console.error('Unexpected error during signup:', error);
       }
       setIsLoading(false);
-      setGlobalError("An unexpected error occurred. Please try again later.");
+      setGlobalError('An unexpected error occurred. Please try again later.');
     }
   }
 
@@ -286,15 +254,27 @@ export default function SignupPage() {
           <p>{globalError}</p>
         </div>
       )}
-      
+
       <div className="w-full max-w-[420px] p-3 bg-gray-50 rounded-3xl border border-[#e4e7ec] flex flex-col justify-center items-center gap-2">
         <div className="relative w-full h-fit px-4 sm:px-6 py-8 sm:py-10 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-6 sm:gap-8 overflow-hidden">
           {/* Corner dots */}
           <div className="pointer-events-none absolute inset-0">
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ top: 16, left: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ bottom: 16, left: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ top: 16, right: 16 }} />
-            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute" style={{ bottom: 16, right: 16 }} />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ top: 16, left: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ bottom: 16, left: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ top: 16, right: 16 }}
+            />
+            <div
+              className="w-1.5 h-1.5 bg-white rounded-full shadow-[0px_1px_2px_0px_rgba(0,0,0,0.10)] border border-[#e4e7ec] absolute"
+              style={{ bottom: 16, right: 16 }}
+            />
           </div>
 
           {/* App icon */}
@@ -321,14 +301,19 @@ export default function SignupPage() {
           </div>
 
           {/* Signup form */}
-          <form onSubmit={handleSignUp} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
+          <form
+            onSubmit={handleSignUp}
+            className="z-10 flex flex-col items-center gap-6 w-full rounded-xl"
+          >
             <div className="flex flex-col items-start gap-5 w-full">
               {/* Email field */}
               <div className="flex flex-col items-start gap-1.5 w-full">
                 <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Email
                 </label>
-                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${emailError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
+                <div
+                  className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${emailError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}
+                >
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/mail-01.svg`}
                     alt="Mail Icon"
@@ -346,7 +331,9 @@ export default function SignupPage() {
                   )}
                 </div>
                 {emailError && (
-                  <span className="text-red-500 text-sm mt-1">{emailError}</span>
+                  <span className="text-red-500 text-sm mt-1">
+                    {emailError}
+                  </span>
                 )}
               </div>
 
@@ -355,28 +342,32 @@ export default function SignupPage() {
                 <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
                   Password
                 </label>
-                <div className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${passwordError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}>
+                <div
+                  className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${passwordError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}
+                >
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`}
                     alt="Lock Icon"
                     className="w-4 h-4"
                   />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={password}
                     onChange={handlePasswordChange}
                   />
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? "eye-off" : "eye"}.svg`}
-                    alt={showPassword ? "Hide Password" : "Show Password"}
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}
+                    alt={showPassword ? 'Hide Password' : 'Show Password'}
                     className="w-4 h-4 cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
                 {passwordError && (
-                  <span className="text-red-500 text-sm mt-1">{passwordError}</span>
+                  <span className="text-red-500 text-sm mt-1">
+                    {passwordError}
+                  </span>
                 )}
               </div>
             </div>
@@ -387,16 +378,17 @@ export default function SignupPage() {
                 type="submit"
                 disabled={isLoading || !email || !password}
                 className={`w-full px-3 py-2 rounded-lg border-2 border-white flex items-center justify-center gap-1 overflow-hidden transition-colors duration-300 ${
-                  isLoading ? "bg-[#F9FAFB]" : "bg-[#4e6bd7] hover:bg-[#374c99]"
+                  isLoading ? 'bg-[#F9FAFB]' : 'bg-[#4e6bd7] hover:bg-[#374c99]'
                 }`}
               >
                 {isLoading ? (
                   <div
                     className="w-5 h-5 animate-spin"
                     style={{
-                      borderRadius: "50%",
-                      background: "conic-gradient(#4761C4 0%, #F9FAFB 100%)",
-                      maskImage: "radial-gradient(closest-side, transparent 83%, black 84%)"
+                      borderRadius: '50%',
+                      background: 'conic-gradient(#4761C4 0%, #F9FAFB 100%)',
+                      maskImage:
+                        'radial-gradient(closest-side, transparent 83%, black 84%)',
                     }}
                   />
                 ) : (
@@ -439,13 +431,19 @@ export default function SignupPage() {
             <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
               By continuing you agree to
             </div>
-            <Link href="https://www.process-flow.io/terms" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+            <Link
+              href="https://www.process-flow.io/terms"
+              className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight"
+            >
               Terms of Service
             </Link>
             <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
               and
             </div>
-            <Link href="https://www.process-flow.io/privacy" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+            <Link
+              href="https://www.process-flow.io/privacy"
+              className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight"
+            >
               Privacy Policy.
             </Link>
           </div>
@@ -456,11 +454,14 @@ export default function SignupPage() {
           <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
             Already have an account?
           </div>
-          <Link href="/login" className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight">
+          <Link
+            href="/login"
+            className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight"
+          >
             Log in
           </Link>
         </div>
       </div>
     </div>
   );
-} 
+}
