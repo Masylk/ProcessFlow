@@ -9,7 +9,6 @@ import * as Sentry from '@sentry/nextjs';
 import { createBrowserClient } from '@supabase/ssr';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { toast } from 'sonner';
-import { sanitizeInput } from '../utils/sanitize';
 
 // Add these constants at the top (after imports)
 const LOGIN_ATTEMPT_KEY = 'login_attempts';
@@ -119,10 +118,6 @@ function LoginContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Sanitize before validation/submission
-    const cleanEmail = sanitizeInput(email);
-    const cleanPassword = sanitizeInput(password);
-
     // Blocked: prevent login
     if (isBlocked) {
       toast.error('Too many failed attempts', {
@@ -131,6 +126,9 @@ function LoginContent() {
       });
       return;
     }
+
+    const cleanEmail = email;
+    const cleanPassword = password;
 
     if (!validateEmail(cleanEmail)) {
       toast.error('Invalid Email', {
@@ -360,10 +358,7 @@ function LoginContent() {
                     placeholder="Email address"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={email}
-                    onChange={(e) => {
-                      const newEmail = sanitizeInput(e.target.value);
-                      setEmail(newEmail);
-                    }}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -384,7 +379,7 @@ function LoginContent() {
                     placeholder="••••••••"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={password}
-                    onChange={(e) => setPassword(sanitizeInput(e.target.value))}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showPassword ? 'eye-off' : 'eye'}.svg`}

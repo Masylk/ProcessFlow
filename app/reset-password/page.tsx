@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { toast } from 'sonner';
-import { sanitizeInput } from '../utils/sanitize';
+
+// Password strength validation (same as signup)
+const validatePassword = (password: string): boolean => {
+  // At least 8 characters, one uppercase, one lowercase, one number, one special character
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{8,}$/;
+  return strongPasswordRegex.test(password);
+};
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -13,31 +20,25 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user has valid reset token on mount
-  useEffect(() => {
-    const checkResetToken = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // If there's a session, sign out immediately
-      if (session) {
-        await supabase.auth.signOut();
-      }
-    };
-    
-    checkResetToken();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const cleanPassword = sanitizeInput(password);
-    const cleanConfirmPassword = sanitizeInput(confirmPassword);
+    const cleanPassword = password;
+    const cleanConfirmPassword = confirmPassword;
 
     if (!cleanPassword || !cleanConfirmPassword) {
       toast.error('Missing Fields', {
         description: 'Please fill in both password fields.',
         duration: 5000,
+      });
+      return;
+    }
+
+    if (!validatePassword(cleanPassword)) {
+      toast.error('Weak Password', {
+        description:
+          'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+        duration: 6000,
       });
       return;
     }
@@ -54,17 +55,17 @@ export default function ResetPasswordPage() {
 
     try {
       const supabase = createClient();
-      
-      // First, ensure no active session
-      await supabase.auth.signOut();
 
       // Update the password
-      const { error } = await supabase.auth.updateUser({ password: cleanPassword });
+      const { error } = await supabase.auth.updateUser({
+        password: cleanPassword,
+      });
 
       if (error) {
         if (error.message.includes('same')) {
           toast.error('Invalid Password', {
-            description: 'Your new password must be different from your previous password.',
+            description:
+              'Your new password must be different from your previous password.',
             duration: 5000,
           });
         } else {
@@ -76,18 +77,19 @@ export default function ResetPasswordPage() {
       } else {
         // Clear any auth session that might have been created
         await supabase.auth.signOut();
-        
+
         // Clear the reset cookies by making a request to the API
         await fetch('/api/auth/clear-reset-cookies', {
           method: 'POST',
         });
-        
+
         // Show success message and redirect
         toast.success('Password Reset Successful', {
-          description: 'Your password has been successfully reset. You can now log in with your new password.',
+          description:
+            'Your password has been successfully reset. You can now log in with your new password.',
           duration: 7000,
         });
-        
+
         // Redirect to login with success message
         router.push('/login?message=password-reset-success');
       }
@@ -105,10 +107,8 @@ export default function ResetPasswordPage() {
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex items-center justify-center p-4">
       {/* Outer gray parent container */}
       <div className="w-full max-w-[420px] p-3 bg-gray-50 rounded-3xl border border-[#e4e7ec] flex flex-col justify-center items-center gap-2">
-        
         {/* Inner white card */}
         <div className="relative w-full px-4 sm:px-6 py-6 sm:py-8 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-4 sm:gap-6 overflow-hidden">
-          
           {/* Corner dots (16px from each edge) */}
           <div className="pointer-events-none absolute inset-0">
             <div
@@ -214,13 +214,17 @@ export default function ResetPasswordPage() {
                   leading-tight
                 "
               >
-                Your new password must be different to previously used passwords.
+                Your new password must be different to previously used
+                passwords.
               </div>
             </div>
           </div>
 
           {/* Password form fields */}
-          <form onSubmit={handleSubmit} className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
+          <form
+            onSubmit={handleSubmit}
+            className="z-10 flex flex-col items-center gap-6 w-full rounded-xl"
+          >
             <div className="flex flex-col items-start gap-5 w-full">
               {/* New Password field */}
               <div className="flex flex-col items-start gap-1.5 w-full">
@@ -249,7 +253,7 @@ export default function ResetPasswordPage() {
                     className="w-4 h-4"
                   />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     className="
                       grow
@@ -262,14 +266,14 @@ export default function ResetPasswordPage() {
                       bg-transparent
                     "
                     value={password}
-                    onChange={(e) => setPassword(sanitizeInput(e.target.value))}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                      showPassword ? "eye-off" : "eye"
+                      showPassword ? 'eye-off' : 'eye'
                     }.svg`}
-                    alt={showPassword ? "Hide Password" : "Show Password"}
+                    alt={showPassword ? 'Hide Password' : 'Show Password'}
                     className="w-4 h-4 cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   />
@@ -303,7 +307,7 @@ export default function ResetPasswordPage() {
                     className="w-4 h-4"
                   />
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     className="
                       grow
@@ -316,14 +320,14 @@ export default function ResetPasswordPage() {
                       bg-transparent
                     "
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(sanitizeInput(e.target.value))}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                      showPassword ? "eye-off" : "eye"
+                      showPassword ? 'eye-off' : 'eye'
                     }.svg`}
-                    alt={showPassword ? "Hide Password" : "Show Password"}
+                    alt={showPassword ? 'Hide Password' : 'Show Password'}
                     className="w-4 h-4 cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   />
@@ -351,8 +355,8 @@ export default function ResetPasswordPage() {
                   duration-300
                   ${
                     isLoading
-                      ? "bg-[#F9FAFB]"
-                      : "bg-[#4e6bd7] hover:bg-[#374c99]"
+                      ? 'bg-[#F9FAFB]'
+                      : 'bg-[#4e6bd7] hover:bg-[#374c99]'
                   }
                 `}
               >
@@ -360,9 +364,10 @@ export default function ResetPasswordPage() {
                   <div
                     className="w-5 h-5 animate-spin"
                     style={{
-                      borderRadius: "50%",
-                      background: "conic-gradient(#4761C4 0%, #F9FAFB 100%)",
-                      maskImage: "radial-gradient(closest-side, transparent 83%, black 84%)"
+                      borderRadius: '50%',
+                      background: 'conic-gradient(#4761C4 0%, #F9FAFB 100%)',
+                      maskImage:
+                        'radial-gradient(closest-side, transparent 83%, black 84%)',
                     }}
                   />
                 ) : (
@@ -391,9 +396,6 @@ export default function ResetPasswordPage() {
             </div>
           </a>
         </div>
-
-        
-
       </div>
     </div>
   );

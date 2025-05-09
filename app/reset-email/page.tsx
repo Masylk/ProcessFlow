@@ -1,7 +1,6 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { sanitizeInput } from '../utils/sanitize';
 
 export default function Home() {
   const [isResending, setIsResending] = useState(false);
@@ -9,12 +8,10 @@ export default function Home() {
   const handleResendEmail = async () => {
     setIsResending(true);
     try {
-      // If you make email dynamic, sanitize it:
-      // const cleanEmail = sanitizeInput(email);
       const response = await fetch('/api/auth/resend-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'ceo@process-flow.io' }), // sanitize if dynamic
+        body: JSON.stringify({ email: 'ceo@process-flow.io' }),
       });
 
       if (response.ok) {
@@ -43,10 +40,8 @@ export default function Home() {
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex items-center justify-center">
       {/* Outer gray parent container */}
       <div className="w-[420px] p-3 bg-gray-50 rounded-3xl border border-[#e4e7ec] flex flex-col justify-center items-center gap-2">
-        
         {/* Inner white card */}
         <div className="relative w-full px-6 py-8 bg-white rounded-2xl border border-[#e4e7ec] flex flex-col justify-start items-center gap-6 overflow-hidden">
-          
           {/* Corner dots (16px from each edge) */}
           <div className="pointer-events-none absolute inset-0">
             <div
@@ -149,14 +144,14 @@ export default function Home() {
             <span className="text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
               We've sent a reset link to
             </span>
-            <br/>
+            <br />
             <span className="text-[#475467] text-sm font-semibold font-['Inter'] leading-tight">
               ceo@process-flow.io
             </span>
           </div>
 
           {/* Email button */}
-                
+
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-onboarding.svg`}
             alt="Check Icon"
@@ -164,8 +159,8 @@ export default function Home() {
           />
           <div className="self-stretch h-9 rounded-xl flex flex-col justify-start items-center gap-6">
             <div className="self-stretch h-9 flex flex-col justify-start items-start gap-4">
-              <a 
-                href="mailto:" 
+              <a
+                href="mailto:"
                 className="self-stretch px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] flex justify-center items-center gap-1 cursor-pointer transition duration-300 hover:bg-[#374c99] no-underline"
               >
                 <div className="px-0.5 flex justify-center items-center">
@@ -178,8 +173,8 @@ export default function Home() {
           </div>
 
           {/* Back to login */}
-          <a 
-            href="/login" 
+          <a
+            href="/login"
             className="justify-center items-center gap-1.5 flex cursor-pointer text-inherit no-underline"
           >
             <div className="w-5 h-5 relative flex justify-center items-center">
@@ -196,7 +191,7 @@ export default function Home() {
         </div>
 
         {/* Resend email outside the white container */}
-        <button 
+        <button
           onClick={handleResendEmail}
           disabled={isResending}
           className="py-3 flex justify-center items-baseline gap-1 cursor-pointer no-underline"
@@ -214,13 +209,30 @@ export default function Home() {
         <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
           <div className="w-[420px] h-9 px-2 py-1.5 bg-gray-50 rounded-full border border-[#e4e7ec] flex justify-center items-center">
             <div className="grow shrink basis-0 h-6 px-2 py-0.5 bg-white rounded-[99px] flex justify-between items-center">
-              <div className="text-[#475467] text-sm font-normal">2025 © Processflow</div>
+              <div className="text-[#475467] text-sm font-normal">
+                2025 © Processflow
+              </div>
               <div className="w-0.5 h-0.5 bg-[#475467] rounded-full mx-2" />
-              <a href="/support" className="text-[#475467] text-sm font-normal hover:underline">Support</a>
+              <a
+                href="/support"
+                className="text-[#475467] text-sm font-normal hover:underline"
+              >
+                Support
+              </a>
               <div className="w-0.5 h-0.5 bg-[#475467] rounded-full mx-2" />
-              <a href="/privacy" className="text-[#475467] text-sm font-normal hover:underline">Privacy</a>
+              <a
+                href="/privacy"
+                className="text-[#475467] text-sm font-normal hover:underline"
+              >
+                Privacy
+              </a>
               <div className="w-0.5 h-0.5 bg-[#475467] rounded-full mx-2" />
-              <a href="/terms" className="text-[#475467] text-sm font-normal hover:underline">Terms</a>
+              <a
+                href="/terms"
+                className="text-[#475467] text-sm font-normal hover:underline"
+              >
+                Terms
+              </a>
             </div>
           </div>
         </div>

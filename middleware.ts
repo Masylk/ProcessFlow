@@ -173,7 +173,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url));
       }
       
-      // Add user info to headers for all other protected routes
+      // Add user info to heades for all other protected routes
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-user-id', user.id);
       if (user.user_metadata?.role) {
