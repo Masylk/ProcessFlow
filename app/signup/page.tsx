@@ -37,14 +37,13 @@ export default function SignupPage() {
 
   // Handle email validation and check if it exists
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = sanitizeInput(e.target.value);
-    setEmail(newEmail);
+    setEmail(e.target.value);
     if (emailError) setEmailError('');
     if (globalError) setGlobalError('');
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(sanitizeInput(e.target.value));
+    setPassword(e.target.value);
     if (passwordError) setPasswordError('');
   };
 
@@ -82,10 +81,6 @@ export default function SignupPage() {
       console.log('Starting signup process');
     }
 
-    // Sanitize before validation/submission
-    const cleanEmail = sanitizeInput(email);
-    const cleanPassword = sanitizeInput(password);
-
     // Clear any existing notifications first
     setShowEmailNotification(false);
     setGlobalError('');
@@ -95,12 +90,12 @@ export default function SignupPage() {
     // Validate inputs before submission
     let hasErrors = false;
 
-    if (!validateEmail(cleanEmail)) {
+    if (!validateEmail(email)) {
       setEmailError('Please enter a valid email address.');
       hasErrors = true;
     }
 
-    if (!validatePassword(cleanPassword)) {
+    if (!validatePassword(password)) {
       setPasswordError(
         'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
       );
@@ -110,7 +105,7 @@ export default function SignupPage() {
     if (hasErrors) return;
 
     // Validate password
-    if (cleanPassword.length < 8) {
+    if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters');
       if (process.env.NODE_ENV !== 'production') {
         console.log('Password too short, signup blocked');
@@ -124,16 +119,16 @@ export default function SignupPage() {
     }
     setIsLoading(true);
     try {
-      const emailCheck = await checkEmailExists(cleanEmail);
+      const emailCheck = await checkEmailExists(email);
 
       // Continue with signup process if email doesn't exist
-      if (cleanEmail && cleanPassword) {
+      if (email && password) {
         const formData = new FormData();
-        formData.append('email', cleanEmail);
-        formData.append('password', cleanPassword);
+        formData.append('email', email);
+        formData.append('password', password);
 
         if (process.env.NODE_ENV !== 'production') {
-          console.log('Submitting signup request with email:', cleanEmail);
+          console.log('Submitting signup request with email:', email);
         }
         const newUser = await signup(formData);
         if (process.env.NODE_ENV !== 'production') {

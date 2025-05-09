@@ -382,64 +382,11 @@ export async function POST(request: Request) {
         let workspace;
         let workflowCreationWarning = null;
         
-        // Check if we have a temporary workspace from the first step
-        // Get temp workspace ID from user metadata
-        const userMetadata = await supabase.auth.getUser();
-        const userTempWorkspaceId = userMetadata?.data?.user?.user_metadata?.temp_workspace_id;
+        // Reset user workspaces
+        await prisma.user_workspace.deleteMany({
+          where: { user_id: dbUser.id }
+        });
         
-        let existingUserWorkspaces = null;
-        if (!userTempWorkspaceId) {
-          // If no temp workspace ID is found in metadata, check if the user already has a workspace
-          existingUserWorkspaces = await prisma.user_workspace.findMany({
-            where: { user_id: dbUser.id },
-            include: { workspace: true },
-            orderBy: { id: 'desc' },
-            take: 1
-          });
-        }
-        
-        // First try to use temp workspace from metadata
-        if (userTempWorkspaceId) {
-          // Update the temp workspace with the real information
-          workspace = await updateExistingWorkspace(
-            userTempWorkspaceId, 
-            formData, 
-            dbUser.id, 
-            dbUser.temp_industry, 
-            dbUser.temp_company_size
-          );
-        } 
-        // Then try to use the most recently created workspace if one exists
-        else if (existingUserWorkspaces && existingUserWorkspaces.length > 0) {
-          const userWorkspace = existingUserWorkspaces[0];
-          
-          // Check if the workspace reference exists in the user_workspace
-          if (userWorkspace && userWorkspace.workspace_id) {
-            // Get the workspace directly instead of using the included workspace
-            const existingWorkspaceId = userWorkspace.workspace_id;
-            
-            Sentry.addBreadcrumb({
-              category: 'workspace',
-              message: `Using existing workspace instead of creating new one`,
-              level: 'info',
-              data: {
-                workspaceId: existingWorkspaceId,
-                userId: dbUser.id
-              }
-            });
-            
-            // Update the existing workspace with the real information
-            workspace = await updateExistingWorkspace(
-              existingWorkspaceId, 
-              formData, 
-              dbUser.id, 
-              dbUser.temp_industry, 
-              dbUser.temp_company_size
-            );
-          }
-        }
-        // Only create a new workspace if we couldn't find any existing workspace
-        else {
           // Create a new workspace if no temp workspace exists
           console.log(`Creating new workspace for user ${dbUser.id} as no existing workspace was found`);
           
@@ -526,7 +473,6 @@ export async function POST(request: Request) {
             };
             Sentry.captureException(workflowErrorFinal);
           }
-        }
 
         // Update user with active workspace and complete onboarding
         await prisma.user.update({
