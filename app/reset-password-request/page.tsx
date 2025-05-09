@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { sanitizeInput } from '../utils/sanitize';
 
 export default function ResetPasswordRequestPage() {
   const [email, setEmail] = useState('');
@@ -23,9 +22,8 @@ export default function ResetPasswordRequestPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const cleanEmail = sanitizeInput(email);
-
     try {
+      const cleanEmail = email;
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,15 +40,17 @@ export default function ResetPasswordRequestPage() {
       } else if (response.status === 400) {
         // Extract wait time from error message using regex
         const waitTimeMatch = data.error?.match(/after (\d+) seconds/);
-        const waitTimeValue = waitTimeMatch ? parseInt(waitTimeMatch[1], 10) : null;
+        const waitTimeValue = waitTimeMatch
+          ? parseInt(waitTimeMatch[1], 10)
+          : null;
         if (process.env.NODE_ENV !== 'production') {
           console.log('Extracted wait time:', waitTimeValue);
         }
         setWaitTime(waitTimeValue);
         toast.error('Password Reset Request Failed', {
-          description: waitTimeValue 
+          description: waitTimeValue
             ? `Please wait ${formatWaitTime(waitTimeValue)} before requesting another password reset.`
-            : "Please wait a few minutes before requesting another password reset.",
+            : 'Please wait a few minutes before requesting another password reset.',
           duration: 7000,
         });
       }
@@ -82,20 +82,23 @@ export default function ResetPasswordRequestPage() {
       if (response.status === 400) {
         // Extract wait time from error message using regex
         const waitTimeMatch = data.error?.match(/after (\d+) seconds/);
-        const waitTimeValue = waitTimeMatch ? parseInt(waitTimeMatch[1], 10) : null;
+        const waitTimeValue = waitTimeMatch
+          ? parseInt(waitTimeMatch[1], 10)
+          : null;
         if (process.env.NODE_ENV !== 'production') {
           console.log('Extracted wait time:', waitTimeValue);
         }
         setWaitTime(waitTimeValue);
         toast.error('Password Reset Request Failed', {
-          description: waitTimeValue 
+          description: waitTimeValue
             ? `Please wait ${formatWaitTime(waitTimeValue)} before requesting another password reset.`
-            : "Please wait a few minutes before requesting another password reset.",
+            : 'Please wait a few minutes before requesting another password reset.',
           duration: 7000,
         });
       } else if (response.ok) {
         toast.success('Email Sent', {
-          description: 'A new password reset email has been sent to your inbox.',
+          description:
+            'A new password reset email has been sent to your inbox.',
           duration: 5000,
         });
       }
@@ -155,7 +158,9 @@ export default function ResetPasswordRequestPage() {
                     Check your email
                   </div>
                   <div className="w-full text-center text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
-                    We've sent a reset link to<br />{email}
+                    We've sent a reset link to
+                    <br />
+                    {email}
                   </div>
                 </div>
               </div>
@@ -173,7 +178,7 @@ export default function ResetPasswordRequestPage() {
 
               {/* Open email app button */}
               <button
-                onClick={() => window.location.href = "mailto:"}
+                onClick={() => (window.location.href = 'mailto:')}
                 className="w-full px-3 py-2 bg-[#4e6bd7] rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] flex justify-center items-center gap-1 text-white text-sm font-semibold font-['Inter'] leading-tight hover:bg-[#374c99] transition-colors duration-300"
               >
                 Open email app
@@ -194,9 +199,11 @@ export default function ResetPasswordRequestPage() {
                       <div
                         className="w-4 h-4 animate-spin"
                         style={{
-                          borderRadius: "50%",
-                          background: "conic-gradient(#4761C4 0%, #F9FAFB 100%)",
-                          maskImage: "radial-gradient(closest-side, transparent 83%, black 84%)"
+                          borderRadius: '50%',
+                          background:
+                            'conic-gradient(#4761C4 0%, #F9FAFB 100%)',
+                          maskImage:
+                            'radial-gradient(closest-side, transparent 83%, black 84%)',
                         }}
                       />
                       Sending...
@@ -223,7 +230,10 @@ export default function ResetPasswordRequestPage() {
 
               {/* Login form fields */}
               <div className="z-10 flex flex-col items-center gap-6 w-full rounded-xl">
-                <form className="flex flex-col items-start gap-5 w-full" onSubmit={handleSubmit}>
+                <form
+                  className="flex flex-col items-start gap-5 w-full"
+                  onSubmit={handleSubmit}
+                >
                   {/* Email field */}
                   <div className="flex flex-col items-start gap-1.5 w-full">
                     <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
@@ -240,7 +250,7 @@ export default function ResetPasswordRequestPage() {
                         placeholder="Email address"
                         className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                         value={email}
-                        onChange={(e) => setEmail(sanitizeInput(e.target.value))}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
                     </div>
@@ -251,16 +261,20 @@ export default function ResetPasswordRequestPage() {
                     type="submit"
                     disabled={isLoading || !email}
                     className={`w-full px-3 py-2 rounded-lg border-2 border-white flex items-center justify-center gap-1 overflow-hidden transition-colors duration-300 ${
-                      isLoading ? "bg-[#F9FAFB]" : "bg-[#4e6bd7] hover:bg-[#374c99]"
+                      isLoading
+                        ? 'bg-[#F9FAFB]'
+                        : 'bg-[#4e6bd7] hover:bg-[#374c99]'
                     }`}
                   >
                     {isLoading ? (
                       <div
                         className="w-5 h-5 animate-spin"
                         style={{
-                          borderRadius: "50%",
-                          background: "conic-gradient(#4761C4 0%, #F9FAFB 100%)",
-                          maskImage: "radial-gradient(closest-side, transparent 83%, black 84%)"
+                          borderRadius: '50%',
+                          background:
+                            'conic-gradient(#4761C4 0%, #F9FAFB 100%)',
+                          maskImage:
+                            'radial-gradient(closest-side, transparent 83%, black 84%)',
                         }}
                       />
                     ) : (
@@ -275,8 +289,8 @@ export default function ResetPasswordRequestPage() {
           )}
 
           {/* Back to login */}
-          <a 
-            href="/login" 
+          <a
+            href="/login"
             className="justify-center items-center gap-1.5 flex cursor-pointer text-inherit no-underline"
           >
             <div className="w-5 h-5 relative flex justify-center items-center">

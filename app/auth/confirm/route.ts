@@ -18,15 +18,18 @@ export async function GET(request: NextRequest) {
   try {
     // Handle password recovery
     if (type === 'recovery' && token_hash) {
-      const { data, error } = await supabase.auth.verifyOtp({
-        token_hash,
-        type: 'recovery'
-      });
+      // const { data, error } = await supabase.auth.verifyOtp({
+      //   token_hash,
+      //   type: 'recovery'
+      // });
       
-      if (error) {
-        console.error('Error verifying recovery token:', error);
-        return NextResponse.redirect(new URL('/login?error=recovery-failed', request.url));
-      }
+      // if (error) {
+      //   console.error('Error verifying recovery token:', error);
+      //   return NextResponse.redirect(new URL('/login?error=recovery-failed', request.url));
+      // }
+
+      // After verifying OTP, immediately sign out to prevent automatic login
+      // await supabase.auth.signOut();
 
       // Set a cookie to indicate that password reset is required and store the user ID
       const response = NextResponse.redirect(new URL('/reset-password', request.url));
@@ -38,14 +41,14 @@ export async function GET(request: NextRequest) {
       });
       
       // Store the user ID in a separate cookie for the reset password page
-      if (data.user) {
-        response.cookies.set('reset-user-id', data.user.id, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 60 * 30 // 30 minutes
-        });
-      }
+      // if (data.user) {
+      //   response.cookies.set('reset-user-id', data.user.id, {
+      //     httpOnly: true,
+      //     secure: process.env.NODE_ENV === 'production',
+      //     sameSite: 'lax',
+      //     maxAge: 60 * 30 // 30 minutes
+      //   });
+      // }
       
       return response;
     }
