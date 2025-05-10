@@ -25,6 +25,7 @@ export interface Block {
   path?: Path; // Optional, the path this block belongs to
   coordinates?: { x: number; y: number } | null; // Optional, block coordinates
   children?: Block[]; // Add this line
+  is_endpoint?: boolean; // Optional, if the block is an endpoint
 }
 
 // Enum for Block types
