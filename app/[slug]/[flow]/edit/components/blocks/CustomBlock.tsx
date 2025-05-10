@@ -455,6 +455,48 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     setShowDropdown(false);
   };
 
+  const handleToggleEndpoint = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDropdown(false);
+
+    try {
+      const response = await fetch(
+        `/api/blocks/${blockData.id}/toggle-endpoint`,
+        {
+          method: 'PATCH',
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Optionally show a toast or error message
+        alert(result.error || 'Failed to toggle endpoint');
+        return;
+      }
+
+      // Update local blockData and paths store
+      setBlockData((prev) => ({
+        ...prev,
+        is_endpoint: result.is_endpoint,
+      }));
+
+      // Optionally update allPaths if you want to keep global state in sync
+      setAllPaths((paths) =>
+        paths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockData.id
+              ? { ...block, is_endpoint: result.is_endpoint }
+              : block
+          ),
+        }))
+      );
+    } catch (error) {
+      alert('Failed to toggle endpoint');
+      console.error(error);
+    }
+  };
+
   const renderDropdown = () => {
     if (!showDropdown) return null;
 
@@ -627,6 +669,36 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
                 Copy Link
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          onClick={handleToggleEndpoint}
+          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
+        >
+          <div
+            style={
+              {
+                '--hover-bg': colors['bg-quaternary'],
+              } as React.CSSProperties
+            }
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          >
+            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
+              <div className="w-4 h-4 relative overflow-hidden">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/flag.svg`}
+                  alt="Toggle Endpoint"
+                  className="w-4 h-4"
+                />
+              </div>
+              <div
+                style={{ color: colors['text-primary'] }}
+                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
+              >
+                {blockData.is_endpoint ? 'Unset endpoint' : 'Set as endpoint'}
               </div>
             </div>
           </div>
@@ -839,6 +911,19 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     handleMouseEnter,
     handleMouseLeave,
   } = useTooltip();
+
+  useEffect(() => {
+    // Find the latest block in allPaths
+    const updatedBlock = allPaths
+      .flatMap((path) => path.blocks)
+      .find((b) => b.id === blockData.id);
+    if (updatedBlock && updatedBlock.is_endpoint !== blockData.is_endpoint) {
+      setBlockData((prev) => ({
+        ...prev,
+        is_endpoint: updatedBlock.is_endpoint,
+      }));
+    }
+  }, [allPaths, blockData.id, blockData.is_endpoint]);
 
   return (
     <BasicBlock {...props}>

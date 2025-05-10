@@ -9,6 +9,16 @@ import { BasicBlock } from './BasicBlock';
 function LastBlock(props: NodeProps & { data: NodeData }) {
   const { id, data, selected } = props;
 
+  // Find the block before this one in its path
+  const pathBlocks = data.path?.blocks || [];
+  const thisBlockIndex = pathBlocks.findIndex((b) => b.id === data.block.id);
+  const prevBlock = thisBlockIndex > 0 ? pathBlocks[thisBlockIndex - 1] : null;
+
+  // If the previous block is_endpoint, hide this component
+  if (prevBlock && prevBlock.is_endpoint) {
+    return null;
+  }
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (data.handleAddBlockOnEdge && data.path) {

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import { Flow } from './Flow';
-import { NodeData, Path, Block } from '../../types';
+import { NodeData, Path, Block, StrokeLine } from '../../types';
 import { getWorkflowStrokeLines } from '../utils/stroke-lines';
 import WorkflowHeader from './WorkflowHeader';
 import { useSearchParams } from 'next/navigation';
@@ -22,7 +22,7 @@ export function ReactFlowPageClient({
   workflowId,
 }: ReactFlowPageClientProps) {
   const [workflowName, setWorkflowName] = useState<string>('');
-  const [strokeLines, setStrokeLines] = useState<any[]>([]);
+  const [strokeLines, setStrokeLines] = useState<StrokeLine[]>([]);
   const [parentFolder, setParentFolder] = useState<string | undefined>();
   const [grandParentFolder, setGrandParentFolder] = useState<
     string | undefined
