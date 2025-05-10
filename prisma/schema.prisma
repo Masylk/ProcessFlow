@@ -235,6 +235,7 @@ model block {
   task_type           task_type?
   workflow_id         Int
   path_id             Int
+  is_endpoint         Boolean?            @default(false)
   delay_seconds       Int?
   delay_event         String?
   delay_type          delay_type?

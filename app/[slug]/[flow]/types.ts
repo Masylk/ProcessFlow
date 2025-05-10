@@ -125,6 +125,7 @@ export interface Block {
     title: string;
     description: string;
   };
+  is_endpoint?: boolean;
 }
 
 // Assuming enums and other interfaces
