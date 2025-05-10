@@ -193,6 +193,7 @@ Table block {
   task_type task_type
   workflow_id Int [not null]
   path_id Int [not null]
+  is_endpoint Boolean [default: false]
   delay_seconds Int
   delay_event String
   delay_type delay_type
