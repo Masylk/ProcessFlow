@@ -29,6 +29,7 @@ import {
   Path,
   Block,
   DelayType,
+  StrokeLine,
 } from '../../types';
 import path from 'path';
 import { processPath } from '../utils/processPath';
@@ -89,8 +90,8 @@ interface FlowProps {
     path_id: number,
     position: number
   ) => Promise<void>;
-  strokeLines: any[];
-  setStrokeLines: React.Dispatch<React.SetStateAction<any[]>>;
+  strokeLines: StrokeLine[];
+  setStrokeLines: React.Dispatch<React.SetStateAction<StrokeLine[]>>;
   newBlockId: number | null;
   clearNewBlockId: () => void;
 }
@@ -344,6 +345,8 @@ export function Flow({
               target: `block-${strokeLine.target_block_id}`,
               label: strokeLine.label,
               onStrokeLinesUpdate: setStrokeLines,
+              onPathsUpdate: setPaths,
+              strokeLines: strokeLines,
               isVisible: visibility,
             },
             style: { zIndex: 1000 },

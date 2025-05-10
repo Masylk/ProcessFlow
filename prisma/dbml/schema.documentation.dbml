@@ -193,6 +193,7 @@ Table block {
   task_type task_type [note: 'Manual or automatic task']
   workflow_id Int [not null, note: 'Parent workflow']
   path_id Int [not null, note: 'Parent path']
+  is_endpoint Boolean [default: false, note: 'Marks this block as an endpoint in the path']
   delay_seconds Int [note: 'Wait time for delay blocks']
   delay_event String [note: 'Event to wait for in delay blocks']
   delay_type delay_type [note: 'Fixed or event-based delay']

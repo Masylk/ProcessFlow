@@ -166,16 +166,24 @@ export default function SharePage({
                       .find((b: Block) => b.id === strokeLine.source_block_id);
 
                     if (sourceBlock) {
-                      sourceBlock.child_paths = [
-                        ...(sourceBlock.child_paths || []),
-                        {
-                          path_id: continuePath.id,
-                          block_id: sourceBlock.id,
-                          created_at: new Date().toISOString(),
-                          path: continuePath,
-                          block: sourceBlock,
-                        },
-                      ];
+                      if (
+                        sourceBlock.is_endpoint &&
+                        (blocksAfterSource[0].type === 'LAST' ||
+                          blocksAfterSource[0].type === 'END')
+                      ) {
+                        sourceBlock.child_paths = sourceBlock.child_paths;
+                      } else {
+                        sourceBlock.child_paths = [
+                          ...(sourceBlock.child_paths || []),
+                          {
+                            path_id: continuePath.id,
+                            block_id: sourceBlock.id,
+                            created_at: new Date().toISOString(),
+                            path: continuePath,
+                            block: sourceBlock,
+                          },
+                        ];
+                      }
                     }
 
                     newPaths.push(continuePath);
