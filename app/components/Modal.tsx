@@ -12,7 +12,7 @@ export interface ModalProps {
   /**
    * The title of the modal
    */
-  title: string;
+  title?: string;
 
   /**
    * Optional subtitle or description of the modal
@@ -139,30 +139,34 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* Header */}
         <div
-          className={`flex flex-col items-start gap-4 px-6 pt-6 ${showHeaderSeparator ? 'pb-6 border-b' : ''}`}
+          className={`px-6 pt-6 ${showHeaderSeparator ? 'pb-6 border-b' : ''}`}
           style={{
             borderColor: showHeaderSeparator
               ? colors['border-secondary']
               : 'transparent',
           }}
         >
-          {renderIcon()}
-          <div className="flex flex-col gap-1">
-            <h2
-              className="text-lg font-medium"
-              style={{ color: colors['text-primary'] }}
-            >
-              {title}
-            </h2>
-            {subtitle && (
-              <p
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
-              >
-                {subtitle}
-              </p>
-            )}
-          </div>
+          {(icon || title) && (
+            <div className="flex flex-row items-center gap-4">
+              {renderIcon()}
+              <div className="flex flex-col gap-1">
+                <h2
+                  className="text-lg font-medium"
+                  style={{ color: colors['text-primary'] }}
+                >
+                  {title}
+                </h2>
+                {subtitle && (
+                  <p
+                    className="text-sm"
+                    style={{ color: colors['text-secondary'] }}
+                  >
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content */}

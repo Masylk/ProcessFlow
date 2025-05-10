@@ -60,6 +60,7 @@ import EventDelayBlock from './blocks/EventDelayBlock';
 import { useStrokeLinesStore } from '../store/strokeLinesStore';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { useLoadingStore } from '../store/loadingStore';
+import EditLinksModal from './modals/EditLinksModal';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -297,6 +298,24 @@ export function Flow({
 
   // Add state for linkNode
   const [linkNode, setLinkNode] = useState<Node | null>(null);
+
+  // Add state for ConnectNodeModal at the top of Flow
+  const [showConnectNodeModal, setShowConnectNodeModal] = useState(false);
+  const [connectModalSourceNode, setConnectModalSourceNode] = useState<Node | null>(null);
+  const [connectModalTargetNode, setConnectModalTargetNode] = useState<Node | null>(null);
+  const [connectModalLabel, setConnectModalLabel] = useState<string>('');
+  const { setShowEditLinksModal } = useModalStore();
+  const [editStrokeLineId, setEditStrokeLineId] = useState<string | undefined>(undefined);
+  const [isEditLink, setIsEditLink] = useState(false);
+
+  // Add a callback to update a stroke line in state
+  const handleLinkUpdated = useCallback((updatedStrokeLine: StrokeLine) => {
+    setStrokeLines((prev) =>
+      prev.map((line) =>
+        line.id === updatedStrokeLine.id ? { ...line, ...updatedStrokeLine } : line
+      )
+    );
+  }, [setStrokeLines]);
 
   // Main effect for creating nodes and edges
   useEffect(() => {
@@ -792,6 +811,32 @@ export function Flow({
           onPreviewUpdate={setPreviewEdge}
         />
       )}
+
+      {showConnectNodeModal && connectModalSourceNode && connectModalTargetNode && (
+        <ConnectNodeModal
+          onClose={() => setShowConnectNodeModal(false)}
+          onConfirm={() => setShowConnectNodeModal(false)}
+          sourceNode={connectModalSourceNode}
+          availableNodes={getNodes()}
+          initialTargetNodeId={connectModalTargetNode.id}
+          initialLabel={connectModalLabel}
+          editStrokeLineId={editStrokeLineId}
+          isEdit={isEditLink}
+          onLinkUpdated={handleLinkUpdated}
+        />
+      )}
+
+      <EditLinksModal
+        onEditLink={(sourceNode, targetNode, label, strokeLineId) => {
+          setConnectModalSourceNode(sourceNode);
+          setConnectModalTargetNode(targetNode);
+          setConnectModalLabel(label);
+          setEditStrokeLineId(strokeLineId);
+          setIsEditLink(true);
+          setShowConnectNodeModal(true);
+          setShowEditLinksModal(false);
+        }}
+      />
 
       <Sidebar workspaceId={workspaceId} workflowId={workflowId} />
 

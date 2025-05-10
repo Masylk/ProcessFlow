@@ -258,7 +258,7 @@ export async function DELETE(request: Request) {
       });
     }
 
-    return NextResponse.json({ message: 'Stroke line deleted successfully' });
+    return NextResponse.json({ message: 'Link deleted successfully' });
   } catch (error) {
     console.error('Error deleting stroke line:', error);
     return NextResponse.json(
