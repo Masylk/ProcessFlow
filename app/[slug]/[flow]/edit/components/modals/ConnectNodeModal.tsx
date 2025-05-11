@@ -10,7 +10,9 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { ThemeProvider } from '@/app/context/ThemeContext';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
-import { Block, BlockType } from '../../../types';
+import { Block, BlockType, NodeData } from '../../../types';
+import Modal from '@/app/components/Modal';
+import { updateStrokeLine } from '../../utils/stroke-lines';
 
 interface ConnectNodeModalProps {
   onClose: () => void;
@@ -18,6 +20,11 @@ interface ConnectNodeModalProps {
   sourceNode: Node;
   availableNodes: Node[];
   onPreviewUpdate?: (edge: Edge | null) => void;
+  initialTargetNodeId?: string;
+  initialLabel?: string;
+  editStrokeLineId?: string;
+  isEdit?: boolean;
+  onLinkUpdated?: (updatedStrokeLine: any) => void;
 }
 
 const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
@@ -26,11 +33,15 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   sourceNode,
   availableNodes,
   onPreviewUpdate,
+  initialTargetNodeId,
+  initialLabel,
+  editStrokeLineId,
+  isEdit,
+  onLinkUpdated,
 }) => {
-  const [step, setStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNodeId, setSelectedNodeId] = useState<string>('');
-  const [label, setLabel] = useState('');
+  const [selectedNodeId, setSelectedNodeId] = useState<string>(initialTargetNodeId || '');
+  const [label, setLabel] = useState(initialLabel || '');
   const { fitView, getNode } = useReactFlow();
   const colors = useColors();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
@@ -46,6 +57,8 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setIsModalOpen = useIsModalOpenStore((state) => state.setIsModalOpen);
+  const [originalTargetNodeId] = useState(initialTargetNodeId || '');
+  const [originalLabel] = useState(initialLabel || '');
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -133,20 +146,6 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // Set focus on label input when moving to step 2
-  useEffect(() => {
-    if (step === 2) {
-      // Use a tiny delay to ensure the DOM is updated
-      const timer = setTimeout(() => {
-        const labelInput = document.getElementById('connection-label-input');
-        if (labelInput) {
-          (labelInput as HTMLInputElement).focus();
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -200,18 +199,33 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     e.stopPropagation();
   };
 
-  const handleNext = () => {
-    if (selectedNodeId) {
-      setStep(2);
-    }
-  };
-
   const handleConfirm = async () => {
     if (selectedNodeId && label.trim()) {
       try {
         setError(null);
         setIsLoading(true);
-        await onConfirm(selectedNodeId, label);
+        if (isEdit && editStrokeLineId) {
+          // Update existing stroke line
+          const nodeData = sourceNode.data as NodeData;
+          const workflowId = nodeData.path?.workflow_id;
+          if (!workflowId) {
+            setError('Workflow ID is missing from source node');
+            setIsLoading(false);
+            return;
+          }
+          const updated = await updateStrokeLine({
+            id: parseInt(editStrokeLineId.replace('stroke-edge-', '')),
+            source_block_id: parseInt(sourceNode.id.replace('block-', '')),
+            target_block_id: parseInt(selectedNodeId.replace('block-', '')),
+            workflow_id: workflowId,
+            label: label,
+          });
+          if (!updated) throw new Error('Failed to update link');
+          if (onLinkUpdated) onLinkUpdated(updated);
+          onClose(); // Close modal after successful update
+        } else {
+          await onConfirm(selectedNodeId, label);
+        }
         setPreviewEdge(null);
         onPreviewUpdate?.(null);
       } catch (err) {
@@ -326,75 +340,136 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           className="flex items-center gap-4 px-6 pt-6 pb-6 border-b"
           style={{ borderColor: colors['border-secondary'] }}
         >
-          {step === 1 ? (
-            <div
-              className="w-12 h-12 p-3 rounded-[10px] flex items-center justify-center"
-              style={{
-                backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-light'],
-                boxShadow: colors['shadow-sm'],
-              }}
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`}
-                alt="Connect"
-                className="w-6 h-6"
-              />
-            </div>
-          ) : (
-            <ButtonNormal
-              variant="tertiary"
-              size="small"
-              onClick={() => setStep(1)}
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/arrow-left.svg`}
-            >
-              Back
-            </ButtonNormal>
-          )}
+          <div
+            className="w-12 h-12 p-3 rounded-[10px] flex items-center justify-center"
+            style={{
+              backgroundColor: colors['bg-secondary'],
+              borderColor: colors['border-light'],
+              boxShadow: colors['shadow-sm'],
+            }}
+          >
+            <img
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`}
+              alt="Connect blocks"
+              className="w-6 h-6"
+            />
+          </div>
           <h2
             className="text-lg font-medium"
             style={{ color: colors['text-primary'] }}
           >
-            {step === 1 ? 'Connect blocks' : ''}
+            Create a path to a node
           </h2>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          {step === 1 ? (
-            <div className="flex flex-col gap-4">
-              <div
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
-              >
-                Select Block
-              </div>
+          <div className="flex flex-col gap-4">
+            <div
+              className="text-sm font-semibold"
+              style={{ color: colors['text-secondary'] }}
+            >
+              Select Block
+            </div>
 
-              {/* Two Column Layout */}
-              <div className="flex justify-end">
-                <div className="flex gap-0">
-                  {/* Connection Line Image Column */}
-                  <div className="w-4 flex-shrink-0 relative">
-                    <div className="absolute top-[60px] bottom-[60px]">
+            {/* Two Column Layout */}
+            <div className="flex justify-end">
+              <div className="flex gap-0">
+                {/* Connection Line Image Column */}
+                <div className="w-4 flex-shrink-0 relative">
+                  <div className="absolute top-[60px] bottom-[60px]">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-line.svg`}
+                      alt="Connection line"
+                      className="h-full w-full object-fill"
+                    />
+                    {/* Check Icon */}
+                    <div className="absolute left-[0.4px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center">
                       <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-line.svg`}
-                        alt="Connection line"
-                        className="h-full w-full object-fill"
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-white.svg`}
+                        alt="Check"
+                        className="w-3 h-3"
                       />
-                      {/* Check Icon */}
-                      <div className="absolute left-[0.4px] top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon-white.svg`}
-                          alt="Check"
-                          className="w-3 h-3"
-                        />
-                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Nodes Column */}
+                <div className="w-[450px] flex flex-col gap-6">
+                  {/* Source Block */}
+                  <div
+                    className="w-full p-4 rounded-lg"
+                    style={{
+                      backgroundColor: colors['bg-secondary'],
+                      borderColor: colors['border-light'],
+                      border: `1px solid ${colors['border-light']}`,
+                    }}
+                  >
+                    <div
+                      className="text-sm mb-2"
+                      style={{ color: colors['text-secondary'] }}
+                    >
+                      Node 1
+                    </div>
+                    <div
+                      className="text-xs mb-1"
+                      style={{ color: colors['text-tertiary'] }}
+                    >
+                      #{(sourceNode.data.block as Block).type}
+                    </div>
+                    <div
+                      className="text-sm font-medium break-words line-clamp-2"
+                      style={{ color: colors['text-primary'] }}
+                    >
+                      {sourceNode.data.label as string}
                     </div>
                   </div>
 
-                  {/* Nodes Column */}
-                  <div className="w-[450px] flex flex-col gap-6">
-                    {/* Source Block */}
+                  {/* Target Block */}
+                  {selectedNodeId ? (
+                    <div
+                      className="w-full p-4 rounded-lg"
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
+                        borderColor: colors['border-light'],
+                        border: `1px solid ${colors['border-light']}`,
+                      }}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div
+                          className="text-sm"
+                          style={{ color: colors['text-secondary'] }}
+                        >
+                          Node 2
+                        </div>
+                        <button
+                          onClick={() => {
+                            clearSelection();
+                          }}
+                          style={{ color: colors['text-tertiary'] }}
+                          className="hover:text-gray-600"
+                        >
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                            alt="Delete"
+                            className="w-4 h-4"
+                          />
+                        </button>
+                      </div>
+                      <div
+                        className="text-xs mb-1"
+                        style={{ color: colors['text-tertiary'] }}
+                      >
+                        #{(getNode(selectedNodeId)?.data.block as Block).type}
+                      </div>
+                      <div
+                        className="text-sm font-medium break-words line-clamp-2"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        {getNode(selectedNodeId)?.data.label as string}
+                      </div>
+                    </div>
+                  ) : (
                     <div
                       className="w-full p-4 rounded-lg"
                       style={{
@@ -407,372 +482,286 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                         className="text-sm mb-2"
                         style={{ color: colors['text-secondary'] }}
                       >
-                        Node 1
+                        Node 2
                       </div>
-                      <div
-                        className="text-xs mb-1"
-                        style={{ color: colors['text-tertiary'] }}
-                      >
-                        #{(sourceNode.data.block as Block).type}
-                      </div>
-                      <div
-                        className="text-sm font-medium break-words line-clamp-2"
-                        style={{ color: colors['text-primary'] }}
-                      >
-                        {sourceNode.data.label as string}
-                      </div>
-                    </div>
+                      <div className="relative" ref={dropdownRef}>
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => setIsInputFocused(true)}
+                          ref={inputRef}
+                        >
+                          <InputField
+                            type="icon-leading"
+                            iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
+                            value={searchTerm}
+                            onChange={handleChange}
+                            placeholder="Search for a node..."
+                          />
+                        </div>
 
-                    {/* Target Block */}
-                    {selectedNodeId ? (
-                      <div
-                        className="w-full p-4 rounded-lg"
-                        style={{
-                          backgroundColor: colors['bg-secondary'],
-                          borderColor: colors['border-light'],
-                          border: `1px solid ${colors['border-light']}`,
-                        }}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div
-                            className="text-sm"
-                            style={{ color: colors['text-secondary'] }}
-                          >
-                            Node 2
-                          </div>
-                          <button
-                            onClick={() => {
-                              clearSelection();
-                            }}
-                            style={{ color: colors['text-tertiary'] }}
-                            className="hover:text-gray-600"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </div>
                         <div
-                          className="text-xs mb-1"
-                          style={{ color: colors['text-tertiary'] }}
+                          className="flex items-center gap-2 absolute right-2 top-2.5 z-50 cursor-pointer transition-transform duration-200"
+                          style={{
+                            transform: isInputFocused
+                              ? 'rotate(180deg)'
+                              : 'rotate(0deg)',
+                          }}
+                          onClick={() => setIsInputFocused(!isInputFocused)}
                         >
-                          #{(getNode(selectedNodeId)?.data.block as Block).type}
-                        </div>
-                        <div
-                          className="text-sm font-medium break-words line-clamp-2"
-                          style={{ color: colors['text-primary'] }}
-                        >
-                          {getNode(selectedNodeId)?.data.label as string}
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        className="w-full p-4 rounded-lg"
-                        style={{
-                          backgroundColor: colors['bg-secondary'],
-                          borderColor: colors['border-light'],
-                          border: `1px solid ${colors['border-light']}`,
-                        }}
-                      >
-                        <div
-                          className="text-sm mb-2"
-                          style={{ color: colors['text-secondary'] }}
-                        >
-                          Node 2
-                        </div>
-                        <div className="relative" ref={dropdownRef}>
-                          <div
-                            className="cursor-pointer"
-                            onClick={() => setIsInputFocused(true)}
-                            ref={inputRef}
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke={colors['text-tertiary']}
+                            viewBox="0 0 24 24"
                           >
-                            <InputField
-                              type="icon-leading"
-                              iconUrl={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/search-icon.svg`}
-                              value={searchTerm}
-                              onChange={handleChange}
-                              placeholder="Search for a node..."
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
                             />
-                          </div>
+                          </svg>
+                        </div>
 
+                        {/* Search list with improved UX */}
+                        {isInputFocused && (
                           <div
-                            className="flex items-center gap-2 absolute right-2 top-2.5 z-50 cursor-pointer transition-transform duration-200"
+                            className={`absolute left-0 right-0 rounded-lg shadow-lg max-h-[240px] overflow-y-auto z-10 transition-all duration-200 ease-in-out border py-1 ${
+                              dropdownPosition === 'top'
+                                ? 'bottom-[calc(100%_+_5px)]'
+                                : 'top-[calc(100%_+_5px)]'
+                            }`}
                             style={{
-                              transform: isInputFocused
-                                ? 'rotate(180deg)'
-                                : 'rotate(0deg)',
+                              backgroundColor: colors['bg-secondary'],
+                              borderColor: colors['border-secondary'],
+                              animation: 'fadeIn 0.2s ease-out',
                             }}
-                            onClick={() => setIsInputFocused(!isInputFocused)}
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke={colors['text-tertiary']}
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </div>
-
-                          {/* Search list with improved UX */}
-                          {isInputFocused && (
-                            <div
-                              className={`absolute left-0 right-0 rounded-lg shadow-lg max-h-[240px] overflow-y-auto z-10 transition-all duration-200 ease-in-out border py-1 ${
-                                dropdownPosition === 'top'
-                                  ? 'bottom-[calc(100%_+_5px)]'
-                                  : 'top-[calc(100%_+_5px)]'
-                              }`}
-                              style={{
-                                backgroundColor: colors['bg-secondary'],
-                                borderColor: colors['border-secondary'],
-                                animation: 'fadeIn 0.2s ease-out',
-                              }}
-                            >
-                              {isLoading ? (
-                                <div className="p-4 text-sm text-center flex items-center justify-center">
-                                  <div
-                                    className="w-5 h-5 border-2 rounded-full border-t-transparent animate-spin mr-2"
-                                    style={{
-                                      borderColor: `${colors['accent-primary']} transparent ${colors['accent-primary']} ${colors['accent-primary']}`,
-                                    }}
-                                  ></div>
-                                  <span
-                                    style={{ color: colors['text-secondary'] }}
-                                  >
-                                    Searching...
-                                  </span>
-                                </div>
-                              ) : filteredNodes.length > 0 ? (
-                                filteredNodes.map((node) => (
-                                  <button
-                                    key={node.id}
-                                    onMouseDown={(e) => {
-                                      e.preventDefault(); // Prevent blur from firing before click
-                                      handleNodeClick(node.id);
-                                    }}
-                                    className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
-                                    style={{
-                                      color: colors['text-primary'],
-                                      backgroundColor:
-                                        selectedNodeId === node.id
-                                          ? `${colors['accent-primary']}15`
-                                          : 'transparent',
-                                    }}
-                                    onMouseOver={(e) => {
-                                      if (selectedNodeId !== node.id) {
+                            {isLoading ? (
+                              <div className="p-4 text-sm text-center flex items-center justify-center">
+                                <div
+                                  className="w-5 h-5 border-2 rounded-full border-t-transparent animate-spin mr-2"
+                                  style={{
+                                    borderColor: `${colors['accent-primary']} transparent ${colors['accent-primary']} ${colors['accent-primary']}`,
+                                  }}
+                                ></div>
+                                <span
+                                  style={{ color: colors['text-secondary'] }}
+                                >
+                                  Searching...
+                                </span>
+                              </div>
+                            ) : filteredNodes.length > 0 ? (
+                              filteredNodes.map((node) => (
+                                <button
+                                  key={node.id}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent blur from firing before click
+                                    handleNodeClick(node.id);
+                                  }}
+                                  className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
+                                  style={{
+                                    color: colors['text-primary'],
+                                    backgroundColor:
+                                      selectedNodeId === node.id
+                                        ? `${colors['accent-primary']}15`
+                                        : 'transparent',
+                                  }}
+                                  onMouseOver={(e) => {
+                                    if (selectedNodeId !== node.id) {
+                                      const innerDiv =
+                                        e.currentTarget.querySelector('div');
+                                      if (innerDiv) {
+                                        innerDiv.style.backgroundColor =
+                                          colors['bg-tertiary'];
+                                      }
+                                    }
+                                  }}
+                                  onMouseOut={(e) => {
+                                    if (selectedNodeId !== node.id) {
+                                      const innerDiv =
+                                        e.currentTarget.querySelector('div');
+                                      if (innerDiv) {
+                                        innerDiv.style.backgroundColor =
+                                          'transparent';
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
+                                    <div className="w-5 h-5 flex-shrink-0">
+                                      <img
+                                        src={getNodeTypeIcon(
+                                          node.data.type as string
+                                        )}
+                                        alt={`${node.data.type} icon`}
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                    <div className="text-sm font-medium">
+                                      {node.data.label as string}
+                                    </div>
+                                    {selectedNodeId === node.id && (
+                                      <div className="ml-auto">
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke={colors['accent-primary']}
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M5 13l4 4L19 7"
+                                          />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                              ))
+                            ) : searchTerm ? (
+                              <div
+                                className="p-6 text-sm text-center flex flex-col items-center justify-center gap-2"
+                                style={{ color: colors['text-tertiary'] }}
+                              >
+                                <svg
+                                  className="w-6 h-6 mb-1"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke={colors['text-tertiary']}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.5}
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                  />
+                                </svg>
+                                <span>No matching nodes found</span>
+                                <span className="text-xs opacity-80">
+                                  Try a different search term
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="p-4 text-sm">
+                                {availableNodes
+                                  .filter((node) => node.data.type === 'STEP')
+                                  .slice(0, 5)
+                                  .map((node) => (
+                                    <button
+                                      key={node.id}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handleNodeClick(node.id);
+                                      }}
+                                      className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
+                                      style={{
+                                        color: colors['text-primary'],
+                                      }}
+                                      onMouseOver={(e) => {
                                         const innerDiv =
-                                          e.currentTarget.querySelector('div');
+                                          e.currentTarget.querySelector(
+                                            'div'
+                                          );
                                         if (innerDiv) {
                                           innerDiv.style.backgroundColor =
                                             colors['bg-tertiary'];
                                         }
-                                      }
-                                    }}
-                                    onMouseOut={(e) => {
-                                      if (selectedNodeId !== node.id) {
+                                      }}
+                                      onMouseOut={(e) => {
                                         const innerDiv =
-                                          e.currentTarget.querySelector('div');
+                                          e.currentTarget.querySelector(
+                                            'div'
+                                          );
                                         if (innerDiv) {
                                           innerDiv.style.backgroundColor =
                                             'transparent';
                                         }
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
-                                      <div className="w-5 h-5 flex-shrink-0">
-                                        <img
-                                          src={getNodeTypeIcon(
-                                            node.data.type as string
-                                          )}
-                                          alt={`${node.data.type} icon`}
-                                          className="w-full h-full object-contain"
-                                        />
-                                      </div>
-                                      <div className="text-sm font-medium">
-                                        {node.data.label as string}
-                                      </div>
-                                      {selectedNodeId === node.id && (
-                                        <div className="ml-auto">
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke={colors['accent-primary']}
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M5 13l4 4L19 7"
-                                            />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </button>
-                                ))
-                              ) : searchTerm ? (
-                                <div
-                                  className="p-6 text-sm text-center flex flex-col items-center justify-center gap-2"
-                                  style={{ color: colors['text-tertiary'] }}
-                                >
-                                  <svg
-                                    className="w-6 h-6 mb-1"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke={colors['text-tertiary']}
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={1.5}
-                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
-                                  </svg>
-                                  <span>No matching nodes found</span>
-                                  <span className="text-xs opacity-80">
-                                    Try a different search term
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="p-4 text-sm">
-                                  {availableNodes
-                                    .filter((node) => node.data.type === 'STEP')
-                                    .slice(0, 5)
-                                    .map((node) => (
-                                      <button
-                                        key={node.id}
-                                        onMouseDown={(e) => {
-                                          e.preventDefault();
-                                          handleNodeClick(node.id);
-                                        }}
-                                        className="w-full text-left text-sm transition-colors flex items-center justify-between p-[1px] px-[6px]"
-                                        style={{
-                                          color: colors['text-primary'],
-                                        }}
-                                        onMouseOver={(e) => {
-                                          const innerDiv =
-                                            e.currentTarget.querySelector(
-                                              'div'
-                                            );
-                                          if (innerDiv) {
-                                            innerDiv.style.backgroundColor =
-                                              colors['bg-tertiary'];
-                                          }
-                                        }}
-                                        onMouseOut={(e) => {
-                                          const innerDiv =
-                                            e.currentTarget.querySelector(
-                                              'div'
-                                            );
-                                          if (innerDiv) {
-                                            innerDiv.style.backgroundColor =
-                                              'transparent';
-                                          }
-                                        }}
-                                      >
-                                        <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
-                                          <div className="w-5 h-5 flex-shrink-0">
-                                            <img
-                                              src={getNodeTypeIcon(
-                                                node.data.type as string
-                                              )}
-                                              alt={`${node.data.type} icon`}
-                                              className="w-full h-full object-contain"
-                                            />
-                                          </div>
-                                          <div className="text-sm font-medium">
-                                            {node.data.label as string}
-                                          </div>
-                                        </div>
-                                      </button>
-                                    ))}
-                                  {availableNodes.filter(
-                                    (node) => node.data.type === 'STEP'
-                                  ).length > 5 && (
-                                    <div
-                                      className="px-4 py-2 text-xs text-center"
-                                      style={{ color: colors['text-tertiary'] }}
+                                      }}
                                     >
-                                      Type to search more nodes
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                                      <div className="flex items-center gap-2 w-full rounded-[6px] py-[10px] px-[10px] pl-[8px]">
+                                        <div className="w-5 h-5 flex-shrink-0">
+                                          <img
+                                            src={getNodeTypeIcon(
+                                              node.data.type as string
+                                            )}
+                                            alt={`${node.data.type} icon`}
+                                            className="w-full h-full object-contain"
+                                          />
+                                        </div>
+                                        <div className="text-sm font-medium">
+                                          {node.data.label as string}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                {availableNodes.filter(
+                                  (node) => node.data.type === 'STEP'
+                                ).length > 5 && (
+                                  <div
+                                    className="px-4 py-2 text-xs text-center"
+                                    style={{ color: colors['text-tertiary'] }}
+                                  >
+                                    Type to search more nodes
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div
-                className="text-sm"
-                style={{ color: colors['text-secondary'] }}
-              >
-                Add a label to that path
-              </div>
-              <div className="flex flex-col gap-6">
-                <div id="connection-label-input">
-                  <InputField
-                    value={label}
-                    onChange={(value) => setLabel(value)}
-                    placeholder="Enter a label for this connection"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="flex flex-col gap-4">
-              {error && (
-                <div
-                  className="p-4 rounded-lg flex items-center gap-3 text-sm"
-                  style={{
-                    backgroundColor: `${colors['error-primary']}15`,
-                    color: colors['error-primary'],
-                    border: `1px solid ${colors['error-primary']}25`,
-                  }}
+            
+            {/* Link Name Input - Added here */}
+            <div className="mt-6">
+              <div className="flex items-center gap-1 mb-2">
+                <label
+                  className="text-sm font-semibold"
+                  style={{ color: colors['text-secondary'] }}
                 >
-                  <svg
-                    className="w-5 h-5 flex-shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span style={{ color: colors['error-primary'] }}>
-                    {error}
-                  </span>
-                </div>
-              )}
+                  Link name
+                </label>
+                <span style={{ color: colors['accent-primary'] }}>*</span>
+              </div>
+              <InputField
+                value={label}
+                onChange={(value) => setLabel(value)}
+                placeholder="Enter a label for this connection"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div
+              className="p-4 rounded-lg flex items-center gap-3 text-sm mt-4"
+              style={{
+                backgroundColor: `${colors['error-primary']}15`,
+                color: colors['error-primary'],
+                border: `1px solid ${colors['error-primary']}25`,
+              }}
+            >
+              <svg
+                className="w-5 h-5 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span style={{ color: colors['error-primary'] }}>
+                {error}
+              </span>
             </div>
           )}
         </div>
@@ -793,21 +782,20 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             </ButtonNormal>
             <ButtonNormal
               variant="primary"
-              onClick={step === 1 ? handleNext : handleConfirm}
+              onClick={handleConfirm}
               disabled={
-                step === 1 ? !selectedNodeId : !label.trim() || isLoading
+                !selectedNodeId || !label.trim() || isLoading ||
+                (isEdit && selectedNodeId === originalTargetNodeId && label === originalLabel)
               }
               size="small"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Creating...</span>
+                  <span>{isEdit ? 'Updating...' : 'Creating...'}</span>
                 </div>
-              ) : step === 1 ? (
-                'Next'
               ) : (
-                'Create connection'
+                isEdit ? 'Update link' : 'Create link'
               )}
             </ButtonNormal>
           </div>

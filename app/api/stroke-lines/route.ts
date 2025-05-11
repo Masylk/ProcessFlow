@@ -224,11 +224,40 @@ export async function DELETE(request: Request) {
       );
     }
 
+    // Fetch the stroke line to get source_block_id and target_block_id
+    const strokeLine = await prisma.stroke_line.findUnique({
+      where: { id: parseInt(id) },
+      select: { source_block_id: true, target_block_id: true },
+    });
+    if (!strokeLine) {
+      return NextResponse.json(
+        { error: 'Stroke line not found' },
+        { status: 404 }
+      );
+    }
+
+    const { source_block_id } = strokeLine;
+
     await prisma.stroke_line.delete({
       where: { id: parseInt(id) },
     });
 
-    return NextResponse.json({ message: 'Stroke line deleted successfully' });
+    // Count remaining stroke lines where this block is the source and NOT self-referencing
+    const remainingCount = await prisma.stroke_line.count({
+      where: {
+        source_block_id,
+      },
+    });
+
+    if (remainingCount === 0) {
+      // Set is_endpoint to false
+      await prisma.block.update({
+        where: { id: source_block_id },
+        data: { is_endpoint: false },
+      });
+    }
+
+    return NextResponse.json({ message: 'Link deleted successfully' });
   } catch (error) {
     console.error('Error deleting stroke line:', error);
     return NextResponse.json(

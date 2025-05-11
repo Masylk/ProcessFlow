@@ -33,13 +33,6 @@ import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { CustomTooltip } from '@/app/components/CustomTooltip';
 
-interface CustomBlockProps extends NodeProps {
-  data: NodeData & {
-    onPreviewUpdate?: (edge: Edge | null) => void;
-    // ... other data props
-  };
-}
-
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
@@ -362,17 +355,40 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setConnectData({
-      sourceNode: {
-        id,
-        data,
-        position: { x: 0, y: 0 },
-        type: 'custom',
-        width: undefined,
-        height: undefined,
-      } as Node,
-    });
-    setShowConnectModal(true);
+
+    // Check if this block has stroke lines
+    const hasStrokeLines = getEdges().some(
+      (edge) => edge.source === id && edge.type === 'strokeEdge'
+    );
+
+    if (hasStrokeLines) {
+      // Set edit links data and show the modal
+      setEditLinksData({
+        sourceNode: {
+          id,
+          data,
+          position: { x: 0, y: 0 },
+          type: 'custom',
+          width: undefined,
+          height: undefined,
+        } as Node<NodeData>,
+      });
+      setShowEditLinksModal(true);
+    } else {
+      // Original connect behavior
+      setConnectData({
+        sourceNode: {
+          id,
+          data,
+          position: { x: 0, y: 0 },
+          type: 'custom',
+          width: undefined,
+          height: undefined,
+        },
+      });
+      setShowConnectModal(true);
+    }
+
     setShowDropdown(false);
   };
 
@@ -484,8 +500,20 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`}
-                  alt="Connect"
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
+                    getEdges().some(
+                      (edge) => edge.source === id && edge.type === 'strokeEdge'
+                    )
+                      ? 'connect-node.svg'
+                      : 'connect-node.svg'
+                  }`}
+                  alt={
+                    getEdges().some(
+                      (edge) => edge.source === id && edge.type === 'strokeEdge'
+                    )
+                      ? 'Edit Links'
+                      : 'Connect'
+                  }
                   className="w-4 h-4"
                 />
               </div>
@@ -493,7 +521,11 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                Connect block
+                {getEdges().some(
+                  (edge) => edge.source === id && edge.type === 'strokeEdge'
+                )
+                  ? 'Edit links'
+                  : 'Connect block'}
               </div>
             </div>
           </div>
@@ -839,6 +871,25 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     handleMouseEnter,
     handleMouseLeave,
   } = useTooltip();
+
+  useEffect(() => {
+    // Find the latest block in allPaths
+    const updatedBlock = allPaths
+      .flatMap((path) => path.blocks)
+      .find((b) => b.id === blockData.id);
+    if (updatedBlock && updatedBlock.is_endpoint !== blockData.is_endpoint) {
+      setBlockData((prev) => ({
+        ...prev,
+        is_endpoint: updatedBlock.is_endpoint,
+      }));
+    }
+  }, [allPaths, blockData.id, blockData.is_endpoint]);
+
+  // After the other useModalStore hooks, add these two:
+  const setShowEditLinksModal = useModalStore(
+    (state) => state.setShowEditLinksModal
+  );
+  const setEditLinksData = useModalStore((state) => state.setEditLinksData);
 
   return (
     <BasicBlock {...props}>

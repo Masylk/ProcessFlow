@@ -99,7 +99,7 @@ const tabs: Tab[] = [
     label: 'Link',
     content: [
       {
-        title: 'Link Block',
+        title: 'Link',
         description: 'The Link allows you to create connections between blocks that don\'t follow the standard top-to-bottom flow. This is essential for representing complex processes that include cycles, loops, decision points with returns to previous steps, or any non-linear flow.',
         image: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/connect-node.svg`
       },
@@ -389,7 +389,7 @@ export function DocumentationModal({ onClose }: DocumentationModalProps) {
                   className="text-sm"
                   style={{ color: colors['text-secondary'] }}
                 >
-                  Learn how to use {tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()} blocks in your workflow
+                  Learn how to use a {tabs.find(tab => tab.id === activeTab)?.label.toLowerCase()} in your flow
                 </p>
               </div>
               <ButtonNormal

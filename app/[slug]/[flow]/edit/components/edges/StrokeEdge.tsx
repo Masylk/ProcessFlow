@@ -24,6 +24,8 @@ import { updateStrokeLineControlPoints } from '../../utils/stroke-lines';
 import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 import { BasicEdge } from './BasicEdge';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
+import { usePathsStore } from '../../store/pathsStore';
+import { Block, StrokeLine } from '../../../types';
 
 interface StrokeEdgeData {
   [key: string]: unknown;
@@ -37,6 +39,8 @@ interface StrokeEdgeData {
   isVisible?: boolean;
   onStrokeLinesUpdate?: (updateFn: (prev: any[]) => any[]) => void;
   controlPoints?: { x: number; y: number }[];
+  strokeLines?: StrokeLine[];
+  onPathsUpdate?: (updateFn: (prev: any[]) => any[]) => void;
 }
 
 type EdgeProps = Omit<BaseEdgeProps, 'data'> & {
@@ -105,6 +109,8 @@ function StrokeEdge({
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const { allStrokeLinesVisible } = useStrokeLinesStore();
   const isModalOpen = useIsModalOpenStore((state: any) => state.isModalOpen);
+  const allPaths = usePathsStore((state) => state.paths);
+  const setAllPaths = usePathsStore((state) => state.setPaths);
 
   const isSelfLoop = data?.source === data?.target;
   const markerId = `stroke-arrow-${id}`;
@@ -192,12 +198,55 @@ function StrokeEdge({
         throw new Error('Failed to delete stroke line');
       }
 
+      // --- NEW LOGIC: Check if the source block has any other outgoing stroke lines ---
+      // Find the source block id (from data)
+      const sourceBlockId = Number(
+        data?.source?.replace?.('block-', '') || data?.source
+      );
+      // Use the strokeLines prop from data (already up-to-date except for the just-deleted one)
+      const remainingStrokeLines = (data?.strokeLines || []).filter(
+        (line) => line.id.toString() !== strokeLineId // Exclude the just-deleted stroke line
+      );
+      // Filter for outgoing stroke lines from this source block (excluding self-loops)
+      const outgoing = remainingStrokeLines.filter(
+        (line) =>
+          line.source_block_id === sourceBlockId &&
+          line.target_block_id !== sourceBlockId
+      );
+      if (outgoing.length === 0) {
+        // Update the block in allPaths to set is_endpoint: false
+        setAllPaths((paths) =>
+          paths.map((path) => ({
+            ...path,
+            blocks: path.blocks.map((block) => {
+              if (block.id === sourceBlockId) {
+                return { ...block, is_endpoint: false };
+              }
+              return block;
+            }),
+          }))
+        );
+        if (data?.onPathsUpdate) {
+          data.onPathsUpdate((paths) =>
+            paths.map((path) => ({
+              ...path,
+              blocks: path.blocks.map((block: Block) =>
+                block.id === sourceBlockId
+                  ? { ...block, is_endpoint: false }
+                  : block
+              ),
+            }))
+          );
+        }
+      }
+
       // Update the stroke lines in the parent component
       if (data?.onStrokeLinesUpdate) {
         const updateFn = (prev: any[]) =>
           prev.filter((line) => line.id.toString() !== strokeLineId);
         data.onStrokeLinesUpdate(updateFn);
       }
+      // --- END NEW LOGIC ---
     } catch (error) {
       console.error('Error deleting stroke line:', error);
     }
@@ -447,8 +496,6 @@ function StrokeEdge({
 
   useEffect(() => {
     const loadControlPoints = async () => {
-      
-     
       try {
         let strokeLine = null;
         const source = getConnectionPoint(

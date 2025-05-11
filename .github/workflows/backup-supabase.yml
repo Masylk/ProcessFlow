@@ -23,10 +23,10 @@ jobs:
 
       - name: Dump Supabase Database
         run: |
-          supabase db dump --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} > backup_$(date +%F_%H-%M-%S).sql
+          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" -f backup.sql
 
       - name: Upload backup to GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
           name: supabase-backup
-          path: backup_*.sql
+          path: backup.sql

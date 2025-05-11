@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Path } from '../../types';
+import { NodeData, Path, StrokeLine } from '../../types';
 import { Node } from '@xyflow/react';
 
 interface ModalStore {
@@ -14,6 +14,14 @@ interface ModalStore {
   modalData: any; // Replace 'any' with proper type if available
   setShowModal: (show: boolean) => void;
   setModalData: (data: { path: Path; position: number; existingPaths: string[] }) => void;
+  showEditLinksModal: boolean;
+  editLinksData: {
+    sourceNode: Node<NodeData>;
+  } | null;
+  setShowEditLinksModal: (show: boolean) => void;
+  setEditLinksData: (data: { sourceNode: Node<NodeData> } | null) => void;
+  onStrokeLinesUpdate?: React.Dispatch<React.SetStateAction<StrokeLine[]>>;
+  setOnStrokeLinesUpdate: (fn: React.Dispatch<React.SetStateAction<StrokeLine[]>> | undefined) => void;
 }
 
 export const useModalStore = create<ModalStore>((set) => ({
@@ -29,4 +37,10 @@ export const useModalStore = create<ModalStore>((set) => ({
   },
   setShowModal: (show) => set({ showParallelPathModal: show }),
   setModalData: (data) => set({ modalData: data }),
+  showEditLinksModal: false,
+  editLinksData: null,
+  setShowEditLinksModal: (show) => set({ showEditLinksModal: show }),
+  setEditLinksData: (data) => set({ editLinksData: data }),
+  onStrokeLinesUpdate: undefined,
+  setOnStrokeLinesUpdate: (fn) => set({ onStrokeLinesUpdate: fn }),
 })); 

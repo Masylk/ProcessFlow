@@ -70,7 +70,7 @@ export const updateStrokeLine = async (data: UpdateStrokeLineData) => {
     }
 
     const updatedStrokeLine = await response.json();
-    toast.success('Stroke line updated successfully');
+    toast.success('Link updated successfully');
     return updatedStrokeLine;
   } catch (error) {
     console.error('Error updating stroke line:', error);
@@ -96,7 +96,7 @@ export const deleteStrokeLine = async (id: number) => {
       return false;
     }
 
-    toast.success('Stroke line deleted successfully');
+    toast.success('Link deleted successfully');
     return true;
   } catch (error) {
     console.error('Error deleting stroke line:', error);

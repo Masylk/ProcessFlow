@@ -61,6 +61,14 @@ export interface Path {
   parent_blocks: PathParentBlock[];  // Assuming a PathParentBlock interface exists
 }
 
+export interface StrokeLine {
+  id: number;
+  source_block_id: number;
+  target_block_id: number;
+  label: string;
+  control_points: { x: number; y: number }[];
+}
+
 export interface WorkflowData {
   id: string;
   name: string;
