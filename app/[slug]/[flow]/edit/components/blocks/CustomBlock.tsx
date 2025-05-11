@@ -33,13 +33,6 @@ import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { CustomTooltip } from '@/app/components/CustomTooltip';
 
-interface CustomBlockProps extends NodeProps {
-  data: NodeData & {
-    onPreviewUpdate?: (edge: Edge | null) => void;
-    // ... other data props
-  };
-}
-
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
@@ -362,12 +355,12 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
 
   const handleConnectClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // Check if this block has stroke lines
     const hasStrokeLines = getEdges().some(
       (edge) => edge.source === id && edge.type === 'strokeEdge'
     );
-    
+
     if (hasStrokeLines) {
       // Set edit links data and show the modal
       setEditLinksData({
@@ -378,7 +371,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
           type: 'custom',
           width: undefined,
           height: undefined,
-        } as Node,
+        } as Node<NodeData>,
       });
       setShowEditLinksModal(true);
     } else {
@@ -391,11 +384,11 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
           type: 'custom',
           width: undefined,
           height: undefined,
-        } as Node,
+        },
       });
       setShowConnectModal(true);
     }
-    
+
     setShowDropdown(false);
   };
 
@@ -478,48 +471,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     setShowDropdown(false);
   };
 
-  const handleToggleEndpoint = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDropdown(false);
-
-    try {
-      const response = await fetch(
-        `/api/blocks/${blockData.id}/toggle-endpoint`,
-        {
-          method: 'PATCH',
-        }
-      );
-      const result = await response.json();
-
-      if (!response.ok) {
-        // Optionally show a toast or error message
-        alert(result.error || 'Failed to toggle endpoint');
-        return;
-      }
-
-      // Update local blockData and paths store
-      setBlockData((prev) => ({
-        ...prev,
-        is_endpoint: result.is_endpoint,
-      }));
-
-      // Optionally update allPaths if you want to keep global state in sync
-      setAllPaths((paths) =>
-        paths.map((path) => ({
-          ...path,
-          blocks: path.blocks.map((block) =>
-            block.id === blockData.id
-              ? { ...block, is_endpoint: result.is_endpoint }
-              : block
-          ),
-        }))
-      );
-    } catch (error) {
-      alert('Failed to toggle endpoint');
-      console.error(error);
-    }
-  };
-
   const renderDropdown = () => {
     if (!showDropdown) return null;
 
@@ -550,11 +501,19 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
-                    getEdges().some((edge) => edge.source === id && edge.type === 'strokeEdge')
+                    getEdges().some(
+                      (edge) => edge.source === id && edge.type === 'strokeEdge'
+                    )
                       ? 'connect-node.svg'
                       : 'connect-node.svg'
                   }`}
-                  alt={getEdges().some((edge) => edge.source === id && edge.type === 'strokeEdge') ? "Edit Links" : "Connect"}
+                  alt={
+                    getEdges().some(
+                      (edge) => edge.source === id && edge.type === 'strokeEdge'
+                    )
+                      ? 'Edit Links'
+                      : 'Connect'
+                  }
                   className="w-4 h-4"
                 />
               </div>
@@ -562,7 +521,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 style={{ color: colors['text-primary'] }}
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
-                {getEdges().some((edge) => edge.source === id && edge.type === 'strokeEdge')
+                {getEdges().some(
+                  (edge) => edge.source === id && edge.type === 'strokeEdge'
+                )
                   ? 'Edit links'
                   : 'Connect block'}
               </div>
@@ -698,36 +659,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
               >
                 Copy Link
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          onClick={handleToggleEndpoint}
-          className="self-stretch px-1.5 py-px flex items-center gap-3 transition duration-300"
-        >
-          <div
-            style={
-              {
-                '--hover-bg': colors['bg-quaternary'],
-              } as React.CSSProperties
-            }
-            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
-          >
-            <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
-              <div className="w-4 h-4 relative overflow-hidden">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/flag.svg`}
-                  alt="Toggle Endpoint"
-                  className="w-4 h-4"
-                />
-              </div>
-              <div
-                style={{ color: colors['text-primary'] }}
-                className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
-              >
-                {blockData.is_endpoint ? 'Unset endpoint' : 'Set as endpoint'}
               </div>
             </div>
           </div>
@@ -955,7 +886,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   }, [allPaths, blockData.id, blockData.is_endpoint]);
 
   // After the other useModalStore hooks, add these two:
-  const setShowEditLinksModal = useModalStore((state) => state.setShowEditLinksModal);
+  const setShowEditLinksModal = useModalStore(
+    (state) => state.setShowEditLinksModal
+  );
   const setEditLinksData = useModalStore((state) => state.setEditLinksData);
 
   return (

@@ -301,21 +301,30 @@ export function Flow({
 
   // Add state for ConnectNodeModal at the top of Flow
   const [showConnectNodeModal, setShowConnectNodeModal] = useState(false);
-  const [connectModalSourceNode, setConnectModalSourceNode] = useState<Node | null>(null);
-  const [connectModalTargetNode, setConnectModalTargetNode] = useState<Node | null>(null);
+  const [connectModalSourceNode, setConnectModalSourceNode] =
+    useState<Node | null>(null);
+  const [connectModalTargetNode, setConnectModalTargetNode] =
+    useState<Node | null>(null);
   const [connectModalLabel, setConnectModalLabel] = useState<string>('');
   const { setShowEditLinksModal } = useModalStore();
-  const [editStrokeLineId, setEditStrokeLineId] = useState<string | undefined>(undefined);
+  const [editStrokeLineId, setEditStrokeLineId] = useState<string | undefined>(
+    undefined
+  );
   const [isEditLink, setIsEditLink] = useState(false);
 
   // Add a callback to update a stroke line in state
-  const handleLinkUpdated = useCallback((updatedStrokeLine: StrokeLine) => {
-    setStrokeLines((prev) =>
-      prev.map((line) =>
-        line.id === updatedStrokeLine.id ? { ...line, ...updatedStrokeLine } : line
-      )
-    );
-  }, [setStrokeLines]);
+  const handleLinkUpdated = useCallback(
+    (updatedStrokeLine: StrokeLine) => {
+      setStrokeLines((prev) =>
+        prev.map((line) =>
+          line.id === updatedStrokeLine.id
+            ? { ...line, ...updatedStrokeLine }
+            : line
+        )
+      );
+    },
+    [setStrokeLines]
+  );
 
   // Main effect for creating nodes and edges
   useEffect(() => {
@@ -696,6 +705,15 @@ export function Flow({
     }
   }, [allStrokeLinesVisible, paths, updateStrokeLineVisibility]);
 
+  // Set the modal store's onStrokeLinesUpdate to setStrokeLines
+  useEffect(() => {
+    useModalStore.getState().setOnStrokeLinesUpdate(setStrokeLines);
+    // Optionally, clean up on unmount
+    return () => {
+      useModalStore.getState().setOnStrokeLinesUpdate(undefined);
+    };
+  }, [setStrokeLines]);
+
   return (
     <div
       className={`fixed inset-0 flex-1 w-full h-screen overflow-hidden ${
@@ -812,19 +830,21 @@ export function Flow({
         />
       )}
 
-      {showConnectNodeModal && connectModalSourceNode && connectModalTargetNode && (
-        <ConnectNodeModal
-          onClose={() => setShowConnectNodeModal(false)}
-          onConfirm={() => setShowConnectNodeModal(false)}
-          sourceNode={connectModalSourceNode}
-          availableNodes={getNodes()}
-          initialTargetNodeId={connectModalTargetNode.id}
-          initialLabel={connectModalLabel}
-          editStrokeLineId={editStrokeLineId}
-          isEdit={isEditLink}
-          onLinkUpdated={handleLinkUpdated}
-        />
-      )}
+      {showConnectNodeModal &&
+        connectModalSourceNode &&
+        connectModalTargetNode && (
+          <ConnectNodeModal
+            onClose={() => setShowConnectNodeModal(false)}
+            onConfirm={() => setShowConnectNodeModal(false)}
+            sourceNode={connectModalSourceNode}
+            availableNodes={getNodes()}
+            initialTargetNodeId={connectModalTargetNode.id}
+            initialLabel={connectModalLabel}
+            editStrokeLineId={editStrokeLineId}
+            isEdit={isEditLink}
+            onLinkUpdated={handleLinkUpdated}
+          />
+        )}
 
       <EditLinksModal
         onEditLink={(sourceNode, targetNode, label, strokeLineId) => {

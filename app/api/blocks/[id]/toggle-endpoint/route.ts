@@ -40,7 +40,6 @@ export async function PATCH(request: NextRequest) {
     const strokeLineCount = await prisma.stroke_line.count({
       where: {
         source_block_id: blockId,
-        NOT: { target_block_id: blockId },
       },
     });
 
