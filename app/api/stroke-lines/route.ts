@@ -246,7 +246,6 @@ export async function DELETE(request: Request) {
     const remainingCount = await prisma.stroke_line.count({
       where: {
         source_block_id,
-        NOT: { target_block_id: source_block_id },
       },
     });
 
