@@ -16,12 +16,20 @@ jobs:
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Dump Supabase database (schema + data)
+      - name: Parse DB credentials and dump database
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          export PGPASSWORD=$(echo $DATABASE_URL | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
-          pg_dump "$DATABASE_URL" -F p -f backup.sql
+          # Extract connection parameters
+          DB_USER=$(echo $DATABASE_URL | sed -n 's|.*://\([^:]*\):.*|\1|p')
+          DB_PASSWORD=$(echo $DATABASE_URL | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+          DB_HOST=$(echo $DATABASE_URL | sed -n 's|.*@\(.*\):[0-9]*\/.*|\1|p')
+          DB_NAME=$(echo $DATABASE_URL | sed -n 's|.*/\(.*\)$|\1|p')
+
+          export PGPASSWORD=$DB_PASSWORD
+
+          # Perform full pg_dump
+          pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F p -f backup.sql
 
       - name: Upload backup to GitHub Artifact
         uses: actions/upload-artifact@v4
