@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install Supabase CLI
@@ -21,12 +21,31 @@ jobs:
       - name: Login to Supabase
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Dump Supabase Database
-        run: |
-          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" -f backup.sql
+      - name: Create backup directory
+        run: mkdir -p backups
 
-      - name: Upload backup to GitHub Artifact
+      - name: Dump Supabase Database with debug
+        run: |
+          supabase db dump \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            -f backups/backup.sql \
+            --debug
+
+      # Optional fallback method using pg_dump directly
+      # - name: Fallback: Dump database using pg_dump
+      #   env:
+      #     PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      #   run: |
+      #     pg_dump \
+      #       --host=db.wtfegxkxzqbdndcdqcjo.supabase.co \
+      #       --port=5432 \
+      #       --username=postgres \
+      #       --dbname=your-db-name \
+      #       --no-owner --no-privileges --format=p \
+      #       --file=backups/backup.sql
+
+      - name: Upload backup as artifact
         uses: actions/upload-artifact@v4
         with:
           name: supabase-backup
-          path: backup.sql
+          path: backups/backup.sql
