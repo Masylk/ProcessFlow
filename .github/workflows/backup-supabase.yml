@@ -10,42 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Login to Supabase
-        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Create backup directory
-        run: mkdir -p backups
-
-      - name: Dump Supabase Database with debug
+      - name: Dump Supabase database (schema + data)
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          supabase db dump \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
-            -f backups/backup.sql \
-            --debug
+          export PGPASSWORD=$(echo $DATABASE_URL | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+          pg_dump "$DATABASE_URL" -F p -f backup.sql
 
-      # Optional fallback method using pg_dump directly
-      # - name: Fallback: Dump database using pg_dump
-      #   env:
-      #     PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      #   run: |
-      #     pg_dump \
-      #       --host=db.wtfegxkxzqbdndcdqcjo.supabase.co \
-      #       --port=5432 \
-      #       --username=postgres \
-      #       --dbname=your-db-name \
-      #       --no-owner --no-privileges --format=p \
-      #       --file=backups/backup.sql
-
-      - name: Upload backup as artifact
+      - name: Upload backup to GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-backup
-          path: backups/backup.sql
+          name: supabase-full-backup
+          path: backup.sql
