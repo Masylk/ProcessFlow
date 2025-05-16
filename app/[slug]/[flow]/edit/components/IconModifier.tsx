@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import IconSelector from './IconSelector';
 import { Block } from '../../types';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 interface IconModifierProps {
   block: Block;
@@ -11,10 +12,34 @@ interface IconModifierProps {
 export default function IconModifier({ block, onUpdate }: IconModifierProps) {
   const [showSelector, setShowSelector] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
   const colors = useColors();
   const themeAssets = useThemeAssets();
 
+  useEffect(() => {
+    let isMounted = true;
+    const getIconUrl = async () => {
+      let iconPath: string;
+      if (!block.icon) {
+        iconPath = 'step-icons/default-icons/container.svg';
+      } else if (block.icon.startsWith('https://cdn.brandfetch.io/')) {
+        setIconUrl(block.icon);
+        return;
+      } else {
+        iconPath = block.icon;
+      }
+      // Fetch signed URL for the icon (either default or custom)
+      const signedUrl = await fetchSignedUrl(iconPath);
+      if (isMounted) setIconUrl(signedUrl);
+    };
+    getIconUrl();
+    return () => {
+      isMounted = false;
+    };
+  }, [block.icon]);
+
   const handleIconSelect = (icon?: string) => {
+    console.log('icon', icon);
     if (icon) {
       onUpdate({ icon });
     } else {
@@ -44,23 +69,15 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {block.icon ? (
+        {iconUrl ? (
           <img
-            src={block.icon.startsWith('https://cdn.brandfetch.io/') 
-              ? block.icon 
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
+            src={iconUrl}
             alt="Selected Icon"
             className="w-6 h-auto object-contain select-none pointer-events-none"
             referrerPolicy="strict-origin-when-cross-origin"
           />
         ) : (
-          <div className="w-6 h-6 flex justify-center items-center">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
-              alt="Default Icon"
-              className="w-6 h-6 select-none pointer-events-none"
-            />
-          </div>
+          <div className="w-6 h-6 flex justify-center items-center" />
         )}
       </div>
 

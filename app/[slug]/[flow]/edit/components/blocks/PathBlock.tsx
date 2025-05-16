@@ -565,8 +565,14 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                   border: `1px solid ${colors['border-secondary']}`,
                 }}
               >
-                {data.block.icon ? (
-                  data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                {data.block.signedIconUrl ? (
+                  <img
+                    src={data.block.signedIconUrl}
+                    alt="Block Icon"
+                    className="w-6 h-6"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                ) : data.block.icon && data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
                     <img
                       src={data.block.icon}
                       alt="Block Icon"
@@ -575,14 +581,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                     />
                   ) : (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${data.block.icon}`}
-                      alt="Block Icon"
-                      className="w-6 h-6"
-                    />
-                  )
-                ) : (
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`}
                     alt="Default Icon"
                     className="w-6 h-6"
                   />

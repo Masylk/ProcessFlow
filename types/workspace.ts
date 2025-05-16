@@ -7,6 +7,7 @@ export interface Folder {
   parent_id?: number;
   team_tags: string[];
   icon_url?: string;
+  signedIconUrl?: string;
   emote?: string;
   position: number;
 }

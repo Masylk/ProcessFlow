@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { BlockEndType } from '@/types/block';
+import { createSignedUrls } from '@/utils/createSignedUrls';
 
 /**
  * @swagger
@@ -298,7 +299,12 @@ export async function GET(
           existingPaths.map(path => fixPathBlockPositions(path))
         );
 
-        return { paths: updatedPaths };
+        // Add signed URLs to each path's blocks
+        const signedPaths = await Promise.all(
+          updatedPaths.map(path => createSignedUrls(path))
+        );
+
+        return { paths: signedPaths };
       }
     });
 

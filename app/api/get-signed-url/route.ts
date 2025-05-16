@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     // Generate a signed URL for the requested path
     const { data, error } = await supabase.storage
       .from(bucketName) // Use the bucket name from the environment variable
-      .createSignedUrl(path, 60); // 60 seconds expiry
+      .createSignedUrl(path, 86400); // 24 hours expiry
 
     if (error) {
       throw new Error(error.message);

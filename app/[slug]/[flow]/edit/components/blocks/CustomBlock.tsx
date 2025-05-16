@@ -199,6 +199,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     // Ensure icon reset is explicit
     if ('icon' in updatedData && updatedData.icon === undefined) {
       updatedData.icon = null;
+      blockData.signedIconUrl = null;
     }
     if (updatedData.image === undefined) {
       updatedData.image = blockData.image;
@@ -1090,24 +1091,23 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                 border: `1px solid ${colors['border-secondary']}`,
               }}
             >
-              {blockData.icon ? (
-                blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
-                  <img
-                    src={blockData.icon}
-                    alt="Block Icon"
-                    className="w-6 h-6"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
-                ) : (
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${blockData.icon}`}
-                    alt="Block Icon"
-                    className="w-6 h-6"
-                  />
-                )
+              {blockData.signedIconUrl ? (
+                <img
+                  src={blockData.signedIconUrl}
+                  alt="Block Icon"
+                  className="w-6 h-6"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : blockData.icon && blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                <img
+                  src={blockData.icon}
+                  alt="Block Icon"
+                  className="w-6 h-6"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
               ) : (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`}
                   alt="Default Icon"
                   className="w-6 h-6"
                 />

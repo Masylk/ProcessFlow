@@ -221,7 +221,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               variant="secondary"
               size="small"
               onClick={handleAddPath}
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
             >
               Add new path
             </ButtonNormal>

@@ -197,10 +197,10 @@ const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
             <DynamicIcon
               url={
                 block.icon
-                ? block.icon.startsWith('https://cdn.brandfetch.io/') 
-                  ? block.icon 
-                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`
-                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                  ? block.icon.startsWith('https://cdn.brandfetch.io/')
+                    ? block.icon
+                    : block.signedIconUrl
+                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`
               }
               size={20}
               color="inherit"
@@ -827,10 +827,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
     if (!searchFilter) return true;
 
     const searchTerm = searchFilter.toLowerCase();
-    const blockTitle = (
-      block.title ||
-      `Block ${block.id}`
-    ).toLowerCase();
+    const blockTitle = (block.title || `Block ${block.id}`).toLowerCase();
 
     return blockTitle.includes(searchTerm);
   };

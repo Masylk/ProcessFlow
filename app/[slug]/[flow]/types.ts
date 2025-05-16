@@ -115,8 +115,10 @@ export interface Block {
   position: number;
   title?: string | null;
   icon?: string | null;
+  signedIconUrl?: string | null;
   description?: string | null;
   image?: string | null;
+  signedImageUrl?: string | null;
   original_image?: string | null;
   image_description?: string | null;
   average_time?: string | null;
