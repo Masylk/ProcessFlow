@@ -128,6 +128,7 @@ export default function Page() {
   // Add new state near other states
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+  const [previewIcon, setPreviewIcon] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -310,9 +311,6 @@ export default function Page() {
   };
 
   const handleDuplicateWorkflow = async () => {
-    console.log('handleDuplicateWorkflow');
-    console.log('selectedWorkflow', selectedWorkflow);
-    console.log('activeWorkspace', activeWorkspace);
     if (!selectedWorkflow || !activeWorkspace) return;
 
     const baseName = selectedWorkflow.name;
@@ -331,14 +329,16 @@ export default function Page() {
     await handleCreateWorkflow(
       duplicateName,
       selectedWorkflow.description,
-      selectedWorkflow.icon
+      selectedWorkflow.icon,
+      selectedWorkflow.signedIconUrl
     );
   };
 
   const handleCreateWorkflow = async (
     name: string,
     description: string,
-    icon: string | null
+    icon: string | null,
+    signedIcon: string | null | undefined
   ) => {
     if (!activeWorkspace) {
       console.error('No active workspace selected');
@@ -367,6 +367,9 @@ export default function Page() {
 
       if (result.workflow) {
         const workflow = result.workflow;
+        if (signedIcon) {
+          workflow.signedIconUrl = signedIcon;
+        }
         // Update the list of workspaces
         setWorkspaces((prevWorkspaces) =>
           prevWorkspaces.map((workspace) =>
@@ -403,7 +406,8 @@ export default function Page() {
     name: string,
     description: string,
     folder?: Folder | null,
-    icon?: string | null
+    icon?: string | null,
+    signedIcon?: string | null
   ): Promise<{
     workflow: Workflow | null;
     error?: { title: string; description: string };
@@ -414,6 +418,7 @@ export default function Page() {
         description,
         folder_id: folder?.id,
         icon: icon ?? undefined,
+        signedIconUrl: signedIcon ?? undefined,
       });
 
       if (result.error) {
@@ -619,8 +624,6 @@ export default function Page() {
   };
 
   const handleSelectWorkflow = (workflow: Workflow | null) => {
-    console.log('handleSelectWorkflow');
-    console.log('workflow', workflow);
     setSelectedWorkflow(workflow);
   };
 
@@ -763,7 +766,8 @@ export default function Page() {
 
     setIsSubmitting(true);
     try {
-      if (iconUrl) await handleAddFolder(folderName, iconUrl);
+      if (iconUrl)
+        await handleAddFolder(folderName, iconUrl, undefined, previewIcon);
       else if (emote) await handleAddFolder(folderName, undefined, emote);
       else await handleAddFolder(folderName);
       closeCreateFolder();
@@ -774,16 +778,18 @@ export default function Page() {
     }
   };
 
-  const updateIcon = (icon?: string, emote?: string) => {
+  const updateIcon = (icon?: string, emote?: string, signedIcon?: string) => {
     if (icon) {
       setIconUrl(icon);
       setEmote(undefined);
+      setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
     } else if (emote) {
       setIconUrl(undefined);
       setEmote(emote);
     } else {
       setIconUrl(undefined);
       setEmote(undefined);
+      setPreviewIcon(undefined);
     }
   };
 
@@ -792,6 +798,7 @@ export default function Page() {
     setFolderName('');
     setIconUrl(undefined);
     setEmote(undefined);
+    setPreviewIcon(undefined);
   };
 
   // Add this near your other useEffect hooks
@@ -1018,7 +1025,8 @@ export default function Page() {
   const handleAddFolder = async (
     name: string,
     icon_url?: string,
-    emote?: string
+    emote?: string,
+    signedIconUrl?: string
   ) => {
     if (!activeWorkspace) return;
 
@@ -1049,7 +1057,12 @@ export default function Page() {
       }
 
       const newFolder: Folder = await res.json();
-
+      if (signedIconUrl) {
+        newFolder.signedIconUrl = signedIconUrl;
+      }
+      setPreviewIcon(undefined);
+      setIconUrl(undefined);
+      setEmote(undefined);
       setActiveWorkspace((prevWorkspace) =>
         prevWorkspace
           ? {
@@ -1068,7 +1081,8 @@ export default function Page() {
     name: string,
     parentId: number,
     icon_url?: string,
-    emote?: string
+    emote?: string,
+    signedIconUrl?: string
   ) => {
     if (!activeWorkspace) return;
 
@@ -1093,7 +1107,9 @@ export default function Page() {
       }
 
       const newSubfolder: Folder = await res.json();
-
+      if (signedIconUrl) {
+        newSubfolder.signedIconUrl = signedIconUrl;
+      }
       setActiveWorkspace((prevWorkspace) =>
         prevWorkspace
           ? {
@@ -1113,7 +1129,8 @@ export default function Page() {
   const handleEditFolder = async (
     folderName: string,
     icon_url?: string | null,
-    emote?: string | null
+    emote?: string | null,
+    signedIconUrl?: string | null
   ) => {
     if (!activeWorkspace || !editingFolder) return;
 
@@ -1142,6 +1159,11 @@ export default function Page() {
 
       const updatedFolder: Folder = await response.json();
 
+      if (signedIconUrl) {
+        updatedFolder.signedIconUrl = signedIconUrl;
+      } else if (!icon_url) {
+        updatedFolder.signedIconUrl = undefined;
+      }
       setActiveWorkspace((prevWorkspace) =>
         prevWorkspace
           ? {
@@ -1497,7 +1519,7 @@ export default function Page() {
               </label>
               <div className="flex items-center gap-2">
                 <IconModifier
-                  initialIcon={iconUrl}
+                  initialIcon={previewIcon || undefined}
                   onUpdate={updateIcon}
                   emote={emote}
                 />

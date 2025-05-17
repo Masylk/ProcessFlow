@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import Tooltip from '@/app/components/Tooltip';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 const BRANDFETCH_TIMEOUT = 10000; // 10 seconds timeout
 const ACCEPTED_FILE_TYPES = 'image/png,image/jpeg,image/svg+xml';
@@ -12,11 +13,14 @@ interface Entity {
 }
 
 interface IconSelectorProps {
-  onSelect: (icon?: string, emote?: string) => void;
+  onSelect: (icon?: string, emote?: string, signedIcon?: string) => void;
   allowEmoji?: boolean;
 }
 
-const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true }) => {
+const IconSelector: React.FC<IconSelectorProps> = ({
+  onSelect,
+  allowEmoji = true,
+}) => {
   const colors = useColors();
   const [applist, setAppList] = useState<Entity[]>([]);
   const [iconlist, setIconList] = useState<Entity[]>([]);
@@ -26,13 +30,76 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
   const [uploadError, setUploadError] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [emojiList] = useState<string[]>([
-    '💼', '📅', '📝', '📊', '📈', '💻', '🖥️', '📎', '📂', '🗂️',
-    '📌', '📏', '📐', '🖊️', '🖋️', '🖌️', '🖍️', '✂️', '🔍', '🔎',
-    '⌛', '⏳', '⏰', '🕰️', '🏢', '🏛️', '🏠', '📬', '📥', '📤',
-    '📖', '📕', '📗', '📘', '📙', '📚', '🧠', '🎯', '🏆', '🥇',
-    '🏅', '💡', '🔦', '🛠️', '🔧', '🔨', '🏗️', '🏭', '🏪', '📠',
-    '📜', '🏋️‍♂️', '🚀', '🎓', '📣', '🏃‍♂️', '🏃‍♀️', '🎼', '🎨', '🧑‍💻',
-    '👨‍💻', '👩‍💻', '📡', '🎙️', '🔢', '💰', '🏦', '🏛️', '🗃️', '📊',
+    '💼',
+    '📅',
+    '📝',
+    '📊',
+    '📈',
+    '💻',
+    '🖥️',
+    '📎',
+    '📂',
+    '🗂️',
+    '📌',
+    '📏',
+    '📐',
+    '🖊️',
+    '🖋️',
+    '🖌️',
+    '🖍️',
+    '✂️',
+    '🔍',
+    '🔎',
+    '⌛',
+    '⏳',
+    '⏰',
+    '🕰️',
+    '🏢',
+    '🏛️',
+    '🏠',
+    '📬',
+    '📥',
+    '📤',
+    '📖',
+    '📕',
+    '📗',
+    '📘',
+    '📙',
+    '📚',
+    '🧠',
+    '🎯',
+    '🏆',
+    '🥇',
+    '🏅',
+    '💡',
+    '🔦',
+    '🛠️',
+    '🔧',
+    '🔨',
+    '🏗️',
+    '🏭',
+    '🏪',
+    '📠',
+    '📜',
+    '🏋️‍♂️',
+    '🚀',
+    '🎓',
+    '📣',
+    '🏃‍♂️',
+    '🏃‍♀️',
+    '🎼',
+    '🎨',
+    '🧑‍💻',
+    '👨‍💻',
+    '👩‍💻',
+    '📡',
+    '🎙️',
+    '🔢',
+    '💰',
+    '🏦',
+    '🏛️',
+    '🗃️',
+    '📊',
   ]);
 
   // Add state for BrandFetch preview loading
@@ -40,51 +107,67 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
   const [brandFetchUrl, setBrandFetchUrl] = useState<string | null>(null);
   const [brandFetchError, setBrandFetchError] = useState(false);
 
-  const [hoveredIcon, setHoveredIcon] = useState<{ name: string; type: string } | null>(null);
+  const [hoveredIcon, setHoveredIcon] = useState<{
+    name: string;
+    type: string;
+  } | null>(null);
 
-  const TABS = allowEmoji ? ['Icons', 'Apps', 'Upload', 'Emoji'] : ['Icons', 'Apps', 'Upload'];
+  const TABS = allowEmoji
+    ? ['Icons', 'Apps', 'Upload', 'Emoji']
+    : ['Icons', 'Apps', 'Upload'];
 
-  const handleFileUpload = useCallback(async (file: File) => {
-    if (!file.type.match(ACCEPTED_FILE_TYPES.replace(/,/g, '|'))) {
-      setUploadError('Invalid file type. Please upload PNG, JPEG, or SVG files.');
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadError('File size exceeds 5MB limit.');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadError('');
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload-icon', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload file');
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      if (!file.type.match(ACCEPTED_FILE_TYPES.replace(/,/g, '|'))) {
+        setUploadError(
+          'Invalid file type. Please upload PNG, JPEG, or SVG files.'
+        );
+        return;
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Upload failed');
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError('File size exceeds 5MB limit.');
+        return;
       }
 
-      onSelect(data.data.iconUrl);
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadError(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [onSelect]);
+      setIsUploading(true);
+      setUploadError('');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/upload-icon', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to upload file');
+        }
+
+        if (!data.success) {
+          throw new Error(data.error || 'Upload failed');
+        }
+
+        // Fetch signed URL before calling onSelect
+        const signedUrl = await fetchSignedUrl(data.data.iconUrl);
+        onSelect(data.data.iconUrl, undefined, signedUrl || undefined);
+      } catch (error) {
+        console.error('Upload error:', error);
+        setUploadError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to upload file. Please try again.'
+        );
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [onSelect]
+  );
 
   useEffect(() => {
     const fetchIcons = async () => {
@@ -93,18 +176,40 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
         if (!response.ok) throw new Error('Failed to fetch icons');
         const data = await response.json();
 
+        // Set initial lists with empty signedUrl
         const applistResult: Entity[] = data.applist.map((app: string) => ({
           basicUrl: `step-icons/apps/${app}`,
-          signedUrl: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/apps/${app}`,
+          signedUrl: '',
         }));
-
         const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
           basicUrl: `step-icons/default-icons/${icon}`,
-          signedUrl: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/${icon}`,
+          signedUrl: '',
         }));
 
         setAppList(applistResult);
         setIconList(iconlistResult);
+
+        // Fetch signed URLs in the background for apps
+        data.applist.forEach(async (app: string, idx: number) => {
+          const basicUrl = `step-icons/apps/${app}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setAppList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+
+        // Fetch signed URLs in the background for icons
+        data.iconlist.forEach(async (icon: string, idx: number) => {
+          const basicUrl = `step-icons/default-icons/${icon}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setIconList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
       } catch (error) {
         console.error(error);
       }
@@ -116,7 +221,12 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
   // Update effect for BrandFetch search
   useEffect(() => {
     const fetchBrandIcon = async () => {
-      if (!searchTerm || applist.some(app => app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase()))) {
+      if (
+        !searchTerm ||
+        applist.some((app) =>
+          app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      ) {
         setBrandFetchUrl(null);
         return;
       }
@@ -127,17 +237,23 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), BRANDFETCH_TIMEOUT);
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          BRANDFETCH_TIMEOUT
+        );
 
-        const response = await fetch(`/api/logo-search?q=${encodeURIComponent(searchTerm)}`, {
-          signal: controller.signal
-        });
-        
+        const response = await fetch(
+          `/api/logo-search?q=${encodeURIComponent(searchTerm)}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
         clearTimeout(timeoutId);
-        
+
         if (!response.ok) throw new Error('Failed to fetch brand icon');
         const data = await response.json();
-        
+
         if (data.icon) {
           setBrandFetchUrl(data.icon);
         } else {
@@ -155,22 +271,22 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
   }, [searchTerm, applist]);
 
   return (
-    <div 
+    <div
       className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden"
-      style={{ 
+      style={{
         backgroundColor: colors['bg-primary'],
         borderWidth: '1px',
         borderStyle: 'solid',
-        borderColor: colors['border-secondary']
+        borderColor: colors['border-secondary'],
       }}
     >
       {/* Tabs */}
-      <div 
+      <div
         className="self-stretch flex justify-between items-center"
-        style={{ 
+        style={{
           borderBottomWidth: '1px',
           borderBottomStyle: 'solid',
-          borderBottomColor: colors['border-secondary']
+          borderBottomColor: colors['border-secondary'],
         }}
       >
         <div className="flex gap-3 pt-3 px-3">
@@ -178,13 +294,15 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
             <div
               key={tab}
               className={`px-2 pb-3 cursor-pointer transition-colors duration-200 ${
-                activeTab === tab
-                  ? 'border-b-2 font-medium'
-                  : ''
+                activeTab === tab ? 'border-b-2 font-medium' : ''
               }`}
               style={{
-                color: activeTab === tab ? colors['text-brand-secondary'] : colors['text-secondary'],
-                borderBottomColor: activeTab === tab ? colors['bg-brand-solid'] : 'transparent'
+                color:
+                  activeTab === tab
+                    ? colors['text-brand-secondary']
+                    : colors['text-secondary'],
+                borderBottomColor:
+                  activeTab === tab ? colors['bg-brand-solid'] : 'transparent',
               }}
               onClick={() => setActiveTab(tab)}
             >
@@ -202,14 +320,14 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
       </div>
 
       {/* Search Bar */}
-      <div 
+      <div
         className="self-stretch px-4 py-3 flex flex-col gap-2"
-        style={{ 
+        style={{
           backgroundColor: colors['bg-primary'],
           borderBottomWidth: '1px',
           borderBottomStyle: 'solid',
           borderBottomColor: colors['border-secondary'],
-          display: activeTab === 'Upload' ? 'none' : 'flex'
+          display: activeTab === 'Upload' ? 'none' : 'flex',
         }}
       >
         <div className="flex items-center gap-2">
@@ -236,19 +354,38 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
               borderLeft: `3px solid ${colors['border-brand_alt']}`,
             }}
           >
-            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+            <svg
+              className="w-4 h-4 mt-0.5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16v-4m0-4h.01"
+              />
             </svg>
             <span>
-              You can search for any company logo by typing a domain (e.g., <span className="font-semibold">google.com</span>) or brand name. If not found, we'll fetch it.
+              You can search for any company logo by typing a domain (e.g.,{' '}
+              <span className="font-semibold">google.com</span>) or brand name.
+              If not found, we'll fetch it.
             </span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div 
+      <div
         className="self-stretch h-60 flex flex-col overflow-y-auto p-3"
         style={{ backgroundColor: colors['bg-primary'] }}
       >
@@ -261,16 +398,22 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
               .map((app, index) => (
                 <button
                   key={index}
-                  onClick={() => onSelect(app.basicUrl)}
+                  onClick={() => {
+                    if (!app.signedUrl) return;
+                    onSelect(app.basicUrl, undefined, app.signedUrl);
+                  }}
                   className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
-                  style={{ 
-                    backgroundColor: hoveredButton === `app-${index}` ? colors['bg-quaternary'] : 'transparent'
+                  style={{
+                    backgroundColor:
+                      hoveredButton === `app-${index}`
+                        ? colors['bg-quaternary']
+                        : 'transparent',
                   }}
                   onMouseEnter={() => {
                     setHoveredButton(`app-${index}`);
                     setHoveredIcon({
                       name: app.basicUrl.split('/').pop()?.split('.')[0] || '',
-                      type: 'App'
+                      type: 'App',
                     });
                   }}
                   onMouseLeave={() => {
@@ -278,25 +421,36 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                     setHoveredIcon(null);
                   }}
                 >
-                  <img
-                    src={app.signedUrl}
-                    alt={app.basicUrl}
-                    className="w-6 h-6 object-contain select-none pointer-events-none"
-                  />
-                  <Tooltip 
-                    text={hoveredIcon?.name || ''} 
-                    visible={hoveredIcon?.type === 'App' && hoveredButton === `app-${index}`}
+                  {app.signedUrl ? (
+                    <img
+                      src={app.signedUrl}
+                      alt={app.basicUrl}
+                      className="w-6 h-6 object-contain select-none pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 bg-gray-100 rounded" />
+                  )}
+                  <Tooltip
+                    text={hoveredIcon?.name || ''}
+                    visible={
+                      hoveredIcon?.type === 'App' &&
+                      hoveredButton === `app-${index}`
+                    }
                   />
                 </button>
               ))}
             {/* BrandFetch integration in Apps tab */}
-            {searchTerm && applist.filter((app) =>
+            {searchTerm &&
+              applist.filter((app) =>
                 app.basicUrl.toLowerCase().includes(searchTerm.toLowerCase())
               ).length === 0 && (
                 <button
                   className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
                   style={{
-                    backgroundColor: hoveredButton === 'apps-brandfetch' ? colors['bg-quaternary'] : 'transparent',
+                    backgroundColor:
+                      hoveredButton === 'apps-brandfetch'
+                        ? colors['bg-quaternary']
+                        : 'transparent',
                   }}
                   onClick={() => brandFetchUrl && onSelect(brandFetchUrl)}
                   onMouseEnter={() => setHoveredButton('apps-brandfetch')}
@@ -304,9 +458,25 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                   disabled={!brandFetchUrl || brandFetchError}
                 >
                   {brandFetchLoading && (
-                    <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    <svg
+                      className="animate-spin w-6 h-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      style={{ color: colors['border-brand_alt'] }}
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                      />
                     </svg>
                   )}
                   {brandFetchUrl && !brandFetchLoading && (
@@ -319,12 +489,23 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                     />
                   )}
                   {brandFetchError && !brandFetchLoading && (
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: colors['text-error'] }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      style={{ color: colors['text-error'] }}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
                     </svg>
                   )}
                 </button>
-            )}
+              )}
           </div>
         )}
 
@@ -337,16 +518,22 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
               .map((icon, index) => (
                 <button
                   key={index}
-                  onClick={() => onSelect(icon.basicUrl)}
+                  onClick={() => {
+                    if (!icon.signedUrl) return;
+                    onSelect(icon.basicUrl, undefined, icon.signedUrl);
+                  }}
                   className="w-10 h-10 rounded-md flex items-center justify-center transition-colors duration-200 relative"
-                  style={{ 
-                    backgroundColor: hoveredButton === `icon-${index}` ? colors['bg-quaternary'] : 'transparent'
+                  style={{
+                    backgroundColor:
+                      hoveredButton === `icon-${index}`
+                        ? colors['bg-quaternary']
+                        : 'transparent',
                   }}
                   onMouseEnter={() => {
                     setHoveredButton(`icon-${index}`);
                     setHoveredIcon({
                       name: icon.basicUrl.split('/').pop()?.split('.')[0] || '',
-                      type: 'Icon'
+                      type: 'Icon',
                     });
                   }}
                   onMouseLeave={() => {
@@ -354,14 +541,21 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                     setHoveredIcon(null);
                   }}
                 >
-                  <img
-                    src={icon.signedUrl}
-                    alt={icon.basicUrl}
-                    className="w-6 h-6 object-contain select-none pointer-events-none"
-                  />
-                  <Tooltip 
-                    text={hoveredIcon?.name || ''} 
-                    visible={hoveredIcon?.type === 'Icon' && hoveredButton === `icon-${index}`}
+                  {icon.signedUrl ? (
+                    <img
+                      src={icon.signedUrl}
+                      alt={icon.basicUrl}
+                      className="w-6 h-6 object-contain select-none pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 bg-gray-100 rounded" />
+                  )}
+                  <Tooltip
+                    text={hoveredIcon?.name || ''}
+                    visible={
+                      hoveredIcon?.type === 'Icon' &&
+                      hoveredButton === `icon-${index}`
+                    }
                   />
                 </button>
               ))}
@@ -372,7 +566,9 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
           <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
             <div
               className={`w-full p-5 border border-dashed rounded-lg flex flex-col items-center gap-3 transition-colors duration-200 cursor-pointer ${
-                isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-brand-secondary'
+                isUploading
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:border-brand-secondary'
               }`}
               style={{ borderColor: colors['border-secondary'] }}
               onDragOver={(e) => {
@@ -401,19 +597,38 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
             >
               {isUploading ? (
                 <div className="flex flex-col items-center gap-2">
-                  <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none" style={{ color: colors['border-brand_alt'] }}>
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  <svg
+                    className="animate-spin w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    style={{ color: colors['border-brand_alt'] }}
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
                   </svg>
-                  <span style={{ color: colors['text-secondary'] }}>Uploading...</span>
+                  <span style={{ color: colors['text-secondary'] }}>
+                    Uploading...
+                  </span>
                 </div>
               ) : (
                 <>
-                  <div 
+                  <div
                     className="w-12 h-12 rounded-lg flex items-center justify-center"
                     style={{
                       backgroundColor: colors['bg-primary'],
-                      boxShadow: '0px 1px 2px 0px rgba(16, 24, 40, 0.05), inset 0px -2px 0px 0px rgba(16, 24, 40, 0.05), inset 0px 0px 0px 1px rgba(16, 24, 40, 0.18)'
+                      boxShadow:
+                        '0px 1px 2px 0px rgba(16, 24, 40, 0.05), inset 0px -2px 0px 0px rgba(16, 24, 40, 0.05), inset 0px 0px 0px 1px rgba(16, 24, 40, 0.18)',
                     }}
                   >
                     <img
@@ -424,14 +639,23 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                   </div>
                   <div className="flex flex-col items-center gap-1">
                     <div className="flex items-center gap-1">
-                      <span className="text-sm font-semibold" style={{ color: colors['text-brand-secondary'] }}>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: colors['text-brand-secondary'] }}
+                      >
                         Click to upload
                       </span>
-                      <span className="text-sm" style={{ color: colors['text-secondary'] }}>
+                      <span
+                        className="text-sm"
+                        style={{ color: colors['text-secondary'] }}
+                      >
                         or drag and drop
                       </span>
                     </div>
-                    <p className="text-xs text-center" style={{ color: colors['text-secondary'] }}>
+                    <p
+                      className="text-xs text-center"
+                      style={{ color: colors['text-secondary'] }}
+                    >
                       SVG, PNG, JPG
                     </p>
                   </div>
@@ -439,11 +663,11 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
               )}
             </div>
             {uploadError && (
-              <div 
+              <div
                 className="text-sm px-4 py-2 rounded-md"
-                style={{ 
+                style={{
                   backgroundColor: colors['bg-error'],
-                  color: colors['text-error']
+                  color: colors['text-error'],
                 }}
               >
                 {uploadError}
@@ -459,14 +683,17 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                 key={index}
                 onClick={() => onSelect(undefined, emoji)}
                 className="w-10 h-10 flex items-center justify-center rounded-md transition-colors duration-200 relative"
-                style={{ 
-                  backgroundColor: hoveredButton === `emoji-${index}` ? colors['bg-quaternary'] : 'transparent'
+                style={{
+                  backgroundColor:
+                    hoveredButton === `emoji-${index}`
+                      ? colors['bg-quaternary']
+                      : 'transparent',
                 }}
                 onMouseEnter={() => {
                   setHoveredButton(`emoji-${index}`);
                   setHoveredIcon({
                     name: `Emoji ${emoji}`,
-                    type: 'Emoji'
+                    type: 'Emoji',
                   });
                 }}
                 onMouseLeave={() => {
@@ -475,9 +702,12 @@ const IconSelector: React.FC<IconSelectorProps> = ({ onSelect, allowEmoji = true
                 }}
               >
                 {emoji}
-                <Tooltip 
-                  text={hoveredIcon?.name || ''} 
-                  visible={hoveredIcon?.type === 'Emoji' && hoveredButton === `emoji-${index}`}
+                <Tooltip
+                  text={hoveredIcon?.name || ''}
+                  visible={
+                    hoveredIcon?.type === 'Emoji' &&
+                    hoveredButton === `emoji-${index}`
+                  }
                 />
               </button>
             ))}

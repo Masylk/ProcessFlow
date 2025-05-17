@@ -205,6 +205,7 @@ export async function POST(req: NextRequest) {
       workspace_id,
       folder_id = null,
       author_id,
+      icon = null,
     } = await req.json();
 
     // Validate required fields
@@ -293,6 +294,7 @@ export async function POST(req: NextRequest) {
         folder_id,
         is_public: true,
         author_id: author_id ? Number(author_id) : null,
+        icon,
         public_access_id: await generatePublicAccessId(cleanedName, 0, workspace_id),
       },
       include: {
