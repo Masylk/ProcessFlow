@@ -231,6 +231,7 @@ export default function Page() {
       const data = await res.json();
       if (data) {
         setUser(data);
+        console.log('data.avatar_signed_url', data.avatar_signed_url);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -629,6 +630,8 @@ export default function Page() {
 
   // Function to update the user in state
   const updateUser = (updatedUser: User) => {
+    console.log('updatedUser', updatedUser);
+    console.log('avatar_signed_url', updatedUser.avatar_signed_url);
     setUser(updatedUser);
   };
 

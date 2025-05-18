@@ -102,7 +102,13 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
             Add a subfolder to
             {parent.icon_url ? (
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${parent.icon_url}`}
+                src={
+                  parent.icon_url.startsWith('https://cdn.brandfetch.io/')
+                    ? parent.icon_url
+                    : parent.signedIconUrl
+                      ? parent.signedIconUrl
+                      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                }
                 alt="icon"
                 className="w-4 h-4 inline-block ml-1"
               />

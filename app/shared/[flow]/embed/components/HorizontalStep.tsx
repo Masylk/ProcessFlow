@@ -240,8 +240,8 @@ export default function HorizontalStep({
   const scrollbarWidth = getScrollbarWidth();
 
   const getIconPath = (block: Block) => {
-    if (block.icon) {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    if (block.icon && block.signedIconUrl) {
+      return `${block.signedIconUrl}`;
     }
 
     switch (block.type) {
@@ -487,11 +487,7 @@ export default function HorizontalStep({
           >
             {/* Header Section */}
             <div
-              className={cn(
-                hasOnlyDescription
-                  ? ''
-                  : 'w-full px-5 pt-5 pb-4'
-              )}
+              className={cn(hasOnlyDescription ? '' : 'w-full px-5 pt-5 pb-4')}
             >
               {/* Step Header */}
               <div className="flex items-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">

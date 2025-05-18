@@ -69,10 +69,10 @@ export default function UserSettings({
   const avatarSrc = user.avatar_url
     ? user.avatar_url.startsWith('http')
       ? user.avatar_url // Use as is if it's a full URL (like Google avatar)
-      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
-    : user.avatar_signed_url
-      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
-      : defaultAvatar;
+      : user.avatar_signed_url
+        ? user.avatar_signed_url
+        : defaultAvatar
+    : defaultAvatar;
 
   // Local state for file upload and preview.
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -201,6 +201,12 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       updatedData.icon = null;
       blockData.signedIconUrl = null;
     }
+    if (
+      updatedData.icon &&
+      updatedData.icon.startsWith('https://cdn.brandfetch.io/')
+    ) {
+      blockData.signedIconUrl = null;
+    }
     if (updatedData.image === undefined) {
       updatedData.image = blockData.image;
     }
@@ -1098,7 +1104,8 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
                   className="w-6 h-6"
                   referrerPolicy="strict-origin-when-cross-origin"
                 />
-              ) : blockData.icon && blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
+              ) : blockData.icon &&
+                blockData.icon.startsWith('https://cdn.brandfetch.io/') ? (
                 <img
                   src={blockData.icon}
                   alt="Block Icon"

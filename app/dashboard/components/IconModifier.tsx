@@ -1,8 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import IconSelector from './IconSelector';
 import { useColors } from '@/app/theme/hooks';
 import ReactDOM from 'react-dom';
 import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
+
+interface Entity {
+  basicUrl: string;
+  signedUrl: string;
+}
 
 interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
@@ -27,6 +32,8 @@ export default function IconModifier({
   } | null>(null);
   const iconButtonRef = useRef<HTMLDivElement>(null);
   const [iconUrl, setIconUrl] = useState<string | undefined>(initialIcon);
+  const [applist, setAppList] = useState<Entity[]>([]);
+  const [iconlist, setIconList] = useState<Entity[]>([]);
 
   // Calculate and set the position for the IconSelector
   useEffect(() => {
@@ -54,6 +61,56 @@ export default function IconModifier({
     console.log('initialIcon', initialIcon);
     setIconUrl(initialIcon);
   }, [initialIcon]);
+
+  // Fetch icons and signed URLs
+  useEffect(() => {
+    const fetchIcons = async () => {
+      try {
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) throw new Error('Failed to fetch icons');
+        const data = await response.json();
+
+        // Set initial lists with empty signedUrl
+        const applistResult: Entity[] = data.applist.map((app: string) => ({
+          basicUrl: `step-icons/apps/${app}`,
+          signedUrl: '',
+        }));
+        const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
+          basicUrl: `step-icons/default-icons/${icon}`,
+          signedUrl: '',
+        }));
+
+        setAppList(applistResult);
+        setIconList(iconlistResult);
+
+        // Fetch signed URLs in the background for apps
+        data.applist.forEach(async (app: string, idx: number) => {
+          const basicUrl = `step-icons/apps/${app}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setAppList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+
+        // Fetch signed URLs in the background for icons
+        data.iconlist.forEach(async (icon: string, idx: number) => {
+          const basicUrl = `step-icons/default-icons/${icon}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setIconList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchIcons();
+  }, []);
 
   const handleIconSelect = (
     icon?: string,
@@ -122,7 +179,12 @@ export default function IconModifier({
               left: selectorPosition.left,
             }}
           >
-            <IconSelector onSelect={handleIconSelect} allowEmoji={allowEmoji} />
+            <IconSelector
+              onSelect={handleIconSelect}
+              allowEmoji={allowEmoji}
+              applist={applist}
+              iconlist={iconlist}
+            />
           </div>,
           document.body
         )

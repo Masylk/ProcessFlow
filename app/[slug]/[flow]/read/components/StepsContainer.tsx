@@ -35,10 +35,10 @@ export default function StepsContainer({
           : 'clock-stopwatch-1.svg'
       }`;
     }
-    if (block.icon) {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    if (block.icon && block.signedIconUrl) {
+      return `${block.signedIconUrl}`;
     }
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`;
   };
 
   // Helper function to format duration
@@ -69,11 +69,13 @@ export default function StepsContainer({
   return (
     <div className="space-y-2" style={{ marginLeft: level * 16 }}>
       {/* Path header with collapse toggle */}
-      <div 
+      <div
         className="flex items-center gap-2 p-2 rounded-md w-full hover-bg-custom cursor-pointer"
-        style={{ 
-          '--hover-bg': colors['bg-secondary'],
-        } as React.CSSProperties}
+        style={
+          {
+            '--hover-bg': colors['bg-secondary'],
+          } as React.CSSProperties
+        }
         onClick={onToggleCollapse}
       >
         <img
@@ -81,7 +83,7 @@ export default function StepsContainer({
           alt="Branch Icon"
           className="w-4 h-4"
         />
-        <span 
+        <span
           className="text-sm truncate flex-1"
           style={{ color: colors['text-secondary'] }}
         >
@@ -90,9 +92,11 @@ export default function StepsContainer({
         {onToggleCollapse && (
           <div
             className="p-1 rounded flex-shrink-0 hover-bg-custom"
-            style={{ 
-              '--hover-bg': colors['bg-secondary'],
-            } as React.CSSProperties}
+            style={
+              {
+                '--hover-bg': colors['bg-secondary'],
+              } as React.CSSProperties
+            }
           >
             <img
               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${
@@ -117,16 +121,20 @@ export default function StepsContainer({
               'focus:outline-none cursor-pointer',
               activeStepId === block.id ? '' : 'hover-bg-custom'
             )}
-            style={{
-              backgroundColor: activeStepId === block.id
-                ? colors['bg-brand-solid']
-                : 'transparent',
-              '--hover-bg': colors['bg-secondary'],
-            } as React.CSSProperties}
+            style={
+              {
+                backgroundColor:
+                  activeStepId === block.id
+                    ? colors['bg-brand-solid']
+                    : 'transparent',
+                '--hover-bg': colors['bg-secondary'],
+              } as React.CSSProperties
+            }
             role="link"
             aria-label={`Navigate to ${getBlockDisplayText(block)} section`}
           >
-            {block.icon && block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+            {block.icon &&
+            block.icon.startsWith('https://cdn.brandfetch.io/') ? (
               <img
                 src={block.icon}
                 alt="Step Icon"
@@ -149,16 +157,17 @@ export default function StepsContainer({
                 activeStepId === block.id && 'font-medium'
               )}
               style={{
-                color: activeStepId === block.id
-                  ? colors['text-white']
-                  : colors['text-secondary'],
+                color:
+                  activeStepId === block.id
+                    ? colors['text-white']
+                    : colors['text-secondary'],
               }}
             >
               {getBlockDisplayText(block)}
             </span>
           </button>
         ))}
-        
+
       <style jsx global>{`
         .hover-bg-custom:hover {
           background-color: var(--hover-bg);

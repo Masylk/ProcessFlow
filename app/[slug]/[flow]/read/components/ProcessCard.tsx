@@ -29,7 +29,8 @@ interface ProcessCardProps {
 // Utility to extract filename without extension from a path
 function getFilenameWithoutExtension(path: string): string {
   const filename = path.split('/').pop() || path;
-  return filename.replace(/\.[^/.]+$/, '');
+  // Remove everything after the first dot in the extension (e.g. .svg, .png, .jpg, .svg?foo=bar)
+  return filename.replace(/\.[^/.]+.*/, '');
 }
 
 export default function ProcessCard({
@@ -81,7 +82,11 @@ export default function ProcessCard({
           src={integration.icon}
           alt={integration.name}
           className="w-3.5 h-3.5 object-contain"
-          referrerPolicy={integration.icon.startsWith('https://cdn.brandfetch.io/') ? 'strict-origin-when-cross-origin' : undefined}
+          referrerPolicy={
+            integration.icon.startsWith('https://cdn.brandfetch.io/')
+              ? 'strict-origin-when-cross-origin'
+              : undefined
+          }
         />
       )}
       <span
@@ -119,18 +124,18 @@ export default function ProcessCard({
                 referrerPolicy="strict-origin-when-cross-origin"
               />
             ) : icon.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL || '') ? (
-              <DynamicIcon
-                url={icon}
-                size={40}
-                color="inherit"
-                className="select-none"
+              <img
+                src={icon}
+                alt={workflow.name}
+                className="w-10 h-10 object-contain"
+                referrerPolicy="strict-origin-when-cross-origin"
               />
             ) : (
-              <DynamicIcon
-                url={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${icon}`}
-                size={40}
-                color="inherit"
-                className="select-none"
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                alt="Default Icon"
+                className="w-10 h-10 select-none"
+                draggable="false"
               />
             )
           ) : (

@@ -63,26 +63,36 @@ const SortableFolderItem = (props: SortableFolderItemProps) => {
 
   let folderIcon;
   if (folder.icon_url) {
-    folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`;
+    folderIcon = folder.icon_url.startsWith('https://cdn.brandfetch.io/')
+      ? folder.icon_url
+      : folder.signedIconUrl
+        ? folder.signedIconUrl
+        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
   } else {
     folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
   }
 
   return (
-    <div 
-      ref={setNodeRef} 
+    <div
+      ref={setNodeRef}
       style={style}
       {...attributes}
       className={`mt-1 max-w-full${isDragging ? ' dragging' : ''} relative group/folder`}
       data-depth={depth}
     >
       {/* Single Drag Handle Indicator - Only visible on hover */}
-      <div 
+      <div
         {...listeners}
         className="absolute left-[-16px] top-0 bottom-0 w-4 flex items-center justify-center opacity-0 group-hover/folder:opacity-40 hover:opacity-80 transition-opacity cursor-grab z-10"
         style={{ color: colors['text-tertiary'] }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <circle cx="3" cy="3" r="1.5" fill="currentColor" />
           <circle cx="3" cy="9" r="1.5" fill="currentColor" />
           <circle cx="9" cy="3" r="1.5" fill="currentColor" />
@@ -114,4 +124,4 @@ const SortableFolderItem = (props: SortableFolderItemProps) => {
   );
 };
 
-export default SortableFolderItem; 
+export default SortableFolderItem;

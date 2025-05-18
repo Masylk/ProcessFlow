@@ -84,10 +84,12 @@ export interface WorkflowData {
     name: string;
   };
   icon?: string;
+  signedIconUrl?: string;
   description?: string;
   author?: {
     full_name: string;
     avatar_url?: string;
+    avatar_signed_url?: string;
   };
   folder?: {
     id: string;

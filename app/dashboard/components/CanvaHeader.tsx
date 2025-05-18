@@ -20,20 +20,20 @@ export default function CanvaHeader({
   const getFolderIcon = () => {
     if (selectedFolder?.icon_url) {
       // Display the icon_url if it exists
-      return (
-        selectedFolder.icon_url.startsWith('https://cdn.brandfetch.io/') ? (  
-          <img
-            src={selectedFolder.icon_url}
-            alt="Folder Icon"
-            className="w-6 h-6"
-          />
-        ) : (
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${selectedFolder.icon_url}`}
-            alt="Folder Icon"
-            className="w-6 h-6"
-          />
-        )
+      return selectedFolder.icon_url.startsWith(
+        'https://cdn.brandfetch.io/'
+      ) ? (
+        <img
+          src={selectedFolder.icon_url}
+          alt="Folder Icon"
+          className="w-6 h-6"
+        />
+      ) : (
+        <img
+          src={`${selectedFolder.signedIconUrl}`}
+          alt="Folder Icon"
+          className="w-6 h-6"
+        />
       );
     } else if (selectedFolder?.emote) {
       // Display the emote if icon_url does not exist
@@ -51,9 +51,9 @@ export default function CanvaHeader({
   };
 
   return (
-    <div 
-      style={{ 
-        borderColor: colors['border-secondary']
+    <div
+      style={{
+        borderColor: colors['border-secondary'],
       }}
       className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b"
     >
@@ -70,7 +70,7 @@ export default function CanvaHeader({
         )}
 
         {/* Display selected folder name or "My Flows" */}
-        <div 
+        <div
           style={{ color: colors['text-primary'] }}
           className="text-2xl font-medium font-['Inter'] leading-loose"
         >
@@ -78,13 +78,12 @@ export default function CanvaHeader({
         </div>
       </div>
       <div className="hidden justify-end items-center gap-2">
-       
         {/* Import Process Button */}
         <ButtonNormal
           variant="secondary"
           size="small"
           leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/upload-01.svg`}
-          className='hidden'
+          className="hidden"
         >
           Import a process
         </ButtonNormal>
@@ -94,7 +93,7 @@ export default function CanvaHeader({
           size="small"
           leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/white-plus.svg`}
           onClick={openCreateFlow}
-          className='hidden'
+          className="hidden"
         >
           New Flow
         </ButtonNormal>

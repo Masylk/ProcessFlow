@@ -15,6 +15,8 @@ interface Entity {
 
 interface IconSelectorProps {
   onSelect: (icon?: string) => void;
+  applist: Entity[];
+  iconlist: Entity[];
 }
 
 // Popular brands mapping
@@ -42,10 +44,12 @@ const BRAND_TO_DOMAIN: { [brand: string]: string } = {
   Adobe: 'adobe.com',
 };
 
-export default function IconSelector({ onSelect }: IconSelectorProps) {
+export default function IconSelector({
+  onSelect,
+  applist,
+  iconlist,
+}: IconSelectorProps) {
   const colors = useColors();
-  const [applist, setAppList] = useState<Entity[]>([]);
-  const [iconlist, setIconList] = useState<Entity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('Apps');
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -111,55 +115,6 @@ export default function IconSelector({ onSelect }: IconSelectorProps) {
     },
     [onSelect]
   );
-
-  useEffect(() => {
-    const fetchIcons = async () => {
-      try {
-        const response = await fetch('/api/step-icons');
-        if (!response.ok) throw new Error('Failed to fetch icons');
-        const data = await response.json();
-
-        // Set initial lists with empty signedUrl
-        const applistResult: Entity[] = data.applist.map((app: string) => ({
-          basicUrl: `step-icons/apps/${app}`,
-          signedUrl: '',
-        }));
-        const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
-          basicUrl: `step-icons/default-icons/${icon}`,
-          signedUrl: '',
-        }));
-
-        setAppList(applistResult);
-        setIconList(iconlistResult);
-
-        // Fetch signed URLs in the background for apps
-        data.applist.forEach(async (app: string, idx: number) => {
-          const basicUrl = `step-icons/apps/${app}`;
-          const signedUrl = await fetchSignedUrl(basicUrl);
-          setAppList((prev) =>
-            prev.map((item, i) =>
-              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
-            )
-          );
-        });
-
-        // Fetch signed URLs in the background for icons
-        data.iconlist.forEach(async (icon: string, idx: number) => {
-          const basicUrl = `step-icons/default-icons/${icon}`;
-          const signedUrl = await fetchSignedUrl(basicUrl);
-          setIconList((prev) =>
-            prev.map((item, i) =>
-              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
-            )
-          );
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchIcons();
-  }, []);
 
   // Update effect for BrandFetch search
   useEffect(() => {

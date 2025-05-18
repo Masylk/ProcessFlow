@@ -17,15 +17,15 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
   // First try to use the direct avatar_url (which could be a Google avatar URL)
   // Then fall back to avatar_signed_url if it exists
   // Finally use the default avatar
-  const avatarSrc =
-    user?.avatar_url
-      ? user.avatar_url.startsWith('http')
-        ? user.avatar_url // Use as is if it's a full URL (like Google avatar)
-        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_url}`
+  const avatarSrc = user?.avatar_url
+    ? user.avatar_url.startsWith('http')
+      ? user.avatar_url // Use as is if it's a full URL (like Google avatar)
       : user?.avatar_signed_url
-        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${user.avatar_signed_url}`
-        : defaultAvatar;
+        ? user.avatar_signed_url
+        : defaultAvatar
+    : defaultAvatar;
 
+  console.log('avatarSrc', avatarSrc);
   return (
     <div
       className={`flex items-center select-none rounded-full border transition-all duration-300 hover:bg-lightMode-bg-primary_hover ${
