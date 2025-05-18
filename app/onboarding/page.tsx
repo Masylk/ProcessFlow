@@ -37,6 +37,7 @@ function OnboardingContent() {
     
     // Force light theme styles for onboarding
     document.documentElement.classList.add('force-light-theme');
+    document.documentElement.classList.remove('dark');
     
     return () => {
       // Reset on unmount
