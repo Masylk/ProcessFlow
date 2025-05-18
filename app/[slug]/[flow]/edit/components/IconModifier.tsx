@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import IconSelector from './IconSelector';
 import { Block } from '../../types';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
+
+interface Entity {
+  basicUrl: string;
+  signedUrl: string;
+}
 
 interface IconModifierProps {
   block: Block;
@@ -11,10 +17,85 @@ interface IconModifierProps {
 export default function IconModifier({ block, onUpdate }: IconModifierProps) {
   const [showSelector, setShowSelector] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [applist, setAppList] = useState<Entity[]>([]);
+  const [iconlist, setIconList] = useState<Entity[]>([]);
   const colors = useColors();
   const themeAssets = useThemeAssets();
 
+  useEffect(() => {
+    let isMounted = true;
+    const getIconUrl = async () => {
+      let iconPath: string;
+      if (!block.icon) {
+        iconPath = 'step-icons/default-icons/container.svg';
+      } else if (block.icon.startsWith('https://cdn.brandfetch.io/')) {
+        setIconUrl(block.icon);
+        return;
+      } else {
+        iconPath = block.icon;
+      }
+      // Fetch signed URL for the icon (either default or custom)
+      const signedUrl = await fetchSignedUrl(iconPath);
+      if (isMounted) setIconUrl(signedUrl);
+    };
+    getIconUrl();
+    return () => {
+      isMounted = false;
+    };
+  }, [block.icon]);
+
+  // Fetch icons and signed URLs for selector
+  useEffect(() => {
+    const fetchIcons = async () => {
+      try {
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) throw new Error('Failed to fetch icons');
+        const data = await response.json();
+
+        // Set initial lists with empty signedUrl
+        const applistResult: Entity[] = data.applist.map((app: string) => ({
+          basicUrl: `step-icons/apps/${app}`,
+          signedUrl: '',
+        }));
+        const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
+          basicUrl: `step-icons/default-icons/${icon}`,
+          signedUrl: '',
+        }));
+
+        setAppList(applistResult);
+        setIconList(iconlistResult);
+
+        // Fetch signed URLs in the background for apps
+        data.applist.forEach(async (app: string, idx: number) => {
+          const basicUrl = `step-icons/apps/${app}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setAppList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+
+        // Fetch signed URLs in the background for icons
+        data.iconlist.forEach(async (icon: string, idx: number) => {
+          const basicUrl = `step-icons/default-icons/${icon}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setIconList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchIcons();
+  }, []);
+
   const handleIconSelect = (icon?: string) => {
+    console.log('icon', icon);
     if (icon) {
       onUpdate({ icon });
     } else {
@@ -44,23 +125,15 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        {block.icon ? (
+        {iconUrl ? (
           <img
-            src={block.icon.startsWith('https://cdn.brandfetch.io/') 
-              ? block.icon 
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`}
+            src={iconUrl}
             alt="Selected Icon"
             className="w-6 h-auto object-contain select-none pointer-events-none"
             referrerPolicy="strict-origin-when-cross-origin"
           />
         ) : (
-          <div className="w-6 h-6 flex justify-center items-center">
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/step-icons/default-icons/container.svg`}
-              alt="Default Icon"
-              className="w-6 h-6 select-none pointer-events-none"
-            />
-          </div>
+          <div className="w-6 h-6 flex justify-center items-center" />
         )}
       </div>
 
@@ -79,7 +152,11 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
       {/* Icon Selector */}
       {showSelector && (
         <div className="absolute top-12 left-0 z-50">
-          <IconSelector onSelect={handleIconSelect} />
+          <IconSelector
+            onSelect={handleIconSelect}
+            applist={applist}
+            iconlist={iconlist}
+          />
         </div>
       )}
     </div>

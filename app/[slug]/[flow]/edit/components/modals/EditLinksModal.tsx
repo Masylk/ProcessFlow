@@ -322,15 +322,15 @@ const EditLinksModal: React.FC<EditLinksModalProps> = ({
                 }}
               >
                 <div className="w-5 h-5">
-                  {sourceBlock?.data?.block?.icon ? (
+                  {sourceBlock?.data?.block?.signedIconUrl ? (
                     <img
-                      src={
-                        sourceBlock.data.block.icon.startsWith(
-                          'https://cdn.brandfetch.io/'
-                        )
-                          ? sourceBlock.data.block.icon
-                          : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${sourceBlock.data.block.icon}`
-                      }
+                      src={sourceBlock.data.block.signedIconUrl}
+                      alt="Block Icon"
+                      className="w-5 h-5"
+                    />
+                  ) : sourceBlock?.data?.block?.icon && sourceBlock.data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                    <img
+                      src={sourceBlock.data.block.icon}
                       alt="Block Icon"
                       className="w-5 h-5"
                     />
@@ -474,20 +474,25 @@ const EditLinksModal: React.FC<EditLinksModalProps> = ({
                           />
                         </div>
                         <div className="flex items-center gap-1">
-                          {targetNode?.data?.block?.icon && (
-                            <div className="w-4 h-4">
-                              <img
-                                src={
-                                  targetNode.data.block.icon.startsWith(
-                                    'https://cdn.brandfetch.io/'
-                                  )
-                                    ? targetNode.data.block.icon
-                                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${targetNode.data.block.icon}`
-                                }
-                                alt="Icon"
-                                className="w-4 h-4"
-                              />
-                            </div>
+                          {
+                          targetNode?.data?.block?.signedIconUrl ? (
+                            <img
+                              src={targetNode.data.block.signedIconUrl}
+                              alt="Block Icon"
+                              className="w-4 h-4"
+                            />
+                          ) : targetNode?.data?.block?.icon && targetNode.data.block.icon.startsWith('https://cdn.brandfetch.io/') ? (
+                            <img
+                              src={targetNode.data.block.icon}
+                              alt="Block Icon"
+                              className="w-4 h-4"
+                            />
+                          ) : (
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`}
+                              alt="Block"
+                              className="w-4 h-4"
+                            />
                           )}
                           <span
                             className="text-sm font-medium"

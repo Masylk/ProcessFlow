@@ -238,7 +238,11 @@ export default function Sidebar({
 
     let folderIcon;
     if (folder.icon_url) {
-      folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`;
+      folderIcon = folder.icon_url.startsWith('https://cdn.brandfetch.io/')
+        ? folder.icon_url
+        : folder.signedIconUrl
+          ? folder.signedIconUrl
+          : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
     } else {
       folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
     }
@@ -340,7 +344,9 @@ export default function Sidebar({
                   style={{ color: colors['text-primary'] }}
                   className="text-sm font-medium font-['Inter'] leading-tight flex items-center justify-between gap-2 min-w-0"
                 >
-                  <span className="truncate min-w-0">{activeWorkspace.name}</span>
+                  <span className="truncate min-w-0">
+                    {activeWorkspace.name}
+                  </span>
                   <Image
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/chevron-selector-vertical.svg`}
                     alt="Open workspace menu"

@@ -185,7 +185,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Update user data
-    const updatedUser = await prisma.user.update({
+    const updatedUser: any = await prisma.user.update({
       where: { id: Number(id) },
       data: {
         first_name,
@@ -197,6 +197,24 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    if (updatedUser.avatar_url) {
+      // If the updatedUser.avatar_url is a storage path (not an external URL), generate a signed URL
+      if (!updatedUser.avatar_url.startsWith('http')) {
+        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+        if (bucketName) {
+          const { data, error } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(updatedUser.avatar_url, 86400);
+          if (!error && data?.signedUrl) {
+            updatedUser.avatar_signed_url = data.signedUrl;
+          } else {
+            console.error('Error generating signed URL:', error);
+          }
+        } else {
+          console.error('Bucket name is undefined');
+        }
+      }
+    }
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
     console.error('Error updating user:', error);

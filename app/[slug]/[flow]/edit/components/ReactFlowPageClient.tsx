@@ -113,63 +113,71 @@ export function ReactFlowPageClient({
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [workflowRes, pathsRes] = await Promise.all([
-          fetch(`/api/workspace/${workspaceId}/workflows/${workflowId}`),
-          fetch(
-            `/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`
-          ),
-        ]);
+  // Move fetchData outside of useEffect so it can be reused
+  const fetchData = React.useCallback(async () => {
+    try {
+      const [workflowRes, pathsRes] = await Promise.all([
+        fetch(`/api/workspace/${workspaceId}/workflows/${workflowId}`),
+        fetch(`/api/workspace/${workspaceId}/paths?workflow_id=${workflowId}`),
+      ]);
 
-        const workflow = await workflowRes.json();
-        setWorkflowName(workflow.name);
-        setWorkspace(workflow.workspace);
-        setParentFolder(workflow.folder?.name);
-        setGrandParentFolder(workflow.folder?.parent?.name);
+      const workflow = await workflowRes.json();
+      setWorkflowName(workflow.name);
+      setWorkspace(workflow.workspace);
+      setParentFolder(workflow.folder?.name);
+      setGrandParentFolder(workflow.folder?.parent?.name);
 
-        const pathsData = await pathsRes.json();
-        setPaths(pathsData.paths);
+      const pathsData = await pathsRes.json();
+      setPaths(pathsData.paths);
 
-        // Fetch stroke lines
-        const strokeLinesData = await getWorkflowStrokeLines(
-          parseInt(workflowId)
-        );
-        if (strokeLinesData) {
-          setStrokeLines(strokeLinesData);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      // Fetch stroke lines
+      const strokeLinesData = await getWorkflowStrokeLines(
+        parseInt(workflowId)
+      );
+      if (strokeLinesData) {
+        setStrokeLines(strokeLinesData);
       }
-    };
-    fetchData();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   }, [workspaceId, workflowId, setPaths]);
+
+  // Initial fetch and set up interval
+  useEffect(() => {
+    fetchData();
+
+    const interval = setInterval(() => {
+      fetchData();
+    }, 43_200_000); // 12 hours
+
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   return (
     <>
       <ScreenSizeOverlay />
       <div className="h-screen flex flex-col">
         <WorkflowHeader
-        workflowId={workflowId}
-        parentFolder={parentFolder}
-        grandParentFolder={grandParentFolder}
-        slug={workspace?.name}
-      />
-      <div className="pt-[56px] flex-1 h-[calc(100vh-56px)]">
-        <ReactFlowProvider>
-          <Flow
-            workflowName={workflowName}
-            workspaceId={workspaceId}
-            workflowId={workflowId}
-            onBlockAdd={handleBlockAdd}
-            strokeLines={strokeLines}
-            setStrokeLines={setStrokeLines}
-            newBlockId={newBlockId}
-            clearNewBlockId={() => setNewBlockId(null)}
-          />
-        </ReactFlowProvider>
+          workflowId={workflowId}
+          parentFolder={parentFolder}
+          grandParentFolder={grandParentFolder}
+          slug={workspace?.name}
+        />
+        <div className="pt-[56px] flex-1 h-[calc(100vh-56px)]">
+          <ReactFlowProvider>
+            <Flow
+              workflowName={workflowName}
+              workspaceId={workspaceId}
+              workflowId={workflowId}
+              onBlockAdd={handleBlockAdd}
+              strokeLines={strokeLines}
+              setStrokeLines={setStrokeLines}
+              newBlockId={newBlockId}
+              clearNewBlockId={() => setNewBlockId(null)}
+            />
+          </ReactFlowProvider>
+        </div>
       </div>
-    </div>
-  </>);
+    </>
+  );
 }

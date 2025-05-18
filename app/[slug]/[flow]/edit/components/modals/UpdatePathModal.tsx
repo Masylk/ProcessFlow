@@ -229,7 +229,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
                 <IconModifier
                   block={minimalBlock}
                   onUpdate={(update) => {
-                    setIcon(update.icon ?? undefined);
+                    setIcon(update.icon ?? 'step-icons/default-icons/dataflow.svg');
                   }}
                 />
               </div>

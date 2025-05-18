@@ -16,7 +16,8 @@ interface EditFolderModalProps {
   onEdit: (
     folderName: string,
     icon_url?: string,
-    emote?: string
+    emote?: string,
+    signedIconUrl?: string
   ) => Promise<void>;
   initialIcon?: string;
   folder: Folder;
@@ -31,6 +32,11 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
   const [folderName, setFolderName] = useState(folder.name);
   const [iconUrl, setIconUrl] = useState<string | undefined>(
     folder.icon_url || undefined
+  );
+  const [previewIcon, setPreviewIcon] = useState<string | undefined>(
+    folder.icon_url && folder.icon_url.startsWith('https://cdn.brandfetch.io/')
+      ? folder.icon_url
+      : folder.signedIconUrl || undefined
   );
   const [emote, setEmote] = useState<string | undefined>(folder.emote);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +54,7 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      if (iconUrl) await onEdit(name, iconUrl);
+      if (iconUrl) await onEdit(name, iconUrl, undefined, previewIcon);
       else if (emote) await onEdit(name, undefined, emote);
       else await onEdit(name);
 
@@ -63,16 +69,18 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
     }
   };
 
-  const updateIcon = (icon?: string, emote?: string) => {
+  const updateIcon = (icon?: string, emote?: string, signedIcon?: string) => {
     if (icon) {
       setIconUrl(icon);
       setEmote(undefined);
+      setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
     } else if (emote) {
       setIconUrl(undefined);
       setEmote(emote);
     } else {
       setIconUrl(undefined);
       setEmote(undefined);
+      setPreviewIcon(undefined);
     }
   };
 
@@ -123,7 +131,7 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
           </label>
           <div className="flex items-center gap-2">
             <IconModifier
-              initialIcon={iconUrl}
+              initialIcon={previewIcon || undefined}
               onUpdate={updateIcon}
               emote={emote}
             />

@@ -12,7 +12,8 @@ interface CreateSubfolderModalProps {
     folderName: string,
     parentId: number,
     icon_url?: string,
-    emote?: string
+    emote?: string,
+    signedIconUrl?: string
   ) => Promise<void>;
   parentId: number;
   parent: Folder;
@@ -26,29 +27,32 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
 }) => {
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
+  const [previewIcon, setPreviewIcon] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
   const colors = useColors();
   const [isSaving, setIsSaving] = useState(false);
 
   const createFolder = (name: string) => {
     setIsSaving(true);
-    if (iconUrl) onCreate(name, parentId, iconUrl);
+    if (iconUrl) onCreate(name, parentId, iconUrl, undefined, previewIcon);
     else if (emote) onCreate(name, parentId, undefined, emote);
     else onCreate(name, parentId);
     setIsSaving(false);
     onClose();
   };
 
-  const updateIcon = (icon?: string, emote?: string) => {
+  const updateIcon = (icon?: string, emote?: string, signedIcon?: string) => {
     if (icon) {
       setIconUrl(icon);
       setEmote(undefined);
+      setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
     } else if (emote) {
       setIconUrl(undefined);
       setEmote(emote);
     } else {
       setIconUrl(undefined);
       setEmote(undefined);
+      setPreviewIcon(undefined);
     }
   };
 
@@ -98,7 +102,13 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
             Add a subfolder to
             {parent.icon_url ? (
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${parent.icon_url}`}
+                src={
+                  parent.icon_url.startsWith('https://cdn.brandfetch.io/')
+                    ? parent.icon_url
+                    : parent.signedIconUrl
+                      ? parent.signedIconUrl
+                      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                }
                 alt="icon"
                 className="w-4 h-4 inline-block ml-1"
               />
@@ -119,7 +129,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
           </label>
           <div className="mt-2 flex items-center gap-2">
             <IconModifier
-              initialIcon={iconUrl}
+              initialIcon={previewIcon}
               onUpdate={updateIcon}
               emote={emote}
             />

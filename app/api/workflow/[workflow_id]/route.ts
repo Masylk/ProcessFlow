@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { generatePublicAccessId } from '../utils';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -72,7 +73,7 @@ export async function GET(
     const params = await props.params;
     const workflowId = parseInt(params.workflow_id);
 
-    let workflow = await prisma.workflow.findUnique({
+    let workflow: any = await prisma.workflow.findUnique({
       where: { id: workflowId },
       select: {
         id: true,
@@ -158,6 +159,37 @@ export async function GET(
         },
       });
     }
+
+    // Add signedIconUrl if workflow.icon exists and is not a Brandfetch URL
+    if (workflow.icon && !workflow.icon.startsWith('https://cdn.brandfetch.io/')) {
+      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+      if (bucketName) {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(workflow.icon, 86400);
+        if (!error && data?.signedUrl) {
+          (workflow as any).signedIconUrl = data.signedUrl;
+        }
+      }
+    }
+
+    // Add signed avatar URL for author if needed
+    if (
+      workflow.author &&
+      workflow.author.avatar_url &&
+      !workflow.author.avatar_url.startsWith('http')
+    ) {
+      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+      if (bucketName) {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(workflow.author.avatar_url, 86400);
+        if (!error && data?.signedUrl) {
+          (workflow.author as any).avatar_signed_url = data.signedUrl;
+        }
+      }
+    }
+    
 
     return NextResponse.json(workflow);
   } catch (error) {

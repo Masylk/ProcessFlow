@@ -9,6 +9,7 @@ export interface Workflow {
   id: number;
   name: string;
   icon: string;
+  signedIconUrl?: string;
   description: string;
   workspaceId: number;
   workspace: Workspace;

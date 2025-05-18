@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const workflow = await prisma.workflow.findFirst({
+    const workflow: any = await prisma.workflow.findFirst({
       where: {
         public_access_id,
         is_public: true,
@@ -53,6 +54,20 @@ export async function GET(req: NextRequest) {
       );
     }
     
+    if (
+      workflow.author?.avatar_url &&
+      !workflow.author.avatar_url.startsWith('http')
+    ) {
+      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+      if (bucketName) {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(workflow.author.avatar_url, 86400);
+        if (!error && data?.signedUrl) {
+          workflow.author.avatar_signed_url = data.signedUrl;
+        }
+      }
+    }
     return NextResponse.json(workflow);
   } catch (error) {
     console.error('Error fetching public workflow:', error);

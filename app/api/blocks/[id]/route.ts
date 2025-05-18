@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { deleteOneBlock } from '../../utils/blocks/deleteOne';
 import { formatTitle } from '../../utils/formatTitle';
+import { createSignedUrlForBlock } from '@/utils/createSignedUrls';
 
 /**
  * @swagger
@@ -97,8 +98,6 @@ export async function PATCH(req: NextRequest) {
       delay_event,
     } = await req.json();
 
-    console.log('description', description);
-    console.log('title', title);
     // const formattedTitle = formatTitle(title);
     const formattedTitle = title;
     const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
@@ -151,7 +150,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update block with all fields
-    const updatedBlock = await prisma.block.update({
+    const updatedBlock: any = await prisma.block.update({
       where: { id: block_id },
       data: {
         type,
@@ -173,7 +172,9 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(updatedBlock);
+    const signedBlock = await createSignedUrlForBlock(updatedBlock);
+
+    return NextResponse.json(signedBlock);
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to update block' },

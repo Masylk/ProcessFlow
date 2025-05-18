@@ -695,7 +695,9 @@ export default function SharedPage({
           workflowData.icon && workflowData.icon.trim() !== ''
             ? workflowData.icon.startsWith('https://cdn.brandfetch.io/')
               ? workflowData.icon
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.icon}`
+              : workflowData.signedIconUrl
+                ? workflowData.signedIconUrl
+                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
@@ -704,7 +706,12 @@ export default function SharedPage({
         integrations: paths
           .flatMap((path) =>
             path.blocks
-              .filter((block) => block.icon && block.icon.includes('/apps/'))
+              .filter(
+                (block) =>
+                  block.icon &&
+                  block.icon.includes('/apps/') &&
+                  block.signedIconUrl
+              )
               .map((block) => ({
                 name: block
                   .icon!.split('/apps/')[1]
@@ -712,7 +719,7 @@ export default function SharedPage({
                   .split('-')
                   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                   .join(' '),
-                icon: `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`,
+                icon: `${block.signedIconUrl}`,
               }))
           )
           .filter(
@@ -725,8 +732,9 @@ export default function SharedPage({
             avatar:
               workflowData.author.avatar_url &&
               workflowData.author.avatar_url !== null &&
-              workflowData.author.avatar_url.trim() !== ''
-                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${workflowData.author.avatar_url}`
+              workflowData.author.avatar_url.trim() !== '' &&
+              workflowData.author.avatar_signed_url
+                ? workflowData.author.avatar_signed_url
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),

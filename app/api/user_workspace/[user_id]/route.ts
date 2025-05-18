@@ -1,6 +1,7 @@
 // app/api/workspace/[user_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { createSignedIconUrlsForWorkspaces } from '@/utils/createSignedUrls';
 
 /**
  * @swagger
@@ -168,7 +169,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
       return NextResponse.json([newWorkspace]);
     }
 
-    return NextResponse.json(workspaces);
+    const workspacesWithSignedIcons = await createSignedIconUrlsForWorkspaces(workspaces);
+
+    return NextResponse.json(workspacesWithSignedIcons);
   } catch (error) {
     console.error('Error fetching workspaces:', error);
     return NextResponse.json(
