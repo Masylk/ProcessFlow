@@ -271,8 +271,8 @@ export default function VerticalStep({
 
   // Helper function to get icon path
   const getIconPath = (block: Block) => {
-    if (block.icon) {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    if (block.icon && block.signedIconUrl) {
+      return `${block.signedIconUrl}`;
     }
 
     switch (block.type) {

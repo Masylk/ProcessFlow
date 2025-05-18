@@ -1,13 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import IconSelector from './IconSelector';
 import { useColors } from '@/app/theme/hooks';
 import ReactDOM from 'react-dom';
+import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
+
+interface Entity {
+  basicUrl: string;
+  signedUrl: string;
+}
 
 interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
   emote?: string;
-  onUpdate: (icon?: string, emote?: string) => void; // Callback when an icon is updated
+  onUpdate: (icon?: string, emote?: string, signedIcon?: string) => void; // Callback when an icon is updated
   allowEmoji?: boolean; // Add this prop
+  flow?: boolean;
 }
 
 export default function IconModifier({
@@ -15,6 +22,7 @@ export default function IconModifier({
   onUpdate,
   emote,
   allowEmoji = true, // Default to true
+  flow = false,
 }: IconModifierProps) {
   const colors = useColors();
   const [showSelector, setShowSelector] = useState(false);
@@ -23,6 +31,9 @@ export default function IconModifier({
     left: number;
   } | null>(null);
   const iconButtonRef = useRef<HTMLDivElement>(null);
+  const [iconUrl, setIconUrl] = useState<string | undefined>(initialIcon);
+  const [applist, setAppList] = useState<Entity[]>([]);
+  const [iconlist, setIconList] = useState<Entity[]>([]);
 
   // Calculate and set the position for the IconSelector
   useEffect(() => {
@@ -46,10 +57,69 @@ export default function IconModifier({
     return () => document.removeEventListener('keydown', handleKey);
   }, [showSelector]);
 
-  const handleIconSelect = (icon?: string, emote?: string) => {
+  useEffect(() => {
+    console.log('initialIcon', initialIcon);
+    setIconUrl(initialIcon);
+  }, [initialIcon]);
+
+  // Fetch icons and signed URLs
+  useEffect(() => {
+    const fetchIcons = async () => {
+      try {
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) throw new Error('Failed to fetch icons');
+        const data = await response.json();
+
+        // Set initial lists with empty signedUrl
+        const applistResult: Entity[] = data.applist.map((app: string) => ({
+          basicUrl: `step-icons/apps/${app}`,
+          signedUrl: '',
+        }));
+        const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
+          basicUrl: `step-icons/default-icons/${icon}`,
+          signedUrl: '',
+        }));
+
+        setAppList(applistResult);
+        setIconList(iconlistResult);
+
+        // Fetch signed URLs in the background for apps
+        data.applist.forEach(async (app: string, idx: number) => {
+          const basicUrl = `step-icons/apps/${app}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setAppList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+
+        // Fetch signed URLs in the background for icons
+        data.iconlist.forEach(async (icon: string, idx: number) => {
+          const basicUrl = `step-icons/default-icons/${icon}`;
+          const signedUrl = await fetchSignedUrl(basicUrl);
+          setIconList((prev) =>
+            prev.map((item, i) =>
+              i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+            )
+          );
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchIcons();
+  }, []);
+
+  const handleIconSelect = (
+    icon?: string,
+    emote?: string,
+    signedIcon?: string
+  ) => {
     if (icon) {
       // If an icon is selected, clear the emote
-      onUpdate(icon, undefined);
+      onUpdate(icon, undefined, signedIcon);
     } else if (emote) {
       // If an emote is selected, clear the icon
       onUpdate(undefined, emote);
@@ -73,13 +143,9 @@ export default function IconModifier({
       }}
       onClick={() => setShowSelector((v) => !v)}
     >
-      {initialIcon ? (
+      {iconUrl && !emote ? (
         <img
-          src={
-            initialIcon.startsWith('https://cdn.brandfetch.io/')
-              ? initialIcon
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${initialIcon}`
-          }
+          src={iconUrl}
           alt="Selected Icon"
           className="w-6 h-6 select-none pointer-events-none"
           referrerPolicy="strict-origin-when-cross-origin"
@@ -89,7 +155,11 @@ export default function IconModifier({
       ) : (
         <div className="w-6 h-6 flex justify-center items-center">
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`}
+            src={`${
+              flow
+                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`
+                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+            }`}
             alt="Default Icon"
             className="w-6 h-6 select-none pointer-events-none"
           />
@@ -109,7 +179,12 @@ export default function IconModifier({
               left: selectorPosition.left,
             }}
           >
-            <IconSelector onSelect={handleIconSelect} allowEmoji={allowEmoji} />
+            <IconSelector
+              onSelect={handleIconSelect}
+              allowEmoji={allowEmoji}
+              applist={applist}
+              iconlist={iconlist}
+            />
           </div>,
           document.body
         )

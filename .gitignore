@@ -44,3 +44,6 @@ nftl.txt
 # Claude documentation
 CLAUDE.md
 .qodo
+
+# Ignore database backups
+backup.sql

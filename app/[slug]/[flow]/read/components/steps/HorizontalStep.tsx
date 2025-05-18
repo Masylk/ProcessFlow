@@ -189,11 +189,11 @@ export default function HorizontalStep({
         (containerHeight - (scrollbarThumbHeight || 0));
 
   const getIconPath = (block: Block) => {
-    if (block.icon) {
-      return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${block.icon}`;
+    if (block.icon && block.signedIconUrl) {
+      return `${block.signedIconUrl}`;
     }
 
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`;
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`;
   };
 
   const getDisplayTitle = (block: Block) => {

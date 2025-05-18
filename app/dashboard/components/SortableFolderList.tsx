@@ -591,8 +591,11 @@ export default function SortableFolderList({
               icon={
                 activeFolder.emote
                   ? ''
-                  : activeFolder.icon_url
-                    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${activeFolder.icon_url}`
+                  : activeFolder.icon_url &&
+                    !activeFolder.icon_url.startsWith('https://cdn.brandfetch.io/')
+                    ? `${activeFolder.icon_url}`
+                    : activeFolder.signedIconUrl
+                    ? `${activeFolder.signedIconUrl}`
                     : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
               }
               label={activeFolder.name}

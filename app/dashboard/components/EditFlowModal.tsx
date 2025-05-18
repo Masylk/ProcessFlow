@@ -18,7 +18,8 @@ interface EditFlowModalProps {
     name: string,
     description: string,
     folder: Folder | null | undefined,
-    icon: string | null
+    icon: string | null,
+    signedIcon: string | null
   ) => Promise<{
     workflow: Workflow | null;
     error?: { title: string; description: string };
@@ -38,6 +39,12 @@ export default function EditFlowModal({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState(selectedWorkflow.icon || null);
+  const [previewIcon, setPreviewIcon] = useState(
+    selectedWorkflow.icon &&
+      selectedWorkflow.icon.startsWith('https://cdn.brandfetch.io/')
+      ? selectedWorkflow.icon
+      : selectedWorkflow.signedIconUrl || null
+  );
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -47,7 +54,8 @@ export default function EditFlowModal({
         processName,
         flowDescription,
         undefined,
-        flowIcon
+        flowIcon,
+        previewIcon
       );
 
       if (result.error) {
@@ -139,9 +147,13 @@ export default function EditFlowModal({
               <div className="flex items-center gap-2 w-full">
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
-                    initialIcon={flowIcon || undefined}
-                    onUpdate={(icon) => setFlowIcon(icon || null)}
+                    initialIcon={previewIcon || undefined}
+                    onUpdate={(icon, emote, signedIcon) => {
+                      setFlowIcon(icon || null);
+                      setPreviewIcon(signedIcon ? signedIcon : icon || null);
+                    }}
                     allowEmoji={false}
+                    flow={true}
                   />
                 </div>
                 <div style={{ zIndex: 0 }} className="flex-1">

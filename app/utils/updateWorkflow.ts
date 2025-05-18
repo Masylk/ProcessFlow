@@ -37,6 +37,11 @@ export async function updateWorkflow(
     }
 
     const updatedWorkflow: Workflow = await response.json();
+    if (updateData.signedIconUrl) {
+      updatedWorkflow.signedIconUrl = updateData.signedIconUrl;
+    } else if (!updateData.icon) {
+      updatedWorkflow.signedIconUrl = undefined;
+    }
     return { workflow: updatedWorkflow };
   } catch (error) {
     console.error('Error calling update workflow API:', error);

@@ -13,7 +13,8 @@ interface CreateFlowModalProps {
   onCreateFlow: (
     name: string,
     description: string,
-    icon: string | null
+    icon: string | null,
+    signedIcon: string | null
   ) => Promise<void>;
 }
 
@@ -26,7 +27,7 @@ export default function CreateFlowModal({
   const [flowDescription, setFlowDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState<string | null>(null);
-
+  const [previewIcon, setPreviewIcon] = useState<string | null>(null);
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -96,9 +97,13 @@ export default function CreateFlowModal({
               <div className="flex items-center gap-2 w-full">
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
-                    initialIcon={flowIcon || undefined}
-                    onUpdate={(icon) => setFlowIcon(icon || null)}
+                    initialIcon={previewIcon || undefined}
+                    onUpdate={(icon, emote, signedIcon) => {
+                      setFlowIcon(icon || null);
+                      setPreviewIcon(signedIcon ? signedIcon : icon || null);
+                    }}
                     allowEmoji={false}
+                    flow={true}
                   />
                 </div>
                 <div style={{ zIndex: 0 }} className="flex-1">
@@ -234,7 +239,8 @@ export default function CreateFlowModal({
                   onCreateFlow(
                     sanitizedFlowName,
                     sanitizedFlowDescription,
-                    flowIcon
+                    flowIcon,
+                    previewIcon
                   )
                     .then(() => {
                       setIsSaving(false);

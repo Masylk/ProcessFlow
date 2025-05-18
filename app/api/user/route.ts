@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server'; // Import your Supabase client
 import prisma from '@/lib/prisma'; // Import your Prisma client
+import { supabase } from '@/lib/supabaseClient'; // Already imported in your signed url util
 
 /**
  * @swagger
@@ -122,6 +123,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    let avatar_signed_url: string | null = null;
+    if (user.avatar_url && !user.avatar_url.startsWith('http')) {
+      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+      if (bucketName) {
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(user.avatar_url, 86400);
+        if (!error && data?.signedUrl) {
+          avatar_signed_url = data.signedUrl;
+        }
+      }
+    }
     // If the email differs, update the Prisma user record
     if (user.email !== supabaseEmail) {
       const updatedUser = await prisma.user.update({
@@ -130,10 +143,11 @@ export async function GET(req: NextRequest) {
           email: supabaseEmail,
         },
       });
-      return NextResponse.json(updatedUser);
+      // Add avatar_signed_url to updatedUser before returning
+      return NextResponse.json({ ...updatedUser, avatar_signed_url });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({ ...user, avatar_signed_url });
   } catch (dbError) {
     console.error('Error fetching or updating user from Prisma:', dbError);
     return NextResponse.json(

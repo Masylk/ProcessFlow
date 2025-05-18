@@ -84,10 +84,12 @@ export interface WorkflowData {
     name: string;
   };
   icon?: string;
+  signedIconUrl?: string;
   description?: string;
   author?: {
     full_name: string;
     avatar_url?: string;
+    avatar_signed_url?: string;
   };
   folder?: {
     id: string;
@@ -115,8 +117,10 @@ export interface Block {
   position: number;
   title?: string | null;
   icon?: string | null;
+  signedIconUrl?: string | null;
   description?: string | null;
   image?: string | null;
+  signedImageUrl?: string | null;
   original_image?: string | null;
   image_description?: string | null;
   average_time?: string | null;

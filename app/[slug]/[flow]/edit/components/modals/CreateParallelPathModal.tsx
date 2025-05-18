@@ -42,9 +42,11 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   position,
   existingPaths = [],
 }) => {
-  const [conditionName, setConditionName] = useState<string>("");
-  const [conditionDescription, setConditionDescription] = useState<string>("");
-  const [icon, setIcon] = useState<string | undefined>(`step-icons/default-icons/dataflow.svg`);
+  const [conditionName, setConditionName] = useState<string>('');
+  const [conditionDescription, setConditionDescription] = useState<string>('');
+  const [icon, setIcon] = useState<string | undefined>(
+    `step-icons/default-icons/dataflow.svg`
+  );
   const [pathNames, setPathNames] = useState<string[]>([]);
   const [selectedPath, setSelectedPath] = useState<number>(0);
   const colors = useColors();
@@ -81,8 +83,8 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   };
 
   // Check if any path name is empty or if condition name is empty
-  const hasEmptyPath = pathNames.some((name) => name.trim() === "");
-  const isConditionNameEmpty = conditionName.trim() === "";
+  const hasEmptyPath = pathNames.some((name) => name.trim() === '');
+  const isConditionNameEmpty = conditionName.trim() === '';
 
   const handleAddPath = () => {
     setPathNames([...pathNames, `Path n°${pathNames.length + 1}`]);
@@ -94,19 +96,22 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
     setPathNames(newPathNames);
   };
 
-  const minimalBlock = useMemo(() => ({
-    id: 0,
-    created_at: '',
-    updated_at: '',
-    type: 'STEP' as const,
-    position: 0,
-    workflow_id: 0,
-    path_id: 0,
-    workflow: path.workflow,
-    path: path,
-    child_paths: [],
-    icon: icon || undefined,
-  }), [icon, path]);
+  const minimalBlock = useMemo(
+    () => ({
+      id: 0,
+      created_at: '',
+      updated_at: '',
+      type: 'STEP' as const,
+      position: 0,
+      workflow_id: 0,
+      path_id: 0,
+      workflow: path.workflow,
+      path: path,
+      child_paths: [],
+      icon: icon || undefined,
+    }),
+    [icon, path]
+  );
 
   const modalContent = (
     <div style={themeVars as React.CSSProperties} className={currentTheme}>
@@ -137,7 +142,9 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
                   path_to_move: selectedPath,
                 })
               }
-              disabled={isConditionNameEmpty || hasEmptyPath || pathNames.length === 0}
+              disabled={
+                isConditionNameEmpty || hasEmptyPath || pathNames.length === 0
+              }
             >
               Create condition
             </ButtonNormal>
@@ -150,14 +157,21 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
         >
           {/* Condition Name + Icon Selector */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold flex items-center gap-1 text-left" style={{ color: colors['text-secondary'] }}>
+            <label
+              className="text-sm font-semibold flex items-center gap-1 text-left"
+              style={{ color: colors['text-secondary'] }}
+            >
               Condition name <span className="text-primary">*</span>
             </label>
             <div className="flex flex-row items-center w-full gap-2">
               <div className="flex items-center">
                 <IconModifier
                   block={minimalBlock}
-                  onUpdate={update => setIcon(update.icon ?? undefined)}
+                  onUpdate={(update) =>
+                    setIcon(
+                      update.icon ?? 'step-icons/default-icons/dataflow.svg'
+                    )
+                  }
                 />
               </div>
               <div className="flex-1">
@@ -172,14 +186,20 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
           </div>
           {/* Condition Description */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold" style={{ color: colors['text-secondary'] }}>
+            <label
+              className="text-sm font-semibold"
+              style={{ color: colors['text-secondary'] }}
+            >
               Condition description
             </label>
             <textarea
               className="border rounded-lg p-3 min-h-[80px] resize-y text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-primary"
-              style={{ background: colors['bg-primary'], borderColor: colors['border-primary'] }}
+              style={{
+                background: colors['bg-primary'],
+                borderColor: colors['border-primary'],
+              }}
               value={conditionDescription}
-              onChange={e => setConditionDescription(e.target.value)}
+              onChange={(e) => setConditionDescription(e.target.value)}
               placeholder="Describe the condition (optional)"
             />
           </div>
@@ -221,7 +241,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
               variant="secondary"
               size="small"
               onClick={handleAddPath}
-              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
+              leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-white.svg`}
             >
               Add new path
             </ButtonNormal>

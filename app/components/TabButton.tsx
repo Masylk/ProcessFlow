@@ -158,6 +158,12 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 <div className="w-4 h-4 flex items-center justify-center leading-none">
                   {emote}
                 </div>
+              ) : folder?.signedIconUrl ? (
+                <img
+                  src={folder.signedIconUrl}
+                  alt={label}
+                  className="w-4 h-4 object-contain"
+                />
               ) : folder?.icon_url ? (
                 folder.icon_url.startsWith('https://cdn.brandfetch.io/') ? (
                   <img
@@ -166,15 +172,9 @@ export const TabButton: React.FC<TabButtonProps> = ({
                     className="w-4 h-4 object-contain"
                     referrerPolicy="strict-origin-when-cross-origin"
                   />
-                ) : folder.icon_url.startsWith('assets/shared_components/') ? (
-                  <img
-                    src={getAssetUrl(folder.icon_url)}
-                    alt={label}
-                    className="w-4 h-4 object-contain"
-                  />
                 ) : (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH}/${folder.icon_url}`}
+                    // src={getAssetUrl(folder.icon_url)}
                     alt={label}
                     className="w-4 h-4 object-contain"
                   />
