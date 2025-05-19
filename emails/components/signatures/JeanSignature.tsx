@@ -86,6 +86,7 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
       
       {/* Social Icons */}
       <div style={{ marginTop: '8px' }}>
+        {/*
         <Link href={productHuntUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={productHuntIconUrl}
@@ -101,6 +102,7 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
             }}
           />
         </Link>
+        */}
         <Link href={linkedinUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={linkedinIconUrl}
@@ -116,6 +118,7 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
             }}
           />
         </Link>
+        {/*
         <Link href={xUrl} style={{ textDecoration: 'none', marginRight: '10px', display: 'inline-block' }}>
           <Img
             src={xIconUrl}
@@ -131,6 +134,7 @@ export const JeanSignature: React.FC<JeanSignatureProps> = ({ publicUrls = {} })
             }}
           />
         </Link>
+        */}
       </div>
     </Section>
   );

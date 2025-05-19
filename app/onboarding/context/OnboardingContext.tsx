@@ -555,19 +555,25 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (response.ok) {
-        setIsWorkflowCreated(true);
+        const data = await response.json();
+        if (Array.isArray(data.workflowIds) && data.workflowIds.length > 0) {
+          setIsWorkflowCreated(true);
+        } else {
+          setWorkflowCreationError('No workflows were created');
+          setIsWorkflowCreated(false);
+        }
       } else {
         const data = await response.json();
         setWorkflowCreationError(
-          data.error || 'Failed to create default workflow'
+          data.error || 'Failed to create default workflows'
         );
         // Still set as created so user can continue
         setIsWorkflowCreated(true);
       }
     } catch (error) {
-      console.error('Error creating default workflow:', error);
+      console.error('Error creating default workflows:', error);
       setWorkflowCreationError(
-        'Connection error while creating default workflow'
+        'Connection error while creating default workflows'
       );
       // Still set as created so user can continue
       setIsWorkflowCreated(true);
