@@ -160,9 +160,16 @@ input, textarea {
 }
 
 /* Force light theme for the onboarding page */
-.force-light-theme {
-  /* Override dark mode styles with light mode equivalents */
-  background-color: #ffffff !important;
+.force-light-theme,
+.force-light-theme .dark,
+.force-light-theme.dark {
+  --tw-bg-opacity: 1 !important;
+  --tw-text-opacity: 1 !important;
+  color-scheme: light !important;
+}
+.force-light-theme .dark,
+.force-light-theme.dark {
+  background-color: #fff !important;
   color: #101828 !important;
 }
 
