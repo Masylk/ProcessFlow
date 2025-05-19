@@ -151,6 +151,16 @@ function LoginContent() {
         if (response?.error) {
           // Add failed attempt
           const attempts = addLoginAttempt();
+          // Log error to console
+          console.error('Login failed:', response.error, { email: cleanEmail });
+
+          // Report to PostHog
+          posthog.capture('login_failed', {
+            email: cleanEmail,
+            error: response.error,
+            attempts,
+          });
+
           if (attempts >= MAX_ATTEMPTS) {
             const blockUntil = Date.now() + BLOCK_MINUTES * 60 * 1000;
             setBlockUntil(blockUntil);
@@ -199,6 +209,18 @@ function LoginContent() {
       } catch (err) {
         // Add failed attempt on unexpected error
         const attempts = addLoginAttempt();
+        // Log error to console
+        console.error('Unexpected error during login:', err, {
+          email: cleanEmail,
+        });
+
+        // Report to PostHog
+        posthog.capture('login_failed_unexpected', {
+          email: cleanEmail,
+          error: err instanceof Error ? err.message : String(err),
+          attempts,
+        });
+
         if (attempts >= MAX_ATTEMPTS) {
           const blockUntil = Date.now() + BLOCK_MINUTES * 60 * 1000;
           setBlockUntil(blockUntil);
@@ -211,7 +233,6 @@ function LoginContent() {
           });
           return;
         }
-        console.error('Unexpected error during login:', err);
         toast.error('Login Failed', {
           description: 'An unexpected error occurred. Please try again.',
           duration: 5000,
