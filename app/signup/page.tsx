@@ -176,9 +176,12 @@ export default function SignupPage() {
         );
       }
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Unexpected error during signup:', error);
-      }
+      console.error('Unexpected error during signup:', error);
+      // Report to PostHog
+      posthog.capture('signup_failed', {
+        email,
+        error: error instanceof Error ? error.message : String(error),
+      });
       setIsLoading(false);
       setGlobalError('An unexpected error occurred. Please try again later.');
     }
