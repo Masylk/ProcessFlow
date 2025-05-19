@@ -1,14 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useColors } from '@/app/theme/hooks';
 import InputField from '@/app/components/InputFields';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useOnboarding } from '../context/OnboardingContext';
 import { sanitizeNameInput } from '../utils/inputSanitizer';
 
 const PersonalInfoStep: React.FC = () => {
-  const colors = useColors();
   const { 
     personalInfo: { firstName, lastName, setFirstName, setLastName },
     isLoading,
@@ -34,14 +32,12 @@ const PersonalInfoStep: React.FC = () => {
   return (
     <div className="w-full max-w-[442px] flex flex-col gap-6 mx-auto">
       <div
-        className="text-center text-2xl font-semibold font-['Inter']"
-        style={{ color: colors['text-primary'] }}
+        className="text-center text-2xl font-semibold font-['Inter'] text-gray-900 dark:text-white"
       >
         Welcome to ProcessFlow!
       </div>
       <div
-        className="text-center text-base font-normal font-['Inter']"
-        style={{ color: colors['text-secondary'] }}
+        className="text-center text-base font-normal font-['Inter'] text-gray-600 dark:text-gray-300"
       >
         You can always change your name later.
       </div>
