@@ -18,6 +18,7 @@ export async function login(formData: FormData) {
   try {
     const supabase = await createClient();
 
+    await supabase.auth.signOut();
     const credentials = {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
