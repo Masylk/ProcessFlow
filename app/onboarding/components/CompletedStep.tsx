@@ -7,14 +7,16 @@ import { useOnboarding } from '../context/OnboardingContext';
 const CompletedStep: React.FC = () => {
   const videoRef = useRef<HTMLIFrameElement>(null);
   const {
-    isCreatingWorkflow,
     error,
-    workflowCreationError,
     handleCompletedContinue,
     setCurrentStep,
     setError,
     setWorkspaceCreationStarted,
+    workspaceInfo,
   } = useOnboarding();
+
+  // Destructure from workspaceInfo
+  const { isCreatingWorkflow, workflowCreationError } = workspaceInfo;
 
   // Add a manual logout function that will clear all authentication data
   const handleEmergencyLogout = () => {
