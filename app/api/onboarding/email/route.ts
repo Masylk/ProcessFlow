@@ -8,7 +8,7 @@ import { scheduleFollowUpEmail, scheduleTestEmail } from '@/lib/scheduledEmails'
 import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackRequestEmail';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import * as Sentry from '@sentry/nextjs';
-import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
+import { createDefaultWorkflow, createDefaultWorkflows } from '@/app/api/utils/create-default-workflow';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -446,29 +446,29 @@ export async function POST(request: Request) {
           let workflowErrorFinal = null;
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
-              const result = await createDefaultWorkflow({
+              const results = await createDefaultWorkflows({
                 workspaceId: workspace.id,
                 userId: dbUser.id
               });
-              if (result?.warnings) {
+              const allWarnings = results.flatMap(r => 'warnings' in r && r.warnings ? r.warnings : []);
+              if (allWarnings.length > 0) {
                 workflowCreationWarning = {
-                  message: 'Default workflow created with warnings',
-                  details: result.warnings
+                  message: 'Default workflows created with warnings',
+                  details: allWarnings
                 };
               }
               workflowErrorFinal = null;
               break; // Success, exit retry loop
             } catch (workflowError) {
-              console.error(`Error creating default workflow (attempt ${attempt}):`, workflowError);
+              console.error(`Error creating default workflows (attempt ${attempt}):`, workflowError);
               Sentry.captureException(workflowError);
               workflowErrorFinal = workflowError;
-              // Wait a short time before retrying (optional)
               if (attempt < 3) await new Promise(res => setTimeout(res, 500));
             }
           }
           if (workflowErrorFinal) {
             workflowCreationWarning = {
-              message: 'Failed to create default workflow after 3 attempts',
+              message: 'Failed to create default workflows after 3 attempts',
               details: workflowErrorFinal
             };
             Sentry.captureException(workflowErrorFinal);
@@ -586,26 +586,27 @@ export async function POST(request: Request) {
           }
         });
         
-        // Create default workflow for invited users as well
+        // Create default workflows for invited users as well
         let invitedWorkflowCreationWarning = null;
         if (dbUser.active_workspace_id) {
           let invitedWorkflowErrorFinal = null;
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
-              const result = await createDefaultWorkflow({
+              const results = await createDefaultWorkflows({
                 workspaceId: dbUser.active_workspace_id,
                 userId: dbUser.id
               });
-              if (result?.warnings) {
+              const allWarnings = results.flatMap(r => 'warnings' in r && r.warnings ? r.warnings : []);
+              if (allWarnings.length > 0) {
                 invitedWorkflowCreationWarning = {
-                  message: 'Default workflow created with warnings',
-                  details: result.warnings
+                  message: 'Default workflows created with warnings',
+                  details: allWarnings
                 };
               }
               invitedWorkflowErrorFinal = null;
               break; // Success, exit retry loop
             } catch (workflowError) {
-              console.error(`Error creating default workflow for invited user (attempt ${attempt}):`, workflowError);
+              console.error(`Error creating default workflows for invited user (attempt ${attempt}):`, workflowError);
               Sentry.captureException(workflowError);
               invitedWorkflowErrorFinal = workflowError;
               if (attempt < 3) await new Promise(res => setTimeout(res, 500));
@@ -613,7 +614,7 @@ export async function POST(request: Request) {
           }
           if (invitedWorkflowErrorFinal) {
             invitedWorkflowCreationWarning = {
-              message: 'Failed to create default workflow after 3 attempts',
+              message: 'Failed to create default workflows after 3 attempts',
               details: invitedWorkflowErrorFinal
             };
             Sentry.captureException(invitedWorkflowErrorFinal);

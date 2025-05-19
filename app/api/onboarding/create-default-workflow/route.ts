@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
+import { createDefaultWorkflows } from '@/app/api/utils/create-default-workflow';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 
@@ -40,22 +40,27 @@ export async function POST() {
     const workspaceId = Number(workspaces[0].id);
     const userId = Number(user.id);
     
-    // Create the default workflow
-    const result = await createDefaultWorkflow({ workspaceId, userId });
-    
-    if (!result || !result.success || (result.warnings && result.warnings.length > 0)) {
+    // Create the default workflows
+    const results = await createDefaultWorkflows({ workspaceId, userId });
+    // Only access warnings on objects that have it
+    const warnings = results.flatMap(r => 'warnings' in r && r.warnings ? r.warnings : []);
+    const success = results.every(r => r.success);
+    if (!success) {
       return NextResponse.json(
-        { 
-          error: 'Failed to create default workflow',
-          warnings: result?.warnings 
+        {
+          error: 'Failed to create all default workflows',
+          results,
+          warnings: warnings.length > 0 ? warnings : undefined,
         },
         { status: 500 }
       );
     }
-    
-    return NextResponse.json({ 
-      success: true, 
-      workflowId: result.workflow.id 
+    // Only access workflow on objects that have it
+    const workflowIds = results.map(r => 'workflow' in r && r.workflow?.id).filter(Boolean);
+    return NextResponse.json({
+      success: true,
+      workflowIds,
+      warnings: warnings.length > 0 ? warnings : undefined,
     });
   } catch (error) {
     console.error('Error creating default workflow:', error);

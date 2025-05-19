@@ -6,10 +6,46 @@ export interface CreateDefaultWorkflowOptions {
   userId?: number;
 }
 
-export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefaultWorkflowOptions) {
-  // Source workflow details - the workflow we want to duplicate
-  const SOURCE_WORKFLOW_ID = process.env.LOCAL_WORKFLOW_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKFLOW_TEMPLATE_ID) : 257;
-  const SOURCE_WORKSPACE_ID = process.env.LOCAL_WORKSPACE_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKSPACE_TEMPLATE_ID) : 110;
+export interface CreateDefaultWorkflowsOptions {
+  workspaceId: number;
+  userId?: number;
+}
+
+export async function createDefaultWorkflows({ workspaceId, userId }: CreateDefaultWorkflowsOptions) {
+  // Get workflow IDs from env or fallback
+  const workflowIds = process.env.LOCAL_WORKFLOW_TEMPLATE_IDS
+    ? process.env.LOCAL_WORKFLOW_TEMPLATE_IDS.split(',').map((id) => parseInt(id.trim(), 10))
+    : [300, 305, 321];
+  const SOURCE_WORKSPACE_ID = 110;
+
+  // Map of custom names by template ID
+  const customNames: Record<number, string> = {
+    321: 'Customer support ticket process with Zendesk',
+    300: 'Employee Onboarding',
+    305: 'Freelance Client Onboarding Process',
+  };
+
+  const results = [];
+  for (const workflowId of workflowIds) {
+    try {
+      const result = await createDefaultWorkflow({
+        workspaceId,
+        userId,
+        sourceWorkflowId: workflowId,
+        sourceWorkspaceId: SOURCE_WORKSPACE_ID,
+        customName: customNames[workflowId],
+      });
+      results.push(result);
+    } catch (error) {
+      results.push({ success: false, error: error instanceof Error ? error.message : error });
+    }
+  }
+  return results;
+}
+
+export async function createDefaultWorkflow({ workspaceId, userId, sourceWorkflowId, sourceWorkspaceId, customName }: { workspaceId: number; userId?: number; sourceWorkflowId?: number; sourceWorkspaceId?: number; customName?: string }) {
+  const SOURCE_WORKFLOW_ID = sourceWorkflowId ?? (process.env.LOCAL_WORKFLOW_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKFLOW_TEMPLATE_ID) : 257);
+  const SOURCE_WORKSPACE_ID = sourceWorkspaceId ?? (process.env.LOCAL_WORKSPACE_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKSPACE_TEMPLATE_ID) : 110);
 
   // Get the source workflow with all related components
   const sourceWorkflow = await prisma.workflow.findUnique({
@@ -51,7 +87,7 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
   }
 
   // Generate a unique name for the new workflow
-  let newWorkflowName = "Getting Started with ProcessFlow";
+  let newWorkflowName = customName || "Getting Started with ProcessFlow";
   let counter = 1;
   let nameIsUnique = false;
 
@@ -68,7 +104,7 @@ export async function createDefaultWorkflow({ workspaceId, userId }: CreateDefau
     if (!existingWorkflow) {
       nameIsUnique = true;
     } else {
-      newWorkflowName = `Getting Started with ProcessFlow (${counter})`;
+      newWorkflowName = `${customName || "Getting Started with ProcessFlow"} (${counter})`;
       counter++;
     }
   }
