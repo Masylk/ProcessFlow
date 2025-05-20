@@ -23,14 +23,14 @@ const CompletedStep: React.FC = () => {
     // Clear all storage data
     localStorage.clear();
     sessionStorage.clear();
-    
+
     // Clear any auth cookies by setting them to expired
-    document.cookie.split(";").forEach((c) => {
+    document.cookie.split(';').forEach((c) => {
       document.cookie = c
-        .replace(/^ +/, "")
+        .replace(/^ +/, '')
         .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
     });
-    
+
     // Force reload to the root page
     window.location.href = '/';
   };
@@ -41,15 +41,15 @@ const CompletedStep: React.FC = () => {
         {isCreatingWorkflow
           ? 'Setting up your workspace'
           : error
-          ? 'Workspace Setup Issue'
-          : 'Your workspace is ready!'}
+            ? 'Workspace Setup Issue'
+            : 'Your workspace is ready!'}
       </div>
       <div className="text-center text-base font-normal font-['Inter'] text-gray-600">
         {isCreatingWorkflow
           ? 'This will take less than a minute.'
           : error
-          ? 'We encountered an issue while setting up your workspace.'
-          : 'Watch this short video to get started with ProcessFlow.'}
+            ? 'We encountered an issue while setting up your workspace.'
+            : 'Watch this short video to get started with ProcessFlow.'}
       </div>
       {/* Video Container - Only show when no error */}
       {!error && (
@@ -81,12 +81,18 @@ const CompletedStep: React.FC = () => {
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
               <span className="text-red-500">{error}</span>
             </div>
             <div className="mt-2 text-sm text-center text-gray-600">
-              You can still proceed to the dashboard and try creating a workspace again.
+              You can still proceed to the dashboard and try creating a
+              workspace again.
             </div>
           </div>
         ) : (
@@ -98,9 +104,16 @@ const CompletedStep: React.FC = () => {
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              ></path>
             </svg>
-            <span className="text-gray-600">Your workspace is ready to use!</span>
+            <span className="text-gray-600">
+              Your workspace is ready to use!
+            </span>
           </div>
         )}
         {workflowCreationError && !isCreatingWorkflow && !error && (
@@ -112,7 +125,12 @@ const CompletedStep: React.FC = () => {
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              ></path>
             </svg>
             <span className="text-yellow-500">{workflowCreationError}</span>
           </div>
@@ -161,4 +179,4 @@ const CompletedStep: React.FC = () => {
   );
 };
 
-export default CompletedStep; 
+export default CompletedStep;
