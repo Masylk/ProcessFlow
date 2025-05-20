@@ -220,7 +220,6 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
       !isCreatingWorkflow &&
       !error
     ) {
-      console.log('Starting workspace creation from completed step effect');
       createWorkspace();
 
       // Set flag that workspace creation has started if not already set
@@ -486,7 +485,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           // After workspace creation succeeds, create the default workflow
-          await initializeDefaultWorkflow();
+          setIsWorkflowCreated(true);
         } else {
           const data = await response.json();
           console.error('Workspace creation failed with error:', data);
@@ -542,42 +541,6 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setIsLoading(false);
     setIsCreatingWorkflow(false);
-  };
-
-  // Initialize the default workflow
-  const initializeDefaultWorkflow = async () => {
-    try {
-      const response = await fetch('/api/onboarding/create-default-workflow', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data.workflowIds) && data.workflowIds.length > 0) {
-          setIsWorkflowCreated(true);
-        } else {
-          setWorkflowCreationError('No workflows were created');
-          setIsWorkflowCreated(false);
-        }
-      } else {
-        const data = await response.json();
-        setWorkflowCreationError(
-          data.error || 'Failed to create default workflows'
-        );
-        // Still set as created so user can continue
-        setIsWorkflowCreated(true);
-      }
-    } catch (error) {
-      console.error('Error creating default workflows:', error);
-      setWorkflowCreationError(
-        'Connection error while creating default workflows'
-      );
-      // Still set as created so user can continue
-      setIsWorkflowCreated(true);
-    }
   };
 
   // Handle completed step continue button
