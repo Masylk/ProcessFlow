@@ -25,6 +25,11 @@ h1 {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  /* Input field variables for light mode */
+  --input-bg: #fff;
+  --input-fg: #101828;
+  --input-border: #d0d5dd;
+  --input-label: #344054;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +37,11 @@ h1 {
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
+    /* Input field variables for dark mode (media) */
+    --input-bg: #181a20;
+    --input-fg: #fff;
+    --input-border: #23262f;
+    --input-label: #a3a3a3;
   }
 }
 
@@ -161,12 +171,31 @@ input, textarea {
 
 /* Force light theme for the onboarding page */
 .force-light-theme,
-.force-light-theme .dark,
-.force-light-theme.dark {
-  --tw-bg-opacity: 1 !important;
-  --tw-text-opacity: 1 !important;
-  color-scheme: light !important;
+.force-light-theme *,
+.force-light-theme.dark,
+html.force-light-theme,
+html.force-light-theme *,
+body.force-light-theme,
+body.force-light-theme * {
+  --input-bg: #fff !important;
+  --input-fg: #101828 !important;
+  --input-border: #d0d5dd !important;
+  --input-label: #344054 !important;
+  /* Button variables for light mode */
+  --button-primary-bg: #4761c4 !important;
+  --button-primary-fg: #fff !important;
+  --button-primary-border: #4761c4 !important;
+  --button-primary-bg-hover: #3246a8 !important;
+  --button-primary-fg-hover: #fff !important;
+  --button-primary-border-hover: #3246a8 !important;
+  --button-secondary-bg: #fff !important;
+  --button-secondary-fg: #101828 !important;
+  --button-secondary-border: #d0d5dd !important;
+  --button-secondary-bg-hover: #f4f4f5 !important;
+  --button-secondary-fg-hover: #101828 !important;
+  --button-secondary-border-hover: #bfc5d2 !important;
 }
+
 .force-light-theme .dark,
 .force-light-theme.dark {
   background-color: #fff !important;
@@ -191,4 +220,12 @@ input, textarea {
 
 .force-light-theme ::-webkit-scrollbar-thumb:hover {
   background: theme('colors.lightMode.bg-secondary-solid') !important;
+}
+
+.dark {
+  /* Input field variables for dark mode (class) */
+  --input-bg: #181a20;
+  --input-fg: #fff;
+  --input-border: #23262f;
+  --input-label: #a3a3a3;
 }

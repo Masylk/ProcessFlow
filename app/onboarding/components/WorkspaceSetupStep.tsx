@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useOnboarding } from '../context/OnboardingContext';
@@ -9,24 +8,23 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
 import { sanitizeWorkspaceNameInput, generateSlugFromName } from '../utils/inputSanitizer';
 
 const WorkspaceSetupStep: React.FC = () => {
-  const colors = useColors();
-  const { 
-    workspaceInfo: { 
-      workspaceName, 
-      workspaceURL, 
-      logo, 
+  const {
+    workspaceInfo: {
+      workspaceName,
+      workspaceURL,
+      logo,
       logoFile,
       setWorkspaceName,
       setWorkspaceURL,
       setLogo,
-      setLogoFile
+      setLogoFile,
     },
     isLoading,
     isNavigatingBack,
     error,
     setError,
     submitWorkspaceSetup,
-    goToPreviousStep
+    goToPreviousStep,
   } = useOnboarding();
 
   // UI states
@@ -254,16 +252,10 @@ const WorkspaceSetupStep: React.FC = () => {
   return (
     <div className="w-full max-w-[442px] flex flex-col gap-4 sm:gap-6 mx-auto mb-8">
       <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
-        <div
-          className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose"
-          style={{ color: colors['text-primary'] }}
-        >
+        <div className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose text-gray-900 dark:text-white">
           Set up your workspace
         </div>
-        <div
-          className="self-stretch text-center text-sm sm:text-base font-normal font-['Inter'] leading-normal"
-          style={{ color: colors['text-secondary'] }}
-        >
+        <div className="self-stretch text-center text-sm sm:text-base font-normal font-['Inter'] leading-normal text-gray-600 dark:text-gray-300">
           You will still be able to modify your workspace later.
         </div>
       </div>
@@ -293,34 +285,12 @@ const WorkspaceSetupStep: React.FC = () => {
 
         {/* Workspace URL Input */}
         <div className="w-full flex-col justify-start items-start gap-1.5 flex">
-          <div
-            className="text-sm font-medium font-['Inter'] leading-tight"
-            style={{ color: colors['text-primary'] }}
-          >
+          <div className="text-sm font-medium font-['Inter'] leading-tight text-gray-900 dark:text-white">
             Workspace URL
           </div>
-          <div
-            className={`w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200`}
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor:
-                urlError ||
-                (slugAvailability && !slugAvailability.available)
-                  ? 'rgb(239, 68, 68)'
-                  : slugAvailability && slugAvailability.available
-                    ? 'rgb(34, 197, 94)'
-                    : isFocused
-                      ? colors['border-accent']
-                      : colors['border-secondary'],
-              boxShadow: isFocused
-                ? `0 0 0 4px ${colors['ring-accent']}`
-                : undefined,
-            }}
-          >
+          <div className="w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
             <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
-              <span style={{ color: colors['text-secondary'] }}>
-                app.process-flow.io/
-              </span>
+              <span className="text-gray-600 dark:text-gray-300">app.process-flow.io/</span>
             </div>
             <input
               type="text"
@@ -335,16 +305,7 @@ const WorkspaceSetupStep: React.FC = () => {
                   .replace(/\s+/g, '-')
                   .replace(/[^a-zA-Z0-9-]/g, '') || 'processflow'
               }
-              className={`flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200`}
-              style={{
-                backgroundColor: colors['bg-primary'],
-                borderLeftColor: isFocused
-                  ? colors['border-accent']
-                  : colors['border-secondary'],
-                color: workspaceURL
-                  ? colors['text-primary']
-                  : colors['text-secondary'],
-              }}
+              className="flex-grow w-full px-3 py-2 rounded-tr-lg rounded-br-lg border-l focus:outline-none transition-colors duration-200 bg-white dark:bg-gray-900 border-l-gray-300 dark:border-l-gray-700 text-gray-900 dark:text-white"
             />
           </div>
           {urlError && (
@@ -373,21 +334,14 @@ const WorkspaceSetupStep: React.FC = () => {
 
         {/* Workspace Logo Upload */}
         <div className="self-stretch flex-col justify-start items-start gap-2 flex">
-          <div
-            className="w-40 text-sm font-medium font-['Inter'] leading-tight"
-            style={{ color: colors['text-primary'] }}
-          >
+          <div className="w-40 text-sm font-medium font-['Inter'] leading-tight text-gray-900 dark:text-white">
             Workspace Logo
           </div>
           <div className="self-stretch flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
             {/* Upload Circle */}
             <label
               htmlFor="logo-upload"
-              className="w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full border cursor-pointer"
-              style={{
-                backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-secondary'],
-              }}
+              className="w-16 h-16 flex-shrink-0 flex items-center justify-center rounded-full border cursor-pointer bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
             >
               {logo ? (
                 <img
@@ -419,13 +373,7 @@ const WorkspaceSetupStep: React.FC = () => {
               onDrop={handleDrop}
               onClick={handleFileInputClick}
             >
-              <div
-                className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl border hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1"
-                style={{
-                  backgroundColor: colors['bg-primary'],
-                  borderColor: colors['border-secondary'],
-                }}
-              >
+              <div className="w-full h-[74px] px-3 sm:px-6 py-3 sm:py-4 rounded-xl border hover:border-[#4E6BD7] transition-colors duration-300 flex flex-col justify-start items-center gap-1 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
                 <div className="w-full h-[42px] flex flex-col justify-center items-center gap-1 sm:gap-3">
                   <div className="w-full flex flex-col justify-center items-center">
                     <div className="w-full flex flex-wrap justify-center items-center gap-1 text-xs sm:text-sm">
@@ -434,17 +382,11 @@ const WorkspaceSetupStep: React.FC = () => {
                           Click to upload
                         </div>
                       </div>
-                      <div
-                        className="font-normal font-['Inter'] leading-tight"
-                        style={{ color: colors['text-secondary'] }}
-                      >
+                      <div className="font-normal font-['Inter'] leading-tight text-gray-600 dark:text-gray-300">
                         or drag and drop
                       </div>
                     </div>
-                    <div
-                      className="w-full text-center text-xs font-normal font-['Inter'] leading-[18px]"
-                      style={{ color: colors['text-secondary'] }}
-                    >
+                    <div className="w-full text-center text-xs font-normal font-['Inter'] leading-[18px] text-gray-600 dark:text-gray-300">
                       SVG, PNG, JPG or GIF (max. 800×400px)
                     </div>
                   </div>

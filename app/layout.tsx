@@ -6,6 +6,7 @@ import { PostHogProvider } from './providers';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthCheck from './components/AuthCheck';
 import { Toaster } from 'sonner';
+import { BodyClassProvider } from './BodyClassProvider';
 
 // Import environment checker
 import '../lib/env-check';
@@ -63,7 +64,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
-      <body className={`${inter.className} overflow-hidden`}>
+      <BodyClassProvider>
         <ThemeProvider>
           <PostHogProvider>
             <AuthCheck>{children}</AuthCheck>
@@ -87,7 +88,7 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
         />
-      </body>
+      </BodyClassProvider>
     </html>
   );
 }
