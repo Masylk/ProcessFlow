@@ -1,8 +1,8 @@
-name: Run Jest Tests
+name: Run Jest Tests on PR
 
 on:
   pull_request:
-    branches: ['**']
+    branches: ['**'] # Runs for PRs targeting any branch
 
 jobs:
   test:
@@ -15,10 +15,24 @@ jobs:
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18 # or 18.18.2
+          node-version: 18
 
       - name: 📦 Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: 🌐 Set Vercel Preview URL
+        id: vercel-url
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          SLUGIFIED_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | tr '/' '-' | tr '_' '-')
+          echo "TEST_BASE_URL=https://process-flow-git-${SLUGIFIED_NAME}-mtogbes-projects.vercel.app" >> $GITHUB_ENV
+
+      - name: 📝 Log TEST_BASE_URL
+        run: echo "TEST_BASE_URL=$TEST_BASE_URL"
+        env:
+          TEST_BASE_URL: ${{ env.TEST_BASE_URL }}
+
       - name: 🧪 Run Jest tests
         run: npm run test
+        env:
+          TEST_BASE_URL: ${{ env.TEST_BASE_URL }}
