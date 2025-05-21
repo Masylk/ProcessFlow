@@ -2,7 +2,7 @@ name: Run Jest Tests on PR
 
 on:
   pull_request:
-    branches: ['**'] # Runs for PRs targeting any branch
+    branches: ['**']
 
 jobs:
   test:
@@ -20,20 +20,25 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: 🌐 Set Vercel Preview URL
-        id: vercel-url
-        run: |
-          BRANCH_NAME="${{ github.head_ref }}"
-          SLUGIFIED_NAME=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | tr '/' '-' | tr '_' '-')
-          echo "TEST_BASE_URL=https://process-flow-git-${SLUGIFIED_NAME}-mtogbes-projects.vercel.app" >> $GITHUB_ENV
-
-      - name: 📝 Log TEST_BASE_URL
-        run: echo "TEST_BASE_URL=$TEST_BASE_URL"
+      - name: 🚀 Wait for Vercel Preview Deployment
+        id: vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_SCOPE }} # Optional
+          vercel-args: '--prod=false'
+          working-directory: ./
         env:
-          TEST_BASE_URL: ${{ env.TEST_BASE_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: 📝 Log Preview URL
+        run: echo "Preview URL is ${{ steps.vercel.outputs.preview-url }}"
 
       - name: 🧪 Run Jest tests
         run: npm run test
         env:
-          TEST_BASE_URL: ${{ env.TEST_BASE_URL }}
+          TEST_BASE_URL: ${{ steps.vercel.outputs.preview-url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
