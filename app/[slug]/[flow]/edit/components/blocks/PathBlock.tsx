@@ -581,7 +581,7 @@ function PathBlock(props: NodeProps & { data: NodeData }) {
                     />
                   ) : (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/container.svg`}
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
                     alt="Default Icon"
                     className="w-6 h-6"
                   />

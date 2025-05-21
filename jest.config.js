@@ -13,11 +13,11 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   // Configuration spécifique pour TypeScript
-  transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-    }],
-  },
+  // transform: {
+  //   '^.+\\.(ts|tsx)$': ['ts-jest', {
+  //     tsconfig: 'tsconfig.json',
+  //   }],
+  // },
   // Patterns des fichiers de test
   testMatch: [
     '**/__tests__/**/*.ts?(x)',
