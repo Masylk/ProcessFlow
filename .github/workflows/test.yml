@@ -2,10 +2,8 @@ name: Run Jest Tests
 
 on:
   push:
-    # Runs on all branches
     branches: ['**']
   pull_request:
-    # Runs for PRs targeting any branch
     branches: ['**']
 
 jobs:
@@ -19,7 +17,7 @@ jobs:
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.3.1 # Use your project’s Node version
+          node-version: 18 # or 18.18.2
 
       - name: 📦 Install dependencies
         run: npm ci --legacy-peer-deps
