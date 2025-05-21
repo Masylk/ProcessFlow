@@ -1,7 +1,8 @@
 // tests/api/hello.integration.test.ts
 import request from 'supertest'
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
+console.log('Using BASE_URL:', BASE_URL)
 
 describe('/api/hello (integration)', () => {
   it('returns hello message', async () => {
