@@ -9,6 +9,7 @@ import { scheduleFeedbackRequestEmail } from '@/lib/emails/scheduleFeedbackReque
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import * as Sentry from '@sentry/nextjs';
 import { createDefaultWorkflow, createDefaultWorkflows } from '@/app/api/utils/create-default-workflow';
+import { performance } from 'perf_hooks';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -444,6 +445,10 @@ export async function POST(request: Request) {
           
           // If no temp workspace was created, we need to create the workflow now
           let workflowErrorFinal = null;
+          let workflowCreationDurationMs = null; // Add this to store the duration
+
+          const workflowStart = performance.now(); // Start timing
+
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
               const results = await createDefaultWorkflows({
@@ -466,6 +471,10 @@ export async function POST(request: Request) {
               if (attempt < 3) await new Promise(res => setTimeout(res, 500));
             }
           }
+
+          workflowCreationDurationMs = performance.now() - workflowStart; // End timing
+          console.log(`Default workflows created in ${workflowCreationDurationMs} milliseconds`);
+
           if (workflowErrorFinal) {
             workflowCreationWarning = {
               message: 'Failed to create default workflows after 3 attempts',
@@ -592,10 +601,14 @@ export async function POST(request: Request) {
           let invitedWorkflowErrorFinal = null;
           for (let attempt = 1; attempt <= 3; attempt++) {
             try {
+              const start = performance.now();
               const results = await createDefaultWorkflows({
                 workspaceId: dbUser.active_workspace_id,
                 userId: dbUser.id
               });
+              const end = performance.now();
+              const elapsedTime = end - start;
+              console.log(`Default workflows created in ${elapsedTime} milliseconds`);
               const allWarnings = results.flatMap(r => 'warnings' in r && r.warnings ? r.warnings : []);
               if (allWarnings.length > 0) {
                 invitedWorkflowCreationWarning = {

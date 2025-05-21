@@ -1,0 +1,28 @@
+name: Run Jest Tests
+
+on:
+  push:
+    # Runs on all branches
+    branches: ['**']
+  pull_request:
+    # Runs for PRs targeting any branch
+    branches: ['**']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.3.1 # Use your project’s Node version
+
+      - name: 📦 Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: 🧪 Run Jest tests
+        run: npm run test
