@@ -3,6 +3,8 @@ name: Export .feature to Markdown
 on:
   push:
     branches: ['**']
+    paths:
+      - 'e2e/**'
   workflow_dispatch: # allows manual trigger in GitHub UI
 
 jobs:
