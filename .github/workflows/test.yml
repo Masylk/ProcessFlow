@@ -1,8 +1,12 @@
-name: Run Jest Tests
+name: Run Jest Tests on PR
 
 on:
   pull_request:
     branches: ['**']
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   test:
@@ -11,14 +15,59 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
 
       - name: 🟢 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18 # or 18.18.2
+          node-version: 18
 
       - name: 📦 Install dependencies
         run: npm ci --legacy-peer-deps
 
+      # --- Vercel CLI Deployment Steps ---
+      - name: 📤 Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: 📥 Pull Vercel environment variables
+        run: vercel pull --yes --environment=${{ github.head_ref == 'main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: 🔧 Build project using Vercel CLI
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: 🚀 Deploy to Vercel with prebuilt output
+        id: vercel_deploy
+        run: |
+          if [ "${{ github.head_ref }}" = "main" ]; then
+            vercel_url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} | tail -1)
+          else
+            vercel_url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} | tail -1)
+          fi
+          echo "VERCEL_DEPLOYMENT_URL=$vercel_url" >> $GITHUB_ENV
+          echo "Deployed to: $vercel_url"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: 📝 Log Preview URL
+        run: echo "Preview URL is $VERCEL_DEPLOYMENT_URL"
+
       - name: 🧪 Run Jest tests
         run: npm run test
+        env:
+          TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: 🎭 Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: 🎭 Run Playwright E2E tests
+        run: npx playwright test
+        env:
+          TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
