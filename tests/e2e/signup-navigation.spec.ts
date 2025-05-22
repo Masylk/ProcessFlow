@@ -12,7 +12,9 @@ test.use({
 });
 
 test('should navigate to signup page when clicking Sign up link', async ({ page }) => {
-  await page.goto(`${BASE_URL}/login`);
+  const loginUrl = `${BASE_URL}/login`;
+  console.log('Navigating to:', loginUrl);
+  await page.goto(loginUrl);
 
   await page.getByRole('textbox', { name: '••••••••' }).click();
   await page.getByRole('textbox', { name: '••••••••' }).fill('');
