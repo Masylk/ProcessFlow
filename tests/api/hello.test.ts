@@ -15,3 +15,4 @@ describe('/api/hello (integration)', () => {
       .expect({ message: 'Hello from API' })
   })
 })
+
