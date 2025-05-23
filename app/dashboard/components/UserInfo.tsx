@@ -25,7 +25,6 @@ export default function UserInfo({ user, isActive = false }: UserInfoProps) {
         : defaultAvatar
     : defaultAvatar;
 
-  console.log('avatarSrc', avatarSrc);
   return (
     <div
       className={`flex items-center select-none rounded-full border transition-all duration-300 hover:bg-lightMode-bg-primary_hover ${

@@ -37,9 +37,18 @@ export async function generateMetadata({
   if (!workflowName || !workflowId) {
     return { title: 'ProcessFlow' };
   }
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
   const baseUrl = getBaseUrl();
   console.log('[DEBUG] Base URL:', baseUrl);
-  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`);
+
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     return { title: 'ProcessFlow' };
@@ -68,10 +77,16 @@ export default async function ReactFlowPage({
 
   // Get workflow data from API using path parameter
   const baseUrl = getBaseUrl();
-  if (isPreview()) {
-    console.log('[DEBUG] Base URL:', baseUrl);
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
   }
-  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`);
+
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
   if (isPreview()) {
     console.log('[DEBUG] Response:', response);
   }
