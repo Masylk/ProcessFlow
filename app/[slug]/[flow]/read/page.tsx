@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import ReadPageClient from './components/ReadPageClient';
-import getBaseUrl from '@/app/onboarding/utils/getBaseUrl';
+import getBaseUrl from '@/app/utils/getBaseUrl';
 
 interface PageParams {
   slug: string;
@@ -39,9 +39,17 @@ export async function generateMetadata({
     return { title: 'ProcessFlow' };
   }
 
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
   // Get workflow data from API
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`);
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     return { title: 'ProcessFlow' };
@@ -64,8 +72,16 @@ export default async function ReadPage(props: PageProps) {
   }
 
   // Get workflow data from API using path parameter
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
   const baseUrl = getBaseUrl();
-  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`);
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     // Handle unauthorized or not found cases

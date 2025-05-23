@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation';
 import posthog from 'posthog-js';
 import React from 'react';
 import { cookies } from 'next/headers';
-import { isPreview } from '@/app/onboarding/utils/isPreview';
+import { isPreview } from '@/app/utils/isPreview';
 
 const isDevelopmentOrStaging = isPreview();
 

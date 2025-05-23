@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { generatePublicAccessId } from '../utils';
 import { supabase } from '@/lib/supabaseClient';
-import { isPreview } from '@/app/onboarding/utils/isPreview';
+import { isPreview } from '@/app/utils/isPreview';
 
 export async function PATCH(req: NextRequest) {
   try {

@@ -3,8 +3,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
 import { Metadata } from 'next';
-import getBaseUrl from '@/app/onboarding/utils/getBaseUrl';
-import { isPreview } from '@/app/onboarding/utils/isPreview';
+import getBaseUrl from '@/app/utils/getBaseUrl';
+import { isPreview } from '@/app/utils/isPreview';
 
 interface PageParams {
   flow: string;
