@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
 import { Metadata } from 'next';
+import baseurl from '@/app/onboarding/utils/getBaseUrl';
 
 interface PageParams {
   flow: string;
@@ -21,6 +22,8 @@ interface Workflow {
   created_at: string;
 }
 
+
+
 export async function generateMetadata({
   params,
 }: {
@@ -35,11 +38,7 @@ export async function generateMetadata({
   if (!workflowName || !workflowId) {
     return { title: 'ProcessFlow' };
   }
-
-  // Get workflow data from API
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  const response = await fetch(`${baseurl}/api/workflow/${workflowId}`);
 
   if (!response.ok) {
     return { title: 'ProcessFlow' };
@@ -67,9 +66,7 @@ export default async function ReactFlowPage({
   }
 
   // Get workflow data from API using path parameter
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  const response = await fetch(`${baseurl}/api/workflow/${workflowId}`);
 
   if (!response.ok) {
     // Handle unauthorized or not found cases

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import ReadPageClient from './components/ReadPageClient';
+import baseurl from '@/app/onboarding/utils/getBaseUrl';
 
 interface PageParams {
   slug: string;
@@ -40,7 +41,7 @@ export async function generateMetadata({
 
   // Get workflow data from API
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
+    `${baseurl}/api/workflow/${workflowId}`
   );
 
   if (!response.ok) {
@@ -65,7 +66,7 @@ export default async function ReadPage(props: PageProps) {
 
   // Get workflow data from API using path parameter
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
+    `${baseurl}/api/workflow/${workflowId}`
   );
 
   if (!response.ok) {
