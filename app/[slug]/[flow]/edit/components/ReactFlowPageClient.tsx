@@ -16,6 +16,7 @@ interface ReactFlowPageClientProps {
 }
 
 import { ScreenSizeOverlay } from './ScreenSizeOverlay';
+import { isPreview } from '@/app/onboarding/utils/isPreview';
 
 export function ReactFlowPageClient({
   workspaceId,
@@ -144,6 +145,9 @@ export function ReactFlowPageClient({
 
   // Initial fetch and set up interval
   useEffect(() => {
+    if (isPreview()) {
+      console.log('[DEBUG] Fetching data...');
+    }
     fetchData();
 
     const interval = setInterval(() => {

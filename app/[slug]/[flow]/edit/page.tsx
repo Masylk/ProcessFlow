@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
 import { Metadata } from 'next';
 import getBaseUrl from '@/app/onboarding/utils/getBaseUrl';
+import { isPreview } from '@/app/onboarding/utils/isPreview';
 
 interface PageParams {
   flow: string;
@@ -67,12 +68,24 @@ export default async function ReactFlowPage({
 
   // Get workflow data from API using path parameter
   const baseUrl = getBaseUrl();
-  console.log('[DEBUG] Base URL:', baseUrl);
+  if (isPreview()) {
+    console.log('[DEBUG] Base URL:', baseUrl);
+  }
   const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`);
+  if (isPreview()) {
+    console.log('[DEBUG] Response:', response);
+  }
 
   if (!response.ok) {
     // Handle unauthorized or not found cases
-    const { error } = await response.json();
+    let error: any = {};
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      error = await response.json();
+    }
+    if (isPreview()) {
+      console.log('[DEBUG] Error:', error);
+    }
     if (response.status === 401) {
       redirect('/login');
     } else {
@@ -81,6 +94,9 @@ export default async function ReactFlowPage({
   }
 
   const workflow: Workflow = await response.json();
+  if (isPreview()) {
+    console.log('[DEBUG] Workflow:', workflow);
+  }
 
   return (
     <ReactFlowPageClient

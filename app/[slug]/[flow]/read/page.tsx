@@ -69,7 +69,11 @@ export default async function ReadPage(props: PageProps) {
 
   if (!response.ok) {
     // Handle unauthorized or not found cases
-    const { error } = await response.json();
+    let error: any = {};
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      error = await response.json();
+    }
     if (response.status === 401) {
       redirect('/login');
     } else {

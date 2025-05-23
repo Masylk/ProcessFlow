@@ -5,7 +5,7 @@ interface User {
   id: string;
 }
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
 
 export async function workspaceProtection(request: NextRequest, user: User) {
   if (isDevelopment) {
