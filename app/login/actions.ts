@@ -14,17 +14,25 @@ import { cookies } from 'next/headers';
 
 const isDevelopmentOrStaging = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
 
+
 export async function login(formData: FormData) {
+  console.log('[DEBUG] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log('[DEBUG] SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'present' : 'missing');
   try {
     const supabase = await createClient();
+    console.log('[DEBUG] Supabase client created');
 
     await supabase.auth.signOut();
+    console.log('[DEBUG] Signed out previous session');
+
     const credentials = {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
     };
+    console.log('[DEBUG] Credentials:', credentials);
 
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
+    console.log('[DEBUG] Supabase signInWithPassword result:', { data, error });
 
     if (error) {
       if (isDevelopmentOrStaging) {
@@ -58,6 +66,7 @@ export async function login(formData: FormData) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
       });
+      console.log('[DEBUG] Session cookie set');
     }
 
     return { id: user.id, email: user.email };
