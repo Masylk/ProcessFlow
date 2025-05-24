@@ -172,20 +172,27 @@ export default function IconModifier({
   const selectorPortal =
     showSelector && selectorPosition
       ? ReactDOM.createPortal(
-          <div
-            className="fixed z-[10000]"
-            style={{
-              top: selectorPosition.top,
-              left: selectorPosition.left,
-            }}
-          >
-            <IconSelector
-              onSelect={handleIconSelect}
-              allowEmoji={allowEmoji}
-              applist={applist}
-              iconlist={iconlist}
+          <>
+            {/* Backdrop to capture outside clicks */}
+            <div
+              className="fixed inset-0 z-[9999]"
+              onClick={() => setShowSelector(false)}
             />
-          </div>,
+            <div
+              className="fixed z-[10000]"
+              style={{
+                top: selectorPosition.top,
+                left: selectorPosition.left,
+              }}
+            >
+              <IconSelector
+                onSelect={handleIconSelect}
+                allowEmoji={allowEmoji}
+                applist={applist}
+                iconlist={iconlist}
+              />
+            </div>
+          </>,
           document.body
         )
       : null;

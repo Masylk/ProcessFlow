@@ -225,7 +225,7 @@ const IconSelector: React.FC<IconSelectorProps> = ({
 
   return (
     <div
-      className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden"
+      className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden shadow-lg"
       style={{
         backgroundColor: colors['bg-primary'],
         borderWidth: '1px',

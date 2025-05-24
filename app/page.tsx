@@ -44,7 +44,7 @@ import IconModifier from './dashboard/components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './dashboard/components/TutorialOverlay';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { debounce } from 'lodash';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { checkFolderName, checkWorkspaceName } from './utils/checkNames';
@@ -140,6 +140,7 @@ export default function Page() {
 
   // Add near the top of the component
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // // Memoize the filtered workspaces based on search term
   // const filteredWorkspaces = useMemo(() => {
@@ -329,7 +330,10 @@ export default function Page() {
 
     await handleCreateWorkflow(
       duplicateName,
-      selectedWorkflow.description,
+      selectedWorkflow.whyExists || selectedWorkflow.description || '',
+      selectedWorkflow.processOwner || '',
+      selectedWorkflow.reviewDate || '',
+      selectedWorkflow.howToComplete || '',
       selectedWorkflow.icon,
       selectedWorkflow.signedIconUrl
     );
@@ -337,7 +341,10 @@ export default function Page() {
 
   const handleCreateWorkflow = async (
     name: string,
-    description: string,
+    whyExists: string,
+    processOwner: string,
+    reviewDate: string,
+    howToComplete: string,
     icon: string | null,
     signedIcon: string | null | undefined
   ) => {
@@ -352,7 +359,11 @@ export default function Page() {
     try {
       const result = await createWorkflow({
         name,
-        description,
+        description: whyExists,
+        processOwner,
+        reviewDate,
+        whyExists,
+        howToComplete,
         workspaceId: activeWorkspace.id,
         folderId: selectedFolder?.id,
         icon,
@@ -396,6 +407,14 @@ export default function Page() {
         toast.success('Workflow Created', {
           description: 'Your new workflow has been created successfully.',
         });
+
+        // Navigate to the edit mode of the newly created workflow
+        if (activeWorkspace.slug) {
+          // Sanitize the workflow name for URL
+          const sanitizedName = name.replace(/\s+/g, '-');
+          const editUrl = `/${activeWorkspace.slug}/${sanitizedName}--pf-${workflow.id}/edit`;
+          router.push(editUrl);
+        }
       }
     } catch (error) {
       console.error('Error creating workflow:', error);
@@ -405,7 +424,10 @@ export default function Page() {
   const handleEditWorkflow = async (
     id: number,
     name: string,
-    description: string,
+    whyExists: string,
+    processOwner: string,
+    reviewDate: string,
+    howToComplete: string,
     folder?: Folder | null,
     icon?: string | null,
     signedIcon?: string | null
@@ -416,7 +438,11 @@ export default function Page() {
     try {
       const result = await updateWorkflow(id, {
         name,
-        description,
+        description: whyExists,
+        processOwner,
+        reviewDate,
+        whyExists,
+        howToComplete,
         folder_id: folder?.id,
         icon: icon ?? undefined,
         signedIconUrl: signedIcon ?? undefined,
@@ -1616,7 +1642,10 @@ export default function Page() {
             handleEditWorkflow(
               selectedWorkflow.id,
               selectedWorkflow.name,
-              selectedWorkflow.description,
+              selectedWorkflow.whyExists || selectedWorkflow.description || '',
+              selectedWorkflow.processOwner || '',
+              selectedWorkflow.reviewDate || '',
+              selectedWorkflow.howToComplete || '',
               folder,
               selectedWorkflow.icon
             )

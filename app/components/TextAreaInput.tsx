@@ -182,7 +182,7 @@ const TextAreaInput: React.FC<TextAreaInputProps> = ({
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
         <div className="flex gap-2 items-center">
-          <span style={labelStyles} className="text-sm font-medium">
+          <span style={labelStyles} className="text-sm font-semibold">
             {label}
           </span>
           {required && (
@@ -192,7 +192,7 @@ const TextAreaInput: React.FC<TextAreaInputProps> = ({
                   ? colors['text-destructive']
                   : colors['text-primary'],
               }}
-              className="text-sm font-medium"
+              className="text-sm font-semibold"
             >
               *
             </span>

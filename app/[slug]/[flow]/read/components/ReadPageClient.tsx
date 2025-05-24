@@ -699,7 +699,7 @@ export default function ReadPageClient() {
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description,
+          description: workflowData.description || "This Flow helps streamline and automate key business processes.",
         },
         integrations: paths
           .flatMap((path) =>
@@ -725,7 +725,7 @@ export default function ReadPageClient() {
               index === self.findIndex((i) => i.name === integration.name)
           ),
         ...(workflowData.author && {
-          author: {
+          owner: {
             name: workflowData.author.full_name,
             avatar:
               workflowData.author.avatar_url &&
@@ -736,6 +736,8 @@ export default function ReadPageClient() {
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
+        reviewDate: "15/03/2024",
+        additionalNotes: "This process has been optimized for efficiency and includes automated notifications. Please ensure all team members are familiar with the new approval steps before implementation.",
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)

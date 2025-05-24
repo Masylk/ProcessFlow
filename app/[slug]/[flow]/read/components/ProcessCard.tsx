@@ -10,9 +10,9 @@ interface Integration {
   icon?: string;
 }
 
-interface Author {
+interface Owner {
   name: string;
-  avatar: string;
+  avatar?: string;
 }
 
 interface ProcessCardProps {
@@ -22,8 +22,10 @@ interface ProcessCardProps {
     description?: string;
   };
   integrations: Integration[];
-  author?: Author;
-  lastUpdate: string;
+  owner?: Owner;
+  reviewDate?: string;
+  additionalNotes?: string;
+  lastUpdate?: string;
 }
 
 // Utility to extract filename without extension from a path
@@ -37,7 +39,9 @@ export default function ProcessCard({
   icon,
   workflow,
   integrations,
-  author,
+  owner,
+  reviewDate,
+  additionalNotes,
   lastUpdate,
 }: ProcessCardProps) {
   const colors = useColors();
@@ -159,12 +163,20 @@ export default function ProcessCard({
               {workflow.name}
             </h3>
             {workflow.description && (
-              <p
-                style={{ color: colors['text-quaternary'] }}
-                className="font-normal text-sm"
-              >
-                {workflow.description}
-              </p>
+              <div>
+                <p
+                  style={{ color: colors['text-secondary'] }}
+                  className="text-sm font-medium mb-1"
+                >
+                  Why does this Flow exist?
+                </p>
+                <p
+                  style={{ color: colors['text-quaternary'] }}
+                  className="font-normal text-sm"
+                >
+                  {workflow.description}
+                </p>
+              </div>
             )}
           </div>
 
@@ -214,32 +226,74 @@ export default function ProcessCard({
             )}
           </div>
 
-          {/* Footer: Author and Last Update */}
-          <div className="flex items-center gap-4">
-            {author && (
+          {/* Footer: Owner, Review Date, and Last Update */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {owner && (
+              <>
+                <div className="flex items-center gap-2">
+                  {owner.avatar && (
+                    <img
+                      src={owner.avatar}
+                      alt={owner.name}
+                      className="rounded-full w-5 h-5"
+                    />
+                  )}
+                  <span
+                    style={{ color: colors['text-secondary'] }}
+                    className="font-medium text-sm"
+                  >
+                    {owner.name}
+                  </span>
+                </div>
+                {(reviewDate || lastUpdate) && (
+                  <div
+                    style={{ color: colors['text-tertiary'] }}
+                    className="w-1 h-1 rounded-full bg-current"
+                  />
+                )}
+              </>
+            )}
+            {reviewDate && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ color: colors['text-tertiary'] }}
+                    className="text-sm"
+                  >
+                    Review date: {reviewDate}
+                  </span>
+                </div>
+                {lastUpdate && (
+                  <div
+                    style={{ color: colors['text-tertiary'] }}
+                    className="w-1 h-1 rounded-full bg-current"
+                  />
+                )}
+              </>
+            )}
+            {lastUpdate && (
               <div className="flex items-center gap-2">
-                <img
-                  src={`${author.avatar}`}
-                  alt={author.name}
-                  className="rounded-full w-5 h-5"
-                />
                 <span
-                  style={{ color: colors['text-secondary'] }}
-                  className="font-medium text-sm"
+                  style={{ color: colors['text-tertiary'] }}
+                  className="text-sm"
                 >
-                  {author.name}
+                  Last update: {lastUpdate}
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span
-                style={{ color: colors['text-tertiary'] }}
-                className="text-sm"
-              >
-                Last update: {lastUpdate}
-              </span>
-            </div>
           </div>
+
+          {/* Additional Notes */}
+          {additionalNotes && (
+            <div className="mt-2">
+              <p
+                style={{ color: colors['text-quaternary'] }}
+                className="text-sm italic"
+              >
+                <span className="font-medium not-italic">Additional notes:</span> {additionalNotes}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -5,6 +5,8 @@ import { useState } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import TextAreaInput from '@/app/components/TextAreaInput';
+import DatePicker from '@/app/components/DatePicker';
+import SelectField from '@/app/components/SelectField';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '@/app/components/IconUpload';
 import IconModifier from './IconModifier';
@@ -16,7 +18,10 @@ interface EditFlowModalProps {
   onConfirm: (
     id: number,
     name: string,
-    description: string,
+    whyExists: string,
+    processOwner: string,
+    reviewDate: string,
+    howToComplete: string,
     folder: Folder | null | undefined,
     icon: string | null,
     signedIcon: string | null
@@ -34,8 +39,17 @@ export default function EditFlowModal({
 }: EditFlowModalProps) {
   const colors = useColors();
   const [processName, setProcessName] = useState(selectedWorkflow.name);
-  const [flowDescription, setFlowDescription] = useState(
-    selectedWorkflow.description
+  const [processOwner, setProcessOwner] = useState(
+    selectedWorkflow.processOwner || ''
+  );
+  const [reviewDate, setReviewDate] = useState(
+    selectedWorkflow.reviewDate || ''
+  );
+  const [whyExists, setWhyExists] = useState(
+    selectedWorkflow.whyExists || selectedWorkflow.description || ''
+  );
+  const [howToComplete, setHowToComplete] = useState(
+    selectedWorkflow.howToComplete || ''
   );
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState(selectedWorkflow.icon || null);
@@ -46,13 +60,28 @@ export default function EditFlowModal({
       : selectedWorkflow.signedIconUrl || null
   );
 
+  // Sample team members for the process owner dropdown
+  const teamMembers = [
+    'John Smith',
+    'Sarah Johnson',
+    'Mike Chen',
+    'Emily Rodriguez',
+    'David Kim',
+    'Lisa Thompson',
+    'Alex Parker',
+    'Maria Garcia'
+  ];
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const result = await onConfirm(
         selectedWorkflow.id,
         processName,
-        flowDescription,
+        whyExists,
+        processOwner,
+        reviewDate,
+        howToComplete,
         undefined,
         flowIcon,
         previewIcon
@@ -98,7 +127,7 @@ export default function EditFlowModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-full overflow-visible">
-          <div className="self-stretch px-6 pt-6 flex-col justify-start items-start gap-4 flex">
+          <div className="self-stretch px-6 pt-6 flex justify-start items-start gap-4">
             <div
               style={{
                 backgroundColor: colors['bg-secondary'],
@@ -125,7 +154,7 @@ export default function EditFlowModal({
                 style={{ color: colors['text-secondary'] }}
                 className="text-sm font-normal leading-tight"
               >
-                Edit your Flow's name
+                Edit your Flow's details
               </div>
             </div>
           </div>
@@ -134,13 +163,14 @@ export default function EditFlowModal({
             className="self-stretch px-6 pt-6 flex-col justify-start items-start gap-5 flex"
             style={{ zIndex: 0 }}
           >
+            {/* Process name with icon */}
             <div className="self-stretch flex-col justify-start items-start gap-3 flex">
               <div className="justify-start items-start gap-0.5 inline-flex">
                 <div
-                  style={{ color: colors['text-primary'] }}
+                  style={{ color: colors['input-label'] }}
                   className="text-sm font-semibold leading-tight"
                 >
-                  Process name{' '}
+                  Flow name{' '}
                   <span style={{ color: colors['text-accent'] }}>*</span>
                 </div>
               </div>
@@ -161,26 +191,52 @@ export default function EditFlowModal({
                     type="default"
                     value={processName}
                     onChange={setProcessName}
-                    placeholder="Onboarding Process"
+                    placeholder="Onboarding process"
                     required
                   />
                 </div>
               </div>
             </div>
-            <div
-              className="self-stretch flex-col justify-start items-start gap-1.5 flex"
-              style={{ zIndex: 0 }}
-            >
-              <div
-                style={{ color: colors['text-primary'] }}
-                className="text-sm font-semibold leading-tight"
-              >
-                Flow description
+
+            {/* Process Owner and Review Date row */}
+            <div className="w-full flex gap-4">
+              <div className="flex-1">
+                <SelectField
+                  label="Flow owner"
+                  value={processOwner}
+                  onChange={setProcessOwner}
+                  placeholder="Select an owner"
+                  options={teamMembers}
+                  allowCustomInput={true}
+                />
               </div>
+              <div className="flex-1">
+                <DatePicker
+                  label="Review Date"
+                  value={reviewDate}
+                  onChange={setReviewDate}
+                  placeholder="Pick a date"
+                />
+              </div>
+            </div>
+
+            {/* Why does this process exist? */}
+            <div className="w-full">
               <TextAreaInput
-                value={flowDescription}
-                onChange={setFlowDescription}
-                placeholder="This Flow defines how to onboard a new employee"
+                label="Why does this Flow exist?"
+                value={whyExists}
+                onChange={setWhyExists}
+                placeholder="Enter a description..."
+              />
+            </div>
+
+            {/* How do we complete this process? */}
+            <div className="w-full">
+              <TextAreaInput
+                label="Additional notes"
+                value={howToComplete}
+                onChange={setHowToComplete}
+                placeholder="Enter a description..."
               />
             </div>
           </div>

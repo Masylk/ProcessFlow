@@ -11,6 +11,10 @@ export interface Workflow {
   icon: string;
   signedIconUrl?: string;
   description: string;
+  processOwner?: string;
+  reviewDate?: string;
+  whyExists?: string;
+  howToComplete?: string;
   workspaceId: number;
   workspace: Workspace;
   blocks: Block[];

@@ -358,7 +358,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
             className="text-lg font-medium"
             style={{ color: colors['text-primary'] }}
           >
-            Create a path to a node
+            Create a path to a block
           </h2>
         </div>
 
@@ -704,7 +704,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                                     className="px-4 py-2 text-xs text-center"
                                     style={{ color: colors['text-tertiary'] }}
                                   >
-                                    Type to search more nodes
+                                    Type to search more blocks
                                   </div>
                                 )}
                               </div>
