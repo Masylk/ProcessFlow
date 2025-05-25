@@ -21,3 +21,4 @@ Feature: User login
     Given I am on the login page
     When I click the "Log in" button without entering credentials
     Then I should see validation errors for both email and password
+
