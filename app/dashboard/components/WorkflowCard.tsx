@@ -337,7 +337,7 @@ export default function WorkflowCard({
             '--hover-bg': colors['bg-quaternary'],
           } as React.CSSProperties
         }
-        className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[200px] flex flex-col"
+        className="rounded-lg border hover:cursor-pointer relative transition-all duration-300 ease-in-out hover:bg-[var(--hover-bg)] hover:scale-[1.02] hover:shadow-lg h-[200px] flex flex-col"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

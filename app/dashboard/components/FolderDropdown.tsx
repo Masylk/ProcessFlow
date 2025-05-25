@@ -19,9 +19,10 @@ export default function FolderDropdown({
   return (
     <div 
       style={{
-        backgroundColor: colors['bg-secondary']
+        backgroundColor: colors['bg-secondary'],
+        borderColor: colors['border-primary']
       }}
-      className="shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 flex flex-col overflow-hidden cursor-pointer rounded-lg"
+      className="shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 flex flex-col overflow-hidden cursor-pointer rounded-lg z-[9999] border"
     >
       <div
         onClick={() => onEditFolder(parent)}
@@ -31,7 +32,7 @@ export default function FolderDropdown({
           style={{
             '--hover-bg': colors['bg-quaternary']
           } as React.CSSProperties}
-          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
         >
           <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
             <div className="w-4 h-4 relative overflow-hidden">
@@ -59,7 +60,7 @@ export default function FolderDropdown({
           style={{
             '--hover-bg': colors['bg-quaternary']
           } as React.CSSProperties}
-          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
         >
           <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
             <div className="w-4 h-4 relative overflow-hidden">
@@ -92,7 +93,7 @@ export default function FolderDropdown({
           style={{
             '--hover-bg': colors['bg-quaternary']
           } as React.CSSProperties}
-          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+          className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
         >
           <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
             <div className="w-4 h-4 relative overflow-hidden">

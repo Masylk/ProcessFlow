@@ -1474,6 +1474,7 @@ export default function Page() {
                       onDuplicateWorkflow={handleDuplicateWorkflow}
                       onMoveWorkflow={openMoveFlow}
                       currentView={currentView}
+                      isLoading={isLoading}
                       onViewChange={setCurrentView}
                       onStatusChange={handleStatusChange}
                     />

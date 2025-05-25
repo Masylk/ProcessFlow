@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useColors } from '@/app/theme/hooks';
-import { themeRegistry } from '@/app/theme/registry';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { OnboardingProvider, useOnboarding } from './context/OnboardingContext';
 import MotionStep from './components/MotionStep';
@@ -26,8 +25,8 @@ export default function Onboarding() {
 function OnboardingContent() {
   const { currentStep, isLoadingInitialState, workspaceCreationStarted } = useOnboarding();
   
-  // Use light theme colors regardless of system theme
-  const colors = themeRegistry.get('light').tokens.colors;
+  // Use the colors hook which returns CSS variables
+  const colors = useColors();
   
   // Add effect to ensure page is scrollable and uses light mode
   useEffect(() => {

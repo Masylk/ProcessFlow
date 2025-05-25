@@ -238,7 +238,6 @@ const DelayTypeModal: React.FC<DelayTypeModalProps> = ({
                 variant="secondary"
                 size="small"
                 className="flex-1"
-                style={buttonSecondaryStyle}
               >
                 Cancel
               </ButtonNormal>

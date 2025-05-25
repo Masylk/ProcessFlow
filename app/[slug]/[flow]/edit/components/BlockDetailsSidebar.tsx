@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import TextEditor from './TextEditor';
 import { useColors } from '@/app/theme/hooks';
-import { ThemeProvider } from '@/app/context/ThemeContext';
 import { Block, TaskType } from '../../types';
 import BlockMediaVisualizer from './BlockMediaVisualizer';
 import MediaUploader from './MediaUploader';
@@ -43,6 +42,7 @@ export default function BlockDetailsSidebar({
   onUpdate,
 }: BlockDetailsSidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const textEditorRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingAverageTime, setIsEditingAverageTime] = useState(false);
   const [title, setTitle] = useState(block.title || '');
@@ -62,6 +62,21 @@ export default function BlockDetailsSidebar({
     }
     return () => setEditMode(false);
   }, [block.id, setEditMode]);
+
+  // Auto-focus the textarea when editing mode becomes active
+  useEffect(() => {
+    if (isEditingDescription && textEditorRef.current) {
+      const textarea = textEditorRef.current.querySelector('textarea');
+      if (textarea) {
+        // Use setTimeout to ensure the textarea is rendered
+        setTimeout(() => {
+          textarea.focus();
+          // Position cursor at the end
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }, 0);
+      }
+    }
+  }, [isEditingDescription]);
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -135,7 +150,7 @@ export default function BlockDetailsSidebar({
 
       {/* Sidebar */}
       <div
-        className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l z-50 flex flex-col overflow-y-auto"
+        className="fixed top-0 right-0 h-screen w-[540px] shadow-lg p-6 border-l z-50 flex flex-col overflow-y-auto transform transition-all duration-300 ease-out animate-in slide-in-from-right-0"
         style={{
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-primary'],
@@ -197,7 +212,7 @@ export default function BlockDetailsSidebar({
                 />
               ) : (
                 <h1
-                  className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50 break-words line-clamp-2"
+                  className="text-lg font-semibold cursor-pointer px-2 py-1 rounded hover:bg-opacity-50 break-words line-clamp-2 transition-all duration-200 hover:scale-[1.02]"
                   style={{
                     color: colors['text-primary'],
                     backgroundColor: 'transparent',
@@ -368,38 +383,21 @@ export default function BlockDetailsSidebar({
                 Description
               </div>
               <div
-                className="h-[200px] rounded-lg transition-colors duration-200"
-                onClick={() => setIsEditingDescription(true)}
+                className="h-[200px] rounded-lg transition-all duration-200"
+                onClick={() => {
+                  if (!isEditingDescription) {
+                    setIsEditingDescription(true);
+                  }
+                }}
+                style={{ cursor: !isEditingDescription ? 'pointer' : 'default' }}
               >
                 <div
                   style={{
-                    backgroundColor:
-                      colors[
-                        getInputToken(
-                          'normal',
-                          'bg',
-                          false,
-                          !isEditingDescription
-                        )
-                      ],
-                    color:
-                      colors[
-                        getInputToken(
-                          'normal',
-                          'fg',
-                          false,
-                          !isEditingDescription
-                        )
-                      ],
-                    borderColor:
-                      colors[
-                        getInputToken(
-                          'normal',
-                          'border',
-                          false,
-                          !isEditingDescription
-                        )
-                      ],
+                    backgroundColor: colors[getInputToken('normal', 'bg', false, false)],
+                    color: colors[getInputToken('normal', 'fg', false, false)],
+                    borderColor: isEditingDescription
+                      ? colors[getInputToken('focus', 'border', false, false)]
+                      : colors[getInputToken('normal', 'border', false, false)],
                     boxShadow: isEditingDescription
                       ? '0px 0px 0px 4px rgba(78,107,215,0.12)'
                       : '0px 1px 2px rgba(16, 24, 40, 0.05)',
@@ -407,13 +405,14 @@ export default function BlockDetailsSidebar({
                     borderRadius: '0.5rem',
                   }}
                   className="flex items-start gap-2 p-3 transition-all duration-200 h-full"
+                  ref={textEditorRef}
                 >
                   <TextEditor
                     value={description}
-                    onChange={setDescription}
+                    onChange={(value) => setDescription(value)}
                     onBlur={handleDescriptionUpdate}
                     onKeyDown={handleDescriptionKeyDown}
-                    readOnly={!isEditingDescription}
+                    readOnly={false}
                     className={`w-full h-full border-none outline-none resize-vertical text-base leading-6 font-inter ${isEditingDescription ? 'cursor-text' : 'cursor-pointer'}`}
                     placeholder="Add a description..."
                     textColor={colors['text-primary']}
@@ -449,9 +448,9 @@ export default function BlockDetailsSidebar({
     </>
   );
 
-  // Use createPortal with ThemeProvider
+  // Use createPortal without the conflicting ThemeProvider wrapper
   return createPortal(
-    <ThemeProvider>{sidebarContent}</ThemeProvider>,
+    sidebarContent,
     document.body
   );
 }

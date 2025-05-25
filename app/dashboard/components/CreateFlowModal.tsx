@@ -55,11 +55,11 @@ export default function CreateFlowModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-8"
+      className="fixed inset-0 flex items-center justify-center p-8 animate-in fade-in-0 duration-200"
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 animate-in fade-in-0 duration-300">
         <div
           style={{ backgroundColor: colors['bg-overlay'] }}
           className="absolute inset-0 opacity-70"
@@ -69,7 +69,7 @@ export default function CreateFlowModal({
       <div
         onClick={handleModalClick}
         style={{ backgroundColor: colors['bg-primary'] }}
-        className="w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex relative z-10"
+        className="w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex relative z-10 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out"
       >
         <div className="w-full overflow-visible">
           <div className="flex items-start gap-4 px-6 pt-6">
@@ -240,7 +240,7 @@ export default function CreateFlowModal({
                 onClick={onClose}
                 variant="secondary"
                 size="small"
-                className="grow shrink basis-0"
+                className="grow shrink basis-0 transition-all duration-200 hover:scale-[1.02]"
               >
                 Cancel
               </ButtonNormal>
@@ -272,7 +272,7 @@ export default function CreateFlowModal({
                 }}
                 variant="primary"
                 size="small"
-                className="grow shrink basis-0"
+                className="grow shrink basis-0 transition-all duration-200 hover:scale-[1.02]"
                 isLoading={isSaving}
                 loadingText="Creating..."
                 disabled={!flowName.trim() || isSaving}

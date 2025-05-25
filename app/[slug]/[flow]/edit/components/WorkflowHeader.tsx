@@ -17,7 +17,7 @@ interface WorkflowHeaderProps {
   slug?: string;
 }
 
-const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
+const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
   workflowId,
   parentFolder,
   grandParentFolder,
@@ -250,7 +250,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div
-                className="absolute top-full left-0 mt-1 w-48 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border z-50 overflow-hidden py-1 flex flex-col"
+                className="absolute top-full left-0 mt-1 w-48 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border z-[9999] overflow-hidden py-1 flex flex-col animate-in slide-in-from-top-2 fade-in-0 duration-200"
                 style={{
                   backgroundColor: colors['bg-secondary'],
                   borderColor: colors['border-primary'],
@@ -278,7 +278,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
                           </div>
                           <div
                             style={{ 
-                              color: item.label === 'Delete Flow' ? colors['text-error'] : colors['text-primary'] 
+                              color: colors['text-primary'] 
                             }}
                             className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                           >
@@ -411,6 +411,6 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = ({
       />
     </>
   );
-};
+});
 
 export default WorkflowHeader;

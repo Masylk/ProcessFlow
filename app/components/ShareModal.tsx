@@ -328,42 +328,22 @@ export default function ShareModal({
           }}
           className="w-full flex items-center gap-1 border rounded-lg p-1 mb-5"
         >
-          <button
+          <ButtonNormal
             onClick={() => setActiveTab('share')}
-            style={{
-              backgroundColor:
-                activeTab === 'share' ? colors['bg-primary'] : 'transparent',
-              borderColor:
-                activeTab === 'share'
-                  ? colors['border-secondary']
-                  : 'transparent',
-              color:
-                activeTab === 'share'
-                  ? colors['text-primary']
-                  : colors['text-quaternary'],
-            }}
-            className="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 border hover:text-[var(--text-primary)]"
+            variant={activeTab === 'share' ? 'secondary' : 'tertiary'}
+            size="small"
+            className="flex-1"
           >
             Share
-          </button>
-          <button
+          </ButtonNormal>
+          <ButtonNormal
             onClick={() => setActiveTab('embed')}
-            style={{
-              backgroundColor:
-                activeTab === 'embed' ? colors['bg-primary'] : 'transparent',
-              borderColor:
-                activeTab === 'embed'
-                  ? colors['border-secondary']
-                  : 'transparent',
-              color:
-                activeTab === 'embed'
-                  ? colors['text-primary']
-                  : colors['text-quaternary'],
-            }}
-            className="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 border hover:text-[var(--text-primary)]"
+            variant={activeTab === 'embed' ? 'secondary' : 'tertiary'}
+            size="small"
+            className="flex-1"
           >
             Embed
-          </button>
+          </ButtonNormal>
         </div>
 
         {/* Tab content */}
@@ -910,27 +890,22 @@ export default function ShareModal({
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <button 
-                      className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                    <ButtonNormal 
+                      variant="tertiary"
+                      iconOnly
+                      size="small"
+                      className="p-2 rounded-[5.8px]"
                       onClick={togglePreviewTheme}
-                      title={`Switch to ${currentTheme === 'light' ? 'dark' : 'light'} theme`}
-                    >
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'moon' : 'sun'}.svg`}
-                        alt={currentTheme === 'light' ? 'Dark theme' : 'Light theme'}
-                        className="w-[14.5px] h-[14.5px]"
-                      />
-                    </button>
-                    <button
-                      className="p-2 rounded-[5.8px] hover:bg-[rgba(0,0,0,0.05)]"
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${currentTheme === 'light' ? 'moon' : 'sun'}.svg`}
+                    />
+                    <ButtonNormal
+                      variant="tertiary"
+                      iconOnly
+                      size="small"
+                      className="p-2 rounded-[5.8px]"
                       onClick={handleCopyEmbedSnippet}
-                    >
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
-                        alt="External Link"
-                        className="w-[14.5px] h-[14.5px]"
-                      />
-                    </button>
+                      leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/link-external-02.svg`}
+                    />
                   </div>
                 </div>
               </div>

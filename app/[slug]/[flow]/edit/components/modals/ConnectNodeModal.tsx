@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
@@ -8,7 +8,7 @@ import { useConnectModeStore } from '../../store/connectModeStore';
 import { useModalStore } from '../../store/modalStore';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
-import { ThemeProvider } from '@/app/context/ThemeContext';
+// No longer need separate ThemeProvider for modals
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { Block, BlockType, NodeData } from '../../../types';
 import Modal from '@/app/components/Modal';
@@ -59,6 +59,9 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   const setIsModalOpen = useIsModalOpenStore((state) => state.setIsModalOpen);
   const [originalTargetNodeId] = useState(initialTargetNodeId || '');
   const [originalLabel] = useState(initialLabel || '');
+  
+  // Add ref to prevent cascading updates
+  const isUpdatingPreview = useRef(false);
 
   useEffect(() => {
     setIsModalOpen(true);
@@ -66,73 +69,92 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
   }, [setIsModalOpen]);
 
   // Helper function for consistent view options
-  const getFitViewOptions = (nodes: Node[]) => ({
+  const getFitViewOptions = useCallback((nodes: Node[]) => ({
     nodes,
     duration: 800,
     padding: 1.2,
     maxZoom: 1.2,
     // Add offset to account for modal width (600px + padding)
     offset: [-(600 + 32), 0], // 600px is modal width, 32px is right padding
-  });
+  }), []);
 
-  // Initial zoom to source node
+  // Memoize the preview edge to prevent unnecessary recreations
+  const memoizedPreviewEdge = useMemo(() => {
+    if (!selectedNodeId) return null;
+    
+    return {
+      id: 'preview-edge',
+      source: sourceNode.id,
+      target: selectedNodeId,
+      type: 'strokeEdge',
+      sourceHandle: 'stroke_source',
+      targetHandle:
+        selectedNodeId === sourceNode.id
+          ? 'stroke_self_target'
+          : 'stroke_target',
+      style: {
+        opacity: 1,
+        stroke: colors['accent-primary'],
+        strokeWidth: 3,
+        strokeDasharray: '5,5',
+        zIndex: 9999,
+      },
+      animated: true,
+      data: {
+        source: sourceNode.id,
+        target: selectedNodeId,
+        preview: true,
+        isVisible: true,
+      },
+      zIndex: 9999,
+    } as Edge;
+  }, [selectedNodeId, sourceNode.id, colors]);
+
+  // Stable update preview function
+  const updatePreview = useCallback((edge: Edge | null) => {
+    if (isUpdatingPreview.current) return;
+    isUpdatingPreview.current = true;
+    
+    try {
+      onPreviewUpdate?.(edge);
+    } finally {
+      // Reset the flag after a brief delay to allow the update to complete
+      setTimeout(() => {
+        isUpdatingPreview.current = false;
+      }, 0);
+    }
+  }, [onPreviewUpdate]);
+
+  // Initial zoom to source node - only run once
   useEffect(() => {
     const node = getNode(sourceNode.id);
     if (node) {
       fitView(getFitViewOptions([node]));
     }
-  }, [sourceNode.id, getNode, fitView]);
+  }, [sourceNode.id]); // Removed getNode and fitView from dependencies to prevent re-runs
 
-  // Zoom to both nodes when target is selected
+  // Zoom to both nodes when target is selected - debounced
   useEffect(() => {
-    if (selectedNodeId) {
+    if (!selectedNodeId) return;
+    
+    const timeoutId = setTimeout(() => {
       const source = getNode(sourceNode.id);
       const target = getNode(selectedNodeId);
       if (source && target) {
         fitView(getFitViewOptions([source, target]));
       }
-    }
-  }, [selectedNodeId, sourceNode.id, getNode, fitView]);
+    }, 100); // Small debounce to prevent rapid calls
 
-  const updatePreview = (previewEdge: Edge | null) => {
-    onPreviewUpdate?.(previewEdge);
-  };
+    return () => clearTimeout(timeoutId);
+  }, [selectedNodeId, sourceNode.id]); // Removed getNode and fitView from dependencies
 
+  // Update preview edge - optimized to prevent infinite loops
   useEffect(() => {
-    if (selectedNodeId) {
-      const edge: Edge = {
-        id: 'preview-edge',
-        source: sourceNode.id,
-        target: selectedNodeId,
-        type: 'strokeEdge',
-        sourceHandle: 'stroke_source',
-        targetHandle:
-          selectedNodeId === sourceNode.id
-            ? 'stroke_self_target'
-            : 'stroke_target',
-        style: {
-          opacity: 1,
-          stroke: colors['accent-primary'],
-          strokeWidth: 3,
-          strokeDasharray: '5,5',
-          zIndex: 9999,
-        },
-        animated: true,
-        data: {
-          source: sourceNode.id,
-          target: selectedNodeId,
-          preview: true,
-          isVisible: true,
-        },
-        zIndex: 9999,
-      };
-      setPreviewEdge(edge);
-      onPreviewUpdate?.(edge);
-    } else {
-      setPreviewEdge(null);
-      onPreviewUpdate?.(null);
-    }
-  }, [selectedNodeId, sourceNode.id, onPreviewUpdate, colors]);
+    if (isUpdatingPreview.current) return;
+    
+    setPreviewEdge(memoizedPreviewEdge);
+    updatePreview(memoizedPreviewEdge);
+  }, [memoizedPreviewEdge, updatePreview]);
 
   // Add escape key handler
   useEffect(() => {
@@ -199,7 +221,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
     e.stopPropagation();
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = useCallback(async () => {
     if (selectedNodeId && label.trim()) {
       try {
         setError(null);
@@ -227,7 +249,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           await onConfirm(selectedNodeId, label);
         }
         setPreviewEdge(null);
-        onPreviewUpdate?.(null);
+        updatePreview(null);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'An unexpected error occurred'
@@ -236,73 +258,72 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         setIsLoading(false);
       }
     }
-  };
+  }, [selectedNodeId, label, isEdit, editStrokeLineId, sourceNode, onLinkUpdated, onClose, onConfirm, updatePreview]);
 
-  const handleNodeSelect = (nodeId: string) => {
+  const handleNodeSelect = useCallback((nodeId: string) => {
+    // Batch state updates to prevent cascading re-renders
     setSelectedNodeId(nodeId);
-    setConnectData({
-      sourceNode: sourceNode,
-      targetNode: getNode(nodeId),
-    });
+    
+    // Set connect data
+    const targetNode = getNode(nodeId);
+    if (targetNode) {
+      setConnectData({
+        sourceNode: sourceNode,
+        targetNode: targetNode,
+      });
+    }
 
-    // Create and set preview edge
-    const previewEdge = {
-      id: 'preview-edge',
-      source: sourceNode.id,
-      target: nodeId,
-      type: 'strokeEdge',
-      data: {
-        preview: true,
-        isVisible: true,
-      },
-    };
+    // Set preview edge ID for the store
+    setPreviewEdgeId('preview-edge');
+    
+    // The preview edge will be automatically created by the memoizedPreviewEdge useMemo
+    // and updated by the useEffect, so we don't need to manually create it here
+  }, [getNode, sourceNode, setConnectData, setPreviewEdgeId]);
 
-    setPreviewEdgeId(previewEdge.id);
-    updatePreview(previewEdge);
-  };
-
-  const clearSelection = () => {
+  const clearSelection = useCallback(() => {
     setTargetBlockId(null);
     setPreviewEdgeId(null);
     setSelectedNodeId('');
     setSearchTerm('');
-    updatePreview(null);
-  };
+    // The preview will be automatically cleared by the useEffect when selectedNodeId becomes empty
+  }, [setTargetBlockId, setPreviewEdgeId]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     clearSelection();
     onClose();
-  };
+  }, [clearSelection, onClose]);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
     // Set a small delay before hiding the list
     const timeout = setTimeout(() => {
       setIsInputFocused(false);
     }, 200);
     setBlurTimeout(timeout);
-  };
+  }, []);
 
-  const handleNodeClick = (nodeId: string) => {
+  const handleNodeClick = useCallback((nodeId: string) => {
     // Clear the blur timeout if it exists
     if (blurTimeout) {
       clearTimeout(blurTimeout);
     }
-    setSelectedNodeId(nodeId);
     handleNodeSelect(nodeId);
     setIsInputFocused(false); // Hide list after selection
-  };
+  }, [blurTimeout, handleNodeSelect]);
 
-  const handleChange = (value: string) => {
+  const handleChange = useCallback((value: string) => {
     setSearchTerm(value);
-    // Show loading state briefly for better feedback
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 300);
+    
+    // Only show loading state for longer searches
+    if (value.length > 2) {
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), 200);
+    }
 
     // If there's a value and the dropdown isn't visible, show it
     if (!isInputFocused) {
       setIsInputFocused(true);
     }
-  };
+  }, [isInputFocused]);
 
   // Helper function to get icon URL based on node type
   const getNodeTypeIcon = (type: string): string => {
@@ -341,11 +362,10 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
           style={{ borderColor: colors['border-secondary'] }}
         >
           <div
-            className="w-12 h-12 p-3 rounded-[10px] flex items-center justify-center"
+            className="w-12 h-12 p-3 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border justify-center items-center inline-flex overflow-hidden"
             style={{
               backgroundColor: colors['bg-secondary'],
-              borderColor: colors['border-light'],
-              boxShadow: colors['shadow-sm'],
+              borderColor: colors['border-secondary'],
             }}
           >
             <img
@@ -442,19 +462,15 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
                         >
                           Node 2
                         </div>
-                        <button
+                        <ButtonNormal
                           onClick={() => {
                             clearSelection();
                           }}
-                          style={{ color: colors['text-tertiary'] }}
-                          className="hover:text-gray-600"
-                        >
-                          <img
-                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
-                            alt="Delete"
-                            className="w-4 h-4"
-                          />
-                        </button>
+                          variant="tertiary"
+                          iconOnly
+                          size="small"
+                          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
+                        />
                       </div>
                       <div
                         className="text-xs mb-1"
@@ -773,7 +789,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
         >
           <div className="flex gap-2">
             <ButtonNormal
-              variant="tertiary"
+              variant="secondary"
               onClick={handleClose}
               size="small"
               disabled={isLoading}
@@ -806,7 +822,7 @@ const ConnectNodeModal: React.FC<ConnectNodeModalProps> = ({
 
   if (typeof window === 'undefined') return null;
   return createPortal(
-    <ThemeProvider>{modalContent}</ThemeProvider>,
+    modalContent,
     document.body
   );
 };

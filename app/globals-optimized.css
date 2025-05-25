@@ -1,0 +1,297 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: 'Inter', sans-serif;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* ========================================
+   OPTIMIZED THEME SYSTEM - MINIMAL CSS VARIABLES
+   ======================================== */
+
+:root {
+  /* Only essential CSS variables for best performance */
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+/* Light theme (default) */
+:root,
+[data-theme="light"] {
+  /* Essential colors only - keep under 20 variables for performance */
+  --text-primary: #101828;
+  --text-secondary: #344054;
+  --text-tertiary: #475467;
+  --text-white: #ffffff;
+  --text-disabled: #667085;
+  
+  --bg-primary: #ffffff;
+  --bg-primary-solid: #0c111d;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f2f4f7;
+  --bg-disabled: #f2f4f7;
+  
+  --border-primary: #d0d5dd;
+  --border-secondary: #e4e7ec;
+  
+  --brand-primary: #4761c4;
+  --brand-secondary: #4e6bd7;
+  --brand-light: #edf0fb;
+  
+  --fg-brand-primary: #4761c4;
+  
+  --error-primary: #d92d20;
+  --error-light: #fef3f2;
+  
+  --warning-primary: #dc6803;
+  --warning-light: #fffaeb;
+  
+  --success-primary: #079455;
+  --success-light: #ecfdf3;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --text-primary: #f5f5f6;
+  --text-secondary: #cecfd2;
+  --text-tertiary: #94969c;
+  --text-white: #ffffff;
+  --text-disabled: #85888e;
+  
+  --bg-primary: #0c111d;
+  --bg-primary-solid: #0c111d;
+  --bg-secondary: #161b26;
+  --bg-tertiary: #1f242f;
+  --bg-disabled: #1f242f;
+  
+  --border-primary: #333741;
+  --border-secondary: #1f242f;
+  
+  --brand-primary: #4761c4;
+  --brand-secondary: #4e6bd7;
+  --brand-light: #161b26;
+  
+  --fg-brand-primary: #4761c4;
+  
+  --error-primary: #d92d20;
+  --error-light: #161b26;
+  
+  --warning-primary: #dc6803;
+  --warning-light: #161b26;
+  
+  --success-primary: #079455;
+  --success-light: #161b26;
+}
+
+/* Optimized transitions - only on body for best performance */
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+/* Theme transition class for components that absolutely need it */
+.theme-transition {
+  transition: 
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+/* No transitions for performance-sensitive elements */
+svg, svg *,
+canvas,
+video,
+.no-transition,
+[data-no-transition="true"] {
+  transition: none !important;
+}
+
+/* ========================================
+   COMPONENT STYLES USING CSS VARIABLES
+   ======================================== */
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: var(--text-white);
+  border-color: var(--brand-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-secondary);
+  border-color: var(--brand-secondary);
+}
+
+.btn-secondary {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* Input styles */
+.input-field {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.input-field:focus {
+  border-color: var(--brand-primary);
+}
+
+.input-field::placeholder {
+  color: var(--text-disabled);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--bg-primary);
+  border-color: var(--border-secondary);
+}
+
+.card-secondary {
+  background-color: var(--bg-secondary);
+}
+
+/* ========================================
+   EXISTING STYLES (UNCHANGED)
+   ======================================== */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Apple-style scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-disabled);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+* {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only in input fields and textareas */
+input, textarea {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+  cursor: grab;
+  position: relative;
+}
+
+.dragging {
+  z-index: 9999;
+}
+
+[data-id].drag-over-as-child {
+  background-color: rgba(73, 131, 247, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(73, 131, 247, 0.4);
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(73, 131, 247, 0.2);
+}
+
+[data-id].drag-over-as-child::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234761C4' width='24' height='24'%3E%3Cpath d='M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.5;
+}
+
+[data-id].drag-over-as-sibling-before {
+  border-top: 2px solid rgba(73, 131, 247, 0.8);
+  position: relative;
+}
+
+[data-id].drag-over-as-sibling-after {
+  border-bottom: 2px solid rgba(73, 131, 247, 0.8);
+  position: relative;
+}
+
+[data-id][data-has-children="true"] {
+  transition: background-color 0.2s ease;
+}
+
+.dnd-active [data-id][data-has-children="true"]:hover {
+  background-color: rgba(73, 131, 247, 0.05);
+}
+
+@keyframes folder-expanding-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(73, 131, 247, 0.2); }
+  70% { box-shadow: 0 0 0 5px rgba(73, 131, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(73, 131, 247, 0); }
+}
+
+.folder-expanding {
+  animation: folder-expanding-pulse 1.5s infinite;
+  background-color: rgba(73, 131, 247, 0.08) !important;
+}
+
+/* Force light theme styles */
+.force-light-theme,
+.force-light-theme *,
+.force-light-theme.dark,
+html.force-light-theme,
+html.force-light-theme *,
+body.force-light-theme,
+body.force-light-theme * {
+  --text-primary: #101828 !important;
+  --text-secondary: #344054 !important;
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f9fafb !important;
+  --border-primary: #d0d5dd !important;
+  --brand-primary: #4761c4 !important;
+}
+
+.force-light-theme .dark,
+.force-light-theme.dark {
+  background-color: #fff !important;
+  color: #101828 !important;
+}
+
+.force-light-theme ::-webkit-scrollbar-thumb {
+  background: #d0d5dd !important;
+}
+
+.force-light-theme ::-webkit-scrollbar-thumb:hover {
+  background: #98a2b3 !important;
+}

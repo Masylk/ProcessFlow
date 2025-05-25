@@ -118,15 +118,19 @@ const EditLinksModal: React.FC<EditLinksModalProps> = ({
     function handleEscape(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpenMenuId(null);
     }
-    document.addEventListener('mousedown', handleClick as EventListener);
-    document.addEventListener('touchstart', handleClick as EventListener);
-    document.addEventListener('keydown', handleEscape);
+    
+    if (showEditLinksModal) { // Only add listeners when modal is open
+      document.addEventListener('mousedown', handleClick as EventListener);
+      document.addEventListener('touchstart', handleClick as EventListener);
+      document.addEventListener('keydown', handleEscape);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClick as EventListener);
       document.removeEventListener('touchstart', handleClick as EventListener);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [openMenuId]);
+  }, [openMenuId, showEditLinksModal]); // Add showEditLinksModal dependency
 
   // Menu positioning (above or below)
   const handleMenuOpen = (linkId: string, idx: number) => {
