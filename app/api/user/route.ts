@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server'; // Import your Supabase client
 import prisma from '@/lib/prisma'; // Import your Prisma client
 import { supabase } from '@/lib/supabaseClient'; // Already imported in your signed url util
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -111,9 +113,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Fetch the Prisma user based on the Supabase UID
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: {
         auth_id: userId,
       },
@@ -137,7 +143,7 @@ export async function GET(req: NextRequest) {
     }
     // If the email differs, update the Prisma user record
     if (user.email !== supabaseEmail) {
-      const updatedUser = await prisma.user.update({
+      const updatedUser = await prisma_client.user.update({
         where: { auth_id: userId },
         data: {
           email: supabaseEmail,
@@ -154,5 +160,7 @@ export async function GET(req: NextRequest) {
       { error: 'Internal Server Error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

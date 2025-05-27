@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
 import { useColors } from '@/app/theme/hooks';
+import { motion } from 'framer-motion';
 
 // Helper function for environment-based logging
 const devLog = (...args: any[]) => {
@@ -28,7 +29,6 @@ export default function UserDropdown({
 }: UserDropdownProps) {
   const colors = useColors();
   const supabase = createClient();
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -67,22 +67,15 @@ export default function UserDropdown({
     }
   };
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
-
   return (
-    <div
-      ref={dropdownRef}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ 
+        duration: 0.15, 
+        ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+      }}
       style={{
         backgroundColor: colors['bg-secondary'],
         borderColor: colors['border-primary']
@@ -95,14 +88,15 @@ export default function UserDropdown({
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
           onClick={() => {
             onOpenUserSettings();
-            onClose();
+            // Delay closing the dropdown to allow modal to start loading
+            setTimeout(onClose, 50);
           }}
         >
           <div 
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -132,7 +126,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -162,7 +156,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -185,14 +179,15 @@ export default function UserDropdown({
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
           onClick={() => {
             onOpenHelpCenter();
-            onClose();
+            // Delay closing the dropdown to allow modal to start loading
+            setTimeout(onClose, 50);
           }}
         >
           <div 
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -224,7 +219,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -242,6 +237,6 @@ export default function UserDropdown({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

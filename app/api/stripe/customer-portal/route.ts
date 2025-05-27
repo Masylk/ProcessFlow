@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { createStripePortalSession } from '@/lib/stripe';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { workspaceId } = await request.json();
 
@@ -20,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     // Get workspace and verify user has access
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       include: { user_workspaces: {
         include: { user: true }
@@ -56,5 +62,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating customer portal session:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

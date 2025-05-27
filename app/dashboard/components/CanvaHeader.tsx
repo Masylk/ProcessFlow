@@ -57,7 +57,7 @@ export default function CanvaHeader({
       }}
       className="w-full h-[68px] py-5 px-8 justify-between items-center inline-flex border-b"
     >
-      <div className="justify-start items-center gap-4 flex">
+      <div className="justify-start items-center gap-4 flex transition-all duration-200 hover:scale-[1.02]">
         {/* Dynamically display folder icon or default flows icon */}
         {selectedFolder ? (
           getFolderIcon()

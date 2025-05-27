@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { BlockEndType } from '@/types/block';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface ConnectPathsRequest {
   child_path_ids: number[];
@@ -12,6 +14,10 @@ interface ConnectPathsRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body: ConnectPathsRequest = await req.json();
     const { child_path_ids, destination_path_id, pathblock_title, pathblock_description, pathblock_icon } = body;
@@ -25,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use transaction to ensure all operations succeed or none do
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       // Find any end-type block of the destination path
       const destinationEndBlock = await tx.block.findFirst({
         where: {
@@ -119,6 +125,10 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to connect paths' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 

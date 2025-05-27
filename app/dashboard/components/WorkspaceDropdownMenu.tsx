@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import { useColors } from '@/app/theme/hooks';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface WorkspaceDropdownMenuProps {
   userEmail: string;
@@ -44,36 +45,7 @@ export default function WorkspaceDropdownMenu({
   const colors = useColors();
   const router = useRouter();
   const [isWorkspaceListVisible, setIsWorkspaceListVisible] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      // If clicking outside both the main dropdown and submenu
-      const clickedOutsideDropdown =
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node);
-      const clickedOutsideSubmenu =
-        submenuRef.current &&
-        !submenuRef.current.contains(event.target as Node);
-
-      // If there's no submenu visible, only check the main dropdown
-      // If submenu is visible, check both
-      if (isWorkspaceListVisible) {
-        if (clickedOutsideDropdown && clickedOutsideSubmenu) {
-          onClose();
-          setIsWorkspaceListVisible(false);
-        }
-      } else if (clickedOutsideDropdown) {
-        onClose();
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose, isWorkspaceListVisible]);
 
   const handleSettingsClick = () => {
     onOpenSettings();
@@ -99,8 +71,14 @@ export default function WorkspaceDropdownMenu({
 
   return (
     <>
-      <div
-        ref={dropdownRef}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        transition={{ 
+          duration: 0.15, 
+          ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+        }}
         style={{
           backgroundColor: colors['bg-secondary'],
           borderColor: colors['border-primary'],
@@ -180,15 +158,23 @@ export default function WorkspaceDropdownMenu({
           </button>
 
           {/* Workspace List Submenu */}
-          {isWorkspaceListVisible && (
-            <div
-              ref={submenuRef}
-              style={{
-                backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-primary'],
-              }}
-              className="absolute left-full top-[-7px] w-[264px] rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border"
-            >
+          <AnimatePresence>
+            {isWorkspaceListVisible && (
+              <motion.div
+                ref={submenuRef}
+                initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                transition={{ 
+                  duration: 0.15, 
+                  ease: [0.16, 1, 0.3, 1]
+                }}
+                style={{
+                  backgroundColor: colors['bg-secondary'],
+                  borderColor: colors['border-primary'],
+                }}
+                className="absolute left-full top-[-7px] w-[264px] rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border"
+              >
               {/* Email Header */}
               <div className="px-1.5 py-px">
                 <div
@@ -346,8 +332,9 @@ export default function WorkspaceDropdownMenu({
                   </div>
                 </div>
               </button>
-            </div>
+            </motion.div>
           )}
+        </AnimatePresence>
         </div>
 
         {/* Separator */}
@@ -384,7 +371,7 @@ export default function WorkspaceDropdownMenu({
             </div>
           </div>
         </button>
-      </div>
+      </motion.div>
     </>
   );
 }

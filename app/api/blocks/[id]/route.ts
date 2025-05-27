@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { deleteOneBlock } from '../../utils/blocks/deleteOne';
 import { formatTitle } from '../../utils/formatTitle';
 import { createSignedUrlForBlock } from '@/utils/createSignedUrls';
@@ -79,6 +80,11 @@ export async function PATCH(req: NextRequest) {
 
   const block_id = Number(id);
 
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const {
       type,
@@ -102,7 +108,7 @@ export async function PATCH(req: NextRequest) {
     const formattedTitle = title;
     const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
 
-    const existingBlock = await prisma.block.findUnique({
+    const existingBlock = await prisma_client.block.findUnique({
       where: { id: block_id },
       select: { 
         image: true,
@@ -150,7 +156,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update block with all fields
-    const updatedBlock: any = await prisma.block.update({
+    const updatedBlock: any = await prisma_client.block.update({
       where: { id: block_id },
       data: {
         type,
@@ -180,6 +186,10 @@ export async function PATCH(req: NextRequest) {
       { error: 'Failed to update block' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 

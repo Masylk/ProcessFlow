@@ -4,6 +4,7 @@ import FolderDropdown from '@/app/dashboard/components/FolderDropdown';
 import { getAssetUrl, SHARED_ASSETS } from '@/app/utils/assetUrls';
 import { useColors } from '@/app/theme/hooks';
 import { cn } from '@/lib/utils/cn';
+import { AnimatePresence } from 'framer-motion';
 
 interface TabButtonProps {
   icon: string;
@@ -52,9 +53,11 @@ export const TabButton: React.FC<TabButtonProps> = ({
     e.stopPropagation();
     if (folder) {
       if (dropdownPosition) {
+        // If dropdown is already open, close it
         onSelectFolder?.(undefined);
         setDropdownPosition(null);
       } else {
+        // Open the dropdown
         onSelectFolder?.(folder);
         const rect = (e.target as HTMLElement).getBoundingClientRect();
         setDropdownPosition({
@@ -66,11 +69,13 @@ export const TabButton: React.FC<TabButtonProps> = ({
   };
 
   const handleDropdownAction = async (action: () => void | Promise<void>) => {
-    if (folder) {
-      onSelectFolder?.(folder);
+    try {
+      await action();
+    } finally {
+      // Always close the dropdown after an action
+      onSelectFolder?.(undefined);
+      setDropdownPosition(null);
     }
-    await action();
-    setDropdownPosition(null);
   };
 
   useEffect(() => {
@@ -84,12 +89,30 @@ export const TabButton: React.FC<TabButtonProps> = ({
       }
     };
 
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onSelectFolder?.(undefined);
+        setDropdownPosition(null);
+      }
+    };
+
     if (dropdownPosition) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // Add a small delay to prevent immediate closing when opening
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscapeKey);
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', handleEscapeKey);
+      };
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [dropdownPosition, onSelectFolder]);
 
@@ -99,7 +122,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
 
   const buttonStyles = {
     backgroundColor: isActive ? colors['bg-secondary'] : 'transparent',
-    borderColor: isActive ? colors['border-secondary'] : 'transparent',
+    borderColor: isActive ? colors['border-tertiary'] : 'transparent',
   };
 
   const hoverStyles = `
@@ -119,7 +142,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
           role="button"
           tabIndex={0}
           className={cn(
-            'w-full px-3 py-1.5 rounded-md flex items-center cursor-pointer transition-colors border',
+            'w-full px-3 py-1.5 rounded-md flex items-center cursor-pointer transition-all duration-200 border hover:scale-[1.02] hover:shadow-sm',
             isActive && 'active'
           )}
           style={buttonStyles}
@@ -138,7 +161,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && onToggleExpand?.()}
                 className={cn(
-                  'w-4 h-4 hidden group-hover:block flex-shrink-0 rounded-md opacity-70 hover:opacity-100',
+                  'w-4 h-4 hidden group-hover:block flex-shrink-0 rounded-md transition-all duration-200 hover:scale-110',
                   'hover:bg-[var(--bg-secondary)]'
                 )}
               >
@@ -215,12 +238,12 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 e.key === 'Enter' && handleDropdownClick(e as any)
               }
               className={cn(
-                'w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto rounded-md',
+                'w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto rounded-md transition-all duration-200 hover:scale-110',
                 'hover:bg-[var(--bg-secondary)] opacity-70 hover:opacity-100'
               )}
             >
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal-black.svg`}
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dots-horizontal.svg`}
                 alt="Show Folder Dropdown"
                 className="w-5 h-5"
               />
@@ -229,31 +252,41 @@ export const TabButton: React.FC<TabButtonProps> = ({
         </div>
 
         {/* Dropdown Menu */}
-        {dropdownPosition && folder && (
-          <div
-            ref={dropdownRef}
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
-              top: dropdownPosition.top,
-              left: dropdownPosition.left,
-            }}
-            className="fixed z-50 w-auto min-w-[200px] rounded-lg overflow-hidden border shadow-lg"
-          >
-            <FolderDropdown
-              onCreateSubfolder={() =>
-                handleDropdownAction(() => onCreateSubfolder?.(folder))
-              }
-              onDeleteFolder={() =>
-                handleDropdownAction(async () => await onDeleteFolder?.(folder))
-              }
-              onEditFolder={() =>
-                handleDropdownAction(() => onEditFolder?.(folder))
-              }
-              parent={folder}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {dropdownPosition && folder && (
+            <>
+              {/* Invisible backdrop for modal behavior */}
+              <div 
+                className="fixed inset-0 z-40 cursor-default"
+                onClick={() => {
+                  onSelectFolder?.(undefined);
+                  setDropdownPosition(null);
+                }}
+              />
+              <div
+                ref={dropdownRef}
+                style={{
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                }}
+                className="fixed z-50 w-auto min-w-[200px]"
+              >
+                <FolderDropdown
+                  onCreateSubfolder={() =>
+                    handleDropdownAction(() => onCreateSubfolder?.(folder))
+                  }
+                  onDeleteFolder={() =>
+                    handleDropdownAction(async () => await onDeleteFolder?.(folder))
+                  }
+                  onEditFolder={() =>
+                    handleDropdownAction(() => onEditFolder?.(folder))
+                  }
+                  parent={folder}
+                />
+              </div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

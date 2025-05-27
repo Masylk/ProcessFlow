@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabaseAdmin } from '@/utils/supabase/admin'; // Use the new admin client
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -65,6 +67,10 @@ import { supabaseAdmin } from '@/utils/supabase/admin'; // Use the new admin cli
  *                   example: "Internal Server Error: Error message"
  */
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await req.json();
 
@@ -76,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find user in PostgreSQL using auth_id
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: { auth_id: userId },
       select: { id: true },
     });
@@ -89,10 +95,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Delete related user_workspace and actions
-    await prisma.user_workspace.deleteMany({ where: { user_id: user.id } });
+    await prisma_client.user_workspace.deleteMany({ where: { user_id: user.id } });
 
     // Delete the user from PostgreSQL
-    await prisma.user.delete({ where: { id: user.id } });
+    await prisma_client.user.delete({ where: { id: user.id } });
 
     // Delete the user from Supabase Auth using the admin client
   
@@ -112,5 +118,9 @@ export async function POST(req: NextRequest) {
       { error: `Internal Server Error: ${error.message}` },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

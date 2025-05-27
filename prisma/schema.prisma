@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 
 generator dbml {
@@ -11,7 +12,7 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
+  
 model user {
   id                      Int                @id @default(autoincrement())
   created_at              DateTime           @default(now())
@@ -173,6 +174,9 @@ model workflow {
   name             String
   icon             String?
   description      String
+  additional_notes String?
+  process_owner    String?
+  review_date      DateTime?
   workspace_id     Int
   folder_id        Int?
   is_public        Boolean            @default(true)

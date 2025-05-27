@@ -701,7 +701,9 @@ export default function SharedPage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description,
+          description:
+            workflowData.description ||
+            'This Flow helps streamline and automate key business processes.',
         },
         integrations: paths
           .flatMap((path) =>
@@ -726,8 +728,9 @@ export default function SharedPage({
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
+        // Use actual workflow author data
         ...(workflowData.author && {
-          author: {
+          owner: {
             name: workflowData.author.full_name,
             avatar:
               workflowData.author.avatar_url &&
@@ -738,6 +741,10 @@ export default function SharedPage({
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
+        review_date: workflowData.review_date
+          ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
+          : 'No review date',
+        additionalNotes: workflowData.additional_notes,
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -1093,7 +1100,9 @@ export default function SharedPage({
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
-                    {processCardData && <ProcessCard {...processCardData} />}
+                    {processCardData && (
+                      <ProcessCard {...processCardData} viewMode={viewMode} />
+                    )}
                     {pathsToDisplay
                       .map((path) => {
                         return (
@@ -1201,8 +1210,11 @@ export default function SharedPage({
                             className="flex items-center justify-center"
                           >
                             {processCardData && (
-                              <div className="w-full flex justify-center">
-                                <ProcessCard {...processCardData} />
+                              <div className="w-full flex justify-center h-full">
+                                <ProcessCard
+                                  {...processCardData}
+                                  viewMode={viewMode}
+                                />
                               </div>
                             )}
                           </div>

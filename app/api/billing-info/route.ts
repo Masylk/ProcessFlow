@@ -165,6 +165,8 @@ import prisma from '@/lib/prisma';
 import { createClient } from '@/lib/supabaseServerClient';
 import Stripe from 'stripe';
 import { cookies } from 'next/headers';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not defined');
@@ -210,6 +212,11 @@ interface BillingInfoRequest {
 
 // GET billing info for a workspace
 export async function GET(req: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();
@@ -228,7 +235,7 @@ export async function GET(req: Request) {
     }
 
     // Find workspace and check if user has access
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(workspaceId) },
       include: {
         user_workspaces: {
@@ -284,7 +291,7 @@ export async function GET(req: Request) {
       };
       
       // Update billing information in our database
-      await prisma.workspace_billing_infos.upsert({
+      await prisma_client.workspace_billing_infos.upsert({
         where: {
           workspace_id: parseInt(workspaceId)
         },
@@ -369,6 +376,10 @@ export async function GET(req: Request) {
         });
       }
       throw stripeError;
+    } finally {
+      if (isVercel()) {
+        await prisma_client.$disconnect();
+      }
     }
   } catch (error) {
     conditionalErrorLog('Error in billing-info endpoint:', error);
@@ -380,7 +391,11 @@ export async function GET(req: Request) {
 }
 
 // POST to create/update billing info
-export async function POST(request: Request) {
+export async function POST(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const supabase = createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -389,7 +404,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
       select: { id: true }
     });
@@ -398,7 +413,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const body: BillingInfoRequest = await request.json();
+    const body: BillingInfoRequest = await req.json();
     const { 
       workspaceId, 
       billing_email, 
@@ -418,7 +433,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user has access to this workspace
-    const userWorkspace = await prisma.user_workspace.findFirst({
+    const userWorkspace = await prisma_client.user_workspace.findFirst({
       where: {
         user_id: dbUser.id,
         workspace_id: workspaceId,
@@ -432,7 +447,7 @@ export async function POST(request: Request) {
     }
 
     // Get the workspace to access Stripe customer ID
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       select: { stripe_customer_id: true }
     });
@@ -524,7 +539,7 @@ export async function POST(request: Request) {
     }
 
     // Upsert billing info in database
-    const billingInfo = await prisma.workspace_billing_infos.upsert({
+    const billingInfo = await prisma_client.workspace_billing_infos.upsert({
       where: {
         workspace_id: workspaceId,
       },
@@ -556,5 +571,9 @@ export async function POST(request: Request) {
   } catch (error) {
     conditionalErrorLog('Error updating billing info:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { workspaceId } = await req.json();
     
@@ -10,7 +17,7 @@ export async function POST(req: Request) {
     }
     
     // Find the workspace
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       include: { subscription: true },
     });
@@ -20,7 +27,7 @@ export async function POST(req: Request) {
     }
     
     // Find active users for this workspace
-    const users = await prisma.user.findMany({
+    const users = await prisma_client.user.findMany({
       where: { active_workspace_id: workspaceId },
     });
     
@@ -55,5 +62,9 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Error sending subscription emails:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

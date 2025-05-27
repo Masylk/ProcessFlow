@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import ReadPageClient from './components/ReadPageClient';
+import getBaseUrl from '@/app/utils/getBaseUrl';
 
 interface PageParams {
   slug: string;
@@ -38,10 +39,17 @@ export async function generateMetadata({
     return { title: 'ProcessFlow' };
   }
 
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
   // Get workflow data from API
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     return { title: 'ProcessFlow' };
@@ -64,13 +72,24 @@ export default async function ReadPage(props: PageProps) {
   }
 
   // Get workflow data from API using path parameter
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
+  const baseUrl = getBaseUrl();
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     // Handle unauthorized or not found cases
-    const { error } = await response.json();
+    let error: any = {};
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      error = await response.json();
+    }
     if (response.status === 401) {
       redirect('/login');
     } else {

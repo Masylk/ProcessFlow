@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { formatTitle } from '../utils/formatTitle';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 enum DelayType {
   FIXED_DURATION = 'FIXED_DURATION',
@@ -96,6 +97,11 @@ export async function POST(req: NextRequest) {
     path_options,
     imageUrl,
   } = await req.json();
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   const formattedTitle = formatTitle(title);
   const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
@@ -153,7 +159,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await prisma.$transaction(async (prisma) => {
+    // Choose the correct Prisma client
+    const result = await prisma_client.$transaction(async (prisma) => {
       // Find the current max position in the path
       const maxBlock = await prisma.block.findFirst({
         where: { path_id },
@@ -209,5 +216,9 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to create block' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

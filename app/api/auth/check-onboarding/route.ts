@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -49,7 +51,6 @@ import prisma from '@/lib/prisma';
  */
 export async function GET(request: Request) {
   const supabase = await createClient();
-  
   // Utiliser getUser() au lieu de getSession()
   const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -57,8 +58,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
-    const userInfo = await prisma.user.findUnique({
+    const userInfo = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
       select: {
         onboarding_step: true,
@@ -73,5 +79,9 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error checking onboarding status:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

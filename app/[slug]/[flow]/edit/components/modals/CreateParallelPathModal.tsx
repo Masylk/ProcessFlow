@@ -5,7 +5,6 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import InputDropdown from '@/app/components/InputDropdown';
 import { useColors, useTheme } from '@/app/theme/hooks';
-import { themeRegistry } from '@/app/theme/registry';
 import { Path } from '../../../types';
 import IconModifier from '../IconModifier';
 import DOMPurify from 'dompurify';
@@ -51,18 +50,6 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   const [selectedPath, setSelectedPath] = useState<number>(0);
   const colors = useColors();
   const { currentTheme } = useTheme();
-
-  // Get theme variables for direct application
-  const themeVars = useMemo(() => {
-    const theme = themeRegistry.get(currentTheme);
-    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>(
-      (acc, [key, value]) => {
-        acc[`--${key}`] = value;
-        return acc;
-      },
-      {}
-    );
-  }, [currentTheme]);
 
   // Initialize pathNames with existing paths when the modal opens
   useEffect(() => {
@@ -114,20 +101,20 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
   );
 
   const modalContent = (
-    <div style={themeVars as React.CSSProperties} className={currentTheme}>
+    <div className={currentTheme}>
       <Modal
         title="Create a new condition"
         onClose={onClose}
         icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
         iconBackgroundColor={colors['bg-secondary']}
-        iconBorderColor={colors['border-light']}
+        iconBorderColor={colors['border-secondary']}
         showHeaderSeparator={true}
         showActionsSeparator={true}
         width="w-[600px]"
         className="overflow-hidden"
         actions={
           <div className="flex justify-end gap-2 w-full">
-            <ButtonNormal variant="tertiary" size="small" onClick={onClose}>
+            <ButtonNormal variant="secondary" size="small" onClick={onClose}>
               Cancel
             </ButtonNormal>
             <ButtonNormal
@@ -228,7 +215,7 @@ const CreateParallelPathModal: React.FC<CreateParallelPathModalProps> = ({
                   </div>
                   {index > 1 && (
                     <ButtonNormal
-                      variant="tertiary"
+                      variant="secondary"
                       size="medium"
                       onClick={() => handleRemovePath(index)}
                       leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}

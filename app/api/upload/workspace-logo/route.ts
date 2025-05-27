@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 // Maximum file size (1MB)
 const MAX_FILE_SIZE = 1 * 1024 * 1024;
@@ -8,6 +10,10 @@ const MAX_FILE_SIZE = 1 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
 
 export async function POST(request: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const supabase = await createClient();
     
@@ -45,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Get the user from the database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
     
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if the user has access to the workspace
-    const userWorkspace = await prisma.user_workspace.findFirst({
+    const userWorkspace = await prisma_client.user_workspace.findFirst({
       where: {
         user_id: dbUser.id,
         workspace_id: parseInt(workspaceId),
@@ -89,7 +95,7 @@ export async function POST(request: NextRequest) {
       .getPublicUrl(`workspaces_logo/${fileName}`);
     
     // Update the workspace in the database with the new logo URL
-    await prisma.workspace.update({
+    await prisma_client.workspace.update({
       where: { 
         id: parseInt(workspaceId) 
       },
@@ -105,5 +111,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       error: `Internal server error: ${errorMessage}` 
     }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

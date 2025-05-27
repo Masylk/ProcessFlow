@@ -7,6 +7,8 @@ import WorkflowCard from './WorkflowCard';
 import { Workflow, WorkflowStatus } from '@/types/workflow';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useColors } from '@/app/theme/hooks';
+import SkeletonCard from '@/app/components/SkeletonCard';
+import SkeletonWorkflowCard from '@/app/components/SkeletonWorkflowCard';
 
 interface CanvasProps {
   workspace: Workspace;
@@ -21,9 +23,10 @@ interface CanvasProps {
   searchTerm?: string;
   currentView: 'grid' | 'table';
   onViewChange: (view: 'grid' | 'table') => void;
+  isLoading?: boolean;
 }
 
-const Canvas: React.FC<CanvasProps> = ({
+const Canvas: React.FC<CanvasProps> = React.memo(({
   workspace,
   selectedFolder,
   openCreateFlow,
@@ -36,6 +39,7 @@ const Canvas: React.FC<CanvasProps> = ({
   searchTerm = '',
   currentView,
   onViewChange,
+  isLoading = false,
 }) => {
   const colors = useColors();
 
@@ -82,19 +86,32 @@ const Canvas: React.FC<CanvasProps> = ({
             </h2>
             {currentView === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {recentlyUsedWorkflows.map((workflow) => (
-                  <WorkflowCard
-                    key={workflow.id}
-                    workflow={workflow}
-                    workspace={workspace}
-                    onSelectWorkflow={onSelectWorkflow}
-                    onDuplicateWorkflow={onDuplicateWorkflow}
-                    onDeleteWorkflow={onDeleteWorkflow}
-                    onEditWorkflow={onEditWorkflow}
-                    onMoveWorkflow={onMoveWorkflow}
-                    onStatusChange={onStatusChange}
-                  />
-                ))}
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <SkeletonWorkflowCard key={index} />
+                  ))
+                ) : recentlyUsedWorkflows.length === 0 ? (
+                  <div 
+                    style={{ color: colors['text-secondary'] }}
+                    className="col-span-full text-center py-8"
+                  >
+                    No recently used workflows
+                  </div>
+                ) : (
+                  recentlyUsedWorkflows.map((workflow) => (
+                    <WorkflowCard
+                      key={workflow.id}
+                      workflow={workflow}
+                      workspace={workspace}
+                      onSelectWorkflow={onSelectWorkflow}
+                      onDuplicateWorkflow={onDuplicateWorkflow}
+                      onDeleteWorkflow={onDeleteWorkflow}
+                      onEditWorkflow={onEditWorkflow}
+                      onMoveWorkflow={onMoveWorkflow}
+                      onStatusChange={onStatusChange}
+                    />
+                  ))
+                )}
               </div>
             ) : (
               <div 
@@ -192,19 +209,37 @@ const Canvas: React.FC<CanvasProps> = ({
           </h2>
           {currentView === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {workflowsToDisplay.map((workflow) => (
-                <WorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  workspace={workspace}
-                  onSelectWorkflow={onSelectWorkflow}
-                  onDuplicateWorkflow={onDuplicateWorkflow}
-                  onDeleteWorkflow={onDeleteWorkflow}
-                  onEditWorkflow={onEditWorkflow}
-                  onMoveWorkflow={onMoveWorkflow}
-                  onStatusChange={onStatusChange}
-                />
-              ))}
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, index) => (
+                  <SkeletonWorkflowCard key={index} />
+                ))
+              ) : workflowsToDisplay.length === 0 ? (
+                <div 
+                  style={{ color: colors['text-secondary'] }}
+                  className="col-span-full text-center py-12"
+                >
+                  {selectedFolder ? 
+                    `No workflows in "${selectedFolder.name}" folder` : 
+                    searchTerm ? 
+                      `No workflows found for "${searchTerm}"` : 
+                      'No workflows found'
+                  }
+                </div>
+              ) : (
+                workflowsToDisplay.map((workflow) => (
+                  <WorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    workspace={workspace}
+                    onSelectWorkflow={onSelectWorkflow}
+                    onDuplicateWorkflow={onDuplicateWorkflow}
+                    onDeleteWorkflow={onDeleteWorkflow}
+                    onEditWorkflow={onEditWorkflow}
+                    onMoveWorkflow={onMoveWorkflow}
+                    onStatusChange={onStatusChange}
+                  />
+                ))
+              )}
             </div>
           ) : (
             <div 
@@ -291,6 +326,6 @@ const Canvas: React.FC<CanvasProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default Canvas;

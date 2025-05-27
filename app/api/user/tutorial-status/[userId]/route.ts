@@ -1,7 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface TutorialStatusRequest {
   hasCompletedTutorial: boolean;
@@ -11,6 +12,10 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ userId: string }> }
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await context.params;
     if (!userId) {
@@ -26,7 +31,7 @@ export async function GET(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const dbUser = await prisma.user.findFirst({
+    const dbUser = await prisma_client.user.findFirst({
       where: {
         auth_id: user.id
       },
@@ -48,6 +53,8 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching tutorial status:', error);
     return NextResponse.json({ error: 'Failed to fetch tutorial status' }, { status: 500 });
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
@@ -55,6 +62,10 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ userId: string }> }
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await context.params;
     if (!userId) {
@@ -81,7 +92,7 @@ export async function POST(
     const { hasCompletedTutorial } = body as TutorialStatusRequest;
 
     // Use transaction to ensure both updates succeed or fail together
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       const dbUser = await tx.user.findFirst({
         where: {
           auth_id: user.id

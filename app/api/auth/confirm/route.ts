@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -13,6 +15,11 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash,
@@ -26,12 +33,12 @@ export async function GET(request: NextRequest) {
 
     if (data?.user && data?.session) {
       try {
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma_client.user.findUnique({
           where: { auth_id: data.user.id }
         });
 
         if (!existingUser) {
-          await prisma.user.create({
+          await prisma_client.user.create({
             data: {
               auth_id: data.user.id,
               email: data.user.email || '',
@@ -67,5 +74,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error during confirmation:', error);
     return NextResponse.redirect(new URL('/login?error=confirmation_failed', request.url));
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

@@ -563,7 +563,9 @@ export default function SharePage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description,
+          description:
+            workflowData.description ||
+            'This Flow helps streamline and automate key business processes.',
         },
         integrations: paths
           .flatMap((path) =>
@@ -588,15 +590,22 @@ export default function SharePage({
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
-        author: workflowData.author && {
-          name: workflowData.author.full_name,
-          avatar:
-            workflowData.author.avatar_url &&
-            workflowData.author.avatar_url.trim() !== '' &&
-            workflowData.author.avatar_signed_url
-              ? workflowData.author.avatar_signed_url
-              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
-        },
+        // Use actual workflow author data
+        ...(workflowData.author && {
+          owner: {
+            name: workflowData.author.full_name,
+            avatar:
+              workflowData.author.avatar_url &&
+              workflowData.author.avatar_url.trim() !== '' &&
+              workflowData.author.avatar_signed_url
+                ? workflowData.author.avatar_signed_url
+                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+          },
+        }),
+        review_date: workflowData.review_date
+          ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
+          : 'No review date',
+        additionalNotes: workflowData.additional_notes,
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)

@@ -1,5 +1,7 @@
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { scheduleFollowUpEmail } from '@/lib/scheduledEmails';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * Schedule a feedback request email to be sent 7 days after welcome email
@@ -9,6 +11,10 @@ import { scheduleFollowUpEmail } from '@/lib/scheduledEmails';
  * @returns A promise that resolves to the result of scheduling the email
  */
 export async function scheduleFeedbackRequestEmail(userId: number) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     if (!userId) {
       console.error('Missing required userId for scheduling feedback request email');
@@ -16,7 +22,7 @@ export async function scheduleFeedbackRequestEmail(userId: number) {
     }
 
     // Check if a feedback request email is already scheduled for this user
-    const existingScheduledEmail = await prisma.scheduled_email.findFirst({
+    const existingScheduledEmail = await prisma_client.scheduled_email.findFirst({
       where: {
         user_id: userId,
         email_type: 'FEEDBACK_REQUEST',
@@ -25,8 +31,9 @@ export async function scheduleFeedbackRequestEmail(userId: number) {
       },
     });
 
+    if (isVercel()) await prisma_client.$disconnect();
+
     if (existingScheduledEmail) {
-     
       return { success: true, scheduledEmailId: existingScheduledEmail.id };
     }
 
@@ -47,10 +54,11 @@ export async function scheduleFeedbackRequestEmail(userId: number) {
       return { success: false, error: result.error };
     }
 
-   
     return { success: true, scheduledEmailId: result.scheduledEmailId };
   } catch (error) {
     console.error('Error scheduling feedback request email:', error);
     return { success: false, error };
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

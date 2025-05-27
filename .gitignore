@@ -42,7 +42,6 @@ nftl.txt
 .env.sentry-build-plugin
 
 # Claude documentation
-CLAUDE.md
 .qodo
 
 # Ignore database backups

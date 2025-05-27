@@ -245,7 +245,7 @@ function CustomSmoothStepEdge({
               >
                 <img
                   src={
-                    assets.icons['plus'] ||
+                    (assets.icons as Record<string, string>)['plus'] ||
                     `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-circle.svg`
                   }
                   alt="Add"
@@ -267,7 +267,7 @@ function CustomSmoothStepEdge({
               >
                 <img
                   src={
-                    assets.icons['trash'] ||
+                    (assets.icons as Record<string, string>)['trash'] ||
                     `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`
                   }
                   alt="Delete"

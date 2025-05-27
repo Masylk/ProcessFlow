@@ -1,6 +1,8 @@
 // app/api/workspace/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -138,7 +140,11 @@ import prisma from '@/lib/prisma';
  */
 export async function GET(req: NextRequest) {
   try {
-    const workspaces = await prisma.workspace.findMany({
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
+    const workspaces = await prisma_client.workspace.findMany({
       include: {
         user_workspaces: {
           include: {
@@ -158,11 +164,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, user_id } = await req.json();
 
     // Vérifier si l'utilisateur existe
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: { id: Number(user_id) },
     });
 
@@ -177,7 +187,7 @@ export async function POST(req: NextRequest) {
     const randomColour = background_colours[randomIndex];
 
     // Créer le workspace et lier le créateur en tant qu'ADMIN, en assignant la couleur de fond aléatoire
-    const newWorkspace = await prisma.workspace.create({
+    const newWorkspace = await prisma_client.workspace.create({
       data: {
         name,
         background_colour: randomColour,
@@ -204,5 +214,7 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to create workspace' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

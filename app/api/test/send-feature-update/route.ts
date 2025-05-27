@@ -4,9 +4,15 @@ import { createClient } from '@/utils/supabase/server';
 import { sendReactEmail } from '@/lib/email';
 import { FeatureUpdateEmail } from '@/emails/templates/ShareRoadmap';
 import { generateRoadmapLinkForEmail } from '@/lib/roadmapAuth';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 // GET endpoint for easier testing via browser
 export async function GET(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Only allow in development or staging environments
     if (process.env.NODE_ENV === 'production') {
@@ -22,7 +28,7 @@ export async function GET(request: Request) {
     }
 
     // Get user from database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
 
@@ -72,10 +78,18 @@ export async function GET(request: Request) {
       { error: error instanceof Error ? error.message : 'Failed to send feature update email' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
 export async function POST(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Only allow in development or staging environments
     if (process.env.NODE_ENV === 'production') {
@@ -91,7 +105,7 @@ export async function POST(request: Request) {
     }
 
     // Get user from database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
 
@@ -141,5 +155,9 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : 'Failed to send feature update email' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

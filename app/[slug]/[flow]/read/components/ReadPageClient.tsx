@@ -699,7 +699,9 @@ export default function ReadPageClient() {
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description,
+          description:
+            workflowData.description ||
+            'This Flow helps streamline and automate key business processes.',
         },
         integrations: paths
           .flatMap((path) =>
@@ -725,7 +727,7 @@ export default function ReadPageClient() {
               index === self.findIndex((i) => i.name === integration.name)
           ),
         ...(workflowData.author && {
-          author: {
+          owner: {
             name: workflowData.author.full_name,
             avatar:
               workflowData.author.avatar_url &&
@@ -736,6 +738,10 @@ export default function ReadPageClient() {
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
+        review_date: workflowData.review_date
+          ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
+          : 'No review date',
+        additionalNotes: workflowData.additional_notes,
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -1133,7 +1139,9 @@ export default function ReadPageClient() {
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
-                    {processCardData && <ProcessCard {...processCardData} />}
+                    {processCardData && (
+                      <ProcessCard {...processCardData} viewMode={viewMode} />
+                    )}
                     {pathsToDisplay
                       .map((path) => {
                         return (
@@ -1228,13 +1236,13 @@ export default function ReadPageClient() {
               ) : (
                 <div className="h-full flex items-center justify-center">
                   <div
-                    className="rounded-lg border w-full max-w-3xl mx-6"
+                    className="rounded-lg border w-full max-w-3xl mx-6 h-[472px] flex flex-col min-w-0"
                     style={{
                       backgroundColor: colors['bg-primary'],
                       borderColor: colors['border-secondary'],
                     }}
                   >
-                    <div className="p-8 flex flex-col">
+                    <div className="p-8 flex flex-col flex-1 min-h-0">
                       {currentStep === -1 ? (
                         <>
                           <div
@@ -1242,11 +1250,14 @@ export default function ReadPageClient() {
                               height: '472px',
                               backgroundColor: colors['bg-primary'],
                             }}
-                            className="flex items-center justify-center"
+                            className="flex items-center justify-center min-h-0"
                           >
                             {processCardData && (
-                              <div className="w-full flex justify-center">
-                                <ProcessCard {...processCardData} />
+                              <div className="w-full flex justify-center h-full">
+                                <ProcessCard
+                                  {...processCardData}
+                                  viewMode={viewMode}
+                                />
                               </div>
                             )}
                           </div>

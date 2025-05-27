@@ -4,7 +4,6 @@ import Modal from '@/app/components/Modal';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useColors, useTheme } from '@/app/theme/hooks';
-import { themeRegistry } from '@/app/theme/registry';
 import { remove } from 'lodash';
 import IconModifier from '../IconModifier';
 import { Block } from '../../../types';
@@ -75,18 +74,6 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
     }
     setRemovedPaths([]);
   }, [existingPaths]);
-
-  // Get theme variables for direct application
-  const themeVars = useMemo(() => {
-    const theme = themeRegistry.get(currentTheme);
-    return Object.entries(theme.tokens.colors).reduce<Record<string, string>>(
-      (acc, [key, value]) => {
-        acc[`--${key}`] = value;
-        return acc;
-      },
-      {}
-    );
-  }, [currentTheme]);
 
   // Check if any path name is empty
   const hasEmptyPath = pathRows.some((row) => row.name.trim() === '');
@@ -174,31 +161,30 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
     });
   };
 
-  // Minimal workflow and path for IconModifier
-
   // Minimal block for icon selector
   const minimalBlock: Block = useMemo(
     () => ({
       ...block,
       icon: icon || undefined,
     }),
-    [icon]
+    [icon, block]
   );
 
   const modalContent = (
-    <div style={themeVars as React.CSSProperties} className={currentTheme}>
+    <div className={currentTheme}>
       <Modal
         title="Add Child Paths"
         onClose={onClose}
         icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`}
         iconBackgroundColor={colors['bg-secondary']}
-        iconBorderColor={colors['border-light']}
+        iconBorderColor={colors['border-secondary']}
         showHeaderSeparator={true}
         showActionsSeparator={true}
         width="w-[600px]"
+        className="overflow-hidden"
         actions={
           <div className="flex justify-end gap-2 w-full">
-            <ButtonNormal variant="tertiary" size="small" onClick={onClose}>
+            <ButtonNormal variant="secondary" size="small" onClick={onClose}>
               Cancel
             </ButtonNormal>
             <ButtonNormal
@@ -263,7 +249,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
             />
           </div>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto">
+            <div className="flex flex-col gap-4 max-h-[240px] overflow-y-auto p-1">
               {pathRows.map((row, index) => (
                 <div key={index} className="flex gap-2 items-end">
                   <div className="flex flex-col gap-1 flex-grow">
@@ -281,7 +267,7 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
                     />
                   </div>
                   <ButtonNormal
-                    variant="tertiary"
+                    variant="secondary"
                     size="medium"
                     onClick={() => handleRemovePath(index)}
                     leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/trash-01.svg`}
@@ -306,7 +292,6 @@ const UpdatePathModal: React.FC<UpdatePathModalProps> = ({
   // Only render if we're in a browser environment
   if (typeof window === 'undefined') return null;
 
-  // Don't use ThemeProvider in portal to avoid theme flash
   return createPortal(modalContent, document.body);
 };
 

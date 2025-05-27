@@ -1,6 +1,8 @@
 // app/api/workspace/subfolders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -70,12 +72,16 @@ import prisma from '@/lib/prisma';
  *                   example: "Failed to add subfolder"
  */
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, workspace_id, parent_id, icon_url, emote, position } =
       await req.json();
 
     // Create a new subfolder with the specified parent folder
-    const newSubfolder = await prisma.folder.create({
+    const newSubfolder = await prisma_client.folder.create({
       data: {
         name,
         workspace_id: Number(workspace_id),
@@ -93,5 +99,7 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to add subfolder' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

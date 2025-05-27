@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -60,6 +62,10 @@ import prisma from '@/lib/prisma';
  *                   example: "Internal server error"
  */
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { folderId, newParentId, newPosition } = await req.json();
 
@@ -71,7 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if folder exists
-    const folder = await prisma.folder.findUnique({
+    const folder = await prisma_client.folder.findUnique({
       where: { id: Number(folderId) },
     });
 
@@ -86,7 +92,7 @@ export async function POST(req: NextRequest) {
     const isFolderMovingToNewParent = folder.parent_id !== newParentId;
     
     // Find siblings of the target position (folders with the same parent)
-    const siblingFolders = await prisma.folder.findMany({
+    const siblingFolders = await prisma_client.folder.findMany({
       where: {
         workspace_id: workspaceId,
         parent_id: newParentId === undefined ? folder.parent_id : newParentId,
@@ -96,7 +102,7 @@ export async function POST(req: NextRequest) {
     });
     
     // Update all positions in a transaction to ensure consistency
-    const updatedFolder = await prisma.$transaction(async (tx) => {
+    const updatedFolder = await prisma_client.$transaction(async (tx) => {
       // If folder is moving to a new parent, just update its parent and position
       if (isFolderMovingToNewParent) {
         // If moving to a new parent, shift all siblings in the new parent whose position
@@ -179,5 +185,7 @@ export async function POST(req: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

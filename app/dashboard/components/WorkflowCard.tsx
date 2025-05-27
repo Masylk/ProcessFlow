@@ -13,6 +13,7 @@ import {
 } from '@/app/[slug]/[flow]/utils/createLinks';
 import { toast } from 'sonner';
 import ShareModal from '@/app/components/ShareModal';
+import { motion } from 'framer-motion';
 
 interface StatusStyle {
   bg: string;
@@ -56,6 +57,14 @@ export default function WorkflowCard({
   onStatusChange,
 }: WorkflowCardProps) {
   const colors = useColors();
+
+  // Temporary fake data for testing - remove this later
+  const workflowWithFakeData = {
+    ...workflow,
+    process_owner: workflow.process_owner || 'Sarah Johnson',
+    review_date: workflow.review_date || '2024-06-15',
+  };
+
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -329,7 +338,7 @@ export default function WorkflowCard({
             '--hover-bg': colors['bg-quaternary'],
           } as React.CSSProperties
         }
-        className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
+        className="rounded-lg border hover:cursor-pointer relative transition-all duration-300 ease-in-out hover:bg-[var(--hover-bg)] hover:scale-[1.02] hover:shadow-lg h-[200px] flex flex-col"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -382,7 +391,7 @@ export default function WorkflowCard({
         {/* Main Content */}
         <div className="flex flex-col h-full">
           {/* Top Section */}
-          <div className="p-4 flex-1">
+          <div className="p-4">
             {/* Icon */}
             <div className="mb-3">
               <div className="flex items-center justify-center w-8 h-8">
@@ -412,7 +421,7 @@ export default function WorkflowCard({
               </div>
             </div>
 
-            {/* Title and Description */}
+            {/* Title */}
             <div className="space-y-1">
               <h3
                 style={{ color: colors['text-primary'] }}
@@ -423,6 +432,57 @@ export default function WorkflowCard({
               </h3>
             </div>
           </div>
+
+          {/* Middle Section - Process Owner and Review Date */}
+          {(workflowWithFakeData.process_owner ||
+            workflowWithFakeData.review_date) && (
+            <div className="px-4 pb-3">
+              <div className="space-y-1">
+                {workflowWithFakeData.process_owner && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-profile.svg`}
+                        alt="Owner"
+                        className="w-4 h-4 opacity-50"
+                      />
+                    </div>
+                    <span
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-xs truncate"
+                      title={workflowWithFakeData.process_owner}
+                    >
+                      {workflowWithFakeData.process_owner}
+                    </span>
+                  </div>
+                )}
+                {workflowWithFakeData.review_date && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`}
+                        alt="Review Date"
+                        className="w-4 h-4 opacity-50"
+                      />
+                    </div>
+                    <span
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-xs"
+                    >
+                      Review due:{' '}
+                      {new Date(
+                        workflowWithFakeData.review_date
+                      ).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Section */}
           <div className="mt-auto">
@@ -449,8 +509,15 @@ export default function WorkflowCard({
 
                 {/* Status Dropdown Menu */}
                 {isStatusMenuOpen && (
-                  <div
+                  <motion.div
                     ref={statusMenuRef}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{
+                      duration: 0.15,
+                      ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
+                    }}
                     style={{
                       backgroundColor: colors['bg-secondary'],
                       borderColor: colors['border-primary'],
@@ -458,7 +525,7 @@ export default function WorkflowCard({
                         ? { bottom: 'calc(100% + 4px)' }
                         : { top: 'calc(100% + 4px)' }),
                     }}
-                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
+                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px]"
                   >
                     <div className="flex flex-col">
                       {Object.entries(STATUS_STYLES).map(([key, style]) => (
@@ -504,7 +571,7 @@ export default function WorkflowCard({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
@@ -520,8 +587,15 @@ export default function WorkflowCard({
 
         {/* Menu Dropdown */}
         {isMenuOpen && (
-          <div
+          <motion.div
             ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{
+              duration: 0.15,
+              ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
+            }}
             style={{
               backgroundColor: colors['bg-secondary'],
               borderColor: colors['border-primary'],
@@ -591,7 +665,7 @@ export default function WorkflowCard({
                 </div>
               )
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 

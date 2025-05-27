@@ -17,7 +17,7 @@ export default function SearchBar({ searchTerm, onSearchChange }: SearchBarProps
   };
 
   return (
-    <div className="w-[350px] flex items-center">
+    <div className="w-[350px] flex items-center transition-all duration-200 hover:scale-[1.02]">
       <div className="flex-grow">
         <InputField
           type="icon-leading"

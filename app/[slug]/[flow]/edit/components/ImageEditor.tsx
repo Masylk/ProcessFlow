@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import dynamic from 'next/dynamic';
@@ -17,6 +17,10 @@ class ImageEditorErrorBoundary extends React.Component<
 
   static getDerivedStateFromError() {
     return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ImageEditor Error:', error, errorInfo);
   }
 
   render() {
@@ -60,42 +64,54 @@ export default function ImageEditorModal({
   const editorRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDestroying, setIsDestroying] = useState(false);
   const instanceRef = useRef<any>(null);
   const originalOverflowRef = useRef<string>('');
 
   // Handle body overflow
   useEffect(() => {
     // Store the original overflow value
-    originalOverflowRef.current = window.getComputedStyle(document.body).overflow;
+    originalOverflowRef.current = window.getComputedStyle(document.body).overflow || '';
     // Set overflow to hidden
     document.body.style.overflow = 'hidden';
 
-    const cleanup = () => {
-      // Use a small delay to ensure proper cleanup
-      setTimeout(() => {
-        document.body.style.overflow = originalOverflowRef.current;
-      }, 0);
+    return () => {
+      // Restore original overflow
+      document.body.style.overflow = originalOverflowRef.current || '';
     };
-
-    return cleanup;
   }, []);
 
-  // Handle editor initialization and cleanup
+  // Handle editor initialization
   useEffect(() => {
+    let initializationAttempts = 0;
+    const maxAttempts = 50; // 5 seconds max
+
     const checkInstance = () => {
       try {
+        initializationAttempts++;
+        
+        if (initializationAttempts > maxAttempts) {
+          setError('Failed to initialize editor');
+          setIsLoading(false);
+          return true;
+        }
+
         if (editorRef.current?.getInstance) {
           const instance = editorRef.current.getInstance();
-          if (instance) {
+          if (instance && instance.invoke) {
             instanceRef.current = instance;
             setIsLoading(false);
+            setError(null);
             return true;
           }
         }
         return false;
       } catch (err) {
         console.error('Error getting editor instance:', err);
+        if (initializationAttempts > maxAttempts) {
+          setError('Failed to initialize editor');
+          setIsLoading(false);
+          return true;
+        }
         return false;
       }
     };
@@ -108,46 +124,36 @@ export default function ImageEditorModal({
 
     return () => {
       clearInterval(initializeInterval);
+    };
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
       if (instanceRef.current) {
         try {
-          const drawingModes = ['CROPPER', 'FREE_DRAWING', 'LINE_DRAWING', 'TEXT', 'SHAPE'];
-          drawingModes.forEach(mode => {
-            try {
-              if (
-                instanceRef.current.getDrawingMode &&
-                instanceRef.current.getDrawingMode() === mode &&
-                instanceRef.current.stopDrawingMode
-              ) {
-                instanceRef.current.stopDrawingMode();
-              }
-            } catch (e) {
-              // Ignore errors during cleanup
-            }
-          });
-          // Guard destroy
           if (typeof instanceRef.current.destroy === 'function') {
             instanceRef.current.destroy();
           }
         } catch (e) {
-          // Ignore errors during cleanup
+          console.warn('Error during TUI Image Editor cleanup:', e);
         }
         instanceRef.current = null;
       }
     };
   }, []);
 
-  const handleClose = () => {
-    if (isLoading) return; // Prevent close while loading
-    setIsDestroying(true);
+  const handleClose = useCallback(() => {
     onClose();
-  };
+  }, [onClose]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (!instanceRef.current) {
+      setError('Editor not ready');
+      return;
+    }
+
     try {
-      if (!instanceRef.current) {
-        throw new Error('Editor instance not available');
-      }
-
       const dataUrl = instanceRef.current.toDataURL();
       if (!dataUrl) {
         throw new Error('Failed to get image data');
@@ -155,14 +161,13 @@ export default function ImageEditorModal({
 
       const imageFile = dataURLtoFile(dataUrl, 'edited-image.png');
       await uploadFile(imageFile);
-      
-      setIsDestroying(true);
       onClose();
+      
     } catch (err) {
       console.error('Error saving image:', err);
       setError('Failed to save image');
     }
-  };
+  }, [onClose]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -182,7 +187,7 @@ export default function ImageEditorModal({
       onSave(data.filePath);
     } catch (error) {
       console.error('Error uploading file:', error);
-      setError('Failed to upload file');
+      throw new Error('Failed to upload file');
     }
   };
 
@@ -200,17 +205,22 @@ export default function ImageEditorModal({
     return new File([u8arr], filename, { type: mime });
   };
 
+  const handleModalClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  }, [handleClose]);
+
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div 
-      className="fixed inset-0 z-[1000] isolate overflow-hidden"
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isLoading) {
-          handleClose();
-        }
-      }}
+      className="fixed inset-0 z-[1000] overflow-hidden"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      onClick={handleModalClick}
     >
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 flex flex-col"
@@ -219,7 +229,7 @@ export default function ImageEditorModal({
           width: '80vw',
           height: '80vh',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleContentClick}
       >
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2
@@ -233,7 +243,6 @@ export default function ImageEditorModal({
               onClick={handleClose} 
               size="small" 
               variant="secondary"
-              disabled={isLoading || isDestroying}
             >
               Cancel
             </ButtonNormal>
@@ -241,7 +250,7 @@ export default function ImageEditorModal({
               onClick={handleSave} 
               size="small" 
               variant="primary"
-              disabled={isLoading || isDestroying || !!error}
+              disabled={isLoading || !!error}
             >
               Save
             </ButtonNormal>
@@ -255,32 +264,34 @@ export default function ImageEditorModal({
             </div>
           ) : (
             <ImageEditorErrorBoundary>
-              <TuiImageEditor
-                ref={editorRef}
-                includeUI={{
-                  loadImage: {
-                    path: imageUrl,
-                    name: 'Image',
-                  },
-                  theme: {
-                    'common.backgroundColor': colors['bg-primary'],
-                    'common.border': `1px solid ${colors['border-primary']}`,
-                    'common.color': colors['text-primary'],
-                  },
-                  menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
-                  menuBarPosition: 'bottom',
-                  uiSize: {
-                    width: '100%',
-                    height: '100%',
-                  },
-                }}
-                cssMaxHeight={700}
-                cssMaxWidth={1000}
-                selectionStyle={{
-                  cornerSize: 20,
-                  rotatingPointOffset: 70,
-                }}
-              />
+              <div style={{ width: '100%', height: '100%' }}>
+                <TuiImageEditor
+                  ref={editorRef}
+                  includeUI={{
+                    loadImage: {
+                      path: imageUrl,
+                      name: 'Image',
+                    },
+                    theme: {
+                      'common.backgroundColor': colors['bg-primary'],
+                      'common.border': `1px solid ${colors['border-primary']}`,
+                      'common.color': colors['text-primary'],
+                    },
+                    menu: ['crop', 'flip', 'rotate', 'draw', 'shape', 'icon', 'text'],
+                    menuBarPosition: 'bottom',
+                    uiSize: {
+                      width: '100%',
+                      height: '100%',
+                    },
+                  }}
+                  cssMaxHeight={700}
+                  cssMaxWidth={1000}
+                  selectionStyle={{
+                    cornerSize: 20,
+                    rotatingPointOffset: 70,
+                  }}
+                />
+              </div>
             </ImageEditorErrorBoundary>
           )}
         </div>

@@ -61,6 +61,7 @@ import { useStrokeLinesStore } from '../store/strokeLinesStore';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { useLoadingStore } from '../store/loadingStore';
 import EditLinksModal from './modals/EditLinksModal';
+import { debounce } from '../utils/debounce';
 
 type StrokeLineVisibility = [number, boolean];
 
@@ -97,7 +98,7 @@ interface FlowProps {
   clearNewBlockId: () => void;
 }
 
-export function Flow({
+export const Flow = React.memo(function Flow({
   workflowName,
   workspaceId,
   workflowId,
@@ -131,6 +132,7 @@ export function Flow({
   const { allStrokeLinesVisible, setAllStrokeLinesVisible } =
     useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
+  const [isLayouting, setIsLayouting] = useState(false);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
   const isEditMode = useEditModeStore((state) => state.isEditMode);
@@ -307,6 +309,7 @@ export function Flow({
     useState<Node | null>(null);
   const [connectModalLabel, setConnectModalLabel] = useState<string>('');
   const { setShowEditLinksModal } = useModalStore();
+  const showEditLinksModal = useModalStore((state) => state.showEditLinksModal);
   const [editStrokeLineId, setEditStrokeLineId] = useState<string | undefined>(
     undefined
   );
@@ -331,81 +334,91 @@ export function Flow({
     if (!Array.isArray(paths)) return;
 
     const createLayoutedNodes = async () => {
-      const firstPath = paths.find((path) => path.parent_blocks?.length === 0);
-      if (firstPath) {
-        const nodes: Node[] = [];
-        const edges: Edge[] = [];
+      try {
+        setIsLayouting(true);
+        const firstPath = paths.find((path) => path.parent_blocks?.length === 0);
+        if (firstPath) {
+          const nodes: Node[] = [];
+          const edges: Edge[] = [];
 
-        processPath(
-          workspaceId,
-          firstPath,
-          nodes,
-          edges,
-          handleDeleteBlock,
-          handleAddBlockOnEdge,
-          new Set<string>(),
-          setPaths,
-          setStrokeLines,
-          updateStrokeLineVisibility,
-          strokeLineVisibilities,
-          paths
-        );
+          processPath(
+            workspaceId,
+            firstPath,
+            nodes,
+            edges,
+            handleDeleteBlock,
+            handleAddBlockOnEdge,
+            new Set<string>(),
+            setPaths,
+            setStrokeLines,
+            updateStrokeLineVisibility,
+            strokeLineVisibilities,
+            paths
+          );
 
-        // Add stroke edges with visibility check
-        const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
-          const isSelfLoop =
-            strokeLine.source_block_id === strokeLine.target_block_id;
-          const visibility =
-            strokeLineVisibilities.find(
-              ([id]) => id === strokeLine.source_block_id
-            )?.[1] ?? true;
+          // Add stroke edges with visibility check
+          const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
+            const isSelfLoop =
+              strokeLine.source_block_id === strokeLine.target_block_id;
+            const visibility =
+              strokeLineVisibilities.find(
+                ([id]) => id === strokeLine.source_block_id
+              )?.[1] ?? true;
 
-          return {
-            id: `stroke-edge-${strokeLine.id}`,
-            source: `block-${strokeLine.source_block_id}`,
-            target: `block-${strokeLine.target_block_id}`,
-            sourceHandle: 'stroke_source',
-            targetHandle: isSelfLoop ? 'stroke_self_target' : 'stroke_target',
-            type: 'strokeEdge',
-            animated: true,
-            data: {
+            return {
+              id: `stroke-edge-${strokeLine.id}`,
               source: `block-${strokeLine.source_block_id}`,
               target: `block-${strokeLine.target_block_id}`,
-              label: strokeLine.label,
-              onStrokeLinesUpdate: setStrokeLines,
-              onPathsUpdate: setPaths,
-              strokeLines: strokeLines,
-              isVisible: visibility,
-            },
-            style: { zIndex: 1000 },
-          };
-        });
+              sourceHandle: 'stroke_source',
+              targetHandle: isSelfLoop ? 'stroke_self_target' : 'stroke_target',
+              type: 'strokeEdge',
+              animated: true,
+              data: {
+                source: `block-${strokeLine.source_block_id}`,
+                target: `block-${strokeLine.target_block_id}`,
+                label: strokeLine.label,
+                onStrokeLinesUpdate: setStrokeLines,
+                onPathsUpdate: setPaths,
+                strokeLines: strokeLines,
+                isVisible: visibility,
+              },
+              style: { zIndex: 1000 },
+            };
+          });
 
-        const allEdges = [...edges, ...strokeEdges];
-        setEdges(allEdges);
+          const allEdges = [...edges, ...strokeEdges];
+          setEdges(allEdges);
 
-        // Only layout the nodes
-        const layoutedNodes = await createElkLayout(
-          nodes,
-          edges.filter((e) => !e.type?.includes('stroke'))
-        );
-        setNodes(layoutedNodes);
-
-        // Check for blockId in URL and set viewport accordingly
-        const blockId = searchParams ? searchParams.get('blockId') : null;
-        if (blockId) {
-          const targetNode = layoutedNodes.find(
-            (n) => n.id === `block-${blockId}`
+          // Only layout the nodes
+          const layoutedNodes = await createElkLayout(
+            nodes,
+            edges.filter((e) => !e.type?.includes('stroke'))
           );
-          if (targetNode) {
-            setDefaultViewport({
-              x: -(targetNode.position.x - window.innerWidth / 2),
-              y: -(targetNode.position.y - window.innerHeight / 2),
-              zoom: 1,
-            });
-            setLinkNode(targetNode);
+          setNodes(layoutedNodes);
+
+          // Check for blockId in URL and set viewport accordingly
+          const blockId = searchParams ? searchParams.get('blockId') : null;
+          if (blockId) {
+            const targetNode = layoutedNodes.find(
+              (n) => n.id === `block-${blockId}`
+            );
+            if (targetNode) {
+              setDefaultViewport({
+                x: -(targetNode.position.x - window.innerWidth / 2),
+                y: -(targetNode.position.y - window.innerHeight / 2),
+                zoom: 1,
+              });
+              setLinkNode(targetNode);
+            }
           }
         }
+      } catch (error) {
+        console.error('Error creating layout:', error);
+        // Provide fallback - set empty nodes/edges to prevent crashes
+        setNodes([]);
+        setEdges([]);
+      } finally {
+        setIsLayouting(false);
       }
     };
     createLayoutedNodes();
@@ -477,6 +490,9 @@ export function Flow({
       setShowDropdown(false);
     } catch (error) {
       console.error('Error creating block:', error);
+      setShowDropdown(false);
+      // Optionally show user-friendly error message
+      // You could add a toast notification here
     }
   };
 
@@ -518,6 +534,9 @@ export function Flow({
       }
     } catch (error) {
       console.error('Error creating parallel paths:', error);
+      setIsModalOpen(false);
+      // Optionally show user-friendly error message
+      // You could add a toast notification here
     }
   };
 
@@ -596,11 +615,12 @@ export function Flow({
         const strokeLines = await strokeLinesResponse.json();
         setStrokeLines(strokeLines);
       } catch (error) {
+        console.error('Error in handleConnect:', error);
         // Re-throw the error to be handled by the modal
         throw error;
       }
     },
-    [nodes, connectData, setShowConnectModal, setStrokeLines]
+    [nodes, connectData, setShowConnectModal, setStrokeLines, workflowId]
   );
 
   useEffect(() => {
@@ -638,9 +658,17 @@ export function Flow({
     }
   }, [isConnectMode, connectData]);
 
+  // Create a debounced version of setPaths
+  const debouncedSetPaths = useCallback(
+    debounce((newPaths: Path[]) => {
+      setPaths(newPaths);
+    }, 100),
+    [setPaths]
+  );
+
   useEffect(() => {
     const handlePathsUpdate = (event: CustomEvent) => {
-      setPaths(event.detail);
+      debouncedSetPaths(event.detail);
     };
 
     window.addEventListener('updatePaths', handlePathsUpdate as EventListener);
@@ -651,7 +679,7 @@ export function Flow({
         handlePathsUpdate as EventListener
       );
     };
-  }, [setPaths]);
+  }, [debouncedSetPaths]);
 
   useEffect(() => {
     setAllPaths(paths);
@@ -726,6 +754,17 @@ export function Flow({
             : colors['bg-primary'],
       }}
     >
+      {isLayouting && (
+        <div 
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: `${colors['bg-primary']}80` }}
+        >
+          <div 
+            className="animate-spin rounded-full h-8 w-8 border-b-2"
+            style={{ borderColor: colors['fg-brand-primary'] }}
+          />
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={allEdges}
@@ -736,7 +775,7 @@ export function Flow({
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
         onNodeClick={(event, node) => {
-          if (isModalOpen) return;
+          if (isModalOpen || isLayouting) return;
           event.preventDefault();
           event.stopPropagation();
           if (node.data.type !== 'STEP') return;
@@ -753,6 +792,7 @@ export function Flow({
           );
         }}
         onPaneClick={() => {
+          if (isLayouting) return;
           setEditMode(false, null);
         }}
         fitView={true}
@@ -865,4 +905,4 @@ export function Flow({
       </div>
     </div>
   );
-}
+});

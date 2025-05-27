@@ -147,29 +147,30 @@ export default function MoveWorkflowModal({
         style={{ backgroundColor: colors['bg-primary'] }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-[400px] h-[24px] relative" />
-        <div className="self-stretch h-[136px] flex flex-col justify-center items-start px-6">
-          <div
-            className="w-12 h-12 p-3 rounded-[10px] shadow-sm flex justify-center items-center overflow-hidden"
-            style={{
-              backgroundColor: colors['bg-secondary'],
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderColor: colors['border-secondary'],
-            }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-download.svg`}
-              alt="Folder move icon"
-              className="w-6 h-6"
-            />
-          </div>
-          <div className="self-stretch h-7 flex flex-col justify-start items-start gap-1 mb-4 mt-4">
+        <div className="self-stretch px-6 pt-6 pb-4">
+          <div className="flex flex-row items-center gap-3">
             <div
-              className="text-lg font-semibold"
-              style={{ color: colors['text-primary'] }}
+              className="w-12 h-12 p-3 rounded-[10px] shadow-sm flex justify-center items-center overflow-hidden"
+              style={{
+                backgroundColor: colors['bg-secondary'],
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: colors['border-secondary'],
+              }}
             >
-              Move Flow "{selectedWorkflow.name}"
+              <img
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-download.svg`}
+                alt="Folder move icon"
+                className="w-6 h-6"
+              />
+            </div>
+            <div className="flex flex-col">
+              <div
+                className="text-lg font-semibold"
+                style={{ color: colors['text-primary'] }}
+              >
+                Move Flow "{selectedWorkflow.name}"
+              </div>
             </div>
           </div>
         </div>
@@ -227,29 +228,32 @@ export default function MoveWorkflowModal({
             colors={colors}
           />
         </div>
-        <div className="self-stretch h-[100px] pt-8 flex flex-col justify-start items-center">
-          <div className="self-stretch px-6 pb-6 flex gap-3">
-            <ButtonNormal
-              variant="secondary"
-              size="small"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isMoving}
-            >
-              Cancel
-            </ButtonNormal>
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              onClick={handleMove}
-              className="flex-1"
-              disabled={targetFolder === undefined || isMoving}
-              isLoading={isMoving}
-              loadingText="Moving..."
-            >
-              Move
-            </ButtonNormal>
-          </div>
+        <div className="self-stretch flex-1" />
+        <div
+          className="self-stretch h-px"
+          style={{ backgroundColor: colors['border-secondary'] }}
+        />
+        <div className="self-stretch px-6 py-6 flex gap-3">
+          <ButtonNormal
+            variant="secondary"
+            size="small"
+            onClick={onClose}
+            className="flex-1"
+            disabled={isMoving}
+          >
+            Cancel
+          </ButtonNormal>
+          <ButtonNormal
+            variant="primary"
+            size="small"
+            onClick={handleMove}
+            className="flex-1"
+            disabled={targetFolder === undefined || isMoving}
+            isLoading={isMoving}
+            loadingText="Moving..."
+          >
+            Move
+          </ButtonNormal>
         </div>
       </div>
     </div>

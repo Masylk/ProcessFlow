@@ -1,6 +1,8 @@
 // app/api/workflow/[workflow_id]/title/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the path to where you initialize Prisma in your project
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * @swagger
@@ -117,12 +119,17 @@ export async function GET(req: Request, props: { params: Promise<{ workflow_id: 
   const params = await props.params;
   const workflow_id = parseInt(params.workflow_id);
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   if (isNaN(workflow_id)) {
     return NextResponse.json({ error: 'Invalid workflow ID' }, { status: 400 });
   }
 
   try {
-    const workflow = await prisma.workflow.findUnique({
+    const workflow = await prisma_client.workflow.findUnique({
       where: {
         id: workflow_id,
       },
@@ -145,12 +152,18 @@ export async function GET(req: Request, props: { params: Promise<{ workflow_id: 
       { error: 'Internal Server Error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
 export async function PUT(req: Request, props: { params: Promise<{ workflow_id: string }> }) {
   const params = await props.params;
   const workflow_id = parseInt(params.workflow_id);
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   if (isNaN(workflow_id)) {
     return NextResponse.json({ error: 'Invalid workflow ID' }, { status: 400 });
@@ -159,7 +172,7 @@ export async function PUT(req: Request, props: { params: Promise<{ workflow_id: 
   try {
     const { title } = await req.json();
 
-    const updatedWorkflow = await prisma.workflow.update({
+    const updatedWorkflow = await prisma_client.workflow.update({
       where: {
         id: workflow_id,
       },
@@ -175,5 +188,7 @@ export async function PUT(req: Request, props: { params: Promise<{ workflow_id: 
       { error: 'Internal Server Error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

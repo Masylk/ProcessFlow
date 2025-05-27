@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useColors } from '@/app/theme/hooks';
-import { ThemeProvider } from '@/app/context/ThemeContext';
+// No longer need separate ThemeProvider for modals
 
 export interface ModalProps {
   /**
@@ -121,11 +121,11 @@ const Modal: React.FC<ModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 flex items-center justify-center p-8 z-[9999]"
+      className="fixed inset-0 flex items-center justify-center p-8 z-[9999] animate-in fade-in-0 duration-200"
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0">
+      <div className="fixed inset-0 animate-in fade-in-0 duration-300">
         <div
           style={{ backgroundColor: colors['bg-overlay'] }}
           className="absolute inset-0 opacity-70"
@@ -133,7 +133,7 @@ const Modal: React.FC<ModalProps> = ({
       </div>
 
       <div
-        className={`rounded-xl shadow-lg ${width} flex flex-col relative z-10 ${className}`}
+        className={`rounded-xl shadow-lg ${width} flex flex-col relative z-10 ${className} animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out`}
         style={{ backgroundColor: colors['bg-primary'] }}
         onClick={handleModalClick}
       >
@@ -189,11 +189,8 @@ const Modal: React.FC<ModalProps> = ({
     </div>
   );
 
-  // Use createPortal with ThemeProvider to ensure theme context is available
-  return createPortal(
-    <ThemeProvider>{modalContent}</ThemeProvider>,
-    document.body
-  );
+  // FastThemeProvider from layout.tsx covers the whole app, including portals
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;

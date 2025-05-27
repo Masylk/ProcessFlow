@@ -10,6 +10,8 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
 import * as Sentry from '@sentry/nextjs';
 import { createDefaultWorkflow, createDefaultWorkflows } from '@/app/api/utils/create-default-workflow';
 import { performance } from 'perf_hooks';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 // Define the EmailScheduleResponse interface and necessary functions inline
 interface EmailScheduleResponse {
@@ -64,13 +66,17 @@ async function scheduleEmail(
   emailType: EmailType,
   scheduledDate: Date
 ): Promise<EmailScheduleResponse> {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Here you would implement the actual email scheduling logic
     // This could involve creating a record in a database table for scheduled emails
     // that a cron job would pick up and process
     
     // Use upsert to handle duplicates gracefully
-    await prisma.scheduled_email.upsert({
+    await prisma_client.scheduled_email.upsert({
       where: {
         unique_pending_email_per_user_type: {
           user_id: userId,
@@ -198,10 +204,14 @@ async function updateExistingWorkspace(
   formData: any, 
   userId: number,
   tempIndustry: string | null, 
-  tempCompanySize: string | null
+  tempCompanySize: string | null,
+  prisma_client: typeof prisma
 ) {
   try {
-    const workspace = await prisma.workspace.update({
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
+    const workspace = await prisma_client.workspace.update({
       where: { id: workspaceId },
       data: {
         name: formData.workspace_name,
@@ -221,6 +231,11 @@ async function updateExistingWorkspace(
 }
 
 export async function POST(request: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -281,7 +296,7 @@ export async function POST(request: Request) {
     }
 
     // Get user from database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
 
@@ -300,7 +315,7 @@ export async function POST(request: Request) {
       //   );
 
         // Update user with personal info and temporary workspace ID
-        await prisma.user.update({
+        await prisma_client.user.update({
           where: { id: dbUser.id },
           data: {
             ...formData,
@@ -323,7 +338,7 @@ export async function POST(request: Request) {
         // Extract user-specific and workspace-specific data
         const { industry, company_size, is_navigating_back, ...userData } = formData;
         
-        await prisma.user.update({
+        await prisma_client.user.update({
           where: { id: dbUser.id },
           data: {
             ...userData,
@@ -351,7 +366,7 @@ export async function POST(request: Request) {
       case 'WORKSPACE_SETUP':
         // Skip workspace validation if we're just navigating back
         if (formData.is_navigating_back) {
-          await prisma.user.update({
+          await prisma_client.user.update({
             where: { id: dbUser.id },
             data: {
               onboarding_step: 'PROFESSIONAL_INFO'
@@ -384,7 +399,7 @@ export async function POST(request: Request) {
         let workflowCreationWarning = null;
         
         // Reset user workspaces
-        await prisma.user_workspace.deleteMany({
+        await prisma_client.user_workspace.deleteMany({
           where: { user_id: dbUser.id }
         });
         
@@ -392,7 +407,7 @@ export async function POST(request: Request) {
           console.log(`Creating new workspace for user ${dbUser.id} as no existing workspace was found`);
           
           // Double-check slug availability before attempting to create
-          const existingWorkspaceWithSlug = await prisma.workspace.findFirst({
+          const existingWorkspaceWithSlug = await prisma_client.workspace.findFirst({
             where: { slug: formData.workspace_url }
           });
           
@@ -404,7 +419,7 @@ export async function POST(request: Request) {
           }
           
           try {
-            workspace = await prisma.workspace.create({
+            workspace = await prisma_client.workspace.create({
               data: {
                 name: formData.workspace_name,
                 slug: formData.workspace_url,
@@ -484,7 +499,7 @@ export async function POST(request: Request) {
           }
 
         // Update user with active workspace and complete onboarding
-        await prisma.user.update({
+        await prisma_client.user.update({
           where: { id: dbUser.id },
           data: {
             active_workspace_id: workspace?.id || null,
@@ -576,7 +591,7 @@ export async function POST(request: Request) {
         return NextResponse.json(response);
 
       case 'INVITED_USER':
-        await prisma.user.update({
+        await prisma_client.user.update({
           where: { id: dbUser.id },
           data: {
             ...formData,
@@ -670,5 +685,9 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : 'Failed to update onboarding information' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 
