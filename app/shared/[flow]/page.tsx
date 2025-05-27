@@ -701,7 +701,7 @@ export default function SharedPage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description,
+          description: workflowData.description || "This Flow helps streamline and automate key business processes.",
         },
         integrations: paths
           .flatMap((path) =>
@@ -726,8 +726,9 @@ export default function SharedPage({
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
+        // Use actual workflow author data
         ...(workflowData.author && {
-          author: {
+          owner: {
             name: workflowData.author.full_name,
             avatar:
               workflowData.author.avatar_url &&
@@ -738,6 +739,8 @@ export default function SharedPage({
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
+        reviewDate: "10/04/2024",
+        additionalNotes: "This is a mission-critical process that affects multiple departments. Any changes must be communicated 48 hours in advance to all stakeholders.",
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -748,7 +751,7 @@ export default function SharedPage({
                   ? new Date(block.updated_at).toLocaleDateString('en-GB')
                   : latest,
               ''
-            ) || 'No updates',
+            ) || 'No updates'
       }
     : null;
 

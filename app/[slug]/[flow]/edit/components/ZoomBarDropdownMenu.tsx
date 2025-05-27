@@ -78,7 +78,7 @@ const ZoomBarDropdownMenu: React.FC<ZoomBarDropdownMenuProps> = ({ onClose, curr
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-12 right-0 w-48 rounded-lg shadow-lg border z-50 overflow-hidden"
+      className="absolute top-12 right-0 w-48 rounded-lg shadow-lg border z-[9999] overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 fade-in-0 duration-200"
       style={{
         backgroundColor: colors['bg-primary'],
         borderColor: colors['border-primary'],

@@ -1298,7 +1298,7 @@ export default function SettingsPage({
                 {/* Light Theme Option */}
                 <div
                   className="relative cursor-pointer group"
-                  onClick={() => setTheme('light' as ThemeMode)}
+                  onClick={() => setTheme('light')}
                 >
                   <div
                     style={{
@@ -1351,7 +1351,7 @@ export default function SettingsPage({
                 {/* Dark Theme Option */}
                 <div
                   className="relative cursor-pointer group"
-                  onClick={() => setTheme('dark' as ThemeMode)}
+                  onClick={() => setTheme('dark')}
                 >
                   <div
                     style={{
@@ -1404,40 +1404,30 @@ export default function SettingsPage({
                 {/* System Theme Option */}
                 <div
                   className="relative cursor-pointer group hidden"
-                  onClick={() => setTheme('system' as ThemeMode)}
+                  onClick={() => setTheme('light')}
                 >
                   <div
                     style={{
                       backgroundColor: colors['bg-primary'],
                       borderColor:
-                        currentTheme === 'system'
+                        currentTheme === 'light'
                           ? colors['text-accent']
                           : colors['border-secondary'],
                     }}
                     className="aspect-[4/3] rounded-xl border-2 overflow-hidden transition-all duration-200 hover:border-[#4761c4]"
                   >
                     <div className="w-full h-full p-2">
-                      <div className="w-full h-full rounded-lg overflow-hidden grid grid-cols-2 gap-1">
-                        <div className="bg-[#F9FAFB] overflow-hidden">
-                          <div className="h-1.5 w-6 bg-[#D0D5DD] rounded-full m-1.5"></div>
-                          <div className="space-y-0.5 px-1.5">
-                            <div className="h-0.5 w-3/4 bg-[#D0D5DD] rounded-full"></div>
-                            <div className="h-0.5 w-1/2 bg-[#D0D5DD] rounded-full"></div>
-                            <div className="h-0.5 w-2/3 bg-[#D0D5DD] rounded-full"></div>
-                          </div>
-                        </div>
-                        <div className="bg-[#1C1C1C] overflow-hidden">
-                          <div className="h-1.5 w-6 bg-[#2C2C2C] rounded-full m-1.5"></div>
-                          <div className="space-y-0.5 px-1.5">
-                            <div className="h-0.5 w-3/4 bg-[#2C2C2C] rounded-full"></div>
-                            <div className="h-0.5 w-1/2 bg-[#2C2C2C] rounded-full"></div>
-                            <div className="h-0.5 w-2/3 bg-[#2C2C2C] rounded-full"></div>
-                          </div>
+                      <div className="w-full h-full rounded-lg bg-[#F9FAFB] overflow-hidden">
+                        <div className="h-2 w-8 bg-[#D0D5DD] rounded-full m-2"></div>
+                        <div className="space-y-1 px-2">
+                          <div className="h-1 w-3/4 bg-[#D0D5DD] rounded-full"></div>
+                          <div className="h-1 w-1/2 bg-[#D0D5DD] rounded-full"></div>
+                          <div className="h-1 w-2/3 bg-[#D0D5DD] rounded-full"></div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  {currentTheme === 'system' && (
+                  {currentTheme === 'light' && (
                     <div className="absolute -right-1 -top-1">
                       <div
                         style={{
@@ -1460,7 +1450,7 @@ export default function SettingsPage({
                     style={{ color: colors['text-primary'] }}
                     className="mt-2 text-sm font-medium text-center"
                   >
-                    System
+                    Light
                   </p>
                 </div>
               </div>

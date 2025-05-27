@@ -87,7 +87,7 @@ export default function UserDropdown({
         backgroundColor: colors['bg-secondary'],
         borderColor: colors['border-primary']
       }}
-      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden"
+      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 fade-in-0 duration-200"
     >
       <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}
@@ -102,7 +102,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -132,7 +132,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+            className="cursor-pointer grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
           >
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
@@ -162,7 +162,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -192,7 +192,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img
@@ -224,7 +224,7 @@ export default function UserDropdown({
             style={{
               '--hover-bg': colors['bg-quaternary']
             } as React.CSSProperties}
-            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden">
+            className="grow shrink basis-0 h-[38px] px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden">
             <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
               <div className="w-4 h-4 relative overflow-hidden">
                 <img

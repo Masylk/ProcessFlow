@@ -119,7 +119,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
           role="button"
           tabIndex={0}
           className={cn(
-            'w-full px-3 py-1.5 rounded-md flex items-center cursor-pointer transition-colors border',
+            'w-full px-3 py-1.5 rounded-md flex items-center cursor-pointer transition-all duration-200 border hover:scale-[1.02] hover:shadow-sm',
             isActive && 'active'
           )}
           style={buttonStyles}
@@ -138,7 +138,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && onToggleExpand?.()}
                 className={cn(
-                  'w-4 h-4 hidden group-hover:block flex-shrink-0 rounded-md opacity-70 hover:opacity-100',
+                  'w-4 h-4 hidden group-hover:block flex-shrink-0 rounded-md opacity-70 hover:opacity-100 transition-all duration-200 hover:scale-110',
                   'hover:bg-[var(--bg-secondary)]'
                 )}
               >
@@ -215,7 +215,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
                 e.key === 'Enter' && handleDropdownClick(e as any)
               }
               className={cn(
-                'w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto rounded-md',
+                'w-5 h-5 relative overflow-hidden hidden group-hover:block ml-auto rounded-md transition-all duration-200 hover:scale-110',
                 'hover:bg-[var(--bg-secondary)] opacity-70 hover:opacity-100'
               )}
             >
@@ -238,7 +238,7 @@ export const TabButton: React.FC<TabButtonProps> = ({
               top: dropdownPosition.top,
               left: dropdownPosition.left,
             }}
-            className="fixed z-50 w-auto min-w-[200px] rounded-lg overflow-hidden border shadow-lg"
+            className="fixed z-50 w-auto min-w-[200px] rounded-lg overflow-hidden border shadow-lg animate-in zoom-in-95 slide-in-from-top-2 fade-in-0 duration-200"
           >
             <FolderDropdown
               onCreateSubfolder={() =>

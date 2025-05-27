@@ -3,6 +3,8 @@ import { useState } from 'react';
 import ButtonNormal from '../../components/ButtonNormal';
 import InputField from '../../components/InputFields';
 import TextAreaInput from '../../components/TextAreaInput';
+import DatePicker from '../../components/DatePicker';
+import SelectField from '../../components/SelectField';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '../../components/IconUpload';
 import IconModifier from './IconModifier';
@@ -12,7 +14,10 @@ interface CreateFlowModalProps {
   onClose: () => void;
   onCreateFlow: (
     name: string,
-    description: string,
+    whyExists: string,
+    processOwner: string,
+    reviewDate: string,
+    howToComplete: string,
     icon: string | null,
     signedIcon: string | null
   ) => Promise<void>;
@@ -24,21 +29,37 @@ export default function CreateFlowModal({
 }: CreateFlowModalProps) {
   const colors = useColors();
   const [flowName, setFlowName] = useState('');
-  const [flowDescription, setFlowDescription] = useState('');
+  const [processOwner, setProcessOwner] = useState('');
+  const [reviewDate, setReviewDate] = useState('');
+  const [whyExists, setWhyExists] = useState('');
+  const [howToComplete, setHowToComplete] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState<string | null>(null);
   const [previewIcon, setPreviewIcon] = useState<string | null>(null);
+
+  // Sample team members for the process owner dropdown
+  const teamMembers = [
+    'John Smith',
+    'Sarah Johnson',
+    'Mike Chen',
+    'Emily Rodriguez',
+    'David Kim',
+    'Lisa Thompson',
+    'Alex Parker',
+    'Maria Garcia'
+  ];
+
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-8"
+      className="fixed inset-0 flex items-center justify-center p-8 animate-in fade-in-0 duration-200"
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 animate-in fade-in-0 duration-300">
         <div
           style={{ backgroundColor: colors['bg-overlay'] }}
           className="absolute inset-0 opacity-70"
@@ -48,10 +69,10 @@ export default function CreateFlowModal({
       <div
         onClick={handleModalClick}
         style={{ backgroundColor: colors['bg-primary'] }}
-        className="w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex relative z-10"
+        className="w-[550px] rounded-xl shadow-[0px_8px_8px_-4px_rgba(16,24,40,0.03)] flex-col justify-start items-start flex relative z-10 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out"
       >
         <div className="w-full overflow-visible">
-          <div className="flex items-start gap-4 px-6 pt-6 flex-col">
+          <div className="flex items-start gap-4 px-6 pt-6">
             <div
               style={{
                 backgroundColor: colors['bg-secondary'],
@@ -78,18 +99,19 @@ export default function CreateFlowModal({
                 style={{ color: colors['text-secondary'] }}
                 className="text-sm font-normal font-['Inter'] leading-tight"
               >
-                Start from scratch or start with one of our templates.
+                Give your Flow some context.
               </div>
             </div>
           </div>
           <div
             style={{ borderColor: colors['border-secondary'] }}
-            className="self-stretch px-6 pt-4 pb-4 border-b flex-col justify-start items-start gap-3 flex"
+            className="self-stretch px-6 pt-4 pb-4 border-b flex-col justify-start items-start gap-5 flex"
           >
+            {/* Flow name with icon */}
             <div className="w-full">
               <label
                 className="block text-sm font-semibold mb-2"
-                style={{ color: colors['text-primary'] }}
+                style={{ color: colors['input-label'] }}
               >
                 Flow name{' '}
                 <span style={{ color: colors['text-accent'] }}>*</span>
@@ -117,33 +139,70 @@ export default function CreateFlowModal({
                 </div>
               </div>
             </div>
-            <TextAreaInput
-              label="Flow description"
-              value={flowDescription}
-              onChange={(value) => setFlowDescription(value)}
-              placeholder="This Flow indicates the user how to create a task"
-            />
+
+            {/* Process Owner and Review Date row */}
+            <div className="w-full flex gap-4">
+              <div className="flex-1">
+                <SelectField
+                  label="Flow owner"
+                  value={processOwner}
+                  onChange={setProcessOwner}
+                  placeholder="Select an owner"
+                  options={teamMembers}
+                  allowCustomInput={true}
+                />
+              </div>
+              <div className="flex-1">
+                <DatePicker
+                  label="Review Date"
+                  value={reviewDate}
+                  onChange={setReviewDate}
+                  placeholder="Pick a date"
+                />
+              </div>
+            </div>
+
+            {/* Why does this process exist? */}
+            <div className="w-full">
+              <TextAreaInput
+                label="Why does this Flow exist?"
+                value={whyExists}
+                onChange={(value) => setWhyExists(value)}
+                placeholder="Enter a description..."
+              />
+            </div>
+
+            {/* How do we complete this process? */}
+            <div className="w-full">
+              <TextAreaInput
+                label="Additional notes"
+                value={howToComplete}
+                onChange={(value) => setHowToComplete(value)}
+                placeholder="Enter a description..."
+              />
+            </div>
           </div>
-          <div className="self-stretch h-[300px] p-6 flex-col justify-start items-start gap-5 hidden overflow-hidden">
+
+          <div className="opacity-50 h-[296px] relative w-full px-6 pt-4 hidden">
             <div
               style={{ color: colors['text-primary'] }}
-              className="text-sm font-semibold font-['Inter'] leading-tight"
+              className="text-sm font-semibold font-['Inter'] leading-tight mb-4"
             >
-              New
+              Templates (coming soon...)
             </div>
             <div
               style={{
                 backgroundColor: colors['bg-secondary'],
-                borderColor: colors['border-primary'],
+                borderColor: colors['border-secondary'],
               }}
-              className="self-stretch p-4 rounded-xl border-2 justify-start items-start gap-1 inline-flex"
+              className="w-full h-[72px] p-4 rounded-xl border justify-start items-start gap-1 inline-flex"
             >
               <div className="grow shrink basis-0 h-10 justify-start items-start gap-3 flex">
-                <div className="w-8 h-8 p-2 bg-[#c8d1f3] rounded-full justify-center items-center flex overflow-hidden">
+                <div className="w-8 h-8 p-2 bg-[#DCFAE6] rounded-full justify-center items-center flex overflow-hidden">
                   <div className="w-4 h-4 relative flex-col justify-start items-start flex overflow-hidden">
                     <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-two-blue.svg`}
-                      alt="2 layers blue icon"
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-two-green.svg`}
+                      alt="2 layers green icon"
                       className="w-4 h-4"
                     />
                   </div>
@@ -154,69 +213,24 @@ export default function CreateFlowModal({
                       style={{ color: colors['text-primary'] }}
                       className="text-sm font-medium font-['Inter'] leading-tight"
                     >
-                      New Flow
+                      Onboarding
                     </div>
                   </div>
                   <div
                     style={{ color: colors['text-secondary'] }}
                     className="self-stretch text-sm font-normal font-['Inter'] leading-tight"
                   >
-                    Build your flow from scratch.
+                    Placeholder explaining the flow
                   </div>
                 </div>
               </div>
-              <div className="w-4 h-4 p-[5px] bg-[#4761c4] rounded-full justify-center items-center flex overflow-hidden">
-                <div className="w-1.5 h-1.5 relative bg-white rounded-full" />
-              </div>
-            </div>
-            <div className="opacity-50 h-[296px] relative w-full">
               <div
-                style={{ color: colors['text-primary'] }}
-                className="left-0 top-0 text-sm font-semibold font-['Inter'] leading-tight"
-              >
-                Templates (coming soon...)
-              </div>
-              <div
-                style={{
-                  backgroundColor: colors['bg-secondary'],
-                  borderColor: colors['border-secondary'],
-                }}
-                className="w-full h-[72px] p-4 left-0 top-[40px] absolute rounded-xl border justify-start items-start gap-1 inline-flex"
-              >
-                <div className="grow shrink basis-0 h-10 justify-start items-start gap-3 flex">
-                  <div className="w-8 h-8 p-2 bg-[#DCFAE6] rounded-full justify-center items-center flex overflow-hidden">
-                    <div className="w-4 h-4 relative flex-col justify-start items-start flex overflow-hidden">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/layers-two-green.svg`}
-                        alt="2 layers green icon"
-                        className="w-4 h-4"
-                      />
-                    </div>
-                  </div>
-                  <div className="grow shrink basis-0 flex-col justify-start items-start inline-flex">
-                    <div className="justify-start items-start gap-1 inline-flex">
-                      <div
-                        style={{ color: colors['text-primary'] }}
-                        className="text-sm font-medium font-['Inter'] leading-tight"
-                      >
-                        Onboarding
-                      </div>
-                    </div>
-                    <div
-                      style={{ color: colors['text-secondary'] }}
-                      className="self-stretch text-sm font-normal font-['Inter'] leading-tight"
-                    >
-                      Placeholder explaining the flow
-                    </div>
-                  </div>
-                </div>
-                <div
-                  style={{ borderColor: colors['border-secondary'] }}
-                  className="w-4 h-4 relative rounded-full border"
-                />
-              </div>
+                style={{ borderColor: colors['border-secondary'] }}
+                className="w-4 h-4 relative rounded-full border"
+              />
             </div>
           </div>
+
           <div
             style={{ borderColor: colors['border-secondary'] }}
             className="self-stretch py-6 border-t flex-col justify-start items-start flex"
@@ -226,7 +240,7 @@ export default function CreateFlowModal({
                 onClick={onClose}
                 variant="secondary"
                 size="small"
-                className="grow shrink basis-0"
+                className="grow shrink basis-0 transition-all duration-200 hover:scale-[1.02]"
               >
                 Cancel
               </ButtonNormal>
@@ -235,10 +249,15 @@ export default function CreateFlowModal({
                   if (!flowName.trim()) return;
                   setIsSaving(true);
                   const sanitizedFlowName = flowName;
-                  const sanitizedFlowDescription = flowDescription;
+                  const sanitizedProcessOwner = processOwner;
+                  const sanitizedWhyExists = whyExists;
+                  const sanitizedHowToComplete = howToComplete;
                   onCreateFlow(
                     sanitizedFlowName,
-                    sanitizedFlowDescription,
+                    sanitizedWhyExists,
+                    sanitizedProcessOwner,
+                    reviewDate,
+                    sanitizedHowToComplete,
                     flowIcon,
                     previewIcon
                   )
@@ -253,7 +272,7 @@ export default function CreateFlowModal({
                 }}
                 variant="primary"
                 size="small"
-                className="grow shrink basis-0"
+                className="grow shrink basis-0 transition-all duration-200 hover:scale-[1.02]"
                 isLoading={isSaving}
                 loadingText="Creating..."
                 disabled={!flowName.trim() || isSaving}

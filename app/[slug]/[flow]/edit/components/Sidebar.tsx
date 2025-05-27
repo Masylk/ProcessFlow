@@ -140,7 +140,7 @@ const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
   return (
     <div
       key={block.id}
-      className="w-full cursor-pointer transition-all duration-200"
+      className="w-full cursor-pointer transition-all duration-200 hover:scale-[1.02]"
       style={{
         backgroundColor: isSelected
           ? colors['brand-utility-600']
@@ -887,7 +887,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             return (
               <div
                 key={block.id}
-                className="w-full cursor-pointer transition-all duration-200"
+                className="w-full cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 style={{
                   backgroundColor: isBlockSelected(block.id)
                     ? colors['brand-utility-600']
@@ -1236,7 +1236,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
         {isSidebarVisible && (
           <div
             ref={sidebarRef}
-            className="flex-1 flex flex-col relative border-r"
+            className="flex-1 flex flex-col relative border-r transform transition-all duration-300 ease-out animate-in slide-in-from-left-0"
             style={{
               width: sidebarWidth,
               minWidth: '250px',

@@ -421,7 +421,7 @@ export default function Sidebar({
               </span>
               <button
                 onClick={() => onCreateFolder()}
-                className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100"
+                className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100 transition-all duration-200 hover:scale-110 hover:rotate-90"
               >
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}

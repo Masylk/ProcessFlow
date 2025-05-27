@@ -162,7 +162,8 @@ const ButtonNormal: React.FC<ButtonProps> = ({
           baseStyles,
           variant.startsWith('link') ? linkStyles : sizeStyles[size],
           className,
-          (isLoading || props.disabled) && disabledStyles
+          (isLoading || props.disabled) && disabledStyles,
+          'transform transition-all duration-200 ease-in-out hover:scale-[0.98] active:scale-[0.96]'
         )}
         style={buttonStyle}
         disabled={isLoading || props.disabled}

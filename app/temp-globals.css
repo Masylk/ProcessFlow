@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-family: 'Inter', sans-serif;
+}
+
+/* body {
+  @apply: font-sans;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+} */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  /* Input field variables for light mode */
+  --input-bg: #fff;
+  --input-fg: #101828;
+  --input-border: #d0d5dd;
+  --input-label: #344054;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+    /* Input field variables for dark mode (media) */
+    --input-bg: #181a20;
+    --input-fg: #fff;
+    --input-border: #23262f;
+    --input-label: #a3a3a3;
+  }
+}
+
+body {
+  font-family: 'Inter', sans-serif; /* Applying Inter font */
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Apple-style scrollbar that doesn't take up extra space */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme('colors.lightMode.bg-quaternary');
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.lightMode.bg-secondary-solid');
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Dark mode class-based styling */
+.dark ::-webkit-scrollbar-thumb {
+  background: theme('colors.darkMode.bg-quaternary');
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.darkMode.bg-secondary-solid');
+}
+
+* {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection only in input fields and textareas */
+input, textarea {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+  cursor: grab;
+  position: relative;
+}
+
+.dragging {
+  z-index: 9999;
+}
+
+/* Show the indicator more prominently when dragging over a potential drop target */
+[data-id].drag-over-as-child {
+  background-color: rgba(73, 131, 247, 0.1);
+  border-radius: 8px;
+  border: 2px solid rgba(73, 131, 247, 0.4);
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(73, 131, 247, 0.2);
+  /* Add a folder icon indicator */
+}
+
+[data-id].drag-over-as-child::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234761C4' width='24' height='24'%3E%3Cpath d='M4 20q-.825 0-1.413-.588T2 18V6q0-.825.588-1.413T4 4h6l2 2h8q.825 0 1.413.588T22 8v10q0 .825-.588 1.413T20 20H4Z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.5;
+}
+
+[data-id].drag-over-as-sibling-before {
+  border-top: 2px solid rgba(73, 131, 247, 0.8);
+  position: relative;
+}
+
+[data-id].drag-over-as-sibling-after {
+  border-bottom: 2px solid rgba(73, 131, 247, 0.8);
+  position: relative;
+}
+
+/* Add style for folders with subfolders during drag operations */
+[data-id][data-has-children="true"] {
+  transition: background-color 0.2s ease;
+}
+
+/* Style for hover on folders with children during drag */
+.dnd-active [data-id][data-has-children="true"]:hover {
+  background-color: rgba(73, 131, 247, 0.05);
+}
+
+/* Animation for the folder that's about to expand */
+@keyframes folder-expanding-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(73, 131, 247, 0.2); }
+  70% { box-shadow: 0 0 0 5px rgba(73, 131, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(73, 131, 247, 0); }
+}
+
+.folder-expanding {
+  animation: folder-expanding-pulse 1.5s infinite;
+  background-color: rgba(73, 131, 247, 0.08) !important;
+}
+
+/* Force light theme for the onboarding page */
+.force-light-theme,
+.force-light-theme *,
+.force-light-theme.dark,
+html.force-light-theme,
+html.force-light-theme *,
+body.force-light-theme,
+body.force-light-theme * {
+  --input-bg: #fff !important;
+  --input-fg: #101828 !important;
+  --input-border: #d0d5dd !important;
+  --input-label: #344054 !important;
+  /* Button variables for light mode */
+  --button-primary-bg: #4761c4 !important;
+  --button-primary-fg: #fff !important;
+  --button-primary-border: #4761c4 !important;
+  --button-primary-bg-hover: #3246a8 !important;
+  --button-primary-fg-hover: #fff !important;
+  --button-primary-border-hover: #3246a8 !important;
+  --button-secondary-bg: #fff !important;
+  --button-secondary-fg: #101828 !important;
+  --button-secondary-border: #d0d5dd !important;
+  --button-secondary-bg-hover: #f4f4f5 !important;
+  --button-secondary-fg-hover: #101828 !important;
+  --button-secondary-border-hover: #bfc5d2 !important;
+}
+
+.force-light-theme .dark,
+.force-light-theme.dark {
+  background-color: #fff !important;
+  color: #101828 !important;
+}
+
+.force-light-theme * {
+  /* Use !important to override any dark mode styles */
+  --text-primary: #101828 !important;
+  --text-secondary: #344054 !important;
+  --text-tertiary: #475467 !important;
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f9fafb !important;
+  --border-primary: #d0d5dd !important;
+  --border-secondary: #e4e7ec !important;
+}
+
+/* Dark mode scrollbar override for the force-light-theme class */
+.force-light-theme ::-webkit-scrollbar-thumb {
+  background: theme('colors.lightMode.bg-quaternary') !important;
+}
+
+.force-light-theme ::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.lightMode.bg-secondary-solid') !important;
+}
+
+.dark {
+  /* Input field variables for dark mode (class) */
+  --input-bg: #181a20;
+  --input-fg: #fff;
+  --input-border: #23262f;
+  --input-label: #a3a3a3;
+}

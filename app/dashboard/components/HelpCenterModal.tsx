@@ -3,6 +3,7 @@ import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
 import { restartTutorial } from '@/app/utils/tutorial';
 import { useColors } from '@/app/theme/hooks';
+import ButtonNormal from '@/app/components/ButtonNormal';
 
 interface HelpCenterModalProps {
   onClose: () => void;
@@ -66,25 +67,14 @@ export default function HelpCenterModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
-        <button
+        <ButtonNormal
+          variant="tertiary"
+          iconOnly
+          size="small"
+          className="absolute top-4 right-4"
           onClick={onClose}
-          className="absolute top-4 right-4 p-4 rounded-md transition duration-300"
-          style={{ 
-            '--hover-bg': colors['bg-quaternary'],
-          } as React.CSSProperties}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
-            alt="Close"
-            className="w-6 h-6"
-          />
-        </button>
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
+        />
 
         <div className="self-stretch flex flex-col items-center">
           <div className="self-stretch px-6 pt-6 flex items-start gap-4">

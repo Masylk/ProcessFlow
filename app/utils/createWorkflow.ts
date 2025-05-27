@@ -4,6 +4,10 @@ import { checkWorkflowName } from './checkNames';
 interface CreateWorkflowParams {
   name: string;
   description: string;
+  processOwner?: string;
+  reviewDate?: string;
+  whyExists?: string;
+  howToComplete?: string;
   workspaceId: number;
   folderId?: number | null;
   teamTags?: string[];
@@ -14,6 +18,10 @@ interface CreateWorkflowParams {
 export async function createWorkflow({
   name,
   description,
+  processOwner,
+  reviewDate,
+  whyExists,
+  howToComplete,
   workspaceId,
   folderId,
   teamTags,
@@ -38,6 +46,10 @@ export async function createWorkflow({
       body: JSON.stringify({
         name,
         description,
+        process_owner: processOwner,
+        review_date: reviewDate,
+        why_exists: whyExists,
+        how_to_complete: howToComplete,
         workspace_id: workspaceId,
         folder_id: folderId,
         author_id: authorId,

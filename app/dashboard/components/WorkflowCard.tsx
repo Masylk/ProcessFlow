@@ -56,6 +56,14 @@ export default function WorkflowCard({
   onStatusChange,
 }: WorkflowCardProps) {
   const colors = useColors();
+  
+  // Temporary fake data for testing - remove this later
+  const workflowWithFakeData = {
+    ...workflow,
+    processOwner: workflow.processOwner || 'Sarah Johnson',
+    reviewDate: workflow.reviewDate || '2024-06-15',
+  };
+  
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -329,7 +337,7 @@ export default function WorkflowCard({
             '--hover-bg': colors['bg-quaternary'],
           } as React.CSSProperties
         }
-        className="rounded-lg border hover:cursor-pointer relative transition-all ease-in-out hover:bg-[var(--hover-bg)] h-[180px] flex flex-col"
+        className="rounded-lg border hover:cursor-pointer relative transition-all duration-300 ease-in-out hover:bg-[var(--hover-bg)] hover:scale-[1.02] hover:shadow-lg h-[200px] flex flex-col"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -382,7 +390,7 @@ export default function WorkflowCard({
         {/* Main Content */}
         <div className="flex flex-col h-full">
           {/* Top Section */}
-          <div className="p-4 flex-1">
+          <div className="p-4">
             {/* Icon */}
             <div className="mb-3">
               <div className="flex items-center justify-center w-8 h-8">
@@ -412,7 +420,7 @@ export default function WorkflowCard({
               </div>
             </div>
 
-            {/* Title and Description */}
+            {/* Title */}
             <div className="space-y-1">
               <h3
                 style={{ color: colors['text-primary'] }}
@@ -423,6 +431,53 @@ export default function WorkflowCard({
               </h3>
             </div>
           </div>
+
+          {/* Middle Section - Process Owner and Review Date */}
+          {(workflowWithFakeData.processOwner || workflowWithFakeData.reviewDate) && (
+            <div className="px-4 pb-3">
+              <div className="space-y-1">
+                {workflowWithFakeData.processOwner && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-profile.svg`}
+                        alt="Owner"
+                        className="w-4 h-4 opacity-50"
+                      />
+                    </div>
+                    <span
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-xs truncate"
+                      title={workflowWithFakeData.processOwner}
+                    >
+                      {workflowWithFakeData.processOwner}
+                    </span>
+                  </div>
+                )}
+                {workflowWithFakeData.reviewDate && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/calendar-clock-1.svg`}
+                        alt="Review Date"
+                        className="w-4 h-4 opacity-50"
+                      />
+                    </div>
+                    <span
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-xs"
+                    >
+                      Review due: {new Date(workflowWithFakeData.reviewDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Section */}
           <div className="mt-auto">
