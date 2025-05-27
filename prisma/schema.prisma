@@ -173,6 +173,9 @@ model workflow {
   name             String
   icon             String?
   description      String
+  additional_notes String?
+  process_owner    String?
+  review_date      DateTime?
   workspace_id     Int
   folder_id        Int?
   is_public        Boolean            @default(true)

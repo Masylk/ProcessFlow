@@ -701,7 +701,9 @@ export default function SharedPage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description || "This Flow helps streamline and automate key business processes.",
+          description:
+            workflowData.description ||
+            'This Flow helps streamline and automate key business processes.',
         },
         integrations: paths
           .flatMap((path) =>
@@ -739,8 +741,10 @@ export default function SharedPage({
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
-        reviewDate: "10/04/2024",
-        additionalNotes: "This is a mission-critical process that affects multiple departments. Any changes must be communicated 48 hours in advance to all stakeholders.",
+        review_date: workflowData.review_date
+          ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
+          : 'No review date',
+        additionalNotes: workflowData.additional_notes,
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -751,7 +755,7 @@ export default function SharedPage({
                   ? new Date(block.updated_at).toLocaleDateString('en-GB')
                   : latest,
               ''
-            ) || 'No updates'
+            ) || 'No updates',
       }
     : null;
 
@@ -1096,7 +1100,9 @@ export default function SharedPage({
               {viewMode === 'vertical' ? (
                 <div className="p-6">
                   <div className="ml-28 flex flex-col gap-[72px]">
-                    {processCardData && <ProcessCard {...processCardData} />}
+                    {processCardData && (
+                      <ProcessCard {...processCardData} viewMode={viewMode} />
+                    )}
                     {pathsToDisplay
                       .map((path) => {
                         return (
@@ -1204,8 +1210,11 @@ export default function SharedPage({
                             className="flex items-center justify-center"
                           >
                             {processCardData && (
-                              <div className="w-full flex justify-center">
-                                <ProcessCard {...processCardData} />
+                              <div className="w-full flex justify-center h-full">
+                                <ProcessCard
+                                  {...processCardData}
+                                  viewMode={viewMode}
+                                />
                               </div>
                             )}
                           </div>

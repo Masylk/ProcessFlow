@@ -563,7 +563,9 @@ export default function SharePage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description: workflowData.description || "This Flow helps streamline and automate key business processes.",
+          description:
+            workflowData.description ||
+            'This Flow helps streamline and automate key business processes.',
         },
         integrations: paths
           .flatMap((path) =>
@@ -600,8 +602,10 @@ export default function SharePage({
                 : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
           },
         }),
-        reviewDate: "28/02/2024",
-        additionalNotes: "Critical process - requires approval from department heads before any modifications. Updated security protocols are in effect.",
+        review_date: workflowData.review_date
+          ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
+          : 'No review date',
+        additionalNotes: workflowData.additional_notes,
         lastUpdate:
           paths
             .flatMap((path) => path.blocks)
@@ -612,7 +616,7 @@ export default function SharePage({
                   ? new Date(block.updated_at).toLocaleDateString('en-GB')
                   : latest,
               ''
-            ) || 'No updates'
+            ) || 'No updates',
       }
     : null;
 

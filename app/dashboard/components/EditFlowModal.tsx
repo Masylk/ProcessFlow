@@ -18,10 +18,10 @@ interface EditFlowModalProps {
   onConfirm: (
     id: number,
     name: string,
-    whyExists: string,
-    processOwner: string,
-    reviewDate: string,
-    howToComplete: string,
+    description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     folder: Folder | null | undefined,
     icon: string | null,
     signedIcon: string | null
@@ -40,16 +40,16 @@ export default function EditFlowModal({
   const colors = useColors();
   const [processName, setProcessName] = useState(selectedWorkflow.name);
   const [processOwner, setProcessOwner] = useState(
-    selectedWorkflow.processOwner || ''
+    selectedWorkflow.process_owner || ''
   );
-  const [reviewDate, setReviewDate] = useState(
-    selectedWorkflow.reviewDate || ''
+  const [review_date, setreview_date] = useState(
+    selectedWorkflow.review_date || ''
   );
-  const [whyExists, setWhyExists] = useState(
-    selectedWorkflow.whyExists || selectedWorkflow.description || ''
+  const [description, setdescription] = useState(
+    selectedWorkflow.description || selectedWorkflow.description || ''
   );
-  const [howToComplete, setHowToComplete] = useState(
-    selectedWorkflow.howToComplete || ''
+  const [additionalNotes, setAdditionalNotes] = useState(
+    selectedWorkflow.additional_notes || ''
   );
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState(selectedWorkflow.icon || null);
@@ -69,7 +69,7 @@ export default function EditFlowModal({
     'David Kim',
     'Lisa Thompson',
     'Alex Parker',
-    'Maria Garcia'
+    'Maria Garcia',
   ];
 
   const handleSave = async () => {
@@ -78,10 +78,10 @@ export default function EditFlowModal({
       const result = await onConfirm(
         selectedWorkflow.id,
         processName,
-        whyExists,
+        description,
         processOwner,
-        reviewDate,
-        howToComplete,
+        review_date,
+        additionalNotes,
         undefined,
         flowIcon,
         previewIcon
@@ -213,8 +213,8 @@ export default function EditFlowModal({
               <div className="flex-1">
                 <DatePicker
                   label="Review Date"
-                  value={reviewDate}
-                  onChange={setReviewDate}
+                  value={review_date}
+                  onChange={setreview_date}
                   placeholder="Pick a date"
                 />
               </div>
@@ -224,8 +224,8 @@ export default function EditFlowModal({
             <div className="w-full">
               <TextAreaInput
                 label="Why does this Flow exist?"
-                value={whyExists}
-                onChange={setWhyExists}
+                value={description}
+                onChange={setdescription}
                 placeholder="Enter a description..."
               />
             </div>
@@ -234,8 +234,8 @@ export default function EditFlowModal({
             <div className="w-full">
               <TextAreaInput
                 label="Additional notes"
-                value={howToComplete}
-                onChange={setHowToComplete}
+                value={additionalNotes}
+                onChange={setAdditionalNotes}
                 placeholder="Enter a description..."
               />
             </div>

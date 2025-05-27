@@ -4,10 +4,9 @@ import { checkWorkflowName } from './checkNames';
 interface CreateWorkflowParams {
   name: string;
   description: string;
-  processOwner?: string;
-  reviewDate?: string;
-  whyExists?: string;
-  howToComplete?: string;
+  process_owner?: string;
+  review_date?: string;
+  additional_notes?: string;
   workspaceId: number;
   folderId?: number | null;
   teamTags?: string[];
@@ -18,10 +17,9 @@ interface CreateWorkflowParams {
 export async function createWorkflow({
   name,
   description,
-  processOwner,
-  reviewDate,
-  whyExists,
-  howToComplete,
+  process_owner,
+  review_date,
+  additional_notes,
   workspaceId,
   folderId,
   teamTags,
@@ -38,6 +36,16 @@ export async function createWorkflow({
       };
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('process_owner', process_owner);
+      console.log('review_date', review_date);
+      console.log('additional_notes', additional_notes);
+    }
+    
+    // Sanitize review_date: send null if empty string or undefined
+    const sanitizedReviewDate =
+      review_date === '' || review_date === undefined ? null : review_date;
+
     const response = await fetch('/api/workspace/workflows', {
       method: 'POST',
       headers: {
@@ -46,10 +54,9 @@ export async function createWorkflow({
       body: JSON.stringify({
         name,
         description,
-        process_owner: processOwner,
-        review_date: reviewDate,
-        why_exists: whyExists,
-        how_to_complete: howToComplete,
+        process_owner: process_owner,
+        review_date: sanitizedReviewDate,
+        additional_notes: additional_notes,
         workspace_id: workspaceId,
         folder_id: folderId,
         author_id: authorId,

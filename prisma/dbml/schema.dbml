@@ -134,6 +134,9 @@ Table workflow {
   name String [not null]
   icon String
   description String [not null]
+  additional_notes String
+  process_owner String
+  review_date DateTime
   workspace_id Int [not null]
   folder_id Int
   is_public Boolean [not null, default: true]

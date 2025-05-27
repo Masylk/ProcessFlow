@@ -202,6 +202,9 @@ export async function POST(req: NextRequest) {
     const {
       name,
       description,
+      process_owner,
+      review_date,
+      additional_notes,
       workspace_id,
       folder_id = null,
       author_id,
@@ -228,9 +231,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Remove the old validation since it's now handled by checkWorkflowName
     // Clean whitespaces in name
     const cleanedName = name.trim().replace(/\s+/g, ' ');
+
+    // Convert review_date to proper DateTime format
+    let sanitizedReviewDate = null;
+    if (review_date && review_date !== '') {
+      try {
+        // If it's just a date (YYYY-MM-DD), convert to full DateTime
+        const dateObj = new Date(review_date);
+        if (!isNaN(dateObj.getTime())) {
+          // Convert to ISO string for Prisma
+          sanitizedReviewDate = dateObj.toISOString();
+        }
+      } catch (error) {
+        console.error('Error parsing review_date:', error);
+        // Leave as null if parsing fails
+      }
+    }
 
     // Get workspace with subscription info and workflow count
     const workspace = await prisma.workspace.findUnique({
@@ -290,6 +308,9 @@ export async function POST(req: NextRequest) {
       data: {
         name: cleanedName,
         description,
+        process_owner,
+        review_date: sanitizedReviewDate,
+        additional_notes,
         workspace_id,
         folder_id,
         is_public: true,
@@ -445,6 +466,9 @@ export async function PUT(req: NextRequest) {
       id,
       name,
       description,
+      process_owner,
+      review_date,
+      additional_notes,
       folder_id = null,
       icon = null,
       status = null,
@@ -471,13 +495,33 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // Convert review_date to proper DateTime format if provided
+    let sanitizedReviewDate = undefined;
+    if (review_date !== undefined) {
+      if (review_date === '' || review_date === null) {
+        sanitizedReviewDate = null;
+      } else {
+        try {
+          const dateObj = new Date(review_date);
+          if (!isNaN(dateObj.getTime())) {
+            sanitizedReviewDate = dateObj.toISOString();
+          }
+        } catch (error) {
+          console.error('Error parsing review_date:', error);
+        }
+      }
+    }
+
     const updatedWorkflow = await prisma.workflow.update({
       where: {
         id: Number(id),
       },
       data: {
-        ...(name && { name: name.trim().replace(/\s+/g, ' ') }), // Clean whitespace if name is provided
-        ...(description && { description }),
+        ...(name && { name: name.trim().replace(/\s+/g, ' ') }),
+        ...(description !== undefined && { description }),
+        ...(process_owner !== undefined && { process_owner }),
+        ...(sanitizedReviewDate !== undefined && { review_date: sanitizedReviewDate }),
+        ...(additional_notes !== undefined && { additional_notes }),
         ...(folder_id !== null && {
           folder_id: folder_id ? Number(folder_id) : null,
         }),

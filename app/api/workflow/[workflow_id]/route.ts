@@ -30,6 +30,9 @@ export async function PATCH(req: NextRequest) {
         is_public: true,
         public_access_id: true,
         description: true,
+        process_owner: true,
+        review_date: true,
+        additional_notes: true,
         workspace_id: true,
         folder: {
           select: {
@@ -82,6 +85,9 @@ export async function GET(
         is_public: true,
         public_access_id: true,
         description: true,
+        process_owner: true,
+        review_date: true,
+        additional_notes: true,
         workspace_id: true,
         folder: {
           select: {
@@ -131,6 +137,9 @@ export async function GET(
           is_public: true,
           public_access_id: true,
           description: true,
+          process_owner: true,
+          review_date: true,
+          additional_notes: true,
           workspace_id: true,
           folder: {
             select: {

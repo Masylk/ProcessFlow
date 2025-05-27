@@ -318,10 +318,10 @@ export default function Page() {
 
     await handleCreateWorkflow(
       duplicateName,
-      selectedWorkflow.whyExists || selectedWorkflow.description || '',
-      selectedWorkflow.processOwner || '',
-      selectedWorkflow.reviewDate || '',
-      selectedWorkflow.howToComplete || '',
+      selectedWorkflow.description || selectedWorkflow.description || '',
+      selectedWorkflow.process_owner || '',
+      selectedWorkflow.review_date || '',
+      selectedWorkflow.additional_notes || '',
       selectedWorkflow.icon,
       selectedWorkflow.signedIconUrl
     );
@@ -329,10 +329,10 @@ export default function Page() {
 
   const handleCreateWorkflow = async (
     name: string,
-    whyExists: string,
-    processOwner: string,
-    reviewDate: string,
-    howToComplete: string,
+    description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     icon: string | null,
     signedIcon: string | null | undefined
   ) => {
@@ -347,11 +347,10 @@ export default function Page() {
     try {
       const result = await createWorkflow({
         name,
-        description: whyExists,
-        processOwner,
-        reviewDate,
-        whyExists,
-        howToComplete,
+        description,
+        process_owner,
+        review_date,
+        additional_notes,
         workspaceId: activeWorkspace.id,
         folderId: selectedFolder?.id,
         icon,
@@ -412,10 +411,10 @@ export default function Page() {
   const handleEditWorkflow = async (
     id: number,
     name: string,
-    whyExists: string,
-    processOwner: string,
-    reviewDate: string,
-    howToComplete: string,
+    description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     folder?: Folder | null,
     icon?: string | null,
     signedIcon?: string | null
@@ -426,11 +425,10 @@ export default function Page() {
     try {
       const result = await updateWorkflow(id, {
         name,
-        description: whyExists,
-        processOwner,
-        reviewDate,
-        whyExists,
-        howToComplete,
+        description,
+        process_owner,
+        review_date,
+        additional_notes,
         folder_id: folder?.id,
         icon: icon ?? undefined,
         signedIconUrl: signedIcon ?? undefined,
@@ -1633,10 +1631,12 @@ export default function Page() {
             handleEditWorkflow(
               selectedWorkflow.id,
               selectedWorkflow.name,
-              selectedWorkflow.whyExists || selectedWorkflow.description || '',
-              selectedWorkflow.processOwner || '',
-              selectedWorkflow.reviewDate || '',
-              selectedWorkflow.howToComplete || '',
+              selectedWorkflow.description ||
+                selectedWorkflow.description ||
+                '',
+              selectedWorkflow.process_owner || '',
+              selectedWorkflow.review_date || '',
+              selectedWorkflow.additional_notes || '',
               folder,
               selectedWorkflow.icon
             )
@@ -1659,5 +1659,3 @@ export default function Page() {
     </div>
   );
 }
-
-

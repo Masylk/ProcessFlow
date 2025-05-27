@@ -1,7 +1,7 @@
 'use client';
 
 import { useColors } from '@/app/theme/hooks';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { cn } from '@/lib/utils';
 import DynamicIcon from '@/utils/DynamicIcon';
 
@@ -15,6 +15,7 @@ interface Owner {
   avatar?: string;
 }
 
+type ViewMode = 'vertical' | 'carousel';
 interface ProcessCardProps {
   icon: string;
   workflow: {
@@ -23,9 +24,10 @@ interface ProcessCardProps {
   };
   integrations: Integration[];
   owner?: Owner;
-  reviewDate?: string;
+  review_date?: string;
   additionalNotes?: string;
   lastUpdate?: string;
+  viewMode?: ViewMode;
 }
 
 // Utility to extract filename without extension from a path
@@ -40,13 +42,17 @@ export default function ProcessCard({
   workflow,
   integrations,
   owner,
-  reviewDate,
+  review_date,
   additionalNotes,
   lastUpdate,
+  viewMode = 'vertical',
 }: ProcessCardProps) {
   const colors = useColors();
   const [showPopover, setShowPopover] = useState(false);
   const popoverTimerRef = useRef<NodeJS.Timeout>();
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const notesRef = useRef<HTMLDivElement>(null);
+  const [shouldCenter, setShouldCenter] = useState(false);
 
   const visibleIntegrations = integrations.slice(0, 5);
   const hiddenIntegrations = integrations.slice(5);
@@ -72,6 +78,17 @@ export default function ProcessCard({
       }
     };
   }, []);
+
+  useLayoutEffect(() => {
+    // Only run if either description or additionalNotes exists
+    if (descriptionRef.current || notesRef.current) {
+      const descHeight = descriptionRef.current?.offsetHeight || 0;
+      const notesHeight = notesRef.current?.offsetHeight || 0;
+      console.log(descHeight, notesHeight);
+      console.log('should center ', descHeight + notesHeight < 400);
+      setShouldCenter(descHeight + notesHeight < 400);
+    }
+  }, [workflow.description, additionalNotes]);
 
   const IntegrationBadge = ({ integration }: { integration: Integration }) => (
     <div
@@ -109,7 +126,10 @@ export default function ProcessCard({
       style={{
         borderColor: colors['border-secondary'],
       }}
-      className="rounded-xl flex flex-col transition-all duration-200 w-[636px]"
+      className={cn(
+        'rounded-xl flex flex-col transition-all duration-200 w-full h-full overflow-auto',
+        viewMode === 'carousel' && shouldCenter && 'items-center justify-center'
+      )}
     >
       <div className="flex gap-6">
         {/* Large Icon - keep original size */}
@@ -163,7 +183,7 @@ export default function ProcessCard({
               {workflow.name}
             </h3>
             {workflow.description && (
-              <div>
+              <div className="max-w-md" ref={descriptionRef}>
                 <p
                   style={{ color: colors['text-secondary'] }}
                   className="text-sm font-medium mb-1"
@@ -172,7 +192,7 @@ export default function ProcessCard({
                 </p>
                 <p
                   style={{ color: colors['text-quaternary'] }}
-                  className="font-normal text-sm"
+                  className="font-normal text-sm whitespace-pre-line break-words"
                 >
                   {workflow.description}
                 </p>
@@ -245,7 +265,7 @@ export default function ProcessCard({
                     {owner.name}
                   </span>
                 </div>
-                {(reviewDate || lastUpdate) && (
+                {(review_date || lastUpdate) && (
                   <div
                     style={{ color: colors['text-tertiary'] }}
                     className="w-1 h-1 rounded-full bg-current"
@@ -253,14 +273,14 @@ export default function ProcessCard({
                 )}
               </>
             )}
-            {reviewDate && (
+            {review_date && (
               <>
                 <div className="flex items-center gap-2">
                   <span
                     style={{ color: colors['text-tertiary'] }}
                     className="text-sm"
                   >
-                    Review date: {reviewDate}
+                    Review date: {review_date}
                   </span>
                 </div>
                 {lastUpdate && (
@@ -285,12 +305,15 @@ export default function ProcessCard({
 
           {/* Additional Notes */}
           {additionalNotes && (
-            <div className="mt-2">
+            <div className="mt-2 max-w-md" ref={notesRef}>
               <p
                 style={{ color: colors['text-quaternary'] }}
-                className="text-sm italic"
+                className="text-sm italic whitespace-pre-line break-words"
               >
-                <span className="font-medium not-italic">Additional notes:</span> {additionalNotes}
+                <span className="font-medium not-italic">
+                  Additional notes:
+                </span>{' '}
+                {additionalNotes}
               </p>
             </div>
           )}
