@@ -12,7 +12,7 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
+  
 model user {
   id                      Int                @id @default(autoincrement())
   created_at              DateTime           @default(now())

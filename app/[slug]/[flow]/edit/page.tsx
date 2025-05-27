@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
 import { Metadata } from 'next';
 import getBaseUrl from '@/app/utils/getBaseUrl';
-import { isPreview } from '@/app/utils/isPreview';
 
 interface PageParams {
   flow: string;
@@ -44,7 +43,6 @@ export async function generateMetadata({
       process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
   }
   const baseUrl = getBaseUrl();
-  console.log('[DEBUG] Base URL:', baseUrl);
 
   const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
     headers,
@@ -87,9 +85,6 @@ export default async function ReactFlowPage({
   const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
     headers,
   });
-  if (isPreview()) {
-    console.log('[DEBUG] Response:', response);
-  }
 
   if (!response.ok) {
     // Handle unauthorized or not found cases
@@ -97,9 +92,6 @@ export default async function ReactFlowPage({
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       error = await response.json();
-    }
-    if (isPreview()) {
-      console.log('[DEBUG] Error:', error);
     }
     if (response.status === 401) {
       redirect('/login');
@@ -109,9 +101,6 @@ export default async function ReactFlowPage({
   }
 
   const workflow: Workflow = await response.json();
-  if (isPreview()) {
-    console.log('[DEBUG] Workflow:', workflow);
-  }
 
   return (
     <ReactFlowPageClient
