@@ -16,6 +16,7 @@ import { toast } from 'react-hot-toast';
 import SortableFolderList from './SortableFolderList';
 import { useFolderPositioning } from '../hooks/useFolderPositioning';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
+import { AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
   workspaces: Workspace[];
@@ -353,36 +354,40 @@ export default function Sidebar({
                     width={20}
                     height={20}
                     className="w-5 h-5 flex-shrink-0"
-                    style={{
-                      filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}`,
-                    }}
                   />
                 </div>
               </div>
-              {dropdownVisible && (
-                <div className="fixed inset-0 z-10" onClick={closeDropDown}>
-                  <div
-                    className="absolute top-14 left-4 mt-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <WorkspaceDropdownMenu
-                      userEmail={userEmail}
-                      workspaces={workspaces}
-                      activeWorkspace={activeWorkspace}
-                      setActiveWorkspace={setActiveWorkspace}
-                      onClose={closeDropDown}
-                      onOpenSettings={() => setIsSettingsView(true)}
-                      onLogout={onLogout}
-                      onOpenCreateWorkspaceModal={
-                        handleOpenCreateWorkspaceModal
-                      }
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
+
+        {/* Workspace Dropdown Overlay */}
+        <AnimatePresence>
+          {dropdownVisible && (
+                         <div 
+               className="fixed inset-0 z-10" 
+               onClick={closeDropDown}
+             >
+               <div
+                 className="absolute top-14 left-4 mt-2"
+                 onClick={(e) => e.stopPropagation()}
+               >
+                <WorkspaceDropdownMenu
+                  userEmail={userEmail}
+                  workspaces={workspaces}
+                  activeWorkspace={activeWorkspace}
+                  setActiveWorkspace={setActiveWorkspace}
+                  onClose={closeDropDown}
+                  onOpenSettings={() => setIsSettingsView(true)}
+                  onLogout={onLogout}
+                  onOpenCreateWorkspaceModal={
+                    handleOpenCreateWorkspaceModal
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Divider */}
         <div
@@ -421,7 +426,7 @@ export default function Sidebar({
               </span>
               <button
                 onClick={() => onCreateFolder()}
-                className="w-5 h-5 relative overflow-hidden opacity-70 hover:opacity-100 transition-all duration-200 hover:scale-110 hover:rotate-90"
+                className="w-5 h-5 relative overflow-hidden transition-all duration-200 hover:scale-110 hover:rotate-90"
               >
                 <Image
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon.svg`}
@@ -429,9 +434,6 @@ export default function Sidebar({
                   width={20}
                   height={20}
                   className="w-5 h-5"
-                  style={{
-                    filter: `brightness(0) saturate(100%) ${currentTheme === 'dark' ? 'invert(1)' : ''}`,
-                  }}
                 />
               </button>
             </div>

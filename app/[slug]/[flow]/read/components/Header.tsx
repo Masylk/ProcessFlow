@@ -11,6 +11,7 @@ import UserInfo from '@/app/dashboard/components/UserInfo';
 import UserDropdown from '@/app/dashboard/components/UserDropdown';
 import { User } from '@/types/user';
 import ShareModal from '@/app/components/ShareModal';
+import { AnimatePresence } from 'framer-motion';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { createEditLink } from '../../utils/createLinks';
@@ -212,24 +213,26 @@ const Header: React.FC<HeaderProps> = ({
               onClick={handleUserInfoClick}
             >
               <UserInfo user={user} isActive={dropdownVisible} />
-              {dropdownVisible && (
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setDropdownVisible(false)}
-                >
+              <AnimatePresence>
+                {dropdownVisible && (
                   <div
-                    className="absolute top-[68px] right-3.5"
-                    onClick={(e) => e.stopPropagation()}
+                    className="fixed inset-0 z-10"
+                    onClick={() => setDropdownVisible(false)}
                   >
-                    <UserDropdown
-                      user={user}
-                      onOpenUserSettings={onOpenUserSettings}
-                      onOpenHelpCenter={onOpenHelpCenter}
-                      onClose={() => setDropdownVisible(false)}
-                    />
+                    <div
+                      className="absolute top-[68px] right-3.5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <UserDropdown
+                        user={user}
+                        onOpenUserSettings={onOpenUserSettings}
+                        onOpenHelpCenter={onOpenHelpCenter}
+                        onClose={() => setDropdownVisible(false)}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>

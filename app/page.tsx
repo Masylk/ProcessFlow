@@ -11,9 +11,8 @@ import {
 import UserInfo from './dashboard/components/UserInfo';
 import SearchBar from './dashboard/components/SearchBar';
 import UserDropdown from './dashboard/components/UserDropdown';
-import UserSettings from './dashboard/components/UserSettings';
+import { AnimatePresence } from 'framer-motion';
 import Sidebar from './dashboard/components/Sidebar';
-import HelpCenterModal from './dashboard/components/HelpCenterModal';
 import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './dashboard/components/ConfirmChangePasswordModal';
@@ -49,19 +48,8 @@ import { debounce } from 'lodash';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { checkFolderName, checkWorkspaceName } from './utils/checkNames';
 
-const HelpCenterModalDynamic = dynamic(
-  () => import('./dashboard/components/HelpCenterModal'),
-  {
-    ssr: false,
-  }
-);
-
-const UserSettingsDynamic = dynamic(
-  () => import('./dashboard/components/UserSettings'),
-  {
-    ssr: false,
-  }
-);
+import HelpCenterModal from './dashboard/components/HelpCenterModal';
+import UserSettings from './dashboard/components/UserSettings';
 
 export default function Page() {
   const { currentTheme } = useTheme();
@@ -1422,24 +1410,26 @@ export default function Page() {
                       onClick={handleUserInfoClick}
                     >
                       <UserInfo user={user} isActive={dropdownVisible} />
-                      {dropdownVisible && (
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setDropdownVisible(false)}
-                        >
+                      <AnimatePresence>
+                        {dropdownVisible && (
                           <div
-                            className="absolute top-[68px] right-3.5"
-                            onClick={(e) => e.stopPropagation()}
+                            className="fixed inset-0 z-10"
+                            onClick={() => setDropdownVisible(false)}
                           >
-                            <UserDropdown
-                              user={user}
-                              onOpenUserSettings={openUserSettings}
-                              onOpenHelpCenter={openHelpCenter}
-                              onClose={() => setDropdownVisible(false)}
-                            />
+                            <div
+                              className="absolute top-[68px] right-3.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <UserDropdown
+                                user={user}
+                                onOpenUserSettings={openUserSettings}
+                                onOpenHelpCenter={openHelpCenter}
+                                onClose={() => setDropdownVisible(false)}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -1489,7 +1479,7 @@ export default function Page() {
       {/* Modals */}
       {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
-          <UserSettingsDynamic
+          <UserSettings
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
@@ -1593,7 +1583,7 @@ export default function Page() {
             </div>
           }
         >
-          <HelpCenterModalDynamic
+          <HelpCenterModal
             onClose={closeHelpCenter}
             user={user}
             setShowTutorial={setShowTutorial}

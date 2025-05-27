@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { Block, Path } from '../../types';
 import { PathContainer } from './PathContainer';
@@ -1306,21 +1307,28 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       </div>
 
       {/* Help Center Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-[9999]">
+      {showHelpModal && createPortal(
+        <div className="fixed inset-0 z-[10000]">
           <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Documentation Modal */}
-      {showDocModal && (
-        <div className="fixed inset-0 z-[9999]">
+      {showDocModal && createPortal(
+        <div className="fixed inset-0 z-[10000]">
           <DocumentationModal onClose={toggleDocModal} />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Settings Modal */}
-      {isSettingsModalOpen && <SettingsModal onClose={toggleSettingsModal} />}
+      {isSettingsModalOpen && createPortal(
+        <div className="fixed inset-0 z-[10000]">
+          <SettingsModal onClose={toggleSettingsModal} />
+        </div>,
+        document.body
+      )}
     </>
   );
 }
