@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import ImageEditor from './ImageEditor';
 import { useColors } from '@/app/theme/hooks';
+import { createPortal } from 'react-dom';
 
 interface BlockMediaVisualizerProps {
   block: Block;
@@ -102,11 +103,14 @@ export default function BlockMediaVisualizer({
       </div>
 
       {isEditing && signedImageUrl && (
-        <ImageEditor
-          imageUrl={signedImageUrl}
-          onClose={() => setIsEditing(false)}
-          onSave={handleSaveEdit}
-        />
+        createPortal(
+          <ImageEditor
+            imageUrl={signedImageUrl}
+            onClose={() => setIsEditing(false)}
+            onSave={handleSaveEdit}
+          />,
+          document.body
+        )
       )}
     </>
   );

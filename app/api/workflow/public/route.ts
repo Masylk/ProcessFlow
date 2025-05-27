@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const { searchParams } = new URL(req.url);
     const public_access_id = searchParams.get('public_access_id');
@@ -14,7 +17,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const workflow: any = await prisma.workflow.findFirst({
+    const workflow: any = await prisma_client.workflow.findFirst({
       where: {
         public_access_id,
         is_public: true,
@@ -75,5 +78,7 @@ export async function GET(req: NextRequest) {
       { error: 'Failed to fetch workflow' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

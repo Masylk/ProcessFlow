@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { deleteManyPaths } from '@/app/api/utils/paths/deleteMany';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @openapi
@@ -56,11 +58,13 @@ import { deleteManyPaths } from '@/app/api/utils/paths/deleteMany';
  */
 
 export async function POST(req: NextRequest) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const { blockIds } = await req.json();
 
     // Get blocks to handle image deletion and child_paths
-    const blocks = await prisma.block.findMany({
+    const blocks = await prisma_client.block.findMany({
       where: {
         id: {
           in: blockIds
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
           await deleteManyPaths(childPathIds);
         }
         // Convert block to LAST
-        await prisma.block.update({
+        await prisma_client.block.update({
           where: { id: block.id },
           data: { type: 'LAST' }
         });
@@ -118,7 +122,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Delete only STEP and DELAY blocks
-    await prisma.block.deleteMany({
+    await prisma_client.block.deleteMany({
       where: {
         id: {
           in: blockIds
@@ -134,7 +138,7 @@ export async function POST(req: NextRequest) {
     const maxDeletedPosition = Math.max(...deletedPositions);
     const numDeleted = blocks.length;
 
-    await prisma.block.updateMany({
+    await prisma_client.block.updateMany({
       where: {
         path_id: pathId,
         position: { gt: maxDeletedPosition }
@@ -151,5 +155,9 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to delete blocks' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

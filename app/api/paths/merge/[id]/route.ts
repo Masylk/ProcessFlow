@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface UpdateMergePathRequest {
   parents_to_connect: number[];
@@ -10,6 +12,7 @@ export async function PATCH(
   req: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const params = await props.params;
     const { id } = params;
@@ -18,7 +21,7 @@ export async function PATCH(
     const { parents_to_connect, parents_to_disconnect } = await req.json();
 
     // Use transaction to ensure all operations succeed or none do
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       // Delete specified relationships
       if (parents_to_disconnect.length > 0) {
         await tx.path_parent_block.deleteMany({
@@ -108,5 +111,9 @@ export async function PATCH(
       { error: 'Failed to update merge path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

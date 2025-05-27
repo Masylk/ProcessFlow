@@ -11,9 +11,8 @@ import {
 import UserInfo from './dashboard/components/UserInfo';
 import SearchBar from './dashboard/components/SearchBar';
 import UserDropdown from './dashboard/components/UserDropdown';
-import UserSettings from './dashboard/components/UserSettings';
+import { AnimatePresence } from 'framer-motion';
 import Sidebar from './dashboard/components/Sidebar';
-import HelpCenterModal from './dashboard/components/HelpCenterModal';
 import { Folder, Workspace } from '@/types/workspace';
 import { User } from '@/types/user';
 import ConfirmChangePasswordModal from './dashboard/components/ConfirmChangePasswordModal';
@@ -44,24 +43,13 @@ import IconModifier from './dashboard/components/IconModifier';
 import { createClient } from '@/utils/supabase/client';
 import TutorialOverlay from './dashboard/components/TutorialOverlay';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { debounce } from 'lodash';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { checkFolderName, checkWorkspaceName } from './utils/checkNames';
 
-const HelpCenterModalDynamic = dynamic(
-  () => import('./dashboard/components/HelpCenterModal'),
-  {
-    ssr: false,
-  }
-);
-
-const UserSettingsDynamic = dynamic(
-  () => import('./dashboard/components/UserSettings'),
-  {
-    ssr: false,
-  }
-);
+import HelpCenterModal from './dashboard/components/HelpCenterModal';
+import UserSettings from './dashboard/components/UserSettings';
 
 export default function Page() {
   const { currentTheme } = useTheme();
@@ -140,6 +128,7 @@ export default function Page() {
 
   // Add near the top of the component
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // // Memoize the filtered workspaces based on search term
   // const filteredWorkspaces = useMemo(() => {
@@ -328,7 +317,10 @@ export default function Page() {
 
     await handleCreateWorkflow(
       duplicateName,
-      selectedWorkflow.description,
+      selectedWorkflow.description || selectedWorkflow.description || '',
+      selectedWorkflow.process_owner || '',
+      selectedWorkflow.review_date || '',
+      selectedWorkflow.additional_notes || '',
       selectedWorkflow.icon,
       selectedWorkflow.signedIconUrl
     );
@@ -337,6 +329,9 @@ export default function Page() {
   const handleCreateWorkflow = async (
     name: string,
     description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     icon: string | null,
     signedIcon: string | null | undefined
   ) => {
@@ -352,6 +347,9 @@ export default function Page() {
       const result = await createWorkflow({
         name,
         description,
+        process_owner,
+        review_date,
+        additional_notes,
         workspaceId: activeWorkspace.id,
         folderId: selectedFolder?.id,
         icon,
@@ -395,6 +393,14 @@ export default function Page() {
         toast.success('Workflow Created', {
           description: 'Your new workflow has been created successfully.',
         });
+
+        // Navigate to the edit mode of the newly created workflow
+        if (activeWorkspace.slug) {
+          // Sanitize the workflow name for URL
+          const sanitizedName = name.replace(/\s+/g, '-');
+          const editUrl = `/${activeWorkspace.slug}/${sanitizedName}--pf-${workflow.id}/edit`;
+          router.push(editUrl);
+        }
       }
     } catch (error) {
       console.error('Error creating workflow:', error);
@@ -405,6 +411,9 @@ export default function Page() {
     id: number,
     name: string,
     description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     folder?: Folder | null,
     icon?: string | null,
     signedIcon?: string | null
@@ -416,6 +425,9 @@ export default function Page() {
       const result = await updateWorkflow(id, {
         name,
         description,
+        process_owner,
+        review_date,
+        additional_notes,
         folder_id: folder?.id,
         icon: icon ?? undefined,
         signedIconUrl: signedIcon ?? undefined,
@@ -1395,24 +1407,26 @@ export default function Page() {
                       onClick={handleUserInfoClick}
                     >
                       <UserInfo user={user} isActive={dropdownVisible} />
-                      {dropdownVisible && (
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setDropdownVisible(false)}
-                        >
+                      <AnimatePresence>
+                        {dropdownVisible && (
                           <div
-                            className="absolute top-[68px] right-3.5"
-                            onClick={(e) => e.stopPropagation()}
+                            className="fixed inset-0 z-10"
+                            onClick={() => setDropdownVisible(false)}
                           >
-                            <UserDropdown
-                              user={user}
-                              onOpenUserSettings={openUserSettings}
-                              onOpenHelpCenter={openHelpCenter}
-                              onClose={() => setDropdownVisible(false)}
-                            />
+                            <div
+                              className="absolute top-[68px] right-3.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <UserDropdown
+                                user={user}
+                                onOpenUserSettings={openUserSettings}
+                                onOpenHelpCenter={openHelpCenter}
+                                onClose={() => setDropdownVisible(false)}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -1447,6 +1461,7 @@ export default function Page() {
                       onDuplicateWorkflow={handleDuplicateWorkflow}
                       onMoveWorkflow={openMoveFlow}
                       currentView={currentView}
+                      isLoading={isLoading}
                       onViewChange={setCurrentView}
                       onStatusChange={handleStatusChange}
                     />
@@ -1461,7 +1476,7 @@ export default function Page() {
       {/* Modals */}
       {user && userSettingsVisible && (
         <div className="fixed inset-0 z-20 flex items-center justify-center">
-          <UserSettingsDynamic
+          <UserSettings
             user={user}
             updateNewPassword={setNewPassword}
             passwordChanged={passwordChanged}
@@ -1565,7 +1580,7 @@ export default function Page() {
             </div>
           }
         >
-          <HelpCenterModalDynamic
+          <HelpCenterModal
             onClose={closeHelpCenter}
             user={user}
             setShowTutorial={setShowTutorial}
@@ -1615,7 +1630,12 @@ export default function Page() {
             handleEditWorkflow(
               selectedWorkflow.id,
               selectedWorkflow.name,
-              selectedWorkflow.description,
+              selectedWorkflow.description ||
+                selectedWorkflow.description ||
+                '',
+              selectedWorkflow.process_owner || '',
+              selectedWorkflow.review_date || '',
+              selectedWorkflow.additional_notes || '',
               folder,
               selectedWorkflow.icon
             )

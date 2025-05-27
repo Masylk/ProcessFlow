@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const body = await req.json();
     const { name, workflow_id } = body;
@@ -14,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the path
-    const path = await prisma.path.create({
+    const path = await prisma_client.path.create({
       data: {
         name,
         workflow_id,
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create default blocks (BEGIN, STEP, END)
-    await prisma.block.createMany({
+    await prisma_client.block.createMany({
       data: [
         {
           type: 'BEGIN',
@@ -52,7 +55,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Return the path with its blocks
-    const pathWithBlocks = await prisma.path.findUnique({
+    const pathWithBlocks = await prisma_client.path.findUnique({
       where: { id: path.id },
       include: {
         blocks: {
@@ -70,10 +73,15 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to create path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const body = await req.json();
     const { id, name } = body;
@@ -85,7 +93,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const updatedPath = await prisma.path.update({
+    const updatedPath = await prisma_client.path.update({
       where: { id },
       data: { name },
       include: {
@@ -109,5 +117,9 @@ export async function PATCH(req: NextRequest) {
       { error: 'Failed to update path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

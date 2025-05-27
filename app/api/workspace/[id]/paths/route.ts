@@ -1,9 +1,10 @@
 // app/api/workspace/[id]/paths/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { BlockEndType } from '@/types/block';
 import { createSignedUrls } from '@/utils/createSignedUrls';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -108,7 +109,8 @@ export async function GET(
   }
 
   try {
-    const result = await prisma.$transaction(async (prisma: Prisma.TransactionClient) => {
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    const result = await prisma_client.$transaction(async (prisma: Prisma.TransactionClient) => {
       const parsedworkflow_id = parseInt(workflow_id, 10);
 
       // Fetch paths for the given workflow_id
@@ -316,5 +318,7 @@ export async function GET(
       { error: 'Failed to fetch or create paths' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma.$disconnect();
   }
 }

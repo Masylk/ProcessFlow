@@ -4,8 +4,11 @@ import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { subscriptionRateLimiter } from '@/lib/rateLimit';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Apply rate limiting
     const rateLimitResponse = await subscriptionRateLimiter(req);
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     // Find workspace and subscription
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(workspaceId) },
       include: { subscription: true }
     });
@@ -93,7 +96,7 @@ export async function POST(req: Request) {
       const changeType = isUpgrade ? 'upgraded' : 'switched';
 
       // Update the subscription record in our database
-      await prisma.subscription.update({
+      await prisma_client.subscription.update({
         where: { id: workspace.subscription.id },
         data: {
           // Update the current period end based on Stripe's response
@@ -115,6 +118,10 @@ export async function POST(req: Request) {
         { error: 'Failed to update subscription', details: stripeError.message },
         { status: 500 }
       );
+    } finally {
+      if (isVercel()) {
+        await prisma_client.$disconnect();
+      }
     }
   } catch (error: any) {
     console.error('Subscription update error:', error);

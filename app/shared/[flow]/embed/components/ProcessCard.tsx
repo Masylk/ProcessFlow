@@ -9,36 +9,87 @@ interface Integration {
   icon?: string;
 }
 
-interface Author {
+interface Owner {
   name: string;
-  avatar: string;
+  avatar?: string;
 }
 
 interface ProcessCardProps {
   icon: string;
   workflow: {
     name: string;
-    description?: string;
+    description?: string; // "Why does this Flow exist?"
   };
   integrations: Integration[];
-  author?: Author;
-  lastUpdate: string;
+  owner?: Owner; // Flow owner
+  review_date?: string; // Review Date
+  additionalNotes?: string; // Additional notes
+  lastUpdate?: string; // Keep for backwards compatibility
 }
 
 export default function ProcessCard({
   icon,
   workflow,
   integrations,
-  author,
+  owner,
+  review_date,
+  additionalNotes,
   lastUpdate,
 }: ProcessCardProps) {
   const colors = useColors();
   const [showPopover, setShowPopover] = useState(false);
   const popoverTimerRef = useRef<NodeJS.Timeout>();
+  const [windowHeight, setWindowHeight] = useState<number>(0);
+  const [shouldCenter, setShouldCenter] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const additionalNotesRef = useRef<HTMLDivElement>(null);
 
   const visibleIntegrations = integrations.slice(0, 5);
   const hiddenIntegrations = integrations.slice(5);
   const hasHiddenIntegrations = integrations.length > 5;
+
+  // Update window dimensions
+  useEffect(() => {
+    const updateWindowDimensions = () => {
+      setWindowHeight(window.innerHeight);
+    };
+
+    // Initialize
+    updateWindowDimensions();
+
+    // Add event listener
+    window.addEventListener('resize', updateWindowDimensions);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', updateWindowDimensions);
+    };
+  }, []);
+
+  // Check if content should be centered based on height
+  useEffect(() => {
+    const checkContentHeight = () => {
+      let totalContentHeight = 0;
+
+      if (descriptionRef.current) {
+        totalContentHeight += descriptionRef.current.offsetHeight;
+      }
+
+      if (additionalNotesRef.current) {
+        totalContentHeight += additionalNotesRef.current.offsetHeight;
+      }
+
+      const halfWindowHeight = windowHeight * 0.5;
+      setShouldCenter(
+        totalContentHeight < halfWindowHeight && windowHeight > 0
+      );
+    };
+
+    // Use setTimeout to ensure DOM has been updated
+    const timeoutId = setTimeout(checkContentHeight, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [workflow.description, additionalNotes, windowHeight]);
 
   const handleMouseEnter = () => {
     if (popoverTimerRef.current) {
@@ -90,7 +141,12 @@ export default function ProcessCard({
       style={{
         borderColor: colors['border-secondary'],
       }}
-      className="h-full w-full flex items-center justify-center"
+      className={cn(
+        'h-full w-full',
+        shouldCenter
+          ? 'flex items-center justify-center'
+          : 'flex justify-center'
+      )}
     >
       <div className="flex gap-4 flex-row items-start max-w-3xl">
         {/* Large Icon */}
@@ -118,12 +174,21 @@ export default function ProcessCard({
               {workflow.name}
             </h3>
             {workflow.description && (
-              <p
-                style={{ color: colors['text-quaternary'] }}
-                className="max-w-2xl font-normaltext-sm"
-              >
-                {workflow.description}
-              </p>
+              <div className="max-w-2xl break-words">
+                <p
+                  style={{ color: colors['text-secondary'] }}
+                  className="text-sm font-medium mb-1"
+                >
+                  Why does this Flow exist?
+                </p>
+                <p
+                  ref={descriptionRef}
+                  style={{ color: colors['text-quaternary'] }}
+                  className="font-normal text-sm"
+                >
+                  {workflow.description}
+                </p>
+              </div>
             )}
           </div>
 
@@ -175,30 +240,76 @@ export default function ProcessCard({
 
           {/* Footer */}
           <div className="flex items-center gap-4 flex-row">
-            {author && (
+            {owner && (
+              <>
+                <div className="flex items-center gap-2">
+                  {owner.avatar && (
+                    <img
+                      src={owner.avatar}
+                      alt={owner.name}
+                      className="rounded-full w-8 h-8"
+                    />
+                  )}
+                  <span
+                    style={{ color: colors['text-secondary'] }}
+                    className="font-medium text-sm"
+                  >
+                    {owner.name}
+                  </span>
+                </div>
+                {(review_date || lastUpdate) && (
+                  <div
+                    style={{ color: colors['text-tertiary'] }}
+                    className="w-1 h-1 rounded-full bg-current"
+                  />
+                )}
+              </>
+            )}
+            {review_date && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span
+                    style={{ color: colors['text-tertiary'] }}
+                    className="text-sm"
+                  >
+                    Review date: {review_date}
+                  </span>
+                </div>
+                {lastUpdate && (
+                  <div
+                    style={{ color: colors['text-tertiary'] }}
+                    className="w-1 h-1 rounded-full bg-current"
+                  />
+                )}
+              </>
+            )}
+            {lastUpdate && (
               <div className="flex items-center gap-2">
-                <img
-                  src={`${author.avatar}`}
-                  alt={author.name}
-                  className="rounded-full w-8 h-8"
-                />
                 <span
-                  style={{ color: colors['text-secondary'] }}
-                  className="font-medium text-sm"
+                  style={{ color: colors['text-tertiary'] }}
+                  className="text-sm"
                 >
-                  {author.name}
+                  Last update: {lastUpdate}
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span
-                style={{ color: colors['text-tertiary'] }}
-                className="text-sm"
-              >
-                Last update: {lastUpdate}
-              </span>
-            </div>
           </div>
+
+          {/* Additional Notes */}
+          {additionalNotes && (
+            <div className="mt-2">
+              <p
+                ref={additionalNotesRef}
+                style={{ color: colors['text-quaternary'] }}
+                className="text-sm italic"
+              >
+                <span className="font-medium not-italic">
+                  Additional notes:
+                </span>{' '}
+                {additionalNotes}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

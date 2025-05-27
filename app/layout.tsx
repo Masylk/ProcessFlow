@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { PostHogProvider } from './providers';
-import { ThemeProvider } from './context/ThemeContext';
+import { FastThemeProvider } from './context/FastThemeContext';
 import AuthCheck from './components/AuthCheck';
 import { Toaster } from 'sonner';
 import { BodyClassProvider } from './BodyClassProvider';
@@ -65,12 +65,12 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
       </head>
       <BodyClassProvider>
-        <ThemeProvider>
+        <FastThemeProvider>
           <PostHogProvider>
             <AuthCheck>{children}</AuthCheck>
             <Toaster />
           </PostHogProvider>
-        </ThemeProvider>
+        </FastThemeProvider>
 
         {/* External Scripts - Load after interactive */}
         <Script

@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import * as Sentry from '@sentry/nextjs';
 
 /**
@@ -8,6 +10,8 @@ import * as Sentry from '@sentry/nextjs';
  * This is a fallback mechanism for situations where users get stuck in the onboarding flow
  */
 export async function POST(request: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Check authentication
     const supabase = await createClient();
@@ -18,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Check if the user exists in the database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
 
@@ -36,7 +40,7 @@ export async function POST(request: Request) {
     // If no active workspace is set, find one from user-workspace relationships
     if (!activeWorkspaceId) {
       // Query for workspaces directly via the join table
-      const userWorkspaces = await prisma.user_workspace.findMany({
+      const userWorkspaces = await prisma_client.user_workspace.findMany({
         where: { user_id: dbUser.id },
         orderBy: { id: 'desc' },
         take: 1,
@@ -56,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     // Update the user record in the database
-    await prisma.user.update({
+    await prisma_client.user.update({
       where: { id: dbUser.id },
       data: {
         onboarding_step: 'COMPLETED',
@@ -91,5 +95,9 @@ export async function POST(request: Request) {
       { error: error instanceof Error ? error.message : 'Failed to force complete onboarding' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ThemeContextType, ThemeMode, ButtonTokens, InputTokens, BreadcrumbTokens, IconTokens } from '../theme/types';
 import { themeRegistry } from '../theme/registry';
 import { lightTheme } from '../theme/themes/light';
@@ -14,93 +14,124 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(undefine
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
-  const theme = themeRegistry.get(currentTheme);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const getCssVariable = (token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens)): string => {
+  // Apply CSS variables directly to document root (much faster than inline styles)
+  const applyThemeVariables = useCallback((theme: ThemeMode) => {
+    const themeData = themeRegistry.get(theme);
+    const root = document.documentElement;
+    
+    // Apply variables in batch for better performance
+    Object.entries(themeData.tokens.colors).forEach(([key, value]) => {
+      root.style.setProperty(`--${key}`, value);
+    });
+  }, []);
+
+  const getCssVariable = useCallback((token: keyof (ButtonTokens & InputTokens & BreadcrumbTokens & IconTokens)): string => {
     return `var(--${token})`;
-  };
-
-  // Pre-compute CSS variables for both themes
-  const lightThemeVars = useMemo(() => {
-    const lightTheme = themeRegistry.get('light');
-    return Object.entries(lightTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    }, {});
   }, []);
 
-  const darkThemeVars = useMemo(() => {
-    const darkTheme = themeRegistry.get('dark');
-    return Object.entries(darkTheme.tokens.colors).reduce<Record<string, string>>((acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    }, {});
-  }, []);
-
-  // Combine both theme variables
-  const cssVariables = useMemo(() => {
-    return currentTheme === 'light' ? lightThemeVars : darkThemeVars;
-  }, [currentTheme, lightThemeVars, darkThemeVars]);
+  const setTheme = useCallback((mode: ThemeMode) => {
+    if (themeRegistry.exists(mode)) {
+      // Temporarily disable transitions for instant switching
+      const root = document.documentElement;
+      root.style.setProperty('--theme-transition-duration', '0ms');
+      
+      setCurrentTheme(mode);
+      applyThemeVariables(mode);
+      localStorage.setItem('theme-mode', mode);
+      
+      // Re-enable transitions after DOM updates
+      requestAnimationFrame(() => {
+        root.style.setProperty('--theme-transition-duration', '150ms');
+      });
+    }
+  }, [applyThemeVariables]);
 
   useEffect(() => {
-    // Check system preference
+    // Check system preference and saved theme
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme-mode') as ThemeMode;
     
-    // Use saved theme if it exists, otherwise use system preference
+    let initialTheme: ThemeMode = 'light';
     if (savedTheme && themeRegistry.exists(savedTheme)) {
-      setCurrentTheme(savedTheme);
+      initialTheme = savedTheme;
     } else if (systemPrefersDark) {
-      setCurrentTheme('dark');
+      initialTheme = 'dark';
     }
+    
+    setCurrentTheme(initialTheme);
+    applyThemeVariables(initialTheme);
 
-    // Add transition styles to head
+    // Add optimized transition styles
     const style = document.createElement('style');
+    style.id = 'theme-transitions';
     style.textContent = `
       :root {
-        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+        --theme-transition-duration: 150ms;
       }
       
-      * {
-        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      /* Only transition essential elements for better performance */
+      body,
+      .theme-transition,
+      [data-theme-transition="true"] {
+        transition: 
+          background-color var(--theme-transition-duration) ease,
+          color var(--theme-transition-duration) ease,
+          border-color var(--theme-transition-duration) ease;
       }
       
-      /* Make icon transitions instant */
-      svg, svg path, svg circle, svg rect, svg line, svg polygon, svg *, 
+      /* Exclude performance-sensitive elements */
+      svg, svg *,
+      canvas,
+      video,
+      [data-no-transition="true"],
+      .no-transition {
+        transition: none !important;
+      }
+      
+      /* Optimize icon transitions */
       [class*="icon"], [class*="Icon"] {
-        transition: fill 0s, stroke 0s, color 0.05s ease !important;
+        transition: color 50ms ease !important;
       }
     `;
+    
+    // Remove existing style if it exists
+    const existingStyle = document.getElementById('theme-transitions');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
     document.head.appendChild(style);
+    setIsInitialized(true);
 
     return () => {
-      document.head.removeChild(style);
+      const styleElement = document.getElementById('theme-transitions');
+      if (styleElement) {
+        styleElement.remove();
+      }
     };
-  }, []);
+  }, [applyThemeVariables]);
 
   useEffect(() => {
-    // Update document class
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(currentTheme);
-  }, [currentTheme]);
+    if (!isInitialized) return;
+    
+    // Update document class for CSS-based theming
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(currentTheme);
+  }, [currentTheme, isInitialized]);
 
   const value: ThemeContextType = {
     currentTheme,
     themes: themeRegistry.getAllThemes(),
-    setTheme: (mode: ThemeMode) => {
-      if (themeRegistry.exists(mode)) {
-        setCurrentTheme(mode);
-        localStorage.setItem('theme-mode', mode);
-      }
-    },
+    setTheme,
     getCssVariable,
   };
 
   return (
     <ThemeContext.Provider value={value}>
-      <div style={cssVariables as React.CSSProperties}>
-        {children}
-      </div>
+      {children}
     </ThemeContext.Provider>
   );
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -68,6 +70,8 @@ import { Prisma } from '@prisma/client';
  */
 
 export async function POST(req: NextRequest) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const id = req.nextUrl.pathname.split('/')[3];
     const blockId = parseInt(id);
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     
     // Get the original block
-    const originalBlock = await prisma.block.findUnique({
+    const originalBlock = await prisma_client.block.findUnique({
       where: { id: blockId },
       select: {
         id: true,
@@ -131,7 +135,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update positions of blocks after the target position
-    await prisma.block.updateMany({
+    await prisma_client.block.updateMany({
       where: {
         path_id: targetPathId,
         position: {
@@ -146,7 +150,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create the duplicate block
-    const duplicatedBlock = await prisma.block.create({
+    const duplicatedBlock = await prisma_client.block.create({
       data: {
         type: originalBlock.type,
         position: targetPosition,
@@ -197,5 +201,9 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to duplicate block' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

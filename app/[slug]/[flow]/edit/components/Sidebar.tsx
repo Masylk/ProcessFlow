@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useReactFlow } from '@xyflow/react';
 import { Block, Path } from '../../types';
 import { PathContainer } from './PathContainer';
@@ -140,7 +141,7 @@ const SidebarBlockRow: React.FC<SidebarBlockRowProps> = ({
   return (
     <div
       key={block.id}
-      className="w-full cursor-pointer transition-all duration-200"
+      className="w-full cursor-pointer transition-all duration-200 hover:scale-[1.02]"
       style={{
         backgroundColor: isSelected
           ? colors['brand-utility-600']
@@ -887,7 +888,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
             return (
               <div
                 key={block.id}
-                className="w-full cursor-pointer transition-all duration-200"
+                className="w-full cursor-pointer transition-all duration-200 hover:scale-[1.02]"
                 style={{
                   backgroundColor: isBlockSelected(block.id)
                     ? colors['brand-utility-600']
@@ -1236,7 +1237,7 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
         {isSidebarVisible && (
           <div
             ref={sidebarRef}
-            className="flex-1 flex flex-col relative border-r"
+            className="flex-1 flex flex-col relative border-r transform transition-all duration-300 ease-out animate-in slide-in-from-left-0"
             style={{
               width: sidebarWidth,
               minWidth: '250px',
@@ -1306,21 +1307,28 @@ export function Sidebar({ workspaceId, workflowId }: SidebarProps) {
       </div>
 
       {/* Help Center Modal */}
-      {showHelpModal && (
-        <div className="fixed inset-0 z-[9999]">
+      {showHelpModal && createPortal(
+        <div className="fixed inset-0 z-[10000]">
           <HelpCenterModal onClose={toggleHelpModal} user={mockUser as User} />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Documentation Modal */}
-      {showDocModal && (
-        <div className="fixed inset-0 z-[9999]">
+      {showDocModal && createPortal(
+        <div className="fixed inset-0 z-[10000]">
           <DocumentationModal onClose={toggleDocModal} />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Settings Modal */}
-      {isSettingsModalOpen && <SettingsModal onClose={toggleSettingsModal} />}
+      {isSettingsModalOpen && createPortal(
+        <div className="fixed inset-0 z-[10000]">
+          <SettingsModal onClose={toggleSettingsModal} />
+        </div>,
+        document.body
+      )}
     </>
   );
 }

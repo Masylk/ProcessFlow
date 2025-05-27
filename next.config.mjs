@@ -17,6 +17,25 @@ const nextConfig = {
   publicRuntimeConfig: {
     isStaging: process.env.NODE_ENV !== 'production',
   },
+  // Image optimization for better icon loading performance
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.brandfetch.io',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 86400, // Cache images for 24 hours
+  },
   compiler: {
     styledComponents: true,
   },

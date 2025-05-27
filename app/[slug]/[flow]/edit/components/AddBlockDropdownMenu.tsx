@@ -6,6 +6,7 @@ import { useClipboardStore } from '../store/clipboardStore';
 import { useModalStore } from '../store/modalStore';
 import { useColors } from '@/app/theme/hooks';
 import DelayTypeModal from './modals/DelayTypeModal';
+import { motion } from 'framer-motion';
 
 interface AddBlockDropdownMenuProps {
   dropdownDatas: DropdownDatas;
@@ -222,15 +223,21 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
       {!showDelayTypeModal && (
         <>
           <div className="fixed inset-0" onClick={onClose} />
-          <div
-            className="absolute shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)] rounded-lg border z-50 py-1 flex flex-col overflow-hidden cursor-pointer"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ 
+              duration: 0.15, 
+              ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+            }}
+            className="absolute shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)] rounded-lg border z-[9999] py-1 flex flex-col overflow-hidden cursor-pointer"
             style={{
               top: dropdownDatas.y,
               left: dropdownDatas.x,
               transform: 'translate(-50%, -100%)',
               backgroundColor: colors['bg-secondary'],
               borderColor: colors['border-primary'],
-              zIndex: 99999999,
             }}
           >
             <div className="py-1">
@@ -258,7 +265,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                         '--hover-bg': colors['bg-quaternary'],
                       } as React.CSSProperties
                     }
-                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
                   >
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
@@ -340,7 +347,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                         '--hover-bg': colors['bg-quaternary'],
                       } as React.CSSProperties
                     }
-                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
                   >
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
@@ -372,7 +379,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                         '--hover-bg': colors['bg-quaternary'],
                       } as React.CSSProperties
                     }
-                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-200 overflow-hidden"
                   >
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
@@ -393,7 +400,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </>

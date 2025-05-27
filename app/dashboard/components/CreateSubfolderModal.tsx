@@ -75,7 +75,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex flex-col items-start gap-1">
+        <div className="flex flex-row items-center gap-3">
           <div
             className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
             style={{
@@ -89,33 +89,35 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
               className="w-12 h-12"
             />
           </div>
-          <h2
-            className="text-lg font-semibold"
-            style={{ color: colors['text-primary'] }}
-          >
-            Create a Subfolder
-          </h2>
-          <div
-            className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0"
-            style={{ color: colors['text-secondary'] }}
-          >
-            Add a subfolder to
-            {parent.icon_url ? (
-              <img
-                src={
-                  parent.icon_url.startsWith('https://cdn.brandfetch.io/')
-                    ? parent.icon_url
-                    : parent.signedIconUrl
-                      ? parent.signedIconUrl
-                      : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-                }
-                alt="icon"
-                className="w-4 h-4 inline-block ml-1"
-              />
-            ) : (
-              <span className="ml-1">{parent.emote || ''}</span>
-            )}
-            <span className="ml-0.5">{parent.name}</span>
+          <div className="flex flex-col">
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: colors['text-primary'] }}
+            >
+              Create a Subfolder
+            </h2>
+            <div
+              className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0"
+              style={{ color: colors['text-secondary'] }}
+            >
+              Add a subfolder to
+              {parent.icon_url ? (
+                <img
+                  src={
+                    parent.icon_url.startsWith('https://cdn.brandfetch.io/')
+                      ? parent.icon_url
+                      : parent.signedIconUrl
+                        ? parent.signedIconUrl
+                        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+                  }
+                  alt="icon"
+                  className="w-4 h-4 inline-block ml-1"
+                />
+              ) : (
+                <span className="ml-1">{parent.emote || ''}</span>
+              )}
+              <span className="ml-0.5">{parent.name}</span>
+            </div>
           </div>
         </div>
 

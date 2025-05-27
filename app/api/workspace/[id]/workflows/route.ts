@@ -1,6 +1,8 @@
 // app/api/workspace/[id]/workflows/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -63,10 +65,15 @@ import prisma from '@/lib/prisma';
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const workspace_id = parseInt(params.id);
-  const workflows = await prisma.workflow.findMany({
-    where: {
-      workspace_id,
-    },
-  });
-  return NextResponse.json(workflows);
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  try {
+    const workflows = await prisma_client.workflow.findMany({
+      where: {
+        workspace_id,
+      },
+    });
+    return NextResponse.json(workflows);
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
+  }
 }

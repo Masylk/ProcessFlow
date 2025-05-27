@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { sendReactEmail } from '@/lib/email';
 import SubscriptionActivatedEmail from '@/emails/templates/SubscriptionActivatedEmail';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -46,6 +48,8 @@ import prisma from '@/lib/prisma';
  *         description: Internal server error
  */
 export async function POST(req: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const { userId, workspaceId } = await req.json();
 
@@ -57,7 +61,7 @@ export async function POST(req: Request) {
     }
 
     // Get user information
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: { id: userId },
     });
 
@@ -69,7 +73,7 @@ export async function POST(req: Request) {
     }
 
     // Get workspace and subscription information
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       include: { subscription: true },
     });
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
     }
 
     // Check if we already have a scheduled email for this user and type
-    const existingEmail = await prisma.scheduled_email.findFirst({
+    const existingEmail = await prisma_client.scheduled_email.findFirst({
       where: {
         user_id: userId,
         email_type: 'SUBSCRIPTION_ACTIVATED',
@@ -118,7 +122,7 @@ export async function POST(req: Request) {
 
     if (emailResult.success) {
       // Record the email as sent in the scheduled_email table
-      await prisma.scheduled_email.create({
+      await prisma_client.scheduled_email.create({
         data: {
           user_id: userId,
           email_type: 'SUBSCRIPTION_ACTIVATED',
@@ -149,5 +153,9 @@ export async function POST(req: Request) {
       { error: 'Internal Server Error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

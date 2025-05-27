@@ -4,6 +4,8 @@ import { stripe, mapStripeStatusToDbStatus } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
 import { webhookRateLimiter } from '@/lib/rateLimit';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 // Validate webhook secret is configured
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -17,7 +19,7 @@ interface CustomerMetadata {
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Get the customer to find the workspace
     const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
@@ -33,7 +35,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     }) as Stripe.Customer;
 
     // Start a transaction to ensure data consistency
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       // Create subscription record
       const sub = await tx.subscription.create({
         data: {
@@ -94,7 +96,16 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
     return result;
   } catch (error) {
-    throw error;
+    return NextResponse.json(
+      { 
+        received: true, 
+        success: false,
+        error: 'Webhook processing error'
+      },
+      { status: 200 }
+    );
+  } finally {
+    if (isVercel()) await prisma.$disconnect();
   }
 }
 
@@ -351,5 +362,7 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+  } finally {
+    if (isVercel()) await prisma.$disconnect();
   }
 } 

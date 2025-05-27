@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function DELETE(req: NextRequest) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Extract ID from the URL path
     const id = req.nextUrl.pathname.split('/').slice(-2)[0];
@@ -16,7 +20,7 @@ export async function DELETE(req: NextRequest) {
     const blockId = parseInt(id);
 
     // Get both current image and original image paths
-    const block = await prisma.block.findUnique({
+    const block = await prisma_client.block.findUnique({
       where: { id: blockId },
       select: { 
         image: true,
@@ -48,7 +52,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Update the block to remove both image references
-    const updatedBlock = await prisma.block.update({
+    const updatedBlock = await prisma_client.block.update({
       where: { id: blockId },
       data: { 
         image: null,
@@ -63,5 +67,9 @@ export async function DELETE(req: NextRequest) {
       { error: 'Failed to delete images' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

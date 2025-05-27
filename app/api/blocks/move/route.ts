@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { BlockEndType, BlockType } from '@/types/block';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface MoveBlocksRequest {
   block_ids: number[];
@@ -64,6 +66,8 @@ interface MoveBlocksRequest {
  */
 
 export async function POST(req: NextRequest) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const body: MoveBlocksRequest = await req.json();
     const { block_ids, destination_path_id } = body;
@@ -77,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use transaction to ensure all operations succeed or none do
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       // Get destination path blocks to find END block and current positions
       const destinationBlocks = await tx.block.findMany({
         where: { path_id: destination_path_id },
@@ -181,5 +185,9 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to move blocks' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

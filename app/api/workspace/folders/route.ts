@@ -1,6 +1,8 @@
 // app/api/workspace/folders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
@@ -68,6 +70,7 @@ import { checkFolderName } from '@/app/utils/checkNames';
  *                   example: "Failed to add folder"
  */
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const { name, workspace_id, icon_url, emote, position } = await req.json();
 
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create a new folder with no parent (top-level)
-    const newFolder = await prisma.folder.create({
+    const newFolder = await prisma_client.folder.create({
       data: {
         name,
         workspace_id: Number(workspace_id),
@@ -99,5 +102,7 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to add folder' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

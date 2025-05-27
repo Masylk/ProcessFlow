@@ -1,6 +1,8 @@
 // app/api/workspace/folders/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { checkFolderName } from '@/app/utils/checkNames';
 
 /**
@@ -190,11 +192,12 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   const params = await props.params;
   const folderId = Number(params.id);
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const { name, icon_url, emote, parent_id } = await req.json();
 
     // Check if folder exists
-    const existingFolder = await prisma.folder.findUnique({
+    const existingFolder = await prisma_client.folder.findUnique({
       where: { id: folderId },
     });
 
@@ -222,7 +225,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     };
 
     // Update folder
-    const updatedFolder = await prisma.folder.update({
+    const updatedFolder = await prisma_client.folder.update({
       where: { id: folderId },
       data: updateData,
     });
@@ -234,5 +237,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

@@ -1,6 +1,8 @@
 // app/api/workspace/[user_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { createSignedIconUrlsForWorkspaces } from '@/utils/createSignedUrls';
 
 /**
@@ -81,10 +83,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
   const params = await props.params;
   const userId = parseInt(params.user_id); // Use the user_id from the URL
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+
   try {
     // Fetch user's workspaces with all necessary relations
     console.time('prisma.user_workspace.findMany');
-    const userWorkspaces = await prisma.user_workspace.findMany({
+    const userWorkspaces = await prisma_client.user_workspace.findMany({
       where: {
         user_id: userId,
       },
@@ -122,7 +126,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
 
       // Create the default workspace and include folders (which will be empty)
       console.time('prisma.workspace.create');
-      const newWorkspace = await prisma.workspace.create({
+      const newWorkspace = await prisma_client.workspace.create({
         data: {
           name: 'My Workspace',
           background_colour: defaultBackgroundColor,
@@ -158,7 +162,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
 
       // Mettre à jour l'active_workspace_id de l'utilisateur
       console.time('prisma.user.update');
-      await prisma.user.update({
+      await prisma_client.user.update({
         where: { id: userId },
         data: {
           active_workspace_id: newWorkspace.id,
@@ -178,5 +182,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
       { error: 'Internal Server Error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

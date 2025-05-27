@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
 import { subscriptionRateLimiter } from '@/lib/rateLimit';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface UserWorkspace {
   user: {
@@ -25,6 +27,7 @@ interface WorkspaceWithDetails {
 }
 
 export async function POST(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Apply rate limiting
     const rateLimitResponse = await subscriptionRateLimiter(req);
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
     }
 
     // Find workspace by ID or slug
-    const workspace = await prisma.workspace.findFirst({
+    const workspace = await prisma_client.workspace.findFirst({
       where: workspaceId ? { id: workspaceId } : { slug: workspaceSlug },
       include: { user_workspaces: true },
     });
@@ -81,7 +84,7 @@ export async function POST(req: Request) {
         customerId = customer.id;
 
         // Update workspace with Stripe customer ID
-        await prisma.workspace.update({
+        await prisma_client.workspace.update({
           where: { id: workspace.id },
           data: { stripe_customer_id: customerId },
         });
@@ -130,10 +133,15 @@ export async function POST(req: Request) {
       { error: 'Error creating subscription', details: error.message },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
 export async function GET(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();
@@ -151,7 +159,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Workspace ID required' }, { status: 400 });
     }
 
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(workspaceId) },
       include: {
         subscription: true,
@@ -240,5 +248,9 @@ export async function GET(req: Request) {
       { error: 'Error fetching subscription status' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

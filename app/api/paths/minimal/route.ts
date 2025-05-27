@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { BlockEndType } from '@/types/block';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 interface CreateMinimalPathRequest {
   name: string;
@@ -9,6 +11,7 @@ interface CreateMinimalPathRequest {
 }
 
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     const body: CreateMinimalPathRequest = await req.json();
     const { name, workflow_id } = body;
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use transaction to ensure all operations succeed or none do
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       // Create new path
       const newPath = await tx.path.create({
         data: {
@@ -93,6 +96,10 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to create path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 

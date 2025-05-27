@@ -15,13 +15,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Handle reset to defaults
   const handleResetToDefaults = () => {
-    setTheme('light' as ThemeMode);
+    setTheme('light');
     useStrokeLinesStore.getState().setAllStrokeLinesVisible(true);
   };
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 z-[9999]"
+      className="flex items-center justify-center p-8 h-full w-full"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -42,25 +42,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
-        <button
+        <ButtonNormal
+          variant="tertiary"
+          iconOnly
+          size="small"
+          className="absolute top-4 right-4"
           onClick={onClose}
-          className="absolute top-4 right-4 p-4 rounded-md transition duration-300"
-          style={{ 
-            '--hover-bg': colors['bg-quaternary'],
-          } as React.CSSProperties}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors['bg-quaternary'];
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
-            alt="Close"
-            className="w-6 h-6"
-          />
-        </button>
+          leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/x-close-icon.svg`}
+        />
 
         {/* Modal header */}
         <div className="px-6 py-6 border-b"
@@ -95,7 +84,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               {/* Light Theme Option */}
               <div 
                 className="relative cursor-pointer group"
-                onClick={() => setTheme('light' as ThemeMode)}
+                onClick={() => setTheme('light')}
               >
                 <div 
                   style={{ 
@@ -145,7 +134,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               {/* Dark Theme Option */}
               <div 
                 className="relative cursor-pointer group"
-                onClick={() => setTheme('dark' as ThemeMode)}
+                onClick={() => setTheme('dark')}
               >
                 <div 
                   style={{ 

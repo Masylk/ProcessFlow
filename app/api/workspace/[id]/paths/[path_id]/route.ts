@@ -1,6 +1,8 @@
 // app/api/workspace/[id]/paths/[path_id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import path according to your setup
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -121,6 +123,7 @@ export async function GET(
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
   const path_id = parseInt(params.path_id);
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
 
   // Validate inputs
   if (!workflow_id || isNaN(workspaceId) || isNaN(path_id)) {
@@ -141,7 +144,7 @@ export async function GET(
     }
 
     // Fetch blocks for the workflow
-    const blocks = await prisma.block.findMany({
+    const blocks = await prisma_client.block.findMany({
       where: { workflow_id: parsedworkflow_id },
       include: {
         child_paths: {
@@ -159,5 +162,7 @@ export async function GET(
       { error: 'Failed to fetch blocks' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

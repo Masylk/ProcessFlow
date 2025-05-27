@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import Tooltip from '@/app/components/Tooltip';
+import OptimizedIcon from '@/app/components/OptimizedIcon';
 import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
 
 const BRANDFETCH_TIMEOUT = 10000; // 10 seconds timeout
@@ -225,7 +226,7 @@ const IconSelector: React.FC<IconSelectorProps> = ({
 
   return (
     <div
-      className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden"
+      className="w-[502px] h-[328px] rounded-xl flex flex-col overflow-hidden shadow-lg"
       style={{
         backgroundColor: colors['bg-primary'],
         borderWidth: '1px',
@@ -374,15 +375,11 @@ const IconSelector: React.FC<IconSelectorProps> = ({
                     setHoveredIcon(null);
                   }}
                 >
-                  {app.signedUrl ? (
-                    <img
-                      src={app.signedUrl}
-                      alt={app.basicUrl}
-                      className="w-6 h-6 object-contain select-none pointer-events-none"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 bg-gray-100 rounded" />
-                  )}
+                  <OptimizedIcon
+                    src={app.signedUrl}
+                    alt={app.basicUrl}
+                    loading="eager"
+                  />
                   <Tooltip
                     text={hoveredIcon?.name || ''}
                     visible={
@@ -494,15 +491,11 @@ const IconSelector: React.FC<IconSelectorProps> = ({
                     setHoveredIcon(null);
                   }}
                 >
-                  {icon.signedUrl ? (
-                    <img
-                      src={icon.signedUrl}
-                      alt={icon.basicUrl}
-                      className="w-6 h-6 object-contain select-none pointer-events-none"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 bg-gray-100 rounded" />
-                  )}
+                  <OptimizedIcon
+                    src={icon.signedUrl}
+                    alt={icon.basicUrl}
+                    loading="eager"
+                  />
                   <Tooltip
                     text={hoveredIcon?.name || ''}
                     visible={

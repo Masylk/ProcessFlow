@@ -212,7 +212,7 @@ How to add :
 
 ### **End Block :**
 
-The **End Block** represents the final point of a process path. Unlike the Start block (which is automatically added to every workflow and cannot be deleted), End nodes are optional visual elements that help users clearly identify where specific paths terminate.
+The **End Block** represents the final point of a process path. Unlike the Start block (which is automatically added to every workflow and cannot be deleted), End blocks are optional visual elements that help users clearly identify where specific paths terminate.
 
 When to use:
 

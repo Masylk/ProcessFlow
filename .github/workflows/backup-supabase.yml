@@ -16,20 +16,26 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Login to Supabase
-        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Dump Supabase Database
+      - name: Parse DB credentials and dump database
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          supabase db dump --db-url "${{ secrets.SUPABASE_DB_URL }}" -f backup.sql
+          # Extract connection parameters
+          DB_USER=$(echo $DATABASE_URL | sed -n 's|.*://\([^:]*\):.*|\1|p')
+          DB_PASSWORD=$(echo $DATABASE_URL | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+          DB_HOST=$(echo $DATABASE_URL | sed -n 's|.*@\(.*\):[0-9]*\/.*|\1|p')
+          DB_NAME=$(echo $DATABASE_URL | sed -n 's|.*/\(.*\)$|\1|p')
+
+          export PGPASSWORD=$DB_PASSWORD
+
+          # Perform full pg_dump
+          pg_dump -h $DB_HOST -U $DB_USER -d $DB_NAME -F p -f backup.sql
 
       - name: Upload backup to GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-backup
+          name: supabase-full-backup
           path: backup.sql

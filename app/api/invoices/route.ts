@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { createClient } from '@/lib/supabaseServerClient';
 import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
   try {
     // Get user session using Supabase
     const cookieStore = cookies();
@@ -23,7 +27,7 @@ export async function GET(request: Request) {
     }
 
     // Check if user has access to workspace
-    const workspace = await prisma.workspace.findFirst({
+    const workspace = await prisma_client.workspace.findFirst({
       where: {
         id: parseInt(workspaceId),
         user_workspaces: {
@@ -74,5 +78,9 @@ export async function GET(request: Request) {
       { error: 'Failed to fetch invoices' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 
