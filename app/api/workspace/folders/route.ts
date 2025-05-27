@@ -71,6 +71,9 @@ import { checkFolderName } from '@/app/utils/checkNames';
  */
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, workspace_id, icon_url, emote, position } = await req.json();
 

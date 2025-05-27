@@ -67,8 +67,10 @@ import { isVercel } from '@/app/api/utils/isVercel';
  *                   example: "Internal Server Error: Error message"
  */
 export async function POST(req: NextRequest) {
-  // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await req.json();
 

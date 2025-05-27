@@ -89,6 +89,9 @@ export async function GET(
   props: { params: Promise<{ id: string; workflowId: string }> }
 ) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params;
     const workspace_id = parseInt(params.id);

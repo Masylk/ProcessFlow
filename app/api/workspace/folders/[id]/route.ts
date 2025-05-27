@@ -136,13 +136,16 @@ export async function DELETE(
 ) {
   const params = await props.params;
   const folderId = Number(params.id);
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Parse body for parent_id and workspace_id
     const { parent_id, workspace_id } = await req.json();
 
     // Check if folder exists
-    const folder = await prisma.folder.findUnique({
+    const folder = await prisma_client.folder.findUnique({
       where: { id: folderId },
     });
 
@@ -151,12 +154,12 @@ export async function DELETE(
     }
 
     // Delete folder
-    await prisma.folder.delete({
+    await prisma_client.folder.delete({
       where: { id: folderId },
     });
 
     // Update positions of siblings with higher position
-    await prisma.folder.updateMany({
+    await prisma_client.folder.updateMany({
       where: {
         workspace_id: Number(workspace_id),
         parent_id: parent_id === null ? null : Number(parent_id),
@@ -193,6 +196,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   const folderId = Number(params.id);
 
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, icon_url, emote, parent_id } = await req.json();
 

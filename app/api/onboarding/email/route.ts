@@ -66,13 +66,17 @@ async function scheduleEmail(
   emailType: EmailType,
   scheduledDate: Date
 ): Promise<EmailScheduleResponse> {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Here you would implement the actual email scheduling logic
     // This could involve creating a record in a database table for scheduled emails
     // that a cron job would pick up and process
     
     // Use upsert to handle duplicates gracefully
-    await prisma.scheduled_email.upsert({
+    await prisma_client.scheduled_email.upsert({
       where: {
         unique_pending_email_per_user_type: {
           user_id: userId,
@@ -204,6 +208,9 @@ async function updateExistingWorkspace(
   prisma_client: typeof prisma
 ) {
   try {
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
     const workspace = await prisma_client.workspace.update({
       where: { id: workspaceId },
       data: {
@@ -226,6 +233,9 @@ async function updateExistingWorkspace(
 export async function POST(request: Request) {
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

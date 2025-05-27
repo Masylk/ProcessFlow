@@ -9,6 +9,9 @@ import { cookies } from 'next/headers';
 export async function GET(request: Request) {
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get user session using Supabase
     const cookieStore = cookies();

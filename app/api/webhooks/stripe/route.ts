@@ -18,8 +18,7 @@ interface CustomerMetadata {
   workspaceId: string;
 }
 
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
-  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+async function handleSubscriptionCreated(subscription: Stripe.Subscription, prisma_client: PrismaClient) {
   try {
     // Get the customer to find the workspace
     const customer = await stripe.customers.retrieve(subscription.customer as string) as Stripe.Customer;
@@ -104,16 +103,13 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       },
       { status: 200 }
     );
-  } finally {
-    if (isVercel()) await prisma.$disconnect();
   }
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  // Map Stripe subscription status to our enum using the utility function
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription, prisma_client: PrismaClient) {
   const mappedStatus = mapStripeStatusToDbStatus(subscription.status);
   
-  await prisma.subscription.update({
+  await prisma_client.subscription.update({
     where: {
       stripe_subscription_id: subscription.id,
     },
@@ -127,8 +123,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   });
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  await prisma.subscription.update({
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, prisma_client: PrismaClient) {
+  await prisma_client.subscription.update({
     where: {
       stripe_subscription_id: subscription.id,
     },
@@ -139,10 +135,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   });
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
+async function handleInvoicePaid(invoice: Stripe.Invoice, prisma_client: PrismaClient) {
   if (!invoice.subscription) return;
 
-  const subscription = await prisma.subscription.findUnique({
+  const subscription = await prisma_client.subscription.findUnique({
     where: {
       stripe_subscription_id: invoice.subscription as string,
     },
@@ -150,7 +146,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   if (!subscription) return;
 
-  await prisma.billing.create({
+  await prisma_client.billing.create({
     data: {
       subscription_id: subscription.id,
       workspace_id: subscription.workspace_id,
@@ -166,13 +162,13 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   });
 }
 
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, prisma_client: PrismaClient) {
   // Remove console.error - implement actual error handling if needed
   // For now just return silently
   return;
 }
 
-async function handleCustomerUpdated(customer: Stripe.Customer) {
+async function handleCustomerUpdated(customer: Stripe.Customer, prisma_client: PrismaClient) {
 
   try {
     // Get the full customer details with expanded tax_ids
@@ -181,7 +177,7 @@ async function handleCustomerUpdated(customer: Stripe.Customer) {
     }) as Stripe.Customer;
 
     // Find the workspace associated with this customer
-    const workspace = await prisma.workspace.findFirst({
+    const workspace = await prisma_client.workspace.findFirst({
       where: { stripe_customer_id: customer.id },
     });
 
@@ -210,7 +206,7 @@ async function handleCustomerUpdated(customer: Stripe.Customer) {
     ].filter(Boolean).join('\n');
 
     // Update billing information
-    return await prisma.workspace_billing_infos.upsert({
+    return await prisma_client.workspace_billing_infos.upsert({
       where: {
         workspace_id: workspace.id,
       },
@@ -233,6 +229,10 @@ async function handleCustomerUpdated(customer: Stripe.Customer) {
 }
 
 export async function POST(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const rateLimitResponse = await webhookRateLimiter(req);
     if (rateLimitResponse) {
@@ -264,22 +264,22 @@ export async function POST(req: Request) {
     try {
       switch (event.type) {
         case 'customer.subscription.created':
-          await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+          await handleSubscriptionCreated(event.data.object as Stripe.Subscription, prisma_client);
           break;
         case 'customer.subscription.updated':
-          await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+          await handleSubscriptionUpdated(event.data.object as Stripe.Subscription, prisma_client);
           break;
         case 'customer.subscription.deleted':
-          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, prisma_client);
           break;
         case 'customer.updated':
-          await handleCustomerUpdated(event.data.object as Stripe.Customer);
+          await handleCustomerUpdated(event.data.object as Stripe.Customer, prisma_client);
           break;
         case 'invoice.paid':
-          await handleInvoicePaid(event.data.object as Stripe.Invoice);
+          await handleInvoicePaid(event.data.object as Stripe.Invoice, prisma_client);
           break;
         case 'invoice.payment_failed':
-          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, prisma_client);
           break;
       }
 
@@ -298,13 +298,13 @@ export async function POST(req: Request) {
         
         if (isEarlyAdopterPlan && subscription.status === 'active') {
           // Find the workspace with this subscription
-          const workspace = await prisma.workspace.findFirst({
+          const workspace = await prisma_client.workspace.findFirst({
             where: { stripe_customer_id: subscription.customer as string },
           });
           
           if (workspace) {
             // Find the active users for this workspace
-            const activeUsers = await prisma.user.findMany({
+            const activeUsers = await prisma_client.user.findMany({
               where: { active_workspace_id: workspace.id },
             });
             
@@ -363,6 +363,6 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } finally {
-    if (isVercel()) await prisma.$disconnect();
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

@@ -69,13 +69,16 @@ import { isVercel } from '@/app/api/utils/isVercel';
  *                   example: Failed to duplicate block
  */
 
-export async function POST(req: NextRequest) {
-  // Choose the correct Prisma client
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const blockId = Number(params.id);
+
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   try {
-    const id = req.nextUrl.pathname.split('/')[3];
-    const blockId = parseInt(id);
-    
     // Get position and path_id from request body if provided
     const body = await req.json().catch(() => ({}));
     

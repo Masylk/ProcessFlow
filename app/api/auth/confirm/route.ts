@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
 
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
-
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash,

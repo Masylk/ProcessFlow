@@ -101,6 +101,10 @@ export async function GET(
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   if (!workflow_id || isNaN(workspaceId)) {
     return NextResponse.json(
       { error: 'workflow_id and valid workspaceId are required' },
@@ -109,7 +113,6 @@ export async function GET(
   }
 
   try {
-    const prisma_client = isVercel() ? new PrismaClient() : prisma;
     const result = await prisma_client.$transaction(async (prisma: Prisma.TransactionClient) => {
       const parsedworkflow_id = parseInt(workflow_id, 10);
 
@@ -319,6 +322,6 @@ export async function GET(
       { status: 500 }
     );
   } finally {
-    if (isVercel()) await prisma.$disconnect();
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

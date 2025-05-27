@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma';
 import { SenderType } from '@/lib/email';
 import { generateRoadmapLinkForEmail } from '@/lib/roadmapAuth';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 type ScheduleEmailProps = {
   userId: number;
@@ -18,12 +20,16 @@ export async function scheduleEmail({
   scheduledFor,
   metadata = {},
 }: ScheduleEmailProps) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // If this is a FEATURE_UPDATE email, we need to generate a roadmap link
     if (emailType === 'FEATURE_UPDATE' && !metadata.roadmapLink) {
       try {
         // Get the user from the database
-        const user = await prisma.user.findUnique({
+        const user = await prisma_client.user.findUnique({
           where: { id: userId },
           select: {
             id: true,
@@ -54,7 +60,7 @@ export async function scheduleEmail({
       }
     }
 
-    const scheduledEmail = await prisma.scheduled_email.create({
+    const scheduledEmail = await prisma_client.scheduled_email.create({
       data: {
         user_id: userId,
         email_type: emailType,
@@ -68,6 +74,8 @@ export async function scheduleEmail({
   } catch (error) {
     console.error('Error scheduling email:', error);
     return { success: false, error };
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 

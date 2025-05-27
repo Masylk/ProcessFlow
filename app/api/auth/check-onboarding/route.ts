@@ -60,6 +60,9 @@ export async function GET(request: Request) {
 
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const userInfo = await prisma_client.user.findUnique({
       where: { auth_id: user.id },

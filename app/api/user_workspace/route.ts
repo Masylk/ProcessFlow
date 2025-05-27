@@ -140,7 +140,11 @@ import { isVercel } from '@/app/api/utils/isVercel';
  */
 export async function GET(req: NextRequest) {
   try {
-    const workspaces = await prisma.workspace.findMany({
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
+    const workspaces = await prisma_client.workspace.findMany({
       include: {
         user_workspaces: {
           include: {
@@ -161,6 +165,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, user_id } = await req.json();
 

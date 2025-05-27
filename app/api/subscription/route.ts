@@ -28,6 +28,9 @@ interface WorkspaceWithDetails {
 
 export async function POST(req: Request) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Apply rate limiting
     const rateLimitResponse = await subscriptionRateLimiter(req);
@@ -142,6 +145,9 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();

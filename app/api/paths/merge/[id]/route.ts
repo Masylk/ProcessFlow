@@ -13,6 +13,9 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params;
     const { id } = params;

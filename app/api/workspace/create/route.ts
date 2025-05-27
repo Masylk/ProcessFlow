@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
   }
 
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   try {
     // Check if the request is multipart/form-data or JSON

@@ -7,6 +7,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 export async function DELETE(req: NextRequest) {
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Extract ID from the URL path
     const id = req.nextUrl.pathname.split('/').slice(-2)[0];

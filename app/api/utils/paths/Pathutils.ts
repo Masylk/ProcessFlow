@@ -9,6 +9,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
  */
 export async function IsFirstPath(id: string | number): Promise<boolean> {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const path = await prisma_client.path.findUnique({
       where: { id: typeof id === 'string' ? parseInt(id, 10) : id },

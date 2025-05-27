@@ -9,6 +9,9 @@ export async function GET(
   props: { params: Promise<{ id: string }> } // Handle params as a Promise
 ) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params; // Await the params
     const workspaceId = parseInt(params.id); // Convert to number

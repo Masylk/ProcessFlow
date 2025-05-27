@@ -15,6 +15,9 @@ interface ConnectPathsRequest {
 
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body: ConnectPathsRequest = await req.json();
     const { child_path_ids, destination_path_id, pathblock_title, pathblock_description, pathblock_icon } = body;

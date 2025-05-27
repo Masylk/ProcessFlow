@@ -22,4 +22,8 @@ if (process.env.VERCEL) {
   prisma = globalForPrisma.prisma;
 }
 
+if (!prisma) {
+  throw new Error('Prisma client not initialized');
+}
+
 export default prisma;

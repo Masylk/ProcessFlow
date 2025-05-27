@@ -6,6 +6,9 @@ import { deleteManyPaths } from './deleteMany';
 
 export async function deleteOnePath(id: number | string) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const pathId = typeof id === 'string' ? parseInt(id, 10) : id;
 

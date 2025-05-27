@@ -66,6 +66,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   const params = await props.params;
   const workspace_id = parseInt(params.id);
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const workflows = await prisma_client.workflow.findMany({
       where: {

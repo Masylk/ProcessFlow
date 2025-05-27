@@ -201,6 +201,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
  */
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const {
       name,
@@ -479,6 +482,11 @@ export async function PUT(req: NextRequest) {
       status = null,
     } = await req.json();
 
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
+
     if (!id) {
       return NextResponse.json(
         { error: 'Workflow ID is required' },
@@ -517,7 +525,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    const updatedWorkflow = await prisma.workflow.update({
+    const updatedWorkflow = await prisma_client.workflow.update({
       where: {
         id: Number(id),
       },
@@ -546,6 +554,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { workflowId } = await req.json(); // Expecting the workflow ID in the request body
 
@@ -558,7 +570,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Start a transaction to ensure all related deletions occur together
-    await prisma.$transaction(async (prisma) => {
+    await prisma_client.$transaction(async (prisma) => {
       // Delete all blocks related to the workflow
       await prisma.block.deleteMany({
         where: { workflow_id: Number(workflowId) },

@@ -4,6 +4,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function editOnePath(id: number | string, data: any) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     return await prisma_client.path.update({
       where: { id: typeof id === 'string' ? parseInt(id, 10) : id },

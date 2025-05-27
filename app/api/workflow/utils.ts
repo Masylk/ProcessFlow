@@ -20,6 +20,9 @@ export async function generatePublicAccessId(
   const publicId = `${hash.substring(0, 12)}`;
   
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Check if this ID already exists
     const existingWorkflow = await prisma_client.workflow.findFirst({

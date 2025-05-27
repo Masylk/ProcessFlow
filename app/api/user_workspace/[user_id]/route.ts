@@ -84,6 +84,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ user_id: 
   const userId = parseInt(params.user_id); // Use the user_id from the URL
 
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   try {
     // Fetch user's workspaces with all necessary relations

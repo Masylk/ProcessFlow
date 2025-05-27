@@ -74,6 +74,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
  */
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { name, description, workspaceId } = await req.json();
 

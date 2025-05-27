@@ -10,6 +10,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 // GET endpoint for easier testing via browser
 export async function GET(request: Request) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Only allow in development or staging environments
     if (process.env.NODE_ENV === 'production') {
@@ -84,6 +87,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Only allow in development or staging environments
     if (process.env.NODE_ENV === 'production') {

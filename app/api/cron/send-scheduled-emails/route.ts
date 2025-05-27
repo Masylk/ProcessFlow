@@ -76,6 +76,9 @@ function calculateNextRetryTime(retryCount: number): Date {
 // Check if a user has created at least one flow
 async function hasUserCreatedFlow(userId: number, prisma_client: typeof prisma): Promise<boolean> {
   try {
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
     // Count workflows in workspaces where the user is a member
     const userWorkspaces = await prisma_client.user_workspace.findMany({
       where: {
@@ -111,6 +114,9 @@ export const revalidate = 0;
 export async function GET(request: Request) {
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Check for authorization header (optional, but recommended for security)
     const authHeader = request.headers.get('authorization');

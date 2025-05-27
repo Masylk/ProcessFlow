@@ -116,6 +116,9 @@ export async function GET(
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
     const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   // Validate workflow_id and workspaceId
   if (!workflow_id || isNaN(workspaceId)) {

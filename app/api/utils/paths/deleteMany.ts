@@ -9,6 +9,9 @@ import { supabase } from '@/lib/supabaseClient';
  */
 export async function deleteManyPaths(pathIds: number[]): Promise<void> {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     if (!Array.isArray(pathIds) || pathIds.length === 0) return;
 

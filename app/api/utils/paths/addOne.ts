@@ -3,7 +3,10 @@ import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function addOnePath(data: any) {
-  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  const prisma_client = isVercel() ? new PrismaClient() : prisma; 
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Adjust 'Path' and 'data' type as per your Prisma schema
     return await prisma_client.path.create({ data });

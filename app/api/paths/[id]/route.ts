@@ -7,6 +7,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
@@ -57,6 +60,9 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params;
     const id = parseInt(params.id);
@@ -94,6 +100,9 @@ export async function PATCH(
 
 export async function DELETE(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const id = req.nextUrl.pathname.split('/')[3];
     const pathId = parseInt(id);

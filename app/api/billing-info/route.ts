@@ -214,6 +214,9 @@ interface BillingInfoRequest {
 export async function GET(req: Request) {
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();
@@ -388,9 +391,11 @@ export async function GET(req: Request) {
 }
 
 // POST to create/update billing info
-export async function POST(request: Request) {
-  // Choose the correct Prisma client
+export async function POST(req: Request) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const supabase = createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -408,7 +413,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const body: BillingInfoRequest = await request.json();
+    const body: BillingInfoRequest = await req.json();
     const { 
       workspaceId, 
       billing_email, 

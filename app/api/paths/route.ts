@@ -5,6 +5,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body = await req.json();
     const { name, workflow_id } = body;
@@ -82,6 +85,9 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body = await req.json();
     const { id, name } = body;

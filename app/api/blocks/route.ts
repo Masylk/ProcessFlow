@@ -99,6 +99,10 @@ export async function POST(req: NextRequest) {
   } = await req.json();
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
 
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   const formattedTitle = formatTitle(title);
   const formattedDelayEvent = delay_event ? formatTitle(delay_event) : undefined;
 

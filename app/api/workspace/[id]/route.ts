@@ -169,7 +169,10 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   if (!id) {
     return NextResponse.json(
       { error: 'Workspace ID is required' },
@@ -178,7 +181,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   }
 
   try {
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(id) },
       include: {
         user_workspaces: {
@@ -215,7 +218,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const workspaceId = parseInt(params.id);
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const updates = await req.json();
 
@@ -227,7 +233,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       }, { status: 400 });
     }
     // Check if workspace exists
-    const existingWorkspace = await prisma.workspace.findUnique({
+    const existingWorkspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
     });
 
@@ -236,7 +242,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     }
 
     // Update workspace and include all related data in the response
-    const updatedWorkspace = await prisma.workspace.update({
+    const updatedWorkspace = await prisma_client.workspace.update({
       where: { id: workspaceId },
       data: updates,
       include: {
@@ -267,6 +273,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params;
     const workspaceId = parseInt(params.id);

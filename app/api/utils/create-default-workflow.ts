@@ -15,6 +15,9 @@ export interface CreateDefaultWorkflowsOptions {
 
 export async function createDefaultWorkflows({ workspaceId, userId }: CreateDefaultWorkflowsOptions) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get workflow IDs from env or fallback
     const workflowIds = process.env.LOCAL_WORKFLOW_TEMPLATE_IDS
@@ -55,6 +58,9 @@ export async function createDefaultWorkflow(
   prisma_client?: PrismaClient
 ) {
   const _prisma = prisma_client || (isVercel() ? new PrismaClient() : prisma);
+  if (!_prisma) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const SOURCE_WORKFLOW_ID = sourceWorkflowId ?? (process.env.LOCAL_WORKFLOW_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKFLOW_TEMPLATE_ID) : 257);
     const SOURCE_WORKSPACE_ID = sourceWorkspaceId ?? (process.env.LOCAL_WORKFLOW_TEMPLATE_ID ? parseInt(process.env.LOCAL_WORKFLOW_TEMPLATE_ID) : 110);

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { formatTitle } from '../utils/formatTitle';
+import { isVercel } from '../utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * @swagger
@@ -44,6 +46,10 @@ import { formatTitle } from '../utils/formatTitle';
  *         description: Server error
  */
 export async function POST(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body = await request.json();
     const { source_block_id, target_block_id, workflow_id, label, control_points = null } = body;
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
     const formattedLabel = formatTitle(label);
 
     // Check if a stroke line with same source and target already exists
-    const existingStrokeLine = await prisma.stroke_line.findFirst({
+    const existingStrokeLine = await prisma_client.stroke_line.findFirst({
       where: {
         source_block_id,
         target_block_id,
@@ -75,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     // Create new stroke line
-    const strokeLine = await prisma.stroke_line.create({
+    const strokeLine = await prisma_client.stroke_line.create({
       data: {
         source_block_id,
         target_block_id,
@@ -137,6 +143,10 @@ export async function POST(request: Request) {
  *         description: Server error
  */
 export async function PUT(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body = await request.json();
     const { id, source_block_id, target_block_id, workflow_id, label, control_points } = body;
@@ -149,7 +159,7 @@ export async function PUT(request: Request) {
     }
 
     // Check if the new source/target combination already exists for another stroke line
-    const existingStrokeLine = await prisma.stroke_line.findFirst({
+    const existingStrokeLine = await prisma_client.stroke_line.findFirst({
       where: {
         source_block_id,
         target_block_id,
@@ -170,7 +180,7 @@ export async function PUT(request: Request) {
     const formattedLabel = label ? formatTitle(label) : undefined;
 
     // Update stroke line
-    const updatedStrokeLine = await prisma.stroke_line.update({
+    const updatedStrokeLine = await prisma_client.stroke_line.update({
       where: { id },
       data: {
         source_block_id,
@@ -213,6 +223,10 @@ export async function PUT(request: Request) {
  *         description: Server error
  */
 export async function DELETE(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -225,7 +239,7 @@ export async function DELETE(request: Request) {
     }
 
     // Fetch the stroke line to get source_block_id and target_block_id
-    const strokeLine = await prisma.stroke_line.findUnique({
+    const strokeLine = await prisma_client.stroke_line.findUnique({
       where: { id: parseInt(id) },
       select: { source_block_id: true, target_block_id: true },
     });
@@ -238,12 +252,12 @@ export async function DELETE(request: Request) {
 
     const { source_block_id } = strokeLine;
 
-    await prisma.stroke_line.delete({
+    await prisma_client.stroke_line.delete({
       where: { id: parseInt(id) },
     });
 
     // Count remaining stroke lines where this block is the source and NOT self-referencing
-    const remainingCount = await prisma.stroke_line.count({
+    const remainingCount = await prisma_client.stroke_line.count({
       where: {
         source_block_id,
       },
@@ -251,7 +265,7 @@ export async function DELETE(request: Request) {
 
     if (remainingCount === 0) {
       // Set is_endpoint to false
-      await prisma.block.update({
+      await prisma_client.block.update({
         where: { id: source_block_id },
         data: { is_endpoint: false },
       });
@@ -297,6 +311,10 @@ export async function DELETE(request: Request) {
  *         description: Server error
  */
 export async function GET(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -315,7 +333,7 @@ export async function GET(request: Request) {
 
     // If ID is provided, fetch single stroke line
     if (id) {
-      const strokeLine = await prisma.stroke_line.findUnique({
+      const strokeLine = await prisma_client.stroke_line.findUnique({
         where: {
           id: parseInt(id),
         },
@@ -343,7 +361,7 @@ export async function GET(request: Request) {
 
     // If workflow_id is provided, fetch all stroke lines for that workflow
     if (workflowId) {
-      const strokeLines = await prisma.stroke_line.findMany({
+      const strokeLines = await prisma_client.stroke_line.findMany({
         where: {
           workflow_id: parseInt(workflowId),
         },
@@ -407,6 +425,10 @@ export async function GET(request: Request) {
  *         description: Server error
  */
 export async function PATCH(request: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -434,7 +456,7 @@ export async function PATCH(request: Request) {
     }
 
     // Update only the control points using Prisma's set operator for JSON fields
-    const updatedStrokeLine = await prisma.stroke_line.update({
+    const updatedStrokeLine = await prisma_client.stroke_line.update({
       where: { 
         id: parseInt(id) 
       },

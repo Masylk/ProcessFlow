@@ -1,4 +1,6 @@
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { scheduleFollowUpEmail } from '@/lib/scheduledEmails';
 import { sendReactEmail } from '@/lib/email';
 import { ProcessLimitEmail } from '@/emails/templates/ProcessLimitEmail';
@@ -14,9 +16,13 @@ const EMAIL_TYPE = 'PROCESS_LIMIT_REACHED';
  * @returns Object indicating if the email was scheduled/sent and why
  */
 export async function checkAndScheduleProcessLimitEmail(userId: number) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get the user to confirm they exist
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: { id: userId },
       include: {
         // Include active_workspace to get the workspace ID
@@ -25,6 +31,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
     });
 
     if (!user) {
+      if (isVercel()) await prisma_client.$disconnect();
       return { success: false, reason: 'User not found' };
     }
     
@@ -33,7 +40,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
     
     // If user doesn't have an active workspace, try to find one
     if (!workspaceId) {
-      const userWorkspace = await prisma.user_workspace.findFirst({
+      const userWorkspace = await prisma_client.user_workspace.findFirst({
         where: { user_id: userId },
         select: { workspace_id: true },
         orderBy: { workspace_id: 'asc' }
@@ -45,7 +52,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
     }
 
     // Check if we've already sent this email recently (within cooldown period)
-    const recentEmail = await prisma.scheduled_email.findFirst({
+    const recentEmail = await prisma_client.scheduled_email.findFirst({
       where: {
         user_id: userId,
         email_type: EMAIL_TYPE,
@@ -64,6 +71,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
     });
 
     if (recentEmail) {
+      if (isVercel()) await prisma_client.$disconnect();
       return { 
         success: false, 
         reason: `Process limit email already sent or pending within cooldown period (${COOLDOWN_DAYS} days)`,
@@ -76,7 +84,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
 
     // 1. Create a record in the scheduled_email table (for cooldown tracking)
     const now = new Date();
-    const scheduledEmail = await prisma.scheduled_email.create({
+    const scheduledEmail = await prisma_client.scheduled_email.create({
       data: {
         user_id: userId,
         email_type: EMAIL_TYPE,
@@ -113,7 +121,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
 
       // Update the scheduled email record
       if (sendResult.success) {
-        await prisma.scheduled_email.update({
+        await prisma_client.scheduled_email.update({
           where: { id: scheduledEmail.id },
           data: {
             status: 'SENT',
@@ -121,7 +129,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
             sent_at: new Date(),
           },
         });
-        
+        if (isVercel()) await prisma_client.$disconnect();
         return { 
           success: true, 
           reason: 'Process limit email sent immediately',
@@ -131,7 +139,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
       } else {
         // If sending fails, leave the record as is for the cron job to retry
         console.error(`Failed to send process limit email: ${sendResult.error}`);
-        
+        if (isVercel()) await prisma_client.$disconnect();
         return { 
           success: false, 
           reason: 'Failed to send email immediately, will retry via cron',
@@ -141,6 +149,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
       }
     } catch (sendError) {
       console.error('Error sending process limit email:', sendError);
+      if (isVercel()) await prisma_client.$disconnect();
       return { 
         success: false, 
         reason: 'Error sending immediate email, will retry via cron',
@@ -151,5 +160,7 @@ export async function checkAndScheduleProcessLimitEmail(userId: number) {
   } catch (error) {
     console.error('Error scheduling process limit email:', error);
     return { success: false, error };
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
-import prisma from '@/lib/prisma';
+import prismaSingleton from '@/lib/prisma';
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 interface PageParams {
   slug: string;
@@ -39,6 +41,13 @@ export default async function WorkspaceSlugPage(props: PageProps) {
   const searchParams = await props.searchParams;
 
   const slug = params.slug;
+
+  // Use a new PrismaClient on Vercel, otherwise use the singleton
+  const prisma = isVercel() ? new PrismaClient() : prismaSingleton;
+
+  if (!prisma) {
+    throw new Error('Prisma client not initialized');
+  }
 
   // Find the workspace by slug
   const workspace = await prisma.workspace.findUnique({

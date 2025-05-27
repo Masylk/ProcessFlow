@@ -66,8 +66,10 @@ interface MoveBlocksRequest {
  */
 
 export async function POST(req: NextRequest) {
-  // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const body: MoveBlocksRequest = await req.json();
     const { block_ids, destination_path_id } = body;

@@ -5,6 +5,9 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 export async function addOneWorkspace(data: any) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     if (data.name) {
       const nameError = checkWorkspaceName(data.name);

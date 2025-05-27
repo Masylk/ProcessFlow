@@ -13,6 +13,9 @@ export async function GET(
   context: { params: Promise<{ userId: string }> }
 ) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await context.params;
     if (!userId) {
@@ -59,6 +62,10 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ userId: string }> }
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { userId } = await context.params;
     if (!userId) {
@@ -85,7 +92,7 @@ export async function POST(
     const { hasCompletedTutorial } = body as TutorialStatusRequest;
 
     // Use transaction to ensure both updates succeed or fail together
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma_client.$transaction(async (tx) => {
       const dbUser = await tx.user.findFirst({
         where: {
           auth_id: user.id

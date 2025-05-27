@@ -114,6 +114,9 @@ export async function GET(req: NextRequest) {
   }
 
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Fetch the Prisma user based on the Supabase UID
     const user = await prisma_client.user.findUnique({

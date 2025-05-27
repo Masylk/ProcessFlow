@@ -6,6 +6,9 @@ import { deleteFile } from '../deleteFile';
 
 export async function deleteOneBlock(id: number | string) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Find the block and its path
     const block = await prisma_client.block.findUnique({

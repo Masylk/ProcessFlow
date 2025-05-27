@@ -5,6 +5,9 @@ import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { searchParams } = new URL(req.url);
     const slug = searchParams.get('slug');

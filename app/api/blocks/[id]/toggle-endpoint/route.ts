@@ -16,6 +16,9 @@ export async function PATCH(request: NextRequest) {
 
   // Choose the correct Prisma client
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Fetch the block with its path and all blocks in the path, ordered by position
     const block = await prisma_client.block.findUnique({

@@ -6,12 +6,13 @@ import prisma from '@/lib/prisma';
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
 import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import posthog from 'posthog-js';
 import React from 'react';
 import { cookies } from 'next/headers';
 import { isPreview } from '@/app/utils/isPreview';
+import { isVercel } from '../api/utils/isVercel';
 
 const isDevelopmentOrStaging = isPreview();
 
@@ -93,6 +94,7 @@ export async function signup(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
+
   // Password strength validation (same as frontend)
   const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{8,}$/;
   if (!strongPasswordRegex.test(password)) {
@@ -101,7 +103,12 @@ export async function signup(formData: FormData) {
   }
 
   // 1. Check if email already exists in Prisma
-  const existingUser = await prisma.user.findUnique({
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
+  const existingUser = await prisma_client.user.findUnique({
     where: { email },
   });
   if (existingUser) {
@@ -141,8 +148,10 @@ export async function signup(formData: FormData) {
   const user = data?.user;
   if (!user) return { success: true, message: "If your signup was successful, check your email." };
 
+
+
   try {
-    await prisma.user.create({
+    await prisma_client.user.create({
       data: {
         auth_id: user.id,
         email: user.email!,
@@ -170,8 +179,9 @@ export async function signup(formData: FormData) {
     };
   } catch (error) {
     // Clean up Supabase user if needed
-    await supabase.auth.admin.deleteUser(user.id);
     return { success: true, message: "If your signup was successful, check your email." };
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
@@ -192,11 +202,14 @@ export async function debugCheckEmail(email: string) {
     finalResult: false as boolean,
     explanation: ""
   };
-  
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // 1. Check Prisma
     try {
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await prisma_client.user.findUnique({
         where: { email: email },
       });
       
@@ -216,6 +229,8 @@ export async function debugCheckEmail(email: string) {
         console.error('[DEBUG] Prisma check error:', error);
       }
       results.explanation += "Prisma check failed. ";
+    } finally {
+      if (isVercel()) await prisma_client.$disconnect();
     }
     
     // 2. Check Supabase directly using admin API

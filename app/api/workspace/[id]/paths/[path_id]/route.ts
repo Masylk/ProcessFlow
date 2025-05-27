@@ -125,6 +125,10 @@ export async function GET(
   const path_id = parseInt(params.path_id);
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
 
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   // Validate inputs
   if (!workflow_id || isNaN(workspaceId) || isNaN(path_id)) {
     return NextResponse.json(
