@@ -86,6 +86,9 @@ export interface WorkflowData {
   icon?: string;
   signedIconUrl?: string;
   description?: string;
+  process_owner?: string;
+  review_date?: string;
+  additional_notes?: string;
   author?: {
     full_name: string;
     avatar_url?: string;

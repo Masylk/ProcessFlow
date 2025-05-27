@@ -57,14 +57,14 @@ export default function WorkflowCard({
   onStatusChange,
 }: WorkflowCardProps) {
   const colors = useColors();
-  
+
   // Temporary fake data for testing - remove this later
   const workflowWithFakeData = {
     ...workflow,
-    processOwner: workflow.processOwner || 'Sarah Johnson',
-    reviewDate: workflow.reviewDate || '2024-06-15',
+    process_owner: workflow.process_owner || 'Sarah Johnson',
+    review_date: workflow.review_date || '2024-06-15',
   };
-  
+
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -434,10 +434,11 @@ export default function WorkflowCard({
           </div>
 
           {/* Middle Section - Process Owner and Review Date */}
-          {(workflowWithFakeData.processOwner || workflowWithFakeData.reviewDate) && (
+          {(workflowWithFakeData.process_owner ||
+            workflowWithFakeData.review_date) && (
             <div className="px-4 pb-3">
               <div className="space-y-1">
-                {workflowWithFakeData.processOwner && (
+                {workflowWithFakeData.process_owner && (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
                       <img
@@ -449,13 +450,13 @@ export default function WorkflowCard({
                     <span
                       style={{ color: colors['text-tertiary'] }}
                       className="text-xs truncate"
-                      title={workflowWithFakeData.processOwner}
+                      title={workflowWithFakeData.process_owner}
                     >
-                      {workflowWithFakeData.processOwner}
+                      {workflowWithFakeData.process_owner}
                     </span>
                   </div>
                 )}
-                {workflowWithFakeData.reviewDate && (
+                {workflowWithFakeData.review_date && (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
                       <img
@@ -468,7 +469,10 @@ export default function WorkflowCard({
                       style={{ color: colors['text-tertiary'] }}
                       className="text-xs"
                     >
-                      Review due: {new Date(workflowWithFakeData.reviewDate).toLocaleDateString('en-US', {
+                      Review due:{' '}
+                      {new Date(
+                        workflowWithFakeData.review_date
+                      ).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
@@ -510,9 +514,9 @@ export default function WorkflowCard({
                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    transition={{ 
-                      duration: 0.15, 
-                      ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+                    transition={{
+                      duration: 0.15,
+                      ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
                     }}
                     style={{
                       backgroundColor: colors['bg-secondary'],
@@ -588,9 +592,9 @@ export default function WorkflowCard({
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ 
-              duration: 0.15, 
-              ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+            transition={{
+              duration: 0.15,
+              ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
             }}
             style={{
               backgroundColor: colors['bg-secondary'],

@@ -22,7 +22,7 @@ interface ProcessCardProps {
   };
   integrations: Integration[];
   owner?: Owner; // Flow owner
-  reviewDate?: string; // Review Date
+  review_date?: string; // Review Date
   additionalNotes?: string; // Additional notes
   lastUpdate?: string; // Keep for backwards compatibility
 }
@@ -32,17 +32,64 @@ export default function ProcessCard({
   workflow,
   integrations,
   owner,
-  reviewDate,
+  review_date,
   additionalNotes,
   lastUpdate,
 }: ProcessCardProps) {
   const colors = useColors();
   const [showPopover, setShowPopover] = useState(false);
   const popoverTimerRef = useRef<NodeJS.Timeout>();
+  const [windowHeight, setWindowHeight] = useState<number>(0);
+  const [shouldCenter, setShouldCenter] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const additionalNotesRef = useRef<HTMLDivElement>(null);
 
   const visibleIntegrations = integrations.slice(0, 5);
   const hiddenIntegrations = integrations.slice(5);
   const hasHiddenIntegrations = integrations.length > 5;
+
+  // Update window dimensions
+  useEffect(() => {
+    const updateWindowDimensions = () => {
+      setWindowHeight(window.innerHeight);
+    };
+
+    // Initialize
+    updateWindowDimensions();
+
+    // Add event listener
+    window.addEventListener('resize', updateWindowDimensions);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', updateWindowDimensions);
+    };
+  }, []);
+
+  // Check if content should be centered based on height
+  useEffect(() => {
+    const checkContentHeight = () => {
+      let totalContentHeight = 0;
+
+      if (descriptionRef.current) {
+        totalContentHeight += descriptionRef.current.offsetHeight;
+      }
+
+      if (additionalNotesRef.current) {
+        totalContentHeight += additionalNotesRef.current.offsetHeight;
+      }
+
+      const halfWindowHeight = windowHeight * 0.5;
+      setShouldCenter(
+        totalContentHeight < halfWindowHeight && windowHeight > 0
+      );
+    };
+
+    // Use setTimeout to ensure DOM has been updated
+    const timeoutId = setTimeout(checkContentHeight, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [workflow.description, additionalNotes, windowHeight]);
 
   const handleMouseEnter = () => {
     if (popoverTimerRef.current) {
@@ -94,7 +141,12 @@ export default function ProcessCard({
       style={{
         borderColor: colors['border-secondary'],
       }}
-      className="h-full w-full flex items-center justify-center"
+      className={cn(
+        'h-full w-full',
+        shouldCenter
+          ? 'flex items-center justify-center'
+          : 'flex justify-center'
+      )}
     >
       <div className="flex gap-4 flex-row items-start max-w-3xl">
         {/* Large Icon */}
@@ -122,7 +174,7 @@ export default function ProcessCard({
               {workflow.name}
             </h3>
             {workflow.description && (
-              <div className="max-w-2xl">
+              <div className="max-w-2xl break-words">
                 <p
                   style={{ color: colors['text-secondary'] }}
                   className="text-sm font-medium mb-1"
@@ -130,6 +182,7 @@ export default function ProcessCard({
                   Why does this Flow exist?
                 </p>
                 <p
+                  ref={descriptionRef}
                   style={{ color: colors['text-quaternary'] }}
                   className="font-normal text-sm"
                 >
@@ -204,7 +257,7 @@ export default function ProcessCard({
                     {owner.name}
                   </span>
                 </div>
-                {(reviewDate || lastUpdate) && (
+                {(review_date || lastUpdate) && (
                   <div
                     style={{ color: colors['text-tertiary'] }}
                     className="w-1 h-1 rounded-full bg-current"
@@ -212,14 +265,14 @@ export default function ProcessCard({
                 )}
               </>
             )}
-            {reviewDate && (
+            {review_date && (
               <>
                 <div className="flex items-center gap-2">
                   <span
                     style={{ color: colors['text-tertiary'] }}
                     className="text-sm"
                   >
-                    Review date: {reviewDate}
+                    Review date: {review_date}
                   </span>
                 </div>
                 {lastUpdate && (
@@ -246,10 +299,14 @@ export default function ProcessCard({
           {additionalNotes && (
             <div className="mt-2">
               <p
+                ref={additionalNotesRef}
                 style={{ color: colors['text-quaternary'] }}
                 className="text-sm italic"
               >
-                <span className="font-medium not-italic">Additional notes:</span> {additionalNotes}
+                <span className="font-medium not-italic">
+                  Additional notes:
+                </span>{' '}
+                {additionalNotes}
               </p>
             </div>
           )}

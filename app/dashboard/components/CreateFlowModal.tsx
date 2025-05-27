@@ -14,10 +14,10 @@ interface CreateFlowModalProps {
   onClose: () => void;
   onCreateFlow: (
     name: string,
-    whyExists: string,
-    processOwner: string,
-    reviewDate: string,
-    howToComplete: string,
+    description: string,
+    process_owner: string,
+    review_date: string,
+    additional_notes: string,
     icon: string | null,
     signedIcon: string | null
   ) => Promise<void>;
@@ -31,8 +31,8 @@ export default function CreateFlowModal({
   const [flowName, setFlowName] = useState('');
   const [processOwner, setProcessOwner] = useState('');
   const [reviewDate, setReviewDate] = useState('');
-  const [whyExists, setWhyExists] = useState('');
-  const [howToComplete, setHowToComplete] = useState('');
+  const [description, setdescription] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState<string | null>(null);
   const [previewIcon, setPreviewIcon] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function CreateFlowModal({
     'David Kim',
     'Lisa Thompson',
     'Alex Parker',
-    'Maria Garcia'
+    'Maria Garcia',
   ];
 
   const handleModalClick = (e: React.MouseEvent) => {
@@ -166,8 +166,8 @@ export default function CreateFlowModal({
             <div className="w-full">
               <TextAreaInput
                 label="Why does this Flow exist?"
-                value={whyExists}
-                onChange={(value) => setWhyExists(value)}
+                value={description}
+                onChange={(value) => setdescription(value)}
                 placeholder="Enter a description..."
               />
             </div>
@@ -176,8 +176,8 @@ export default function CreateFlowModal({
             <div className="w-full">
               <TextAreaInput
                 label="Additional notes"
-                value={howToComplete}
-                onChange={(value) => setHowToComplete(value)}
+                value={additionalNotes}
+                onChange={(value) => setAdditionalNotes(value)}
                 placeholder="Enter a description..."
               />
             </div>
@@ -250,14 +250,14 @@ export default function CreateFlowModal({
                   setIsSaving(true);
                   const sanitizedFlowName = flowName;
                   const sanitizedProcessOwner = processOwner;
-                  const sanitizedWhyExists = whyExists;
-                  const sanitizedHowToComplete = howToComplete;
+                  const sanitizeddescription = description;
+                  const sanitizedadditionalNotes = additionalNotes;
                   onCreateFlow(
                     sanitizedFlowName,
-                    sanitizedWhyExists,
+                    sanitizeddescription,
                     sanitizedProcessOwner,
                     reviewDate,
-                    sanitizedHowToComplete,
+                    sanitizedadditionalNotes,
                     flowIcon,
                     previewIcon
                   )
