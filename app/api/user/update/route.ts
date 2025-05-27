@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Import your Prisma client
 import { supabase } from '@/lib/supabaseClient';
+import { isVercel } from '../../utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -122,6 +124,10 @@ const userAssetsBucket = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
  */
 export async function PUT(req: NextRequest) {
   try {
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
     const body = await req.json();
     const {
       id,
@@ -142,7 +148,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Retrieve the existing user data
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma_client.user.findUnique({
       where: { id: Number(id) },
       select: { avatar_url: true },
     });
@@ -185,7 +191,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Update user data
-    const updatedUser: any = await prisma.user.update({
+    const updatedUser: any = await prisma_client.user.update({
       where: { id: Number(id) },
       data: {
         first_name,

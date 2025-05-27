@@ -7,6 +7,8 @@ import { FeedbackRequestEmail } from '@/emails/templates/FeedbackRequestEmail';
 import { ProcessLimitEmail } from '@/emails/templates/ProcessLimitEmail';
 import { SenderType } from '@/lib/email';
 import { CancellationFollowUpEmail } from '@/emails/templates/CancellationFollowUpEmail';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 // Define types for email templates
 type EmailTemplateConfig = {
@@ -72,10 +74,13 @@ function calculateNextRetryTime(retryCount: number): Date {
 }
 
 // Check if a user has created at least one flow
-async function hasUserCreatedFlow(userId: number): Promise<boolean> {
+async function hasUserCreatedFlow(userId: number, prisma_client: typeof prisma): Promise<boolean> {
   try {
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
     // Count workflows in workspaces where the user is a member
-    const userWorkspaces = await prisma.user_workspace.findMany({
+    const userWorkspaces = await prisma_client.user_workspace.findMany({
       where: {
         user_id: userId,
       },
@@ -87,7 +92,7 @@ async function hasUserCreatedFlow(userId: number): Promise<boolean> {
     const workspaceIds = userWorkspaces.map(uw => uw.workspace_id);
     
     // Count workflows in these workspaces
-    const workflowCount = await prisma.workflow.count({
+    const workflowCount = await prisma_client.workflow.count({
       where: {
         workspace_id: {
           in: workspaceIds,
@@ -107,6 +112,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(request: Request) {
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Check for authorization header (optional, but recommended for security)
     const authHeader = request.headers.get('authorization');
@@ -118,7 +128,7 @@ export async function GET(request: Request) {
     const now = new Date();
     
     // Find all scheduled emails that are due to be sent
-    const scheduledEmails = await prisma.scheduled_email.findMany({
+    const scheduledEmails = await prisma_client.scheduled_email.findMany({
       where: {
         scheduled_for: {
           lte: now,
@@ -159,7 +169,7 @@ export async function GET(request: Request) {
           console.error(`Unknown email type: ${email.email_type}`);
           
           // Update the email status to FAILED
-          await prisma.scheduled_email.update({
+          await prisma_client.scheduled_email.update({
             where: { id: email.id },
             data: {
               status: 'FAILED',
@@ -178,12 +188,12 @@ export async function GET(request: Request) {
         // Special handling for FEEDBACK_REQUEST emails
         if (email.email_type === 'FEEDBACK_REQUEST' && metadata.requiresFlowCheck) {
           // Check if the user has created at least one flow
-          const hasCreatedFlow = await hasUserCreatedFlow(email.user_id);
+          const hasCreatedFlow = await hasUserCreatedFlow(email.user_id, prisma_client);
           
           if (!hasCreatedFlow) {
             // User hasn't created a flow yet, so don't send the email
             // Mark as cancelled instead of failed
-            await prisma.scheduled_email.update({
+            await prisma_client.scheduled_email.update({
               where: { id: email.id },
               data: {
                 status: 'CANCELLED',
@@ -232,7 +242,7 @@ export async function GET(request: Request) {
 
         if (sendResult.success) {
           // Update the email status to SENT
-          await prisma.scheduled_email.update({
+          await prisma_client.scheduled_email.update({
             where: { id: email.id },
             data: {
               status: 'SENT',
@@ -254,7 +264,7 @@ export async function GET(request: Request) {
           
           if (newRetryCount >= MAX_RETRY_COUNT) {
             // Max retries reached, mark as permanently failed
-            await prisma.scheduled_email.update({
+            await prisma_client.scheduled_email.update({
               where: { id: email.id },
               data: {
                 status: 'FAILED',
@@ -273,7 +283,7 @@ export async function GET(request: Request) {
             const nextRetryTime = calculateNextRetryTime(newRetryCount - 1);
             
             // Update for retry
-            await prisma.scheduled_email.update({
+            await prisma_client.scheduled_email.update({
               where: { id: email.id },
               data: {
                 status: 'PENDING', // Keep as pending for next attempt
@@ -303,7 +313,7 @@ export async function GET(request: Request) {
         
         if (newRetryCount >= MAX_RETRY_COUNT) {
           // Max retries reached, mark as permanently failed
-          await prisma.scheduled_email.update({
+          await prisma_client.scheduled_email.update({
             where: { id: email.id },
             data: {
               status: 'FAILED',
@@ -322,7 +332,7 @@ export async function GET(request: Request) {
           const nextRetryTime = calculateNextRetryTime(newRetryCount - 1);
           
           // Update for retry
-          await prisma.scheduled_email.update({
+          await prisma_client.scheduled_email.update({
             where: { id: email.id },
             data: {
               status: 'PENDING', // Keep as pending for next attempt
@@ -355,5 +365,9 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error processing scheduled emails:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

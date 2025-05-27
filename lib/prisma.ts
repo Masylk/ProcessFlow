@@ -1,19 +1,29 @@
 // lib/prisma.ts
+import { isPreview } from '@/app/utils/isPreview';
 import { PrismaClient } from '@prisma/client';
 
+const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
-let prisma: PrismaClient;
+let prisma: PrismaClient | undefined;
 
-// In production, don't use the global object to prevent memory leaks
-if (process.env.NODE_ENV === 'production') {
+// If running on Vercel, do not create a Prisma client
+if (process.env.VERCEL) {
+  // console.log('Running on Vercel, not creating Prisma client');
+  prisma = new PrismaClient();
+} else if (process.env.NODE_ENV === 'production') {
+  // console.log('Running in production, creating Prisma client');
   prisma = new PrismaClient();
 } else {
   // In non-production, use global to avoid multiple instances during hot-reloading
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
-
+  if (!globalForPrisma.prisma) {
+    // console.log('Creating Prisma client in non-production environment');
+    globalForPrisma.prisma = new PrismaClient();
   }
-  prisma = global.prisma;
+  prisma = globalForPrisma.prisma;
+}
+
+if (!prisma) {
+  throw new Error('Prisma client not initialized');
 }
 
 export default prisma;

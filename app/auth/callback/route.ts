@@ -4,6 +4,8 @@ import prisma from '@/lib/prisma';
 import { PostHog } from 'posthog-node';
 import * as Sentry from '@sentry/nextjs';
 import { createDefaultWorkflow } from '@/app/api/utils/create-default-workflow';
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 const posthog = new PostHog(
   process.env.NEXT_PUBLIC_POSTHOG_KEY as string,
@@ -44,11 +46,12 @@ export async function GET(request: NextRequest) {
     const { data: { user, session } } = verifyData;
 
     if (user && session) {
+      const prisma_client = isVercel() ? new PrismaClient() : prisma;
+      if (!prisma_client) {
+        throw new Error('Prisma client not initialized');
+      }
       try {
-
-        console.log('user', user);
-        console.log('session', session);
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma_client.user.findUnique({
           where: { auth_id: user.id }
         });
 
@@ -62,7 +65,7 @@ export async function GET(request: NextRequest) {
           const lastName = user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '';
 
           // Create new user with Google avatar if available
-          const newUser = await prisma.user.create({
+          const newUser = await prisma_client.user.create({
             data: {
               auth_id: user.id,
               email: user.email || '',
@@ -103,6 +106,8 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error('Database error:', error);
         return NextResponse.redirect(new URL('/login?error=database', request.url));
+      } finally {
+        if (isVercel()) await prisma_client.$disconnect();
       }
     }
 

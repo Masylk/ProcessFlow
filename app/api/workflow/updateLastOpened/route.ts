@@ -1,6 +1,8 @@
 // app/api/workflow/updateLastOpened/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the path to where you initialize Prisma in your project
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -63,6 +65,10 @@ import prisma from '@/lib/prisma'; // Adjust the path to where you initialize Pr
  *                   example: "Internal server error"
  */
 export async function PATCH(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { workflowId } = await req.json();
 
@@ -73,7 +79,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const updatedWorkflow = await prisma.workflow.update({
+    const updatedWorkflow = await prisma_client.workflow.update({
       where: { id: workflowId },
       data: { last_opened: new Date() },
     });
@@ -88,5 +94,7 @@ export async function PATCH(req: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

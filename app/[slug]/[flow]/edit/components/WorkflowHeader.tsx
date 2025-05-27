@@ -352,19 +352,13 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
               signedIcon: string | null
             ) => {
               try {
-                // Convert review_date to ISO format if it exists
-                let formattedReviewDate = review_date;
-                if (review_date && typeof review_date === 'string') {
-                  // If it's already in ISO format, keep it; otherwise convert date string to ISO
-                  if (!review_date.includes('T')) {
-                    // Convert YYYY-MM-DD to ISO DateTime (start of day UTC)
-                    formattedReviewDate = new Date(
-                      review_date + 'T00:00:00.000Z'
-                    ).toISOString();
-                  }
+                // Convert review_date to ISO-8601 if present and not empty
+                let reviewDateISO: string | null = null;
+                if (review_date && review_date.trim() !== '') {
+                  // If review_date is already ISO, this is safe; if it's "YYYY-MM-DD", this will work too
+                  reviewDateISO = new Date(review_date).toISOString();
                 }
 
-                // Update the workflow via API
                 const response = await fetch(`/api/workflow/${workflowId}`, {
                   method: 'PATCH',
                   headers: {
@@ -374,7 +368,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
                     name,
                     description,
                     process_owner,
-                    review_date: formattedReviewDate,
+                    review_date: reviewDateISO,
                     additional_notes,
                     icon,
                   }),

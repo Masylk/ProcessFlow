@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { searchParams } = new URL(req.url);
     const slug = searchParams.get('slug');
@@ -14,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if a workspace with this slug exists
-    const existingWorkspace = await prisma.workspace.findFirst({
+    const existingWorkspace = await prisma_client.workspace.findFirst({
       where: { slug },
     });
 
@@ -30,5 +36,7 @@ export async function GET(req: NextRequest) {
       { error: 'Failed to check workspace slug availability' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

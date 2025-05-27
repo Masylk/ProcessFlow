@@ -1,12 +1,18 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const token_hash = requestUrl.searchParams.get('token_hash');
   const code = requestUrl.searchParams.get('code');
   const type = requestUrl.searchParams.get('type') || 'email'; // Default to email if not specified
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   // Check for either token_hash (password recovery) or code (email confirmation)
   if (!token_hash && !code) {
@@ -70,12 +76,12 @@ export async function GET(request: NextRequest) {
 
     if (user && session) {
       try {
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma_client.user.findUnique({
           where: { auth_id: user.id }
         });
 
         if (!existingUser) {
-          await prisma.user.create({
+          await prisma_client.user.create({
             data: {
               auth_id: user.id,
               email: user.email || '',
@@ -105,6 +111,8 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error('Database error:', error);
         return NextResponse.redirect(new URL('/login?error=database', request.url));
+      } finally {
+        if (isVercel()) await prisma_client.$disconnect();
       }
     }
 

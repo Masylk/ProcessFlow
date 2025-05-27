@@ -3,8 +3,14 @@ import { stripe, cancelStripeSubscription } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Get the user session using Supabase
     const cookieStore = cookies();
@@ -29,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     // Find workspace by ID
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       include: { subscription: true },
     });
@@ -54,7 +60,7 @@ export async function POST(req: Request) {
       const canceledSubscription = await cancelStripeSubscription(workspace.subscription.stripe_subscription_id);
       
       // Update the subscription in the database
-      await prisma.subscription.update({
+      await prisma_client.subscription.update({
         where: { id: workspace.subscription.id },
         data: {
           status: 'CANCELED',
@@ -83,5 +89,9 @@ export async function POST(req: Request) {
       { error: 'Error canceling subscription', details: error.message },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

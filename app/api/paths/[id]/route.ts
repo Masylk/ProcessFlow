@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { deleteOnePath } from '@/app/api/utils/paths/deleteOne';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
@@ -16,7 +22,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const path = await prisma.path.findUnique({
+    const path = await prisma_client.path.findUnique({
       where: { id: pathId },
       include: {
         blocks: {
@@ -42,6 +48,10 @@ export async function GET(req: NextRequest) {
       { error: 'Failed to fetch path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -49,6 +59,10 @@ export async function PATCH(
   req: NextRequest,
   props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params;
     const id = parseInt(params.id);
@@ -61,7 +75,7 @@ export async function PATCH(
       );
     }
 
-    const updatedPath = await prisma.path.update({
+    const updatedPath = await prisma_client.path.update({
       where: { id },
       data: { name },
       select: {
@@ -77,16 +91,24 @@ export async function PATCH(
       { error: 'Failed to update path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const id = req.nextUrl.pathname.split('/')[3];
     const pathId = parseInt(id);
 
     // Get the path and its blocks to handle image deletion
-    const path = await prisma.path.findUnique({
+    const path = await prisma_client.path.findUnique({
       where: { id: pathId },
       include: {
         blocks: true,
@@ -131,5 +153,9 @@ export async function DELETE(req: NextRequest) {
       { error: 'Failed to delete path' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

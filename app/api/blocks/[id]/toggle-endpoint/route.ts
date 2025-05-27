@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 
 export async function PATCH(request: NextRequest) {
@@ -12,9 +14,14 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid block ID' }, { status: 400 });
   }
 
+  // Choose the correct Prisma client
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Fetch the block with its path and all blocks in the path, ordered by position
-    const block = await prisma.block.findUnique({
+    const block = await prisma_client.block.findUnique({
       where: { id: blockId },
       select: {
         id: true,
@@ -36,7 +43,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Check if block is the source of any stroke lines (excluding self-referencing)
-    const strokeLineCount = await prisma.stroke_line.count({
+    const strokeLineCount = await prisma_client.stroke_line.count({
       where: {
         source_block_id: blockId,
       },
@@ -68,7 +75,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Toggle the is_endpoint value
-    const updatedBlock = await prisma.block.update({
+    const updatedBlock = await prisma_client.block.update({
       where: { id: blockId },
       data: { is_endpoint: !block.is_endpoint },
     });
@@ -80,5 +87,9 @@ export async function PATCH(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

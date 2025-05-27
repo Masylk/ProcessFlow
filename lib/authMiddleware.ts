@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabaseServerClient';
 import { NextResponse, type NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 export async function authMiddleware(request: NextRequest) {
   const supabase = createClient();
@@ -37,9 +39,14 @@ export async function getProtectedUser(request: Request) {
     throw new Error('User ID not found in request headers');
   }
 
-  const user = await prisma.user.findUnique({ 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+  const user = await prisma_client.user.findUnique({ 
     where: { auth_id: userId }
   });
+  if (isVercel()) await prisma_client.$disconnect();
 
   return user;
 } 

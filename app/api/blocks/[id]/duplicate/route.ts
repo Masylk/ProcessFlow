@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabase } from '@/lib/supabaseClient';
 import { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -67,16 +69,21 @@ import { Prisma } from '@prisma/client';
  *                   example: Failed to duplicate block
  */
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const blockId = Number(params.id);
+
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   try {
-    const id = req.nextUrl.pathname.split('/')[3];
-    const blockId = parseInt(id);
-    
     // Get position and path_id from request body if provided
     const body = await req.json().catch(() => ({}));
     
     // Get the original block
-    const originalBlock = await prisma.block.findUnique({
+    const originalBlock = await prisma_client.block.findUnique({
       where: { id: blockId },
       select: {
         id: true,
@@ -131,7 +138,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update positions of blocks after the target position
-    await prisma.block.updateMany({
+    await prisma_client.block.updateMany({
       where: {
         path_id: targetPathId,
         position: {
@@ -146,7 +153,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create the duplicate block
-    const duplicatedBlock = await prisma.block.create({
+    const duplicatedBlock = await prisma_client.block.create({
       data: {
         type: originalBlock.type,
         position: targetPosition,
@@ -197,5 +204,9 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to duplicate block' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

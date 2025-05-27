@@ -1,6 +1,8 @@
 // app/api/workspace/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the path to your Prisma client
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 /**
@@ -167,7 +169,10 @@ import { checkWorkspaceName } from '@/app/utils/checkNames';
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   if (!id) {
     return NextResponse.json(
       { error: 'Workspace ID is required' },
@@ -176,7 +181,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   }
 
   try {
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(id) },
       include: {
         user_workspaces: {
@@ -213,7 +218,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const workspaceId = parseInt(params.id);
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const updates = await req.json();
 
@@ -225,7 +233,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       }, { status: 400 });
     }
     // Check if workspace exists
-    const existingWorkspace = await prisma.workspace.findUnique({
+    const existingWorkspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
     });
 
@@ -234,7 +242,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     }
 
     // Update workspace and include all related data in the response
-    const updatedWorkspace = await prisma.workspace.update({
+    const updatedWorkspace = await prisma_client.workspace.update({
       where: { id: workspaceId },
       data: updates,
       include: {
@@ -264,12 +272,16 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 }
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const workspaceId = parseInt(params.id);
-
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
+    const params = await props.params;
+    const workspaceId = parseInt(params.id);
+
     // Check if workspace exists
-    const existingWorkspace = await prisma.workspace.findUnique({
+    const existingWorkspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
     });
 
@@ -278,19 +290,19 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     }
 
     // First, update any users who have this as their active workspace
-    await prisma.user.updateMany({
+    await prisma_client.user.updateMany({
       where: { active_workspace_id: workspaceId },
       data: { active_workspace_id: null },
     });
 
     // Delete all user_workspace associations
-    await prisma.user_workspace.deleteMany({
+    await prisma_client.user_workspace.deleteMany({
       where: { workspace_id: workspaceId },
     });
 
     // Delete all workflows in this workspace
     // First, delete all blocks and paths associated with workflows
-    const workflowsInWorkspace = await prisma.workflow.findMany({
+    const workflowsInWorkspace = await prisma_client.workflow.findMany({
       where: { workspace_id: workspaceId },
       select: { id: true },
     });
@@ -298,27 +310,27 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
     const workflowIds = workflowsInWorkspace.map(w => w.id);
 
     // Delete blocks
-    await prisma.block.deleteMany({
+    await prisma_client.block.deleteMany({
       where: { workflow_id: { in: workflowIds } },
     });
 
     // Delete paths
-    await prisma.path.deleteMany({
+    await prisma_client.path.deleteMany({
       where: { workflow_id: { in: workflowIds } },
     });
 
     // Delete workflows
-    await prisma.workflow.deleteMany({
+    await prisma_client.workflow.deleteMany({
       where: { workspace_id: workspaceId },
     });
 
     // Delete all folders in this workspace
-    await prisma.folder.deleteMany({
+    await prisma_client.folder.deleteMany({
       where: { workspace_id: workspaceId },
     });
 
     // Finally, delete the workspace itself
-    await prisma.workspace.delete({
+    await prisma_client.workspace.delete({
       where: { id: workspaceId },
     });
 
@@ -329,5 +341,7 @@ export async function DELETE(req: NextRequest, props: { params: Promise<{ id: st
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

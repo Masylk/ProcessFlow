@@ -16,6 +16,7 @@ interface ReactFlowPageClientProps {
 }
 
 import { ScreenSizeOverlay } from './ScreenSizeOverlay';
+import { isPreview } from '@/app/utils/isPreview';
 
 export function ReactFlowPageClient({
   workspaceId,
@@ -144,6 +145,9 @@ export function ReactFlowPageClient({
 
   // Initial fetch and set up interval
   useEffect(() => {
+    if (isPreview()) {
+      console.log('[DEBUG] Fetching data...');
+    }
     fetchData();
 
     const interval = setInterval(() => {
@@ -163,7 +167,7 @@ export function ReactFlowPageClient({
           grandParentFolder={grandParentFolder}
           slug={workspace?.name}
         />
-        <div className="pt-[56px] flex-1 h-[calc(100vh-56px)]">
+        <div className="pt-[72px] flex-1 h-[calc(100vh-56px)]">
           <ReactFlowProvider>
             <Flow
               workflowName={workflowName}

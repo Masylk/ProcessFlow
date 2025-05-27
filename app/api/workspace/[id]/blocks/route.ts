@@ -1,7 +1,8 @@
 // app/api/workspace/[id]/blocks/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -114,6 +115,10 @@ export async function GET(
   const url = new URL(req.url);
   const workflow_id = url.searchParams.get('workflow_id');
   const workspaceId = parseInt(params.id);
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
 
   // Validate workflow_id and workspaceId
   if (!workflow_id || isNaN(workspaceId)) {
@@ -138,7 +143,7 @@ export async function GET(
    
 
     // Fetch or create paths with blocks for the given workflow_id
-    const result = await prisma.$transaction(
+    const result = await prisma_client.$transaction(
       async (prisma: Prisma.TransactionClient) => {
         // Fetch paths for the given workflow_id
         const existingPaths = await prisma.path.findMany({
@@ -234,5 +239,7 @@ export async function GET(
       { error: 'Failed to fetch or create paths and blocks' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

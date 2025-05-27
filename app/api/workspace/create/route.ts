@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 
 export async function POST(request: NextRequest) {
@@ -11,6 +13,11 @@ export async function POST(request: NextRequest) {
   
   if (authError || !user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
   }
 
   try {
@@ -59,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the user from the database
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await prisma_client.user.findUnique({
       where: { auth_id: user.id },
     });
 
@@ -81,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a workspace
-    const workspace = await prisma.workspace.create({
+    const workspace = await prisma_client.workspace.create({
       data: {
         name: formData.name,
         slug: formData.slug || generateSlug(formData.name),
@@ -105,6 +112,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Internal server error' 
     }, { status: 500 });
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 

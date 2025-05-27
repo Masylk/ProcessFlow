@@ -7,6 +7,8 @@ import { getActiveUser } from '@/lib/auth';
 import { checkAndScheduleProcessLimitEmail } from '@/lib/emails/scheduleProcessLimitEmail';
 import { generatePublicAccessId } from '../../workflow/utils';
 import { checkWorkflowName } from '@/app/utils/checkNames';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -198,6 +200,10 @@ import { checkWorkflowName } from '@/app/utils/checkNames';
  *                   example: "Failed to delete workflow and related data"
  */
 export async function POST(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const {
       name,
@@ -251,7 +257,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get workspace with subscription info and workflow count
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: Number(workspace_id) },
       include: {
         subscription: true,
@@ -304,7 +310,7 @@ export async function POST(req: NextRequest) {
       console.log('Creating workflow with author_id:', author_id, typeof author_id);
     }
     // Create the workflow with cleaned name
-    const workflow = await prisma.workflow.create({
+    const workflow = await prisma_client.workflow.create({
       data: {
         name: cleanedName,
         description,
@@ -342,7 +348,7 @@ export async function POST(req: NextRequest) {
 
     // --- NEW LOGIC: Create a path and default blocks for the new workflow ---
     // Create a new path affiliated with this workflow
-    const newPath = await prisma.path.create({
+    const newPath = await prisma_client.path.create({
       data: {
         name: 'First Path',
         workflow_id: workflow.id,
@@ -350,7 +356,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create BEGIN block
-    await prisma.block.create({
+    await prisma_client.block.create({
       data: {
         type: 'BEGIN',
         position: 0,
@@ -362,7 +368,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create default STEP block
-    await prisma.block.create({
+    await prisma_client.block.create({
       data: {
         type: 'STEP',
         position: 1,
@@ -374,7 +380,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create END block
-    await prisma.block.create({
+    await prisma_client.block.create({
       data: {
         type: 'LAST',
         position: 2,
@@ -394,7 +400,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Update the workflow with the final public_access_id
-    const updatedWorkflow = await prisma.workflow.update({
+    const updatedWorkflow = await prisma_client.workflow.update({
       where: { id: workflow.id },
       data: { public_access_id: updatedPublicId },
       include: {
@@ -423,12 +429,12 @@ export async function POST(req: NextRequest) {
     // We only want to send this when they've EXACTLY reached the limit (5 workflows)
     try {
       // After creating the workflow, get the current count
-      const currentCount = await prisma.workflow.count({
+      const currentCount = await prisma_client.workflow.count({
         where: { workspace_id: Number(workspace_id) }
       });
       
       // Get the user ID from the workspace members
-      const workspaceUsers = await prisma.user_workspace.findMany({
+      const workspaceUsers = await prisma_client.user_workspace.findMany({
         where: { workspace_id: Number(workspace_id) },
         select: {
           user_id: true,
@@ -457,6 +463,8 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to add workflow' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
@@ -473,6 +481,11 @@ export async function PUT(req: NextRequest) {
       icon = null,
       status = null,
     } = await req.json();
+
+    const prisma_client = isVercel() ? new PrismaClient() : prisma;
+    if (!prisma_client) {
+      throw new Error('Prisma client not initialized');
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -512,7 +525,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    const updatedWorkflow = await prisma.workflow.update({
+    const updatedWorkflow = await prisma_client.workflow.update({
       where: {
         id: Number(id),
       },
@@ -541,6 +554,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const { workflowId } = await req.json(); // Expecting the workflow ID in the request body
 
@@ -553,7 +570,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Start a transaction to ensure all related deletions occur together
-    await prisma.$transaction(async (prisma) => {
+    await prisma_client.$transaction(async (prisma) => {
       // Delete all blocks related to the workflow
       await prisma.block.deleteMany({
         where: { workflow_id: Number(workflowId) },

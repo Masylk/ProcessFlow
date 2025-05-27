@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -86,19 +88,23 @@ export async function GET(
   req: NextRequest,
   props: { params: Promise<{ id: string; workflowId: string }> }
 ) {
-  const params = await props.params;
-  const workspace_id = parseInt(params.id);
-  const workflow_id = parseInt(params.workflowId);
-
-  if (isNaN(workspace_id) || isNaN(workflow_id)) {
-    return NextResponse.json(
-      { error: 'Invalid workspace ID or workflow ID' },
-      { status: 400 }
-    );
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
   }
-
   try {
-    const workflow = await prisma.workflow.findFirst({
+    const params = await props.params;
+    const workspace_id = parseInt(params.id);
+    const workflow_id = parseInt(params.workflowId);
+
+    if (isNaN(workspace_id) || isNaN(workflow_id)) {
+      return NextResponse.json(
+        { error: 'Invalid workspace ID or workflow ID' },
+        { status: 400 }
+      );
+    }
+
+    const workflow = await prisma_client.workflow.findFirst({
       where: {
         id: workflow_id,
         workspace_id: workspace_id,
@@ -127,5 +133,7 @@ export async function GET(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

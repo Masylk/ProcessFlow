@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { stripe, mapStripeStatusToDbStatus } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 import Stripe from 'stripe';
+import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 // Mark as dynamic to ensure it's not cached
 export const dynamic = 'force-dynamic';
@@ -16,8 +18,13 @@ async function getSubscriptionWithRetry(
   maxRetries = 3,
   delayMs = 2000
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   for (let i = 0; i < maxRetries; i++) {
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       select: {
         id: true,
@@ -33,7 +40,7 @@ async function getSubscriptionWithRetry(
         },
       },
     });
-
+    if (isVercel()) await prisma_client.$disconnect();
     if (workspace?.subscription && workspace.subscription.status === 'ACTIVE') {
       return workspace;
     }
@@ -49,6 +56,10 @@ async function trackCheckoutServerSide(
   sessionId: string,
   status: string
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     // Only attempt if we have a POSTHOG_KEY
     const posthogApiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -65,7 +76,7 @@ async function trackCheckoutServerSide(
     });
 
     // Get workspace info for better tracking data
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       select: {
         id: true,
@@ -89,7 +100,10 @@ async function trackCheckoutServerSide(
       });
     }
   } catch (error) {
+    if (isVercel()) await prisma_client.$disconnect();
     // Just log the error - don't let tracking issues affect the main flow
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
@@ -106,6 +120,11 @@ async function handleSubscriptionActivated(
   sessionId: string,
   workspaceId: string
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   try {
     // Get the session details from Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -122,7 +141,7 @@ async function handleSubscriptionActivated(
 
       if (subscription.status === 'active') {
         // Find the user who made the purchase
-        const user = await prisma.user.findFirst({
+        const user = await prisma_client.user.findFirst({
           where: {
             workspaces: {
               some: {
@@ -131,6 +150,8 @@ async function handleSubscriptionActivated(
             },
           },
         });
+
+        if (isVercel()) await prisma_client.$disconnect();
 
         if (user) {
           // Send the subscription activated email
@@ -163,6 +184,8 @@ async function handleSubscriptionActivated(
     }
   } catch (error) {
     console.error('Error handling subscription activation:', error);
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
@@ -195,6 +218,11 @@ export default async function CheckoutSuccessPage(props: PageProps) {
 
   await sleep(2000);
 
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    return redirect('/');
+  }
+
   try {
     const existingWorkspace = await getSubscriptionWithRetry(workspaceIdNumber);
 
@@ -202,7 +230,7 @@ export default async function CheckoutSuccessPage(props: PageProps) {
       return redirect(`/?workspace=${workspaceId}&checkout=success`);
     }
 
-    let workspace = await prisma.workspace.findUnique({
+    let workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceIdNumber },
       select: {
         id: true,
@@ -218,6 +246,8 @@ export default async function CheckoutSuccessPage(props: PageProps) {
         },
       },
     });
+
+    if (isVercel()) await prisma_client.$disconnect();
 
     if (!workspace) {
       return redirect(
@@ -245,7 +275,7 @@ export default async function CheckoutSuccessPage(props: PageProps) {
         workspace.subscription &&
         workspace.subscription.status === 'CANCELED'
       ) {
-        await prisma.subscription.update({
+        await prisma_client.subscription.update({
           where: { id: workspace.subscription.id },
           data: {
             stripe_subscription_id: stripeSubscription.id,
@@ -273,7 +303,7 @@ export default async function CheckoutSuccessPage(props: PageProps) {
         )) as Stripe.Customer;
 
         const defaultTaxRate = 20.0;
-        await prisma.workspace_billing_infos.upsert({
+        await prisma_client.workspace_billing_infos.upsert({
           where: {
             workspace_id: workspaceIdNumber,
           },
@@ -310,12 +340,12 @@ export default async function CheckoutSuccessPage(props: PageProps) {
           },
         });
 
-        await prisma.workspace.update({
+        await prisma_client.workspace.update({
           where: { id: workspaceIdNumber },
           data: { subscription_id: workspace.subscription.id },
         });
       } else {
-        const newSubscription = await prisma.subscription.create({
+        const newSubscription = await prisma_client.subscription.create({
           data: {
             workspace_id: workspaceIdNumber,
             stripe_subscription_id: stripeSubscription.id,
@@ -342,7 +372,7 @@ export default async function CheckoutSuccessPage(props: PageProps) {
         )) as Stripe.Customer;
 
         const defaultTaxRate = 20.0;
-        await prisma.workspace_billing_infos.upsert({
+        await prisma_client.workspace_billing_infos.upsert({
           where: {
             workspace_id: workspaceIdNumber,
           },
@@ -379,12 +409,14 @@ export default async function CheckoutSuccessPage(props: PageProps) {
           },
         });
 
-        await prisma.workspace.update({
+        await prisma_client.workspace.update({
           where: { id: workspaceIdNumber },
           data: { subscription_id: newSubscription.id },
         });
       }
+      if (isVercel()) await prisma_client.$disconnect();
     } else {
+      if (isVercel()) await prisma_client.$disconnect();
     }
 
     await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'success');
@@ -401,10 +433,12 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   } catch (error) {
     if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
       await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'failed');
+      if (isVercel()) await prisma_client.$disconnect();
       return redirect(
         `/?workspace=${workspaceId}&checkout=failed&error=checkout_error`
       );
     }
+    if (isVercel()) await prisma_client.$disconnect();
     throw error;
   }
 }

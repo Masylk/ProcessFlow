@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ReactFlowPageClient } from './components/ReactFlowPageClient';
 import { Metadata } from 'next';
+import getBaseUrl from '@/app/utils/getBaseUrl';
 
 interface PageParams {
   flow: string;
@@ -35,11 +36,17 @@ export async function generateMetadata({
   if (!workflowName || !workflowId) {
     return { title: 'ProcessFlow' };
   }
+  const headers: HeadersInit = {};
 
-  // Get workflow data from API
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
+  const baseUrl = getBaseUrl();
+
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     return { title: 'ProcessFlow' };
@@ -67,13 +74,25 @@ export default async function ReactFlowPage({
   }
 
   // Get workflow data from API using path parameter
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL}/api/workflow/${workflowId}`
-  );
+  const baseUrl = getBaseUrl();
+  const headers: HeadersInit = {};
+
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+    headers['x-vercel-protection-bypass'] =
+      process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  }
+
+  const response = await fetch(`${baseUrl}/api/workflow/${workflowId}`, {
+    headers,
+  });
 
   if (!response.ok) {
     // Handle unauthorized or not found cases
-    const { error } = await response.json();
+    let error: any = {};
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      error = await response.json();
+    }
     if (response.status === 401) {
       redirect('/login');
     } else {

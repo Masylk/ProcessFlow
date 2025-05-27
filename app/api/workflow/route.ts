@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -71,19 +73,23 @@ import prisma from '@/lib/prisma';
  *                   example: "Failed to create workflow"
  */
 export async function POST(req: NextRequest) {
-  const { name, description, workspaceId } = await req.json();
-
-  // Ensure both `name` and `description` are provided
-  if (!name || !description) {
-    return NextResponse.json(
-      { error: 'Name and description are required' },
-      { status: 400 }
-    );
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
   }
-
   try {
+    const { name, description, workspaceId } = await req.json();
+
+    // Ensure both `name` and `description` are provided
+    if (!name || !description) {
+      return NextResponse.json(
+        { error: 'Name and description are required' },
+        { status: 400 }
+      );
+    }
+
     // Get workspace with subscription info and workflow count
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: workspaceId },
       include: {
         subscription: true,
@@ -117,7 +123,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create a new workflow
-    const newWorkflow = await prisma.workflow.create({
+    const newWorkflow = await prisma_client.workflow.create({
       data: {
         name,
         description,
@@ -133,5 +139,7 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to create workflow' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 

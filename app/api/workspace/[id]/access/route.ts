@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { NextRequest } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function GET(
   request: NextRequest,
   props: { params: Promise<{ id: string }> } // Handle params as a Promise
 ) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const params = await props.params; // Await the params
     const workspaceId = parseInt(params.id); // Convert to number
@@ -19,7 +25,7 @@ export async function GET(
     }
 
     // First, find the user by auth_id
-    const user = await prisma.user.findUnique({
+    const user = await prisma_client.user.findUnique({
       where: {
         auth_id: authId,
       },
@@ -31,7 +37,7 @@ export async function GET(
     }
 
     // Then check workspace access using the user's id
-    const userWorkspace = await prisma.user_workspace.findFirst({
+    const userWorkspace = await prisma_client.user_workspace.findFirst({
       where: {
         workspace_id: workspaceId,
         user_id: user.id, // Using the actual user id here
@@ -51,5 +57,7 @@ export async function GET(
   } catch (error) {
     console.error('Error checking workspace access:', error);
     return new NextResponse(null, { status: 500 });
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
