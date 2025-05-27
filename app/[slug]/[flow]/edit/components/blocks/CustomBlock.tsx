@@ -32,6 +32,7 @@ import { useStrokeLinesStore } from '../../store/strokeLinesStore';
 import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { CustomTooltip } from '@/app/components/CustomTooltip';
+import { motion } from 'framer-motion';
 
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -482,7 +483,14 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     if (!showDropdown) return null;
 
     return createPortal(
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        transition={{ 
+          duration: 0.15, 
+          ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+        }}
         style={{
           backgroundColor: colors['bg-secondary'],
           border: `1px solid ${colors['border-primary']}`,
@@ -705,7 +713,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             </div>
           </div>
         </div>
-      </div>,
+      </motion.div>,
       document.body
     );
   };

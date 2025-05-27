@@ -64,6 +64,7 @@ video,
   --text-error-primary: #d92d20;
   --text-warning-primary: #dc6803;
   --text-success-primary: #079455;
+  --text-accent: #4761c4;
   --border-primary: #d0d5dd;
   --border-secondary: #e4e7ec;
   --border-tertiary: #f2f4f7;
@@ -390,6 +391,7 @@ video,
   --text-error-primary: #f97066;
   --text-warning-primary: #fdb022;
   --text-success-primary: #47cd89;
+  --text-accent: #4761c4;
   --border-primary: #333741;
   --border-secondary: #1f242f;
   --border-tertiary: #1f242f;
@@ -613,4 +615,32 @@ video,
   --tooltip-supporting-text: #cecfd2;
   --wysiwyg-editor-icon-fg: #94969c;
   --wysiwyg-editor-icon-fg_active: #ffffff;
+}
+
+/* Apple-style scrollbar that uses theme colors */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-secondary);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Dark mode scrollbar adjustments */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--border-secondary);
 }

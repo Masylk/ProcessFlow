@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useReactFlow, useStore } from '@xyflow/react';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
+import { motion } from 'framer-motion';
 
 interface ZoomBarDropdownMenuProps {
   onClose: () => void;
@@ -76,9 +77,16 @@ const ZoomBarDropdownMenu: React.FC<ZoomBarDropdownMenuProps> = ({ onClose, curr
   };
 
   return (
-    <div 
+    <motion.div 
       ref={dropdownRef}
-      className="absolute top-12 right-0 w-48 rounded-lg shadow-lg border z-[9999] overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 fade-in-0 duration-200"
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ 
+        duration: 0.15, 
+        ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+      }}
+      className="absolute top-12 right-0 w-48 rounded-lg shadow-lg border z-[9999] overflow-hidden"
       style={{
         backgroundColor: colors['bg-primary'],
         borderColor: colors['border-primary'],
@@ -128,7 +136,7 @@ const ZoomBarDropdownMenu: React.FC<ZoomBarDropdownMenuProps> = ({ onClose, curr
           );
         })}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -21,7 +21,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-8 z-[9999]"
+      className="flex items-center justify-center p-8 h-full w-full"
       onClick={onClose}
     >
       {/* Backdrop */}

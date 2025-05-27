@@ -13,6 +13,7 @@ import {
 } from '@/app/[slug]/[flow]/utils/createLinks';
 import { toast } from 'sonner';
 import ShareModal from '@/app/components/ShareModal';
+import { motion } from 'framer-motion';
 
 interface StatusStyle {
   bg: string;
@@ -504,8 +505,15 @@ export default function WorkflowCard({
 
                 {/* Status Dropdown Menu */}
                 {isStatusMenuOpen && (
-                  <div
+                  <motion.div
                     ref={statusMenuRef}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ 
+                      duration: 0.15, 
+                      ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+                    }}
                     style={{
                       backgroundColor: colors['bg-secondary'],
                       borderColor: colors['border-primary'],
@@ -513,7 +521,7 @@ export default function WorkflowCard({
                         ? { bottom: 'calc(100% + 4px)' }
                         : { top: 'calc(100% + 4px)' }),
                     }}
-                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px] animate-in fade-in zoom-in-95 duration-200"
+                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px]"
                   >
                     <div className="flex flex-col">
                       {Object.entries(STATUS_STYLES).map(([key, style]) => (
@@ -559,7 +567,7 @@ export default function WorkflowCard({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
@@ -575,8 +583,15 @@ export default function WorkflowCard({
 
         {/* Menu Dropdown */}
         {isMenuOpen && (
-          <div
+          <motion.div
             ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ 
+              duration: 0.15, 
+              ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+            }}
             style={{
               backgroundColor: colors['bg-secondary'],
               borderColor: colors['border-primary'],
@@ -646,7 +661,7 @@ export default function WorkflowCard({
                 </div>
               )
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 

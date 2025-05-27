@@ -9,6 +9,7 @@ import ShareModal from '@/app/components/ShareModal';
 import EditFlowModal from '@/app/dashboard/components/EditFlowModal';
 import { createReadLink } from '../../utils/createLinks';
 import { Workflow } from '@/types/workflow';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface WorkflowHeaderProps {
   workflowId: string;
@@ -34,7 +35,6 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
   const [editableTitle, setEditableTitle] = useState('');
   const [createdDate, setCreatedDate] = useState('');
   const [workflowData, setWorkflowData] = useState<Workflow | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const files = [
@@ -75,23 +75,6 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
 
     fetchWorkflowData();
   }, [workflowId]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDropdownOpen]);
 
   const navigateToFirstSegment = () => {
     router.push('/');
@@ -144,7 +127,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
   return (
     <>
       <div
-        className="fixed top-0 left-0 w-full h-[56px] p-4 flex justify-between items-center z-40"
+        className="fixed top-0 left-0 w-full h-[56px] p-4 flex justify-between items-center z-30"
         style={{
           backgroundColor: colors['bg-primary'],
           borderBottom: `1px solid ${colors['border-primary']}`,
@@ -210,7 +193,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
           )}
           
           {/* Workflow title with dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative">
             <span
               className="text-sm font-['Inter'] px-2 py-1 rounded-md cursor-pointer flex items-center gap-1"
               style={{
@@ -248,14 +231,22 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
             </span>
 
             {/* Dropdown Menu */}
-            {isDropdownOpen && (
-              <div
-                className="absolute top-full left-0 mt-1 w-48 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border z-[9999] overflow-hidden py-1 flex flex-col animate-in slide-in-from-top-2 fade-in-0 duration-200"
-                style={{
-                  backgroundColor: colors['bg-secondary'],
-                  borderColor: colors['border-primary'],
-                }}
-              >
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ 
+                    duration: 0.15, 
+                    ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+                  }}
+                  className="absolute top-full left-0 mt-1 w-48 rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] border z-50 overflow-hidden py-1 flex flex-col"
+                  style={{
+                    backgroundColor: colors['bg-secondary'],
+                    borderColor: colors['border-primary'],
+                  }}
+                >
                 {dropdownMenuItems.map((item, index) => (
                   <div key={index}>
                     <div
@@ -319,8 +310,9 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(({
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
 

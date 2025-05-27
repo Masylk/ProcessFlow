@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { User } from '@/types/user';
 import { redirectToRoadmap } from '@/app/utils/roadmap';
 import { useColors } from '@/app/theme/hooks';
+import { motion } from 'framer-motion';
 
 // Helper function for environment-based logging
 const devLog = (...args: any[]) => {
@@ -28,7 +29,6 @@ export default function UserDropdown({
 }: UserDropdownProps) {
   const colors = useColors();
   const supabase = createClient();
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -67,27 +67,20 @@ export default function UserDropdown({
     }
   };
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [onClose]);
-
   return (
-    <div
-      ref={dropdownRef}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ 
+        duration: 0.15, 
+        ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+      }}
       style={{
         backgroundColor: colors['bg-secondary'],
         borderColor: colors['border-primary']
       }}
-      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 fade-in-0 duration-200"
+      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden"
     >
       <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}
@@ -95,7 +88,8 @@ export default function UserDropdown({
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
           onClick={() => {
             onOpenUserSettings();
-            onClose();
+            // Delay closing the dropdown to allow modal to start loading
+            setTimeout(onClose, 50);
           }}
         >
           <div 
@@ -185,7 +179,8 @@ export default function UserDropdown({
           className="self-stretch px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
           onClick={() => {
             onOpenHelpCenter();
-            onClose();
+            // Delay closing the dropdown to allow modal to start loading
+            setTimeout(onClose, 50);
           }}
         >
           <div 
@@ -242,6 +237,6 @@ export default function UserDropdown({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
