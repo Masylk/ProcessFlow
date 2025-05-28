@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 import { generatePublicAccessId } from '../utils';
 import { supabase } from '@/lib/supabaseClient';
+import { generatePublicUrl } from '../../utils/generatePublicUrl';
 
 export async function PATCH(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
@@ -184,14 +185,10 @@ export async function GET(
 
     // Add signedIconUrl if workflow.icon exists and is not a Brandfetch URL
     if (workflow.icon && !workflow.icon.startsWith('https://cdn.brandfetch.io/')) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-      if (bucketName) {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(workflow.icon, 86400);
-        if (!error && data?.signedUrl) {
-          (workflow as any).signedIconUrl = data.signedUrl;
-        } 
+      try {
+        (workflow as any).signedIconUrl = generatePublicUrl(workflow.icon);
+      } catch (error) {
+        console.error('Error generating public URL for workflow icon:', error);
       }
     }
 
@@ -201,14 +198,10 @@ export async function GET(
       workflow.author.avatar_url &&
       !workflow.author.avatar_url.startsWith('http')
     ) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-      if (bucketName) {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(workflow.author.avatar_url, 86400);
-        if (!error && data?.signedUrl) {
-          (workflow.author as any).avatar_signed_url = data.signedUrl;
-        } 
+      try {
+        (workflow.author as any).avatar_signed_url = generatePublicUrl(workflow.author.avatar_url);
+      } catch (error) {
+        console.error('Error generating public URL for author avatar:', error);
       }
     }
     

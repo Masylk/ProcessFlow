@@ -3,6 +3,10 @@ import IconSelector from './IconSelector';
 import { Block } from '../../types';
 import { useColors, useThemeAssets } from '@/app/theme/hooks';
 import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
+import {
+  fetchIconsBatch,
+  preloadCriticalIcons,
+} from '@/utils/optimizedIconFetch';
 
 interface Entity {
   basicUrl: string;
@@ -45,57 +49,97 @@ export default function IconModifier({ block, onUpdate }: IconModifierProps) {
     };
   }, [block.icon]);
 
-  // Fetch icons and signed URLs for selector
+  // Fetch icons and signed URLs with optimized batch loading
   useEffect(() => {
     const fetchIcons = async () => {
       try {
-        // const response = await fetch('/api/step-icons');
-        // if (!response.ok) throw new Error('Failed to fetch icons');
-        // const data = await response.json();
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) throw new Error('Failed to fetch icons');
+        const data = await response.json();
 
-        // // Set initial lists with empty signedUrl
-        // const applistResult: Entity[] = data.applist.map((app: string) => ({
-        //   basicUrl: `step-icons/apps/${app}`,
-        //   signedUrl: '',
-        // }));
-        // const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
-        //   basicUrl: `step-icons/default-icons/${icon}`,
-        //   signedUrl: '',
-        // }));
+        // Use optimized batch fetching with caching and fallback
+        const { applistResult, iconlistResult } = await fetchIconsBatch(
+          data.applist,
+          data.iconlist
+        );
 
-        // setAppList(applistResult);
-        // setIconList(iconlistResult);
+        // Convert to Entity format
+        const appEntities: Entity[] = applistResult.map((item) => ({
+          basicUrl: item.basicUrl,
+          signedUrl: item.signedUrl,
+        }));
 
-        // // Fetch signed URLs in the background for apps
-        // data.applist.forEach(async (app: string, idx: number) => {
-        //   const basicUrl = `step-icons/apps/${app}`;
-        //   const signedUrl = await fetchSignedUrl(basicUrl);
-        //   setAppList((prev) =>
-        //     prev.map((item, i) =>
-        //       i === idx ? { ...item, signedUrl: signedUrl || '' } : item
-        //     )
-        //   );
-        // });
+        const iconEntities: Entity[] = iconlistResult.map((item) => ({
+          basicUrl: item.basicUrl,
+          signedUrl: item.signedUrl,
+        }));
 
-        // // Fetch signed URLs in the background for icons
-        // data.iconlist.forEach(async (icon: string, idx: number) => {
-        //   const basicUrl = `step-icons/default-icons/${icon}`;
-        //   const signedUrl = await fetchSignedUrl(basicUrl);
-        //   setIconList((prev) =>
-        //     prev.map((item, i) =>
-        //       i === idx ? { ...item, signedUrl: signedUrl || '' } : item
-        //     )
-        //   );
-        // });
+        setAppList(appEntities);
+        setIconList(iconEntities);
+
+        // Preload critical icons for better perceived performance
+        const criticalIconUrls = [
+          ...appEntities.slice(0, 10).map((item) => item.signedUrl),
+          ...iconEntities.slice(0, 10).map((item) => item.signedUrl),
+        ].filter((url) => url);
+
+        if (criticalIconUrls.length > 0) {
+          preloadCriticalIcons(criticalIconUrls, 20);
+        }
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching icons:', error);
+
+        // Fallback to old method if new approach fails completely
+        try {
+          const response = await fetch('/api/step-icons');
+          if (!response.ok) throw new Error('Failed to fetch icons');
+          const data = await response.json();
+
+          // Set initial lists with empty signedUrl
+          const applistResult: Entity[] = data.applist.map((app: string) => ({
+            basicUrl: `step-icons/apps/${app}`,
+            signedUrl: '',
+          }));
+          const iconlistResult: Entity[] = data.iconlist.map(
+            (icon: string) => ({
+              basicUrl: `step-icons/default-icons/${icon}`,
+              signedUrl: '',
+            })
+          );
+
+          setAppList(applistResult);
+          setIconList(iconlistResult);
+
+          // Fetch signed URLs in the background for apps
+          data.applist.forEach(async (app: string, idx: number) => {
+            const basicUrl = `step-icons/apps/${app}`;
+            const signedUrl = await fetchSignedUrl(basicUrl);
+            setAppList((prev) =>
+              prev.map((item, i) =>
+                i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+              )
+            );
+          });
+
+          // Fetch signed URLs in the background for icons
+          data.iconlist.forEach(async (icon: string, idx: number) => {
+            const basicUrl = `step-icons/default-icons/${icon}`;
+            const signedUrl = await fetchSignedUrl(basicUrl);
+            setIconList((prev) =>
+              prev.map((item, i) =>
+                i === idx ? { ...item, signedUrl: signedUrl || '' } : item
+              )
+            );
+          });
+        } catch (fallbackError) {
+          console.error('Fallback icon fetching also failed:', fallbackError);
+        }
       }
     };
     fetchIcons();
   }, []);
 
   const handleIconSelect = (icon?: string) => {
-    console.log('icon', icon);
     if (icon) {
       onUpdate({ icon });
     } else {

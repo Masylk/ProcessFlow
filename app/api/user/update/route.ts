@@ -1,5 +1,6 @@
 // app/api/user/update/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { generatePublicUrl } from '../../utils/generatePublicUrl';
 import prisma from '@/lib/prisma'; // Import your Prisma client
 import { supabase } from '@/lib/supabaseClient';
 import { isVercel } from '../../utils/isVercel';
@@ -159,32 +160,6 @@ export async function PUT(req: NextRequest) {
 
     let newAvatarUrl = avatar_url;
 
-    // If the user has an existing avatar, delete it before updating
-    if ((avatar_url || delete_avatar) && existingUser.avatar_url) {
-      const oldAvatarPath = existingUser.avatar_url.replace(
-        `${supabaseUrl}/storage/v1/object/public/${userAssetsBucket}/`,
-        ''
-      );
-
-      if (oldAvatarPath) {
-        if (!userAssetsBucket) {
-          console.error('Supabase bucket name is undefined');
-          return NextResponse.json(
-            { error: 'Supabase bucket name is not set' },
-            { status: 500 }
-          );
-        }
-
-        const { error: deleteError } = await supabase.storage
-          .from(userAssetsBucket)
-          .remove([`uploads/${oldAvatarPath}`]);
-
-        if (deleteError) {
-          console.error('Error deleting old avatar:', deleteError.message);
-        }
-      }
-    }
-
     // If delete_avatar is true, set avatar_url to null
     if (delete_avatar) {
       newAvatarUrl = null;
@@ -204,20 +179,12 @@ export async function PUT(req: NextRequest) {
     });
 
     if (updatedUser.avatar_url) {
-      // If the updatedUser.avatar_url is a storage path (not an external URL), generate a signed URL
+      // If the updatedUser.avatar_url is a storage path (not an external URL), generate a public URL
       if (!updatedUser.avatar_url.startsWith('http')) {
-        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-        if (bucketName) {
-          const { data, error } = await supabase.storage
-            .from(bucketName)
-            .createSignedUrl(updatedUser.avatar_url, 86400);
-          if (!error && data?.signedUrl) {
-            updatedUser.avatar_signed_url = data.signedUrl;
-          } else {
-            console.error('Error generating signed URL:', error);
-          }
-        } else {
-          console.error('Bucket name is undefined');
+        try {
+          updatedUser.avatar_signed_url = generatePublicUrl(updatedUser.avatar_url);
+        } catch (error) {
+          console.error('Error generating public URL for avatar:', error);
         }
       }
     }
