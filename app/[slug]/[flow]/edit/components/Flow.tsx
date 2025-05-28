@@ -334,25 +334,30 @@ export const Flow = React.memo(function Flow({
 
     const createLayoutedNodes = async () => {
       try {
-        const firstPath = paths.find((path) => path.parent_blocks?.length === 0);
-        if (firstPath) {
+        // Find ALL paths with no parent blocks (root paths) instead of just the first one
+        const rootPaths = paths.filter((path) => path.parent_blocks?.length === 0);
+        
+        if (rootPaths.length > 0) {
           const nodes: Node[] = [];
           const edges: Edge[] = [];
 
-          processPath(
-            workspaceId,
-            firstPath,
-            nodes,
-            edges,
-            handleDeleteBlock,
-            handleAddBlockOnEdge,
-            new Set<string>(),
-            setPaths,
-            setStrokeLines,
-            updateStrokeLineVisibility,
-            strokeLineVisibilities,
-            paths
-          );
+          // Process each root path to ensure all workflow nodes are created
+          rootPaths.forEach((rootPath) => {
+            processPath(
+              workspaceId,
+              rootPath,
+              nodes,
+              edges,
+              handleDeleteBlock,
+              handleAddBlockOnEdge,
+              new Set<string>(),
+              setPaths,
+              setStrokeLines,
+              updateStrokeLineVisibility,
+              strokeLineVisibilities,
+              paths
+            );
+          });
 
           // Add stroke edges with visibility check
           const strokeEdges: Edge[] = strokeLines.map((strokeLine) => {
@@ -807,7 +812,7 @@ export const Flow = React.memo(function Flow({
         <Background gap={20} size={3} color={colors['border-primary']} />
         <MiniMap
           nodeColor={colors['fg-brand-primary']}
-          maskColor={`${colors['bg-primary']}80`}
+          maskColor={`${colors['bg-primary']}20`}
           className="custom-minimap"
           style={{ 
             bottom: 90,

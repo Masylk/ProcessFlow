@@ -666,6 +666,19 @@ video,
   background: var(--bg-tertiary) !important;
 }
 
+/* Light mode SVG background - darker */
+:root .react-flow__minimap svg,
+[data-theme="light"] .react-flow__minimap svg {
+  background-color: var(--utility-gray-300) !important;
+  background: var(--utility-gray-300) !important;
+}
+
+/* Dark mode SVG background */
+[data-theme="dark"] .react-flow__minimap svg {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
 /* Target any wrapper containers but exclude nodes */
 [class*="minimap"]:not([class*="node"]) {
   background-color: var(--bg-tertiary) !important;
@@ -677,11 +690,30 @@ video,
   fill: var(--bg-tertiary) !important;
 }
 
-/* Override the mask background only */
-.react-flow__minimap .react-flow__minimap-mask {
-  fill: var(--bg-tertiary) !important;
+/* Light mode main rect background */
+:root .react-flow__minimap > svg > rect:first-child,
+[data-theme="light"] .react-flow__minimap > svg > rect:first-child {
+  fill: var(--utility-gray-300) !important;
 }
 
+/* Reduce mask opacity for subtle contrast */
+.react-flow__minimap .react-flow__minimap-mask {
+  fill: var(--bg-primary) !important;
+  fill-opacity: 0.2 !important; /* Much lighter masking */
+}
+
+/* Light mode specific - very subtle mask */
+:root .react-flow__minimap .react-flow__minimap-mask,
+[data-theme="light"] .react-flow__minimap .react-flow__minimap-mask {
+  fill: var(--utility-gray-200) !important; /* Very light gray */
+  fill-opacity: 0.3 !important; /* Subtle masking */
+}
+
+/* Dark mode specific - keep subtle */
+[data-theme="dark"] .react-flow__minimap .react-flow__minimap-mask {
+  fill: var(--bg-primary) !important;
+  fill-opacity: 0.25 !important; /* Subtle masking in dark mode */
+}
 
 /* Custom class targeting - container only */
 .custom-minimap {
@@ -696,4 +728,60 @@ video,
 
 .react-flow .react-flow__minimap.react-flow__minimap > svg {
   background: var(--bg-tertiary) !important;
+}
+
+/* Enhanced minimap node visibility - ensure nodes outside viewport are clearly visible */
+.react-flow__minimap .react-flow__minimap-node {
+  opacity: 1 !important;
+  fill-opacity: 0.9 !important;
+}
+
+/* ENHANCED VIEWPORT RECTANGLE - Make it the star of the show! */
+.react-flow__minimap .react-flow__minimap-node[data-testid="minimap-node"] {
+  stroke-width: 1 !important;
+  stroke: var(--border-primary) !important;
+}
+
+/* Style the viewport rectangle to be much more prominent */
+.react-flow__minimap svg > rect:last-child {
+  stroke: var(--fg-brand-primary) !important;
+  stroke-width: 3 !important;
+  fill: none !important;
+  stroke-dasharray: none !important;
+  opacity: 1 !important;
+}
+
+/* Light mode viewport rectangle */
+:root .react-flow__minimap svg > rect:last-child,
+[data-theme="light"] .react-flow__minimap svg > rect:last-child {
+  stroke: var(--utility-brand-600) !important; /* Bright brand blue */
+  stroke-width: 3 !important;
+  fill: var(--utility-brand-50) !important; /* Light blue background */
+  fill-opacity: 0.15 !important;
+  stroke-dasharray: none !important;
+  opacity: 1 !important;
+  rx: 4 !important; /* Rounded corners */
+  ry: 4 !important;
+}
+
+/* Dark mode viewport rectangle */
+[data-theme="dark"] .react-flow__minimap svg > rect:last-child {
+  stroke: var(--utility-brand-400) !important; /* Bright brand blue for dark mode */
+  stroke-width: 3 !important;
+  fill: var(--utility-brand-900) !important; /* Dark blue background */
+  fill-opacity: 0.3 !important;
+  stroke-dasharray: none !important;
+  opacity: 1 !important;
+  rx: 4 !important; /* Rounded corners */
+  ry: 4 !important;
+}
+
+/* Alternative targeting for viewport rectangle */
+.react-flow__minimap > svg > rect[stroke] {
+  stroke: var(--fg-brand-primary) !important;
+  stroke-width: 3 !important;
+  fill: var(--bg-brand-primary) !important;
+  fill-opacity: 0.2 !important;
+  rx: 4 !important;
+  ry: 4 !important;
 }
