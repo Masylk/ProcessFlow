@@ -80,7 +80,7 @@ export default function UserDropdown({
         backgroundColor: colors['bg-secondary'],
         borderColor: colors['border-primary']
       }}
-      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden"
+      className="h-full rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border flex-col justify-start items-start inline-flex overflow-hidden z-[70]"
     >
       <div className="h-full flex-col justify-start items-start flex overflow-hidden">
         {/* Settings Item */}

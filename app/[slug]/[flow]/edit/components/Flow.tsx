@@ -132,7 +132,6 @@ export const Flow = React.memo(function Flow({
   const { allStrokeLinesVisible, setAllStrokeLinesVisible } =
     useStrokeLinesStore();
   const [previewEdge, setPreviewEdge] = useState<Edge | null>(null);
-  const [isLayouting, setIsLayouting] = useState(false);
   const { isConnectMode, setIsConnectMode, setSourceBlockId, reset } =
     useConnectModeStore();
   const isEditMode = useEditModeStore((state) => state.isEditMode);
@@ -335,7 +334,6 @@ export const Flow = React.memo(function Flow({
 
     const createLayoutedNodes = async () => {
       try {
-        setIsLayouting(true);
         const firstPath = paths.find((path) => path.parent_blocks?.length === 0);
         if (firstPath) {
           const nodes: Node[] = [];
@@ -417,8 +415,6 @@ export const Flow = React.memo(function Flow({
         // Provide fallback - set empty nodes/edges to prevent crashes
         setNodes([]);
         setEdges([]);
-      } finally {
-        setIsLayouting(false);
       }
     };
     createLayoutedNodes();
@@ -754,17 +750,6 @@ export const Flow = React.memo(function Flow({
             : colors['bg-primary'],
       }}
     >
-      {isLayouting && (
-        <div 
-          className="absolute inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: `${colors['bg-primary']}80` }}
-        >
-          <div 
-            className="animate-spin rounded-full h-8 w-8 border-b-2"
-            style={{ borderColor: colors['fg-brand-primary'] }}
-          />
-        </div>
-      )}
       <ReactFlow
         nodes={nodes}
         edges={allEdges}
@@ -775,7 +760,7 @@ export const Flow = React.memo(function Flow({
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         translateExtent={translateExtent}
         onNodeClick={(event, node) => {
-          if (isModalOpen || isLayouting) return;
+          if (isModalOpen) return;
           event.preventDefault();
           event.stopPropagation();
           if (node.data.type !== 'STEP') return;
@@ -792,7 +777,6 @@ export const Flow = React.memo(function Flow({
           );
         }}
         onPaneClick={() => {
-          if (isLayouting) return;
           setEditMode(false, null);
         }}
         fitView={true}
@@ -824,7 +808,17 @@ export const Flow = React.memo(function Flow({
         <MiniMap
           nodeColor={colors['fg-brand-primary']}
           maskColor={`${colors['bg-primary']}80`}
-          style={{ bottom: 90 }}
+          className="custom-minimap"
+          style={{ 
+            bottom: 90,
+            borderRadius: '8px',
+            border: `1px solid ${colors['border-secondary']}`,
+          }}
+          nodeStrokeColor={colors['border-primary']}
+          nodeStrokeWidth={2}
+          nodeBorderRadius={4}
+          pannable={true}
+          zoomable={true}
         />
       </ReactFlow>
       <PathSelectionBox workspaceId={workspaceId} workflowId={workflowId} />

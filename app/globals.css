@@ -644,3 +644,56 @@ video,
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
   background: var(--border-secondary);
 }
+
+/* Refined MiniMap styling - target only background containers, preserve node colors */
+
+/* CSS Variables approach */
+.react-flow {
+  --xy-minimap-background-color-default: var(--bg-tertiary) !important;
+}
+
+/* Target the main minimap container - NOT its children */
+.react-flow__minimap {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-secondary) !important;
+}
+
+/* Target the SVG background specifically, but not fills */
+.react-flow__minimap svg {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Target any wrapper containers but exclude nodes */
+[class*="minimap"]:not([class*="node"]) {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Target the main SVG rect background, but preserve node fills */
+.react-flow__minimap > svg > rect:first-child {
+  fill: var(--bg-tertiary) !important;
+}
+
+/* Override the mask background only */
+.react-flow__minimap .react-flow__minimap-mask {
+  fill: var(--bg-tertiary) !important;
+}
+
+
+/* Custom class targeting - container only */
+.custom-minimap {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Force override with higher specificity for container only */
+.react-flow .react-flow__minimap.react-flow__minimap {
+  background: var(--bg-tertiary) !important;
+}
+
+.react-flow .react-flow__minimap.react-flow__minimap > svg {
+  background: var(--bg-tertiary) !important;
+}
