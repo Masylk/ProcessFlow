@@ -8,6 +8,7 @@ import { Block } from '../../../types';
 import { BaseStepProps } from './BaseStep';
 import { BlockEndType, BlockType } from '@/types/block';
 import { usePathsStore } from '../../store/pathsStore';
+import { formatTime, isValidTime } from '../../utils/timeUtils';
 
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -414,22 +415,40 @@ export default function VerticalStep({
                   />
                 )}
               </motion.div>
-              <div className="flex items-center gap-2 min-w-0 whitespace-pre-line break-words">
-                <span
-                  className={cn(
-                    'text-left text-base font-semibold break-words line-clamp-2'
-                  )}
-                  style={{
-                    color: colors['text-primary'],
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {renderTitleWithLineBreaks(getDisplayTitle(block), 60)}
-                </span>
+              <div className="flex flex-col gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0 whitespace-pre-line break-words">
+                  <span
+                    className={cn(
+                      'text-left text-base font-semibold break-words line-clamp-2'
+                    )}
+                    style={{
+                      color: colors['text-primary'],
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {renderTitleWithLineBreaks(getDisplayTitle(block), 60)}
+                  </span>
+                </div>
+                {/* Time Display - moved under title */}
+                {isValidTime(block.average_time) && (
+                  <div className="flex items-center gap-1.5">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`}
+                      alt="Time"
+                      className="w-3.5 h-3.5 opacity-60"
+                    />
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: colors['text-tertiary'] }}
+                    >
+                      {formatTime(block.average_time)}
+                    </span>
+                  </div>
+                )}
               </div>
               {block.image && (
                 <motion.div
-                  className="flex-shrink-0 ml-auto"
+                  className="flex-shrink-0"
                   animate={{ rotate: isExpanded ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
                 >

@@ -32,6 +32,7 @@ import {
   createAndCopyShareLink,
   createShareLink,
 } from '../../utils/createLinks';
+import { calculateTotalTime } from '../utils/timeUtils';
 
 const HelpCenterModalDynamic = dynamic(
   () => import('@/app/dashboard/components/HelpCenterModal'),

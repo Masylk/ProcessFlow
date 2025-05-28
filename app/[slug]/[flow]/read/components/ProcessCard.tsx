@@ -272,22 +272,14 @@ export default function ProcessCard({
               </>
             )}
             {review_date && (
-              <>
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{ color: colors['text-tertiary'] }}
-                    className="text-sm"
-                  >
-                    Review date: {review_date}
-                  </span>
-                </div>
-                {lastUpdate && (
-                  <div
-                    style={{ color: colors['text-tertiary'] }}
-                    className="w-1 h-1 rounded-full bg-current"
-                  />
-                )}
-              </>
+              <div className="flex items-center gap-2">
+                <span
+                  style={{ color: colors['text-tertiary'] }}
+                  className="text-sm"
+                >
+                  Review date: {review_date}
+                </span>
+              </div>
             )}
             {lastUpdate && (
               <div className="flex items-center gap-2">

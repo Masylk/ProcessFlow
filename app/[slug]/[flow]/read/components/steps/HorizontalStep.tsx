@@ -5,6 +5,7 @@ import DynamicIcon from '@/utils/DynamicIcon';
 import { Block } from '../../../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { formatTime, isValidTime } from '../../utils/timeUtils';
 // ... other imports
 
 interface HorizontalStepProps extends BaseStepProps {
@@ -462,8 +463,8 @@ export default function HorizontalStep({
                     )}
                   </div>
                 </div>
-                {/* Step Title */}
-                <div className="flex-1">
+                {/* Step Title and Time */}
+                <div className="flex-1 flex flex-col gap-2">
                   <div
                     className="flex items-center text-base font-semibold break-words line-clamp-2 whitespace-pre-line"
                     style={{ color: colors['text-primary'] }}
@@ -472,6 +473,22 @@ export default function HorizontalStep({
                       {renderTitleWithLineBreaks(getDisplayTitle(block))}
                     </span>
                   </div>
+                  {/* Time Display - moved under title */}
+                  {isValidTime(block.average_time) && (
+                    <div className="flex items-center gap-1.5">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/clock-stopwatch-1.svg`}
+                        alt="Time"
+                        className="w-3.5 h-3.5 opacity-60"
+                      />
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: colors['text-tertiary'] }}
+                      >
+                        {formatTime(block.average_time)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
