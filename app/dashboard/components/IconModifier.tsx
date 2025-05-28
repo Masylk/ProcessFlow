@@ -74,35 +74,35 @@ export default function IconModifier({
         if (!response.ok) throw new Error('Failed to fetch icons');
         const data = await response.json();
 
-        // // Use optimized batch fetching with caching and fallback
-        // const { applistResult, iconlistResult } = await fetchIconsBatch(
-        //   data.applist,
-        //   data.iconlist
-        // );
+        // Use optimized batch fetching with caching and fallback
+        const { applistResult, iconlistResult } = await fetchIconsBatch(
+          data.applist,
+          data.iconlist
+        );
 
-        // // Convert to Entity format
-        // const appEntities: Entity[] = applistResult.map(item => ({
-        //   basicUrl: item.basicUrl,
-        //   signedUrl: item.signedUrl
-        // }));
+        // Convert to Entity format
+        const appEntities: Entity[] = applistResult.map(item => ({
+          basicUrl: item.basicUrl,
+          signedUrl: item.signedUrl
+        }));
 
-        // const iconEntities: Entity[] = iconlistResult.map(item => ({
-        //   basicUrl: item.basicUrl,
-        //   signedUrl: item.signedUrl
-        // }));
+        const iconEntities: Entity[] = iconlistResult.map(item => ({
+          basicUrl: item.basicUrl,
+          signedUrl: item.signedUrl
+        }));
 
-        // setAppList(appEntities);
-        // setIconList(iconEntities);
+        setAppList(appEntities);
+        setIconList(iconEntities);
 
-        // // Preload critical icons for better perceived performance
-        // const criticalIconUrls = [
-        //   ...appEntities.slice(0, 10).map(item => item.signedUrl),
-        //   ...iconEntities.slice(0, 10).map(item => item.signedUrl)
-        // ].filter(url => url);
+        // Preload critical icons for better perceived performance
+        const criticalIconUrls = [
+          ...appEntities.slice(0, 10).map(item => item.signedUrl),
+          ...iconEntities.slice(0, 10).map(item => item.signedUrl)
+        ].filter(url => url);
 
-        // if (criticalIconUrls.length > 0) {
-        //   preloadCriticalIcons(criticalIconUrls, 20);
-        // }
+        if (criticalIconUrls.length > 0) {
+          preloadCriticalIcons(criticalIconUrls, 20);
+        }
       } catch (error) {
         console.error('Error fetching icons:', error);
 
