@@ -17,19 +17,34 @@ interface DatePickerProps {
   className?: string;
 }
 
-const getInputToken = (state: 'normal' | 'hover' | 'focus', type: 'bg' | 'fg' | 'border', destructive: boolean = false, disabled: boolean = false): keyof InputTokens => {
+const getInputToken = (
+  state: 'normal' | 'hover' | 'focus',
+  type: 'bg' | 'fg' | 'border',
+  destructive: boolean = false,
+  disabled: boolean = false
+): keyof InputTokens => {
   if (disabled) {
     return `input-disabled-${type}` as keyof InputTokens;
   }
-  
+
   const prefix = destructive ? 'input-destructive-' : 'input-';
   const suffix = state === 'normal' ? '' : `-${state}`;
   return `${prefix}${type}${suffix}` as keyof InputTokens;
 };
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
@@ -76,7 +91,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setIsFocused(false);
       }
@@ -106,15 +124,19 @@ const DatePicker: React.FC<DatePickerProps> = ({
     }, 150);
   };
 
-  const handleCalendarInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleCalendarInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === 'Enter' && tempSelectedDate) {
       selectDate(tempSelectedDate);
     }
   };
 
-  const handleCalendarInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCalendarInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newValue = e.target.value;
-    
+
     // Try to parse the input value in real-time for calendar preview
     if (newValue.trim()) {
       const parsedDate = parseInputDate(newValue);
@@ -175,46 +197,54 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const parseInputDate = (input: string): Date | null => {
     // Try to parse various date formats
     const trimmed = input.trim();
-    
+
     // Try MM/DD/YYYY format
     const mmddyyyy = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (mmddyyyy) {
       const [, month, day, year] = mmddyyyy;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (date.getFullYear() == parseInt(year) && 
-          date.getMonth() == parseInt(month) - 1 && 
-          date.getDate() == parseInt(day)) {
+      if (
+        date.getFullYear() == parseInt(year) &&
+        date.getMonth() == parseInt(month) - 1 &&
+        date.getDate() == parseInt(day)
+      ) {
         return date;
       }
     }
-    
+
     // Try MMM DD, YYYY format (like "Jan 12, 2024")
     const shortMonth = trimmed.match(/^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})$/);
     if (shortMonth) {
       const [, monthStr, day, year] = shortMonth;
-      const monthIndex = MONTHS.findIndex(m => m.toLowerCase().startsWith(monthStr.toLowerCase()));
+      const monthIndex = MONTHS.findIndex((m) =>
+        m.toLowerCase().startsWith(monthStr.toLowerCase())
+      );
       if (monthIndex !== -1) {
         const date = new Date(parseInt(year), monthIndex, parseInt(day));
-        if (date.getFullYear() == parseInt(year) && 
-            date.getMonth() == monthIndex && 
-            date.getDate() == parseInt(day)) {
+        if (
+          date.getFullYear() == parseInt(year) &&
+          date.getMonth() == monthIndex &&
+          date.getDate() == parseInt(day)
+        ) {
           return date;
         }
       }
     }
-    
+
     // Try YYYY-MM-DD format
     const iso = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (iso) {
       const [, year, month, day] = iso;
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      if (date.getFullYear() == parseInt(year) && 
-          date.getMonth() == parseInt(month) - 1 && 
-          date.getDate() == parseInt(day)) {
+      if (
+        date.getFullYear() == parseInt(year) &&
+        date.getMonth() == parseInt(month) - 1 &&
+        date.getDate() == parseInt(day)
+      ) {
         return date;
       }
     }
-    
+
     // Try just year (will set to January 1st)
     const yearOnly = trimmed.match(/^(\d{4})$/);
     if (yearOnly) {
@@ -223,7 +253,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         return new Date(year, 0, 1);
       }
     }
-    
+
     return null;
   };
 
@@ -232,12 +262,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
+    setCurrentDate((prev) => {
       const newDate = new Date(prev);
       if (direction === 'prev') {
         newDate.setMonth(newDate.getMonth() - 1);
@@ -257,12 +287,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const startDay = (firstDay.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
 
     const days = [];
-    
+
     // Previous month's trailing days
     const prevMonth = month === 0 ? 11 : month - 1;
     const prevYear = month === 0 ? year - 1 : year;
     const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
-    
+
     for (let i = startDay - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i;
       const prevDate = new Date(prevYear, prevMonth, day);
@@ -270,7 +300,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
         date: prevDate,
         isCurrentMonth: false,
         isToday: false,
-        isSelected: false
+        isSelected: false,
       });
     }
 
@@ -279,13 +309,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
       const date = new Date(year, month, day);
       const today = new Date();
       const isToday = date.toDateString() === today.toDateString();
-      const isSelected = tempSelectedDate && date.toDateString() === tempSelectedDate.toDateString();
-      
+      const isSelected =
+        tempSelectedDate &&
+        date.toDateString() === tempSelectedDate.toDateString();
+
       days.push({
         date,
         isCurrentMonth: true,
         isToday,
-        isSelected
+        isSelected,
       });
     }
 
@@ -293,14 +325,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
     const remainingCells = 42 - days.length; // 6 weeks × 7 days
     const nextMonth = month === 11 ? 0 : month + 1;
     const nextYear = month === 11 ? year + 1 : year;
-    
+
     for (let day = 1; day <= remainingCells; day++) {
       const nextDate = new Date(nextYear, nextMonth, day);
       days.push({
         date: nextDate,
         isCurrentMonth: false,
         isToday: false,
-        isSelected: false
+        isSelected: false,
       });
     }
 
@@ -315,11 +347,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
     fontFamily: 'Inter',
     borderRadius: 8,
     border: `1px solid ${
-      destructive 
+      destructive
         ? getCssVariable('input-destructive-border')
-        : isFocused 
-          ? getCssVariable(getInputToken('focus', 'border', destructive, disabled))
-          : getCssVariable(getInputToken('normal', 'border', destructive, disabled))
+        : isFocused
+          ? getCssVariable(
+              getInputToken('focus', 'border', destructive, disabled)
+            )
+          : getCssVariable(
+              getInputToken('normal', 'border', destructive, disabled)
+            )
     }`,
     backgroundColor: disabled
       ? getCssVariable('input-disabled-bg')
@@ -337,14 +373,14 @@ const DatePicker: React.FC<DatePickerProps> = ({
         : '0px 0px 0px 4px rgba(78, 107, 215, 0.12)'
       : '0px 1px 2px rgba(16, 24, 40, 0.05)',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    textAlign: 'left',
+    textAlign: 'left' as const,
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", className)}>
+    <div ref={containerRef} className={cn('relative w-full', className)}>
       {label && (
         <div className="flex gap-0.5 items-center mb-1.5">
           <span
@@ -352,8 +388,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
               color: errorMessage
                 ? getCssVariable('input-destructive-label')
                 : disabled
-                ? getCssVariable('input-disabled-label')
-                : getCssVariable('input-label'),
+                  ? getCssVariable('input-disabled-label')
+                  : getCssVariable('input-label'),
               fontSize: 14,
               fontWeight: 600,
               lineHeight: '20px',
@@ -363,13 +399,19 @@ const DatePicker: React.FC<DatePickerProps> = ({
             {label}
           </span>
           {required && (
-            <span style={{ color: colors['text-accent'], fontSize: 14, fontWeight: 600 }}>
+            <span
+              style={{
+                color: colors['text-accent'],
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
               *
             </span>
           )}
         </div>
       )}
-      
+
       <div className="relative">
         <button
           ref={inputRef}
@@ -381,16 +423,16 @@ const DatePicker: React.FC<DatePickerProps> = ({
           className="w-full transition-all duration-200"
         >
           {/* Calendar Icon */}
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 16 16" 
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
             fill="none"
-            style={{ 
+            style={{
               color: disabled
                 ? getCssVariable('input-disabled-fg')
                 : getCssVariable('input-icon'),
-              flexShrink: 0
+              flexShrink: 0,
             }}
           >
             <path
@@ -422,25 +464,23 @@ const DatePicker: React.FC<DatePickerProps> = ({
               strokeLinejoin="round"
             />
           </svg>
-          
+
           {/* Text */}
-          <span style={{ flex: 1 }}>
-            {inputValue || placeholder}
-          </span>
-          
+          <span style={{ flex: 1 }}>{inputValue || placeholder}</span>
+
           {/* Dropdown Arrow */}
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 16 16" 
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
             fill="none"
-            style={{ 
+            style={{
               color: disabled
                 ? getCssVariable('input-disabled-fg')
                 : getCssVariable('input-icon'),
               flexShrink: 0,
               transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.2s'
+              transition: 'transform 0.2s',
             }}
           >
             <path
@@ -467,7 +507,8 @@ const DatePicker: React.FC<DatePickerProps> = ({
             borderRadius: 12,
             marginTop: 4,
             zIndex: 1000,
-            boxShadow: '0px 8px 8px -4px rgba(16, 24, 40, 0.03), 0px 20px 24px -4px rgba(16, 24, 40, 0.08)',
+            boxShadow:
+              '0px 8px 8px -4px rgba(16, 24, 40, 0.03), 0px 20px 24px -4px rgba(16, 24, 40, 0.08)',
             width: 280,
           }}
           onClick={(e) => e.stopPropagation()}
@@ -478,9 +519,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
               <button
                 onClick={() => navigateMonth('prev')}
                 className="p-1.5 rounded-lg transition-colors"
-                style={{ 
+                style={{
                   backgroundColor: 'transparent',
-                  color: colors['text-secondary']
+                  color: colors['text-secondary'],
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -493,7 +534,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   />
                 </svg>
               </button>
-              
+
               <span
                 style={{
                   color: colors['text-primary'],
@@ -504,13 +545,13 @@ const DatePicker: React.FC<DatePickerProps> = ({
               >
                 {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
               </span>
-              
+
               <button
                 onClick={() => navigateMonth('next')}
                 className="p-1.5 rounded-lg transition-colors"
-                style={{ 
+                style={{
                   backgroundColor: 'transparent',
-                  color: colors['text-secondary']
+                  color: colors['text-secondary'],
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -575,7 +616,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             <div>
               {/* Day headers */}
               <div className="grid grid-cols-7 gap-0 mb-1">
-                {DAYS.map(day => (
+                {DAYS.map((day) => (
                   <div
                     key={day}
                     className="h-8 flex items-center justify-center"
@@ -590,12 +631,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   </div>
                 ))}
               </div>
-              
+
               {/* Calendar days */}
               <div className="grid grid-cols-7 gap-0">
                 {getDaysInMonth().map((dayInfo, index) => {
                   const { date, isCurrentMonth, isToday, isSelected } = dayInfo;
-                  
+
                   return (
                     <button
                       key={index}
@@ -603,18 +644,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
                       disabled={!isCurrentMonth}
                       className="h-8 w-8 flex items-center justify-center rounded-full transition-all duration-200 relative"
                       style={{
-                        color: !isCurrentMonth 
+                        color: !isCurrentMonth
                           ? colors['text-disabled']
                           : isSelected
-                          ? '#FFFFFF'
-                          : isToday && !isSelected
-                          ? colors['text-primary']
-                          : colors['text-primary'],
-                        backgroundColor: isSelected 
+                            ? '#FFFFFF'
+                            : isToday && !isSelected
+                              ? colors['text-primary']
+                              : colors['text-primary'],
+                        backgroundColor: isSelected
                           ? '#4E6BD7'
                           : isToday && !isSelected
-                          ? colors['bg-secondary']
-                          : 'transparent',
+                            ? colors['bg-secondary']
+                            : 'transparent',
                         fontSize: 14,
                         fontWeight: isSelected ? 600 : 400,
                         fontFamily: 'Inter',
@@ -667,4 +708,4 @@ const DatePicker: React.FC<DatePickerProps> = ({
   );
 };
 
-export default DatePicker; 
+export default DatePicker;

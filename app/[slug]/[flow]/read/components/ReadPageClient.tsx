@@ -724,12 +724,13 @@ export default function ReadPageClient() {
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
-        ...(workflowData.process_owner && workflowData.process_owner.trim() && {
-          owner: {
-            name: workflowData.process_owner,
-            // Flow owners don't have avatars in our current system
-          },
-        }),
+        ...(workflowData.process_owner &&
+          workflowData.process_owner.trim() && {
+            owner: {
+              name: workflowData.process_owner,
+              // Flow owners don't have avatars in our current system
+            },
+          }),
         review_date: workflowData.review_date
           ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
           : 'No review date',
@@ -1228,13 +1229,13 @@ export default function ReadPageClient() {
               ) : (
                 <div className="h-full flex items-center justify-center">
                   <div
-                    className="rounded-lg border w-full max-w-3xl mx-6 h-[472px] flex flex-col min-w-0"
+                    className="rounded-lg border w-full max-w-3xl mx-6"
                     style={{
                       backgroundColor: colors['bg-primary'],
                       borderColor: colors['border-secondary'],
                     }}
                   >
-                    <div className="p-8 flex flex-col flex-1 min-h-0">
+                    <div className="p-8 flex flex-col">
                       {currentStep === -1 ? (
                         <>
                           <div
@@ -1242,7 +1243,7 @@ export default function ReadPageClient() {
                               height: '472px',
                               backgroundColor: colors['bg-primary'],
                             }}
-                            className="flex items-center justify-center min-h-0"
+                            className="flex items-center justify-center"
                           >
                             {processCardData && (
                               <div className="w-full flex justify-center h-full">
