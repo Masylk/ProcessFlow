@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'; // Import your Prisma client
 import { supabase } from '@/lib/supabaseClient'; // Already imported in your signed url util
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
+import { generatePublicUrl } from '../utils/generatePublicUrl';
 
 /**
  * @swagger
@@ -131,16 +132,13 @@ export async function GET(req: NextRequest) {
 
     let avatar_signed_url: string | null = null;
     if (user.avatar_url && !user.avatar_url.startsWith('http')) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-      if (bucketName) {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(user.avatar_url, 86400);
-        if (!error && data?.signedUrl) {
-          avatar_signed_url = data.signedUrl;
-        }
+      try {
+        avatar_signed_url = generatePublicUrl(user.avatar_url);
+      } catch (error) {
+        console.error('Error generating public URL for avatar:', error);
       }
     }
+
     // If the email differs, update the Prisma user record
     if (user.email !== supabaseEmail) {
       const updatedUser = await prisma_client.user.update({

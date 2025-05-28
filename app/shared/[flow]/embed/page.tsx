@@ -590,16 +590,11 @@ export default function SharePage({
             (integration, index, self) =>
               index === self.findIndex((i) => i.name === integration.name)
           ),
-        // Use actual workflow author data
-        ...(workflowData.author && {
+        // Use process owner data instead of author
+        ...(workflowData.process_owner && workflowData.process_owner.trim() && {
           owner: {
-            name: workflowData.author.full_name,
-            avatar:
-              workflowData.author.avatar_url &&
-              workflowData.author.avatar_url.trim() !== '' &&
-              workflowData.author.avatar_signed_url
-                ? workflowData.author.avatar_signed_url
-                : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/images/default_avatar.png`,
+            name: workflowData.process_owner,
+            // Flow owners don't have avatars in our current system
           },
         }),
         review_date: workflowData.review_date

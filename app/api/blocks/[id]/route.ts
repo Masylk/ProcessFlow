@@ -1,6 +1,6 @@
 // app/api/blocks/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
+import { generatePublicUrl } from '../../utils/generatePublicUrl';
 import prisma from '@/lib/prisma';
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
@@ -120,40 +120,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
-    const existingImageUrl = existingBlock.image;
-
-    // Prepare for file deletion from Supabase storage
-    const deleteFile = async (fileUrl: string | null) => {
-      if (fileUrl) {
-        const filePath = fileUrl.replace(
-          'https://your-project.supabase.co/storage/v1/object/public/',
-          ''
-        );
-
-        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-        if (!bucketName) {
-          console.error(
-            'Bucket name is not defined in the environment variables.'
-          );
-          return;
-        }
-
-        const { error } = await supabase.storage
-          .from(bucketName)
-          .remove([filePath]);
-
-        if (error) {
-          console.error(`Failed to delete file: ${fileUrl}`, error);
-        }
-      }
-    };
-
-    // Delete the previous image only if it's not being used as original_image
-    if (existingImageUrl && 
-        existingImageUrl !== image && 
-        existingImageUrl !== original_image) {
-      await deleteFile(existingImageUrl);
-    }
+    // Note: File deletion logic removed since we're using public storage
+    // Files in public storage don't need to be manually deleted
 
     // Update block with all fields
     const updatedBlock: any = await prisma_client.block.update({

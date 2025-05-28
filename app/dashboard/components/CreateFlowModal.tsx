@@ -4,7 +4,6 @@ import ButtonNormal from '../../components/ButtonNormal';
 import InputField from '../../components/InputFields';
 import TextAreaInput from '../../components/TextAreaInput';
 import DatePicker from '../../components/DatePicker';
-import SelectField from '../../components/SelectField';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '../../components/IconUpload';
 import IconModifier from './IconModifier';
@@ -37,25 +36,13 @@ export default function CreateFlowModal({
   const [flowIcon, setFlowIcon] = useState<string | null>(null);
   const [previewIcon, setPreviewIcon] = useState<string | null>(null);
 
-  // Sample team members for the process owner dropdown
-  const teamMembers = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emily Rodriguez',
-    'David Kim',
-    'Lisa Thompson',
-    'Alex Parker',
-    'Maria Garcia',
-  ];
-
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-8 animate-in fade-in-0 duration-200"
+      className="fixed inset-0 flex items-center justify-center p-8 animate-in fade-in-0 duration-200 z-[100]"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -143,13 +130,12 @@ export default function CreateFlowModal({
             {/* Process Owner and Review Date row */}
             <div className="w-full flex gap-4">
               <div className="flex-1">
-                <SelectField
+                <InputField
                   label="Flow owner"
+                  type="default"
                   value={processOwner}
                   onChange={setProcessOwner}
-                  placeholder="Select an owner"
-                  options={teamMembers}
-                  allowCustomInput={true}
+                  placeholder="Enter owner name"
                 />
               </div>
               <div className="flex-1">

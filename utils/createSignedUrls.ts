@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { generatePublicUrl } from '@/app/api/utils/generatePublicUrl';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
 
@@ -8,7 +8,7 @@ export async function createSignedUrls(path: any) {
     }
     if (!path?.blocks || !Array.isArray(path.blocks)) return path;
 
-  // Map blocks to promises for signed URLs
+  // Map blocks to promises for public URLs
   const updatedBlocks = await Promise.all(
     path.blocks.map(async (block: any) => {
       return await createSignedUrlForBlock(block);
@@ -22,9 +22,8 @@ export async function createSignedUrls(path: any) {
 }
 
 /**
- * Creates signed URLs for the image and icon of a single block.
+ * Creates public URLs for the image and icon of a single block.
  * - Skips icon if it's a Brandfetch CDN URL.
- * - Signed URLs are valid for 24 hours (86400 seconds).
  * @param block The block object to process.
  * @returns The block object with signedImageUrl and/or signedIconUrl if applicable.
  */
@@ -36,11 +35,10 @@ export async function createSignedUrlForBlock(block: any) {
 
   // For block.image
   if (block.image) {
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(block.image, 86400);
-    if (!error && data?.signedUrl) {
-      updatedBlock.signedImageUrl = data.signedUrl;
+    try {
+      updatedBlock.signedImageUrl = generatePublicUrl(block.image);
+    } catch (error) {
+      console.error('Error generating public URL for block image:', error);
     }
   }
 
@@ -49,11 +47,10 @@ export async function createSignedUrlForBlock(block: any) {
     block.icon &&
     !block.icon.startsWith('https://cdn.brandfetch.io/')
   ) {
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(block.icon, 86400);
-    if (!error && data?.signedUrl) {
-      updatedBlock.signedIconUrl = data.signedUrl;
+    try {
+      updatedBlock.signedIconUrl = generatePublicUrl(block.icon);
+    } catch (error) {
+      console.error('Error generating public URL for block icon:', error);
     }
   }
 
@@ -63,7 +60,6 @@ export async function createSignedUrlForBlock(block: any) {
 /**
  * For each workspace, go through each workflow and each folder and create a signedIconUrl for each of their icon_url.
  * - Skips icon_url if it's a Brandfetch CDN URL.
- * - Signed URLs are valid for 24 hours (86400 seconds).
  * @param workspaces Array of workspace objects (as returned by the API)
  * @returns Updated array of workspaces with signedIconUrl fields
  */
@@ -72,6 +68,7 @@ export async function createSignedIconUrlsForWorkspaces(workspaces: any[]) {
     throw new Error('Bucket name is not defined in the environment variables');
   }
   if (!Array.isArray(workspaces)) return workspaces;
+
   // Helper to sign a single icon_url
   const signIconUrl = async (icon_url: string | null | undefined) => {
     if (
@@ -80,10 +77,12 @@ export async function createSignedIconUrlsForWorkspaces(workspaces: any[]) {
     ) {
       return icon_url; // Return as is (or null/undefined)
     }
-    const { data, error } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(icon_url, 86400);
-    return !error && data?.signedUrl ? data.signedUrl : icon_url;
+    try {
+      return generatePublicUrl(icon_url);
+    } catch (error) {
+      console.error('Error generating public URL for icon:', error);
+      return icon_url;
+    }
   };
 
   // Deep copy and process

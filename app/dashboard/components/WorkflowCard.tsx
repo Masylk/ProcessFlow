@@ -58,13 +58,6 @@ export default function WorkflowCard({
 }: WorkflowCardProps) {
   const colors = useColors();
 
-  // Temporary fake data for testing - remove this later
-  const workflowWithFakeData = {
-    ...workflow,
-    process_owner: workflow.process_owner || 'Sarah Johnson',
-    review_date: workflow.review_date || '2024-06-15',
-  };
-
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -338,7 +331,9 @@ export default function WorkflowCard({
             '--hover-bg': colors['bg-quaternary'],
           } as React.CSSProperties
         }
-        className="rounded-lg border hover:cursor-pointer relative transition-all duration-300 ease-in-out hover:bg-[var(--hover-bg)] hover:scale-[1.02] hover:shadow-lg h-[200px] flex flex-col"
+        className={`rounded-lg border hover:cursor-pointer relative transition-all duration-300 ease-in-out hover:bg-[var(--hover-bg)] hover:scale-[1.02] hover:shadow-lg h-[200px] flex flex-col ${
+          isMenuOpen || isStatusMenuOpen ? 'z-50' : 'z-10'
+        }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -434,11 +429,11 @@ export default function WorkflowCard({
           </div>
 
           {/* Middle Section - Process Owner and Review Date */}
-          {(workflowWithFakeData.process_owner ||
-            workflowWithFakeData.review_date) && (
+          {((workflow.process_owner && workflow.process_owner.trim()) || 
+            (workflow.review_date && workflow.review_date.trim())) && (
             <div className="px-4 pb-3">
               <div className="space-y-1">
-                {workflowWithFakeData.process_owner && (
+                {workflow.process_owner && workflow.process_owner.trim() && (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
                       <img
@@ -450,13 +445,13 @@ export default function WorkflowCard({
                     <span
                       style={{ color: colors['text-tertiary'] }}
                       className="text-xs truncate"
-                      title={workflowWithFakeData.process_owner}
+                      title={workflow.process_owner}
                     >
-                      {workflowWithFakeData.process_owner}
+                      {workflow.process_owner}
                     </span>
                   </div>
                 )}
-                {workflowWithFakeData.review_date && (
+                {workflow.review_date && workflow.review_date.trim() && (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 relative overflow-hidden flex-shrink-0">
                       <img
@@ -470,9 +465,7 @@ export default function WorkflowCard({
                       className="text-xs"
                     >
                       Review due:{' '}
-                      {new Date(
-                        workflowWithFakeData.review_date
-                      ).toLocaleDateString('en-US', {
+                      {new Date(workflow.review_date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
@@ -525,7 +518,7 @@ export default function WorkflowCard({
                         ? { bottom: 'calc(100% + 4px)' }
                         : { top: 'calc(100% + 4px)' }),
                     }}
-                    className="absolute left-0 z-30 rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px]"
+                    className="absolute left-0 z-[60] rounded-lg border shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 min-w-[200px]"
                   >
                     <div className="flex flex-col">
                       {Object.entries(STATUS_STYLES).map(([key, style]) => (
@@ -604,7 +597,7 @@ export default function WorkflowCard({
                 : { top: '40px' }),
               right: '4px',
             }}
-            className="absolute w-48 py-1 rounded-lg shadow-md z-30 overflow-hidden border"
+            className="absolute w-48 py-1 rounded-lg shadow-md z-[60] overflow-hidden border"
             onClick={(e) => e.stopPropagation()}
           >
             {menuItems.map((item, index) =>

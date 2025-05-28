@@ -84,8 +84,6 @@ export default function ProcessCard({
     if (descriptionRef.current || notesRef.current) {
       const descHeight = descriptionRef.current?.offsetHeight || 0;
       const notesHeight = notesRef.current?.offsetHeight || 0;
-      console.log(descHeight, notesHeight);
-      console.log('should center ', descHeight + notesHeight < 400);
       setShouldCenter(descHeight + notesHeight < 400);
     }
   }, [workflow.description, additionalNotes]);
@@ -248,7 +246,7 @@ export default function ProcessCard({
 
           {/* Footer: Owner, Review Date, and Last Update */}
           <div className="flex items-center gap-4 flex-wrap">
-            {owner && (
+            {owner && owner.name && owner.name.trim() && (
               <>
                 <div className="flex items-center gap-2">
                   {owner.avatar && (

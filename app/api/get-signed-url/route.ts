@@ -1,13 +1,13 @@
 // app/api/get-signed-url/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
+import { generatePublicUrl } from '../utils/generatePublicUrl';
 
 /**
  * @swagger
  * /api/get-signed-url:
  *   get:
- *     summary: Get a signed URL for a file in the private Supabase bucket
- *     description: Generates a signed URL for accessing a file stored in the private Supabase storage bucket for a limited time (60 seconds).
+ *     summary: Get a public URL for a file in the public Supabase bucket
+ *     description: Generates a public URL for accessing a file stored in the public Supabase storage bucket.
  *     parameters:
  *       - in: query
  *         name: path
@@ -18,7 +18,7 @@ import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
  *         example: "folder/file.png"
  *     responses:
  *       200:
- *         description: Successfully generated signed URL
+ *         description: Successfully generated public URL
  *         content:
  *           application/json:
  *             schema:
@@ -26,8 +26,8 @@ import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
  *               properties:
  *                 signedUrl:
  *                   type: string
- *                   description: The signed URL for accessing the file.
- *                   example: "https://your-supabase-url.supabase.co/storage/v1/object/sign/folder/file.png?token=example-token"
+ *                   description: The public URL for accessing the file.
+ *                   example: "https://fshqhpophyrgrvhzyrto.supabase.co/storage/v1/object/public/user-assets/folder/file.png"
  *       400:
  *         description: Missing required path parameter
  *         content:
@@ -47,7 +47,7 @@ import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "Bucket name is not defined in the environment variables"
+ *                   example: "Supabase URL or storage path is not defined in the environment variables"
  */
 export async function GET(req: NextRequest) {
   // Parse the query parameters
@@ -58,27 +58,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
   }
 
-  // Get the private bucket name from the environment variable
-  const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-
-  if (!bucketName) {
-    return NextResponse.json(
-      { error: 'Bucket name is not defined in the environment variables' },
-      { status: 500 }
-    );
-  }
-
   try {
-    // Generate a signed URL for the requested path
-    const { data, error } = await supabase.storage
-      .from(bucketName) // Use the bucket name from the environment variable
-      .createSignedUrl(path, 86400); // 24 hours expiry
+    // Generate the public URL using the utility function
+    const publicUrl = generatePublicUrl(path);
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return NextResponse.json({ signedUrl: data.signedUrl });
+    return NextResponse.json({ signedUrl: publicUrl });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Something went wrong' },

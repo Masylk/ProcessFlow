@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
     process.env.NEXT_PUBLIC_BASE_URL ||
     `${req.nextUrl.protocol}//${req.nextUrl.host}`;
 
-  console.log('baseUrl', baseUrl);
  
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${baseUrl}`,

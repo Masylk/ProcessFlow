@@ -86,9 +86,6 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
               - Hop on a call with founders of ProcessFlow
             </Text>
             <Text>
-              - Join the Slack and ask immediately to us or our community!
-            </Text>
-            <Text>
               - In any other case, feel free to answer this email 🙂
             </Text>
             

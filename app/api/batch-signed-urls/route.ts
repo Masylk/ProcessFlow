@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { generatePublicUrl } from '../utils/generatePublicUrl';
 
 /**
  * @swagger
  * /api/batch-signed-urls:
  *   post:
- *     summary: Get signed URLs for multiple files in batch
- *     description: Generates signed URLs for multiple files stored in the private Supabase storage bucket for a limited time (24 hours).
+ *     summary: Get public URLs for multiple files in batch
+ *     description: Generates public URLs for multiple files stored in the public Supabase storage bucket.
  *     requestBody:
  *       required: true
  *       content:
@@ -22,7 +22,7 @@ import { supabase } from '@/lib/supabaseClient';
  *                 example: ["step-icons/apps/app1.png", "step-icons/default-icons/icon1.svg"]
  *     responses:
  *       200:
- *         description: Successfully generated signed URLs
+ *         description: Successfully generated public URLs
  *         content:
  *           application/json:
  *             schema:
@@ -55,27 +55,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the private bucket name from the environment variable
-    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-
-    if (!bucketName) {
-      return NextResponse.json(
-        { error: 'Bucket name is not defined in the environment variables' },
-        { status: 500 }
-      );
-    }
-
-    // Generate signed URLs for all paths in parallel
-    const signedUrlPromises = paths.map(async (path: string) => {
+    // Generate public URLs for all paths
+    const signedUrls = paths.map((path: string) => {
       try {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(path, 86400); // 24 hours expiry
-
+        const publicUrl = generatePublicUrl(path);
         return {
           path,
-          signedUrl: error ? null : data.signedUrl,
-          error: error?.message || null
+          signedUrl: publicUrl,
+          error: null
         };
       } catch (error: any) {
         return {
@@ -86,11 +73,9 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const signedUrls = await Promise.all(signedUrlPromises);
-
     return NextResponse.json({ signedUrls });
   } catch (error: any) {
-    console.error('Error in batch signed URLs:', error);
+    console.error('Error in batch public URLs:', error);
     return NextResponse.json(
       { error: error.message || 'Something went wrong' },
       { status: 500 }

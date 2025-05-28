@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { generatePublicUrl } from '../../utils/generatePublicUrl';
 import prisma from '@/lib/prisma';
-import { supabase } from '@/lib/supabaseClient';
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 
@@ -64,14 +64,10 @@ export async function GET(req: NextRequest) {
       workflow.author?.avatar_url &&
       !workflow.author.avatar_url.startsWith('http')
     ) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-      if (bucketName) {
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(workflow.author.avatar_url, 86400);
-        if (!error && data?.signedUrl) {
-          workflow.author.avatar_signed_url = data.signedUrl;
-        }
+      try {
+        workflow.author.avatar_signed_url = generatePublicUrl(workflow.author.avatar_url);
+      } catch (error) {
+        console.error('Error generating public URL for author avatar:', error);
       }
     }
     return NextResponse.json(workflow);

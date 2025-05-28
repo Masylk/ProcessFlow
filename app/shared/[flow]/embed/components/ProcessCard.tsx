@@ -240,7 +240,7 @@ export default function ProcessCard({
 
           {/* Footer */}
           <div className="flex items-center gap-4 flex-row">
-            {owner && (
+            {owner && owner.name && owner.name.trim() && (
               <>
                 <div className="flex items-center gap-2">
                   {owner.avatar && (
