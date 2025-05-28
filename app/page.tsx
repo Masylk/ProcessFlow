@@ -1408,7 +1408,7 @@ export default function Page() {
                       <AnimatePresence>
                         {dropdownVisible && (
                           <div
-                            className="fixed inset-0 z-10"
+                            className="fixed inset-0 z-[80]"
                             onClick={() => setDropdownVisible(false)}
                           >
                             <div
