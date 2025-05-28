@@ -103,7 +103,6 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
 
     const handleDeleteProcess = () => {
       // TODO: Implement delete process functionality
-      console.log('Delete process clicked');
       setIsDropdownOpen(false);
     };
 

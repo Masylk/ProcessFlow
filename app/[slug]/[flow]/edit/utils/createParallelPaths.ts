@@ -3,6 +3,7 @@ import { getBlocksAfterPosition } from './getBlocksAfterPosition';
 import { getChildPathsIds } from './getChildPathsIds';
 import { BlockEndType } from '@/types/block';
 import { useLoadingStore } from '../store/loadingStore';
+import { generatePublicUrl } from '@/app/api/utils/generatePublicUrl';
 
 interface CreateParallelPathsOptions {
   paths_to_create?: string[];
@@ -202,7 +203,7 @@ export async function createParallelPaths(
     path_to_move = 0,
     pathblock_title = "If",
     pathblock_description = "",
-    pathblock_icon = "",
+    pathblock_icon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/dataflow-icon.svg`,
   } = options;
   
   if (path_to_move >= paths_to_create.length) {
@@ -260,7 +261,7 @@ export async function createParallelPaths(
         .filter(b => !blocksToMoveIds.has(b.id))
         .map((b) =>
           b.id === parentBlockId
-            ? { ...b, type: BlockEndType.PATH, child_paths: [...(b.child_paths || []), ...newChildPaths], id: optimisticParentBlockId, title: pathblock_title, description: pathblock_description, icon: pathblock_icon }
+            ? { ...b, type: BlockEndType.PATH, child_paths: [...(b.child_paths || []), ...newChildPaths], id: optimisticParentBlockId, title: pathblock_title, description: pathblock_description, icon: pathblock_icon, signedIconUrl: generatePublicUrl(pathblock_icon) }
             : b
         );
       return { ...p, blocks: updatedBlocks };
@@ -386,6 +387,7 @@ export async function createParallelPaths(
             title: pathblock_title,
             description: pathblock_description,
             icon: pathblock_icon,
+            signedIconUrl: generatePublicUrl(pathblock_icon),
           };
         }
         return block;

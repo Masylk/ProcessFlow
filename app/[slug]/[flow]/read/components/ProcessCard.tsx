@@ -84,8 +84,6 @@ export default function ProcessCard({
     if (descriptionRef.current || notesRef.current) {
       const descHeight = descriptionRef.current?.offsetHeight || 0;
       const notesHeight = notesRef.current?.offsetHeight || 0;
-      console.log(descHeight, notesHeight);
-      console.log('should center ', descHeight + notesHeight < 400);
       setShouldCenter(descHeight + notesHeight < 400);
     }
   }, [workflow.description, additionalNotes]);

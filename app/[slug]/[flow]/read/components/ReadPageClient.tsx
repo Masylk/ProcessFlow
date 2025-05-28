@@ -243,7 +243,6 @@ export default function ReadPageClient() {
         );
         const pathsData = await response.json();
 
-        console.log('pathsData', pathsData);
         if (pathsData.paths) {
           const newPaths = [...pathsData.paths];
 
@@ -646,7 +645,6 @@ export default function ReadPageClient() {
         const workflowResponse = await fetch(`/api/workflow/${workflowId}`);
         const workflowData = await workflowResponse.json();
         setWorkflowData(workflowData);
-        console.log('workflowData', workflowData);
         setLocalIsPublic(workflowData.is_public);
         // Create breadcrumbs from workflow data
         const items: BreadcrumbItem[] = [];
