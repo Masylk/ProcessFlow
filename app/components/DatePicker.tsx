@@ -42,7 +42,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   required = false,
   value = '',
   onChange,
-  placeholder = 'Pick a date',
+  placeholder = 'Select dates',
   disabled = false,
   errorMessage = '',
   className = '',
@@ -56,11 +56,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
     value ? new Date(value) : null
   );
   const [inputValue, setInputValue] = useState('');
-  const [originalValue, setOriginalValue] = useState<string>('');
   const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null);
-  const [hasAppliedChanges, setHasAppliedChanges] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLButtonElement>(null);
 
   const destructive = !!errorMessage;
 
@@ -81,34 +79,16 @@ const DatePicker: React.FC<DatePickerProps> = ({
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setIsFocused(false);
-        
-        // Only revert if user hasn't applied changes
-        if (!hasAppliedChanges && originalValue !== undefined) {
-          setInputValue(originalValue);
-          if (originalValue) {
-            const originalDate = new Date(originalValue);
-            setSelectedDate(originalDate);
-            setCurrentDate(originalDate);
-          } else {
-            setSelectedDate(null);
-          }
-        }
-        
-        // Reset the applied flag for next time
-        setHasAppliedChanges(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [originalValue, hasAppliedChanges]);
+  }, []);
 
   const handleInputClick = () => {
     if (!disabled) {
-      // Store original value when opening
-      setOriginalValue(formatDate(selectedDate));
       setTempSelectedDate(selectedDate);
-      setHasAppliedChanges(false);
       setIsOpen(!isOpen);
       setIsFocused(true);
     }
@@ -126,6 +106,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
     }, 150);
   };
 
+  const handleCalendarInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tempSelectedDate) {
+      selectDate(tempSelectedDate);
+    }
+  };
+
   const handleCalendarInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     
@@ -136,50 +122,52 @@ const DatePicker: React.FC<DatePickerProps> = ({
         setTempSelectedDate(parsedDate);
         setCurrentDate(parsedDate);
       }
+    } else {
+      setTempSelectedDate(null);
     }
   };
 
   const selectDate = (date: Date) => {
     setTempSelectedDate(date);
+    // Automatically apply the date selection
+    setSelectedDate(date);
+    setInputValue(formatDate(date));
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    if (onChange) {
+      onChange(dateString);
+    }
+    setIsOpen(false);
+    setIsFocused(false);
   };
 
   const selectToday = () => {
     const today = new Date();
     setTempSelectedDate(today);
     setCurrentDate(today);
-  };
-
-  const applyDate = () => {
-    if (tempSelectedDate) {
-      setSelectedDate(tempSelectedDate);
-      setInputValue(formatDate(tempSelectedDate));
-      const year = tempSelectedDate.getFullYear();
-      const month = String(tempSelectedDate.getMonth() + 1).padStart(2, '0');
-      const day = String(tempSelectedDate.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
-      if (onChange) {
-        onChange(dateString);
-      }
+    // Automatically apply today's date selection
+    setSelectedDate(today);
+    setInputValue(formatDate(today));
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    if (onChange) {
+      onChange(dateString);
     }
-    setHasAppliedChanges(true);
     setIsOpen(false);
     setIsFocused(false);
   };
 
-  const cancelSelection = () => {
-    // Revert to original values
-    if (originalValue) {
-      const originalDate = new Date(originalValue);
-      setSelectedDate(originalDate);
-      setCurrentDate(originalDate);
-      setTempSelectedDate(originalDate);
-      setInputValue(originalValue);
-    } else {
-      setSelectedDate(null);
-      setTempSelectedDate(null);
-      setInputValue('');
+  const resetDate = () => {
+    setSelectedDate(null);
+    setTempSelectedDate(null);
+    setInputValue('');
+    if (onChange) {
+      onChange('');
     }
-    setHasAppliedChanges(false);
     setIsOpen(false);
     setIsFocused(false);
   };
@@ -338,7 +326,9 @@ const DatePicker: React.FC<DatePickerProps> = ({
       : getCssVariable(getInputToken('normal', 'bg', destructive, disabled)),
     color: disabled
       ? getCssVariable('input-disabled-fg')
-      : getCssVariable(getInputToken('normal', 'fg', destructive, disabled)),
+      : inputValue
+        ? getCssVariable(getInputToken('normal', 'fg', destructive, disabled))
+        : getCssVariable('input-placeholder'),
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
     boxShadow: isFocused
@@ -347,6 +337,10 @@ const DatePicker: React.FC<DatePickerProps> = ({
         : '0px 0px 0px 4px rgba(78, 107, 215, 0.12)'
       : '0px 1px 2px rgba(16, 24, 40, 0.05)',
     cursor: disabled ? 'not-allowed' : 'pointer',
+    textAlign: 'left',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
   };
 
   return (
@@ -377,19 +371,87 @@ const DatePicker: React.FC<DatePickerProps> = ({
       )}
       
       <div className="relative">
-        <input
+        <button
           ref={inputRef}
-          type="text"
-          value={inputValue}
           onClick={handleInputClick}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           disabled={disabled}
-          placeholder={placeholder}
-          readOnly
           style={inputStyle}
           className="w-full transition-all duration-200"
-        />
+        >
+          {/* Calendar Icon */}
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 16 16" 
+            fill="none"
+            style={{ 
+              color: disabled
+                ? getCssVariable('input-disabled-fg')
+                : getCssVariable('input-icon'),
+              flexShrink: 0
+            }}
+          >
+            <path
+              d="M14 2.66667H2C1.26362 2.66667 0.666667 3.26362 0.666667 4V14C0.666667 14.7364 1.26362 15.3333 2 15.3333H14C14.7364 15.3333 15.3333 14.7364 15.3333 14V4C15.3333 3.26362 14.7364 2.66667 14 2.66667Z"
+              stroke="currentColor"
+              strokeWidth="1.33333"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M11.3333 1.33334V4.00001"
+              stroke="currentColor"
+              strokeWidth="1.33333"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M4.66667 1.33334V4.00001"
+              stroke="currentColor"
+              strokeWidth="1.33333"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M0.666667 6.66667H15.3333"
+              stroke="currentColor"
+              strokeWidth="1.33333"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          
+          {/* Text */}
+          <span style={{ flex: 1 }}>
+            {inputValue || placeholder}
+          </span>
+          
+          {/* Dropdown Arrow */}
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 16 16" 
+            fill="none"
+            style={{ 
+              color: disabled
+                ? getCssVariable('input-disabled-fg')
+                : getCssVariable('input-icon'),
+              flexShrink: 0,
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s'
+            }}
+          >
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="currentColor"
+              strokeWidth="1.33333"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Custom Calendar Dropdown */}
@@ -470,6 +532,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                   type="text"
                   value={formatDate(tempSelectedDate)}
                   onChange={handleCalendarInputChange}
+                  onKeyDown={handleCalendarInputKeyDown}
                   style={{
                     width: '100%',
                     padding: '6px 8px',
@@ -572,26 +635,18 @@ const DatePicker: React.FC<DatePickerProps> = ({
             </div>
           </div>
 
-          {/* Footer with Cancel/Apply buttons */}
+          {/* Footer with Reset button */}
           <div
-            className="flex gap-2 p-3 border-t"
+            className="flex justify-center p-3 border-t"
             style={{ borderColor: colors['border-secondary'] }}
           >
             <ButtonNormal
               variant="secondary"
               size="small"
-              onClick={cancelSelection}
-              className="flex-1"
+              onClick={resetDate}
+              className="w-full max-w-[120px]"
             >
-              Cancel
-            </ButtonNormal>
-            <ButtonNormal
-              variant="primary"
-              size="small"
-              onClick={applyDate}
-              className="flex-1"
-            >
-              Apply
+              Reset
             </ButtonNormal>
           </div>
         </div>

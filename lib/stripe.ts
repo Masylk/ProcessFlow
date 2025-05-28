@@ -132,10 +132,62 @@ export async function createStripePortalSession({
   customerId: string;
   returnUrl: string;
 }) {
-  return stripe.billingPortal.sessions.create({
-    customer: customerId,
-    return_url: returnUrl,
-  });
+  try {
+    return await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    });
+  } catch (error: any) {
+    // If no configuration exists, create a default one
+    if (error.code === 'billing_portal_configuration_not_found' || 
+        error.message?.includes('No configuration provided')) {
+      console.log('Creating default customer portal configuration...');
+      
+      try {
+        // Create a default configuration
+        await stripe.billingPortal.configurations.create({
+          business_profile: {
+            headline: 'ProcessFlow - Manage your subscription',
+          },
+          features: {
+            payment_method_update: {
+              enabled: true,
+            },
+            invoice_history: {
+              enabled: true,
+            },
+            customer_update: {
+              enabled: true,
+              allowed_updates: ['address', 'email', 'tax_id'],
+            },
+            subscription_cancel: {
+              enabled: true,
+              mode: 'at_period_end',
+            },
+            subscription_update: {
+              enabled: true,
+              default_allowed_updates: ['price', 'quantity'],
+              proration_behavior: 'create_prorations',
+            },
+          },
+        });
+        
+        console.log('Default customer portal configuration created successfully');
+        
+        // Now try creating the session again
+        return await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: returnUrl,
+        });
+      } catch (configError) {
+        console.error('Error creating customer portal configuration:', configError);
+        throw configError;
+      }
+    }
+    
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 export async function getStripeSubscription(subscriptionId: string) {

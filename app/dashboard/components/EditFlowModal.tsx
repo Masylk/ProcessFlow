@@ -6,7 +6,6 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import TextAreaInput from '@/app/components/TextAreaInput';
 import DatePicker from '@/app/components/DatePicker';
-import SelectField from '@/app/components/SelectField';
 import { useColors } from '@/app/theme/hooks';
 import IconUpload from '@/app/components/IconUpload';
 import IconModifier from './IconModifier';
@@ -60,18 +59,6 @@ export default function EditFlowModal({
       : selectedWorkflow.signedIconUrl || null
   );
 
-  // Sample team members for the process owner dropdown
-  const teamMembers = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Chen',
-    'Emily Rodriguez',
-    'David Kim',
-    'Lisa Thompson',
-    'Alex Parker',
-    'Maria Garcia',
-  ];
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -109,7 +96,7 @@ export default function EditFlowModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 w-full"
+      className="fixed inset-0 flex items-center justify-center z-[100] w-full"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -201,13 +188,12 @@ export default function EditFlowModal({
             {/* Process Owner and Review Date row */}
             <div className="w-full flex gap-4">
               <div className="flex-1">
-                <SelectField
+                <InputField
                   label="Flow owner"
+                  type="default"
                   value={processOwner}
                   onChange={setProcessOwner}
-                  placeholder="Select an owner"
-                  options={teamMembers}
-                  allowCustomInput={true}
+                  placeholder="Enter owner name"
                 />
               </div>
               <div className="flex-1">
