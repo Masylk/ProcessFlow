@@ -701,9 +701,7 @@ export default function SharedPage({
             : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`,
         workflow: {
           name: workflowData.name,
-          description:
-            workflowData.description ||
-            'This Flow helps streamline and automate key business processes.',
+          description: workflowData.description,
         },
         integrations: paths
           .flatMap((path) =>
