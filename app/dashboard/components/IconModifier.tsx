@@ -3,7 +3,10 @@ import IconSelector from './IconSelector';
 import { useColors } from '@/app/theme/hooks';
 import ReactDOM from 'react-dom';
 import { fetchSignedUrl } from '@/utils/supabase/fetch_url';
-import { fetchIconsBatch, preloadCriticalIcons } from '@/utils/optimizedIconFetch';
+import {
+  fetchIconsBatch,
+  preloadCriticalIcons,
+} from '@/utils/optimizedIconFetch';
 
 interface Entity {
   basicUrl: string;
@@ -67,9 +70,9 @@ export default function IconModifier({
   useEffect(() => {
     const fetchIcons = async () => {
       try {
-        // const response = await fetch('/api/step-icons');
-        // if (!response.ok) throw new Error('Failed to fetch icons');
-        // const data = await response.json();
+        const response = await fetch('/api/step-icons');
+        if (!response.ok) throw new Error('Failed to fetch icons');
+        const data = await response.json();
 
         // // Use optimized batch fetching with caching and fallback
         // const { applistResult, iconlistResult } = await fetchIconsBatch(
@@ -100,10 +103,9 @@ export default function IconModifier({
         // if (criticalIconUrls.length > 0) {
         //   preloadCriticalIcons(criticalIconUrls, 20);
         // }
-
       } catch (error) {
         console.error('Error fetching icons:', error);
-        
+
         // Fallback to old method if new approach fails completely
         try {
           const response = await fetch('/api/step-icons');
@@ -115,10 +117,12 @@ export default function IconModifier({
             basicUrl: `step-icons/apps/${app}`,
             signedUrl: '',
           }));
-          const iconlistResult: Entity[] = data.iconlist.map((icon: string) => ({
-            basicUrl: `step-icons/default-icons/${icon}`,
-            signedUrl: '',
-          }));
+          const iconlistResult: Entity[] = data.iconlist.map(
+            (icon: string) => ({
+              basicUrl: `step-icons/default-icons/${icon}`,
+              signedUrl: '',
+            })
+          );
 
           setAppList(applistResult);
           setIconList(iconlistResult);
