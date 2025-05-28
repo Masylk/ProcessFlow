@@ -401,27 +401,26 @@ export default function HorizontalStep({
       <div
         ref={containerRef}
         className={cn(
-          'h-[472px] overflow-hidden relative',
-          !block.image && 'flex flex-col items-center justify-center'
+          'h-[472px] overflow-hidden relative flex flex-col'
         )}
       >
         {/* Main scrollable container */}
         <div
           ref={contentRef}
           className={cn(
-            'h-full overflow-y-auto overflow-x-hidden hide-scrollbar',
+            'flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar',
             hasOnlyDescription &&
               descriptionHeight <= windowHeight * 0.5 &&
               'flex items-center justify-center',
-            !hasOnlyDescription && 'w-full'
+            !hasOnlyDescription && 'w-full flex items-center justify-center'
           )}
         >
           <div
             className={cn(
               'w-full',
-              !hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
+              hasOnlyDescription && descriptionHeight <= windowHeight * 0.5
                 ? 'flex flex-col items-center justify-center px-5'
-                : ''
+                : 'px-5 py-5'
             )}
           >
             {/* Header Section */}
