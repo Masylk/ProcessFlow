@@ -246,7 +246,7 @@ export default function ProcessCard({
 
           {/* Footer: Owner, Review Date, and Last Update */}
           <div className="flex items-center gap-4 flex-wrap">
-            {owner && (
+            {owner && owner.name && owner.name.trim() && (
               <>
                 <div className="flex items-center gap-2">
                   {owner.avatar && (
