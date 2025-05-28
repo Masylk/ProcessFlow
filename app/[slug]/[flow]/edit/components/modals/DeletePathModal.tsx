@@ -81,7 +81,6 @@ function removePathById(pathId: string, isSubPath = false) {
         Array.isArray(parentBlockObj.child_paths) &&
         parentBlockObj.child_paths.length <= 2 // because we're about to remove one
       ) {
-        // console.log('parentBlockObj', parentBlockObj);
         throw new Error(
           'Cannot delete this path: its parent block would be left with only one child path.'
         );

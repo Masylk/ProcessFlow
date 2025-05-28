@@ -62,7 +62,6 @@ export default function IconModifier({
   }, [showSelector]);
 
   useEffect(() => {
-    console.log('initialIcon', initialIcon);
     setIconUrl(initialIcon);
   }, [initialIcon]);
 
@@ -81,14 +80,14 @@ export default function IconModifier({
         );
 
         // Convert to Entity format
-        const appEntities: Entity[] = applistResult.map(item => ({
+        const appEntities: Entity[] = applistResult.map((item) => ({
           basicUrl: item.basicUrl,
-          signedUrl: item.signedUrl
+          signedUrl: item.signedUrl,
         }));
 
-        const iconEntities: Entity[] = iconlistResult.map(item => ({
+        const iconEntities: Entity[] = iconlistResult.map((item) => ({
           basicUrl: item.basicUrl,
-          signedUrl: item.signedUrl
+          signedUrl: item.signedUrl,
         }));
 
         setAppList(appEntities);
@@ -96,9 +95,9 @@ export default function IconModifier({
 
         // Preload critical icons for better perceived performance
         const criticalIconUrls = [
-          ...appEntities.slice(0, 10).map(item => item.signedUrl),
-          ...iconEntities.slice(0, 10).map(item => item.signedUrl)
-        ].filter(url => url);
+          ...appEntities.slice(0, 10).map((item) => item.signedUrl),
+          ...iconEntities.slice(0, 10).map((item) => item.signedUrl),
+        ].filter((url) => url);
 
         if (criticalIconUrls.length > 0) {
           preloadCriticalIcons(criticalIconUrls, 20);

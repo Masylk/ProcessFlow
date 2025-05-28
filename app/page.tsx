@@ -641,8 +641,6 @@ export default function Page() {
 
   // Function to update the user in state
   const updateUser = (updatedUser: User) => {
-    console.log('updatedUser', updatedUser);
-    console.log('avatar_signed_url', updatedUser.avatar_signed_url);
     setUser(updatedUser);
   };
 
