@@ -57,7 +57,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self';",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net unpkg.com https://js.stripe.com https://media-editor.cloudinary.com https://js.hs-scripts.com http://js.hs-scripts.com https://eu-assets.i.posthog.com https://js.usemessages.com https://js.hs-analytics.net https://js.hs-banner.com https://js.hscollectedforms.net https://www.youtube.com https://va.vercel-scripts.com;",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.jsdelivr.net unpkg.com https://js.stripe.com https://media-editor.cloudinary.com https://js.hs-scripts.com http://js.hs-scripts.com https://eu-assets.i.posthog.com https://js.usemessages.com https://js.hs-analytics.net https://js.hs-banner.com https://js.hscollectedforms.net https://www.youtube.com https://va.vercel-scripts.com https://vercel.live;",
               "worker-src 'self' blob: data:;",
               "style-src 'self' 'unsafe-inline' data: fonts.googleapis.com;", // Tailwind JIT & Google Fonts & data: for TUI
               "img-src 'self' data: blob: https: http://i.ytimg.com https://i.ytimg.com;", // allow images from any HTTPS source and YouTube thumbnails
