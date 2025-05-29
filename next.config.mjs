@@ -63,7 +63,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https: http://i.ytimg.com https://i.ytimg.com;", // allow images from any HTTPS source and YouTube thumbnails
               "font-src 'self' fonts.gstatic.com;",
               "connect-src 'self' https://*.supabase.co https://js.stripe.com https://api.stripe.com https://eu.i.posthog.com https://eu-assets.i.posthog.com https://api.hubspot.com https://forms.hscollectedforms.net;",
-              "frame-src 'self' https://js.stripe.com https://app.hubspot.com https://www.youtube.com https://www.youtube-nocookie.com;", // allow Stripe, HubSpot, and YouTube iframes
+              "frame-src 'self' https://js.stripe.com https://app.hubspot.com https://www.youtube.com https://www.youtube-nocookie.com https://vercel.live;", // allow Stripe, HubSpot, YouTube, and Vercel Live iframes
               "object-src 'none';",
               "base-uri 'self';",
               "frame-ancestors 'none';", // CSP way to prevent embedding
