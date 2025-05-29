@@ -52,7 +52,7 @@ export default function ProcessCard({
   const popoverTimerRef = useRef<NodeJS.Timeout>();
   const descriptionRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLDivElement>(null);
-  const [shouldCenter, setShouldCenter] = useState(false);
+  const [shouldCenter, setShouldCenter] = useState(true);
 
   const visibleIntegrations = integrations.slice(0, 5);
   const hiddenIntegrations = integrations.slice(5);
