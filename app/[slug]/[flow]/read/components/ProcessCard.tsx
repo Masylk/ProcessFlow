@@ -52,7 +52,7 @@ export default function ProcessCard({
   const popoverTimerRef = useRef<NodeJS.Timeout>();
   const descriptionRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLDivElement>(null);
-  const [shouldCenter, setShouldCenter] = useState(false);
+  const [shouldCenter, setShouldCenter] = useState(true);
 
   const visibleIntegrations = integrations.slice(0, 5);
   const hiddenIntegrations = integrations.slice(5);
@@ -272,22 +272,14 @@ export default function ProcessCard({
               </>
             )}
             {review_date && (
-              <>
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{ color: colors['text-tertiary'] }}
-                    className="text-sm"
-                  >
-                    Review date: {review_date}
-                  </span>
-                </div>
-                {lastUpdate && (
-                  <div
-                    style={{ color: colors['text-tertiary'] }}
-                    className="w-1 h-1 rounded-full bg-current"
-                  />
-                )}
-              </>
+              <div className="flex items-center gap-2">
+                <span
+                  style={{ color: colors['text-tertiary'] }}
+                  className="text-sm"
+                >
+                  Review date: {review_date}
+                </span>
+              </div>
             )}
             {lastUpdate && (
               <div className="flex items-center gap-2">
