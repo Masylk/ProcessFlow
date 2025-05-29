@@ -7,7 +7,7 @@ import { FastThemeProvider } from './context/FastThemeContext';
 import AuthCheck from './components/AuthCheck';
 import { Toaster } from 'sonner';
 import { BodyClassProvider } from './BodyClassProvider';
-
+import { SpeedInsights } from '@vercel/speed-insights/next';
 // Import environment checker
 import '../lib/env-check';
 
@@ -69,6 +69,7 @@ export default function RootLayout({
           <PostHogProvider>
             <AuthCheck>{children}</AuthCheck>
             <Toaster />
+            <SpeedInsights />
           </PostHogProvider>
         </FastThemeProvider>
 
