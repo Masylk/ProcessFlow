@@ -1,3 +1,5 @@
+import { generateWorkspaceURL } from './generateWorkspaceURL';
+
 /**
  * Generates a public URL for a file in the Supabase storage bucket
  * @param path - The path of the file in the storage bucket
@@ -19,6 +21,14 @@ export function generatePublicUrl(path: string): string {
 
   if (!path) {
     throw new Error('Path is required to generate public URL');
+  }
+
+  // If the path contains 'step-icons/custom', use generateWorkspaceURL instead
+  if (path.includes('step-icons/custom')) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using generateWorkspaceURL for path:', path);
+    }
+    return generateWorkspaceURL(path);
   }
 
   // Remove leading slash from path if present to avoid double slashes
