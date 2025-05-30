@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useColors } from '@/app/theme/hooks';
 import Image from 'next/image';
@@ -9,6 +9,7 @@ import { BaseStepProps } from './BaseStep';
 import { BlockEndType, BlockType } from '@/types/block';
 import { usePathsStore } from '../../store/pathsStore';
 import { formatTime, isValidTime } from '../../utils/timeUtils';
+import { generateWorkspaceURL } from '@/app/api/utils/generateWorkspaceURL';
 
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -29,7 +30,6 @@ export default function VerticalStep({
 }: BaseStepProps) {
   const colors = useColors();
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const [isImageFullscreen, setIsImageFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -38,30 +38,20 @@ export default function VerticalStep({
   const descriptionRef = useRef<HTMLParagraphElement>(null);
   const paths = usePathsStore((state) => state.paths);
 
+  // Generate image URL directly using generateWorkspaceURL
+  const imageUrl = useMemo(() => {
+    if (!block.image) return null;
+    try {
+      return generateWorkspaceURL(block.image);
+    } catch (error) {
+      console.error('Error generating workspace URL:', error);
+      return null;
+    }
+  }, [block.image]);
+
   useEffect(() => {
     setIsExpanded(defaultExpanded);
   }, [defaultExpanded]);
-
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      if (block.image) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${block.image}`
-          );
-          const data = await response.json();
-
-          if (response.ok && data.signedUrl) {
-            setSignedImageUrl(data.signedUrl);
-          }
-        } catch (error) {
-          console.error('Error fetching signed URL:', error);
-        }
-      }
-    };
-
-    fetchSignedUrl();
-  }, [block.image]);
 
   // Reset zoom level and position when fullscreen changes
   useEffect(() => {
@@ -478,31 +468,30 @@ export default function VerticalStep({
                 )}
                 style={{ color: colors['text-quaternary'] }}
               >
-                {parseTextWithLinks(
-                block.description || ''
-                ).map((segment, index) =>
-                  segment.type === 'link' ? (
-                    <a
-                      key={index}
-                      href={segment.content}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        window.open(
-                          segment.content,
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-                      }}
-                    >
-                      {segment.content}
-                    </a>
-                  ) : (
-                    <span key={index}>{segment.content}</span>
-                  )
+                {parseTextWithLinks(block.description || '').map(
+                  (segment, index) =>
+                    segment.type === 'link' ? (
+                      <a
+                        key={index}
+                        href={segment.content}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          window.open(
+                            segment.content,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
+                        }}
+                      >
+                        {segment.content}
+                      </a>
+                    ) : (
+                      <span key={index}>{segment.content}</span>
+                    )
                 )}
               </p>
             </div>
@@ -547,7 +536,7 @@ export default function VerticalStep({
 
         <AnimatePresence>
           {/* Image Section */}
-          {isExpanded && signedImageUrl && (
+          {isExpanded && imageUrl && (
             <motion.div
               key="image-section"
               className="px-4 pb-4 overflow-hidden will-change-transform"
@@ -569,7 +558,7 @@ export default function VerticalStep({
                 style={{ backgroundColor: colors['bg-secondary'] }}
               >
                 <img
-                  src={signedImageUrl}
+                  src={imageUrl}
                   alt="Block Media"
                   className="w-full h-[500px] object-contain"
                 />
@@ -709,7 +698,7 @@ export default function VerticalStep({
       />
 
       {/* Enhanced Fullscreen Image Viewer */}
-      {isImageFullscreen && signedImageUrl && (
+      {isImageFullscreen && imageUrl && (
         <div
           className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
           onClick={() => setIsImageFullscreen(false)}
@@ -837,7 +826,7 @@ export default function VerticalStep({
               }}
             >
               <img
-                src={signedImageUrl}
+                src={imageUrl}
                 alt="Block Media Fullscreen"
                 className="max-h-full max-w-full object-contain"
                 style={{

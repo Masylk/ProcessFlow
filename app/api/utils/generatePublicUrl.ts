@@ -7,14 +7,14 @@
 export function generatePublicUrl(path: string): string {
   // Get the environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const storagePath = process.env.NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH;
+  const storagePath = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH;
 
   if (!supabaseUrl) {
     throw new Error('NEXT_PUBLIC_SUPABASE_URL is not defined in the environment variables');
   }
 
   if (!storagePath) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_USER_STORAGE_PATH is not defined in the environment variables');
+    throw new Error('NEXT_PUBLIC_SUPABASE_STORAGE_PATH is not defined in the environment variables');
   }
 
   if (!path) {

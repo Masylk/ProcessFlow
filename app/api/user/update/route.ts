@@ -6,10 +6,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { isVercel } from '../../utils/isVercel';
 import { PrismaClient } from '@prisma/client';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const userAssetsBucket = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
-
 /**
  * @swagger
  * /api/user/update:

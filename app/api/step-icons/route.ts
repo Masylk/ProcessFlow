@@ -42,7 +42,7 @@ import { supabase } from '@/lib/supabaseClient';
 export async function GET(req: NextRequest) {
   try {
     // Retrieve the bucket name from the environment variable
-    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PUBLIC_BUCKET;
 
     if (!bucketName) {
       console.error('Bucket name is not defined in the environment variables.');
