@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Supabase Storage
     const { error: uploadError, data } = await supabase.storage
-      .from(process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET!)
+      .from(process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET!)
       .upload(filePath, buffer, {
         contentType: file.type,
         cacheControl: '3600',
@@ -84,9 +84,12 @@ export async function POST(request: NextRequest) {
 
     // Get the public URL for the uploaded file
     const { data: { publicUrl } } = supabase.storage
-      .from(process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET!)
+      .from(process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET!)
       .getPublicUrl(filePath);
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('publicUrl', publicUrl);
+    }
     // Return success response with file information
     return NextResponse.json({
       success: true,

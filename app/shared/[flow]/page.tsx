@@ -661,6 +661,9 @@ export default function SharedPage({
 
         setWorkflowData(workflowData);
 
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('workflowData signedIconUrl', workflowData.signedIconUrl);
+        }
         // Create breadcrumbs from workflow data
         const items: BreadcrumbItem[] = [];
 
@@ -727,12 +730,13 @@ export default function SharedPage({
               index === self.findIndex((i) => i.name === integration.name)
           ),
         // Use process owner data instead of author
-        ...(workflowData.process_owner && workflowData.process_owner.trim() && {
-          owner: {
-            name: workflowData.process_owner,
-            // Flow owners don't have avatars in our current system
-          },
-        }),
+        ...(workflowData.process_owner &&
+          workflowData.process_owner.trim() && {
+            owner: {
+              name: workflowData.process_owner,
+              // Flow owners don't have avatars in our current system
+            },
+          }),
         review_date: workflowData.review_date
           ? new Date(workflowData.review_date).toLocaleDateString('en-GB')
           : 'No review date',

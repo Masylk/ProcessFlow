@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   const filePath = `uploads/${fileName}`; // Upload inside the "uploads" folder
 
   // Retrieve bucket name from environment variable
-  const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+  const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
 
   if (!bucketName) {
     return NextResponse.json(
