@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'; // Import your Prisma client
 import { supabase } from '@/lib/supabaseClient';
 import { isVercel } from '../../utils/isVercel';
 import { PrismaClient } from '@prisma/client';
+import { generateUserUrl } from '../../utils/generateUserUrl';
 
 /**
  * @swagger
@@ -178,7 +179,10 @@ export async function PUT(req: NextRequest) {
       // If the updatedUser.avatar_url is a storage path (not an external URL), generate a public URL
       if (!updatedUser.avatar_url.startsWith('http')) {
         try {
-          updatedUser.avatar_signed_url = generatePublicUrl(updatedUser.avatar_url);
+          updatedUser.avatar_signed_url = generateUserUrl(updatedUser.avatar_url);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Generating user URL for avatar:', updatedUser.avatar_signed_url);
+          }
         } catch (error) {
           console.error('Error generating public URL for avatar:', error);
         }
