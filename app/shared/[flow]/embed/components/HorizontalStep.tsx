@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useColors } from '@/app/theme/hooks';
 import { BaseStepProps } from '@/app/[slug]/[flow]/read/components/steps/BaseStep';
 import DynamicIcon from '@/utils/DynamicIcon';
 import { Block } from '@/app/[slug]/[flow]/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { generateWorkspaceURL } from '@/app/api/utils/generateWorkspaceURL';
 // ... other imports
 
 interface HorizontalStepProps extends BaseStepProps {
@@ -69,7 +70,6 @@ export default function HorizontalStep({
   isFirstStep = false,
 }: HorizontalStepProps) {
   const colors = useColors();
-  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollbarThumbHeight, setScrollbarThumbHeight] = useState<
@@ -93,6 +93,17 @@ export default function HorizontalStep({
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const descriptionRef = useRef<HTMLDivElement>(null);
   const [descriptionHeight, setDescriptionHeight] = useState(0);
+
+  // Generate image URL directly using generateWorkspaceURL
+  const imageUrl = useMemo(() => {
+    if (!block.image) return null;
+    try {
+      return generateWorkspaceURL(block.image);
+    } catch (error) {
+      console.error('Error generating workspace URL:', error);
+      return null;
+    }
+  }, [block.image]);
 
   // Add null check for block
   if (!block) {
@@ -173,7 +184,7 @@ export default function HorizontalStep({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [block, signedImageUrl, windowWidth, windowHeight, imageLoaded]); // Update when content, window size, or image loaded status changes
+  }, [block, imageUrl, windowWidth, windowHeight, imageLoaded]); // Update when content, window size, or image loaded status changes
 
   // Handle image load event to get dimensions
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -269,33 +280,6 @@ export default function HorizontalStep({
 
     return `${typeName}`;
   };
-
-  // Fetch signed URL for image
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      if (block.image) {
-        setImageLoaded(false);
-        setImageError(false);
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${block.image}`
-          );
-          const data = await response.json();
-
-          if (response.ok && data.signedUrl) {
-            setSignedImageUrl(data.signedUrl);
-          } else {
-            setImageError(true);
-          }
-        } catch (error) {
-          console.error('Error fetching signed URL:', error);
-          setImageError(true);
-        }
-      }
-    };
-
-    fetchSignedUrl();
-  }, [block.image]);
 
   // Check if the step has both image and options
   const hasBothImageAndOptions =
@@ -581,9 +565,9 @@ export default function HorizontalStep({
                       aria-label="View image fullscreen"
                       style={{ backgroundColor: colors['bg-secondary'] }}
                     >
-                      {signedImageUrl && !imageError ? (
+                      {imageUrl && !imageError ? (
                         <img
-                          src={signedImageUrl}
+                          src={imageUrl}
                           alt="Step visualization"
                           className="w-full h-[500px] object-contain"
                           onLoad={handleImageLoad}
@@ -733,7 +717,7 @@ export default function HorizontalStep({
       </div>
 
       {/* Fullscreen Modal */}
-      {isImageFullscreen && signedImageUrl && (
+      {isImageFullscreen && imageUrl && (
         <div
           className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
           onClick={() => setIsImageFullscreen(false)}
@@ -858,7 +842,7 @@ export default function HorizontalStep({
               }}
             >
               <img
-                src={signedImageUrl}
+                src={imageUrl}
                 alt="Block Media Fullscreen"
                 className="max-h-full max-w-full object-contain"
                 style={{ pointerEvents: 'none' }}

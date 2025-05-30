@@ -70,6 +70,13 @@ export async function GET(req: NextRequest) {
         console.error('Error generating public URL for author avatar:', error);
       }
     }
+    if (workflow.icon && !workflow.icon.startsWith('http')) {
+      try {
+        workflow.signedIconUrl = generatePublicUrl(workflow.icon);
+      } catch (error) {
+        console.error('Error generating public URL for icon:', error);
+      }
+    }
     return NextResponse.json(workflow);
   } catch (error) {
     console.error('Error fetching public workflow:', error);

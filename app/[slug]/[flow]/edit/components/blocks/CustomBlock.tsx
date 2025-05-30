@@ -33,6 +33,7 @@ import { BasicBlock } from './BasicBlock';
 import { useIsModalOpenStore } from '@/app/isModalOpenStore';
 import { CustomTooltip } from '@/app/components/CustomTooltip';
 import { motion } from 'framer-motion';
+import { generateWorkspaceURL } from '@/app/api/utils/generateWorkspaceURL';
 
 // Regular expression to match URLs
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -96,8 +97,16 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   // Add block state to track changes
   const [blockData, setBlockData] = useState(data.block);
 
-  // Add new state for image URL
-  const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+  // Generate image URL directly using generateWorkspaceURL
+  const imageUrl = useMemo(() => {
+    if (!blockData.image) return null;
+    try {
+      return generateWorkspaceURL(blockData.image);
+    } catch (error) {
+      console.error('Error generating workspace URL:', error);
+      return null;
+    }
+  }, [blockData.image]);
 
   const isConnectMode = useConnectModeStore((state) => state.isConnectMode);
   const { isEditMode, selectedNodeId, setEditMode } = useEditModeStore();
@@ -131,172 +140,6 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
     const idx = blocks.findIndex((block) => block.id === data.block.id);
     return idx === blocks.length - 2;
   }, [data.path?.blocks, data.block.id]);
-
-  // Add useEffect to fetch signed URL when blockData.image changes
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      if (blockData.image) {
-        try {
-          const response = await fetch(
-            `/api/get-signed-url?path=${blockData.image}`
-          );
-          const data = await response.json();
-
-          if (response.ok && data.signedUrl) {
-            setSignedImageUrl(data.signedUrl);
-          } else {
-            setSignedImageUrl(null);
-            setBlockData((prev) => ({ ...prev, image: undefined }));
-            // Force re-render by updating node data
-            setNodes((nds) =>
-              nds.map((node) =>
-                node.id === id
-                  ? {
-                      ...node,
-                      data: {
-                        ...(node.data as NodeData),
-                        block: {
-                          ...(node.data as NodeData).block,
-                          image: undefined,
-                        },
-                      },
-                    }
-                  : node
-              )
-            );
-          }
-        } catch (error) {
-          console.error('Error fetching signed URL:', error);
-          setSignedImageUrl(null);
-          setBlockData((prev) => ({ ...prev, image: undefined }));
-          // Force re-render by updating node data
-          setNodes((nds) =>
-            nds.map((node) =>
-              node.id === id
-                ? {
-                    ...node,
-                    data: {
-                      ...(node.data as NodeData),
-                      block: {
-                        ...(node.data as NodeData).block,
-                        image: undefined,
-                      },
-                    },
-                  }
-                : node
-            )
-          );
-        }
-      } else {
-        setSignedImageUrl(null);
-      }
-    };
-
-    fetchSignedUrl();
-  }, [blockData.image, id, setNodes]);
-
-  // Add the update method to handle all block updates
-  const handleBlockUpdate = async (updatedData: Partial<Block>) => {
-    // Ensure icon reset is explicit
-    if ('icon' in updatedData && updatedData.icon === undefined) {
-      updatedData.icon = null;
-      blockData.signedIconUrl = null;
-    }
-    if (
-      updatedData.icon &&
-      updatedData.icon.startsWith('https://cdn.brandfetch.io/')
-    ) {
-      blockData.signedIconUrl = null;
-    }
-    if (updatedData.image === undefined) {
-      updatedData.image = blockData.image;
-    }
-    const blockId = parseInt(id.replace('block-', ''));
-
-    // Save previous block data for rollback
-    const previousBlock = allPaths
-      .flatMap((path) => path.blocks)
-      .find((block) => block.id === blockId);
-
-    // Optimistically update local state
-    setBlockData((prev) => ({
-      ...prev,
-      ...updatedData,
-    }));
-    // Optimistically update paths store
-    const optimisticPaths = allPaths.map((path) => ({
-      ...path,
-      blocks: path.blocks.map((block) =>
-        block.id === blockId ? { ...block, ...updatedData } : block
-      ),
-    }));
-    setAllPaths(optimisticPaths);
-    data.onPathsUpdate?.(optimisticPaths);
-
-    try {
-      const response = await fetch(`/api/blocks/${blockId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
-      });
-
-      if (!response.ok) throw new Error('Failed to update block');
-
-      const updatedBlock = await response.json();
-
-      // Preserve existing image if not explicitly updated
-      setBlockData((prev) => ({
-        ...prev,
-        ...updatedBlock,
-        image:
-          updatedData.image !== undefined ? updatedBlock.image : prev.image,
-        icon: updatedData.icon !== undefined ? updatedBlock.icon : prev.icon,
-      }));
-
-      // if (updatedData.title !== undefined) {
-      //   data.label = updatedData.title || 'Untitled Block';
-      // }
-
-      // Only update paths if image was changed
-      if (updatedData.image !== undefined) {
-        const updatedPaths = allPaths.map((path) => ({
-          ...path,
-          blocks: path.blocks.map((block) =>
-            block.id === blockId ? { ...block, ...updatedBlock } : block
-          ),
-        }));
-
-        setAllPaths(updatedPaths);
-        data.onPathsUpdate?.(updatedPaths);
-      }
-
-      return updatedBlock;
-    } catch (error) {
-      // Rollback to previous block data
-      setBlockData((prev) => ({
-        ...prev,
-        ...previousBlock,
-      }));
-      setAllPaths((paths) =>
-        paths.map((path) => ({
-          ...path,
-          blocks: path.blocks.map((block) =>
-            block.id === blockId ? { ...block, ...previousBlock } : block
-          ),
-        }))
-      );
-      data.onPathsUpdate?.(
-        allPaths.map((path) => ({
-          ...path,
-          blocks: path.blocks.map((block) =>
-            block.id === blockId ? { ...block, ...previousBlock } : block
-          ),
-        }))
-      );
-      console.error('Error updating block:', error);
-      throw error;
-    }
-  };
 
   // Handle highlight effect
   useEffect(() => {
@@ -487,9 +330,9 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
         initial={{ opacity: 0, scale: 0.95, y: -10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-        transition={{ 
-          duration: 0.15, 
-          ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+        transition={{
+          duration: 0.15,
+          ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
         }}
         style={{
           backgroundColor: colors['bg-secondary'],
@@ -906,6 +749,105 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
   );
   const setEditLinksData = useModalStore((state) => state.setEditLinksData);
 
+  // Add the update method to handle all block updates
+  const handleBlockUpdate = async (updatedData: Partial<Block>) => {
+    // Ensure icon reset is explicit
+    if ('icon' in updatedData && updatedData.icon === undefined) {
+      updatedData.icon = null;
+      blockData.signedIconUrl = null;
+    }
+    if (
+      updatedData.icon &&
+      updatedData.icon.startsWith('https://cdn.brandfetch.io/')
+    ) {
+      blockData.signedIconUrl = null;
+    }
+    if (updatedData.image === undefined) {
+      updatedData.image = blockData.image;
+    }
+    const blockId = parseInt(id.replace('block-', ''));
+
+    // Save previous block data for rollback
+    const previousBlock = allPaths
+      .flatMap((path) => path.blocks)
+      .find((block) => block.id === blockId);
+
+    // Optimistically update local state
+    setBlockData((prev) => ({
+      ...prev,
+      ...updatedData,
+    }));
+    // Optimistically update paths store
+    const optimisticPaths = allPaths.map((path) => ({
+      ...path,
+      blocks: path.blocks.map((block) =>
+        block.id === blockId ? { ...block, ...updatedData } : block
+      ),
+    }));
+    setAllPaths(optimisticPaths);
+    data.onPathsUpdate?.(optimisticPaths);
+
+    try {
+      const response = await fetch(`/api/blocks/${blockId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update block');
+
+      const updatedBlock = await response.json();
+
+      // Preserve existing image if not explicitly updated
+      setBlockData((prev) => ({
+        ...prev,
+        ...updatedBlock,
+        image:
+          updatedData.image !== undefined ? updatedBlock.image : prev.image,
+        icon: updatedData.icon !== undefined ? updatedBlock.icon : prev.icon,
+      }));
+
+      // Only update paths if image was changed
+      if (updatedData.image !== undefined) {
+        const updatedPaths = allPaths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...updatedBlock } : block
+          ),
+        }));
+
+        setAllPaths(updatedPaths);
+        data.onPathsUpdate?.(updatedPaths);
+      }
+
+      return updatedBlock;
+    } catch (error) {
+      // Rollback to previous block data
+      setBlockData((prev) => ({
+        ...prev,
+        ...previousBlock,
+      }));
+      setAllPaths((paths) =>
+        paths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...previousBlock } : block
+          ),
+        }))
+      );
+      data.onPathsUpdate?.(
+        allPaths.map((path) => ({
+          ...path,
+          blocks: path.blocks.map((block) =>
+            block.id === blockId ? { ...block, ...previousBlock } : block
+          ),
+        }))
+      );
+      console.error('Error updating block:', error);
+      throw error;
+    }
+  };
+
   return (
     <BasicBlock {...props}>
       {/* Vertical Toggle Switch Container */}
@@ -1093,7 +1035,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
           className="p-[17px] flex items-center justify-between"
           style={{
             borderBottom:
-              blockData.description || signedImageUrl || blockData.average_time
+              blockData.description || imageUrl || blockData.average_time
                 ? `1px solid ${colors['border-secondary']}`
                 : 'none',
           }}
@@ -1175,9 +1117,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
         </div>
 
         {/* Content section - only render if there's content */}
-        {(blockData.description ||
-          signedImageUrl ||
-          blockData.average_time) && (
+        {(blockData.description || imageUrl || blockData.average_time) && (
           <div className="p-[17px] flex flex-col gap-[13.7px]">
             {blockData.description && (
               <p
@@ -1213,13 +1153,13 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
             )}
 
             {/* Image with signed URL */}
-            {signedImageUrl && (
+            {imageUrl && (
               <div
                 className="rounded-md overflow-hidden h-[267px] w-full"
                 style={{ backgroundColor: colors['bg-secondary'] }}
               >
                 <img
-                  src={signedImageUrl}
+                  src={imageUrl}
                   alt="Block Media"
                   className="w-full h-full object-contain"
                 />
@@ -1314,7 +1254,7 @@ function CustomBlock(props: NodeProps & { data: NodeData }) {
       {showSidebar && (
         <BlockDetailsSidebar
           block={blockData}
-          signedImageUrl={signedImageUrl}
+          signedImageUrl={imageUrl}
           onClose={() => {
             setShowSidebar(false);
             // We don't need to change edit mode or selection state
