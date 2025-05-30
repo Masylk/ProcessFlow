@@ -4,6 +4,7 @@ import { Folder } from '@/types/workspace';
 import InputField from '@/app/components/InputFields';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useColors } from '@/app/theme/hooks';
+import Modal from '@/app/components/Modal';
 import DOMPurify from 'dompurify';
 
 interface CreateSubfolderModalProps {
@@ -19,7 +20,7 @@ interface CreateSubfolderModalProps {
   parent: Folder;
 }
 
-const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
+const CreateSubfolderModal: React.FC<CreateSubfolderModalProps> = ({
   onClose,
   onCreate,
   parentId,
@@ -32,13 +33,20 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
   const colors = useColors();
   const [isSaving, setIsSaving] = useState(false);
 
-  const createFolder = (name: string) => {
+  const handleCreateSubfolder = async () => {
+    if (!folderName.trim()) return;
     setIsSaving(true);
-    if (iconUrl) onCreate(name, parentId, iconUrl, undefined, previewIcon);
-    else if (emote) onCreate(name, parentId, undefined, emote);
-    else onCreate(name, parentId);
-    setIsSaving(false);
-    onClose();
+    try {
+      if (iconUrl) await onCreate(folderName, parentId, iconUrl, undefined, previewIcon);
+      else if (emote) await onCreate(folderName, parentId, undefined, emote);
+      else await onCreate(folderName, parentId);
+      onClose();
+    } catch (error) {
+      // Optionally handle error (toast, etc.)
+      console.error('Error creating subfolder:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateIcon = (icon?: string, emote?: string, signedIcon?: string) => {
@@ -49,6 +57,7 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
     } else if (emote) {
       setIconUrl(undefined);
       setEmote(emote);
+      setPreviewIcon(undefined);
     } else {
       setIconUrl(undefined);
       setEmote(undefined);
@@ -56,80 +65,72 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
     }
   };
 
-  return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-8"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0">
-        <div
-          style={{ backgroundColor: colors['bg-overlay'] }}
-          className="absolute inset-0 opacity-70"
-        />
-      </div>
-
-      <div
-        className="rounded-xl shadow-lg w-[400px] p-6 flex flex-col relative z-10"
-        style={{ backgroundColor: colors['bg-primary'] }}
-        onClick={(e) => e.stopPropagation()}
+  // Modal actions
+  const modalActions = (
+    <>
+      <ButtonNormal
+        variant="secondary"
+        size="small"
+        onClick={onClose}
+        className="flex-1"
+        disabled={isSaving}
       >
-        {/* Header */}
-        <div className="flex flex-row items-center gap-3">
-          <div
-            className="w-12 h-12 p-3 rounded-[10px] border shadow-sm flex items-center justify-center"
-            style={{
-              backgroundColor: colors['bg-primary'],
-              borderColor: colors['border-secondary'],
-            }}
-          >
-            <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`}
-              alt="Folder icon"
-              className="w-12 h-12"
-            />
-          </div>
-          <div className="flex flex-col">
-            <h2
-              className="text-lg font-semibold"
-              style={{ color: colors['text-primary'] }}
-            >
-              Create a Subfolder
-            </h2>
-            <div
-              className="text-sm font-normal font-['Inter'] leading-tight flex items-center gap-0"
-              style={{ color: colors['text-secondary'] }}
-            >
-              Add a subfolder to
-              {parent.icon_url ? (
-                <img
-                  src={
-                    parent.icon_url.startsWith('https://cdn.brandfetch.io/')
-                      ? parent.icon_url
-                      : parent.signedIconUrl
-                        ? parent.signedIconUrl
-                        : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
-                  }
-                  alt="icon"
-                  className="w-4 h-4 inline-block ml-1"
-                />
-              ) : (
-                <span className="ml-1">{parent.emote || ''}</span>
-              )}
-              <span className="ml-0.5">{parent.name}</span>
-            </div>
-          </div>
-        </div>
+        Cancel
+      </ButtonNormal>
+      <ButtonNormal
+        variant="primary"
+        size="small"
+        onClick={handleCreateSubfolder}
+        disabled={!folderName.trim() || isSaving}
+        className="flex-1"
+      >
+        {isSaving ? 'Creating...' : 'Create'}
+      </ButtonNormal>
+    </>
+  );
 
+  // Folder icon for this modal
+  const folderIcon = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon.svg`;
+
+  return (
+    <Modal
+      onClose={onClose}
+      title="Create a Subfolder"
+      icon={folderIcon}
+      actions={modalActions}
+      showActionsSeparator={true}
+    >
+      <div className="flex flex-col gap-4">
+        {/* Parent Info */}
+        <div className="flex flex-row items-center gap-3">
+          {parent.icon_url ? (
+            <img
+              src={
+                parent.icon_url.startsWith('https://cdn.brandfetch.io/')
+                  ? parent.icon_url
+                  : parent.signedIconUrl
+                    ? parent.signedIconUrl
+                    : `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/folder-icon-base.svg`
+              }
+              alt="icon"
+              className="w-6 h-6 rounded mr-1"
+            />
+          ) : (
+            <span className="text-lg mr-1">{parent.emote || ''}</span>
+          )}
+          <span className="text-sm font-medium" style={{ color: colors['text-secondary'] }}>
+            Add a subfolder to <span className="ml-0.5">{parent.name}</span>
+          </span>
+        </div>
         {/* Input Field */}
-        <div className="mt-4">
+        <div>
           <label
-            className="block text-sm font-semibold"
+            className="block text-sm font-semibold mb-2"
             style={{ color: colors['text-primary'] }}
           >
-            Folder name<span style={{ color: colors['text-accent'] }}>*</span>
+            Folder name <span style={{ color: colors['text-accent'] }}>*</span>
           </label>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <IconModifier
               initialIcon={previewIcon}
               onUpdate={updateIcon}
@@ -143,30 +144,9 @@ const CreateFolderModal: React.FC<CreateSubfolderModalProps> = ({
             />
           </div>
         </div>
-
-        {/* Buttons */}
-        <div className="mt-6 flex gap-3">
-          <ButtonNormal
-            variant="secondary"
-            size="small"
-            onClick={onClose}
-            className="flex-1"
-          >
-            Cancel
-          </ButtonNormal>
-          <ButtonNormal
-            variant="primary"
-            size="small"
-            onClick={() => createFolder(folderName)}
-            disabled={!folderName.trim() || isSaving}
-            className="flex-1"
-          >
-            Create
-          </ButtonNormal>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 
-export default CreateFolderModal;
+export default CreateSubfolderModal;
