@@ -1214,9 +1214,12 @@ export default function Page() {
     const fetchSignedUrl = async () => {
       if (user && user.avatar_url && !user.avatar_signed_url) {
         user.avatar_signed_url = user.avatar_url;
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('user.avatar_signed_url', user.avatar_signed_url);
+        }
       }
     };
-
+    console.log('user', user);
     fetchSignedUrl();
   }, [user]);
 

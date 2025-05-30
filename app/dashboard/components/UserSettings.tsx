@@ -218,7 +218,7 @@ export default function UserSettings({
           const formData = new FormData();
           formData.append('file', previewFile);
 
-          const uploadRes = await fetch('/api/upload', {
+          const uploadRes = await fetch('/api/upload/avatar', {
             method: 'POST',
             body: formData,
           });
