@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'; // Already imported in your sig
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 import { generatePublicUrl } from '../utils/generatePublicUrl';
+import { generateUserUrl } from '../utils/generateUserUrl';
 
 /**
  * @swagger
@@ -133,7 +134,7 @@ export async function GET(req: NextRequest) {
     let avatar_signed_url: string | null = null;
     if (user.avatar_url && !user.avatar_url.startsWith('http')) {
       try {
-        avatar_signed_url = generatePublicUrl(user.avatar_url);
+        avatar_signed_url = generateUserUrl(user.avatar_url);
       } catch (error) {
         console.error('Error generating public URL for avatar:', error);
       }
