@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   // Generate a unique file name and specify the folder using user UID
   const sanitizedFileName = file.name.replace(/\s+/g, '_'); // Replace spaces with underscores
   const fileName = `${uuidv4()}-${sanitizedFileName}`;
-  const filePath = `avatars/${userUID}/${fileName}`; // Upload inside user's avatar folder
+  const filePath = `${userUID}/avatars/${fileName}`; // Upload inside user's avatar folder
 
   // Retrieve bucket name from environment variable
   const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
