@@ -1,11 +1,12 @@
-// app/api/upload/route.ts
+// app/api/upload/avatar/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
+import { createClient } from '@/utils/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * @swagger
- * /api/upload:
+ * /api/upload/avatar:
  *   post:
  *     summary: Upload a file to Supabase storage
  *     description: Allows users to upload images or videos to a designated Supabase storage bucket.
@@ -58,6 +59,19 @@ import { v4 as uuidv4 } from 'uuid';
  *                   example: "File upload failed"
  */
 export async function POST(req: NextRequest) {
+  // Get authenticated user
+  const supabaseServer = await createClient();
+  const { data: userData, error: userError } = await supabaseServer.auth.getUser();
+
+  if (userError || !userData || !userData.user) {
+    return NextResponse.json(
+      { error: 'User not authenticated' },
+      { status: 401 }
+    );
+  }
+
+  const userUID = userData.user.id;
+
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
 
@@ -65,25 +79,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
   }
 
-  // Validate file type
+  // Validate file type - avatars should be images only
   const allowedMimeTypes = [
     'image/svg+xml',
     'image/png',
     'image/jpeg',
     'image/gif',
-    'video/mp4',
   ];
   if (!allowedMimeTypes.includes(file.type)) {
-    return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid file type. Only images are allowed for avatars.' }, { status: 400 });
   }
 
   const buffer = await file.arrayBuffer();
   const fileData = new Uint8Array(buffer); // Convert to Uint8Array
 
-  // Generate a unique file name and specify the folder
+  // Generate a unique file name and specify the folder using user UID
   const sanitizedFileName = file.name.replace(/\s+/g, '_'); // Replace spaces with underscores
   const fileName = `${uuidv4()}-${sanitizedFileName}`;
-  const filePath = `uploads/${fileName}`; // Upload inside the "uploads" folder
+  const filePath = `avatars/${userUID}/${fileName}`; // Upload inside user's avatar folder
 
   // Retrieve bucket name from environment variable
   const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
@@ -96,7 +109,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Upload the file to the "uploads" folder in the specified bucket
+    // Upload the file to the user's avatar folder in the specified bucket
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, fileData, {
@@ -113,7 +126,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `File uploaded successfully: ${filePath}`,
+      message: `Avatar uploaded successfully: ${filePath}`,
       filePath,
     });
   } catch (error) {

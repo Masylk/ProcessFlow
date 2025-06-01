@@ -24,7 +24,7 @@ export function generatePublicUrl(path: string): string {
   }
 
   // If the path contains 'step-icons/custom', use generateWorkspaceURL instead
-  if (path.includes('step-icons/custom')) {
+  if (path.includes('uploads/') && path.includes('icons/')) {
     if (process.env.NODE_ENV === 'development') {
       console.log('Using generateWorkspaceURL for path:', path);
     }
