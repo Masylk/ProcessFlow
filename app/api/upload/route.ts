@@ -1,6 +1,10 @@
 // app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient'; // Shared Supabase client
+import { createClient } from '@/utils/supabase/server';
+import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -58,46 +62,81 @@ import { v4 as uuidv4 } from 'uuid';
  *                   example: "File upload failed"
  */
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const file = formData.get('file') as File | null;
+  // Get authenticated user
+  const supabaseServer = await createClient();
+  const { data: userData, error: userError } = await supabaseServer.auth.getUser();
 
-  if (!file) {
-    return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-  }
-
-  // Validate file type
-  const allowedMimeTypes = [
-    'image/svg+xml',
-    'image/png',
-    'image/jpeg',
-    'image/gif',
-    'video/mp4',
-  ];
-  if (!allowedMimeTypes.includes(file.type)) {
-    return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
-  }
-
-  const buffer = await file.arrayBuffer();
-  const fileData = new Uint8Array(buffer); // Convert to Uint8Array
-
-  // Generate a unique file name and specify the folder
-  const sanitizedFileName = file.name.replace(/\s+/g, '_'); // Replace spaces with underscores
-  const fileName = `${uuidv4()}-${sanitizedFileName}`;
-  const filePath = `uploads/${fileName}`; // Upload inside the "uploads" folder
-
-  // Retrieve bucket name from environment variable
-  const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
-
-  if (!bucketName) {
+  if (userError || !userData || !userData.user) {
     return NextResponse.json(
-      { error: 'Bucket name is not defined in environment variables' },
-      { status: 500 }
+      { error: 'User not authenticated' },
+      { status: 401 }
     );
   }
 
+  const userUID = userData.user.id;
+
+  // Get user's active workspace
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   try {
-    // Upload the file to the "uploads" folder in the specified bucket
-    const { data, error } = await supabase.storage
+    const user = await prisma_client.user.findUnique({
+      where: { auth_id: userUID },
+      include: {
+        active_workspace: true
+      }
+    });
+
+    if (!user || !user.active_workspace) {
+      return NextResponse.json(
+        { error: 'No active workspace found' },
+        { status: 400 }
+      );
+    }
+
+    const workspaceSlug = user.active_workspace.slug;
+
+    const formData = await req.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    }
+
+    // Validate file type
+    const allowedMimeTypes = [
+      'image/svg+xml',
+      'image/png',
+      'image/jpeg',
+      'image/gif',
+      'video/mp4',
+    ];
+    if (!allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+    }
+
+    const buffer = await file.arrayBuffer();
+    const fileData = new Uint8Array(buffer); // Convert to Uint8Array
+
+    // Generate a unique file name and specify the folder using workspace slug
+    const sanitizedFileName = file.name.replace(/\s+/g, '_'); // Replace spaces with underscores
+    const fileName = `${uuidv4()}-${sanitizedFileName}`;
+    const filePath = `uploads/${workspaceSlug}/${fileName}`; // Upload inside workspace folder
+
+    // Retrieve bucket name from environment variable
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
+
+    if (!bucketName) {
+      return NextResponse.json(
+        { error: 'Bucket name is not defined in environment variables' },
+        { status: 500 }
+      );
+    }
+    
+    // Upload the file to the workspace folder in the specified bucket
+    const { error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, fileData, {
         contentType: file.type,
@@ -119,5 +158,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('File upload error:', error);
     return NextResponse.json({ error: 'File upload failed' }, { status: 500 });
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
