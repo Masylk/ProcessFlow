@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createServerClient } from '@/utils/supabase/server';
+import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 const ALLOWED_FILE_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -10,12 +14,53 @@ const supabase = createClient(
 );
 
 /**
- * Handles icon file uploads
+ * Handles icon file uploads to workspace-specific folders
  * @param {NextRequest} request - The incoming request containing the file
  * @returns {Promise<NextResponse>} JSON response with the uploaded file URL or error
  */
 export async function POST(request: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
+
   try {
+    // Get authenticated user
+    const supabaseServer = await createServerClient();
+    const { data: userData, error: userError } = await supabaseServer.auth.getUser();
+
+    if (userError || !userData || !userData.user) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'User not authenticated' 
+        },
+        { status: 401 }
+      );
+    }
+
+    const userUID = userData.user.id;
+
+    // Get user's active workspace
+    const user = await prisma_client.user.findUnique({
+      where: { auth_id: userUID },
+      include: {
+        active_workspace: true
+      }
+    });
+
+    if (!user || !user.active_workspace) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'No active workspace found' 
+        },
+        { status: 400 }
+      );
+    }
+
+    const workspaceSlug = user.active_workspace.slug;
+
     // Input validation
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -56,11 +101,11 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
-    // Generate a secure filename
+    // Generate a secure filename and upload to workspace-specific icons folder
     const timestamp = Date.now();
     const randomString = crypto.randomUUID();
     const fileName = `${timestamp}-${randomString}.${fileExtension}`;
-    const filePath = `step-icons/custom/${fileName}`;
+    const filePath = `uploads/${workspaceSlug}/icons/${fileName}`;
 
     // Upload to Supabase Storage
     const { error: uploadError, data } = await supabase.storage
@@ -113,6 +158,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }
 
