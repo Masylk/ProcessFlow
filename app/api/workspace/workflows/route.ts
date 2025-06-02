@@ -9,6 +9,7 @@ import { generatePublicAccessId } from '../../workflow/utils';
 import { checkWorkflowName } from '@/app/utils/checkNames';
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
+import { deleteFile } from '@/app/api/utils/deleteFile';
 
 /**
  * @swagger
@@ -494,6 +495,24 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Fetch the existing workflow to check the previous icon
+    let previousIcon: string | null = null;
+    if (icon !== undefined) {
+      const existingWorkflow = await prisma_client.workflow.findUnique({
+        where: { id: Number(id) },
+        select: { icon: true },
+      });
+      previousIcon = existingWorkflow?.icon || null;
+      // If previous icon exists, is different, and matches the pattern, delete it
+      if (
+        previousIcon &&
+        previousIcon !== icon &&
+        ((previousIcon.includes('uploads/') && previousIcon.includes('icons/')) || previousIcon.includes('step-icons/custom'))
+      ) {
+        await deleteFile(previousIcon);
+      }
+    }
+
     // Add name validation if name is being updated
     if (name) {
       const nameError = checkWorkflowName(name);
@@ -567,6 +586,42 @@ export async function DELETE(req: NextRequest) {
         { error: 'Workflow ID is required' },
         { status: 400 }
       );
+    }
+
+    // --- Delete all block files from storage before deleting blocks ---
+    // Fetch all blocks for the workflow
+    const blocks = await prisma_client.block.findMany({
+      where: { workflow_id: Number(workflowId) },
+      select: { image: true, original_image: true, icon: true },
+    });
+    for (const block of blocks) {
+      // Delete image if exists
+      if (block.image) {
+        await deleteFile(block.image);
+      }
+      // Delete original_image if exists
+      if (block.original_image) {
+        await deleteFile(block.original_image);
+      }
+      // Delete icon if matches the pattern
+      if (
+        block.icon &&
+        ((block.icon.includes('uploads/') && block.icon.includes('icons/')) || block.icon.includes('step-icons/custom'))
+      ) {
+        await deleteFile(block.icon);
+      }
+    }
+
+    // --- Delete workflow icon from storage if it matches the pattern ---
+    const workflow = await prisma_client.workflow.findUnique({
+      where: { id: Number(workflowId) },
+      select: { icon: true },
+    });
+    if (
+      workflow?.icon &&
+      ((workflow.icon.includes('uploads/') && workflow.icon.includes('icons/')) || workflow.icon.includes('step-icons/custom'))
+    ) {
+      await deleteFile(workflow.icon);
     }
 
     // Start a transaction to ensure all related deletions occur together

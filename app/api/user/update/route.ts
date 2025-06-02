@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { isVercel } from '../../utils/isVercel';
 import { PrismaClient } from '@prisma/client';
 import { generateUserUrl } from '../../utils/generateUserUrl';
+import { deleteAvatarFromPrivateBucket } from '../../utils/deleteFile';
 
 /**
  * @swagger
@@ -153,6 +154,20 @@ export async function PUT(req: NextRequest) {
 
     if (!existingUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Delete avatar from storage if needed
+    const shouldDeleteAvatar =
+      delete_avatar ||
+      (existingUser.avatar_url && avatar_url !== undefined && avatar_url !== null && avatar_url !== existingUser.avatar_url);
+
+    if (
+      shouldDeleteAvatar &&
+      existingUser.avatar_url &&
+      typeof existingUser.avatar_url === 'string' &&
+      !existingUser.avatar_url.startsWith('http')
+    ) {
+      await deleteAvatarFromPrivateBucket(existingUser.avatar_url);
     }
 
     let newAvatarUrl = avatar_url;
