@@ -115,7 +115,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     // Handle image duplication if exists
     let newImagePath = null;
     if (originalBlock.image) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
       if (bucketName) {
         // Generate new unique filename
         const timestamp = Date.now();
