@@ -112,6 +112,7 @@ export async function signup(formData: FormData) {
     where: { email },
   });
   if (existingUser) {
+    if (isVercel()) await prisma_client.$disconnect();
     // Always return success, do not reveal existence
     return { success: true, message: "If your signup was successful, check your email." };
   }
@@ -307,5 +308,7 @@ export async function debugCheckEmail(email: string) {
     }
     results.explanation += "Debug check failed with unexpected error. ";
     return results;
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 }

@@ -146,5 +146,9 @@ export async function POST(
     }
     
     return NextResponse.json({ error: 'Failed to update tutorial status' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 

@@ -120,5 +120,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Unexpected error during confirmation:', error);
     return NextResponse.redirect(new URL('/login?error=confirmation-failed', request.url));
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 
