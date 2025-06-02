@@ -212,6 +212,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -268,6 +272,10 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 

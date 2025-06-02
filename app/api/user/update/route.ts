@@ -122,11 +122,11 @@ import { deleteAvatarFromPrivateBucket } from '../../utils/deleteFile';
  *                   example: "Failed to update user"
  */
 export async function PUT(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
-    const prisma_client = isVercel() ? new PrismaClient() : prisma;
-    if (!prisma_client) {
-      throw new Error('Prisma client not initialized');
-    }
     const body = await req.json();
     const {
       id,
@@ -210,5 +210,9 @@ export async function PUT(req: NextRequest) {
       { error: 'Failed to update user' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

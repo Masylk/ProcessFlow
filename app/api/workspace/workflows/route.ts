@@ -470,6 +470,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const {
       id,
@@ -482,11 +487,6 @@ export async function PUT(req: NextRequest) {
       icon = null,
       status = null,
     } = await req.json();
-
-    const prisma_client = isVercel() ? new PrismaClient() : prisma;
-    if (!prisma_client) {
-      throw new Error('Prisma client not initialized');
-    }
 
     if (!id) {
       return NextResponse.json(
@@ -569,6 +569,10 @@ export async function PUT(req: NextRequest) {
       { error: 'Failed to update workflow' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -663,5 +667,9 @@ export async function DELETE(req: NextRequest) {
       { error: 'Failed to delete workflow and related data' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }

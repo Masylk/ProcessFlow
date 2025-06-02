@@ -433,12 +433,14 @@ export default async function CheckoutSuccessPage(props: PageProps) {
   } catch (error) {
     if (error instanceof Error && error.message !== 'NEXT_REDIRECT') {
       await trackCheckoutServerSide(workspaceIdNumber, '[REDACTED]', 'failed');
-      if (isVercel()) await prisma_client.$disconnect();
       return redirect(
         `/?workspace=${workspaceId}&checkout=failed&error=checkout_error`
       );
     }
-    if (isVercel()) await prisma_client.$disconnect();
     throw error;
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
