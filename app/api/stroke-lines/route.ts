@@ -198,6 +198,10 @@ export async function PUT(request: Request) {
       { error: 'Failed to update stroke line' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
