@@ -27,6 +27,10 @@ export async function getProtectedRoute(request: Request) {
  * @returns The user object or null if not found
  */
 export async function getActiveUser(request: NextRequest | Request) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
     const userId = request.headers.get('x-user-id');
     
@@ -34,18 +38,16 @@ export async function getActiveUser(request: NextRequest | Request) {
       console.warn('User ID not found in request headers');
       return null;
     }
-    const prisma_client = isVercel() ? new PrismaClient() : prisma;
-    if (!prisma_client) {
-      throw new Error('Prisma client not initialized');
-    }
+    
     const user = await prisma_client.user.findUnique({ 
       where: { auth_id: userId }
     });
-    if (isVercel()) await prisma_client.$disconnect();
     return user;
   } catch (error) {
     console.error('Error getting active user:', error);
     return null;
+  } finally {
+    if (isVercel()) await prisma_client.$disconnect();
   }
 } 
 

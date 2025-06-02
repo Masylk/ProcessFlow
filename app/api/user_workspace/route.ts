@@ -139,11 +139,11 @@ import { isVercel } from '@/app/api/utils/isVercel';
  *                   example: "Failed to create workspace"
  */
 export async function GET(req: NextRequest) {
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
+    throw new Error('Prisma client not initialized');
+  }
   try {
-    const prisma_client = isVercel() ? new PrismaClient() : prisma;
-    if (!prisma_client) {
-      throw new Error('Prisma client not initialized');
-    }
     const workspaces = await prisma_client.workspace.findMany({
       include: {
         user_workspaces: {
@@ -160,6 +160,10 @@ export async function GET(req: NextRequest) {
       { error: 'Failed to fetch workspaces' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
