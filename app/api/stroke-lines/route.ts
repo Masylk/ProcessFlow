@@ -98,6 +98,10 @@ export async function POST(request: Request) {
       { error: 'Failed to create stroke line' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -282,6 +286,10 @@ export async function DELETE(request: Request) {
       { error: 'Failed to delete stroke line' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -395,6 +403,10 @@ export async function GET(request: Request) {
       { error: 'Failed to fetch stroke lines' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
 
@@ -485,5 +497,9 @@ export async function PATCH(request: Request) {
       { error: 'Failed to update control points' },
       { status: 500 }
     );
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 } 
