@@ -7,6 +7,7 @@ import { isVercel } from '@/app/api/utils/isVercel';
 import { deleteOneBlock } from '../../utils/blocks/deleteOne';
 import { formatTitle } from '../../utils/formatTitle';
 import { createSignedUrlForBlock } from '@/utils/createSignedUrls';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * @swagger
@@ -112,7 +113,8 @@ export async function PATCH(req: NextRequest) {
       where: { id: block_id },
       select: { 
         image: true,
-        original_image: true 
+        original_image: true,
+        icon: true
       },
     });
 
@@ -120,8 +122,42 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Block not found' }, { status: 404 });
     }
 
-    // Note: File deletion logic removed since we're using public storage
-    // Files in public storage don't need to be manually deleted
+    // Delete previous images from storage if new images are being set
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
+    if (bucketName && (image !== undefined || original_image !== undefined || icon !== undefined)) {
+      const filesToDelete = [];
+      
+      // If updating image and there's an existing one, mark it for deletion
+      if (image !== undefined && existingBlock.image && existingBlock.image !== image) {
+        filesToDelete.push(existingBlock.image);
+      }
+      
+      // If updating original_image and there's an existing one, mark it for deletion
+      if (original_image !== undefined && existingBlock.original_image && existingBlock.original_image !== original_image) {
+        filesToDelete.push(existingBlock.original_image);
+      }
+
+      // If updating icon and both new and old icons contain 'uploads/' and 'icons/', and the icon is changing, mark it for deletion
+      if (
+        icon !== undefined &&
+        existingBlock.icon &&
+        existingBlock.icon !== icon &&
+        (existingBlock.icon.includes('uploads/') && existingBlock.icon.includes('icons/') || existingBlock.icon.includes('step-icons/custom'))
+      ) {
+        filesToDelete.push(existingBlock.icon);
+      }
+
+      // Delete the files from storage
+      if (filesToDelete.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from(bucketName)
+          .remove(filesToDelete);
+
+        if (storageError) {
+          console.error('Error deleting previous images/icons from storage:', storageError);
+        }
+      }
+    }
 
     // Update block with all fields
     const updatedBlock: any = await prisma_client.block.update({

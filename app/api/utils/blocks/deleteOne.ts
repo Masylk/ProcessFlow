@@ -31,14 +31,20 @@ export async function deleteOneBlock(id: number | string) {
     }
 
     const imageUrl = block.image;
+    const originalImageUrl = block.original_image;
+    const iconUrl = block.icon;
 
     // Save workflow_id and position before deleting
     const workflowId = block.workflow_id;
     const pathId = block.path_id;
     const deletedPosition = block.position;
 
-    // Delete only the image file from Supabase storage
+    // Delete only the image, original image, and icon files from Supabase storage
     await deleteFile(imageUrl);
+    await deleteFile(originalImageUrl);
+    if (iconUrl && (iconUrl.includes('uploads/') && iconUrl.includes('icons/') || iconUrl.includes('step-icons/custom'))) {
+      await deleteFile(iconUrl);
+    }
 
     // Delete the block (cascade will handle related records)
     await prisma_client.block.delete({
