@@ -252,30 +252,59 @@ export async function GET(
         return path;
       };
 
-      // if (existingPaths.length > 1) {
-      //   // 1. Find all paths with no parent_blocks
-      //   const rootPaths = existingPaths.filter(path => !path.parent_blocks || path.parent_blocks.length === 0);
+      if (existingPaths.length > 1) {
+        // 1. Find all paths with no parent_blocks
+        const rootPaths = existingPaths.filter(path => !path.parent_blocks || path.parent_blocks.length === 0);
 
-      //   // Only delete if there are more than one rootPaths
-      //   if (rootPaths.length > 1) {
-      //     // 2. Find all root paths that have only 2 blocks (one BEGIN and one END/LAST)
-      //     const pathsToDelete = rootPaths.filter(path => {
-      //       if (!path.blocks || path.blocks.length !== 2) return false;
-      //       const types = path.blocks.map(b => b.type);
-      //       return (
-      //         types.includes('BEGIN') &&
-      //         (types.includes('END') || types.includes('LAST'))
-      //       );
-      //     });
+        // Only delete if there are more than one rootPaths
+        if (rootPaths.length > 1) {
+          // Find the rootPath with the oldest created_at BEGIN block among all rootPaths
+          let oldestPathId: number | null = null;
+          let oldestCreatedAt: Date | null = null;
+          rootPaths.forEach(path => {
+            const beginBlock = path.blocks.find(b => b.type === 'BEGIN');
+            if (beginBlock && beginBlock.created_at) {
+              const createdAt = new Date(beginBlock.created_at);
+              if (!oldestCreatedAt || createdAt < oldestCreatedAt) {
+                oldestCreatedAt = createdAt;
+                oldestPathId = path.id;
+              }
+            }
+          });
 
-      //     // 3. Delete those paths
-      //     for (const path of pathsToDelete) {
-      //       // Delete blocks first due to foreign key constraints
-      //       await prisma.block.deleteMany({ where: { path_id: path.id } });
-      //       await prisma.path.delete({ where: { id: path.id } });
-      //     }
-      //   }
-      // }
+
+          // Delete all rootPaths except the one with the oldest BEGIN block
+          for (const path of rootPaths) {
+            if (path.id !== oldestPathId) {
+              // Delete blocks first due to foreign key constraints
+              await prisma.block.deleteMany({ where: { path_id: path.id } });
+              await prisma.path.delete({ where: { id: path.id } });
+            }
+          }
+        }
+      }
+
+      // Fetch again to log root paths after deletion
+      existingPaths = await prisma.path.findMany({
+        where: {
+          workflow_id: parsedworkflow_id,
+        },
+        include: {
+          blocks: {
+            orderBy: {
+              position: 'asc',
+            },
+            include: {
+              child_paths: {
+                include: {
+                  path: true
+                }
+              }
+            }
+          },
+          parent_blocks: true,
+        }
+      });
 
       // Process existing paths or create new one
       if (existingPaths.length === 0) {
