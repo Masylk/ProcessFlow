@@ -252,28 +252,30 @@ export async function GET(
         return path;
       };
 
-      if (existingPaths.length > 1) {
-        // 1. Find all paths with no parent_blocks
-        const rootPaths = existingPaths.filter(path => !path.parent_blocks || path.parent_blocks.length === 0);
+      // if (existingPaths.length > 1) {
+      //   // 1. Find all paths with no parent_blocks
+      //   const rootPaths = existingPaths.filter(path => !path.parent_blocks || path.parent_blocks.length === 0);
 
-        // 2. Find all root paths that have only 2 blocks (one BEGIN and one END/LAST)
-        const pathsToDelete = rootPaths.filter(path => {
-          if (!path.blocks || path.blocks.length !== 2) return false;
-          const types = path.blocks.map(b => b.type);
-          return (
-            types.includes('BEGIN') &&
-            (types.includes('END') || types.includes('LAST'))
-          );
-        });
+      //   // Only delete if there are more than one rootPaths
+      //   if (rootPaths.length > 1) {
+      //     // 2. Find all root paths that have only 2 blocks (one BEGIN and one END/LAST)
+      //     const pathsToDelete = rootPaths.filter(path => {
+      //       if (!path.blocks || path.blocks.length !== 2) return false;
+      //       const types = path.blocks.map(b => b.type);
+      //       return (
+      //         types.includes('BEGIN') &&
+      //         (types.includes('END') || types.includes('LAST'))
+      //       );
+      //     });
 
-        // 3. Delete those paths
-        for (const path of pathsToDelete) {
-          // Delete blocks first due to foreign key constraints
-          await prisma.block.deleteMany({ where: { path_id: path.id } });
-          await prisma.path.delete({ where: { id: path.id } });
-        }
-        // Optionally, you can log or return rootPaths if needed
-      }
+      //     // 3. Delete those paths
+      //     for (const path of pathsToDelete) {
+      //       // Delete blocks first due to foreign key constraints
+      //       await prisma.block.deleteMany({ where: { path_id: path.id } });
+      //       await prisma.path.delete({ where: { id: path.id } });
+      //     }
+      //   }
+      // }
 
       // Process existing paths or create new one
       if (existingPaths.length === 0) {
