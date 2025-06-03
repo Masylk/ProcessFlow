@@ -139,31 +139,32 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     }
 
     // Handle icon duplication if it matches certain paths
+
     let newIconPath = originalBlock.icon;
     if (originalBlock.icon && (
       (originalBlock.icon.includes('/uploads') && originalBlock.icon.includes('/icons')) ||
       originalBlock.icon.includes('/step-icons/custom')
     )) {
-      const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
-      if (bucketName) {
-        const timestamp = Date.now();
-        const originalIconFileName = originalBlock.icon.split('/').pop();
-        const newIconFileName = `${timestamp}-${originalIconFileName}`;
-        const newIconPathCandidate = originalBlock.icon.replace(originalIconFileName!, newIconFileName);
-
-        const { data: iconCopyData, error: iconCopyError } = await supabase
+        const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
+        if (bucketName) {
+          const timestamp = Date.now();
+          const originalIconFileName = originalBlock.icon.split('/').pop();
+          const newIconFileName = `${timestamp}-${originalIconFileName}`;
+          const newIconPathCandidate = originalBlock.icon.replace(originalIconFileName!, newIconFileName);
+          
+          const { data: iconCopyData, error: iconCopyError } = await supabase
           .storage
           .from(bucketName)
           .copy(originalBlock.icon, newIconPathCandidate);
-
-        if (iconCopyError) {
-          console.error('Error copying icon:', iconCopyError);
+          
+          if (iconCopyError) {
+            console.error('Error copying icon:', iconCopyError);
         } else {
           newIconPath = newIconPathCandidate;
         }
       }
-    }
-
+    }  
+    
     // Update positions of blocks after the target position
     await prisma_client.block.updateMany({
       where: {
@@ -198,6 +199,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       },
     });
 
+    const shouldGenerateIconUrl = duplicatedBlock.icon && !duplicatedBlock.icon.startsWith('https://cdn.brandfetch.io/');
+
     // Fetch all paths to return updated data
     // const paths = await prisma.path.findMany({
     //   where: {
@@ -221,7 +224,12 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     // });
 
     return NextResponse.json({
-      block: { ...duplicatedBlock, signedIconUrl: duplicatedBlock.icon ? await generatePublicUrl(duplicatedBlock.icon) : null },
+      block: {
+        ...duplicatedBlock,
+        signedIconUrl: shouldGenerateIconUrl && typeof duplicatedBlock.icon === 'string'
+          ? await generatePublicUrl(duplicatedBlock.icon)
+          : duplicatedBlock.icon
+      },
       // paths: paths,
     });
 
