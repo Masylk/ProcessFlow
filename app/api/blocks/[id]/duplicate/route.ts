@@ -199,11 +199,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       },
     });
 
-    const shouldGenerateIconUrl = duplicatedBlock.icon &&
-      (
-        (duplicatedBlock.icon.includes('/uploads') && duplicatedBlock.icon.includes('/icons')) ||
-        duplicatedBlock.icon.includes('/step-icons/custom')
-      );
+    const shouldGenerateIconUrl = duplicatedBlock.icon && !duplicatedBlock.icon.startsWith('https://cdn.brandfetch.io/');
 
     // Fetch all paths to return updated data
     // const paths = await prisma.path.findMany({
