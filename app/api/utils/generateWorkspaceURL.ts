@@ -1,3 +1,5 @@
+import { generateUserUrl } from "./generateUserUrl";
+
 /**
  * Generates a public URL for a file in the Supabase storage bucket
  * @param path - The path of the file in the storage bucket
@@ -24,6 +26,14 @@ export function generateWorkspaceURL(path: string): string {
   
     // Remove leading slash from path if present to avoid double slashes
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  
+    // If cleanPath starts with "uploads/" and does not have any more "/" after, use generateUserUrl
+    if (
+      cleanPath.startsWith('uploads/') &&
+      !cleanPath.slice('uploads/'.length).includes('/')
+    ) {
+      return `${supabaseUrl}${userStoragePath}/${cleanPath}`;
+    }
   
     // Build and return the public URL
     return `${supabaseUrl}${storagePath}/${cleanPath}`;
