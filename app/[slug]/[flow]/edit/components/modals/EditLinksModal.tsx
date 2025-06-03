@@ -387,7 +387,7 @@ const EditLinksModal: React.FC<EditLinksModalProps> = ({
                           height: 20,
                           borderRadius: 9999,
                           backgroundColor: isDirectionToggled
-                            ? colors['accent-primary'] || '#4761C4'
+                            ? colors['bg-brand-solid'] || '#4761c4'
                             : colors['bg-quaternary'] || '#E4E7EC',
                           boxShadow:
                             '0px 1px 2px 0px rgba(16, 24, 40, 0.06), 0px 1px 3px 0px rgba(16, 24, 40, 0.1)',
