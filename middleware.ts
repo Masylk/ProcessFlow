@@ -181,7 +181,7 @@ export async function middleware(request: NextRequest) {
       }
 
       // Check if this is a workspace or workflow route
-      if (request.url.includes('/workspace/') || request.url.includes('/workflow/')) {
+      if (request.url.includes('/edit') || request.url.includes('/read')) {
         return workspaceProtection(request, user);
       }
 
