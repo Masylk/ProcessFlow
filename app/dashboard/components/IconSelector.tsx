@@ -14,7 +14,12 @@ interface Entity {
 }
 
 interface IconSelectorProps {
-  onSelect: (icon?: string, emote?: string, signedIcon?: string) => void;
+  onSelect: (
+    previewUrl?: string,
+    emote?: string,
+    signedIcon?: string,
+    file?: File
+  ) => void;
   allowEmoji?: boolean;
   applist: Entity[];
   iconlist: Entity[];
@@ -137,27 +142,8 @@ const IconSelector: React.FC<IconSelectorProps> = ({
       setUploadError('');
 
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch('/api/upload-icon', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to upload file');
-        }
-
-        if (!data.success) {
-          throw new Error(data.error || 'Upload failed');
-        }
-
-        // Fetch signed URL before calling onSelect
-        const signedUrl = await fetchSignedUrl(data.data.iconUrl);
-        onSelect(data.data.iconUrl, undefined, signedUrl || undefined);
+        const previewUrl = URL.createObjectURL(file);
+        onSelect(previewUrl, undefined, undefined, file);
       } catch (error) {
         console.error('Upload error:', error);
         setUploadError(

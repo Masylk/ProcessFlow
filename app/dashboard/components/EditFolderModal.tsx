@@ -39,50 +39,33 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       : folder.signedIconUrl || undefined
   );
   const [emote, setEmote] = useState<string | undefined>(folder.emote);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const saveChanges = async (name: string) => {
-    if (!name.trim()) return;
-
-    const nameError = checkFolderName(name);
-    if (nameError) {
-      toast.error(nameError.title, {
-        description: nameError.description,
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (iconUrl) await onEdit(name, iconUrl, undefined, previewIcon);
-      else if (emote) await onEdit(name, undefined, emote);
-      else await onEdit(name);
-
-      onClose();
-    } catch (error) {
-      console.error('Error editing folder:', error);
-      toast.error('Error Saving Folder', {
-        description: 'An unexpected error occurred while saving the folder.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const updateIcon = (icon?: string, emote?: string, signedIcon?: string) => {
+  const updateIcon = (
+    icon?: string,
+    emote?: string,
+    signedIcon?: string,
+    file?: File
+  ) => {
     if (icon) {
       setIconUrl(icon);
       setEmote(undefined);
       setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
+      setPreviewFile(file || null);
     } else if (emote) {
       setIconUrl(undefined);
       setEmote(emote);
+      setPreviewIcon(undefined);
+      setPreviewFile(null);
     } else {
       setIconUrl(undefined);
       setEmote(undefined);
       setPreviewIcon(undefined);
+      setPreviewFile(null);
     }
   };
+
 
   // Define modal actions
   const modalActions = (
@@ -99,7 +82,58 @@ const EditFolderModal: React.FC<EditFolderModalProps> = ({
       <ButtonNormal
         variant="primary"
         size="small"
-        onClick={() => saveChanges(folderName)}
+        onClick={async () => {
+          if (!folderName.trim()) return;
+          const nameError = checkFolderName(folderName);
+          if (nameError) {
+            toast.error(nameError.title, {
+              description: nameError.description,
+            });
+            return;
+          }
+          setIsSubmitting(true);
+          let uploadedIconUrl = iconUrl;
+          let uploadedSignedIcon = previewIcon;
+          if (previewFile) {
+            try {
+              const formData = new FormData();
+              formData.append('file', previewFile);
+              const response = await fetch('/api/upload-icon', {
+                method: 'POST',
+                body: formData,
+              });
+              const data = await response.json();
+              if (!response.ok || !data.success)
+                throw new Error(data.error || 'Upload failed');
+              uploadedIconUrl = data.data.iconUrl;
+              uploadedSignedIcon = data.data.publicUrl || uploadedIconUrl;
+            } catch (error) {
+              console.error('Error uploading icon:', error);
+              setIsSubmitting(false);
+              return;
+            }
+          }
+          try {
+            if (uploadedIconUrl)
+              await onEdit(
+                folderName,
+                uploadedIconUrl,
+                undefined,
+                uploadedSignedIcon
+              );
+            else if (emote) await onEdit(folderName, undefined, emote);
+            else await onEdit(folderName);
+            onClose();
+          } catch (error) {
+            console.error('Error editing folder:', error);
+            toast.error('Error Saving Folder', {
+              description:
+                'An unexpected error occurred while saving the folder.',
+            });
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
         disabled={!folderName.trim() || isSubmitting}
         className="flex-1"
       >

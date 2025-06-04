@@ -708,6 +708,9 @@ export default function Page() {
         )
       );
 
+      // Refresh the page after successful workspace update
+      window.location.reload();
+
       return true;
     } catch (error) {
       console.error('Error updating workspace:', error);
@@ -777,9 +780,35 @@ export default function Page() {
     if (!folderName.trim()) return;
 
     setIsSubmitting(true);
+    let uploadedIconUrl = iconUrl;
+    let uploadedSignedIcon = previewIcon;
+    if (previewFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', previewFile);
+        const response = await fetch('/api/upload-icon', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success)
+          throw new Error(data.error || 'Upload failed');
+        uploadedIconUrl = data.data.iconUrl;
+        uploadedSignedIcon = data.data.publicUrl || uploadedIconUrl;
+      } catch (error) {
+        console.error('Error uploading icon:', error);
+        setIsSubmitting(false);
+        return;
+      }
+    }
     try {
-      if (iconUrl)
-        await handleAddFolder(folderName, iconUrl, undefined, previewIcon);
+      if (uploadedIconUrl)
+        await handleAddFolder(
+          folderName,
+          uploadedIconUrl,
+          undefined,
+          uploadedSignedIcon
+        );
       else if (emote) await handleAddFolder(folderName, undefined, emote);
       else await handleAddFolder(folderName);
       closeCreateFolder();
@@ -1328,6 +1357,8 @@ export default function Page() {
     }
   }, [isSettingsView, activeTab]);
 
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Suspense
@@ -1538,7 +1569,12 @@ export default function Page() {
               <div className="flex items-center gap-2">
                 <IconModifier
                   initialIcon={previewIcon || undefined}
-                  onUpdate={updateIcon}
+                  onUpdate={(icon, emote, signedIcon, file) => {
+                    setIconUrl(icon);
+                    setEmote(emote);
+                    setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
+                    setPreviewFile(file || null);
+                  }}
                   emote={emote}
                 />
                 <InputField

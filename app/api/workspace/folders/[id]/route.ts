@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 import { checkFolderName } from '@/app/utils/checkNames';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * DELETE /api/workspace/folders/:id
@@ -153,6 +154,48 @@ export async function DELETE(
       return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
     }
 
+    // Delete icon from storage if it matches the pattern
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
+    if (
+      bucketName &&
+      folder.icon_url &&
+      (
+        (folder.icon_url.includes('uploads/') && folder.icon_url.includes('icons/')) ||
+        folder.icon_url.includes('step-icons/custom')
+      )
+    ) {
+      const { error: storageError } = await supabase.storage
+        .from(bucketName)
+        .remove([folder.icon_url]);
+      if (storageError) {
+        console.error('Error deleting folder icon from storage:', storageError);
+      }
+    }
+
+    // Get all child folders and delete their icons from storage if they match the pattern
+    if (bucketName) {
+      const childFolders = await prisma_client.folder.findMany({
+        where: { parent_id: folderId },
+        select: { icon_url: true }
+      });
+      const childIconsToDelete = childFolders
+        .map(f => f.icon_url)
+        .filter((iconUrl): iconUrl is string =>
+          !!iconUrl && (
+            (iconUrl.includes('uploads/') && iconUrl.includes('icons/')) ||
+            iconUrl.includes('step-icons/custom')
+          )
+        );
+      if (childIconsToDelete.length > 0) {
+        const { error: childStorageError } = await supabase.storage
+          .from(bucketName)
+          .remove(childIconsToDelete);
+        if (childStorageError) {
+          console.error('Error deleting child folder icons from storage:', childStorageError);
+        }
+      }
+    }
+
     // Delete folder
     await prisma_client.folder.delete({
       where: { id: folderId },
@@ -213,6 +256,27 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     if (!existingFolder) {
       return NextResponse.json({ error: 'Folder not found' }, { status: 404 });
+    }
+
+    // Delete previous icon from storage if new icon_url is being set and the old one matches criteria
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
+    if (
+      bucketName &&
+      icon_url !== undefined &&
+      icon_url !== null &&
+      existingFolder.icon_url &&
+      existingFolder.icon_url !== icon_url &&
+      (
+        (existingFolder.icon_url.includes('uploads/') && existingFolder.icon_url.includes('icons/')) ||
+        existingFolder.icon_url.includes('step-icons/custom')
+      )
+    ) {
+      const { error: storageError } = await supabase.storage
+        .from(bucketName)
+        .remove([existingFolder.icon_url]);
+      if (storageError) {
+        console.error('Error deleting previous folder icon from storage:', storageError);
+      }
     }
 
     // Validate folder name if it's being updated
