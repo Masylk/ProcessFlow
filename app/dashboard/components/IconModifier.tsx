@@ -16,7 +16,12 @@ interface Entity {
 interface IconModifierProps {
   initialIcon?: string; // Optional initial icon
   emote?: string;
-  onUpdate: (icon?: string, emote?: string, signedIcon?: string) => void; // Callback when an icon is updated
+  onUpdate: (
+    icon?: string,
+    emote?: string,
+    signedIcon?: string,
+    file?: File
+  ) => void; // Callback when an icon is updated
   allowEmoji?: boolean; // Add this prop
   flow?: boolean;
 }
@@ -158,18 +163,10 @@ export default function IconModifier({
   const handleIconSelect = (
     icon?: string,
     emote?: string,
-    signedIcon?: string
+    signedIcon?: string,
+    file?: File
   ) => {
-    if (icon) {
-      // If an icon is selected, clear the emote
-      onUpdate(icon, undefined, signedIcon);
-    } else if (emote) {
-      // If an emote is selected, clear the icon
-      onUpdate(undefined, emote);
-    } else {
-      // If neither, clear both
-      onUpdate(undefined, undefined);
-    }
+    onUpdate(icon, emote, signedIcon, file);
     setShowSelector(false);
   };
 

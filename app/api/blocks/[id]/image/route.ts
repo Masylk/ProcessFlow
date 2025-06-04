@@ -36,7 +36,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete both images from Supabase storage
-    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
     if (bucketName) {
       const filesToDelete = [
         block.image,

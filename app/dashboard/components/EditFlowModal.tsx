@@ -58,31 +58,68 @@ export default function EditFlowModal({
       ? selectedWorkflow.icon
       : selectedWorkflow.signedIconUrl || null
   );
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const result = await onConfirm(
-        selectedWorkflow.id,
-        processName,
-        description,
-        processOwner,
-        review_date,
-        additionalNotes,
-        undefined,
-        flowIcon,
-        previewIcon
-      );
-
-      if (result.error) {
-        toast.error(result.error.title, {
-          description: result.error.description,
+      if (previewFile) {
+        const formData = new FormData();
+        formData.append('file', previewFile);
+        const response = await fetch('/api/upload-icon', {
+          method: 'POST',
+          body: formData,
         });
-        return;
-      }
+        const data = await response.json();
+        if (!response.ok || !data.success)
+          throw new Error(data.error || 'Upload failed');
+        const uploadedIconUrl = data.data.iconUrl;
+        const uploadedSignedIcon = data.data.publicUrl || uploadedIconUrl;
+        const result = await onConfirm(
+          selectedWorkflow.id,
+          processName,
+          description,
+          processOwner,
+          review_date,
+          additionalNotes,
+          undefined,
+          uploadedIconUrl,
+          uploadedSignedIcon
+        );
 
-      if (result.workflow) {
-        onClose();
+        if (result.error) {
+          toast.error(result.error.title, {
+            description: result.error.description,
+          });
+          return;
+        }
+
+        if (result.workflow) {
+          onClose();
+        }
+      } else {
+        const result = await onConfirm(
+          selectedWorkflow.id,
+          processName,
+          description,
+          processOwner,
+          review_date,
+          additionalNotes,
+          undefined,
+          flowIcon,
+          previewIcon
+        );
+
+        if (result.error) {
+          toast.error(result.error.title, {
+            description: result.error.description,
+          });
+          return;
+        }
+
+        if (result.workflow) {
+          onClose();
+        }
       }
     } catch (error) {
       console.error('Error saving flow:', error);
@@ -165,9 +202,10 @@ export default function EditFlowModal({
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
                     initialIcon={previewIcon || undefined}
-                    onUpdate={(icon, emote, signedIcon) => {
+                    onUpdate={(icon, emote, signedIcon, file) => {
                       setFlowIcon(icon || null);
                       setPreviewIcon(signedIcon ? signedIcon : icon || null);
+                      setPreviewFile(file || null);
                     }}
                     allowEmoji={false}
                     flow={true}

@@ -15,7 +15,8 @@ interface CreateFolderModalProps {
   onCreate: (
     folderName: string,
     icon_url?: string,
-    emote?: string
+    emote?: string,
+    signedIconUrl?: string
   ) => Promise<void>;
 }
 
@@ -26,6 +27,8 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [folderName, setFolderName] = useState('');
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
+  const [previewIcon, setPreviewIcon] = useState<string | undefined>(undefined);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const colors = useColors();
 
@@ -41,8 +44,35 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     }
 
     setIsSubmitting(true);
+    let uploadedIconUrl = iconUrl;
+    let uploadedSignedIcon = previewIcon;
+    if (previewFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', previewFile);
+        const response = await fetch('/api/upload-icon', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success)
+          throw new Error(data.error || 'Upload failed');
+        uploadedIconUrl = data.data.iconUrl;
+        uploadedSignedIcon = data.data.publicUrl || uploadedIconUrl;
+      } catch (error) {
+        console.error('Error uploading icon:', error);
+        setIsSubmitting(false);
+        return;
+      }
+    }
     try {
-      if (iconUrl) await onCreate(folderName, iconUrl);
+      if (uploadedIconUrl)
+        await onCreate(
+          folderName,
+          uploadedIconUrl,
+          undefined,
+          uploadedSignedIcon
+        );
       else if (emote) await onCreate(folderName, undefined, emote);
       else await onCreate(folderName);
       onClose();
@@ -107,8 +137,13 @@ const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           </label>
           <div className="flex items-center gap-2">
             <IconModifier
-              initialIcon={iconUrl}
-              onUpdate={updateIcon}
+              initialIcon={previewIcon}
+              onUpdate={(icon, emote, signedIcon, file) => {
+                setIconUrl(icon);
+                setEmote(emote);
+                setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
+                setPreviewFile(file || null);
+              }}
               emote={emote}
             />
             <InputField

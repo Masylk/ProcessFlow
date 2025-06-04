@@ -35,6 +35,7 @@ export default function CreateFlowModal({
   const [isSaving, setIsSaving] = useState(false);
   const [flowIcon, setFlowIcon] = useState<string | null>(null);
   const [previewIcon, setPreviewIcon] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
 
   const handleModalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,9 +108,10 @@ export default function CreateFlowModal({
                 <div style={{ zIndex: 30 }}>
                   <IconModifier
                     initialIcon={previewIcon || undefined}
-                    onUpdate={(icon, emote, signedIcon) => {
+                    onUpdate={(icon, emote, signedIcon, file) => {
                       setFlowIcon(icon || null);
                       setPreviewIcon(signedIcon ? signedIcon : icon || null);
+                      setPreviewFile(file || null);
                     }}
                     allowEmoji={false}
                     flow={true}
@@ -231,21 +233,45 @@ export default function CreateFlowModal({
                 Cancel
               </ButtonNormal>
               <ButtonNormal
-                onClick={() => {
+                onClick={async () => {
                   if (!flowName.trim()) return;
                   setIsSaving(true);
                   const sanitizedFlowName = flowName;
                   const sanitizedProcessOwner = processOwner;
                   const sanitizeddescription = description;
                   const sanitizedadditionalNotes = additionalNotes;
+                  let uploadedIconUrl = flowIcon;
+                  let uploadedSignedIcon = previewIcon;
+                  if (previewFile) {
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', previewFile);
+                      const response = await fetch('/api/upload-icon', {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      const data = await response.json();
+                      if (!response.ok || !data.success)
+                        throw new Error(data.error || 'Upload failed');
+                      uploadedIconUrl = data.data.iconUrl;
+                      // Optionally fetch signed URL if needed
+                      uploadedSignedIcon =
+                        data.data.publicUrl || uploadedIconUrl;
+                      console.log('uploadedSignedIcon', uploadedSignedIcon);
+                    } catch (error) {
+                      console.error('Error uploading icon:', error);
+                      setIsSaving(false);
+                      return;
+                    }
+                  }
                   onCreateFlow(
                     sanitizedFlowName,
                     sanitizeddescription,
                     sanitizedProcessOwner,
                     reviewDate,
                     sanitizedadditionalNotes,
-                    flowIcon,
-                    previewIcon
+                    uploadedIconUrl,
+                    uploadedSignedIcon
                   )
                     .then(() => {
                       setIsSaving(false);
