@@ -5,7 +5,6 @@ import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import { supabase } from '@/lib/supabaseClient';
-import slugify from 'slugify';
 
 /**
  * @swagger
@@ -276,8 +275,8 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       .filter((img): img is string => !!img);
 
     // Move assets in storage and update URLs if workspace name changes
-    const oldWorkspaceName = slugify(existingWorkspace.name, { lower: true });
-    const newWorkspaceName = slugify(updates.name, { lower: true });
+    const oldWorkspaceName = existingWorkspace.slug;
+    const newWorkspaceName = updates.name.toLowerCase().replace(/\s+/g, '-');
     const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
     const urlMappings: { oldUrl: string, newUrl: string }[] = [];
 
