@@ -1,4 +1,4 @@
-import React, { ChangeEvent, DragEvent, useState, useEffect, useRef } from 'react';
+import React, { ChangeEvent, DragEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { Block } from '../../types';
 import { useColors } from '@/app/theme/hooks';
 
@@ -14,7 +14,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
   const containerRef = useRef<HTMLLabelElement>(null);
 
   // Helper for file validation
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     if (!file.type.startsWith('image/')) {
       alert('Invalid file type. Please select an image file.');
       return false;
@@ -24,7 +24,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
       return false;
     }
     return true;
-  };
+  }, []);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -52,7 +52,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     }
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -71,15 +71,15 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     } catch (error) {
       console.error('Error uploading file:', error);
     }
-  };
+  }, [onUpdate]);
 
   // Clipboard paste handler
-  const handlePaste = async (event: ClipboardEvent) => {
+  const handlePaste = useCallback(async (event: ClipboardEvent) => {
     event.preventDefault();
     
     try {
       // Check if we have clipboard items
-      if (navigator.clipboard && navigator.clipboard.read) {
+      if (navigator.clipboard?.read) {
         const clipboardItems = await navigator.clipboard.read();
         
         for (const item of clipboardItems) {
@@ -114,24 +114,27 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
       }
     } catch (error) {
       console.error('Error pasting image:', error);
+      alert('Failed to paste image. Please try uploading manually.');
     }
-  };
+  }, [validateFile, uploadFile]);
 
   // Check clipboard content for image
-  const checkClipboardForImage = async () => {
+  const checkClipboardForImage = useCallback(async () => {
     try {
-      if (navigator.clipboard && navigator.clipboard.read) {
+      if (navigator.clipboard?.read) {
         const clipboardItems = await navigator.clipboard.read();
         const hasImage = clipboardItems.some(item => 
           item.types.some(type => type.startsWith('image/'))
         );
         setClipboardHasImage(hasImage);
+      } else {
+        setClipboardHasImage(false);
       }
     } catch (error) {
       // Permission denied or not supported, ignore
       setClipboardHasImage(false);
     }
-  };
+  }, []);
 
   // Setup clipboard event listeners
   useEffect(() => {
@@ -156,11 +159,11 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
       document.removeEventListener('paste', handleGlobalPaste);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [handlePaste, checkClipboardForImage]);
 
   // Keyboard shortcut hint
   const getShortcutText = () => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent);
     return isMac ? '⌘V' : 'Ctrl+V';
   };
 
