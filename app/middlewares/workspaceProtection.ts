@@ -32,14 +32,23 @@ export async function workspaceProtection(request: NextRequest, user: User) {
       }
 
       try {
+        const headers: HeadersInit = {};
+        
+        if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) {
+          headers['x-vercel-protection-bypass'] = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+        }
+
         // Check if workflow exists and get its workspace
         console.log('getBaseUrl(): ', getBaseUrl());
-        const workflowRes = await fetch(`${getBaseUrl()}/api/workflow/${workflowId}`);
+        const workflowRes = await fetch(
+          `${getBaseUrl()}/api/workflow/${workflowId}`,
+          { headers }
+        );
 
-        // if (!workflowRes.ok) {
-        //   console.log('workflow not found');
-        //   return NextResponse.rewrite(new URL('/not-found', request.url));
-        // }
+        if (!workflowRes.ok) {
+          console.log('workflow not found');
+          return NextResponse.rewrite(new URL('/not-found', request.url));
+        }
 
         console.log('workflowRes: ', workflowRes);
         const workflow = await workflowRes.json();
@@ -47,7 +56,8 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         console.log('workflow: ', workflow);
         // Check if user has access to the workflow's workspace
         const userWorkspaceRes = await fetch(
-          `${getBaseUrl()}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`
+          `${getBaseUrl()}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`,
+          { headers }
         );
 
         if (!userWorkspaceRes.ok) {
