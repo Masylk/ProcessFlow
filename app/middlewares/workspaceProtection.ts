@@ -39,21 +39,17 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         }
 
         // Check if workflow exists and get its workspace
-        console.log('getBaseUrl(): ', getBaseUrl());
         const workflowRes = await fetch(
           `${getBaseUrl()}/api/workflow/${workflowId}`,
           { headers }
         );
 
         if (!workflowRes.ok) {
-          console.log('workflow not found');
           return NextResponse.rewrite(new URL('/not-found', request.url));
         }
 
-        console.log('workflowRes: ', workflowRes);
         const workflow = await workflowRes.json();
 
-        console.log('workflow: ', workflow);
         // Check if user has access to the workflow's workspace
         const userWorkspaceRes = await fetch(
           `${getBaseUrl()}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`,
