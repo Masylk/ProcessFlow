@@ -90,6 +90,7 @@ export async function GET(
 
     const workflowId = parseInt(params.workflow_id);
 
+    console.log('workflowId: ', workflowId);
     let workflow: any = await prisma_client.workflow.findUnique({
       where: { id: workflowId },
       select: {
@@ -131,6 +132,7 @@ export async function GET(
     });
     
     if (!workflow) {
+      console.log('workflow not found: ', workflowId);
       return new NextResponse(null, { status: 404 });
     }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from 'next/server';
+import getBaseUrl from '../utils/getBaseUrl';
 
 interface User {
   id: string;
@@ -32,7 +33,7 @@ export async function workspaceProtection(request: NextRequest, user: User) {
 
       try {
         // Check if workflow exists and get its workspace
-        const workflowRes = await fetch(`${request.nextUrl.origin}/api/workflow/${workflowId}`);
+        const workflowRes = await fetch(`${getBaseUrl()}/api/workflow/${workflowId}`);
 
         if (!workflowRes.ok) {
           console.log('workflow not found');
@@ -43,7 +44,7 @@ export async function workspaceProtection(request: NextRequest, user: User) {
 
         // Check if user has access to the workflow's workspace
         const userWorkspaceRes = await fetch(
-          `${request.nextUrl.origin}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`
+          `${getBaseUrl()}/api/workspace/${workflow.workspace_id}/access?userId=${user.id}`
         );
 
         if (!userWorkspaceRes.ok) {
