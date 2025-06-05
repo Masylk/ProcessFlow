@@ -35,6 +35,7 @@ export async function workspaceProtection(request: NextRequest, user: User) {
         const workflowRes = await fetch(`${request.nextUrl.origin}/api/workflow/${workflowId}`);
 
         if (!workflowRes.ok) {
+          console.log('workflow not found');
           return NextResponse.rewrite(new URL('/not-found', request.url));
         }
 
