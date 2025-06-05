@@ -30,14 +30,43 @@ const CreateSubfolderModal: React.FC<CreateSubfolderModalProps> = ({
   const [iconUrl, setIconUrl] = useState<string | undefined>(undefined);
   const [previewIcon, setPreviewIcon] = useState<string | undefined>(undefined);
   const [emote, setEmote] = useState<string | undefined>(undefined);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const colors = useColors();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleCreateSubfolder = async () => {
     if (!folderName.trim()) return;
     setIsSaving(true);
+    let uploadedIconUrl = iconUrl;
+    let uploadedSignedIcon = previewIcon;
+    if (previewFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', previewFile);
+        const response = await fetch('/api/upload-icon', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success)
+          throw new Error(data.error || 'Upload failed');
+        uploadedIconUrl = data.data.iconUrl;
+        uploadedSignedIcon = data.data.publicUrl || uploadedIconUrl;
+      } catch (error) {
+        console.error('Error uploading icon:', error);
+        setIsSaving(false);
+        return;
+      }
+    }
     try {
-      if (iconUrl) await onCreate(folderName, parentId, iconUrl, undefined, previewIcon);
+      if (uploadedIconUrl)
+        await onCreate(
+          folderName,
+          parentId,
+          uploadedIconUrl,
+          undefined,
+          uploadedSignedIcon
+        );
       else if (emote) await onCreate(folderName, parentId, undefined, emote);
       else await onCreate(folderName, parentId);
       onClose();
@@ -118,7 +147,10 @@ const CreateSubfolderModal: React.FC<CreateSubfolderModalProps> = ({
           ) : (
             <span className="text-lg mr-1">{parent.emote || ''}</span>
           )}
-          <span className="text-sm font-medium" style={{ color: colors['text-secondary'] }}>
+          <span
+            className="text-sm font-medium"
+            style={{ color: colors['text-secondary'] }}
+          >
             Add a subfolder to <span className="ml-0.5">{parent.name}</span>
           </span>
         </div>
@@ -133,7 +165,24 @@ const CreateSubfolderModal: React.FC<CreateSubfolderModalProps> = ({
           <div className="flex items-center gap-2">
             <IconModifier
               initialIcon={previewIcon}
-              onUpdate={updateIcon}
+              onUpdate={(icon, emote, signedIcon, file) => {
+                if (icon) {
+                  setIconUrl(icon);
+                  setEmote(undefined);
+                  setPreviewIcon(signedIcon ? signedIcon : icon || undefined);
+                  setPreviewFile(file || null);
+                } else if (emote) {
+                  setIconUrl(undefined);
+                  setEmote(emote);
+                  setPreviewIcon(undefined);
+                  setPreviewFile(null);
+                } else {
+                  setIconUrl(undefined);
+                  setEmote(undefined);
+                  setPreviewIcon(undefined);
+                  setPreviewFile(null);
+                }
+              }}
               emote={emote}
             />
             <InputField

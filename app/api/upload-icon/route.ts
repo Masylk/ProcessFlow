@@ -134,6 +134,7 @@ export async function POST(request: NextRequest) {
 
     if (process.env.NODE_ENV === 'development') {
       console.log('publicUrl', publicUrl);
+      console.log('filePath', filePath);
     }
     // Return success response with file information
     return NextResponse.json({

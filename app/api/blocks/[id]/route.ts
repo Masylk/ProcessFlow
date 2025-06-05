@@ -127,15 +127,22 @@ export async function PATCH(req: NextRequest) {
     if (bucketName && (image !== undefined || original_image !== undefined || icon !== undefined)) {
       const filesToDelete = [];
       
-      // If updating image and there's an existing one, mark it for deletion
-      if (image !== undefined && existingBlock.image && existingBlock.image !== image) {
+      // If updating image and there's an existing one, mark it for deletion only if it's different from both existingBlock.image and existingBlock.original_image
+      if (
+        image !== undefined &&
+        existingBlock.image &&
+        existingBlock.image !== image &&
+        existingBlock.original_image &&
+        existingBlock.original_image !== '' &&
+        existingBlock.image !== existingBlock.original_image
+      ) {
         filesToDelete.push(existingBlock.image);
       }
       
-      // If updating original_image and there's an existing one, mark it for deletion
-      if (original_image !== undefined && existingBlock.original_image && existingBlock.original_image !== original_image) {
-        filesToDelete.push(existingBlock.original_image);
-      }
+      // // If updating original_image and there's an existing one, mark it for deletion
+      // if (original_image !== undefined && existingBlock.original_image && existingBlock.original_image !== original_image) {
+      //   filesToDelete.push(existingBlock.original_image);
+      // }
 
       // If updating icon and both new and old icons contain 'uploads/' and 'icons/', and the icon is changing, mark it for deletion
       if (

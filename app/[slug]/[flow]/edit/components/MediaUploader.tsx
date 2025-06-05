@@ -1,4 +1,4 @@
-import React, { ChangeEvent, DragEvent, useState } from 'react';
+import React, { ChangeEvent, DragEvent, useState, useEffect, useRef, useCallback } from 'react';
 import { Block } from '../../types';
 import { useColors } from '@/app/theme/hooks';
 
@@ -9,10 +9,12 @@ interface MediaUploaderProps {
 
 export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [clipboardHasImage, setClipboardHasImage] = useState(false);
   const colors = useColors();
+  const containerRef = useRef<HTMLLabelElement>(null);
 
   // Helper for file validation
-  const validateFile = (file: File): boolean => {
+  const validateFile = useCallback((file: File): boolean => {
     if (!file.type.startsWith('image/')) {
       alert('Invalid file type. Please select an image file.');
       return false;
@@ -22,7 +24,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
       return false;
     }
     return true;
-  };
+  }, []);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -50,7 +52,7 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     }
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -69,10 +71,105 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
     } catch (error) {
       console.error('Error uploading file:', error);
     }
+  }, [onUpdate]);
+
+  // Clipboard paste handler
+  const handlePaste = useCallback(async (event: ClipboardEvent) => {
+    event.preventDefault();
+    
+    try {
+      // Check if we have clipboard items
+      if (navigator.clipboard?.read) {
+        const clipboardItems = await navigator.clipboard.read();
+        
+        for (const item of clipboardItems) {
+          if (item.types.some(type => type.startsWith('image/'))) {
+            const imageType = item.types.find(type => type.startsWith('image/'));
+            if (imageType) {
+              const blob = await item.getType(imageType);
+              const file = new File([blob], 'pasted-image.png', { type: imageType });
+              
+              if (validateFile(file)) {
+                await uploadFile(file);
+              }
+              return;
+            }
+          }
+        }
+      }
+      
+      // Fallback for older browsers or when clipboard.read() isn't available
+      const items = event.clipboardData?.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file && validateFile(file)) {
+              await uploadFile(file);
+            }
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error pasting image:', error);
+      alert('Failed to paste image. Please try uploading manually.');
+    }
+  }, [validateFile, uploadFile]);
+
+  // Check clipboard content for image
+  const checkClipboardForImage = useCallback(async () => {
+    try {
+      if (navigator.clipboard?.read) {
+        const clipboardItems = await navigator.clipboard.read();
+        const hasImage = clipboardItems.some(item => 
+          item.types.some(type => type.startsWith('image/'))
+        );
+        setClipboardHasImage(hasImage);
+      } else {
+        setClipboardHasImage(false);
+      }
+    } catch (error) {
+      // Permission denied or not supported, ignore
+      setClipboardHasImage(false);
+    }
+  }, []);
+
+  // Setup clipboard event listeners
+  useEffect(() => {
+    const handleGlobalPaste = (event: ClipboardEvent) => {
+      // Only handle paste if this component is visible and the paste is not in an input
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      
+      handlePaste(event);
+    };
+
+    // Check clipboard content when component mounts
+    checkClipboardForImage();
+    
+    // Listen for focus to check clipboard again
+    const handleFocus = () => checkClipboardForImage();
+    
+    document.addEventListener('paste', handleGlobalPaste);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [handlePaste, checkClipboardForImage]);
+
+  // Keyboard shortcut hint
+  const getShortcutText = () => {
+    const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent);
+    return isMac ? '⌘V' : 'Ctrl+V';
   };
 
   return (
     <label
+      ref={containerRef}
       className={`flex flex-col justify-center items-center w-full h-[200px] rounded-xl border-2 border-dashed transition-colors cursor-pointer ${isDragOver ? 'bg-opacity-10' : 'hover:bg-opacity-100'}`}
       style={{
         borderColor: isDragOver
@@ -120,11 +217,21 @@ export default function MediaUploader({ block, onUpdate }: MediaUploaderProps) {
               or drag and drop
             </div>
           </div>
-          <div
-            className="self-stretch text-center text-xs font-normal leading-[18px]"
-            style={{ color: colors['input-hint'] }}
-          >
-            SVG, PNG, JPG or GIF
+          <div className="self-stretch flex flex-col items-center gap-1">
+            <div
+              className="text-center text-xs font-normal leading-[18px]"
+              style={{ color: colors['input-hint'] }}
+            >
+              SVG, PNG, JPG or GIF
+            </div>
+            {clipboardHasImage && (
+              <div
+                className="text-center text-xs font-medium leading-[18px]"
+                style={{ color: colors['button-primary-fg'] }}
+              >
+                Press {getShortcutText()} to paste image
+              </div>
+            )}
           </div>
         </div>
       </div>
