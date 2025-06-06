@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { supabaseAdmin } from '@/utils/supabase/admin'; // Use the new admin client
 import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * @swagger
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await req.json();
 
+    console.log('deleting user', userId);
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Delete related user_workspace and actions
+    // Delete related user_workspace
     await prisma_client.user_workspace.deleteMany({ where: { user_id: user.id } });
 
     // Delete the user from PostgreSQL
@@ -109,6 +111,28 @@ export async function POST(req: NextRequest) {
         { error: `Failed to delete user in Supabase: ${error.message}` },
         { status: 500 }
       );
+    }
+
+    // Delete all files in the user's storage folder (named after their UID)
+    const bucketName = process.env.NEXT_PUBLIC_SUPABASE_PRIVATE_BUCKET;
+    if (bucketName) {
+      try {
+        // List all files in the user's root folder (UID)
+        const { data: files, error: listError } = await supabase.storage.from(bucketName).list(`${userId}/avatars`);
+        console.log('files', files);
+        if (listError) {
+          console.error(`Error listing files for user ${userId}:`, listError);
+        } else if (files && files.length > 0) {
+          // Collect all file paths (including subfolders)
+          const filePaths = files.map((file: any) => `${userId}/avatars/${file.name}`);
+          const { error: removeError } = await supabase.storage.from(bucketName).remove(filePaths);
+          if (removeError) {
+            console.error(`Error deleting files for user ${userId}:`, removeError);
+          }
+        }
+      } catch (storageError) {
+        console.error(`Unexpected error deleting user files for ${userId}:`, storageError);
+      }
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
