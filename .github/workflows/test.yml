@@ -73,9 +73,7 @@ jobs:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: 🧪 Run Cucumber E2E tests (with dotenv)
-        run: npx dotenv -e .env -- npx cucumber-js "e2e/features/**/*.feature" \
-          --require-module ts-node/register \
-          --require "e2e/step-definitions/**/*.steps.ts"
+        run: npx dotenv -e .env -- npx cucumber-js "e2e/features/**/*.feature" --require-module ts-node/register --require "e2e/step-definitions/**/*.steps.ts"
         env:
           TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
