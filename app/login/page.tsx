@@ -376,6 +376,7 @@ function LoginContent() {
                   />
                   <input
                     type="email"
+                    name="email"
                     placeholder="Email address"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={email}
@@ -397,6 +398,7 @@ function LoginContent() {
                   />
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    name="password"
                     placeholder="••••••••"
                     className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
                     value={password}

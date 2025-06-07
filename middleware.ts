@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { workspaceProtection } from './app/middlewares/workspaceProtection';
+import { isVercel } from './app/api/utils/isVercel';
 
 // Define auth routes that should redirect to dashboard when authenticated
 const authRoutes = [
@@ -32,7 +33,7 @@ const onboardingRoutes = [
 // Simple in-memory store (not for production)
 const rateLimitStore = new Map<string, { count: number; lastRequest: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_AUTH_SHARE = process.env.NODE_ENV === 'production' ? 20 : 1000; // 20 in prod, 1000 otherwise
+const RATE_LIMIT_AUTH_SHARE = isVercel() ? 20 : 1000; // 20 if Vercel, 1000 otherwise
 const RATE_LIMIT_GENERAL = 1000;      // 1000 requests per window for other routes
 
 function isRateLimited(ip: string, maxRequests: number): boolean {
