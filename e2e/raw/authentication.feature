@@ -56,7 +56,6 @@ Feature: User Registration
 
 ## Feature: User Authentication
 
-```gherkin
 Feature: User Authentication
               As a registered user
               I want to log into my account
@@ -126,11 +125,7 @@ Feature: User Authentication
              Then I should be redirected to "/auth/callback"
               And I should be logged in automatically
               And I should be redirected to the dashboard
-```
 
-## Feature: Authentication Security
-
-```gherkin
 Feature: Authentication Security
               As a security-conscious system
               I want to protect against authentication attacks
@@ -172,11 +167,7 @@ Feature: Authentication Security
              When I log out
              Then my session should be invalidated
               And I should be redirected to login page
-```
 
-## Feature: Navigation Control
-
-```gherkin
 Feature: Navigation Control
               As the application
               I want to control user navigation based on authentication state
@@ -238,11 +229,7 @@ Feature: Navigation Control
              Then the response should include headers:
                   | X-Frame-Options         | ALLOWALL          |
                   | Content-Security-Policy | frame-ancestors * |
-```
 
-## Feature: Email Confirmation Flow
-
-```gherkin
 Feature: Email Confirmation Flow
               As a new user
               I want to confirm my email address
@@ -268,4 +255,3 @@ Feature: Email Confirmation Flow
              Then I should see option to resend confirmation email
              When I click "resend confirmation"
              Then a new confirmation email should be sent
-```
