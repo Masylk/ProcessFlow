@@ -5,6 +5,13 @@ const { PrismaClient } = require('@prisma/client');
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 const prisma = new PrismaClient();
 
+const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
+const headers = {
+  'Content-Type': 'application/json',
+  ...(BYPASS && { 'x-vercel-protection-bypass': BYPASS }),
+};
+
 /** @type {string[]} */
 let createdTestUsers = [];
 
@@ -16,7 +23,7 @@ async function getUserIdByEmail(email) {
   try {
     const res = await fetch(`${BASE_URL}/api/test/get-user-by-email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ email }),
     });
     if (!res.ok) return null;
@@ -37,7 +44,7 @@ async function cleanupTestUser(email) {
   try {
     const res = await fetch(`${BASE_URL}/api/test/cleanup-user`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ email }),
     });
     if (!res.ok) {
@@ -62,7 +69,7 @@ async function seedTestUser(userData) {
   }
   const res = await fetch(`${BASE_URL}/api/test/seed-user`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(userData),
   });
   if (!res.ok) {
@@ -85,7 +92,7 @@ async function seedWorkspace({ name }) {
   }
   const res = await fetch(`${BASE_URL}/api/test/seed-workspace`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ name, user_id: this.prismaUser.id }),
   });
   if (!res.ok) {
@@ -109,7 +116,7 @@ async function cleanupWorkspace({ name, user_id }) {
   try {
     const res = await fetch(`${BASE_URL}/api/test/cleanup-workspace`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ name, user_id }),
     });
     if (!res.ok) {
