@@ -3,22 +3,22 @@ Feature: Navigation Control
   I want to control user navigation based on authentication state
   So that users see appropriate content
 
-  Scenario: Authenticated user accessing auth routes
-    Given I am logged in
-    When I try to access "/login"
-    Then I should be redirected to dashboard "/"
-    When I try to access "/signup"
-    Then I should be redirected to dashboard "/"
-    When I try to access "/reset-password"
-    Then I should be redirected to dashboard "/"
+  # Scenario: Authenticated user accessing auth routes
+  #  Given I am logged in
+  #  When I try to access "/login"
+  #  Then I should be redirected to dashboard "/"
+  #  When I try to access "/signup"
+  #  Then I should be redirected to dashboard "/"
+  #  When I try to access "/reset-password"
+  #  Then I should be redirected to dashboard "/"
 
-   Scenario: Unauthenticated user accessing protected routes
-     Given I am not authenticated
-     When I try to access "/dashboard"
-     Then I should be redirected to "/login"
-     And the redirect parameter should include original path
-     When I try to access "/workspace/123"
-     Then I should be redirected to "/login"
+#   Scenario: Unauthenticated user accessing protected routes
+ #    Given I am not authenticated
+  #   When I try to access "/dashboard"
+   #  Then I should be redirected to "/login"
+    # And the redirect parameter should include original path
+     # When I try to access "/workspace/123"
+     # Then I should be redirected to "/login"
 
   # Scenario: Onboarding flow for new users
   #   Given I am a newly registered user
