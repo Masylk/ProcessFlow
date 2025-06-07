@@ -5,12 +5,10 @@ const { IWorldOptions, World } = require('@cucumber/cucumber');
 const {
   seedTestUser,
   seedWorkspace,
-  cleanupPrismaUser,
   cleanupWorkspace,
   getUserIdByEmail,
   cleanupTestUser,
 } = require('./utils.steps');
-const { PrismaClient } = require('@prisma/client');
 
 /**
  * @typedef {Object} CustomWorld
@@ -51,7 +49,6 @@ const TEST_EMAILS = {
 // Track created test users for cleanup
 let createdTestUsers = [];
 
-const prisma = new PrismaClient();
 
 function getPageOptions() {
   return BYPASS
@@ -97,10 +94,6 @@ After(async function () {
   if (this.prismaUser && this.prismaUser.id) {
     const workspaceName = this.workspace.name || 'My Test Workspace';
     await cleanupWorkspace({ name: workspaceName, user_id: this.prismaUser.id });
-  }
-  // Cleanup Prisma user if it exists
-  if (this.prismaUser && this.prismaUser.auth_id) {
-    await cleanupPrismaUser(this.prismaUser.auth_id);
   }
   // Cleanup all created test users (Supabase)
   for (const email of createdTestUsers) {
