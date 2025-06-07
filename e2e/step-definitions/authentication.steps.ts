@@ -2,6 +2,13 @@
 const { Given, When, Then, After, Before, setWorldConstructor } = require('@cucumber/cucumber');
 const { expect, chromium } = require('@playwright/test');
 const { IWorldOptions, World } = require('@cucumber/cucumber');
+const {
+  seedTestUser,
+  seedWorkspace,
+  cleanupWorkspace,
+  getUserIdByEmail,
+  cleanupTestUser,
+} = require('./utils.steps');
 
 /**
  * @typedef {Object} CustomWorld
@@ -42,102 +49,11 @@ const TEST_EMAILS = {
 // Track created test users for cleanup
 let createdTestUsers = [];
 
+
 function getPageOptions() {
   return BYPASS
     ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': BYPASS } }
     : {};
-}
-
-/**
- * Helper function to seed test data in Supabase
- * Creates a user with confirmed email - no workspace creation needed
- */
-async function seedTestUser(userData) {
-  // Add to cleanup list    
-  if (!createdTestUsers.includes(userData.email)) {
-    createdTestUsers.push(userData.email);
-  }
-  
-  // Simple implementation for creating confirmed users
-  // 
-  // TO IMPLEMENT: Install @supabase/supabase-js and add this code:
-  /*
-  const { createClient } = require('@supabase/supabase-js');
-  
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY // Service role key for admin operations
-  );
-  
-  // Create user with confirmed email
-  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: userData.email,
-    password: userData.password,
-    email_confirm: userData.email_confirmed, // This confirms the email
-    user_metadata: {
-      onboarding_complete: userData.onboarding_complete || false
-    }
-  });
-  
-  if (authError && authError.message !== 'User already registered') {
-    throw new Error(`Failed to create auth user: ${authError.message}`);
-  }
-  
-  console.log(`✅ Created user ${userData.email} with confirmed email: ${userData.email_confirmed}`);
-  return authUser;
-  */
-  
-  // For now, just log what would be created
-  console.log(`🔧 Would create user: ${userData.email}`);
-  console.log(`   - Email confirmed: ${userData.email_confirmed}`);
-  console.log(`   - Onboarding complete: ${userData.onboarding_complete || false}`);
-  console.log('⚠️  To implement: Add Supabase client code above');
-}
-
-/**
- * Helper to get userId (auth_id) by email using the test API route
- */
-async function getUserIdByEmail(email) {
-  try {
-    const res = await fetch(`${BASE_URL}/api/test/get-user-by-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.auth_id;
-  } catch (err) {
-    console.error(`Error fetching userId for email ${email}:`, err);
-    return null;
-  }
-}
-
-/**
- * Helper function to cleanup test users from Supabase
- */
-async function cleanupTestUser(email) {
-  if (!email) return;
-  try {
-    const userId = await getUserIdByEmail(email);
-    if (!userId) {
-      console.warn(`No userId found for email: ${email}`);
-      return;
-    }
-    const res = await fetch(`${BASE_URL}/api/deleteUser`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    });
-    if (!res.ok) {
-      const error = await res.json();
-      console.error(`Failed to delete user: ${error.error}`);
-    } else {
-      console.log(`🧹 Deleted user: ${email} (userId: ${userId})`);
-    }
-  } catch (err) {
-    console.error(`Error cleaning up user ${email}:`, err);
-  }
 }
 
 /**
@@ -172,7 +88,20 @@ Before(async function () {
   this.page = await this.browser.newPage(getPageOptions());
 });
 
+/** @this {any} */
 After(async function () {
+  // Cleanup workspace if it exists (using a default workspace name if needed)
+  if (this.prismaUser && this.prismaUser.id) {
+    const workspaceName = this.workspace.name || 'My Test Workspace';
+    await cleanupWorkspace({ name: workspaceName, user_id: this.prismaUser.id });
+  }
+  // Cleanup all created test users (Supabase)
+  for (const email of createdTestUsers) {
+    await cleanupTestUser(email);
+  }
+  // Reset the list for next test
+  createdTestUsers = [];
+  
   await this.page?.close();
   await this.browser?.close();
 });
@@ -205,11 +134,11 @@ Given('a user already exists with email {string}', async function (email) {
     console.log('Using existing test user');
   } else {
     // Seed new user data
-    await seedTestUser({
+    await seedTestUser.call(this, {
       email,
       password: 'abcd1234',
       email_confirmed: true,
-      onboarding_complete: true
+      onboarding_step: 'COMPLETED'
     });
   }
 });
@@ -226,11 +155,11 @@ Given('a new user exists with email {string} and confirmed email', async functio
   const actualEmail = email.includes('example.com') ? TEST_EMAILS.NEW_USER : email;
   console.log(`Creating new user ${actualEmail} with confirmed email`);
   
-  await seedTestUser({
+  await seedTestUser.call(this, {
     email: actualEmail,
     password: 'abcd1234',
     email_confirmed: true,
-    onboarding_complete: false
+    onboarding_step: 'PERSONAL_INFO'
   });
 });
 
@@ -248,11 +177,11 @@ Given('an existing user with email {string} and confirmed email', async function
     console.log('Using existing test user (no seeding needed)');
   } else {
     const actualEmail = email.includes('example.com') ? TEST_EMAILS.EXISTING_USER : email;
-    await seedTestUser({
+    await seedTestUser.call(this, {
       email: actualEmail,
       password: 'abcd1234',
       email_confirmed: true,
-      onboarding_complete: true
+      onboarding_step: 'COMPLETED'
     });
   }
 });
@@ -267,7 +196,7 @@ Given('a user exists with email {string} and unconfirmed email', async function 
   const actualEmail = email.includes('example.com') ? TEST_EMAILS.UNCONFIRMED_USER : email;
   console.log(`Creating user ${actualEmail} with unconfirmed email`);
   
-  await seedTestUser({
+  await seedTestUser.call(this, {
     email: actualEmail,
     password: 'abcd1234',
     email_confirmed: false,
@@ -278,11 +207,11 @@ Given('a user exists with email {string} and unconfirmed email', async function 
 Given('an existing user with Google account', async function () {
   console.log('Creating Google OAuth user');
   
-  await seedTestUser({
+  await seedTestUser.call(this, {
     email: TEST_EMAILS.GOOGLE_USER,
     password: null, // Google OAuth users don't have passwords
     email_confirmed: true,
-    onboarding_complete: true,
+    onboarding_step: 'COMPLETED',
     provider: 'google'
   });
 });
@@ -297,17 +226,42 @@ Given('I am logged in', { timeout: 20000 }, async function () {
 Given('I am a newly registered user', async function () {
   // Seed a new user with onboarding not complete and confirmed email
   const email = TEST_EMAILS.NEW_USER;
-  await seedTestUser({
+  const password = 'abcd1234';
+  await seedTestUser.call(this, {
+    email,
+    password,
+    email_confirmed: true,
+    onboarding_step: 'PERSONAL_INFO'
+  });
+  // Store for later steps
+  this.newUserEmail = email;
+  this.userEmail = email;
+  this.password = password;
+});
+Given('my onboarding is not complete', async function () {
+  // Set onboarding status to false for the current test user
+  const email = this.newUserEmail || TEST_USER.email;
+  const password = 'abcd1234';
+  await seedTestUser.call(this, {
+    email,
+    password,
+    email_confirmed: true,
+    onboarding_step: 'PERSONAL_INFO'
+  });
+  this.userEmail = email;
+  this.password = password;
+});
+Given('my onboarding is complete', async function () {
+  // Set onboarding status to true for the current test user
+  const email = this.newUserEmail || TEST_USER.email;
+  await seedTestUser.call(this, {
     email,
     password: 'abcd1234',
     email_confirmed: true,
-    onboarding_complete: false
+    onboarding_step: 'COMPLETED'
   });
-  // Optionally, store the email for later steps
-  this.newUserEmail = email;
+  await seedWorkspace.call(this, { name: 'test' });
 });
-Given('my onboarding is not complete', async function () {});
-Given('my onboarding is complete', async function () {});
 /** @param {string} url */
 Given('I access a URL with encoded spaces {string}', async function (url) {});
 /** @param {string} route */
@@ -463,7 +417,7 @@ When('I try to access {string}', async function (path) {
 
 When('I log in successfully', async function () {
   console.log('Logging in successfully');
-  await login(this.page);
+  await login(this.page, this.userEmail, this.password);
 });
 
 When('I complete the personal information step', async function () {
@@ -619,6 +573,7 @@ Then('I should be logged in successfully', async function () {
 
 /** @this {any} */
 Then('I should be redirected to the dashboard "/"', async function () {
+  console.log('The Page URL before wait:', this.page.url());
   console.log('Checking redirect to dashboard');
   await this.page.waitForURL(`${BASE_URL}/`, { timeout: 10000 });
   expect(this.page.url()).toBe(`${BASE_URL}/`);
@@ -738,7 +693,9 @@ Then('my session should be invalidated', async function () {
 /** @this {any} */
 Then('I should be redirected to dashboard "/"', async function () {
   console.log('Checking redirect to dashboard');
+  console.log('Page URL before wait:', this.page.url());
   await this.page.waitForURL(`${BASE_URL}/`, { timeout: 10000 });
+  console.log('Page URL after wait:', this.page.url());
   expect(this.page.url()).toBe(`${BASE_URL}/`);
 });
 
@@ -839,19 +796,7 @@ Then('a new confirmation email should be sent', async function () {
 Then('I should be redirected to dashboard {string}', async function (dashboardPath) {
   const expectedUrl = `${BASE_URL}${normalize_path(dashboardPath)}`;
   console.log(`Checking redirect to dashboard: ${expectedUrl}`);
+  console.log('The Page URL before wait:', this.page.url());
   await this.page.waitForURL(expectedUrl, { timeout: 10000 });
   expect(this.page.url()).toBe(expectedUrl);
 });
-
-/** @this {any} */
-After(async function () {
-  // Cleanup all created test users
-  for (const email of createdTestUsers) {
-    await cleanupTestUser(email);
-  }
-  // Reset the list for next test
-  createdTestUsers = [];
-  
-  await this.page?.close();
-  await this.browser?.close();
-}); 

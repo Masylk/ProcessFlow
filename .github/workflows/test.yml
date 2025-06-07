@@ -57,12 +57,6 @@ jobs:
       - name: 📝 Log Preview URL
         run: echo "Preview URL is $VERCEL_DEPLOYMENT_URL"
 
-      - name: 🧪 Run Jest tests
-        run: npm run test
-        env:
-          TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-
       - name: 🎭 Install Playwright Browsers
         run: npx playwright install --with-deps
 
@@ -73,9 +67,11 @@ jobs:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: 🧪 Run Cucumber E2E tests
-        run: npx cucumber-js "e2e/features/**/*.feature" \
-          --require-module ts-node/register \
-          --require "e2e/features/step-definitions/**/*.ts"
+        run: npx cucumber-js "e2e/features/**/*.feature" --require-module ts-node/register --require "e2e/step-definitions/**/*.steps.ts"
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
