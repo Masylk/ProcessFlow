@@ -1,6 +1,71 @@
 import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 
+// Environment validation
+const validateEnvironment = () => {
+  // Prevent running in production
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('🚫 Test seeding is forbidden in production environment');
+  }
+  
+  // Validate required environment variables
+  const requiredEnvVars = [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'DATABASE_URL'
+  ];
+  
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  if (missingVars.length > 0) {
+    throw new Error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  }
+  
+  // Warn if URL contains production indicators
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  if (supabaseUrl.includes('prod') || supabaseUrl.includes('production')) {
+    throw new Error('🚫 Supabase URL appears to be production. Aborting for safety.');
+  }
+  
+  console.log('✅ Environment validation passed');
+};
+
+// Helper functions to reduce code duplication
+const generateUniqueIdentifier = async (
+  checkFunction: (identifier: string) => Promise<boolean>,
+  baseIdentifier: string,
+  isSlug: boolean = false
+): Promise<string> => {
+  let unique = baseIdentifier;
+  let counter = 1;
+  
+  while (await checkFunction(unique)) {
+    unique = isSlug ? `${baseIdentifier}-${counter}` : `${baseIdentifier} (${counter})`;
+    counter++;
+  }
+  
+  return unique;
+};
+
+const cleanupWithRetry = async (
+  operation: () => Promise<void>,
+  operationName: string,
+  maxRetries: number = 3
+): Promise<void> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await operation();
+      return;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.warn(`⚠️ ${operationName} failed after ${maxRetries} attempts:`, error instanceof Error ? error.message : String(error));
+        throw error;
+      }
+      console.log(`⏳ ${operationName} failed (attempt ${attempt}/${maxRetries}), retrying in ${attempt}s...`);
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+};
+
 // Test data configuration
 const TEST_USERS = {
   MAIN_USER: {
@@ -44,6 +109,9 @@ class TestDataSeeder {
   private prisma: PrismaClient;
 
   constructor() {
+    // Validate environment before initializing clients
+    validateEnvironment();
+    
     // Initialize Supabase admin client
     this.supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -148,41 +216,48 @@ class TestDataSeeder {
         if (workspaceIds.length > 0) {
           console.log(`Found ${workspaceIds.length} test workspaces to clean up`);
           
-          // Delete in correct order to respect foreign key constraints
-          // 1. Delete stroke_lines first
-          await this.prisma.stroke_line.deleteMany({
-            where: { workflow: { workspace_id: { in: workspaceIds } } }
-          });
+          // Delete in correct order to respect foreign key constraints with retry logic
+          await cleanupWithRetry(async () => {
+            await this.prisma.stroke_line.deleteMany({
+              where: { workflow: { workspace_id: { in: workspaceIds } } }
+            });
+          }, 'Stroke lines cleanup');
           
-          // 2. Delete path_parent_block relationships
-          await this.prisma.path_parent_block.deleteMany({
-            where: { path: { workflow: { workspace_id: { in: workspaceIds } } } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.path_parent_block.deleteMany({
+              where: { path: { workflow: { workspace_id: { in: workspaceIds } } } }
+            });
+          }, 'Path parent block relationships cleanup');
           
-          // 3. Delete blocks
-          await this.prisma.block.deleteMany({
-            where: { workflow: { workspace_id: { in: workspaceIds } } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.block.deleteMany({
+              where: { workflow: { workspace_id: { in: workspaceIds } } }
+            });
+          }, 'Blocks cleanup');
           
-          // 4. Delete paths
-          await this.prisma.path.deleteMany({
-            where: { workflow: { workspace_id: { in: workspaceIds } } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.path.deleteMany({
+              where: { workflow: { workspace_id: { in: workspaceIds } } }
+            });
+          }, 'Paths cleanup');
           
-          // 5. Delete workflows
-          await this.prisma.workflow.deleteMany({
-            where: { workspace_id: { in: workspaceIds } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.workflow.deleteMany({
+              where: { workspace_id: { in: workspaceIds } }
+            });
+          }, 'Workflows cleanup');
           
-          // 6. Delete user_workspace relationships
-          await this.prisma.user_workspace.deleteMany({
-            where: { workspace_id: { in: workspaceIds } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.user_workspace.deleteMany({
+              where: { workspace_id: { in: workspaceIds } }
+            });
+          }, 'User workspace relationships cleanup');
           
-          // 7. Delete workspaces
-          await this.prisma.workspace.deleteMany({
-            where: { id: { in: workspaceIds } }
-          });
+          await cleanupWithRetry(async () => {
+            await this.prisma.workspace.deleteMany({
+              where: { id: { in: workspaceIds } }
+            });
+          }, 'Workspaces cleanup');
         }
         
         // 8. Finally delete users
@@ -195,14 +270,14 @@ class TestDataSeeder {
           try {
             await this.supabaseAdmin.auth.admin.deleteUser(authId);
           } catch (error) {
-            console.warn(`Could not delete auth user ${authId}:`, error.message);
+            console.warn(`Could not delete auth user ${authId}:`, error instanceof Error ? error.message : String(error));
           }
         }
       }
       
       console.log('✅ Cleanup completed');
     } catch (error) {
-      console.warn('⚠️ Cleanup had some issues (this is often normal):', error.message);
+      console.warn('⚠️ Cleanup had some issues (this is often normal):', error instanceof Error ? error.message : String(error));
     }
   }
 
@@ -230,7 +305,7 @@ class TestDataSeeder {
             console.log(`ℹ️ Auth user ${userData.email} already exists, fetching...`);
             // User already exists, try to get the existing user
             const { data: existingUsers } = await this.supabaseAdmin.auth.admin.listUsers();
-            const existingUser = existingUsers.users.find(u => u.email === userData.email);
+            const existingUser = existingUsers.users.find((u: any) => u.email === userData.email);
             
             if (existingUser) {
               authUsers.push({

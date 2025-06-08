@@ -10,6 +10,23 @@ interface CreateTestWorkspaceRequest {
 }
 
 export async function POST(req: NextRequest) {
+  // Security: Prevent running in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Test API endpoints are not available in production' },
+      { status: 403 }
+    );
+  }
+
+  // Additional safety check for production URLs
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('prod') || 
+      process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('production')) {
+    return NextResponse.json(
+      { error: 'Test API endpoints are disabled for production environments' },
+      { status: 403 }
+    );
+  }
+
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
   if (!prisma_client) {
     throw new Error('Prisma client not initialized');
