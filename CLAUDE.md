@@ -12,8 +12,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run test:watch` - Run tests in watch mode
 - `npm run test:coverage` - Run tests with coverage
 
+**E2E Testing:**
+- `npm run test:seed` - Seed test data for E2E tests
+- `npm run test:e2e` - Run all E2E tests (includes automatic seeding)
+- `npm run test:e2e:editor` - Run editor E2E tests (includes automatic seeding)
+- `npm run test:cleanup` - Clean up test data manually
+
 **Testing workflows:**
 - Access workflows at: `http://localhost:3000/workspace/2`
+- E2E test workspace: Use seeded data from `e2e/test-data.json`
+- Test credentials: `test-user@processflow-test.com` / `TestPassword123!`
 
 ## Architecture
 
@@ -25,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ReactFlow for workflow visualization
 - Tailwind CSS with custom theming
 - Stripe for billing
+- Cucumber.js + Playwright for E2E testing
 
 **Core Models:**
 - **Workspace** - Contains workflows, folders, users with role-based access
@@ -75,3 +84,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use Server Actions or `getServerSideProps` for server-side fetching
 - Use Next.js Middleware for request handling
 - Use `useFormState` instead of `useState` for form handling in Server Components
+
+## Testing
+
+**E2E Testing Infrastructure:**
+- **Framework:** Cucumber.js with Gherkin feature files + Playwright for browser automation
+- **Database Seeding:** Automated test data creation for consistent authentication testing
+- **Test Organization:** Feature files organized by domain (authentication, dashboard, editor, etc.)
+- **Authentication:** Seeded test users with credentials for reliable login testing
+- **CI/CD Ready:** Automated seeding and cleanup for continuous integration
+
+**E2E Test Data:**
+- **Seeded Users:** 3 test users with different roles (ADMIN/EDITOR)
+- **Test Workspace:** "Test Workspace" with predictable slug and ID
+- **Test Workflow:** "Test Workflow for E2E" with basic block structure
+- **Data Location:** `e2e/test-data.json` (auto-generated after seeding)
+- **Cleanup:** Automatic cleanup before each seeding run
+
+**E2E Testing Workflow:**
+1. Run `npm run test:seed` to create fresh test data
+2. Tests automatically load seeded credentials from `e2e/test-data.json`
+3. Use `loadTestData()` helper in step definitions to access test data
+4. All tests use consistent authentication and workspace/workflow IDs
+5. Clean slate for each test run ensures reliable CI/CD execution
+
+**Writing E2E Tests:**
+- Create `.feature` files in appropriate domain folders under `e2e/features/`
+- Implement step definitions in corresponding `.steps.ts` files
+- Use `this.page` for Playwright browser interactions
+- Use `this.testData` to access seeded workspace/workflow data
+- Always start authenticated scenarios with `Given I am a logged-in user`
+- Reference seeded URLs: `TEST_DATA.urls.editor` for consistent navigation
+
+**E2E Testing Best Practices:**
+- Use seeded test credentials instead of hardcoded values
+- Leverage `login(page)` helper for authentication flows
+- Take screenshots for debugging: `await page.screenshot({ path: 'debug.png' })`
+- Use appropriate timeouts for async operations
+- Keep step definitions atomic and reusable across features
+- See `/docs/E2E_TESTING_SETUP.md` for comprehensive testing guide

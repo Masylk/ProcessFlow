@@ -3,10 +3,22 @@ Feature: Editor Access and Layout
   I want to access and navigate the workflow editor
   So that I can create and modify my workflows
 
-  Background:
+  # Temporary simplified test to verify our selectors work
+  Scenario: Editor page accessibility (without login)
+    When I navigate directly to an editor URL
+    Then I should be able to access the page
+
+  # Test authentication with seeded data
+  Scenario: Editor login with seeded data
     Given I am a logged-in user
     And I am on the editor page of a workflow
+    Then I should see the workflow header with the workflow name
+    And I should see the main canvas area
 
+  # Background:
+  #   Given I am a logged-in user
+  #   And I am on the editor page of a workflow
+    
   # Scenario: Editor loads successfully
   #   When I access the workflow editor
   #   Then I should see the workflow header with the workflow name

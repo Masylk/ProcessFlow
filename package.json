@@ -9,7 +9,11 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:seed": "tsx e2e/seed-test-data.ts",
+    "test:e2e": "npm run test:seed && npx cucumber-js \"e2e/features/**/*.feature\" --require-module ts-node/register --require \"e2e/step-definitions/*.steps.ts\"",
+    "test:e2e:editor": "npm run test:seed && npx cucumber-js \"e2e/features/editor/*.feature\" --require-module ts-node/register --require \"e2e/step-definitions/editor.steps.ts\"",
+    "test:cleanup": "tsx e2e/cleanup-test-data.ts"
   },
   "dependencies": {
     "@contentsquare/tag-sdk": "^1.1.0",
@@ -107,7 +111,7 @@
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.3.4",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.2",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.2",
     "uglify-js": "^3.19.3"
   }
