@@ -440,11 +440,6 @@ When('I complete the workspace setup step', async function () {
   await this.page.click('button:has-text("Continue"), button:has-text("Create Workspace")');
 });
 
-When('I click "Continue to Dashboard"', async function () {
-  console.log('Clicking Continue to Dashboard');
-  await this.page.click('button:has-text("Continue to Dashboard"), a:has-text("Continue to Dashboard")');
-});
-
 When('I click the confirmation link in the email', async function () {
   console.log('Clicking confirmation link (simulated)');
   // In a real test, this would involve checking email or using a test email service
