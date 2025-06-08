@@ -7,10 +7,10 @@ import { useOnboarding } from '../context/OnboardingContext';
 import { sanitizeNameInput } from '../utils/inputSanitizer';
 
 const PersonalInfoStep: React.FC = () => {
-  const { 
+  const {
     personalInfo: { firstName, lastName, setFirstName, setLastName },
     isLoading,
-    submitPersonalInfo
+    submitPersonalInfo,
   } = useOnboarding();
 
   const handleLastNameChange = (value: string) => {
@@ -30,19 +30,19 @@ const PersonalInfoStep: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[442px] flex flex-col gap-6 mx-auto">
-      <div
-        className="text-center text-2xl font-semibold font-['Inter'] text-gray-900 dark:text-white"
-      >
+    <div
+      className="w-full max-w-[442px] flex flex-col gap-6 mx-auto"
+      data-testid="personal-info-step"
+    >
+      <div className="text-center text-2xl font-semibold font-['Inter'] text-gray-900 dark:text-white">
         Welcome to ProcessFlow!
       </div>
-      <div
-        className="text-center text-base font-normal font-['Inter'] text-gray-600 dark:text-gray-300"
-      >
+      <div className="text-center text-base font-normal font-['Inter'] text-gray-600 dark:text-gray-300">
         You can always change your name later.
       </div>
       <div className="pt-6 flex-col gap-6 flex">
         <InputField
+          dataTestId="last-name-input"
           label="Last Name"
           placeholder="Jobs"
           value={lastName}
@@ -51,6 +51,7 @@ const PersonalInfoStep: React.FC = () => {
           size="medium"
         />
         <InputField
+          dataTestId="first-name-input"
           label="First Name"
           placeholder="Steve"
           value={firstName}
@@ -74,4 +75,4 @@ const PersonalInfoStep: React.FC = () => {
   );
 };
 
-export default PersonalInfoStep; 
+export default PersonalInfoStep;

@@ -41,7 +41,7 @@ Feature: Navigation Control
      Then I should proceed to the workspace setup step
      When I complete the workspace setup step
      Then I should proceed to the completion step
-     And the system should create my workspace
+     And the system should create my workspace 
      And the system should create default workflows
      When I click "Continue to Dashboard"
      Then I should be redirected to dashboard "/"

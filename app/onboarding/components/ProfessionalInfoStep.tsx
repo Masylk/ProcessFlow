@@ -25,13 +25,28 @@ const ProfessionalInfoStep: React.FC = () => {
   // Dropdown options
   const dropdownOptions = {
     industry: ['IT', 'Healthcare', 'Finance', 'Education', 'Retail', 'Other'],
-    role: ['Founder', 'Manager', 'Product Manager', 'Analyst', 'Designer', 'Sales', 'Marketing', 'HR', 'Customer Success', 'Freelancer', 'Other'],
+    role: [
+      'Founder',
+      'Manager',
+      'Product Manager',
+      'Analyst',
+      'Designer',
+      'Sales',
+      'Marketing',
+      'HR',
+      'Customer Success',
+      'Freelancer',
+      'Other',
+    ],
     companySize: ['1', '2-9', '10-49', '50-199', '200-499', '500+'],
     source: ['ProductHunt', 'LinkedIn', 'Google', 'Friend', 'Other'],
   };
 
   return (
-    <div className="w-full max-w-[500px] flex flex-col gap-4 sm:gap-6 mb-8 mx-auto">
+    <div
+      data-testid="professional-info-step"
+      className="w-full max-w-[500px] flex flex-col gap-4 sm:gap-6 mb-8 mx-auto"
+    >
       <div className="self-stretch text-center text-xl md:text-2xl font-semibold font-['Inter'] leading-loose text-gray-900 dark:text-white">
         Tell us about yourself
       </div>
@@ -50,6 +65,8 @@ const ProfessionalInfoStep: React.FC = () => {
           </div>
           <div className="w-full relative">
             <select
+              data-testid="industry-select"
+              name="industry"
               className="w-full px-3.5 py-2.5 pr-10 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
@@ -84,6 +101,8 @@ const ProfessionalInfoStep: React.FC = () => {
           </div>
           <div className="w-full relative">
             <select
+              data-testid="role-select"
+              name="role"
               className="w-full px-3.5 py-2.5 pr-10 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
               value={role}
               onChange={(e) => setRole(e.target.value)}
@@ -119,6 +138,8 @@ const ProfessionalInfoStep: React.FC = () => {
         </div>
         <div className="w-full relative">
           <select
+            data-testid="company-size-select"
+            name="companySize"
             className="w-full px-3.5 py-2.5 pr-10 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
             value={companySize}
             onChange={(e) => setCompanySize(e.target.value)}
@@ -153,6 +174,8 @@ const ProfessionalInfoStep: React.FC = () => {
         </div>
         <div className="w-full relative">
           <select
+            data-testid="source-select"
+            name="source"
             className="w-full px-3.5 py-2.5 pr-10 rounded-lg border text-base cursor-pointer shadow-sm transition-all appearance-none bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
             value={source}
             onChange={(e) => setSource(e.target.value)}
@@ -204,4 +227,4 @@ const ProfessionalInfoStep: React.FC = () => {
   );
 };
 
-export default ProfessionalInfoStep; 
+export default ProfessionalInfoStep;
