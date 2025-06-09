@@ -113,8 +113,8 @@ After(async function (scenario) {
     console.log(`Screenshot taken: ${fileName}`);
   }
   // Cleanup workspace if it exists (using a default workspace name if needed)
-  if (this.prismaUser && this.prismaUser.id) {
-    const workspaceName = this.workspaceName || this.workspace.name || 'My Test Workspace';
+  if (this.prismaUser && this.prismaUser.id && (this.workspaceName || this.workspace?.name)) {
+    const workspaceName = this.workspaceName || this.workspace?.name || 'My Test Workspace';
     await cleanupWorkspace({ name: workspaceName, user_id: this.prismaUser.id });
   }
   
