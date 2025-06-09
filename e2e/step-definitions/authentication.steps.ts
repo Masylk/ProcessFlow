@@ -451,7 +451,6 @@ When('I try to access {string}', async function (path) {
 });
 
 When('I log in successfully', async function () {
-  console.log('Logging in successfully');
   await login(this.page, this.userEmail, this.password);
   console.log('When: I log in successfully ✅');
 });
