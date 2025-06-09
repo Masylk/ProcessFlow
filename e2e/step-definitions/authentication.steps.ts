@@ -68,6 +68,10 @@ async function login(page, email = TEST_USER.email, password = TEST_USER.passwor
   console.log('Navigating to login page:', `${BASE_URL}/login`);
   await page.goto(`${BASE_URL}/login`);
 
+  // Log the current URL after navigation
+  const currentUrl = await page.url();
+  console.log('Current page URL after navigation:', currentUrl);
+
   // Wait for the email input to be visible
   console.log('Waiting for email input to be visible');
   await page.waitForSelector('input[name="email"]', { timeout: 10000 });
