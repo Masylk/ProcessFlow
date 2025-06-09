@@ -45,7 +45,7 @@ Feature: Navigation Control
      And the system should create default workflows
      When I click "Continue to Dashboard"
      Then I should be redirected to dashboard "/"
-     And An email should be sent to the user with the subject "Welcome to ProcessFlow"
+     And An email should be sent to the user with the subject "Welcome to ProcessFlow - Here's how to start decently"
      And my onboarding should be marked as complete
      And I should not be able to access "/onboarding" anymore
 

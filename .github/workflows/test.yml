@@ -12,6 +12,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mailhog:
+        image: mailhog/mailhog
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
@@ -75,3 +82,5 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_BASE_URL: ${{ env.VERCEL_DEPLOYMENT_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          SMTP_SERVER: localhost
+          SMTP_PORT: 1025
