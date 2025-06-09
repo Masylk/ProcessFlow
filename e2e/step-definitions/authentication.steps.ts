@@ -49,8 +49,6 @@ const TEST_EMAILS = {
   GOOGLE_USER: 'googleuser-test@example.com'
 };
 
-// Track created test users for cleanup
-let createdTestUsers = [];
 
 
 function getPageOptions() {
@@ -114,12 +112,10 @@ After(async function () {
     const workspaceName = this.workspaceName || this.workspace.name || 'My Test Workspace';
     await cleanupWorkspace({ name: workspaceName, user_id: this.prismaUser.id });
   }
-  // Cleanup all created test users (Supabase)
-  for (const email of createdTestUsers) {
-    await cleanupTestUser(email);
+  
+  if (this.newUserEmail) {
+    await cleanupTestUser(this.newUserEmail);
   }
-  // Reset the list for next test
-  createdTestUsers = [];
   
   await this.page?.close();
   await this.browser?.close();
