@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isVercel } from '../../utils/isVercel';
 
 export async function GET(req: NextRequest) {
-  if (!prisma) {
+
+  const prisma_client = isVercel() ? new PrismaClient() : prisma;
+  if (!prisma_client) {
     throw new Error('Prisma client not initialized');
   }
   const { searchParams } = new URL(req.url);
@@ -14,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const workspace = await prisma.workspace.findFirst({
+    const workspace = await prisma_client.workspace.findFirst({
       where: {
         name,
         user_workspaces: {
@@ -35,5 +38,9 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching workspace by name:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    if (isVercel()) {
+      await prisma_client.$disconnect();
+    }
   }
 }
