@@ -1,5 +1,5 @@
 // @ts-nocheck
-const { Given, When, Then, After, Before, setWorldConstructor } = require('@cucumber/cucumber');
+const { Given, When, Then, After, Before, setWorldConstructor, setDefaultTimeout } = require('@cucumber/cucumber');
 const { expect, chromium } = require('@playwright/test');
 const { IWorldOptions, World } = require('@cucumber/cucumber');
 const {
@@ -10,6 +10,8 @@ const {
   cleanupTestUser,
   checkWorkspace,
 } = require('./utils.steps');
+
+setDefaultTimeout(100000);
 
 /**
  * @typedef {Object} CustomWorld
