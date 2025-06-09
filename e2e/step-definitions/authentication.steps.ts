@@ -67,12 +67,24 @@ function getPageOptions() {
 async function login(page, email = TEST_USER.email, password = TEST_USER.password) {
   console.log('Navigating to login page:', `${BASE_URL}/login`);
   await page.goto(`${BASE_URL}/login`);
+
+  // Wait for the email input to be visible
+  console.log('Waiting for email input to be visible');
+  await page.waitForSelector('input[name="email"]', { timeout: 10000 });
   console.log('Filling email:', email);
   await page.fill('input[name="email"]', email);
+
+  // Wait for the password input to be visible
+  console.log('Waiting for password input to be visible');
+  await page.waitForSelector('input[name="password"]', { timeout: 10000 });
   console.log('Filling password');
   await page.fill('input[name="password"]', password);
+
+  // Wait for the submit button to be visible
+  await page.waitForSelector('button[type="submit"]', { timeout: 10000 });
   console.log('Clicking submit button');
   await page.click('button[type="submit"]');
+
   console.log('Waiting for dashboard redirect:', `${BASE_URL}/`);
   await page.waitForURL(`${BASE_URL}/`);
   console.log('Login function finished');
