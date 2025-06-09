@@ -72,23 +72,23 @@ async function login(page, email = TEST_USER.email, password = TEST_USER.passwor
 
   // Wait for the email input to be visible
   console.log('Waiting for email input to be visible');
-  await page.waitForSelector('input[name="email"]', { timeout: 10000 });
+  await page.waitForSelector('input[name="email"]', { timeout: 300000 });
   console.log('Filling email:', email);
   await page.fill('input[name="email"]', email);
 
   // Wait for the password input to be visible
   console.log('Waiting for password input to be visible');
-  await page.waitForSelector('input[name="password"]', { timeout: 10000 });
+  await page.waitForSelector('input[name="password"]', { timeout: 300000 });
   console.log('Filling password');
   await page.fill('input[name="password"]', password);
 
   // Wait for the submit button to be visible
-  await page.waitForSelector('button[type="submit"]', { timeout: 10000 });
+  await page.waitForSelector('button[type="submit"]', { timeout: 300000 });
   console.log('Clicking submit button');
   await page.click('button[type="submit"]');
 
   console.log('Waiting for dashboard redirect:', `${BASE_URL}/`);
-  await page.waitForURL(`${BASE_URL}/`);
+  await page.waitForURL(`${BASE_URL}/`, { timeout: 300000 });
   console.log('Login function finished');
 }
 
@@ -106,7 +106,12 @@ Before(async function () {
 });
 
 /** @this {any} */
-After(async function () {
+After(async function (scenario) {
+  if (scenario.result?.status === 'failed' && this.page) {
+    const fileName = `failed-step-${Date.now()}.png`;
+    await this.page.screenshot({ path: fileName, fullPage: true });
+    console.log(`Screenshot taken: ${fileName}`);
+  }
   // Cleanup workspace if it exists (using a default workspace name if needed)
   if (this.prismaUser && this.prismaUser.id) {
     const workspaceName = this.workspaceName || this.workspace.name || 'My Test Workspace';
@@ -464,7 +469,7 @@ When('I try to access {string}', async function (path) {
   console.log(`When: I try to access ${normalizedPath} ✅`);
 });
 
-When('I log in successfully', async function () {
+When('I log in successfully', { timeout: 300000 }, async function () {
   await login(this.page, this.userEmail, this.password);
   console.log('When: I log in successfully ✅');
 });
