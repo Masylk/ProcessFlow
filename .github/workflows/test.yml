@@ -11,7 +11,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
