@@ -40,6 +40,7 @@ model user {
   workspaces              user_workspace[]
   scheduled_emails        scheduled_email[]
   workflows        workflow[]           @relation("author")
+  sent_invitations      workspace_invitation[] @relation("UserInvitations")
   @@index([active_workspace_id])
   @@index([email])
   @@index([auth_id])
@@ -69,6 +70,7 @@ model workspace {
   active_users       user[]                    @relation("active_workspace")
   user_workspaces    user_workspace[]
   workflows          workflow[]
+  invitations        workspace_invitation[]
 
   @@index([stripe_customer_id])
   @@index([subscription_id])
@@ -140,6 +142,7 @@ model user_workspace {
   user         user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   workspace    workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 
+  @@unique([user_id, workspace_id], name: "unique_user_workspace")
   @@index([user_id, workspace_id], map: "user_workspace_composite_idx")
   @@index([user_id])
   @@index([workspace_id])
@@ -297,6 +300,23 @@ model scheduled_email {
   @@map("scheduled_emails")
 }
 
+model workspace_invitation {
+  id             Int        @id @default(autoincrement())
+  workspace_id   Int
+  email          String
+  inviter_id     Int
+  status         invitation_status @default(PENDING)
+  invited_at     DateTime   @default(now())
+  accepted_at    DateTime?
+  expired_at     DateTime?
+  workspace      workspace  @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  inviter        user       @relation("UserInvitations", fields: [inviter_id], references: [id], onDelete: Cascade)
+
+  @@index([workspace_id])
+  @@index([email])
+  @@index([status])
+}
+
 enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
@@ -356,4 +376,11 @@ enum email_status {
   PAUSED
   SENT
   FAILED
+}
+
+enum invitation_status {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }

@@ -12,15 +12,20 @@ const createTransporter = () => {
     console.warn(`Missing email configuration: ${missingEnvVars.join(', ')}. Email functionality may not work properly.`);
   }
   
-  return nodemailer.createTransport({
+  const transporterOptions: any = {
     host: process.env.SMTP_SERVER,
     port: Number(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-    auth: {
+  };
+
+  if (process.env.SMTP_USERNAME && process.env.SMTP_PASSWORD) {
+    transporterOptions.auth = {
       user: process.env.SMTP_USERNAME,
       pass: process.env.SMTP_PASSWORD,
-    },
-  });
+    };
+  }
+
+  return nodemailer.createTransport(transporterOptions);
 };
 
 const transporter = createTransporter();

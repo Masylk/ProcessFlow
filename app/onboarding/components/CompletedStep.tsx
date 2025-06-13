@@ -36,7 +36,10 @@ const CompletedStep: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[600px] flex flex-col gap-6 mx-auto">
+    <div
+      className="w-full max-w-[600px] flex flex-col gap-6 mx-auto"
+      data-testid="completed-step"
+    >
       <div className="text-center text-2xl font-semibold font-['Inter'] text-gray-900">
         {isCreatingWorkflow
           ? 'Setting up your workspace'
@@ -111,7 +114,7 @@ const CompletedStep: React.FC = () => {
                 d="M5 13l4 4L19 7"
               ></path>
             </svg>
-            <span className="text-gray-600">
+            <span data-testid="workspace-ready-message" className="text-gray-600">
               Your workspace is ready to use!
             </span>
           </div>

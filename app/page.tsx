@@ -1359,6 +1359,57 @@ export default function Page() {
 
   const [previewFile, setPreviewFile] = useState<File | null>(null);
 
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+
+  const handleOpenInviteModal = () => {
+    setInviteModalVisible(true);
+    setInviteEmail('');
+    setInviteError('');
+  };
+  const handleCloseInviteModal = () => {
+    setInviteModalVisible(false);
+    setInviteEmail('');
+    setInviteError('');
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSendInvite = async () => {
+    setInviteError('');
+    if (!inviteEmail) {
+      setInviteError('Please enter an email address.');
+      return;
+    }
+    if (!validateEmail(inviteEmail)) {
+      setInviteError('Please enter a valid email address.');
+      return;
+    }
+    setInviteLoading(true);
+    try {
+      const res = await fetch(`/api/workspace/${activeWorkspace?.id}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      if (!res.ok) throw new Error('Failed to send invite');
+      toast.success('Invitation Sent', {
+        description: 'The invitation has been sent successfully.',
+        duration: 3000,
+      });
+      handleCloseInviteModal();
+    } catch (err) {
+      setInviteError('Failed to send invitation. Please try again.');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Suspense
@@ -1419,6 +1470,16 @@ export default function Page() {
                   onSearchChange={handleSearchChange}
                 />
                 <div className="flex items-center gap-4">
+                  {/* Invite Collaborators Button */}
+                  <ButtonNormal
+                    variant="secondary"
+                    size="small"
+                    leadingIcon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-plus-01.svg`}
+                    onClick={handleOpenInviteModal}
+                    data-testid="invite-collaborators-button"
+                  >
+                    Invite Collaborators
+                  </ButtonNormal>
                   <ButtonNormal
                     variant="primary"
                     size="small"
@@ -1692,6 +1753,51 @@ export default function Page() {
 
       {/* Add the tutorial overlay */}
       {showTutorial && <TutorialOverlay onComplete={handleTutorialComplete} />}
+
+      {inviteModalVisible && (
+        <Modal
+          onClose={handleCloseInviteModal}
+          title="Invite Collaborators"
+          icon={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-plus-01.svg`}
+          actions={
+            <>
+              <ButtonNormal
+                variant="secondary"
+                size="small"
+                onClick={handleCloseInviteModal}
+                className="flex-1"
+                disabled={inviteLoading}
+              >
+                Cancel
+              </ButtonNormal>
+              <ButtonNormal
+                variant="primary"
+                size="small"
+                onClick={handleSendInvite}
+                className="flex-1"
+                isLoading={inviteLoading}
+                disabled={!inviteEmail.trim() || inviteLoading}
+              >
+                Send Invite
+              </ButtonNormal>
+            </>
+          }
+          showActionsSeparator={true}
+        >
+          <div className="flex flex-col gap-4">
+            <InputField
+              type="default"
+              value={inviteEmail}
+              onChange={setInviteEmail}
+              placeholder="Enter collaborator's email"
+              label="Email Address"
+              required
+              errorMessage={inviteError}
+              dataTestId="invite-email-input"
+            />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -5,7 +5,10 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import { useOnboarding } from '../context/OnboardingContext';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
-import { sanitizeWorkspaceNameInput, generateSlugFromName } from '../utils/inputSanitizer';
+import {
+  sanitizeWorkspaceNameInput,
+  generateSlugFromName,
+} from '../utils/inputSanitizer';
 
 const WorkspaceSetupStep: React.FC = () => {
   const {
@@ -92,7 +95,7 @@ const WorkspaceSetupStep: React.FC = () => {
   const handleWorkspaceNameChange = (value: string) => {
     const sanitized = sanitizeWorkspaceNameInput(value);
     setWorkspaceName(sanitized);
-    
+
     // Generate the URL slug from the workspace name
     const slug = generateSlugFromName(sanitized);
     setWorkspaceURL(slug);
@@ -107,7 +110,7 @@ const WorkspaceSetupStep: React.FC = () => {
       checkSlugAvailability(slug);
     }, 500);
   };
-  
+
   // Handle URL change
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -134,7 +137,7 @@ const WorkspaceSetupStep: React.FC = () => {
       }, 500);
     }
   };
-  
+
   // File upload handlers
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -202,7 +205,7 @@ const WorkspaceSetupStep: React.FC = () => {
   const handleFileInputClick = () => {
     fileInputRef.current?.click();
   };
-  
+
   // Focus/blur handlers
   const handleFocus = () => {
     setIsFocused(true);
@@ -211,7 +214,7 @@ const WorkspaceSetupStep: React.FC = () => {
   const handleBlur = () => {
     setIsFocused(false);
   };
-  
+
   // Form validation
   const isFormValid = () => {
     if (!workspaceName) return false;
@@ -221,7 +224,7 @@ const WorkspaceSetupStep: React.FC = () => {
     if (!slugAvailability || !slugAvailability.available) return false;
     return true;
   };
-  
+
   // Handle submit workspace
   const handleSubmitWorkspace = () => {
     if (!workspaceName || !isFormValid()) {
@@ -231,7 +234,9 @@ const WorkspaceSetupStep: React.FC = () => {
       }
       // Show error for invalid workspace name
       if (/[^a-zA-Z0-9\- ]/.test(workspaceName)) {
-        setError('Workspace name can only contain letters, numbers, spaces, and hyphens');
+        setError(
+          'Workspace name can only contain letters, numbers, spaces, and hyphens'
+        );
       }
       if (urlError) {
         setError('Please fix the URL format before continuing');
@@ -250,7 +255,10 @@ const WorkspaceSetupStep: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[442px] flex flex-col gap-4 sm:gap-6 mx-auto mb-8">
+    <div
+      className="w-full max-w-[442px] flex flex-col gap-4 sm:gap-6 mx-auto mb-8"
+      data-testid="workspace-setup-step"
+    >
       <div className="self-stretch flex-col justify-start items-center gap-2 sm:gap-4 flex">
         <div className="self-stretch text-center text-xl sm:text-2xl font-semibold font-['Inter'] leading-relaxed sm:leading-loose text-gray-900 dark:text-white">
           Set up your workspace
@@ -270,6 +278,7 @@ const WorkspaceSetupStep: React.FC = () => {
       <div className="w-full flex-col justify-start items-start gap-4 sm:gap-6 flex pt-4 sm:pt-6">
         {/* Workspace Name Input */}
         <InputField
+          dataTestId="workspace-name-input"
           label="Workspace Name"
           required
           type="default"
@@ -290,7 +299,9 @@ const WorkspaceSetupStep: React.FC = () => {
           </div>
           <div className="w-full flex items-center rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border transition-all duration-200 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700">
             <div className="min-w-fit px-3 py-2 rounded-tl-lg rounded-bl-lg">
-              <span className="text-gray-600 dark:text-gray-300">app.process-flow.io/</span>
+              <span className="text-gray-600 dark:text-gray-300">
+                app.process-flow.io/
+              </span>
             </div>
             <input
               type="text"
@@ -407,12 +418,14 @@ const WorkspaceSetupStep: React.FC = () => {
         >
           Back
         </ButtonNormal>
-        
+
         <ButtonNormal
           variant="primary"
           size="small"
           onClick={handleSubmitWorkspace}
-          disabled={isLoading || !isFormValid() || isNavigatingBack || isCheckingSlug}
+          disabled={
+            isLoading || !isFormValid() || isNavigatingBack || isCheckingSlug
+          }
           className="w-2/3"
         >
           {isLoading ? 'Loading...' : 'Continue'}
@@ -422,4 +435,4 @@ const WorkspaceSetupStep: React.FC = () => {
   );
 };
 
-export default WorkspaceSetupStep; 
+export default WorkspaceSetupStep;

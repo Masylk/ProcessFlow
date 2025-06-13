@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '../utils/mail';
 import { render } from '@react-email/render';
@@ -93,7 +94,10 @@ export async function signup(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-
+  const autoConfirm = formData.get('autoConfirm') === 'true';
+  // Get the workspace and token from the form data for the redirect
+  const workspace = formData.get('workspace') as string;
+  const token = formData.get('token') as string;
 
   // Password strength validation (same as frontend)
   const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -119,7 +123,7 @@ export async function signup(formData: FormData) {
 
   // 2. Check if email already exists in Supabase Auth
   try {
-    const { data, error } = await supabase.auth.admin.listUsers();
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && data?.users) {
       const userExists = data.users.some(user => user.email === email);
       if (userExists) {
@@ -131,25 +135,63 @@ export async function signup(formData: FormData) {
     // Optionally log error, but do not block signup on admin API failure
   }
 
-  // 3. Proceed with signup
-  const credentials = {
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm`,
-    },
-  };
+  let user;
+  let authError;
 
-  const { data, error: authError } = await supabase.auth.signUp(credentials);
+  console.log('Auto-confirm:', autoConfirm);
+  if (autoConfirm) {
+    console.log('Auto-confirming user, redirecting to join page');
+    // 3a. Auto-confirmed signup (admin createUser)
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        onboarding_status: {
+          completed_at: new Date().toISOString()
+        }
+      }
+    });
+    user = data?.user;
+    authError = error;
+
+    // Log the user in immediately using the existing login function
+    if (user) {
+      const loginFormData = new FormData();
+      loginFormData.append('email', email);
+      loginFormData.append('password', password);
+      // Optionally, add any other required fields
+      const loginResult = await login(loginFormData);
+      if (loginResult?.error) {
+        // Optionally handle login error (should not happen)
+        console.error('Auto-login after signup failed:', loginResult.error);
+      }
+    }
+  } else {
+    console.log('Not auto-confirming user, normal signup');
+    // 3b. Regular signup (user signUp)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/confirm`,
+        data: {
+          onboarding_status: {
+            completed_at: undefined // Not completed yet
+          }
+        }
+      }
+    });
+    user = data?.user;
+    authError = error;
+  }
+
   if (authError) {
     // Always return success, do not reveal error details
     return { success: true, message: "If your signup was successful, check your email." };
   }
 
-  const user = data?.user;
   if (!user) return { success: true, message: "If your signup was successful, check your email." };
-
-
 
   try {
     await prisma_client.user.create({
@@ -159,7 +201,7 @@ export async function signup(formData: FormData) {
         first_name: '',
         last_name: '',
         full_name: '',
-        onboarding_step: 'PERSONAL_INFO'
+        onboarding_step: autoConfirm ? 'COMPLETED' : 'PERSONAL_INFO'
       }
     });
 
@@ -171,12 +213,27 @@ export async function signup(formData: FormData) {
       }
     });
 
+    if (autoConfirm) {
+      // If autoConfirm, redirect to join page with params
+      const joinParams = new URLSearchParams();
+      if (workspace) joinParams.set('workspace', workspace);
+      if (token) joinParams.set('token', token);
+      const redirectUrl = `/join${joinParams.toString() ? `?${joinParams.toString()}` : ''}`;
+      return {
+        success: true,
+        message: "Account created successfully.",
+        id: user.id,
+        email: user.email,
+        redirectTo: redirectUrl
+      };
+    }
+
+    // If not autoConfirm, redirect to check-email page
     return {
       success: true,
       message: "If your signup was successful, check your email.",
       id: user.id,
       email: user.email,
-      redirectTo: '/check-email'
     };
   } catch (error) {
     // Clean up Supabase user if needed
