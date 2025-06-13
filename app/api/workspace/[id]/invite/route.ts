@@ -3,6 +3,7 @@ import { sendEmail } from '@/lib/email';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/lib/supabaseServerClient';
 import { isVercel } from '@/app/api/utils/isVercel';
+import { PrismaClient } from '@prisma/client';
 
 export async function POST(req: NextRequest) {
   const prisma_client = isVercel() ? new PrismaClient() : prisma;
