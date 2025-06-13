@@ -130,6 +130,23 @@ async function cleanupWorkspace({ name, user_id }) {
   }
 }
 
+/**
+ * @param {object} params
+ * @param {number|string} params.user_id
+ * @param {string} params.name
+ * @returns {Promise<boolean>} true if workspace exists, false if not
+ */
+async function checkWorkspace({ user_id, name }) {
+  if (!user_id || !name) throw new Error('user_id and name are required');
+  console.log('Checking workspace', user_id, name);
+  const url = `${BASE_URL}/api/test/get-workspace-by-name?user_id=${encodeURIComponent(user_id)}&name=${encodeURIComponent(name)}`;
+  const res = await fetch(url, { headers });
+  if (res.status === 200) return true;
+  if (res.status === 404) return false;
+  const data = await res.json().catch(() => ({}));
+  throw new Error(`Unexpected response: ${res.status} ${data.error || ''}`);
+}
+
 module.exports = {
   seedTestUser,
   seedWorkspace,
@@ -137,4 +154,5 @@ module.exports = {
   getUserIdByEmail,
   cleanupTestUser,
   createdTestUsers,
+  checkWorkspace,
 }; 

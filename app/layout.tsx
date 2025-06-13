@@ -63,33 +63,32 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="64x64" href="/64x64.png" />
         <link rel="icon" type="image/png" sizes="256x256" href="/256x256.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/512x512.png" />
-      </head>
-      <BodyClassProvider>
-        <FastThemeProvider>
-          <PostHogProvider>
-            <AuthCheck>{children}</AuthCheck>
-            <Toaster />
-            <SpeedInsights />
-          </PostHogProvider>
-        </FastThemeProvider>
-
-        {/* External Scripts - Load after interactive */}
-        <Script
-          src="https://media-editor.cloudinary.com/all.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          src="//js.hs-scripts.com/47874121.js"
-          strategy="afterInteractive"
-          id="hs-script-loader"
-        />
-
-        {/* External CSS */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
         />
-      </BodyClassProvider>
+      </head>
+      <body>
+        <BodyClassProvider>
+          <FastThemeProvider>
+            <PostHogProvider>
+              <AuthCheck>{children}</AuthCheck>
+              <Toaster />
+              <SpeedInsights />
+            </PostHogProvider>
+          </FastThemeProvider>
+          {/* External Scripts - Load after interactive */}
+          <Script
+            src="https://media-editor.cloudinary.com/all.js"
+            strategy="afterInteractive"
+          />
+          <Script
+            src="//js.hs-scripts.com/47874121.js"
+            strategy="afterInteractive"
+            id="hs-script-loader"
+          />
+        </BodyClassProvider>
+      </body>
     </html>
   );
 }

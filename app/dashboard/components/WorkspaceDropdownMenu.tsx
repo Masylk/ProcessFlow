@@ -75,9 +75,9 @@ export default function WorkspaceDropdownMenu({
         initial={{ opacity: 0, scale: 0.95, y: -10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-        transition={{ 
-          duration: 0.15, 
-          ease: [0.16, 1, 0.3, 1] // Custom easing for smooth feel
+        transition={{
+          duration: 0.15,
+          ease: [0.16, 1, 0.3, 1], // Custom easing for smooth feel
         }}
         style={{
           backgroundColor: colors['bg-secondary'],
@@ -121,7 +121,7 @@ export default function WorkspaceDropdownMenu({
         />
 
         {/* Switch Workspace Option */}
-        <div className="group relative w-full hidden">
+        <div className="group relative w-full">
           <button
             className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
             onMouseEnter={() => setIsWorkspaceListVisible(true)}
@@ -165,9 +165,9 @@ export default function WorkspaceDropdownMenu({
                 initial={{ opacity: 0, scale: 0.95, x: -10 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                transition={{ 
-                  duration: 0.15, 
-                  ease: [0.16, 1, 0.3, 1]
+                transition={{
+                  duration: 0.15,
+                  ease: [0.16, 1, 0.3, 1],
                 }}
                 style={{
                   backgroundColor: colors['bg-secondary'],
@@ -175,166 +175,173 @@ export default function WorkspaceDropdownMenu({
                 }}
                 className="absolute left-full top-[-7px] w-[264px] rounded-lg shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03)] py-1 border"
               >
-              {/* Email Header */}
-              <div className="px-1.5 py-px">
-                <div
-                  style={{ color: colors['text-tertiary'] }}
-                  className="px-2.5 py-[9px] text-sm font-normal cursor-default"
-                >
-                  {userEmail}
-                </div>
-              </div>
-
-              <div
-                style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch h-px border-b my-1"
-              />
-
-              {/* Workspace List */}
-              <div>
-                {workspaces.map((workspace) => (
-                  <button
-                    key={workspace.id}
-                    onClick={async () => {
-                      try {
-                        // First, update the active workspace
-                        await setActiveWorkspace(workspace);
-
-                        // Close the dropdown menu
-                        onClose();
-
-                        // Small delay to ensure state updates are processed
-                        setTimeout(() => {
-                          // Force a refresh of the entire page's data without a full reload
-                          // This will cause all components to re-render with the new data
-                          router.refresh();
-
-                          // If we're in settings view, we need to ensure the settings components
-                          // get the updated workspace data by forcing them to re-render
-                          // This is handled via the router.refresh() which will cause
-                          // the parent components to re-fetch their data
-                        }, 100);
-                      } catch (error) {
-                        console.error('Error switching workspace:', error);
-                      }
-                    }}
-                    className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
+                {/* Email Header */}
+                <div className="px-1.5 py-px">
+                  <div
+                    style={{ color: colors['text-tertiary'] }}
+                    className="px-2.5 py-[9px] text-sm font-normal cursor-default"
                   >
-                    <div
-                      style={
-                        {
-                          '--hover-bg': colors['bg-quaternary'],
-                        } as React.CSSProperties
-                      }
-                      className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    {userEmail}
+                  </div>
+                </div>
+
+                <div
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="self-stretch h-px border-b my-1"
+                />
+
+                {/* Workspace List */}
+                <div>
+                  {workspaces.map((workspace) => (
+                    <button
+                      key={workspace.id}
+                      onClick={async () => {
+                        try {
+                          // Call the API to switch workspace
+                          const res = await fetch(
+                            '/api/user/switch-workspace',
+                            {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                workspaceId: workspace.id,
+                              }),
+                            }
+                          );
+                          if (!res.ok) {
+                            const error = await res.json();
+                            throw new Error(
+                              error.error || 'Failed to switch workspace'
+                            );
+                          }
+                          // Close the dropdown menu
+                          onClose();
+                          // Small delay to ensure state updates are processed
+                          setTimeout(() => {
+                            router.refresh();
+                          }, 100);
+                        } catch (error) {
+                          console.error('Error switching workspace:', error);
+                          alert('Failed to switch workspace.');
+                        }
+                      }}
+                      className="w-full px-1.5 py-px justify-start items-center inline-flex cursor-pointer"
                     >
-                      <div className="flex items-center gap-2">
-                        {workspace.icon_url ? (
-                          <img
-                            src={workspace.icon_url}
-                            alt={workspace.name}
-                            className="w-6 h-6 rounded-lg object-cover"
-                            onError={(e) => {
-                              // If image fails to load, fallback to the default letter display
-                              e.currentTarget.style.display = 'none';
-                              const sibling = e.currentTarget
-                                .nextElementSibling as HTMLElement;
-                              if (sibling) {
-                                sibling.style.display = 'flex';
-                              }
+                      <div
+                        style={
+                          {
+                            '--hover-bg': colors['bg-quaternary'],
+                          } as React.CSSProperties
+                        }
+                        className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-between items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                      >
+                        <div className="flex items-center gap-2">
+                          {workspace.icon_url ? (
+                            <img
+                              src={workspace.icon_url}
+                              alt={workspace.name}
+                              className="w-6 h-6 rounded-lg object-cover"
+                              onError={(e) => {
+                                // If image fails to load, fallback to the default letter display
+                                e.currentTarget.style.display = 'none';
+                                const sibling = e.currentTarget
+                                  .nextElementSibling as HTMLElement;
+                                if (sibling) {
+                                  sibling.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-normal"
+                            style={{
+                              backgroundColor:
+                                workspace.background_colour || '#4299E1',
+                              display: workspace.icon_url ? 'none' : 'flex',
                             }}
+                          >
+                            {workspace.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div
+                            style={{ color: colors['text-primary'] }}
+                            className="text-sm font-normal"
+                          >
+                            {workspace.name}
+                          </div>
+                        </div>
+                        {activeWorkspace?.id === workspace.id && (
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon3.svg`}
+                            alt="Active"
+                            className="w-4 h-4"
                           />
-                        ) : null}
-                        <div
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-normal"
-                          style={{
-                            backgroundColor:
-                              workspace.background_colour || '#4299E1',
-                            display: workspace.icon_url ? 'none' : 'flex',
-                          }}
-                        >
-                          {workspace.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div
-                          style={{ color: colors['text-primary'] }}
-                          className="text-sm font-normal"
-                        >
-                          {workspace.name}
-                        </div>
+                        )}
                       </div>
-                      {activeWorkspace?.id === workspace.id && (
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/check-icon3.svg`}
-                          alt="Active"
-                          className="w-4 h-4"
-                        />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
 
-              <div
-                style={{ borderColor: colors['border-secondary'] }}
-                className="self-stretch h-px hidden border-b my-1"
-              />
-
-              {/* Create/Join Options */}
-              <button
-                onClick={handleOpenCreateWorkspaceModal}
-                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
-              >
                 <div
-                  style={
-                    {
-                      '--hover-bg': colors['bg-quaternary'],
-                    } as React.CSSProperties
-                  }
-                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  style={{ borderColor: colors['border-secondary'] }}
+                  className="self-stretch h-px hidden border-b my-1"
+                />
+
+                {/* Create/Join Options */}
+                <button
+                  onClick={handleOpenCreateWorkspaceModal}
+                  className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
                 >
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
-                      className="w-4 h-4"
-                    />
-                    <div
-                      style={{ color: colors['text-primary'] }}
-                      className="text-sm font-normal"
-                    >
-                      Create a new workspace
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/plus-icon-grey.svg`}
+                        className="w-4 h-4"
+                      />
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-normal"
+                      >
+                        Create a new workspace
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-              <button
-                onClick={onClose}
-                className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
-              >
-                <div
-                  style={
-                    {
-                      '--hover-bg': colors['bg-quaternary'],
-                    } as React.CSSProperties
-                  }
-                  className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                </button>
+                <button
+                  onClick={onClose}
+                  className="w-full px-1.5 py-px justify-start items-center hidden cursor-pointer"
                 >
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
-                      className="w-4 h-4"
-                    />
-                    <div
-                      style={{ color: colors['text-primary'] }}
-                      className="text-sm font-normal"
-                    >
-                      Add an account
+                  <div
+                    style={
+                      {
+                        '--hover-bg': colors['bg-quaternary'],
+                      } as React.CSSProperties
+                    }
+                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/user-circle (1).svg`}
+                        className="w-4 h-4"
+                      />
+                      <div
+                        style={{ color: colors['text-primary'] }}
+                        className="text-sm font-normal"
+                      >
+                        Add an account
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Separator */}

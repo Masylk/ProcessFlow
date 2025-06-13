@@ -29,30 +29,31 @@ Feature: Navigation Control
      When I try to access "/onboarding"
      Then I should be redirected to dashboard "/"
 
-  # Scenario: Complete onboarding flow for new user
-  #   Given I am a newly registered user
-  #   And my onboarding is not complete
-  #   When I log in successfully
-  #   Then I should be redirected to "/onboarding"
-  #   And I should see the onboarding progress indicator
-  #   When I complete the personal information step
-  #   Then I should proceed to the professional information step
-  #   When I complete the professional information step
-  #   Then I should proceed to the workspace setup step
-  #   When I complete the workspace setup step
-  #   Then I should proceed to the completion step
-  #   And the system should create my workspace
-  #   And the system should create default workflows
-  #   When I click "Continue to Dashboard"
-  #   Then I should be redirected to dashboard "/"
-  #   And An email should be sent to the user with the subject "Welcome to ProcessFlow"
-  #   And my onboarding should be marked as complete
-  #   And I should not be able to access "/onboarding" anymore
+   Scenario: Complete onboarding flow for new user
+     Given I am a newly registered user
+     And my onboarding is not complete
+     When I log in successfully
+     Then I should be redirected to "/onboarding"
+     And I should see the onboarding progress indicator
+     When I complete the personal information step
+     Then I should proceed to the professional information step
+     When I complete the professional information step
+     Then I should proceed to the workspace setup step
+     When I complete the workspace setup step
+     Then I should proceed to the completion step
+     And the system should create my workspace 
+     And the system should create default workflows
+     When I click "Continue to Dashboard"
+     Then I should be redirected to dashboard "/"
+     And An email should be sent to the user with the subject "Welcome to ProcessFlow - Here's how to start decently"
+     And my onboarding should be marked as complete
+     And I should not be able to access "/onboarding" anymore
 
-  # Scenario: URL sanitization
-  #   Given I access a URL with encoded spaces "/workspace%20name/flow"
-  #   Then I should be redirected to "/workspace-name/flow"
-  #   And the URL should be properly formatted
+   Scenario: URL sanitization
+     Given I am logged in
+     And I access a URL with encoded spaces "/workspace%20name/flow"
+     Then I should be redirected to "/workspace-name/flow"
+     And the URL should be properly formatted
 
   # Scenario: Embed route protection
   #   Given I access an embed route "/shared/flow/123/embed"

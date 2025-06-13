@@ -304,7 +304,7 @@ export default function Sidebar({
           backgroundColor: colors['bg-primary'],
           borderColor: colors['border-secondary'],
         }}
-        className="h-full border-r flex flex-col relative"
+        className="h-full border-r flex flex-col relative z-20"
       >
         {/* Sidebar Header */}
         <div className="h-[72px] w-full px-4 py-3 flex-col justify-start items-start inline-flex">
@@ -364,14 +364,11 @@ export default function Sidebar({
         {/* Workspace Dropdown Overlay */}
         <AnimatePresence>
           {dropdownVisible && (
-                         <div 
-               className="fixed inset-0 z-10" 
-               onClick={closeDropDown}
-             >
-               <div
-                 className="absolute top-14 left-4 mt-2"
-                 onClick={(e) => e.stopPropagation()}
-               >
+            <div className="fixed inset-0 z-10" onClick={closeDropDown}>
+              <div
+                className="absolute top-14 left-4 mt-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <WorkspaceDropdownMenu
                   userEmail={userEmail}
                   workspaces={workspaces}
@@ -380,9 +377,7 @@ export default function Sidebar({
                   onClose={closeDropDown}
                   onOpenSettings={() => setIsSettingsView(true)}
                   onLogout={onLogout}
-                  onOpenCreateWorkspaceModal={
-                    handleOpenCreateWorkspaceModal
-                  }
+                  onOpenCreateWorkspaceModal={handleOpenCreateWorkspaceModal}
                 />
               </div>
             </div>
