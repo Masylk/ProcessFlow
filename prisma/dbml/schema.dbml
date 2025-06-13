@@ -29,6 +29,7 @@ Table user {
   workspaces user_workspace [not null]
   scheduled_emails scheduled_emails [not null]
   workflows workflow [not null]
+  sent_invitations workspace_invitation [not null]
 }
 
 Table workspace {
@@ -53,6 +54,7 @@ Table workspace {
   active_users user [not null]
   user_workspaces user_workspace [not null]
   workflows workflow [not null]
+  invitations workspace_invitation [not null]
 }
 
 Table workspace_billing_infos {
@@ -109,6 +111,10 @@ Table user_workspace {
   role user_role [not null, default: 'ADMIN']
   user user [not null]
   workspace workspace [not null]
+
+  indexes {
+    (user_id, workspace_id) [unique]
+  }
 }
 
 Table folder {
@@ -241,6 +247,19 @@ Table scheduled_emails {
   }
 }
 
+Table workspace_invitation {
+  id Int [pk, increment]
+  workspace_id Int [not null]
+  email String [not null]
+  inviter_id Int [not null]
+  status invitation_status [not null, default: 'PENDING']
+  invited_at DateTime [default: `now()`, not null]
+  accepted_at DateTime
+  expired_at DateTime
+  workspace workspace [not null]
+  inviter user [not null]
+}
+
 Enum onboarding_step {
   PERSONAL_INFO
   PROFESSIONAL_INFO
@@ -302,6 +321,13 @@ Enum email_status {
   FAILED
 }
 
+Enum invitation_status {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 Ref: user.active_workspace_id > workspace.id
 
 Ref: workspace.subscription_id - subscription.id
@@ -343,3 +369,7 @@ Ref: stroke_line.target_block_id > block.id [delete: Cascade]
 Ref: stroke_line.workflow_id > workflow.id [delete: Cascade]
 
 Ref: scheduled_emails.user_id > user.id [delete: Cascade]
+
+Ref: workspace_invitation.workspace_id > workspace.id [delete: Cascade]
+
+Ref: workspace_invitation.inviter_id > user.id [delete: Cascade]

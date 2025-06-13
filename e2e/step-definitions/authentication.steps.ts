@@ -114,7 +114,7 @@ After(async function (scenario) {
   }
   // Cleanup workspace if it exists (using a default workspace name if needed)
   if (this.prismaUser && this.prismaUser.id && (this.workspaceName || this.workspace?.name)) {
-    const workspaceName = this.workspaceName || this.workspace?.name || 'My Test Workspace';
+    const workspaceName = this.workspaceName || this.workspace?.name;
     await cleanupWorkspace({ name: workspaceName, user_id: this.prismaUser.id });
   }
   
@@ -291,13 +291,30 @@ Given('my onboarding is complete', async function () {
     email_confirmed: true,
     onboarding_step: 'COMPLETED'
   });
-  await seedWorkspace.call(this, { name: 'test' });
+  const uniqueWorkspaceName = `My Test Workspace ${Date.now()}`;
+  await seedWorkspace.call(this, { name: uniqueWorkspaceName });
+  this.workspaceName = uniqueWorkspaceName;
   console.log('Given: my onboarding is complete ✅');
 });
 /** @param {string} url */
-Given('I access a URL with encoded spaces {string}', async function (url) {});
+Given('I access a URL with encoded spaces {string}', async function (url) {
+  console.log(`Navigating to URL with encoded spaces: ${url}`);
+  await this.page.goto(`${BASE_URL}${url}`);
+  console.log(`Given: I access a URL with encoded spaces ${url} ✅`);
+});
 /** @param {string} route */
-Given('I access an embed route {string}', async function (route) {});
+Given('I access an embed route {string}', async function (route) {
+  console.log(`Navigating to embed route: ${route}`);
+  // Use Playwright's APIRequestContext to fetch the response and store it for header checks
+  const requestContext = await chromium.request.newContext();
+  const url = `${BASE_URL}${route}`;
+  const response = await requestContext.get(url);
+  this.embedResponse = response;
+  this.embedRouteUrl = url;
+  // Optionally, also open the page in the browser for visual checks
+  await this.page.goto(url);
+  console.log(`Given: I access an embed route ${route} ✅`);
+});
 /** @param {string} email */
 Given('I have registered with email {string}', async function (email) {});
 Given('I received a confirmation email', async function () {});
@@ -514,8 +531,9 @@ When('I complete the workspace setup step', async function () {
   console.log('Workspace setup step is visible');
   // Fill in the workspace name (adjust selector as needed)
   console.log('Filling workspace name');
-  await this.page.fill('[data-testid="workspace-name-input"]', 'My Test Workspace');
-  this.workspaceName = 'My Test Workspace';
+  const uniqueWorkspaceName = `My Test Workspace ${Date.now()}`;
+  await this.page.fill('[data-testid="workspace-name-input"]', uniqueWorkspaceName);
+  this.workspaceName = uniqueWorkspaceName;
   // If you have other required fields, fill/select them here
   // Click the continue/create workspace button
   console.log('Clicking continue button');
@@ -859,7 +877,7 @@ Then('the system should create my workspace', async function () {
   if ((this.workspace && !this.workspace.name) && !this.workspaceName) {
     throw new Error('No workspace found in test context (this.workspace)');
   }
-  const exists = await checkWorkspace({ user_id: this.prismaUser.id, name: this.workspaceName || this.workspace.name || 'My Test Workspace' });
+  const exists = await checkWorkspace({ user_id: this.prismaUser.id, name: this.workspaceName || this.workspace.name });
   expect(exists).toBe(true);
   if (exists) {
     console.log('Workspace exists');
@@ -963,4 +981,32 @@ Then('I should be redirected to dashboard {string}', async function (dashboardPa
   await this.page.waitForURL(expectedUrl, { timeout: 10000 });
   expect(this.page.url()).toBe(expectedUrl);
   console.log(`Then: I should be redirected to dashboard ${dashboardPath} ✅`);
+});
+
+Then('the URL should have spaces replaced by dashes', async function () {
+  console.log('Checking that %20 has been replaced by a dash in the URL');
+  const currentUrl = this.page.url();
+  const hasEncodedSpace = currentUrl.includes('%20');
+  const hasDash = currentUrl.includes('-');
+  expect(hasEncodedSpace).toBe(false);
+  expect(hasDash).toBe(true);
+  console.log('Then: the URL should have spaces replaced by dashes ✅');
+});
+
+Then('the response should include headers:', async function (dataTable) {
+  if (!this.embedResponse) {
+    throw new Error('No embed response found. Did you call the embed route step?');
+  }
+  const expectedHeaders = dataTable.rowsHash();
+  for (const [header, expectedValue] of Object.entries(expectedHeaders)) {
+    const actualValue = this.embedResponse.headers()[header.toLowerCase()];
+    if (!actualValue) {
+      throw new Error(`Header '${header}' not found in response`);
+    }
+    if (actualValue !== expectedValue) {
+      throw new Error(`Header '${header}' value '${actualValue}' does not match expected '${expectedValue}'`);
+    }
+    console.log(`Header '${header}' correctly set to '${expectedValue}'`);
+  }
+  console.log('Then: the response should include required embed headers ✅');
 });

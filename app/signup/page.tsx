@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import { signup, checkEmailExists } from '../login/actions';
@@ -20,6 +20,10 @@ export default function SignupPage() {
   const [globalError, setGlobalError] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const workspace = searchParams.get('workspace');
+  const token = searchParams.get('token');
+  const autoConfirm = searchParams.get('autoConfirm');
 
   // Email validation
   const validateEmail = (email: string): boolean => {
@@ -74,6 +78,35 @@ export default function SignupPage() {
     return () => clearTimeout(timer);
   }, [email]);
 
+  // Autofill email from token if present and valid
+  useEffect(() => {
+    if (token && !email) {
+      try {
+        // Robust base64 decode for UTF-8
+        function b64DecodeUnicode(str: string) {
+          return decodeURIComponent(
+            atob(str)
+              .split('')
+              .map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+              })
+              .join('')
+          );
+        }
+        const decoded = b64DecodeUnicode(token);
+        const [decodedEmail] = decoded.split(':');
+        if (decodedEmail && validateEmail(decodedEmail)) {
+          setEmail(decodedEmail);
+        }
+      } catch (e) {
+        // Optionally handle invalid token
+        console.error('Invalid invitation token:', e);
+      }
+    }
+    // Only run when token changes or email is empty
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   async function handleSignUp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -126,6 +159,9 @@ export default function SignupPage() {
         const formData = new FormData();
         formData.append('email', email);
         formData.append('password', password);
+        if (workspace) formData.append('workspace', workspace);
+        if (token) formData.append('token', token);
+        if (autoConfirm) formData.append('autoConfirm', autoConfirm);
 
         if (process.env.NODE_ENV !== 'production') {
           console.log('Submitting signup request with email:', email);
@@ -171,9 +207,13 @@ export default function SignupPage() {
           }
         }
         // Single redirect after analytics (success or fail)
-        router.push(
-          `/login?email=${encodeURIComponent(newUser.email || (formData.get('email') as string))}&signup=success`
-        );
+        if (newUser?.redirectTo) {
+          router.push(newUser.redirectTo);
+        } else {
+          router.push(
+            `/login?email=${encodeURIComponent(newUser.email || (formData.get('email') as string))}&signup=success`
+          );
+        }
       }
     } catch (error) {
       console.error('Unexpected error during signup:', error);

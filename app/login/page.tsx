@@ -204,7 +204,18 @@ function LoginContent() {
           posthog.identify(response.id);
           posthog.people.set({ email: response.email });
           posthog.capture('login', { email: response.email });
-          router.push('/');
+
+          // Check for redirect params
+          const redirect = searchParams?.get('redirect');
+          const workspace = searchParams?.get('workspace');
+          const token = searchParams?.get('token');
+          if (redirect === '/join' && workspace && token) {
+            router.push(
+              `/join?workspace=${encodeURIComponent(workspace)}&token=${encodeURIComponent(token)}`
+            );
+          } else {
+            router.push('/');
+          }
         }
       } catch (err) {
         // Add failed attempt on unexpected error

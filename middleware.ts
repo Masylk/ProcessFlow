@@ -30,6 +30,11 @@ const onboardingRoutes = [
   '/onboarding'
 ];
 
+// Add join routes to skip middleware redirects
+const joinRoutes = [
+  '/join'
+];
+
 // Simple in-memory store (not for production)
 const rateLimitStore = new Map<string, { count: number; lastRequest: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -70,8 +75,13 @@ export async function middleware(request: NextRequest) {
   // Add this at the top of your middleware function
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
 
-  // Determine route type for rate limiting
+  // Check if this is a join route with autoConfirm
   const pathname = request.nextUrl.pathname;
+  const searchParams = request.nextUrl.searchParams;
+  const isJoinRoute = joinRoutes.some(route => pathname.startsWith(route));
+  const isAutoConfirm = searchParams.get('autoConfirm') === 'true';
+
+  // Determine route type for rate limiting
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
   const isShareRoute = shareRoutes.some(route => pathname.includes(route));
   const isSensitiveRoute = isAuthRoute || isShareRoute;
@@ -128,18 +138,13 @@ export async function middleware(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
 
-    const pathname = request.nextUrl.pathname;
-    
-    // Check if current route is an auth route
-    const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
-    const isShareRoute = shareRoutes.some(route => pathname.includes(route));
-
     // Skip middleware for static and API routes
     if (
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
       pathname.startsWith('/static') ||
-      pathname === '/'
+      pathname === '/' ||
+      (isJoinRoute && isAutoConfirm) // Allow direct access to join route when auto-confirming
     ) {
       return NextResponse.next();
     }
@@ -192,9 +197,14 @@ export async function middleware(request: NextRequest) {
     }
 
     // If not authenticated and trying to access protected routes
-    if (!isAuthRoute && !isShareRoute) {
+    if (!isAuthRoute && !isShareRoute && !isJoinRoute) {
       const redirectUrl = new URL('/login', request.url);
       redirectUrl.searchParams.set('redirect', pathname);
+      // Copy all original search params
+      request.nextUrl.searchParams.forEach((value, key) => {
+        redirectUrl.searchParams.set(key, value);
+      });
+      console.log('Redirecting to login:', redirectUrl);
       return NextResponse.redirect(redirectUrl);
     }
 

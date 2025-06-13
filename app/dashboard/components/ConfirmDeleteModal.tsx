@@ -56,7 +56,7 @@ export default function ConfirmDeleteModal({
 
       if (response.ok) {
         alert('Your account has been deleted.');
-        router.push('/'); // Redirect to home page
+        router.push('/login'); // Redirect to home page
       } else {
         setError('Failed to delete account. Please try again.');
       }
