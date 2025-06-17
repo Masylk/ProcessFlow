@@ -54,38 +54,47 @@ export default function JoinWorkspacePage() {
         params.set('redirect', '/join');
 
         if (exists) {
-          // Account exists, redirect to login
           router.replace(`/login?${params.toString()}`);
         } else {
-          // No account exists, redirect to signup with auto-confirm
           params.set('autoConfirm', 'true');
-          params.set('email', email); // Pre-fill email in signup form
+          params.set('email', email);
           router.replace(`/signup?${params.toString()}`);
         }
         return;
       }
 
-      const join = async () => {
-        try {
-          const res = await fetch('/api/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ workspace, token }),
-          });
-          if (!res.ok) {
-            const data = await res.json();
-            setStatus('error');
-            setError(data.error || 'Failed to join workspace.');
-            return;
-          }
-          setStatus('success');
-          router.replace('/');
-        } catch (err) {
-          setStatus('error');
-          setError('An unexpected error occurred.');
+      // Always check onboarding after join attempt
+      let joinError = null;
+      try {
+        const res = await fetch('/api/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workspace, token }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          joinError = data.error || 'Failed to join workspace.';
         }
-      };
-      join();
+      } catch (err) {
+        joinError = 'An unexpected error occurred.';
+      }
+
+      // Check onboarding status
+      const {
+        data: { user: refreshedUser },
+      } = await supabase.auth.getUser();
+
+      const onboardingStatus =
+        refreshedUser?.user_metadata?.onboarding_status || {};
+      const isOnboardingComplete = onboardingStatus.completed_at;
+
+      if (!isOnboardingComplete) {
+        router.replace(`/onboarding?join=${encodeURIComponent(workspace)}`);
+      } else {
+        setStatus(joinError ? 'error' : 'success');
+        if (joinError) setError(joinError);
+        router.replace('/');
+      }
     };
 
     checkAuthAndJoin();

@@ -76,14 +76,13 @@ export async function GET(request: NextRequest) {
               onboarding_step: isGoogleAuth ? 'PROFESSIONAL_INFO' : 'PERSONAL_INFO'
             }
           });
+        }
 
-          // For Google users with complete profile, no need to change the redirect
-          // since we're using a unified '/onboarding' path
+        // Handle workspace invitation if parameters exist
+        if (workspaceId && inviteToken) {
+          redirectUrl = `/join?workspace=${encodeURIComponent(workspaceId)}&token=${encodeURIComponent(inviteToken)}`;
         } else if (existingUser && existingUser?.onboarding_step !== 'COMPLETED') {
           redirectUrl = '/onboarding';
-        } else if (inviteToken && workspaceId) {
-          // Handle workspace invitation
-          // redirectUrl = `/auth/workspace-invite?token=${inviteToken}&workspace_id=${workspaceId}`;
         } else {
           redirectUrl = '/';
         }
