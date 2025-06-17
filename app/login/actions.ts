@@ -37,14 +37,8 @@ export async function login(formData: FormData) {
       email: formData.get('email') as string,
       password: formData.get('password') as string,
     };
-    if (isDevelopmentOrStaging) {
-      console.log('[DEBUG] Credentials:', credentials);
-    }
 
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
-    if (isDevelopmentOrStaging) {
-      console.log('[DEBUG] Supabase signInWithPassword result:', { data, error });
-    }
 
     if (error) {
       if (isDevelopmentOrStaging) {
@@ -78,7 +72,6 @@ export async function login(formData: FormData) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
       });
-      console.log('[DEBUG] Session cookie set');
     }
 
     return { id: user.id, email: user.email };
@@ -138,19 +131,12 @@ export async function signup(formData: FormData) {
   let user;
   let authError;
 
-  console.log('Auto-confirm:', autoConfirm);
   if (autoConfirm) {
-    console.log('Auto-confirming user, redirecting to join page');
     // 3a. Auto-confirmed signup (admin createUser)
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: {
-        onboarding_status: {
-          completed_at: new Date().toISOString()
-        }
-      }
     });
     user = data?.user;
     authError = error;
@@ -168,7 +154,6 @@ export async function signup(formData: FormData) {
       }
     }
   } else {
-    console.log('Not auto-confirming user, normal signup');
     // 3b. Regular signup (user signUp)
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -201,7 +186,7 @@ export async function signup(formData: FormData) {
         first_name: '',
         last_name: '',
         full_name: '',
-        onboarding_step: autoConfirm ? 'COMPLETED' : 'PERSONAL_INFO'
+        onboarding_step: 'PERSONAL_INFO'
       }
     });
 
@@ -251,9 +236,6 @@ export async function checkEmailExists(email: string) {
 }
 
 export async function debugCheckEmail(email: string) {
-  if (isDevelopmentOrStaging) {
-    console.log(`[DEBUG] Checking email existence for: ${email}`);
-  }
   const results = {
     prismaCheck: false as boolean,
     supabaseAdminCheck: null as boolean | null,
@@ -272,9 +254,6 @@ export async function debugCheckEmail(email: string) {
       });
       
       results.prismaCheck = !!existingUser;
-      if (isDevelopmentOrStaging) {
-        console.log(`[DEBUG] Prisma result: ${results.prismaCheck ? "User found" : "No user found"}`);
-      }
       
       // If found in Prisma, get more details
       if (existingUser) {
@@ -283,9 +262,6 @@ export async function debugCheckEmail(email: string) {
         results.explanation += "No user found in Prisma database. ";
       }
     } catch (error) {
-      if (isDevelopmentOrStaging) {
-        console.error('[DEBUG] Prisma check error:', error);
-      }
       results.explanation += "Prisma check failed. ";
     } finally {
       if (isVercel()) await prisma_client.$disconnect();
@@ -300,9 +276,6 @@ export async function debugCheckEmail(email: string) {
         if (!error && data?.users) {
           const userExists = data.users.some(user => user.email === email);
           results.supabaseAdminCheck = userExists;
-          if (isDevelopmentOrStaging) {
-            console.log(`[DEBUG] Supabase admin check: ${userExists ? "User found" : "No user found"}`);
-          }
           
           if (userExists) {
             const matchingUser = data.users.find(user => user.email === email);
@@ -311,23 +284,14 @@ export async function debugCheckEmail(email: string) {
             results.explanation += "No user found in Supabase admin check. ";
           }
         } else {
-          if (isDevelopmentOrStaging) {
-            console.log('[DEBUG] Supabase admin check failed:', error);
-          }
           results.explanation += `Supabase admin check failed: ${error?.message || "Unknown error"}. `;
           results.supabaseAdminCheck = null; // Couldn't check
         }
       } catch (adminError: any) {
-        if (isDevelopmentOrStaging) {
-          console.log('[DEBUG] Supabase admin check not available:', adminError);
-        }
         results.explanation += `Supabase admin check not available: ${adminError?.message || "Unknown error"}. `;
         results.supabaseAdminCheck = null; // Couldn't check
       }
     } catch (error) {
-      if (isDevelopmentOrStaging) {
-        console.error('[DEBUG] Supabase check error:', error);
-      }
       results.explanation += "Supabase check failed with error. ";
       results.supabaseAdminCheck = null; // Couldn't check
     }

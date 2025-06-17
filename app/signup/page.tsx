@@ -257,10 +257,20 @@ export default function SignupPage() {
         }
       );
 
+      // Get workspace and token from URL params
+      const workspace = searchParams?.get('workspace');
+      const token = searchParams?.get('token');
+
+      // Build the callback URL with additional parameters if they exist
+      let callbackUrl = `${window.location.origin}/auth/callback`;
+      if (workspace && token) {
+        callbackUrl += `?workspace_id=${encodeURIComponent(workspace)}&invite_token=${encodeURIComponent(token)}`;
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

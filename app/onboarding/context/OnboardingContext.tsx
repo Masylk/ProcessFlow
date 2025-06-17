@@ -68,7 +68,7 @@ interface OnboardingContextType {
 
   // API Functions
   submitPersonalInfo: () => Promise<void>;
-  submitProfessionalInfo: () => Promise<void>;
+  submitProfessionalInfo: (forceComplete?: boolean) => Promise<void>;
   submitWorkspaceSetup: () => void;
 
   // Completed step functions
@@ -363,14 +363,14 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const submitProfessionalInfo = async () => {
+  const submitProfessionalInfo = async (forceComplete?: boolean) => {
     if (!industry || !role || !companySize || !source) {
       setError('Please fill in all fields');
       return;
     }
 
     // First update the UI state to provide immediate feedback
-    setCurrentStep('WORKSPACE_SETUP');
+    setCurrentStep(forceComplete ? 'COMPLETED' : 'WORKSPACE_SETUP');
     setError('');
 
     // Then make the API call in the background
@@ -388,10 +388,21 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({
             professional_role: role,
             company_size: companySize,
             source,
-            onboarding_step: 'WORKSPACE_SETUP',
+            onboarding_step: forceComplete ? 'COMPLETED' : 'WORKSPACE_SETUP',
+            forceComplete,
           },
         }),
       });
+
+      // if (forceComplete) {
+      //   await fetch('/api/user/onboarding-complete', {
+      //     method: 'POST',
+      //     headers: { 'Content-Type': 'application/json' },
+      //   });
+      //   setCurrentStep('COMPLETED');
+      //   // window.location.href = '/';
+      //   return;
+      // }
     } catch (error) {
       console.error(
         'Client error:',

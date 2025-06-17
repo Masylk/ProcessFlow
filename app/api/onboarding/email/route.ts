@@ -336,7 +336,7 @@ export async function POST(request: Request) {
 
       case 'PROFESSIONAL_INFO':
         // Extract user-specific and workspace-specific data
-        const { industry, company_size, is_navigating_back, ...userData } = formData;
+        const { industry, company_size, is_navigating_back, forceComplete, ...userData } = formData;
         
         await prisma_client.user.update({
           where: { id: dbUser.id },
@@ -344,8 +344,8 @@ export async function POST(request: Request) {
             ...userData,
             temp_industry: industry,
             temp_company_size: company_size,
-            // If navigating back, set the step to PERSONAL_INFO, otherwise proceed to WORKSPACE_SETUP
-            onboarding_step: is_navigating_back ? 'PERSONAL_INFO' : 'WORKSPACE_SETUP'
+            onboarding_step: is_navigating_back ? 'PERSONAL_INFO' : (forceComplete ? 'COMPLETED' : 'WORKSPACE_SETUP'),
+            onboarding_completed_at: forceComplete ? new Date() : undefined,
           }
         });
 
@@ -353,8 +353,10 @@ export async function POST(request: Request) {
         await supabase.auth.updateUser({
           data: {
             onboarding_status: {
-              current_step: is_navigating_back ? 'personal-info' : 'workspace-setup',
-              completed_at: null
+              current_step: is_navigating_back
+                ? 'personal-info'
+                : (forceComplete ? 'completed' : 'workspace-setup'),
+              completed_at: forceComplete ? new Date().toISOString() : null,
             }
           }
         });

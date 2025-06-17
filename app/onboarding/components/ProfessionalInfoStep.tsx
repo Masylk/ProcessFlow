@@ -4,7 +4,13 @@ import React from 'react';
 import ButtonNormal from '@/app/components/ButtonNormal';
 import { useOnboarding } from '../context/OnboardingContext';
 
-const ProfessionalInfoStep: React.FC = () => {
+interface ProfessionalInfoStepProps {
+  userHasWorkspace?: boolean;
+}
+
+const ProfessionalInfoStep: React.FC<ProfessionalInfoStepProps> = ({
+  userHasWorkspace,
+}) => {
   const {
     professionalInfo: {
       industry,
@@ -216,7 +222,7 @@ const ProfessionalInfoStep: React.FC = () => {
         <ButtonNormal
           variant="primary"
           size="small"
-          onClick={submitProfessionalInfo}
+          onClick={() => submitProfessionalInfo(userHasWorkspace)}
           disabled={isLoading}
           className="w-2/3"
         >
