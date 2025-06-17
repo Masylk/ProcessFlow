@@ -171,6 +171,7 @@ export async function middleware(request: NextRequest) {
         if (!isOnboardingComplete) {
           // Only redirect if not already on an onboarding route
           if (!isOnboardingRoute) {
+            console.log('Redirecting to onboarding:', request.url);
             return NextResponse.redirect(new URL('/onboarding', request.url));
           }
         }

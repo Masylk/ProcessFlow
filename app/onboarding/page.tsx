@@ -11,6 +11,8 @@ import PersonalInfoStep from './components/PersonalInfoStep';
 import ProfessionalInfoStep from './components/ProfessionalInfoStep';
 import WorkspaceSetupStep from './components/WorkspaceSetupStep';
 import CompletedStep from './components/CompletedStep';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 // Main onboarding component wrapped with provider
 export default function Onboarding() {
@@ -23,21 +25,26 @@ export default function Onboarding() {
 
 // Inner component that uses the onboarding context
 function OnboardingContent() {
-  const { currentStep, isLoadingInitialState, workspaceCreationStarted } = useOnboarding();
-  
+  const { currentStep, isLoadingInitialState, workspaceCreationStarted } =
+    useOnboarding();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const joinWorkspace = searchParams.get('join');
+  const [userHasWorkspace, setUserHasWorkspace] = useState(false);
+
   // Use the colors hook which returns CSS variables
   const colors = useColors();
-  
+
   // Add effect to ensure page is scrollable and uses light mode
   useEffect(() => {
     // Ensure the body has proper overflow behavior
     document.body.style.overflow = 'auto';
     document.body.style.height = '100%';
-    
+
     // Force light theme styles for onboarding
     document.documentElement.classList.add('force-light-theme');
     document.documentElement.classList.remove('dark');
-    
+
     return () => {
       // Reset on unmount
       document.body.style.overflow = '';
@@ -45,7 +52,7 @@ function OnboardingContent() {
       document.documentElement.classList.remove('force-light-theme');
     };
   }, []);
-  
+
   // Add effect to handle browser back button
   useEffect(() => {
     // Listen for popstate events (browser back/forward buttons)
@@ -58,23 +65,50 @@ function OnboardingContent() {
     };
 
     window.addEventListener('popstate', handlePopState);
-    
+
     // Add a history entry to capture back button
     window.history.pushState(null, '', window.location.pathname);
-    
+
     // Clean up the event listener
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [workspaceCreationStarted]);
 
+  useEffect(() => {
+    const checkUserAndWorkspace = async () => {
+      if (!joinWorkspace) return;
+
+      // 1. Get the authenticated user
+      const userRes = await fetch('/api/user');
+      if (!userRes.ok) return;
+      const user = await userRes.json();
+      if (!user?.id || !user?.auth_id) return;
+
+      // 2. Get the user's workspaces
+      const wsRes = await fetch(`/api/user_workspace/${user.id}`);
+      if (!wsRes.ok) return;
+      const workspaces = (await wsRes.json()) as any[];
+
+      // 3. Check if user is part of the workspace (by id or slug)
+      const found = workspaces.some(
+        (ws) => ws.id === parseInt(joinWorkspace) // or ws.slug === joinWorkspace
+      );
+      setUserHasWorkspace(found);
+    };
+
+    checkUserAndWorkspace();
+  }, [joinWorkspace]);
+
   // Render loading state during initial check to prevent flashing of onboarding UI
   if (isLoadingInitialState) {
-    return <div className="flex h-screen w-full items-center justify-center">
-      <LoadingSpinner size="large" />
-    </div>;
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
+    );
   }
-  
+
   // Render the actual onboarding content
   return (
     <div
@@ -90,12 +124,12 @@ function OnboardingContent() {
             className="w-full"
           />
         </div>
-        
+
         {/* Fixed position progress indicator */}
         <div className="w-full">
           <ProgressIndicator />
         </div>
-        
+
         {/* Content container */}
         <div className="w-full flex items-start justify-center pb-16">
           {/* Content for current step */}
@@ -105,19 +139,19 @@ function OnboardingContent() {
                 <PersonalInfoStep />
               </MotionStep>
             )}
-            
+
             {currentStep === 'PROFESSIONAL_INFO' && (
               <MotionStep key="professional-info-step">
-                <ProfessionalInfoStep />
+                <ProfessionalInfoStep userHasWorkspace={userHasWorkspace} />
               </MotionStep>
             )}
-            
+
             {currentStep === 'WORKSPACE_SETUP' && (
               <MotionStep key="workspace-setup-step">
                 <WorkspaceSetupStep />
               </MotionStep>
             )}
-            
+
             {currentStep === 'COMPLETED' && (
               <MotionStep key="completed-step">
                 <CompletedStep />
@@ -128,4 +162,4 @@ function OnboardingContent() {
       </div>
     </div>
   );
-} 
+}

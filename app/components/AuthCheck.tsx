@@ -19,7 +19,7 @@ const PUBLIC_PATHS = [
   '/auth/callback',
   '/auth/confirm',
   '/reset-password-request',
-  '/reset-password'
+  '/reset-password',
 ] as const;
 
 export default function AuthCheck({ children }: { children: React.ReactNode }) {
@@ -50,13 +50,13 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
           '/monitoring',
         ];
 
-        const isPublicPath = pathname ? PUBLIC_PATHS.some((path) =>
-          pathname.startsWith(path)
-        ) : false;
+        const isPublicPath = pathname
+          ? PUBLIC_PATHS.some((path) => pathname.startsWith(path))
+          : false;
 
-        const isSharePath = pathname ? sharePaths.some((path) =>
-          pathname.includes(path)
-        ) : false;
+        const isSharePath = pathname
+          ? sharePaths.some((path) => pathname.includes(path))
+          : false;
 
         // Redirect to login if not authenticated and not on public/share path
         if ((!user || error) && !isPublicPath && !isSharePath) {
@@ -68,27 +68,27 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
         if (user) {
           // Set up PostHog identification
           posthog.identify(user.id);
-          
+
           // Set user email as a property
           if (user.email) {
             posthog.people.set({ email: user.email });
           }
-          
+
           // Capture login event for Google auth users coming from callback
           if (pathname?.includes('/auth/callback')) {
             const isGoogleAuth = user.app_metadata?.provider === 'google';
             if (isGoogleAuth) {
-              posthog.capture('login', { 
+              posthog.capture('login', {
                 email: user.email,
-                provider: 'google'
+                provider: 'google',
               });
             }
           }
-          
+
           // Also set up Sentry user identification
           Sentry.setUser({
             id: user.id,
-            email: user.email || undefined
+            email: user.email || undefined,
           });
 
           // Check onboarding status
@@ -134,7 +134,12 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [pathname, router, supabase.auth]);
 
-  if (isLoading && pathname !== '/login' && pathname && !pathname.startsWith('/auth/')) {
+  if (
+    isLoading &&
+    pathname !== '/login' &&
+    pathname &&
+    !pathname.startsWith('/auth/')
+  ) {
     return <LoadingSpinner fullScreen size="large" />;
   }
 
