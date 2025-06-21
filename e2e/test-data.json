@@ -1,5 +1,5 @@
 {
-  "seededAt": "2025-06-08T06:25:47.907Z",
+  "seededAt": "2025-06-09T05:48:05.343Z",
   "users": {
     "MAIN_USER": {
       "email": "test-user@processflow-test.com",
@@ -24,16 +24,16 @@
     }
   },
   "workspace": {
-    "id": 64,
+    "id": 140,
     "slug": "test-workspace",
     "name": "Test Workspace"
   },
   "workflow": {
-    "id": 59,
+    "id": 93,
     "name": "Test Workflow for E2E"
   },
   "urls": {
     "login": "http://localhost:3000/login",
-    "editor": "/workspace/64/test-workflow-for-e2e--pf-59/edit"
+    "editor": "/test-workspace/test-workflow-for-e2e--pf-93/edit"
   }
 }

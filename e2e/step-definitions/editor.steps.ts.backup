@@ -1,9 +1,9 @@
 /**
- * Editor E2E Test Step Definitions - Refactored
+ * Editor E2E Test Step Definitions
  * 
  * DEVELOPMENT MODE USAGE:
  * Set environment variable TEST_MODE=development to use specific test credentials:
- * - Email: jean.willame+test@outlook.fr  
+ * - Email: jean.willame+test@outlook.fr
  * - Password: Australie12?
  * - Editor URL: http://localhost:3000/caca/test-flow--pf-64/edit
  * 
@@ -12,96 +12,45 @@
  * 
  * This bypasses the seeded test data and authentication for focused editor testing.
  * For CI/CD and production tests, use without TEST_MODE environment variable.
- */// @ts-nocheck
-const { Given, When, Then, After, Before, setWorldConstructor } = require('@cucumber/cucumber');
-const { expect, chromium } = require('@playwright/test');
+ */
+const { Given, When, Then, Before, After } = require('@cucumber/cucumber');
+const { chromium } = require('@playwright/test');
+const { expect } = require('chai');
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000/';
-const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-
-function getPageOptions() {
-  return BYPASS
-    ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': BYPASS } }
-    : {};
-}
-
-function CustomWorld(options) {
-  this.browser = null;
-  this.page = null;
-}
-setWorldConstructor(CustomWorld);
-
-Before(async function () {
-  this.browser = await chromium.launch();
-  this.page = await this.browser.newPage(getPageOptions());
-  // Always start online unless a scenario sets offline
-  await this.page?.context()?.setOffline(false);
-});
-
-After(async function () {
-  // Reset to online before closing the page/browser
-  await this.page?.context()?.setOffline(false);
-  await this.page?.close();
-  await this.browser?.close();
-});
-
-Given('an editor placeholder step', function () {
-  // Placeholder step for editor
-});
-
-// Import refactored utilities
-import {
-  shouldSkipStep,
-  login as helperLogin,
-  getPageOptions as helperGetPageOptions,
-  takeDebugScreenshot,
-  findElementWithFallbacks,
-  clickWithFallbacks,
-  typeWithFallbacks,
-  verifyElementExists,
-  panCanvas,
-  doubleClickCanvas
-} from '../helpers';
-import { TIMEOUTS, SELECTORS, DEBUG_PATHS, TEST_DATA as CONSTANTS_TEST_DATA } from '../constants';
-
-// TypeScript interface for test context
-interface CustomWorld {
-  browser: any;
-  page: any;
-  testData?: {
-    workspace: any;
-    workflow: any;
-    user: any;
-    blocks?: any;
-    path?: any;
-  };
-}
+/**
+ * @typedef {Object} CustomWorld
+ * @property {any} browser
+ * @property {any} page
+ * @property {Object} testData
+ */
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
-// Development mode configuration
+// Development mode configuration - set TEST_MODE=development to use specific credentials and URL
 const USE_DEVELOPMENT_MODE = process.env.TEST_MODE === 'development';
-const DEV_USER_EMAIL = 'test-user@processflow-test.com';
-const DEV_USER_PASSWORD = 'TestPassword123!';
+// Temporarily using seeded credentials since specific ones aren't working
+const DEV_USER_EMAIL = 'test-user@processflow-test.com'; // 'jean.willame+test@outlook.fr';
+const DEV_USER_PASSWORD = 'TestPassword123!'; // 'Australie12?';
 const DEV_EDITOR_URL = '/caca/test-flow--pf-64/edit';
 
 // Load test data from seeded file
-let LOADED_TEST_DATA: any = null;
-let LOADED_TEST_USER: any = null;
+let TEST_DATA: any = null;
+let TEST_USER: any = null;
 
 function loadTestData() {
-  if (!LOADED_TEST_DATA) {
+  if (!TEST_DATA) {
     // Development mode override - use specific credentials for editor testing
     if (USE_DEVELOPMENT_MODE) {
       console.log('🔧 Using DEVELOPMENT MODE - specific credentials for editor testing');
-      LOADED_TEST_USER = {
+      TEST_USER = {
         email: DEV_USER_EMAIL,
         password: DEV_USER_PASSWORD,
         firstName: 'Jean',
         lastName: 'Willame',
         fullName: 'Jean Willame'
       };
-      LOADED_TEST_DATA = {
+      TEST_DATA = {
         workspace: { id: 'dev', slug: 'caca', name: 'Development Workspace' },
         workflow: { id: 64, name: 'test-flow' },
         urls: {
@@ -110,7 +59,7 @@ function loadTestData() {
         }
       };
       console.log('✅ Loaded development mode test data');
-      return { TEST_DATA: LOADED_TEST_DATA, TEST_USER: LOADED_TEST_USER };
+      return { TEST_DATA, TEST_USER };
     }
 
     // Standard seeded data loading for CI/production tests
@@ -118,34 +67,37 @@ function loadTestData() {
       const fs = require('fs');
       const testDataPath = 'e2e/test-data.json';
       if (fs.existsSync(testDataPath)) {
-        LOADED_TEST_DATA = JSON.parse(fs.readFileSync(testDataPath, 'utf8'));
-        LOADED_TEST_USER = LOADED_TEST_DATA.users.MAIN_USER;
+        TEST_DATA = JSON.parse(fs.readFileSync(testDataPath, 'utf8'));
+        TEST_USER = TEST_DATA.users.MAIN_USER;
         console.log('✅ Loaded test data from seeded file');
       } else {
         console.warn('⚠️ No test data file found, using fallback credentials');
-        LOADED_TEST_USER = {
-          email: CONSTANTS_TEST_DATA.DEVELOPMENT_CREDENTIALS.EMAIL,
-          password: CONSTANTS_TEST_DATA.DEVELOPMENT_CREDENTIALS.PASSWORD
+        TEST_USER = {
+          email: 'test-user@processflow-test.com',
+          password: 'TestPassword123!'
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.warn('⚠️ Could not load test data, using fallback:', error.message);
-      LOADED_TEST_USER = {
-        email: CONSTANTS_TEST_DATA.DEVELOPMENT_CREDENTIALS.EMAIL,
-        password: CONSTANTS_TEST_DATA.DEVELOPMENT_CREDENTIALS.PASSWORD
+      TEST_USER = {
+        email: 'test-user@processflow-test.com',
+        password: 'TestPassword123!'
       };
     }
   }
-  return { TEST_DATA: LOADED_TEST_DATA, TEST_USER: LOADED_TEST_USER };
+  return { TEST_DATA, TEST_USER };
 }
 
-// Using helper function instead
-const getPageOptions = helperGetPageOptions;
+function getPageOptions() {
+  return BYPASS
+    ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': BYPASS } }
+    : {};
+}
 
 /**
  * Helper to get userId by email using the test API route
  */
-async function getUserIdByEmail(email: string): Promise<string | null> {
+async function getUserIdByEmail(email) {
   try {
     const res = await fetch(`${BASE_URL}/api/test/get-user-by-email`, {
       method: 'POST',
@@ -164,7 +116,7 @@ async function getUserIdByEmail(email: string): Promise<string | null> {
 /**
  * Helper to create a test workspace for a user
  */
-async function createTestWorkspace(userId: string, workspaceName = 'Test Workspace', workspaceSlug = 'test-workspace'): Promise<any> {
+async function createTestWorkspace(userId, workspaceName = 'Test Workspace', workspaceSlug = 'test-workspace') {
   try {
     const res = await fetch(`${BASE_URL}/api/test/create-test-workspace`, {
       method: 'POST',
@@ -186,7 +138,7 @@ async function createTestWorkspace(userId: string, workspaceName = 'Test Workspa
 /**
  * Helper to create a test workflow in a workspace
  */
-async function createTestWorkflow(workspaceId: string, workflowName = 'Test Workflow', authorId: string | null = null): Promise<any> {
+async function createTestWorkflow(workspaceId, workflowName = 'Test Workflow', authorId = null) {
   try {
     const res = await fetch(`${BASE_URL}/api/test/create-test-workflow`, {
       method: 'POST',
@@ -208,7 +160,7 @@ async function createTestWorkflow(workspaceId: string, workflowName = 'Test Work
 /**
  * Helper to construct editor URL for a workflow
  */
-function constructEditorUrl(workspaceSlug: string, workflowName: string, workflowId: string | number): string {
+function constructEditorUrl(workspaceSlug, workflowName, workflowId) {
   const encodedWorkflowName = workflowName.toLowerCase().replace(/\s+/g, '-');
   return `/${workspaceSlug}/${encodedWorkflowName}--pf-${workflowId}/edit`;
 }
@@ -216,17 +168,139 @@ function constructEditorUrl(workspaceSlug: string, workflowName: string, workflo
 /**
  * Helper function to login (reused from authentication tests)
  */
-// Login function using helper - replaces 130+ line original
-async function login(page: any, email?: string, password?: string) {
+async function login(page, email?: string, password?: string) {
   const { TEST_USER: testUser } = loadTestData();
   const loginEmail = email || testUser.email;
   const loginPassword = password || testUser.password;
-  
-  await helperLogin(page, loginEmail, loginPassword);
+  try {
+    console.log('Navigating to login page:', `${BASE_URL}/login`);
+    await page.goto(`${BASE_URL}/login`);
+    
+    console.log('Waiting for login page to load...');
+    await page.waitForSelector('input[name="email"], input[type="email"]', { timeout: 10000 });
+    
+    console.log('Filling email:', loginEmail);
+    await page.fill('input[name="email"], input[type="email"]', loginEmail);
+    
+    console.log('Filling password');
+    await page.fill('input[name="password"], input[type="password"]', loginPassword);
+    
+    console.log('Clicking submit button');
+    await page.locator('button[type="submit"]').click({ force: true });
+    
+    console.log('Waiting a moment for login processing...');
+    await page.waitForTimeout(3000);
+    
+    // Check for specific error messages that indicate login failure
+    const errorSelectors = [
+      '[role="alert"]',
+      '.error',
+      '.toast',
+      '[data-testid="error-message"]',
+      '.text-red-500:has-text("Invalid")',
+      '.text-red-500:has-text("Wrong")',
+      '.text-red-500:has-text("incorrect")',
+      '.text-danger'
+    ];
+    
+    let hasError = false;
+    let errorText = '';
+    
+    for (const selector of errorSelectors) {
+      try {
+        const element = page.locator(selector);
+        if (await element.count() > 0) {
+          const text = await element.first().textContent();
+          if (text && text.trim().length > 0 && 
+              (text.toLowerCase().includes('invalid') || 
+               text.toLowerCase().includes('wrong') || 
+               text.toLowerCase().includes('incorrect') ||
+               text.toLowerCase().includes('failed'))) {
+            errorText = text;
+            hasError = true;
+            break;
+          }
+        }
+      } catch (e) {
+        // Continue checking other selectors
+      }
+    }
+    
+    if (hasError) {
+      console.log('Login error found:', errorText);
+      await page.screenshot({ path: 'e2e/debug-login-error.png' });
+      throw new Error(`Login failed with error: ${errorText}`);
+    }
+    
+    console.log('Current URL after login attempt:', page.url());
+    
+    // Check if we're still on login page after waiting
+    const currentUrl = page.url();
+    if (currentUrl.includes('/login')) {
+      console.log('Still on login page, checking for any visible errors...');
+      
+      // Take a screenshot of the full page to see what's happening
+      await page.screenshot({ path: 'e2e/debug-login-state.png', fullPage: true });
+      
+      // Look for any red text that might indicate errors
+      const allRedText = await page.locator('.text-red-500, .text-danger, .error').all();
+      for (const element of allRedText) {
+        const text = await element.textContent();
+        if (text && text.trim()) {
+          console.log('Found red text element:', text.trim());
+        }
+      }
+      
+      // Check page title and see if there are form validation issues
+      const pageTitle = await page.title();
+      console.log('Page title:', pageTitle);
+      
+      // Check if there are any form validation errors
+      const inputs = await page.locator('input[type="email"], input[type="password"]').all();
+      for (const input of inputs) {
+        const validationMessage = await input.evaluate(el => el.validationMessage);
+        if (validationMessage) {
+          console.log('Input validation message:', validationMessage);
+        }
+      }
+    }
+    
+    // Try to wait for navigation away from login
+    try {
+      console.log('Waiting for dashboard redirect...');
+      await page.waitForURL(url => {
+        const urlString = typeof url === 'string' ? url : url.toString();
+        return !urlString.includes('/login');
+      }, { timeout: 10000 });
+    } catch (navError) {
+      console.log('Navigation timeout, checking if we\'re already logged in...');
+      // Sometimes we might already be on the dashboard, check current URL
+      const finalUrl = page.url();
+      if (!finalUrl.includes('/login')) {
+        console.log('Already on dashboard page:', finalUrl);
+      } else {
+        console.log('Still on login page after timeout. Login likely failed.');
+        // Take final screenshot for debugging
+        await page.screenshot({ path: 'e2e/debug-login-final.png', fullPage: true });
+        throw new Error('Login failed: Still on login page after timeout');
+      }
+    }
+    
+    console.log('Login function finished successfully');
+  } catch (error) {
+    console.error('Login failed:', error);
+    console.log('Current URL:', page.url());
+    console.log('Page title:', await page.title());
+    
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'e2e/debug-login-failed.png' });
+    
+    throw error;
+  }
 }
 
 // Optimized browser lifecycle management
-Before(async function (){
+Before(async function () {
   this.browser = await chromium.launch({ headless: true });
   this.page = await this.browser.newPage({
     ...getPageOptions(),
@@ -238,7 +312,7 @@ Before(async function (){
   this.page.setDefaultNavigationTimeout(15000);
 });
 
-After(async function (){
+After(async function () {
   if (this.page) {
     await this.page.close();
   }
@@ -249,7 +323,7 @@ After(async function (){
 
 // --- Given Steps ---
 
-Given('I can access the editor page directly', { timeout: 30000 }, async function (){
+Given('I can access the editor page directly', { timeout: 30000 }, async function () {
   if (USE_DEVELOPMENT_MODE) {
     console.log('🔧 DEVELOPMENT MODE: Direct editor access - BYPASSING AUTHENTICATION');
     console.log('🔧 This is for editor functionality testing only');
@@ -280,7 +354,7 @@ Given('I can access the editor page directly', { timeout: 30000 }, async functio
   }
 });
 
-Given('I am a logged-in user', { timeout: 30000 }, async function (){
+Given('I am a logged-in user', { timeout: 30000 }, async function () {
   if (USE_DEVELOPMENT_MODE) {
     console.log('🔧 DEVELOPMENT MODE: Checking if authentication is required...');
     
@@ -309,7 +383,7 @@ Given('I am a logged-in user', { timeout: 30000 }, async function (){
   console.log('Login completed for editor tests.');
 });
 
-Given('I am on the editor page of a workflow', async function (){
+Given('I am on the editor page of a workflow', async function () {
   console.log('Setting up test workspace and workflow...');
   
   const { TEST_DATA, TEST_USER: testUser } = loadTestData();
@@ -364,7 +438,6 @@ Given('I am on the editor page of a workflow', async function (){
     this.testData = {
       workspace,
       workflow: workflowData.workflow,
-      user: testUser,
       blocks: workflowData.blocks,
       path: workflowData.path
     };
@@ -380,7 +453,7 @@ Given('I am on the editor page of a workflow', async function (){
 
 // --- When Steps ---
 
-When('I navigate directly to an editor URL', async function (){
+When('I navigate directly to an editor URL', async function () {
   console.log('Navigating directly to a test editor URL...');
   
   if (USE_DEVELOPMENT_MODE) {
@@ -396,7 +469,7 @@ When('I navigate directly to an editor URL', async function (){
   }
 });
 
-When('I access the workflow editor', async function (){
+When('I access the workflow editor', async function () {
   console.log('Accessing workflow editor (already done in Given step)');
   // This step is implicitly handled by "Given I am on the editor page of a workflow"
   // We just verify we're on the correct page
@@ -404,54 +477,63 @@ When('I access the workflow editor', async function (){
   expect(currentUrl).toContain('/edit');
 });
 
-When('I click the workflow title', async function (){
+When('I click the workflow title', async function () {
   console.log('Clicking workflow title to edit inline');
   // Look for the workflow title element and click it to enable editing
   await this.page.click('h1, [role="heading"], .workflow-title, .workflow-header h1');
 });
 
-When('I click {string}', async function (this: CustomWorld, buttonText: string) {
-  if (await shouldSkipStep(this.page, `clicking ${buttonText}`)) return;
-
-  const selectors = buttonText === 'Read Mode' 
-    ? ['button:has-text("Read Mode")', 'a:has-text("Read Mode")', '[href*="/read"]']
-    : [`button:has-text("${buttonText}")`, `a:has-text("${buttonText}")`];
-  
-  const success = await clickWithFallbacks(this.page, selectors, buttonText);
-  if (!success) {
-    await takeDebugScreenshot(this.page, DEBUG_PATHS.CURRENT_PAGE);
-    throw new Error(`Could not click button: ${buttonText}`);
+When('I click {string}', async function (buttonText) {
+  console.log(`Clicking button: ${buttonText}`);
+  if (buttonText === 'Read Mode') {
+    await this.page.click('button:has-text("Read Mode"), a:has-text("Read Mode"), [href*="/read"]');
+  } else {
+    await this.page.click(`button:has-text("${buttonText}"), a:has-text("${buttonText}")`);
   }
 });
 
-When('I click on a block in the sidebar', async function (){
+When('I click on a block in the sidebar', async function () {
   console.log('Clicking on a block in the sidebar');
   // Click on the first available block in the sidebar
   await this.page.click('.sidebar [data-block-id], .sidebar .block-item, .sidebar li:has-text("Start"), .sidebar li:has-text("Begin")');
 });
 
-When('I pan the canvas by dragging', async function (){
-  if (await shouldSkipStep(this.page, 'panning canvas')) return;
-  await panCanvas(this.page);
-});
-
-When('I zoom {string} using the zoom controls', async function (this: CustomWorld, direction: string) {
-  if (await shouldSkipStep(this.page, `zooming ${direction}`)) return;
-
-  const selectors = direction === 'in' ? [...SELECTORS.ZOOM_IN] : [...SELECTORS.ZOOM_OUT];
-  const success = await clickWithFallbacks(this.page, selectors, `zoom ${direction}`);
+When('I pan the canvas by dragging', async function () {
+  console.log('Panning the canvas by dragging');
+  // Get the canvas/reactflow container
+  const canvas = await this.page.locator('.react-flow, [data-testid="rf__wrapper"], .react-flow__renderer').first();
   
-  if (!success) {
-    console.warn(`⚠️ Could not find zoom ${direction} controls`);
+  // Perform drag operation to pan
+  const box = await canvas.boundingBox();
+  if (box) {
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await this.page.mouse.down();
+    await this.page.mouse.move(box.x + box.width / 2 + 100, box.y + box.height / 2 + 50);
+    await this.page.mouse.up();
   }
 });
 
-When('I double-click on an empty area', async function (){
-  if (await shouldSkipStep(this.page, 'double-clicking canvas')) return;
-  await doubleClickCanvas(this.page);
+When('I zoom {string} using the zoom controls', async function (direction) {
+  console.log(`Zooming ${direction} using zoom controls`);
+  if (direction === 'in') {
+    await this.page.click('.react-flow__controls button[title*="zoom in"], .zoom-controls .zoom-in, button:has-text("+")');
+  } else if (direction === 'out') {
+    await this.page.click('.react-flow__controls button[title*="zoom out"], .zoom-controls .zoom-out, button:has-text("-")');
+  }
 });
 
-When('I am in the editor', async function (){
+When('I double-click on an empty area', async function () {
+  console.log('Double-clicking on empty area of canvas');
+  // Find an empty area in the canvas and double-click
+  const canvas = await this.page.locator('.react-flow, [data-testid="rf__wrapper"], .react-flow__renderer').first();
+  const box = await canvas.boundingBox();
+  if (box) {
+    // Click in the top-right area which should be empty
+    await this.page.dblclick(box.x + box.width * 0.8, box.y + box.height * 0.2);
+  }
+});
+
+When('I am in the editor', async function () {
   console.log('Verifying I am in the editor (already established by background)');
   // This step is implicitly handled by the Background section
   // We just verify we're on the correct page
@@ -529,7 +611,7 @@ Then('I should see the workflow header with the workflow name', async function (
   }
 });
 
-Then('I should see the main canvas area', async function (){
+Then('I should see the main canvas area', async function () {
   console.log('Verifying main canvas area is visible');
   
   const currentUrl = this.page.url();
@@ -543,7 +625,7 @@ Then('I should see the main canvas area', async function (){
   await this.page.waitForSelector('.react-flow, [data-testid="rf__wrapper"], .react-flow__renderer', { timeout: 5000 });
 });
 
-Then('I should see the sidebar on the left', async function (){
+Then('I should see the sidebar on the left', async function () {
   console.log('Verifying sidebar is visible on the left');
   await this.page.waitForSelector('.sidebar, [data-testid="sidebar"], aside', { timeout: 5000 });
   
@@ -553,12 +635,12 @@ Then('I should see the sidebar on the left', async function (){
   expect(box?.x).toBeLessThan(200); // Should be positioned near the left edge
 });
 
-Then('I should see zoom controls', async function (){
+Then('I should see zoom controls', async function () {
   console.log('Verifying zoom controls are visible');
   await this.page.waitForSelector('.react-flow__controls, .zoom-controls', { timeout: 5000 });
 });
 
-Then('I should see a {string} block on the canvas', async function (this: CustomWorld, blockType: string) {
+Then('I should see a {string} block on the canvas', async function (blockType) {
   console.log(`Verifying ${blockType} block is visible on canvas`);
   const blockSelector = blockType.toLowerCase() === 'begin' 
     ? '[data-nodetype="begin"], [data-block-type="begin"], .begin-block, .node-begin'
@@ -567,35 +649,35 @@ Then('I should see a {string} block on the canvas', async function (this: Custom
   await this.page.waitForSelector(blockSelector, { timeout: 5000 });
 });
 
-Then('I should see navigation breadcrumbs', async function (){
+Then('I should see navigation breadcrumbs', async function () {
   console.log('Verifying navigation breadcrumbs are visible');
   await this.page.waitForSelector('.breadcrumbs, [data-testid="breadcrumbs"], nav[aria-label="breadcrumb"]', { timeout: 5000 });
 });
 
-Then('I should be able to edit the workflow title inline', async function (){
+Then('I should be able to edit the workflow title inline', async function () {
   console.log('Verifying inline title editing capability');
   // After clicking the title, there should be an input field or contenteditable element
   await this.page.waitForSelector('input[value], [contenteditable="true"], .title-input', { timeout: 3000 });
 });
 
-Then('I should be redirected to the read view of the workflow', async function (){
+Then('I should be redirected to the read view of the workflow', async function () {
   console.log('Verifying redirect to read view');
   await this.page.waitForURL(/.*\/read/, { timeout: 10000 });
   expect(this.page.url()).toContain('/read');
 });
 
-Then('the canvas should center on that block', async function (){
+Then('the canvas should center on that block', async function () {
   console.log('Verifying canvas centers on selected block');
   // This is challenging to test precisely, but we can verify that a block is highlighted/selected
   await this.page.waitForSelector('.selected, [data-selected="true"], .highlighted', { timeout: 3000 });
 });
 
-Then('the block should be highlighted', async function (){
+Then('the block should be highlighted', async function () {
   console.log('Verifying block is highlighted');
   await this.page.waitForSelector('.selected, [data-selected="true"], .highlighted, .active', { timeout: 3000 });
 });
 
-Then('the canvas should fit all blocks in view', async function (){
+Then('the canvas should fit all blocks in view', async function () {
   console.log('Verifying canvas fits all blocks in view');
   // After double-click, the view should adjust to show all content
   // We can verify this by checking if the zoom level changed or by ensuring blocks are visible
@@ -606,7 +688,7 @@ Then('the canvas should fit all blocks in view', async function (){
   expect(await beginBlock.isVisible()).toBe(true);
 });
 
-Then('I should be able to access the page', async function (){
+Then('I should be able to access the page', async function () {
   console.log('Verifying page is accessible');
   // Simple check that we can access the page without major errors
   const currentUrl = this.page.url();
@@ -621,7 +703,7 @@ Then('I should be able to access the page', async function (){
   expect(pageTitle).toBeTruthy();
 });
 
-Then('I should see the workflow title in the header', async function (){
+Then('I should see the workflow title in the header', async function () {
   console.log('Verifying workflow title is visible in header');
   
   const currentUrl = this.page.url();
@@ -667,7 +749,7 @@ Then('I should see the workflow title in the header', async function (){
   }
 });
 
-Then('I should see a {string} button', async function (this: CustomWorld, buttonText: string) {
+Then('I should see a {string} button', async function (buttonText) {
   console.log(`Verifying ${buttonText} button is visible`);
   
   const currentUrl = this.page.url();
@@ -679,7 +761,7 @@ Then('I should see a {string} button', async function (this: CustomWorld, button
   await this.page.waitForSelector(`button:has-text("${buttonText}"), a:has-text("${buttonText}")`, { timeout: 5000 });
 });
 
-Then('I should see the sidebar with workflow navigation', async function (){
+Then('I should see the sidebar with workflow navigation', async function () {
   console.log('Verifying sidebar with workflow navigation');
   
   const currentUrl = this.page.url();
@@ -717,7 +799,7 @@ Then('I should see the sidebar with workflow navigation', async function (){
   expect(sidebarFound).toBe(true);
 });
 
-Then('I should see a list of all blocks in the workflow', async function (){
+Then('I should see a list of all blocks in the workflow', async function () {
   console.log('Verifying list of blocks in sidebar');
   
   const currentUrl = this.page.url();
@@ -733,7 +815,7 @@ Then('I should see a list of all blocks in the workflow', async function (){
   expect(blockItems).toBeGreaterThan(0);
 });
 
-Then('I should see block hierarchy with proper indentation', async function (){
+Then('I should see block hierarchy with proper indentation', async function () {
   console.log('Verifying block hierarchy with indentation');
   
   const currentUrl = this.page.url();
@@ -751,7 +833,7 @@ Then('I should see block hierarchy with proper indentation', async function (){
   expect(blockList).toBeGreaterThan(0);
 });
 
-Then('I should be able to pan the canvas by dragging', async function (){
+Then('I should be able to pan the canvas by dragging', async function () {
   console.log('Verifying canvas panning capability');
   
   const currentUrl = this.page.url();
@@ -763,7 +845,7 @@ Then('I should be able to pan the canvas by dragging', async function (){
   const canvas = await this.page.locator('.react-flow, [data-testid="rf__wrapper"], .react-flow__renderer').first();
   
   // Get initial viewport position
-  const initialTransform = await canvas.evaluate((el: Element) => {
+  const initialTransform = await canvas.evaluate(el => {
     const style = window.getComputedStyle(el.querySelector('.react-flow__viewport') || el);
     return style.transform;
   });
@@ -780,7 +862,7 @@ Then('I should be able to pan the canvas by dragging', async function (){
     await this.page.waitForTimeout(500);
     
     // Verify transform changed (panning occurred)
-    const finalTransform = await canvas.evaluate((el: Element) => {
+    const finalTransform = await canvas.evaluate(el => {
       const style = window.getComputedStyle(el.querySelector('.react-flow__viewport') || el);
       return style.transform;
     });
@@ -791,7 +873,7 @@ Then('I should be able to pan the canvas by dragging', async function (){
   }
 });
 
-Then('I should be able to zoom in and out using mouse wheel', async function (){
+Then('I should be able to zoom in and out using mouse wheel', async function () {
   console.log('Verifying mouse wheel zoom capability');
   
   const currentUrl = this.page.url();
@@ -817,7 +899,7 @@ Then('I should be able to zoom in and out using mouse wheel', async function (){
   }
 });
 
-Then('I should be able to zoom using the zoom controls', async function (){
+Then('I should be able to zoom using the zoom controls', async function () {
   console.log('Verifying zoom controls functionality');
   
   const currentUrl = this.page.url();
@@ -890,7 +972,7 @@ Then('I should be able to zoom using the zoom controls', async function (){
 
 // --- Block Creation and Management Steps ---
 
-Given('I am in the workflow editor', { timeout: 30000 }, async function (){
+Given('I am in the workflow editor', { timeout: 30000 }, async function () {
   console.log('Setting up workflow editor environment');
   
   // Reuse the existing authentication and editor setup logic
@@ -936,7 +1018,7 @@ Given('I am in the workflow editor', { timeout: 30000 }, async function (){
   console.log('Editor environment setup completed');
 });
 
-Given('I can see the canvas with a {string} block', async function (this: CustomWorld, blockType: string) {
+Given('I can see the canvas with a {string} block', async function (blockType) {
   console.log(`Verifying ${blockType} block is visible on canvas`);
   const blockSelector = blockType.toLowerCase() === 'begin' 
     ? '[data-nodetype="begin"], [data-block-type="begin"], .begin-block, .node-begin'
@@ -945,7 +1027,7 @@ Given('I can see the canvas with a {string} block', async function (this: Custom
   await this.page.waitForSelector(blockSelector, { timeout: 5000 });
 });
 
-Given('I have a Step block on the canvas', async function (){
+Given('I have a Step block on the canvas', async function () {
   console.log('Ensuring a Step block exists on canvas');
   // First try to find existing step block
   const existingStep = await this.page.locator('[data-nodetype="step"], .step-block').count();
@@ -958,33 +1040,33 @@ Given('I have a Step block on the canvas', async function (){
   await this.page.waitForSelector('[data-nodetype="step"], .step-block', { timeout: 5000 });
 });
 
-When('I click the {string} button after the Begin block', async function (this: CustomWorld, buttonText: string) {
+When('I click the {string} button after the Begin block', async function (buttonText) {
   console.log(`Clicking ${buttonText} button after Begin block`);
   // Look for add button near the Begin block
   await this.page.click('[data-testid="add-block-button"], .add-block-btn, button:has-text("+"), .begin-block + button');
 });
 
-When('I click the {string} button after a Step block', async function (this: CustomWorld, buttonText: string) {
+When('I click the {string} button after a Step block', async function (buttonText) {
   console.log(`Clicking ${buttonText} button after Step block`);
   await this.page.click('.step-block + button, [data-testid="add-block-button"]');
 });
 
-When('I click the {string} button after the last block in a path', async function (this: CustomWorld, buttonText: string) {
+When('I click the {string} button after the last block in a path', async function (buttonText) {
   console.log(`Clicking ${buttonText} button after last block`);
   await this.page.click('.path-container .block:last-child + button, [data-testid="add-block-button"]:last-of-type');
 });
 
-When('I enter condition name {string}', async function (this: CustomWorld, conditionName: string) {
+When('I enter condition name {string}', async function (conditionName) {
   console.log(`Entering condition name: ${conditionName}`);
   await this.page.fill('input[name="conditionName"], input[placeholder*="name" i]', conditionName);
 });
 
-When('I enter condition description {string}', async function (this: CustomWorld, description: string) {
+When('I enter condition description {string}', async function (description) {
   console.log(`Entering condition description: ${description}`);
   await this.page.fill('textarea[name="description"], textarea[placeholder*="description" i]', description);
 });
 
-When('I add path names {string} and {string}', async function (this: CustomWorld, path1: string, path2: string) {
+When('I add path names {string} and {string}', async function (path1, path2) {
   console.log(`Adding path names: ${path1} and ${path2}`);
   // Look for path input fields or add path buttons
   await this.page.fill('input[name="pathName"], .path-input:first-of-type', path1);
@@ -992,23 +1074,23 @@ When('I add path names {string} and {string}', async function (this: CustomWorld
   await this.page.fill('input[name="pathName"], .path-input:last-of-type', path2);
 });
 
-When('I set the delay to {int} hours and {int} minutes', async function (this: CustomWorld, hours: number, minutes: number) {
+When('I set the delay to {int} hours and {int} minutes', async function (hours, minutes) {
   console.log(`Setting delay to ${hours} hours and ${minutes} minutes`);
   await this.page.fill('input[name="hours"], [data-field="hours"]', hours.toString());
   await this.page.fill('input[name="minutes"], [data-field="minutes"]', minutes.toString());
 });
 
-When('I enter event name {string}', async function (this: CustomWorld, eventName: string) {
+When('I enter event name {string}', async function (eventName) {
   console.log(`Entering event name: ${eventName}`);
   await this.page.fill('input[name="eventName"], input[placeholder*="event" i]', eventName);
 });
 
-When('I set maximum wait time to {int} days', async function (this: CustomWorld, days: number) {
+When('I set maximum wait time to {int} days', async function (days) {
   console.log(`Setting maximum wait time to ${days} days`);
   await this.page.fill('input[name="maxWaitDays"], [data-field="maxWaitDays"]', days.toString());
 });
 
-When('I select {string}', async function (this: CustomWorld, optionText: string) {
+When('I select {string}', async function (optionText) {
   console.log(`Selecting option: ${optionText}`);
   // Handle different types of selections (block types, delay types, etc.)
   const selectors = [
@@ -1041,7 +1123,7 @@ When('I select {string}', async function (this: CustomWorld, optionText: string)
   }
 });
 
-Given('I have a workflow with multiple blocks', async function (){
+Given('I have a workflow with multiple blocks', async function () {
   console.log('Setting up workflow with multiple blocks');
   // Ensure we have at least a Begin block and one additional block
   const blockCount = await this.page.locator('[data-testid*="rf__node"], .react-flow__node').count();
@@ -1054,17 +1136,17 @@ Given('I have a workflow with multiple blocks', async function (){
 
 // --- Then Steps for Block Creation ---
 
-Then('I should see the add block dropdown menu', async function (){
+Then('I should see the add block dropdown menu', async function () {
   console.log('Verifying add block dropdown menu is visible');
   await this.page.waitForSelector('.dropdown-menu, [data-testid="add-block-dropdown"], .block-options', { timeout: 5000 });
 });
 
-Then('I should at least see the {string} block option', async function (this: CustomWorld, blockType: string) {
+Then('I should at least see the {string} block option', async function (blockType) {
   console.log(`Verifying ${blockType} block option is available`);
   await this.page.waitForSelector(`button:has-text("${blockType}"), [data-option="${blockType.toLowerCase()}"]`, { timeout: 5000 });
 });
 
-Then('a new Step block should be added to the workflow', async function (){
+Then('a new Step block should be added to the workflow', async function () {
   console.log('Verifying new Step block was added');
   await this.page.waitForSelector('[data-nodetype="step"], .step-block', { timeout: 5000 });
   // Verify we have more than just the begin block
@@ -1072,98 +1154,98 @@ Then('a new Step block should be added to the workflow', async function (){
   expect(stepBlocks).toBeGreaterThan(0);
 });
 
-Then('the block should have a default title like {string}', async function (this: CustomWorld, expectedTitle: string) {
+Then('the block should have a default title like {string}', async function (expectedTitle) {
   console.log(`Verifying block has default title: ${expectedTitle}`);
   await this.page.waitForSelector(`.block-title:has-text("${expectedTitle}"), [data-block-title*="${expectedTitle}"]`, { timeout: 3000 });
 });
 
-Then('the block should have a default icon', async function (){
+Then('the block should have a default icon', async function () {
   console.log('Verifying block has a default icon');
   await this.page.waitForSelector('.block-icon, [data-testid="block-icon"]', { timeout: 3000 });
 });
 
-Then('the dropdown menu should close', async function (){
+Then('the dropdown menu should close', async function () {
   console.log('Verifying dropdown menu is closed');
   // Wait for dropdown to disappear
   await this.page.waitForSelector('.dropdown-menu, [data-testid="add-block-dropdown"]', { state: 'hidden', timeout: 3000 });
 });
 
-Then('I should see the {string} modal', async function (this: CustomWorld, modalTitle: string) {
+Then('I should see the {string} modal', async function (modalTitle) {
   console.log(`Verifying ${modalTitle} modal is visible`);
   const modalSelector = `[role="dialog"]:has-text("${modalTitle}"), .modal:has-text("${modalTitle}")`;
   await this.page.waitForSelector(modalSelector, { timeout: 5000 });
 });
 
-Then('the modal should close', async function (){
+Then('the modal should close', async function () {
   console.log('Verifying modal is closed');
   await this.page.waitForSelector('[role="dialog"], .modal', { state: 'hidden', timeout: 5000 });
 });
 
-Then('a Condition block should be created', async function (){
+Then('a Condition block should be created', async function () {
   console.log('Verifying Condition block was created');
   await this.page.waitForSelector('[data-nodetype="condition"], .condition-block', { timeout: 5000 });
 });
 
-Then('two parallel paths should be created with the specified names', async function (){
+Then('two parallel paths should be created with the specified names', async function () {
   console.log('Verifying parallel paths were created');
   await this.page.waitForSelector('.path-container', { timeout: 5000 });
   const pathCount = await this.page.locator('.path-container').count();
   expect(pathCount).toBeGreaterThanOrEqual(2);
 });
 
-Then('each path should have its own branch on the canvas', async function (){
+Then('each path should have its own branch on the canvas', async function () {
   console.log('Verifying each path has its own branch');
   await this.page.waitForSelector('.path-branch, .parallel-path', { timeout: 5000 });
 });
 
-Then('I should see the delay type selection modal', async function (){
+Then('I should see the delay type selection modal', async function () {
   console.log('Verifying delay type selection modal');
   await this.page.waitForSelector('[role="dialog"]:has-text("delay"), .delay-modal', { timeout: 5000 });
 });
 
-Then('I should see the fixed delay configuration modal', async function (){
+Then('I should see the fixed delay configuration modal', async function () {
   console.log('Verifying fixed delay configuration modal');
   await this.page.waitForSelector('[role="dialog"]:has-text("fixed"), .fixed-delay-modal', { timeout: 5000 });
 });
 
-Then('a Fixed Delay block should be added', async function (){
+Then('a Fixed Delay block should be added', async function () {
   console.log('Verifying Fixed Delay block was added');
   await this.page.waitForSelector('[data-nodetype="delay"], .delay-block, [data-delay-type="fixed"]', { timeout: 5000 });
 });
 
-Then('the block should display {string} as the delay time', async function (this: CustomWorld, delayText: string) {
+Then('the block should display {string} as the delay time', async function (delayText) {
   console.log(`Verifying block displays delay time: ${delayText}`);
   await this.page.waitForSelector(`.block-content:has-text("${delayText}"), [data-delay-display*="${delayText}"]`, { timeout: 3000 });
-}); 
+});
 
-Then('I should see the event delay configuration modal', async function (){
+Then('I should see the event delay configuration modal', async function () {
   console.log('Verifying event delay configuration modal');
   await this.page.waitForSelector('[role="dialog"]:has-text("event"), .event-delay-modal', { timeout: 5000 });
 });
 
-Then('an Event Delay block should be added', async function (){
+Then('an Event Delay block should be added', async function () {
   console.log('Verifying Event Delay block was added');
   await this.page.waitForSelector('[data-nodetype="delay"], .delay-block, [data-delay-type="event"]', { timeout: 5000 });
 });
 
-Then('the block should display {string}', async function (this: CustomWorld, displayText: string) {
+Then('the block should display {string}', async function (displayText) {
   console.log(`Verifying block displays: ${displayText}`);
   await this.page.waitForSelector(`.block-content:has-text("${displayText}"), [data-block-display*="${displayText}"]`, { timeout: 3000 });
 });
 
-Then('I should see an {string} option', async function (this: CustomWorld, optionText: string) {
+Then('I should see an {string} option', async function (optionText) {
   console.log(`Verifying ${optionText} option is available`);
   await this.page.waitForSelector(`button:has-text("${optionText}"), [data-option*="${optionText.toLowerCase()}"]`, { timeout: 3000 });
 });
 
-Then('an End block should be added', async function (){
+Then('an End block should be added', async function () {
   console.log('Verifying End block was added');
   await this.page.waitForSelector('[data-nodetype="end"], .end-block', { timeout: 5000 });
 });
 
 // --- Path Management and Workflow Structure Steps ---
 
-Given('I have a workflow with at least one Condition block', async function (){
+Given('I have a workflow with at least one Condition block', async function () {
   console.log('Setting up workflow with Condition block');
   // Create a condition block if it doesn't exist
   const existingCondition = await this.page.locator('[data-nodetype="condition"], .condition-block').count();
@@ -1177,7 +1259,7 @@ Given('I have a workflow with at least one Condition block', async function (){
   await this.page.waitForSelector('[data-nodetype="condition"], .condition-block', { timeout: 5000 });
 });
 
-Given('I have a Condition block with {int} paths', async function (pathCount: number) {
+Given('I have a Condition block with {int} paths', async function (pathCount) {
   console.log(`Setting up Condition block with ${pathCount} paths`);
   // This step assumes the condition block already exists and verifies path count
   await this.page.waitForSelector('[data-nodetype="condition"], .condition-block', { timeout: 5000 });
@@ -1185,57 +1267,57 @@ Given('I have a Condition block with {int} paths', async function (pathCount: nu
   expect(paths).toBeGreaterThanOrEqual(pathCount);
 });
 
-Given('I have multiple parallel paths that need to converge', async function (){
+Given('I have multiple parallel paths that need to converge', async function () {
   console.log('Setting up multiple parallel paths');
   await this.page.waitForSelector('.path-container', { timeout: 5000 });
   const pathCount = await this.page.locator('.path-container').count();
   expect(pathCount).toBeGreaterThan(1);
 });
 
-Given('I have conditional paths', async function (){
+Given('I have conditional paths', async function () {
   console.log('Verifying conditional paths exist');
   await this.page.waitForSelector('.path-container, .conditional-path', { timeout: 5000 });
 });
 
-When('I click the three dots menu on the Condition block', async function (){
+When('I click the three dots menu on the Condition block', async function () {
   console.log('Clicking three dots menu on Condition block');
   await this.page.click('.condition-block [data-testid="block-menu"], .condition-block .three-dots, .condition-block .menu-trigger');
 });
 
-When('I click the three dots menu on the last step block of a path', async function (){
+When('I click the three dots menu on the last step block of a path', async function () {
   console.log('Clicking three dots menu on last step block');
   await this.page.click('.path-container .block:last-child [data-testid="block-menu"], .path-container .block:last-child .three-dots');
 });
 
-When('I click the three dots menu on a source block', async function (){
+When('I click the three dots menu on a source block', async function () {
   console.log('Clicking three dots menu on source block');
   await this.page.click('.block:first-of-type [data-testid="block-menu"], .block:first-of-type .three-dots');
 });
 
-When('I modify a path name from {string} to {string}', async function (this: CustomWorld, oldName: string, newName: string) {
+When('I modify a path name from {string} to {string}', async function (oldName, newName) {
   console.log(`Modifying path name from ${oldName} to ${newName}`);
   // Find the path input with the old name and change it
   await this.page.fill(`input[value="${oldName}"], .path-input:has-text("${oldName}")`, newName);
 });
 
-When('I add a new path {string}', async function (this: CustomWorld, pathName: string) {
+When('I add a new path {string}', async function (pathName) {
   console.log(`Adding new path: ${pathName}`);
   await this.page.click('button:has-text("Add Path"), [data-testid="add-path-btn"]');
   await this.page.fill('input[name="pathName"]:last-of-type, .path-input:last-of-type', pathName);
 });
 
-When('I remove the {string} path', async function (this: CustomWorld, pathName: string) {
+When('I remove the {string} path', async function (pathName) {
   console.log(`Removing path: ${pathName}`);
   await this.page.click(`[data-path="${pathName}"] .remove-btn, .path-input:has-text("${pathName}") + .remove-btn`);
 });
 
-When('I select the paths I want to merge', async function (){
+When('I select the paths I want to merge', async function () {
   console.log('Selecting paths to merge');
   await this.page.click('.path-selector:first-of-type, .path-checkbox:first-of-type');
   await this.page.click('.path-selector:nth-of-type(2), .path-checkbox:nth-of-type(2)');
 });
 
-When('I click on a path label', async function (){
+When('I click on a path label', async function () {
   console.log('Clicking on path label');
   await this.page.click('.path-label:first-of-type, .path-name:first-of-type');
 });
@@ -1828,46 +1910,86 @@ Given('I have copied a block to the clipboard', async function () {
 // --- When Steps for Block Actions ---
 
 When('I click the three dots menu on a Step block', { timeout: 15000 }, async function () {
-  if (await shouldSkipStep(this.page, 'clicking block menu')) return;
-
-  console.log('🖱️ Clicking three dots menu on Step block');
+  console.log('Clicking three dots menu on Step block');
   
-  // First verify a Step block exists
-  const stepBlockExists = await verifyElementExists(
-    this.page, 
-    [...SELECTORS.BLOCKS.STEP], 
-    'Step block'
-  );
-  
-  if (!stepBlockExists) {
-    await takeDebugScreenshot(this.page, DEBUG_PATHS.NO_STEP_BLOCK);
-    throw new Error('No Step block found on the canvas');
+  const currentUrl = this.page.url();
+  if (currentUrl.includes('/unauthorized')) {
+    console.log('⚠️ On unauthorized page - skipping three dots menu interaction');
+    return;
   }
   
-  // Try to click the menu using helper with fallback to right-click
-  const success = await clickWithFallbacks(this.page, [...SELECTORS.BLOCK_MENU], 'three dots menu');
+  // Wait for Step block to be available - try multiple selectors
+  const stepBlockSelectors = [
+    'button:has-text("Test Step")',
+    'button:has-text("Step")',
+    'generic:has-text("Test Step")', 
+    'generic:has-text("Step")',
+    '[data-testid*="rf__node"] button', // Any button in ReactFlow node
+    'button:has(paragraph)' // Buttons with paragraph (description)
+  ];
   
-  if (!success) {
-    console.log('⚠️ Menu button not found, trying right-click fallback...');
-    const stepBlock = await findElementWithFallbacks(this.page, [...SELECTORS.BLOCKS.STEP]);
-    if (stepBlock) {
-      await stepBlock.click({ button: 'right' });
-      console.log('✅ Right-clicked on Step block as fallback');
-    } else {
-      await takeDebugScreenshot(this.page, DEBUG_PATHS.CURRENT_PAGE);
-      throw new Error('Could not find or click menu on Step block');
+  let stepBlockFound = false;
+  for (const selector of stepBlockSelectors) {
+    try {
+      await this.page.waitForSelector(selector, { timeout: 3000 });
+      console.log(`Step block found using selector: ${selector}`);
+      stepBlockFound = true;
+      break;
+    } catch (e) {
+      // Continue to next selector
     }
   }
   
-  await this.page.waitForTimeout(TIMEOUTS.SHORT); // Allow menu to appear
+  if (!stepBlockFound) {
+    console.log('Could not find Step block, taking screenshot for debugging');
+    await this.page.screenshot({ path: 'e2e/debug-no-step-block.png' });
+  }
+  
+  // Try multiple selector strategies for the Menu button (three dots)
+  const menuSelectors = [
+    'button[aria-label="Menu"]', // Button with Menu aria-label
+    'button:has-text("Menu")', // Direct menu button text
+    'button:has(img[alt="Menu"])', // Any button with Menu image
+    '[data-testid*="rf__node"] button:has-text("Menu")', // Menu button in ReactFlow node
+    '[data-testid*="block"] button:has-text("Menu")', // Menu button in block
+    'button[role="button"]:has(img[alt="Menu"])', // Menu button with Menu image
+    '.step-block button:has-text("Menu")', // Menu button in step block
+    '[data-testid="block-menu"]' // Fallback data-testid
+  ];
+  
+  let menuClicked = false;
+  for (const selector of menuSelectors) {
+    try {
+      const element = await this.page.locator(selector).first();
+      if (await element.count() > 0) {
+        await element.click();
+        console.log(`Menu button clicked using selector: ${selector}`);
+        menuClicked = true;
+        break;
+      }
+    } catch (e) {
+      // Continue to next selector
+    }
+  }
+  
+  if (!menuClicked) {
+    console.log('Could not find Menu button, trying right-click on Step block as fallback');
+    await this.page.click('button:has-text("Test Step")', { button: 'right' });
+  }
+  
+  await this.page.waitForTimeout(1000); // Allow menu to appear
 });
 
-When('I select {string}', async function (option: string) {
-  if (await shouldSkipStep(this.page, `selecting option ${option}`)) return;
-
-  console.log(`🔘 Selecting option: ${option}`);
+When('I select {string}', async function (option) {
+  console.log(`Selecting option: ${option}`);
   
-  // Create dynamic selectors for the option
+  const currentUrl = this.page.url();
+  if (currentUrl.includes('/unauthorized')) {
+    console.log('⚠️ On unauthorized page - skipping option selection');
+    return;
+  }
+  
+  // Wait for menu to be visible and click the option
   const optionSelectors = [
     `button:has-text("${option}")`,
     `[data-option="${option.toLowerCase()}"]`,
@@ -1876,40 +1998,79 @@ When('I select {string}', async function (option: string) {
     `[role="menuitem"]:has-text("${option}")`
   ];
   
-  const success = await clickWithFallbacks(this.page, optionSelectors, `option "${option}"`);
-  
-  if (!success) {
-    console.warn(`⚠️ Could not find option "${option}" in menu`);
+  let optionClicked = false;
+  for (const selector of optionSelectors) {
+    try {
+      const element = await this.page.locator(selector);
+      if (await element.count() > 0) {
+        await element.click();
+        console.log(`Option "${option}" clicked using selector: ${selector}`);
+        optionClicked = true;
+        break;
+      }
+    } catch (e) {
+      // Continue to next selector
+    }
   }
   
-  await this.page.waitForTimeout(TIMEOUTS.SHORT); // Allow for action to process
+  if (!optionClicked) {
+    console.log(`Could not find option "${option}" in menu`);
+  }
+  
+  await this.page.waitForTimeout(1000); // Allow for action to process
 });
 
-When('I click the {string} button at any position', async function (buttonText: string) {
-  if (await shouldSkipStep(this.page, `clicking ${buttonText} button`)) return;
-
-  console.log(`🖱️ Clicking ${buttonText} button at any position`);
+When('I click the {string} button at any position', async function (buttonText) {
+  console.log(`Clicking ${buttonText} button at any position`);
   
-  // Use ADD_BLOCK selectors from constants or create dynamic selectors
-  const buttonSelectors = buttonText.toLowerCase().includes('add') || buttonText.includes('+') 
-    ? [...SELECTORS.ADD_BLOCK] 
-    : [`button:has-text("${buttonText}")`, `[aria-label="${buttonText}"]`, `[data-testid="${buttonText.toLowerCase()}-button"]`];
-  
-  const success = await clickWithFallbacks(this.page, buttonSelectors, `${buttonText} button`);
-  
-  if (!success) {
-    console.warn(`⚠️ Could not find ${buttonText} button`);
+  const currentUrl = this.page.url();
+  if (currentUrl.includes('/unauthorized')) {
+    console.log('⚠️ On unauthorized page - skipping button click');
+    return;
   }
   
-  await this.page.waitForTimeout(TIMEOUTS.SHORT);
+  // Look for add block buttons
+  const addButtonSelectors = [
+    '[data-testid="add-block-button"]',
+    '.add-block-btn',
+    'button:has-text("+")',
+    '.add-button',
+    '.block-add-button'
+  ];
+  
+  let buttonClicked = false;
+  for (const selector of addButtonSelectors) {
+    try {
+      const element = await this.page.locator(selector).first();
+      if (await element.count() > 0) {
+        await element.click();
+        console.log(`Add button clicked using selector: ${selector}`);
+        buttonClicked = true;
+        break;
+      }
+    } catch (e) {
+      // Continue to next selector
+    }
+  }
+  
+  if (!buttonClicked) {
+    console.log('Could not find add button');
+  }
+  
+  await this.page.waitForTimeout(1000);
 });
 
 
 When('I search for a block', async function () {
-  if (await shouldSkipStep(this.page, 'searching for block')) return;
-
-  console.log('🔍 Searching for a block in search modal');
+  console.log('Searching for a block in search modal');
   
+  const currentUrl = this.page.url();
+  if (currentUrl.includes('/unauthorized')) {
+    console.log('⚠️ On unauthorized page - skipping block search');
+    return;
+  }
+  
+  // Look for search input and enter a search term
   const searchSelectors = [
     'input[placeholder*="search" i]',
     'input[type="search"]',
@@ -1917,13 +2078,26 @@ When('I search for a block', async function () {
     '[data-testid="block-search"]'
   ];
   
-  const success = await typeWithFallbacks(this.page, searchSelectors, CONSTANTS_TEST_DATA.DEFAULT_BLOCK_TITLE, 'search input');
-  
-  if (!success) {
-    console.warn('⚠️ Could not find search input');
+  let searchPerformed = false;
+  for (const selector of searchSelectors) {
+    try {
+      const element = await this.page.locator(selector);
+      if (await element.count() > 0) {
+        await element.fill('Test Step'); // Search for our test step block
+        console.log(`Search performed using selector: ${selector}`);
+        searchPerformed = true;
+        break;
+      }
+    } catch (e) {
+      // Continue to next selector
+    }
   }
   
-  await this.page.waitForTimeout(TIMEOUTS.SHORT); // Allow search results to load
+  if (!searchPerformed) {
+    console.log('Could not find search input');
+  }
+  
+  await this.page.waitForTimeout(1000); // Allow search results to load
 });
 
 When('I click on the block', async function () {

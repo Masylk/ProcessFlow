@@ -509,7 +509,7 @@ async function main() {
       },
       urls: {
         login: 'http://localhost:3000/login',
-        editor: `/workspace/${result.workspace.id}/${result.workflow.name.toLowerCase().replace(/\s+/g, '-')}--pf-${result.workflow.id}/edit`
+        editor: `/${result.workspace.slug}/${result.workflow.name.toLowerCase().replace(/\s+/g, '-')}--pf-${result.workflow.id}/edit`
       }
     };
     
