@@ -7,38 +7,38 @@ import { PrismaClient } from '@prisma/client';
 import { isVercel } from '@/app/api/utils/isVercel';
 
 export async function POST(req: NextRequest) {
-  if (!prisma) {
-    return NextResponse.json(
-      { error: 'Database connection not available' },
-      { status: 500 }
-    );
-  }
-
-  // Get authenticated user
-  const supabaseServer = await createClient();
-  const { data: userData, error: userError } = await supabaseServer.auth.getUser();
-
-  if (userError || !userData || !userData.user) {
-    return NextResponse.json(
-      { error: 'User not authenticated' },
-      { status: 401 }
-    );
-  }
-
-  const userUID = userData.user.id;
-
-  // Get user's active workspace
-  const prisma_client = isVercel() ? new PrismaClient() : prisma;
-  if (!prisma_client) {
-    throw new Error('Prisma client not initialized');
-  }
+  let prisma_client: PrismaClient | undefined;
 
   try {
+    prisma_client = isVercel() ? new PrismaClient() : prisma;
+
+    if (!prisma_client) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      );
+    }
+
+    // Get authenticated user
+    const supabaseServer = await createClient();
+    const { data: userData, error: userError } =
+      await supabaseServer.auth.getUser();
+
+    if (userError || !userData || !userData.user) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const userUID = userData.user.id;
+
+    // Get user's active workspace
     const user = await prisma_client.user.findUnique({
       where: { auth_id: userUID },
       include: {
-        active_workspace: true
-      }
+        active_workspace: true,
+      },
     });
 
     if (!user || !user.active_workspace) {
@@ -59,13 +59,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (!workspaceId) {
-      return NextResponse.json({ error: 'No workspace ID provided' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No workspace ID provided' },
+        { status: 400 }
+      );
     }
 
     // Retrieve bucket name from environment variable
     const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
 
-    if (!bucketName) {    
+    if (!bucketName) {
       return NextResponse.json(
         { error: 'Bucket name is not defined in environment variables' },
         { status: 500 }
@@ -73,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for existing brand logo and delete it if exists
-    const existingWorkspace = await prisma.workspace.findUnique({
+    const existingWorkspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(workspaceId) },
       select: { brand_logo_url: true },
     });
@@ -97,7 +100,10 @@ export async function POST(req: NextRequest) {
       'image/gif',
     ];
     if (!allowedMimeTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type. Only images are allowed.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid file type. Only images are allowed.' },
+        { status: 400 }
+      );
     }
 
     const buffer = await file.arrayBuffer();
@@ -125,7 +131,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update workspace with new brand logo URL
-    await prisma.workspace.update({
+    await prisma_client.workspace.update({
       where: { id: parseInt(workspaceId) },
       data: { brand_logo_url: filePath },
     });
@@ -138,50 +144,59 @@ export async function POST(req: NextRequest) {
     console.error('File upload error:', error);
     return NextResponse.json({ error: 'File upload failed' }, { status: 500 });
   } finally {
-    if (isVercel()) await prisma_client.$disconnect();
+    if (isVercel() && prisma_client) await prisma_client.$disconnect();
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!prisma) {
-    return NextResponse.json(
-      { error: 'Database connection not available' },
-      { status: 500 }
-    );
-  }
-
-  // Get authenticated user
-  const supabaseServer = await createClient();
-  const { data: userData, error: userError } = await supabaseServer.auth.getUser();
-
-  if (userError || !userData || !userData.user) {
-    return NextResponse.json(
-      { error: 'User not authenticated' },
-      { status: 401 }
-    );
-  }
-
-  const { searchParams } = new URL(req.url);
-  const workspaceId = searchParams.get('workspaceId');
-
-  if (!workspaceId) {
-    return NextResponse.json({ error: 'No workspace ID provided' }, { status: 400 });
-  }
-
+  let prisma_client: PrismaClient | undefined;
   try {
+    prisma_client = isVercel() ? new PrismaClient() : prisma;
+
+    if (!prisma_client) {
+      return NextResponse.json(
+        { error: 'Database connection not available' },
+        { status: 500 }
+      );
+    }
+
+    // Get authenticated user
+    const supabaseServer = await createClient();
+    const { data: userData, error: userError } =
+      await supabaseServer.auth.getUser();
+
+    if (userError || !userData || !userData.user) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const workspaceId = searchParams.get('workspaceId');
+
+    if (!workspaceId) {
+      return NextResponse.json(
+        { error: 'No workspace ID provided' },
+        { status: 400 }
+      );
+    }
     // Get the workspace to find the current brand logo URL
-    const workspace = await prisma.workspace.findUnique({
+    const workspace = await prisma_client.workspace.findUnique({
       where: { id: parseInt(workspaceId) },
       select: { brand_logo_url: true },
     });
 
     if (!workspace?.brand_logo_url) {
-      return NextResponse.json({ error: 'No brand logo found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No brand logo found' },
+        { status: 404 }
+      );
     }
 
     const bucketName = process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_BUCKET;
 
-    if (!bucketName) {    
+    if (!bucketName) {
       return NextResponse.json(
         { error: 'Bucket name is not defined in environment variables' },
         { status: 500 }
@@ -198,7 +213,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Update workspace to remove the brand logo URL
-    await prisma.workspace.update({
+    await prisma_client.workspace.update({
       where: { id: parseInt(workspaceId) },
       data: { brand_logo_url: null },
     });
@@ -208,6 +223,11 @@ export async function DELETE(req: NextRequest) {
     });
   } catch (error) {
     console.error('Delete error:', error);
-    return NextResponse.json({ error: 'Failed to delete brand logo' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete brand logo' },
+      { status: 500 }
+    );
+  } finally {
+    if (isVercel() && prisma_client) await prisma_client.$disconnect();
   }
 }
