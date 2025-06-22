@@ -39,13 +39,11 @@ export default function SettingsPage({
   const { currentTheme, setTheme } = useTheme();
   const tabs = ['Workspace', 'Plan', 'Billing', 'Appearance'];
   const defaultTab = 'Workspace';
-  
+
   // Initialize activeTab based on initialTab or defaultTab
   const [activeTab, setActiveTab] = useState(
     initialTab && tabs.includes(initialTab) ? initialTab : defaultTab
   );
-  
- 
 
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>(
     'monthly'
@@ -339,8 +337,8 @@ export default function SettingsPage({
     if (!tabs.includes(activeTab)) {
       setActiveTab(defaultTab);
     }
-  }, [activeTab]); 
-  
+  }, [activeTab]);
+
   useEffect(() => {
     if (initialTab && tabs.includes(initialTab)) {
       setActiveTab(initialTab);
@@ -1123,7 +1121,10 @@ export default function SettingsPage({
                   </h3>
                   <div className="flex flex-col gap-4">
                     {/* Personal Info */}
-                    <BillingInfoForm workspaceId={workspace?.id || 0} isFreePlan={currentPlan === 'free'} />
+                    <BillingInfoForm
+                      workspaceId={workspace?.id || 0}
+                      isFreePlan={currentPlan === 'free'}
+                    />
                   </div>
                 </div>
               </div>
