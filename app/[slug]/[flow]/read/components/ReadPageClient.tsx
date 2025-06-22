@@ -1093,6 +1093,7 @@ export default function ReadPageClient() {
                 onToggleAccess={toggleWorkflowAccess}
                 shareUrl={shareUrl}
                 workflowTitle={workflowName}
+                workspace={workspace || undefined}
               />
               <div className="absolute right-4 top-20 flex items-center gap-2">
                 <ViewModeSwitch mode={viewMode} onModeChange={setViewMode} />
@@ -1559,6 +1560,7 @@ export default function ReadPageClient() {
             ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/${workspace.logo}`
             : undefined
         }
+        workspace={workspace || undefined}
       />
     </div>
   );

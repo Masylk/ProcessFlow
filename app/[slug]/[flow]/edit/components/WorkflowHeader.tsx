@@ -10,6 +10,7 @@ import EditFlowModal from '@/app/dashboard/components/EditFlowModal';
 import { createReadLink } from '../../utils/createLinks';
 import { Workflow } from '@/types/workflow';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Workspace } from '@/types/workspace';
 
 interface WorkflowHeaderProps {
   workflowId: string;
@@ -31,6 +32,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
     const [editableTitle, setEditableTitle] = useState('');
     const [createdDate, setCreatedDate] = useState('');
     const [workflowData, setWorkflowData] = useState<Workflow | null>(null);
+    const [workspace, setWorkspace] = useState<Workspace | null>(null);
 
     useEffect(() => {
       const files = [
@@ -52,6 +54,16 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
             setWorkflowTitle(data.title || data.name);
             setEditableTitle(data.title || data.name);
             setWorkflowData(data);
+
+            if (data.workspace_id) {
+              const workspaceResponse = await fetch(
+                `/api/workspace/${data.workspace_id}`
+              );
+              if (workspaceResponse.ok) {
+                const workspaceData = await workspaceResponse.json();
+                setWorkspace(workspaceData);
+              }
+            }
 
             // Format the created date
             if (data.created_at) {
@@ -405,6 +417,7 @@ const WorkflowHeader: React.FC<WorkflowHeaderProps> = React.memo(
           isOpen={isShareModalOpen}
           onClose={closeShareModal}
           itemName={workflowTitle || 'Untitled Workflow'}
+          workspace={workspace || undefined}
         />
       </>
     );

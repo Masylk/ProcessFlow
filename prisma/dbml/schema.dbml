@@ -40,12 +40,15 @@ Table workspace {
   name String [not null]
   slug String [unique]
   icon_url String
+  brand_logo_url String
+  brand_name_img_url String
   background_colour String
   linear_customer_id String
   stripe_customer_id String [unique]
   hubspot_company_id String
   company_size String
   industry String
+  branding_enabled Boolean [not null, default: false]
   subscription_id Int [unique]
   subscription subscription
   billing_infos workspace_billing_infos

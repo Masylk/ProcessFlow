@@ -40,6 +40,9 @@ export interface Workspace {
   folders: Folder[];
   team_tags?: string[];
   icon_url?: string;
+  brand_logo_url?: string;
+  brand_name_img_url?: string;
+  branding_enabled?: boolean;
   background_colour?: string;
   slug?: string;
   subscription?: Subscription;
