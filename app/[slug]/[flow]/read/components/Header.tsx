@@ -12,6 +12,7 @@ import UserDropdown from '@/app/dashboard/components/UserDropdown';
 import { User } from '@/types/user';
 import ShareModal from '@/app/components/ShareModal';
 import { AnimatePresence } from 'framer-motion';
+import { Workspace } from '@/types/workspace';
 
 import { usePathname, useRouter } from 'next/navigation';
 import { createEditLink } from '../../utils/createLinks';
@@ -36,6 +37,7 @@ interface HeaderProps {
   onToggleAccess: () => void;
   shareUrl: string;
   workflowTitle?: string;
+  workspace?: Workspace;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -49,6 +51,7 @@ const Header: React.FC<HeaderProps> = ({
   is_public = false,
   onToggleAccess,
   shareUrl,
+  workspace,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -250,10 +253,10 @@ const Header: React.FC<HeaderProps> = ({
         is_public={is_public}
         onToggleAccess={onToggleAccess}
         shareUrl={shareUrl}
+        workspace={workspace}
       />
     </HeaderHeightContext.Provider>
   );
 };
 
 export default Header;
-

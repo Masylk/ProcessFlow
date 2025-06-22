@@ -6,6 +6,7 @@ import ButtonNormal from './ButtonNormal';
 import InputField from './InputFields';
 import { useColors, useTheme } from '../theme/hooks';
 import { toast } from 'sonner';
+import { Workspace } from '@/types/workspace';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface ShareModalProps {
   onToggleAccess?: () => void;
   shareUrl?: string;
   workspaceLogo?: string;
+  workspace?: Workspace;
 }
 
 export default function ShareModal({
@@ -32,6 +34,7 @@ export default function ShareModal({
   onToggleAccess,
   shareUrl,
   workspaceLogo,
+  workspace,
 }: ShareModalProps) {
   const colors = useColors();
   const { currentTheme, setTheme } = useTheme();
@@ -64,6 +67,21 @@ export default function ShareModal({
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isFreePlan = workspace?.subscription?.plan_type === 'FREE';
+
+  const showCustomBranding =
+    workspace?.branding_enabled &&
+    !isFreePlan &&
+    (workspace.brand_logo_url || workspace.brand_name_img_url);
+
+  const brandLogoUrl = workspace?.brand_logo_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_STORAGE_PATH}/${workspace.brand_logo_url}`
+    : null;
+
+  const brandNameUrl = workspace?.brand_name_img_url
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_STORAGE_PATH}/${workspace.brand_name_img_url}`
+    : null;
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const peopleDropdownRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -244,7 +262,8 @@ export default function ShareModal({
       });
     } catch (err) {
       toast.error('Failed to Send Invitation', {
-        description: 'An error occurred while sending the invitation. Please try again.',
+        description:
+          'An error occurred while sending the invitation. Please try again.',
         duration: 3000,
       });
       console.error('Error sending invitation:', err);
@@ -800,32 +819,56 @@ export default function ShareModal({
                   <div className="flex flex-col items-center gap-[29px]">
                     <div className="flex flex-col items-center gap-[14.5px]">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center relative [&[data-fallback]]:before:content-[attr(data-fallback)] [&[data-fallback]]:before:text-lg [&[data-fallback]]:before:font-medium" style={{ color: colors['text-primary'] }}>
-                          <img
-                            src={workspaceLogo || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
-                            alt="Workspace Logo"
-                            className="w-[150px]"
-                            onError={(e) => {
-                              // If workspace logo fails, try the fallback logo
-                              if (workspaceLogo && e.currentTarget.src !== `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`) {
-                                e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`;
-                              } else {
-                                // If fallback also fails, show a text fallback
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement?.setAttribute('data-fallback', 'ProcessFlow');
-                              }
-                            }}
-                          />
+                        <div
+                          className="flex items-center justify-center relative [&[data-fallback]]:before:content-[attr(data-fallback)] [&[data-fallback]]:before:text-lg [&[data-fallback]]:before:font-medium"
+                          style={{ color: colors['text-primary'] }}
+                        >
+                          {showCustomBranding ? (
+                            <div className="flex items-center gap-3">
+                              {brandLogoUrl && (
+                                <img
+                                  src={brandLogoUrl}
+                                  alt="Brand Logo"
+                                  className="h-[40px] w-auto"
+                                />
+                              )}
+                              {brandNameUrl && (
+                                <img
+                                  src={brandNameUrl}
+                                  alt="Brand Name"
+                                  className="h-[27px] w-auto"
+                                />
+                              )}
+                            </div>
+                          ) : (
+                            <div
+                              className="items-center gap-3 flex"
+                              data-fallback-logo
+                            >
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                                alt="ProcessFlow Logo Mark"
+                                className="h-[40px] w-auto"
+                              />
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/pf-name.svg`}
+                                alt="ProcessFlow Name"
+                                className="h-[17px] w-auto"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <span
-                      className="text-[14.5px] leading-[1.5] font-medium text-center"
-                      style={{ color: colors['text-primary'] }}
-                    >
-                      This process was created with Processflow. Create your own
-                      processes now!
-                    </span>
+                    {!showCustomBranding && (
+                      <span
+                        className="text-[14.5px] leading-[1.5] font-medium text-center"
+                        style={{ color: colors['text-primary'] }}
+                      >
+                        This process was created with Processflow. Create your
+                        own processes now!
+                      </span>
+                    )}
                   </div>
 
                   {/* Action Buttons */}
@@ -866,31 +909,38 @@ export default function ShareModal({
                     borderColor: colors['border-secondary'],
                   }}
                 >
-                  <div className="flex items-center gap-[8.7px]">
-                    <span
-                      className="text-[10.2px] leading-[1.43] font-normal"
-                      style={{ color: colors['text-secondary'] }}
-                    >
-                      Made with
-                    </span>
-                    <img
-                      src={workspaceLogo || `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`}
-                      alt="Workspace Logo"
-                      className="h-[20px]"
-                      onError={(e) => {
-                        // If workspace logo fails, try the fallback logo
-                        if (workspaceLogo && e.currentTarget.src !== `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`) {
-                          e.currentTarget.src = `${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logo-pf-in-app.png`;
-                        } else {
-                          // If fallback also fails, show a text fallback
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.parentElement?.setAttribute('data-fallback', 'ProcessFlow');
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ButtonNormal 
+                  {!showCustomBranding && (
+                    <div className="flex items-center gap-[8.7px]">
+                      <span
+                        className="text-[10.2px] leading-[1.43] font-normal"
+                        style={{ color: colors['text-secondary'] }}
+                      >
+                        Made with
+                      </span>
+                      <div
+                        className="items-center gap-2 flex"
+                        data-fallback-logo-footer
+                      >
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
+                          alt="ProcessFlow Logo Mark"
+                          className="h-[20px] w-auto"
+                        />
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/pf-name.svg`}
+                          alt="ProcessFlow Name"
+                          className="h-[10px] w-auto"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    className="flex items-center gap-2"
+                    style={{
+                      marginLeft: showCustomBranding ? 'auto' : undefined,
+                    }}
+                  >
+                    <ButtonNormal
                       variant="tertiary"
                       iconOnly
                       size="small"

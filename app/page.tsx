@@ -680,12 +680,16 @@ export default function Page() {
   ): Promise<boolean> => {
     if (!activeWorkspace) return false;
 
-    const nameError = checkWorkspaceName(updates.name || '');
-    if (nameError) {
-      toast.error(nameError.title + ' ' + nameError.description);
-      return false;
+    console.log('updates', updates);
+    if (updates.name) {
+      const nameError = checkWorkspaceName(updates.name || '');
+      if (nameError) {
+        toast.error(nameError.title + ' ' + nameError.description);
+        return false;
+      }
     }
     try {
+      console.log('try to update activeWorkspace', activeWorkspace);
       const response = await fetch(`/api/workspace/${activeWorkspace.id}`, {
         method: 'PATCH',
         headers: {
@@ -694,12 +698,14 @@ export default function Page() {
         body: JSON.stringify(updates),
       });
 
+      console.log('response', response);
       if (!response.ok) {
         throw new Error('Failed to update workspace');
       }
 
       const updatedWorkspace = await response.json();
 
+      console.log('updatedWorkspace', updatedWorkspace);
       // Update both activeWorkspace and the workspace in the workspaces array
       setActiveWorkspace(updatedWorkspace);
       setWorkspaces((prevWorkspaces) =>
@@ -709,7 +715,9 @@ export default function Page() {
       );
 
       // Refresh the page after successful workspace update
-      window.location.reload();
+      if (updates.name) {
+        window.location.reload();
+      }
 
       return true;
     } catch (error) {

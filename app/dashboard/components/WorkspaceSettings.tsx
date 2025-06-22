@@ -7,6 +7,8 @@ import { useColors } from '@/app/theme/hooks';
 import Modal from '@/app/components/Modal';
 import { checkWorkspaceName } from '@/app/utils/checkNames';
 import { sanitizeWorkspaceNameInput } from '@/app/onboarding/utils/inputSanitizer';
+import { toast } from 'sonner';
+import Switch from '@/app/components/Switch';
 
 interface WorkspaceSettingsProps {
   workspace: Workspace;
@@ -55,7 +57,12 @@ export default function WorkspaceSettings({
   const [copySuccess, setCopySuccess] = useState(false);
   const [error, setError] = useState('');
   const [nameError, setNameError] = useState('');
+  const [brandingEnabled, setBrandingEnabled] = useState(
+    workspace.branding_enabled || false
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isFreePlan = workspace.subscription?.plan_type === 'FREE';
 
   useEffect(() => {
     if (name) {
@@ -69,6 +76,12 @@ export default function WorkspaceSettings({
       setUrlPlaceholder('');
     }
   }, [name]);
+
+  const handleBrandingToggle = async () => {
+    const newBrandingStatus = !brandingEnabled;
+    setBrandingEnabled(newBrandingStatus);
+    await onUpdate({ branding_enabled: newBrandingStatus });
+  };
 
   // Update name input handler to limit and sanitize
   const handleNameChange = (value: string) => {
@@ -321,7 +334,7 @@ export default function WorkspaceSettings({
               onChange={handleNameChange}
               placeholder="Enter workspace name"
             />
-          
+
             {nameError && (
               <div className="text-red-500 text-xs mt-1">{nameError}</div>
             )}
@@ -491,6 +504,266 @@ export default function WorkspaceSettings({
               </div>
             </div>
           </div>
+        </div>
+
+        <div
+          style={{ backgroundColor: colors['border-secondary'] }}
+          className="h-px hidden"
+        />
+
+        {/* Branding Section */}
+        <div className="space-y-8 mt-8">
+          <Switch
+            isOn={brandingEnabled && !isFreePlan}
+            handleToggle={handleBrandingToggle}
+            label="Enable Branding"
+            disabled={isFreePlan}
+          />
+          {brandingEnabled && !isFreePlan && (
+            <>
+              {/* Brand Logo Section */}
+              <div>
+                <h3
+                  style={{ color: colors['text-primary'] }}
+                  className="text-base font-medium mb-2"
+                >
+                  Brand Logo
+                </h3>
+                <div className="flex items-center gap-4">
+                  {workspace?.brand_logo_url ? (
+                    <div className="relative">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_STORAGE_PATH}/${workspace.brand_logo_url}`}
+                        alt="Brand Logo"
+                        className="h-16 w-auto object-contain"
+                      />
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(
+                              `/api/upload/workspace-brand-logo?workspaceId=${workspace.id}`,
+                              {
+                                method: 'DELETE',
+                              }
+                            );
+                            if (!response.ok)
+                              throw new Error('Failed to delete logo');
+                            // Update workspace state
+                            await onUpdate({
+                              brand_logo_url: undefined,
+                            });
+                            toast.success('Brand logo removed successfully');
+                          } catch (error) {
+                            console.error('Error deleting logo:', error);
+                            toast.error('Failed to remove brand logo');
+                          }
+                        }}
+                        style={{
+                          backgroundColor: colors['bg-primary'],
+                          borderColor: colors['border-primary'],
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full border flex items-center justify-center hover:opacity-80"
+                      >
+                        <span style={{ color: colors['text-primary'] }}>×</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
+                        borderColor: colors['border-secondary'],
+                      }}
+                      className="h-16 w-32 border rounded-lg flex items-center justify-center"
+                    >
+                      <span
+                        style={{ color: colors['text-tertiary'] }}
+                        className="text-sm"
+                      >
+                        No logo
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      id="brand-logo-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !workspace) return;
+                        // Check file size (1MB limit)
+                        if (file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB');
+                          return;
+                        }
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('workspaceId', workspace.id.toString());
+                        try {
+                          const response = await fetch(
+                            '/api/upload/workspace-brand-logo',
+                            {
+                              method: 'POST',
+                              body: formData,
+                            }
+                          );
+                          if (!response.ok) throw new Error('Upload failed');
+                          const data = await response.json();
+                          // Update workspace state
+                          await onUpdate({
+                            brand_logo_url: data.filePath,
+                          });
+                          toast.success('Brand logo uploaded successfully');
+                        } catch (error) {
+                          console.error('Upload error:', error);
+                          toast.error('Failed to upload brand logo');
+                        }
+                      }}
+                    />
+                    <ButtonNormal
+                      variant="secondary"
+                      size="small"
+                      onClick={() =>
+                        document.getElementById('brand-logo-upload')?.click()
+                      }
+                    >
+                      Upload Logo
+                    </ButtonNormal>
+                    <p
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-xs mt-2"
+                    >
+                      Max file size: 1MB. Supported formats: PNG, JPG, GIF, SVG
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Brand Name Image Section */}
+              <div>
+                <h3
+                  style={{ color: colors['text-primary'] }}
+                  className="text-base font-medium mb-2"
+                >
+                  Brand Name Image
+                </h3>
+                <div className="flex items-center gap-4">
+                  {workspace?.brand_name_img_url ? (
+                    <div className="relative">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_STORAGE_PATH}/${workspace.brand_name_img_url}`}
+                        alt="Brand Name"
+                        className="h-16 w-auto object-contain"
+                      />
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(
+                              `/api/upload/workspace-brand-name?workspaceId=${workspace.id}`,
+                              {
+                                method: 'DELETE',
+                              }
+                            );
+                            if (!response.ok)
+                              throw new Error('Failed to delete brand name');
+                            // Update workspace state
+                            await onUpdate({
+                              brand_name_img_url: undefined,
+                            });
+                            toast.success(
+                              'Brand name image removed successfully'
+                            );
+                          } catch (error) {
+                            console.error('Error deleting brand name:', error);
+                            toast.error('Failed to remove brand name image');
+                          }
+                        }}
+                        style={{
+                          backgroundColor: colors['bg-primary'],
+                          borderColor: colors['border-primary'],
+                        }}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full border flex items-center justify-center hover:opacity-80"
+                      >
+                        <span style={{ color: colors['text-primary'] }}>×</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        backgroundColor: colors['bg-secondary'],
+                        borderColor: colors['border-secondary'],
+                      }}
+                      className="h-16 w-32 border rounded-lg flex items-center justify-center"
+                    >
+                      <span
+                        style={{ color: colors['text-tertiary'] }}
+                        className="text-sm"
+                      >
+                        No image
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      id="brand-name-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !workspace) return;
+                        // Check file size (1MB limit)
+                        if (file.size > 1024 * 1024) {
+                          toast.error('File size must be less than 1MB');
+                          return;
+                        }
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('workspaceId', workspace.id.toString());
+                        try {
+                          const response = await fetch(
+                            '/api/upload/workspace-brand-name',
+                            {
+                              method: 'POST',
+                              body: formData,
+                            }
+                          );
+                          if (!response.ok) throw new Error('Upload failed');
+                          const data = await response.json();
+                          // Update workspace state
+                          await onUpdate({
+                            brand_name_img_url: data.filePath,
+                          });
+                          toast.success(
+                            'Brand name image uploaded successfully'
+                          );
+                        } catch (error) {
+                          console.error('Upload error:', error);
+                          toast.error('Failed to upload brand name image');
+                        }
+                      }}
+                    />
+                    <ButtonNormal
+                      variant="secondary"
+                      size="small"
+                      onClick={() =>
+                        document.getElementById('brand-name-upload')?.click()
+                      }
+                    >
+                      Upload Brand Name
+                    </ButtonNormal>
+                    <p
+                      style={{ color: colors['text-tertiary'] }}
+                      className="text-s mt-2"
+                    >
+                      Max file size: 1MB. Supported formats: PNG, JPG, GIF, SVG
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div

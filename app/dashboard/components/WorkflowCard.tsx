@@ -405,6 +405,13 @@ export default function WorkflowCard({
                     className="w-6 h-auto object-contain"
                     referrerPolicy="strict-origin-when-cross-origin"
                   />
+                ) : workspace.brand_logo_url ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_WORKSPACE_STORAGE_PATH}/${workspace.brand_logo_url}`}
+                    alt="Workspace Brand Logo"
+                    className="w-8 h-8 object-contain select-none"
+                    draggable="false"
+                  />
                 ) : (
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/logomark-pf.png`}
@@ -429,7 +436,7 @@ export default function WorkflowCard({
           </div>
 
           {/* Middle Section - Process Owner and Review Date */}
-          {((workflow.process_owner && workflow.process_owner.trim()) || 
+          {((workflow.process_owner && workflow.process_owner.trim()) ||
             (workflow.review_date && workflow.review_date.trim())) && (
             <div className="px-4 pb-3">
               <div className="space-y-1">
@@ -465,11 +472,14 @@ export default function WorkflowCard({
                       className="text-xs"
                     >
                       Review due:{' '}
-                      {new Date(workflow.review_date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                      {new Date(workflow.review_date).toLocaleDateString(
+                        'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }
+                      )}
                     </span>
                   </div>
                 )}
@@ -674,6 +684,7 @@ export default function WorkflowCard({
         )}
         is_public={localIsPublic}
         onToggleAccess={handleToggleAccess}
+        workspace={workspace}
       />
     </>
   );
