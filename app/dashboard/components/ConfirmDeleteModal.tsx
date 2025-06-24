@@ -55,6 +55,7 @@ export default function ConfirmDeleteModal({
       });
 
       if (response.ok) {
+        localStorage.removeItem('theme-mode');
         alert('Your account has been deleted.');
         router.push('/login'); // Redirect to home page
       } else {
@@ -105,7 +106,7 @@ export default function ConfirmDeleteModal({
         <p style={{ color: colors['text-secondary'] }} className="text-sm">
           Please enter your password to delete your account.
         </p>
-        
+
         {/* Password Input Field */}
         <div className="mt-3">
           <input
@@ -114,19 +115,22 @@ export default function ConfirmDeleteModal({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 rounded-lg shadow-sm border text-sm"
-            style={{ 
+            style={{
               borderColor: colors['border-secondary'],
               backgroundColor: colors['bg-primary'],
-              color: colors['text-primary']
+              color: colors['text-primary'],
             }}
           />
         </div>
 
         {/* Error Message */}
         {error && (
-          <div 
-            className="mt-2 text-sm font-medium" 
-            style={{ color: colors['text-error'] || colors['text-destructive'] || '#ef4444' }}
+          <div
+            className="mt-2 text-sm font-medium"
+            style={{
+              color:
+                colors['text-error'] || colors['text-destructive'] || '#ef4444',
+            }}
           >
             {error}
           </div>

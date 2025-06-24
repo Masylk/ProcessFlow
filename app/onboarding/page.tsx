@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { useColors } from '@/app/theme/hooks';
+import { useColors, useTheme } from '@/app/theme/hooks';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { OnboardingProvider, useOnboarding } from './context/OnboardingContext';
 import MotionStep from './components/MotionStep';
@@ -34,6 +34,7 @@ function OnboardingContent() {
 
   // Use the colors hook which returns CSS variables
   const colors = useColors();
+  const { currentTheme, setTheme } = useTheme();
 
   // Add effect to ensure page is scrollable and uses light mode
   useEffect(() => {
@@ -45,13 +46,17 @@ function OnboardingContent() {
     document.documentElement.classList.add('force-light-theme');
     document.documentElement.classList.remove('dark');
 
+    if (currentTheme !== 'light') {
+      setTheme('light');
+    }
+
     return () => {
       // Reset on unmount
       document.body.style.overflow = '';
       document.body.style.height = '';
       document.documentElement.classList.remove('force-light-theme');
     };
-  }, []);
+  }, [currentTheme, setTheme]);
 
   // Add effect to handle browser back button
   useEffect(() => {
