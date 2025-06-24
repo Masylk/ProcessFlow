@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -10,7 +16,9 @@ interface FastThemeContextType {
   toggleTheme: () => void;
 }
 
-export const FastThemeContext = createContext<FastThemeContextType | undefined>(undefined);
+export const FastThemeContext = createContext<FastThemeContextType | undefined>(
+  undefined
+);
 
 export function FastThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('light');
@@ -30,21 +38,25 @@ export function FastThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Initialize theme on mount
     const savedTheme = localStorage.getItem('theme-mode') as ThemeMode;
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    
+    // const systemPrefersDark = window.matchMedia(
+    //   '(prefers-color-scheme: dark)'
+    // ).matches;
+
+    const initialTheme = savedTheme || 'light';
+
     // Set initial theme
     document.documentElement.setAttribute('data-theme', initialTheme);
     setCurrentTheme(initialTheme);
   }, []);
 
   return (
-    <FastThemeContext.Provider value={{
-      currentTheme,
-      setTheme,
-      toggleTheme,
-    }}>
+    <FastThemeContext.Provider
+      value={{
+        currentTheme,
+        setTheme,
+        toggleTheme,
+      }}
+    >
       {children}
     </FastThemeContext.Provider>
   );
