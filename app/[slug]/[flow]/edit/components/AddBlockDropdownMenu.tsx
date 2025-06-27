@@ -1,5 +1,4 @@
-import React, { useCallback, useState } from 'react';
-import { createParallelPaths } from '../utils/createParallelPaths';
+import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import { DropdownDatas, Path, DelayType, Block } from '../../types';
 import { BlockEndType } from '@/types/block';
 import { useClipboardStore } from '../store/clipboardStore';
@@ -36,8 +35,20 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const colors = useColors();
   const copiedBlock = useClipboardStore((state) => state.copiedBlock);
   const { setShowModal, setModalData } = useModalStore();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [showDelayTypeModal, setShowDelayTypeModal] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [actualPopupDimensions, setActualPopupDimensions] = useState<{width: number; height: number} | null>(null);
+
+  // Measure popup dimensions after render
+  useEffect(() => {
+    if (popupRef.current) {
+      const rect = popupRef.current.getBoundingClientRect();
+      setActualPopupDimensions({
+        width: rect.width,
+        height: rect.height
+      });
+    }
+  }, []);
 
   const menuItems = [
     {
@@ -72,10 +83,6 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const filteredMenuItems = lastBlockHasExactlyOneChildPath
     ? menuItems.filter((item) => item.type !== 'PATH')
     : menuItems;
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('dropdown position', dropdownDatas.position);
-  }
   const handleSelect = useCallback(
     async (type: string) => {
       if (type === 'PATH') {
@@ -210,6 +217,43 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     onClose();
   };
 
+  // Calculate optimal popup position using exact coordinates
+  const popupPosition = useMemo(() => {
+    const height = actualPopupDimensions?.height || 180;
+    const width = actualPopupDimensions?.width || 240;
+    const padding = 16;
+    
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Vertical positioning: above, below, or bottom edge
+    let top: number;
+    const aboveY = dropdownDatas.y - height;
+    const belowY = dropdownDatas.y;
+    
+    if (aboveY >= padding) {
+      top = aboveY;
+    } else if (belowY + height <= viewportHeight - padding) {
+      top = belowY;
+    } else {
+      top = viewportHeight - height - padding;
+    }
+    
+    // Horizontal positioning: centered, left edge, or right edge
+    let left: number;
+    const centeredX = dropdownDatas.x - width / 2;
+    
+    if (centeredX >= padding && centeredX + width <= viewportWidth - padding) {
+      left = centeredX;
+    } else if (centeredX < padding) {
+      left = padding;
+    } else {
+      left = viewportWidth - width - padding;
+    }
+    
+    return { top, left, transform: 'none' };
+  }, [dropdownDatas.x, dropdownDatas.y, actualPopupDimensions]);
+
   return (
     <>
       {/* Always render the DelayTypeModal but control visibility with isVisible prop */}
@@ -224,6 +268,7 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
         <>
           <div className="fixed inset-0" onClick={onClose} />
           <motion.div
+            ref={popupRef}
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -233,9 +278,9 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
             }}
             className="absolute shadow-[0px_4px_6px_-2px_rgba(16,24,40,0.03),0px_12px_16px_-4px_rgba(16,24,40,0.08)] rounded-lg border z-[9999] py-1 flex flex-col overflow-hidden cursor-pointer"
             style={{
-              top: dropdownDatas.y,
-              left: dropdownDatas.x,
-              transform: 'translate(-50%, -100%)',
+              top: popupPosition.top,
+              left: popupPosition.left,
+              transform: popupPosition.transform,
               backgroundColor: colors['bg-secondary'],
               borderColor: colors['border-primary'],
             }}
