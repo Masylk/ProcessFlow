@@ -897,6 +897,27 @@ export default function ReadPageClient() {
       setPathsToDisplay((current) => [...current, pathCopy]);
       setSelectedOptions((prev) => [...prev, [pathCopy.id, blockId]]);
     }
+
+    // Add smooth scrolling to the first block of the newly added path
+    // Use setTimeout to ensure DOM has updated with new blocks
+    setTimeout(() => {
+      // Find the first non-system block in the newly added path
+      const firstNewBlock = pathCopy.blocks.find(
+        (block) => !['BEGIN', 'LAST', 'MERGE', 'END'].includes(block.type)
+      );
+      
+      if (firstNewBlock) {
+        const blockElement = document.getElementById(`block-${firstNewBlock.id}`);
+        if (blockElement) {
+          blockElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          // Adjust for header height
+          window.scrollBy(0, -120);
+        }
+      }
+    }, 200); // Increased delay to ensure content has rendered
   };
 
   // Add this function to handle step navigation
