@@ -39,6 +39,11 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
   const popupRef = useRef<HTMLDivElement>(null);
   const [actualPopupDimensions, setActualPopupDimensions] = useState<{width: number; height: number} | null>(null);
 
+  // Constants for popup positioning
+  const POPUP_PADDING = 16;
+  const DEFAULT_POPUP_HEIGHT = 180;
+  const DEFAULT_POPUP_WIDTH = 240;
+
   // Measure popup dimensions after render
   useEffect(() => {
     if (popupRef.current) {
@@ -219,9 +224,8 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
 
   // Calculate optimal popup position using exact coordinates
   const popupPosition = useMemo(() => {
-    const height = actualPopupDimensions?.height || 180;
-    const width = actualPopupDimensions?.width || 240;
-    const padding = 16;
+    const height = actualPopupDimensions?.height || DEFAULT_POPUP_HEIGHT;
+    const width = actualPopupDimensions?.width || DEFAULT_POPUP_WIDTH;
     
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
@@ -231,28 +235,28 @@ const AddBlockDropdownMenu: React.FC<AddBlockDropdownMenuProps> = ({
     const aboveY = dropdownDatas.y - height;
     const belowY = dropdownDatas.y;
     
-    if (aboveY >= padding) {
+    if (aboveY >= POPUP_PADDING) {
       top = aboveY;
-    } else if (belowY + height <= viewportHeight - padding) {
+    } else if (belowY + height <= viewportHeight - POPUP_PADDING) {
       top = belowY;
     } else {
-      top = viewportHeight - height - padding;
+      top = viewportHeight - height - POPUP_PADDING;
     }
     
     // Horizontal positioning: centered, left edge, or right edge
     let left: number;
     const centeredX = dropdownDatas.x - width / 2;
     
-    if (centeredX >= padding && centeredX + width <= viewportWidth - padding) {
+    if (centeredX >= POPUP_PADDING && centeredX + width <= viewportWidth - POPUP_PADDING) {
       left = centeredX;
-    } else if (centeredX < padding) {
-      left = padding;
+    } else if (centeredX < POPUP_PADDING) {
+      left = POPUP_PADDING;
     } else {
-      left = viewportWidth - width - padding;
+      left = viewportWidth - width - POPUP_PADDING;
     }
     
     return { top, left, transform: 'none' };
-  }, [dropdownDatas.x, dropdownDatas.y, actualPopupDimensions]);
+  }, [dropdownDatas.x, dropdownDatas.y, actualPopupDimensions, POPUP_PADDING, DEFAULT_POPUP_HEIGHT, DEFAULT_POPUP_WIDTH]);
 
   return (
     <>

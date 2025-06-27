@@ -909,15 +909,24 @@ export default function ReadPageClient() {
       if (firstNewBlock) {
         const blockElement = document.getElementById(`block-${firstNewBlock.id}`);
         if (blockElement) {
-          blockElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
+          // Use requestAnimationFrame for optimal performance
+          requestAnimationFrame(() => {
+            try {
+              blockElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+              });
+              // Adjust for header height
+              window.scrollBy(0, -HEADER_OFFSET_PX);
+            } catch (error) {
+              console.warn('Smooth scrolling failed:', error);
+              // Fallback to basic scrolling if smooth scrolling fails
+              blockElement.scrollIntoView({ block: 'center' });
+            }
           });
-          // Adjust for header height
-          window.scrollBy(0, -120);
         }
       }
-    }, 200); // Increased delay to ensure content has rendered
+    }, SCROLL_DELAY_MS);
   };
 
   // Add this function to handle step navigation
@@ -1067,6 +1076,10 @@ export default function ReadPageClient() {
   };
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Constants for smooth scrolling behavior
+  const SCROLL_DELAY_MS = 200;
+  const HEADER_OFFSET_PX = 120;
 
   return (
     <div
