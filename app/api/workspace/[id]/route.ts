@@ -371,6 +371,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
           },
         },
         folders: true,
+        subscription: true,
       },
     });
 
