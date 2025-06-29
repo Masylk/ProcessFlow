@@ -707,10 +707,12 @@ export default function Page() {
 
       console.log('updatedWorkspace', updatedWorkspace);
       // Update both activeWorkspace and the workspace in the workspaces array
-      setActiveWorkspace(updatedWorkspace);
+      setActiveWorkspace((prev) =>
+        prev ? { ...prev, ...updatedWorkspace } : updatedWorkspace
+      );
       setWorkspaces((prevWorkspaces) =>
         prevWorkspaces.map((w) =>
-          w.id === updatedWorkspace.id ? updatedWorkspace : w
+          w.id === updatedWorkspace.id ? { ...w, ...updatedWorkspace } : w
         )
       );
 
