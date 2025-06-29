@@ -370,7 +370,6 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
             paths: true,
           },
         },
-        folders: true,
         subscription: true,
       },
     });
