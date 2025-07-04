@@ -32,20 +32,24 @@ const ProfessionalInfoStep: React.FC<ProfessionalInfoStepProps> = ({
   const dropdownOptions = {
     industry: ['IT', 'Healthcare', 'Finance', 'Education', 'Retail', 'Other'],
     role: [
-      'Founder',
-      'Manager',
+      'CEO/Founder',
+      'Operations Manager',
+      'Process Manager',
+      'Quality Assurance Manager',
+      'Project Manager',
+      'Team Lead/Supervisor',
+      'HR Manager',
+      'Customer Success Manager',
+      'Business Analyst',
       'Product Manager',
-      'Analyst',
-      'Designer',
-      'Sales',
-      'Marketing',
-      'HR',
-      'Customer Success',
-      'Freelancer',
-      'Other',
+      'Consultant',
+      'Training & Development',
+      'Compliance Manager',
+      'Office Manager',
+      'Other'
     ],
     companySize: ['1', '2-9', '10-49', '50-199', '200-499', '500+'],
-    source: ['ProductHunt', 'LinkedIn', 'Google', 'Friend', 'Other'],
+    source: ['LinkedIn', 'Google Search', 'ProductHunt', 'Colleague/Friend', 'Business Blog/Article', 'Software Review Site', 'AI Search', 'Other'],
   };
 
   return (
