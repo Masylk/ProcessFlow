@@ -22,14 +22,14 @@ interface StatusStyle {
   label: string;
 }
 
-type MenuItem = { label: string; icon: string } | 'separator';
+type MenuItem = { label: string; icon: string; disabled?: boolean; tooltip?: string } | 'separator';
 
 const menuItems: MenuItem[] = [
   { label: 'Open in read mode', icon: 'play.svg' },
   { label: 'Share', icon: 'share-01.svg' },
   'separator',
   { label: 'Edit Flow info', icon: 'edit-05.svg' },
-  { label: 'Duplicate', icon: 'duplicate-icon.svg' },
+  { label: 'Duplicate', icon: 'duplicate-icon.svg', disabled: true, tooltip: 'Not available for the moment' },
   { label: 'Move', icon: 'folder-download.svg' },
   'separator',
   { label: 'Delete Flow', icon: 'trash-01.svg' },
@@ -77,6 +77,7 @@ export default function WorkflowCard({
   const router = useRouter();
   const [isToggling, setIsToggling] = useState(false);
   const [localIsPublic, setLocalIsPublic] = useState(workflow.is_public);
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
 
   const formatLastEdited = (dateString: string) => {
     const date = new Date(dateString);
@@ -620,9 +621,15 @@ export default function WorkflowCard({
               ) : (
                 <div
                   key={index}
-                  className="self-stretch px-1.5 py-px flex items-center gap-3 cursor-pointer"
+                  className={`self-stretch px-1.5 py-px flex items-center gap-3 relative ${
+                    item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                  }`}
+                  onMouseEnter={() => item.disabled && setHoveredItem(index)}
+                  onMouseLeave={() => setHoveredItem(null)}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (item.disabled) return;
+                    
                     onSelectWorkflow(workflow);
                     if (item.label === 'Delete Flow') {
                       onDeleteWorkflow(workflow);
@@ -643,28 +650,46 @@ export default function WorkflowCard({
                   <div
                     style={
                       {
-                        '--hover-bg': colors['bg-quaternary'],
+                        '--hover-bg': item.disabled ? 'transparent' : colors['bg-quaternary'],
                       } as React.CSSProperties
                     }
-                    className="grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex hover:bg-[var(--hover-bg)] transition-all duration-300 overflow-hidden"
+                    className={`grow shrink basis-0 px-2.5 py-[9px] rounded-md justify-start items-center gap-3 flex transition-all duration-300 overflow-hidden ${
+                      item.disabled ? 'opacity-50' : 'hover:bg-[var(--hover-bg)]'
+                    }`}
                   >
                     <div className="grow shrink basis-0 h-5 justify-start items-center gap-2 flex">
                       <div className="w-4 h-4 relative overflow-hidden">
                         <img
                           src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${item.icon}`}
                           alt={`${item.label} Icon`}
-                          className="w-4 h-4 select-none"
+                          className={`w-4 h-4 select-none ${item.disabled ? 'opacity-50' : ''}`}
                           draggable="false"
                         />
                       </div>
                       <div
-                        style={{ color: colors['text-primary'] }}
+                        style={{ color: item.disabled ? colors['text-tertiary'] : colors['text-primary'] }}
                         className="grow shrink basis-0 text-sm font-normal font-['Inter'] leading-tight"
                       >
                         {item.label}
                       </div>
                     </div>
                   </div>
+                  {/* Tooltip for disabled items */}
+                  {item.disabled && item.tooltip && hoveredItem === index && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 z-[70]">
+                      <div
+                        className="px-2 py-1 text-xs rounded shadow-lg whitespace-nowrap"
+                        style={{
+                          backgroundColor: colors['bg-primary'],
+                          color: colors['text-secondary'],
+                          border: `1px solid ${colors['border-primary']}`,
+                          fontSize: '11px',
+                        }}
+                      >
+                        {item.tooltip}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             )}
