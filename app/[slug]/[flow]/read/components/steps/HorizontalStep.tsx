@@ -476,6 +476,17 @@ export default function HorizontalStep({
                       </span>
                     </div>
                   )}
+                  {/* Assignee Display */}
+                  {block.assignee && (
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="text-xs font-medium"
+                        style={{ color: colors['text-tertiary'] }}
+                      >
+                        Assignee: {block.assignee}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

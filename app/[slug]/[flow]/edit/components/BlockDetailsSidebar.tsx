@@ -45,8 +45,10 @@ export default function BlockDetailsSidebar({
   const textEditorRef = useRef<HTMLDivElement>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingAverageTime, setIsEditingAverageTime] = useState(false);
+  const [isEditingAssignee, setIsEditingAssignee] = useState(false);
   const [title, setTitle] = useState(block.title || '');
   const [averageTime, setAverageTime] = useState(block.average_time || '');
+  const [assignee, setAssignee] = useState(block.assignee || '');
   const [taskType, setTaskType] = useState(block.task_type || 'MANUAL');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [description, setDescription] = useState(block.description || '');
@@ -72,7 +74,10 @@ export default function BlockDetailsSidebar({
         setTimeout(() => {
           textarea.focus();
           // Position cursor at the end
-          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+          textarea.setSelectionRange(
+            textarea.value.length,
+            textarea.value.length
+          );
         }, 0);
       }
     }
@@ -97,6 +102,16 @@ export default function BlockDetailsSidebar({
     } else if (e.key === 'Escape') {
       setAverageTime(block.average_time || '');
       setIsEditingAverageTime(false);
+    }
+  };
+
+  const handleAssigneeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onUpdate({ assignee: assignee });
+      setIsEditingAssignee(false);
+    } else if (e.key === 'Escape') {
+      setAssignee(block.assignee || '');
+      setIsEditingAssignee(false);
     }
   };
 
@@ -291,6 +306,30 @@ export default function BlockDetailsSidebar({
                   </div>
                 </div>
 
+                {/* Assignee */}
+                <div className="flex justify-start items-center space-x-[67px]">
+                  <div
+                    className="text-sm font-normal font-['Inter']"
+                    style={{ color: colors['text-primary'] }}
+                  >
+                    Assignee
+                  </div>
+                  <div style={{ width: '140px' }}>
+                    <InputField
+                      type="default"
+                      size="small"
+                      value={assignee}
+                      onChange={(value) => setAssignee(value)}
+                      onBlur={() => {
+                        onUpdate({ assignee: assignee });
+                        setIsEditingAssignee(false);
+                      }}
+                      onKeyDown={handleAssigneeKeyDown}
+                      placeholder="Enter assignee"
+                    />
+                  </div>
+                </div>
+
                 {/* Task Type
                 <div className="flex justify-start items-center space-x-[94px]">
                   <div
@@ -389,11 +428,14 @@ export default function BlockDetailsSidebar({
                     setIsEditingDescription(true);
                   }
                 }}
-                style={{ cursor: !isEditingDescription ? 'pointer' : 'default' }}
+                style={{
+                  cursor: !isEditingDescription ? 'pointer' : 'default',
+                }}
               >
                 <div
                   style={{
-                    backgroundColor: colors[getInputToken('normal', 'bg', false, false)],
+                    backgroundColor:
+                      colors[getInputToken('normal', 'bg', false, false)],
                     color: colors[getInputToken('normal', 'fg', false, false)],
                     borderColor: isEditingDescription
                       ? colors[getInputToken('focus', 'border', false, false)]
@@ -449,8 +491,5 @@ export default function BlockDetailsSidebar({
   );
 
   // Use createPortal without the conflicting ThemeProvider wrapper
-  return createPortal(
-    sidebarContent,
-    document.body
-  );
+  return createPortal(sidebarContent, document.body);
 }
