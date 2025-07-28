@@ -127,6 +127,7 @@ export interface Block {
   original_image?: string | null;
   image_description?: string | null;
   average_time?: string | null;
+  assignee?: string | null;
   task_type?: TaskType | null;  // Assuming a TaskType enum exists
   delay_event?: string | null;
   delay_type?: DelayType | null;  // Assuming a DelayType enum exists

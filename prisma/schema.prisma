@@ -194,7 +194,7 @@ model workflow {
   folder           folder?            @relation(fields: [folder_id], references: [id])
   workspace        workspace          @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   author           user?              @relation("author", fields: [author_id], references: [id])
-  author_id        Int?
+  author_id        Int? 
 
   @@unique([name, workspace_id])
   @@index([workspace_id])
@@ -242,6 +242,7 @@ model block {
   original_image      String?
   image_description   String?
   average_time        String?
+  assignee               String?
   task_type           task_type?
   workflow_id         Int
   path_id             Int
