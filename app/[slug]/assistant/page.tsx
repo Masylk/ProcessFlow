@@ -7,11 +7,21 @@ import ButtonNormal from '@/app/components/ButtonNormal';
 import InputField from '@/app/components/InputFields';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 
+interface Source {
+  workflow_name: string;
+  workflow_id: number;
+  step_title: string | null;
+  step_position: number;
+  similarity_score: number;
+}
+
 interface Message {
   id: string;
   content: string;
   isUser: boolean;
   timestamp: Date;
+  sources?: Source[];
+  contextUsed?: boolean;
 }
 
 export default function AssistantPage() {
@@ -20,6 +30,7 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [similarityThreshold, setSimilarityThreshold] = useState(0.6);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -52,11 +63,31 @@ export default function AssistantPage() {
     setIsLoading(true);
 
     try {
+      // Get workspace ID from URL
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      const workspaceSlug = pathSegments.length > 0 ? pathSegments[0] : '';
+
       // Prepare conversation history for context
       const conversationHistory = messages.map((msg) => ({
         role: msg.isUser ? 'user' : 'assistant',
         content: msg.content,
       }));
+
+      // Get workspace ID from slug (we'll need to fetch this)
+      let workspaceId: number | undefined;
+      if (workspaceSlug) {
+        try {
+          const workspaceResponse = await fetch(
+            `/api/workspace/slug/${workspaceSlug}`
+          );
+          if (workspaceResponse.ok) {
+            const workspaceData = await workspaceResponse.json();
+            workspaceId = workspaceData.id;
+          }
+        } catch (error) {
+          console.warn('Failed to fetch workspace ID:', error);
+        }
+      }
 
       // Call the API
       const response = await fetch('/api/assistant', {
@@ -67,6 +98,8 @@ export default function AssistantPage() {
         body: JSON.stringify({
           message: userMessage.content,
           conversationHistory,
+          workspaceId,
+          similarityThreshold,
         }),
       });
 
@@ -83,6 +116,8 @@ export default function AssistantPage() {
           content: data.response,
           isUser: false,
           timestamp: new Date(),
+          sources: data.sources || [],
+          contextUsed: data.context_used || false,
         };
         setMessages((prev) => {
           console.log('Previous messages before AI response:', prev);
@@ -167,6 +202,89 @@ export default function AssistantPage() {
             </h1>
           </div>
         </div>
+
+        {/* Similarity Threshold Slider */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="similarity-slider"
+              className="text-sm font-medium whitespace-nowrap"
+              style={{ color: colors['text-secondary'] }}
+            >
+              Search Precision: {(similarityThreshold * 100).toFixed(0)}%
+            </label>
+            <input
+              id="similarity-slider"
+              type="range"
+              min="0"
+              max="0.95"
+              step="0.05"
+              value={similarityThreshold}
+              onChange={(e) =>
+                setSimilarityThreshold(parseFloat(e.target.value))
+              }
+              className="w-24 h-2 rounded-lg appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, ${colors['accent-primary']} 0%, ${colors['accent-primary']} ${(similarityThreshold / 0.95) * 100}%, ${colors['border-secondary']} ${(similarityThreshold / 0.95) * 100}%, ${colors['border-secondary']} 100%)`,
+              }}
+            />
+          </div>
+          <div className="text-xs" style={{ color: colors['text-tertiary'] }}>
+            <div>0% = All Results (Broad Search)</div>
+            <div>95% = Only Most Relevant</div>
+            <div className="mt-1 text-xs opacity-75">
+              Controls how similar workflow blocks must be to your question
+            </div>
+          </div>
+
+          {/* Reset Embeddings Button */}
+          <ButtonNormal
+            variant="secondary"
+            size="small"
+            onClick={async () => {
+              try {
+                // Get workspace ID from URL
+                const pathSegments = window.location.pathname
+                  .split('/')
+                  .filter(Boolean);
+                const workspaceSlug =
+                  pathSegments.length > 0 ? pathSegments[0] : '';
+
+                if (workspaceSlug) {
+                  const workspaceResponse = await fetch(
+                    `/api/workspace/slug/${workspaceSlug}`
+                  );
+                  if (workspaceResponse.ok) {
+                    const workspaceData = await workspaceResponse.json();
+                    const workspaceId = workspaceData.id;
+
+                    // Call the reset endpoint
+                    const resetResponse = await fetch('/api/embeddings/reset', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ workspaceId }),
+                    });
+
+                    if (resetResponse.ok) {
+                      alert(
+                        'Embeddings reset successfully! Try asking a question now.'
+                      );
+                    } else {
+                      alert(
+                        'Failed to reset embeddings. Check console for details.'
+                      );
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('Error resetting embeddings:', error);
+                alert('Error resetting embeddings. Check console for details.');
+              }
+            }}
+          >
+            🔄 Reset Embeddings
+          </ButtonNormal>
+        </div>
       </header>
 
       {/* Messages Container */}
@@ -216,6 +334,45 @@ export default function AssistantPage() {
                   }}
                 >
                   <p className="whitespace-pre-wrap">{message.content}</p>
+
+                  {/* Show sources if this is an AI message with context */}
+                  {!message.isUser &&
+                    message.contextUsed &&
+                    message.sources &&
+                    message.sources.length > 0 && (
+                      <div
+                        className="mt-3 pt-2 border-t"
+                        style={{ borderColor: colors['border-secondary'] }}
+                      >
+                        <p
+                          className="text-xs font-medium mb-2"
+                          style={{ color: colors['text-secondary'] }}
+                        >
+                          📋 Referenced from your workflows:
+                        </p>
+                        <div className="space-y-1">
+                          {message.sources.map((source, index) => (
+                            <div
+                              key={index}
+                              className="text-xs p-2 rounded"
+                              style={{ backgroundColor: colors['bg-tertiary'] }}
+                            >
+                              <div
+                                className="font-medium"
+                                style={{ color: colors['text-primary'] }}
+                              >
+                                {source.workflow_name}
+                              </div>
+                              <div style={{ color: colors['text-secondary'] }}>
+                                Step {source.step_position}:{' '}
+                                {source.step_title || 'Untitled Step'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   <p
                     className="text-xs mt-2 opacity-70"
                     style={{
@@ -228,6 +385,14 @@ export default function AssistantPage() {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
+                    {!message.isUser && message.contextUsed && (
+                      <span className="ml-2">✨ Context-aware</span>
+                    )}
+                    {!message.isUser && (
+                      <span className="ml-2">
+                        🔍 Threshold: {(similarityThreshold * 100).toFixed(0)}%
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>

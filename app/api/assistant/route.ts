@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { ChatOpenAI } from '@langchain/openai';
 import OpenAI from "openai";
+import { generateWorkspaceEmbeddings } from '@/lib/embedding/embeddingService';
+import { searchWorkflowContext } from '@/lib/embedding/ragService';
+import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { isVercel } from '@/app/api/utils/isVercel';
 
 /**
  * @swagger
@@ -95,7 +100,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse request body
-    const { message, conversationHistory = [] } = await req.json();
+    const { message, conversationHistory = [], workspaceId, similarityThreshold = 0.6 } = await req.json();
 
     // Validate input
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -117,9 +122,45 @@ export async function POST(req: NextRequest) {
 
     const openai = new OpenAI();
 
+    // Trigger embedding generation if workspaceId is provided (only for new blocks)
+    if (workspaceId && typeof workspaceId === 'number') {
+      try {
+        console.log(`Triggering embedding generation for workspace ${workspaceId}`);
+        generateWorkspaceEmbeddings(workspaceId, { resetExisting: false }).catch((error) => {
+          console.error('Background embedding generation failed:', error);
+        });
+      } catch (error) {
+        console.error('Failed to trigger embedding generation:', error);
+      }
+    }
 
-    // Prepare conversation context
-    const systemPrompt = `You are a helpful AI assistant for ProcessFlow, a workflow and process management platform. You help users with:
+    // Perform RAG search if workspaceId is provided
+    let ragContext = '';
+    let relevantSources: any[] = [];
+    
+    if (workspaceId && typeof workspaceId === 'number') {
+      try {
+        console.log(`Performing RAG search for workspace ${workspaceId} with query: "${message.trim()}"`);
+        const ragResult = await searchWorkflowContext(message.trim(), workspaceId, {
+          maxResults: 5,
+          similarityThreshold: similarityThreshold,
+        });
+
+        if (ragResult.relevantBlocks.length > 0) {
+          ragContext = ragResult.contextText;
+          relevantSources = ragResult.relevantBlocks;
+          console.log(`Found ${ragResult.relevantBlocks.length} relevant workflow blocks`);
+        } else {
+          console.log('No relevant workflow context found');
+        }
+      } catch (error) {
+        console.error('RAG search failed:', error);
+        // Continue without RAG context
+      }
+    }
+
+    // Prepare enhanced system prompt with RAG context
+    let systemPrompt = `You are a helpful AI assistant for ProcessFlow, a workflow and process management platform. You help users with:
 
 1. Creating and managing workflows
 2. Understanding process flows and diagrams
@@ -127,9 +168,26 @@ export async function POST(req: NextRequest) {
 4. Troubleshooting workflow issues
 5. General questions about the platform
 
-Be concise, helpful, and focus on practical advice. If you don't know something specific about ProcessFlow, provide general guidance and suggest contacting support for detailed platform-specific questions.
-
 Current user: ${userData.user.email}`;
+
+    // Add RAG context to system prompt if available
+    if (ragContext) {
+      systemPrompt += `
+
+IMPORTANT: I have access to the user's actual workflows and processes. Use this specific information to provide detailed, accurate answers:
+
+${ragContext}
+
+When answering:
+- Reference specific workflows and steps mentioned above when relevant
+- Provide concrete examples from their actual processes
+- Suggest improvements or modifications to existing workflows when appropriate
+- If the question relates to workflows not mentioned above, provide general guidance`;
+    } else {
+      systemPrompt += `
+
+Be concise, helpful, and focus on practical advice. If you don't know something specific about ProcessFlow, provide general guidance and suggest contacting support for detailed platform-specific questions.`;
+    }
 
     // Build conversation messages
     const messages = [
@@ -139,24 +197,44 @@ Current user: ${userData.user.email}`;
     ];
 
     // Generate AI response
-    const response = await openai.responses.create({
-        model: "gpt-5",
-        input: messages,
-        reasoning: {
-          effort: "minimal"
-        }
-      });
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: messages as any,
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
 
     // Extract the response content
+    const responseContent = response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
 
     // Generate a unique message ID
     const messageId = `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    return NextResponse.json({
+    // Prepare response with source attribution
+    const responseData: any = {
       success: true,
-      response: response.output_text,
+      response: responseContent,
       messageId,
-    });
+    };
+
+    // Add source information if RAG context was used
+    if (relevantSources.length > 0) {
+      responseData.sources = relevantSources.map(source => ({
+        workflow_name: source.workflow_name,
+        workflow_id: source.workflow_id,
+        step_title: source.title,
+        step_position: source.position,
+        similarity_score: Math.round(source.similarity_score * 100) / 100,
+      }));
+
+      responseData.context_used = true;
+      responseData.total_sources = relevantSources.length;
+    } else {
+      responseData.context_used = false;
+      responseData.total_sources = 0;
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Assistant API error:', error);

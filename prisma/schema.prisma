@@ -5,12 +5,14 @@ generator client {
 
 generator dbml {
   provider = "prisma-dbml-generator"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+  extensions = [vector]
 }
   
 model user {
@@ -255,7 +257,7 @@ model block {
   child_paths         path_parent_block[] @relation("path_parent")
   source_stroke_lines stroke_line[]       @relation("stroke_source")
   target_stroke_lines stroke_line[]       @relation("stroke_target")
-
+  embedding           Unsupported("vector")?
   @@index([workflow_id])
   @@index([path_id])
   @@index([type])

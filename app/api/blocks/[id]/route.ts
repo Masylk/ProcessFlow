@@ -8,6 +8,7 @@ import { deleteOneBlock } from '../../utils/blocks/deleteOne';
 import { formatTitle } from '../../utils/formatTitle';
 import { createSignedUrlForBlock } from '@/utils/createSignedUrls';
 import { supabase } from '@/lib/supabaseClient';
+import { EmbeddingService } from '@/lib/embedding/embeddingService';
 
 /**
  * @swagger
@@ -190,6 +191,28 @@ export async function PATCH(req: NextRequest) {
         delay_event: type === 'DELAY' ? formattedDelayEvent : null,
       },
     });
+
+    // Reset embedding using raw query since it's an unsupported type
+    try {
+      await prisma_client.$executeRaw`
+        UPDATE block 
+        SET embedding = NULL, updated_at = NOW()
+        WHERE id = ${block_id}
+      `;
+    } catch (embeddingResetError) {
+      console.warn('Failed to reset embedding:', embeddingResetError);
+      // Don't fail the block update if embedding reset fails
+    }
+
+    // Reset embedding in background if there was a relevant change
+    try {
+      const embeddingService = new EmbeddingService();
+      // No need to explicitly reset since we already set embedding to null above
+      await embeddingService.cleanup();
+    } catch (embeddingError) {
+      console.error('Error with embedding service during block update:', embeddingError);
+      // Don't fail the block update if embedding reset fails
+    }
 
     const signedBlock = await createSignedUrlForBlock(updatedBlock);
 
