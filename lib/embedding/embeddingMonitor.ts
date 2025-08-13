@@ -185,6 +185,7 @@ export async function logEmbeddingOperation(
   workspaceId?: number,
   details?: string
 ): Promise<void> {
+  // Log embedding operations for monitoring purposes
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] EMBEDDING_${operation.toUpperCase()}`;
   

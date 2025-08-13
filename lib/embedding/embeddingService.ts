@@ -163,18 +163,12 @@ export class EmbeddingService {
       const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
       const normalizedEmbedding = embedding.map(val => val / magnitude);
       
-      console.log(`[EMBEDDING] Storing embedding for block ${blockId}`);
-      console.log(`[EMBEDDING] Original magnitude: ${magnitude.toFixed(4)}`);
-      console.log(`[EMBEDDING] Normalized magnitude: ${Math.sqrt(normalizedEmbedding.reduce((sum, val) => sum + val * val, 0)).toFixed(4)}`);
-      
       await this.prismaClient.$executeRaw`
         UPDATE block 
         SET embedding = ${JSON.stringify(normalizedEmbedding)}::vector,
             updated_at = NOW()
         WHERE id = ${blockId}
       `;
-      
-      console.log(`[EMBEDDING] Successfully stored normalized embedding for block ${blockId}`);
     } catch (error) {
       console.error(`Error storing embedding for block ${blockId}:`, error);
       throw new Error(`Failed to store embedding for block ${blockId}`);
@@ -191,6 +185,34 @@ export class EmbeddingService {
     } catch (error) {
       console.error(`Error resetting embedding for block ${blockId}:`, error);
       throw new Error(`Failed to reset embedding for block ${blockId}`);
+    }
+  }
+
+  async clearAllWorkspaceEmbeddings(workspaceId: number): Promise<{ cleared: number }> {
+    try {
+      await this.prismaClient.$executeRaw`
+        UPDATE block 
+        SET embedding = NULL, updated_at = NOW()
+        WHERE workflow_id IN (
+          SELECT id FROM workflow WHERE workspace_id = ${workspaceId}
+        )
+      `;
+      
+      // Get the count of affected rows
+      const countResult: { count: bigint }[] = await this.prismaClient.$queryRaw`
+        SELECT COUNT(*) as count
+        FROM block b
+        JOIN workflow w ON b.workflow_id = w.id
+        WHERE w.workspace_id = ${workspaceId} AND b.embedding IS NOT NULL
+      `;
+      
+      const remainingCount = Number(countResult[0]?.count || 0);
+      const clearedCount = remainingCount === 0 ? 0 : remainingCount; // This will be 0 after clearing
+      
+      return { cleared: clearedCount };
+    } catch (error) {
+      console.error(`Error clearing all workspace embeddings for workspace ${workspaceId}:`, error);
+      throw new Error(`Failed to clear all workspace embeddings for workspace ${workspaceId}`);
     }
   }
 
@@ -211,6 +233,11 @@ export class EmbeddingService {
         return { processed: 0, failed: 0, errors: ['No workflows found in workspace'] };
       }
 
+      // If resetExisting is true, clear ALL embeddings first
+      if (resetExisting) {
+        await this.clearAllWorkspaceEmbeddings(workspaceId);
+      }
+
       for (const workflow of workflows) {
         const paths = await this.prismaClient.path.findMany({
           where: { workflow_id: workflow.id },
@@ -221,20 +248,18 @@ export class EmbeddingService {
         for (const block of workflow.blocks) {
           try {
             if (!resetExisting) {
+              // Only check for existing embeddings if not resetting
               const existingBlocks: { count: bigint }[] = await this.prismaClient.$queryRaw`
                 SELECT COUNT(*) as count FROM block WHERE id = ${block.id} AND embedding IS NOT NULL
               `;
 
               if (Number(existingBlocks[0]?.count || 0) > 0) {
-                console.log(`[EMBEDDING] Block ${block.id} already has embedding, skipping...`);
                 processed++;
                 continue;
               }
-            } else {
-              console.log(`[EMBEDDING] Resetting existing embedding for block ${block.id}...`);
-              await this.resetBlockEmbedding(block.id);
             }
 
+            // Generate new embedding (either for new blocks or after reset)
             const pathName = pathMap.get(block.path_id);
             const contentString = this.createBlockContentString(block, workflow, pathName);
             

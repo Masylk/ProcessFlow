@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { generateWorkspaceEmbeddings } from '@/lib/embedding/embeddingService';
+import { EmbeddingService } from '@/lib/embedding/embeddingService';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,16 +27,15 @@ export async function POST(req: NextRequest) {
 
     console.log(`[EMBEDDINGS] User ${userData.user.email} requested embedding reset for workspace ${workspaceId}`);
 
-    // Trigger embedding regeneration with resetExisting: true
-    const result = await generateWorkspaceEmbeddings(workspaceId, { 
-      resetExisting: true,
-      model: 'text-embedding-3-small'
-    });
+    // Just clear all embeddings, don't regenerate
+    const embeddingService = new EmbeddingService();
+    const clearResult = await embeddingService.clearAllWorkspaceEmbeddings(workspaceId);
+    await embeddingService.cleanup();
 
     return NextResponse.json({
       success: true,
-      message: 'Embeddings reset and regenerated successfully',
-      result
+      message: `Successfully cleared ${clearResult.cleared} embeddings from workspace ${workspaceId}`,
+      cleared: clearResult.cleared
     });
 
   } catch (error) {
