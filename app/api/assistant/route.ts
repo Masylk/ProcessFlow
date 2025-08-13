@@ -198,10 +198,10 @@ Be concise, helpful, and focus on practical advice. If you don't know something 
 
     // Generate AI response
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4.1-mini",
       messages: messages as any,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 15000,
     });
 
     // Extract the response content
