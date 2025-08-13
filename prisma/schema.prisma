@@ -1,11 +1,11 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x", "linux-musl"]
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 generator dbml {
   provider = "prisma-dbml-generator"
-  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
