@@ -15,6 +15,7 @@ export interface RelevantBlock {
   task_type: string | null;
   average_time: string | null;
   similarity_score: number;
+  workflow_url?: string;
 }
 
 export interface RAGContext {
@@ -30,6 +31,15 @@ export interface RAGSearchOptions {
   similarityThreshold?: number;
   includeWorkflowContext?: boolean;
 }
+
+const sanitizeName = (name: string) => name.replace(/\s+/g, '-');
+const getBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/$/, '');
+  const vercel = process.env.VERCEL_URL;
+  if (vercel) return `https://${vercel}`;
+  return 'http://localhost:3000';
+};
 
 export class RAGService {
   private openai: OpenAI;
@@ -115,14 +125,37 @@ export class RAGService {
       `;
 
       // Filter by threshold
-      const results = allBlocksResult.filter(block => 
-        block.raw_similarity >= similarityThreshold
-      );
+      const filtered = allBlocksResult.filter(block => block.raw_similarity >= similarityThreshold);
 
-      // Map the results to include similarity_score
-      const mappedResults = results.map(result => ({
+      // Sort by highest similarity (descending)
+      const sortedBySimilarity = filtered.sort((a, b) => b.raw_similarity - a.raw_similarity);
+
+      // Group by workflow_id and count how many embeddings per workflow
+      const groups = new Map<number, typeof sortedBySimilarity>();
+      for (const row of sortedBySimilarity) {
+        if (!groups.has(row.workflow_id)) groups.set(row.workflow_id, [] as any);
+        (groups.get(row.workflow_id) as any).push(row);
+      }
+
+      // Select top `maxResults` workflows by number of embeddings
+      const topWorkflowIds = Array.from(groups.entries())
+        .sort((a, b) => (b[1] as any).length - (a[1] as any).length)
+        .slice(0, maxResults)
+        .map(([workflowId]) => workflowId);
+
+      // Take all embeddings that belong to those top workflows, preserving similarity order
+      const selectedRows = sortedBySimilarity.filter(r => topWorkflowIds.includes(r.workflow_id));
+
+      // Fetch slug/base once
+      const ws = await this.prismaClient.workspace.findUnique({ where: { id: workspaceId }, select: { slug: true } });
+      const baseUrl = getBaseUrl();
+      const slug = ws?.slug ?? '';
+
+      // Map the results to include similarity_score and workflow_url
+      const mappedResults: RelevantBlock[] = selectedRows.map(result => ({
         ...result,
         similarity_score: Number(result.raw_similarity),
+        workflow_url: slug ? `${baseUrl}/${slug}/${sanitizeName(result.workflow_name)}--pf-${result.workflow_id}/edit` : undefined,
       }));
 
       return mappedResults;

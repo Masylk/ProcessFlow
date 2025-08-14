@@ -51,6 +51,14 @@ export class EmbeddingService {
     }
   }
 
+  private getBaseUrl(): string {
+    const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    if (envUrl) return envUrl.replace(/\/$/, '');
+    const vercel = process.env.VERCEL_URL;
+    if (vercel) return `https://${vercel}`;
+    return 'http://localhost:3000';
+  }
+
   async retrieveWorkflowsInWorkspace(workspaceId: number): Promise<WorkflowWithBlocks[]> {
     try {
       const workflows = await this.prismaClient.workflow.findMany({
@@ -93,10 +101,15 @@ export class EmbeddingService {
     }
   }
 
+  private sanitizeName(name: string): string {
+    return name.replace(/\s+/g, '-');
+  }
+
   createBlockContentString(
     block: BlockData,
     workflow: WorkflowWithBlocks,
-    pathName?: string
+    pathName?: string,
+    workspaceSlug?: string
   ): string {
     const parts: string[] = [];
 
@@ -107,6 +120,14 @@ export class EmbeddingService {
 
     if (pathName) {
       parts.push(`PATH: ${pathName}`);
+    }
+
+    // Append workflow URL if slug is available
+    if (workspaceSlug) {
+      const origin = this.getBaseUrl();
+      const sanitized = this.sanitizeName(workflow.name);
+      const workflowUrl = `${origin}/${workspaceSlug}/${sanitized}--pf-${workflow.id}/edit`;
+      parts.push(`WORKFLOW_URL: ${workflowUrl}`);
     }
 
     parts.push(`STEP_NUMBER: ${block.position}`);
@@ -233,6 +254,13 @@ export class EmbeddingService {
         return { processed: 0, failed: 0, errors: ['No workflows found in workspace'] };
       }
 
+      // Fetch workspace slug once
+      const workspace = await this.prismaClient.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { slug: true },
+      });
+      const workspaceSlug: string | undefined = workspace?.slug ?? undefined;
+
       // If resetExisting is true, clear ALL embeddings first
       if (resetExisting) {
         await this.clearAllWorkspaceEmbeddings(workspaceId);
@@ -261,7 +289,7 @@ export class EmbeddingService {
 
             // Generate new embedding (either for new blocks or after reset)
             const pathName = pathMap.get(block.path_id);
-            const contentString = this.createBlockContentString(block, workflow, pathName);
+            const contentString = this.createBlockContentString(block, workflow, pathName, workspaceSlug);
             
             const embedding = await this.generateEmbedding(contentString, model);
             await this.storeEmbedding(block.id, embedding);
