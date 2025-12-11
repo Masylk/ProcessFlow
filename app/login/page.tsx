@@ -6,7 +6,7 @@ import Link from 'next/link';
 import posthog from 'posthog-js';
 import { login } from './actions';
 import * as Sentry from '@sentry/nextjs';
-import { createBrowserClient } from '@supabase/ssr';
+
 import LoadingSpinner from '../components/LoadingSpinner';
 import { toast } from 'sonner';
 
@@ -254,72 +254,7 @@ function LoginContent() {
     }
   }
 
-  const handleGoogleAuth = async () => {
-    try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-        {
-          cookies: {
-            get(name: string) {
-              return document.cookie
-                .split('; ')
-                .find((row) => row.startsWith(`${name}=`))
-                ?.split('=')[1];
-            },
-            set(name: string, value: string, options: any) {
-              let cookie = `${name}=${value}; path=/`;
-              if (options.maxAge) {
-                cookie += `; max-age=${options.maxAge}`;
-              }
-              if (options.domain) {
-                cookie += `; domain=.process-flow.io`;
-              }
-              document.cookie = cookie;
-            },
-            remove(name: string) {
-              document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
-            },
-          },
-        }
-      );
 
-      // Get workspace and token from URL params
-      const workspace = searchParams?.get('workspace');
-      const token = searchParams?.get('token');
-
-      // Build the callback URL with additional parameters if they exist
-      let callbackUrl = `${window.location.origin}/auth/callback`;
-      if (workspace && token) {
-        callbackUrl += `?workspace_id=${encodeURIComponent(workspace)}&invite_token=${encodeURIComponent(token)}`;
-      }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
-          console.error('Erreur authentification Google:', error.message);
-        }
-      } else {
-        if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
-          console.log('Redirection OAuth initiée:', data);
-        }
-      }
-    } catch (error) {
-      if (process.env.NEXT_PUBLIC_APP_ENV !== 'production') {
-        console.error('Erreur inattendue:', error);
-      }
-    }
-  };
 
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex flex-col items-center justify-center py-6 px-4 sm:px-6">
@@ -483,33 +418,13 @@ function LoginContent() {
 
           {/* Google login */}
           <div className="z-10 flex flex-col items-center w-full mb-2">
-            <button
-              onClick={handleGoogleAuth}
-              className="w-full px-4 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.07)] border border-[#d0d5dd] flex items-center justify-center gap-3 overflow-hidden transition-colors duration-300 hover:bg-[#F9FAFB]"
+            <Link
+              href="/signup"
+              className="w-full px-4 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.07)] border border-[#d0d5dd] flex items-center justify-center gap-3 overflow-hidden transition-colors duration-300 hover:bg-[#F9FAFB] text-[#344054] text-sm font-semibold font-['Inter'] leading-tight"
             >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/google.svg`}
-                alt="Google Icon"
-                className="w-4 h-4"
-              />
-              <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                Log in with Google
-              </div>
-            </button>
+              Sign up
+            </Link>
           </div>
-        </div>
-
-        {/* Sign up link */}
-        <div className="py-3 flex justify-center items-baseline gap-1">
-          <div className="text-[#667085] text-sm font-normal font-['Inter'] leading-tight">
-            Don't have an account?
-          </div>
-          <Link
-            href="/signup"
-            className="text-[#374c99] text-sm font-semibold font-['Inter'] leading-tight"
-          >
-            Sign up
-          </Link>
         </div>
       </div>
     </div>
