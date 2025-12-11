@@ -6,17 +6,20 @@ import Link from 'next/link';
 import posthog from 'posthog-js';
 import { signup, checkEmailExists } from '../login/actions';
 import * as Sentry from '@sentry/nextjs';
-import { createBrowserClient } from '@supabase/ssr';
+
 import { sanitizeInput } from '../utils/sanitize';
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailNotification, setShowEmailNotification] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [globalError, setGlobalError] = useState('');
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const router = useRouter();
@@ -49,6 +52,11 @@ export default function SignupPage() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     if (passwordError) setPasswordError('');
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+    if (confirmPasswordError) setConfirmPasswordError('');
   };
 
   // Add a function to check email existence
@@ -119,6 +127,7 @@ export default function SignupPage() {
     setGlobalError('');
     setEmailError('');
     setPasswordError('');
+    setConfirmPasswordError('');
 
     // Validate inputs before submission
     let hasErrors = false;
@@ -132,6 +141,11 @@ export default function SignupPage() {
       setPasswordError(
         'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
       );
+      hasErrors = true;
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
       hasErrors = true;
     }
 
@@ -227,72 +241,7 @@ export default function SignupPage() {
     }
   }
 
-  const handleGoogleAuth = async () => {
-    try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-        {
-          cookies: {
-            get(name: string) {
-              return document.cookie
-                .split('; ')
-                .find((row) => row.startsWith(`${name}=`))
-                ?.split('=')[1];
-            },
-            set(name: string, value: string, options: any) {
-              let cookie = `${name}=${value}; path=/`;
-              if (options.maxAge) {
-                cookie += `; max-age=${options.maxAge}`;
-              }
-              if (options.domain) {
-                cookie += `; domain=.process-flow.io`;
-              }
-              document.cookie = cookie;
-            },
-            remove(name: string) {
-              document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
-            },
-          },
-        }
-      );
 
-      // Get workspace and token from URL params
-      const workspace = searchParams?.get('workspace');
-      const token = searchParams?.get('token');
-
-      // Build the callback URL with additional parameters if they exist
-      let callbackUrl = `${window.location.origin}/auth/callback`;
-      if (workspace && token) {
-        callbackUrl += `?workspace_id=${encodeURIComponent(workspace)}&invite_token=${encodeURIComponent(token)}`;
-      }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('Erreur authentification Google:', error.message);
-        }
-      } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Redirection OAuth initiée:', data);
-        }
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Erreur inattendue:', error);
-      }
-    }
-  };
 
   return (
     <div className="relative w-full min-h-screen bg-white overflow-hidden flex flex-col items-center justify-center py-6 px-4 sm:px-6">
@@ -418,13 +367,47 @@ export default function SignupPage() {
                   </span>
                 )}
               </div>
+
+              {/* Confirm Password field */}
+              <div className="flex flex-col items-start gap-1.5 w-full">
+                <label className="flex items-start gap-0.5 text-[#344054] text-sm font-medium font-['Inter'] leading-tight">
+                  Confirm Password
+                </label>
+                <div
+                  className={`px-3.5 py-1.5 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] border ${confirmPasswordError ? 'border-red-500' : 'border-[#d0d5dd]'} flex items-center gap-2 w-full focus-within:border-[#4e6bd7] focus-within:shadow-[0px_0px_0px_4px_rgba(78,107,215,0.2)] transition-colors duration-200`}
+                >
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/lock-01.svg`}
+                    alt="Lock Icon"
+                    className="w-4 h-4"
+                  />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="grow text-[#667085] text-base font-normal font-['Inter'] leading-normal outline-none bg-transparent"
+                    value={confirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                  />
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/shared_components/${showConfirmPassword ? 'eye-off' : 'eye'}.svg`}
+                    alt={showConfirmPassword ? 'Hide Password' : 'Show Password'}
+                    className="w-4 h-4 cursor-pointer"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  />
+                </div>
+                {confirmPasswordError && (
+                  <span className="text-red-500 text-sm mt-1">
+                    {confirmPasswordError}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Sign up button */}
             <div className="flex flex-col items-start gap-4 w-full">
-              <button
+                <button
                 type="submit"
-                disabled={isLoading || !email || !password}
+                disabled={isLoading || !email || !password || !confirmPassword}
                 className={`w-full px-3 py-2 rounded-lg border-2 border-white flex items-center justify-center gap-1 overflow-hidden transition-colors duration-300 ${
                   isLoading ? 'bg-[#F9FAFB]' : 'bg-[#4e6bd7] hover:bg-[#374c99]'
                 }`}
@@ -448,31 +431,7 @@ export default function SignupPage() {
             </div>
           </form>
 
-          {/* Divider */}
-          <div className="z-10 flex items-center gap-4 w-full mt-2">
-            <div className="grow h-px border border-[#e4e7ec]" />
-            <div className="text-center text-[#475467] text-sm font-normal font-['Inter'] leading-tight">
-              or
-            </div>
-            <div className="grow h-px border border-[#e4e7ec]" />
-          </div>
-
-          {/* Google signup */}
-          <div className="z-10 flex flex-col items-center w-full mb-2">
-            <button
-              onClick={handleGoogleAuth}
-              className="w-full px-4 py-2 bg-white rounded-lg shadow-[0px_1px_2px_0px_rgba(0,0,0,0.07)] border border-[#d0d5dd] flex items-center justify-center gap-3 overflow-hidden transition-colors duration-300 hover:bg-[#F9FAFB]"
-            >
-              <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_PATH}/assets/logo/google.svg`}
-                alt="Google Icon"
-                className="w-4 h-4"
-              />
-              <div className="text-[#344054] text-sm font-semibold font-['Inter'] leading-tight">
-                Sign up with Google
-              </div>
-            </button>
-          </div>
+            {/* Sign up button */}
 
           {/* Terms and Privacy */}
           <div className="z-10 text-center flex flex-wrap justify-center items-center gap-1">
